@@ -17,6 +17,7 @@ timeout = 20
 
 
 from labrad import types as T, util
+from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.types import Value
@@ -166,7 +167,7 @@ class RigolDS1000ZServer(GPIBManagedServer):
         chString = ":CHAN:%d:INV" %channel
 
         if invert is None:
-            resp = yield dev.query(chString + ?)
+            resp = yield dev.query(chString + '?')
         elif invert in [0, 1]:
             yield dev.write(chString + str(invert))
         else:
@@ -270,7 +271,7 @@ class RigolDS1000ZServer(GPIBManagedServer):
         if mode is None:
             resp = yield dev.query(chString + '?')
         elif mode in ['AUTO', 'NONE', 'SING']:
-            resp =
+            resp = yield dev.write(chString + ' ' + mode)
 
         if mode == 'AUTO':
             yield dev.write(chString + ' ' + mode)
