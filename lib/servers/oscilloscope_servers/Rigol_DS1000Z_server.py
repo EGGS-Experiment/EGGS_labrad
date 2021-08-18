@@ -35,7 +35,7 @@ SCALES = []
 PROBE_FACTORS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
 
 class RigolDS1000ZServer(GPIBManagedServer):
-    name = 'Rigol DS1104Z Oscillosocpe'
+    name = 'Rigol DS1104Z Oscilloscope'
     deviceName = 'Rigol DS1104Z Oscilloscope'
 
     #Base settings
@@ -90,7 +90,7 @@ class RigolDS1000ZServer(GPIBManagedServer):
     @setting(111, channel = 'i', coupling = 's', returns=['s'])
     def channel_coupling(self, c, channel, coupling = None):
         """
-        Get or set the coupling of a specified channel
+        Get/set the coupling of a specified channel
         Coupling can be "AC", "DC", or "GND"
         """
         chString = ':CHAN%d:COUP' %channel
@@ -222,7 +222,7 @@ class RigolDS1000ZServer(GPIBManagedServer):
     @setting(132, level = 'v', returns = ['v'])
     def trigger_level(self, c, level = None):
         """
-        Get or set the vertical zero position of a channel in voltage
+        Get/set the vertical zero position of a channel in voltage
         """
         dev = self.selectedDevice(c)
         chString = ':TRIG:EDG:LEV'
@@ -238,7 +238,7 @@ class RigolDS1000ZServer(GPIBManagedServer):
     @setting(133, channel = '?', returns = ['s'])
     def trigger_channel(self, c, channel = None):
         """
-        Get or set the trigger source
+        Get/set the trigger source
         Must be one of "EXT","LINE", 1, 2, 3, 4, CHAN1, CHAN2...
         """
         dev = self.selectedDevice(c)
