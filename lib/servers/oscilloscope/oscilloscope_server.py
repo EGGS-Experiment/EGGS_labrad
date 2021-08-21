@@ -21,7 +21,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
-from oscilloscope.Rigol_DS1000Z import Rigol_DS1000ZWrapper
+from Rigol_DS1000Z import RigolDS1000ZWrapper
 
 class OscilloscopeServer(GPIBManagedServer):
     """Manges communication with oscilloscopes. ALL the oscilloscopes."""
