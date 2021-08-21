@@ -15,15 +15,13 @@ timeout = 20
 ### END NODE INFO
 """
 
-
 from __future__ import absolute_import
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
-from oscilloscope.agilent.DSOX4104A import DSOX4104AWrapper
-from oscilloscope.agilent.DSO91304A import DSO91304AWrapper
+from oscilloscope.Rigol_DS1000Z import Rigol_DS1000ZWrapper
 
 class OscilloscopeServer(GPIBManagedServer):
     """Manges communication with oscilloscopes. ALL the oscilloscopes."""
@@ -31,13 +29,10 @@ class OscilloscopeServer(GPIBManagedServer):
     name = 'Oscilloscope Server'
 
     deviceWrappers = {
-            'AGILENT TECHNOLOGIES DSO-X 4104A': DSOX4104AWrapper,
-            'KEYSIGHT TECHNOLOGIES DSO-X 4104A': DSOX4104AWrapper,
-            'KEYSIGHT TECHNOLOGIES DSO90804A': DSO91304AWrapper,
+        'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper
     }
 
-    # SYSTEM
-
+    #SYSTEM
     @setting(11, returns='')
     def reset(self, c):
         """Reset the oscilloscope to factory settings."""
@@ -50,8 +45,7 @@ class OscilloscopeServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         yield dev.clear_buffers()
 
-    # CHANNEL
-
+    #CHANNEL
     @setting(50, channel='i', state='b', returns='b')
     def channel_on(self, c, channel, state=None):
         """Set or query channel on/off state.

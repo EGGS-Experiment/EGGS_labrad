@@ -1,27 +1,8 @@
-"""
-### BEGIN NODE INFO
-[info]
-name = Rigol DS1104Z Oscilloscope
-version = 0.9.1
-description = Talks to the Rigol DS1104Z Oscilloscope
-
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
-
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
-"""
-
-
 from labrad import types as T, util
-from labrad.gpib import GPIBManagedServer, GPIBDeviceWrapper
+from labrad.gpib import GPIBDeviceWrapper
 from labrad.server import setting
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.types import Value
-from struct import unpack
 from labrad.units import mV, ns
 
 import time
@@ -35,13 +16,6 @@ SCALES = []
 PROBE_FACTORS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
 
 class RigolDS1000ZWrapper(GPIBDeviceWrapper):
-    pass
-
-class RigolDS1000ZServer(GPIBManagedServer):
-    name = 'Rigol DS1104Z Oscilloscope'
-    deviceWrappers = {
-        'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper
-    }
 
     #Base settings
     @setting(11, returns=[])
@@ -58,7 +32,8 @@ class RigolDS1000ZServer(GPIBManagedServer):
     #Channel settings: main
     @setting(100, channel = 'i', returns = '(vvvvsvss)')
     def channel_info(self, c, channel):
-        """channel(int channel)
+        """
+        channel(int channel)
         Get information on one of the scope channels.
         OUTPUT
         Tuple of (probeAtten, termination, scale, position, coupling, bwLimit, invert, units)
@@ -101,15 +76,14 @@ class RigolDS1000ZServer(GPIBManagedServer):
         chString = ':CHAN%d:COUP' %channel
         dev = self.selectedDevice(c)
 
-        if coupling is None:
-            resp = yield dev.query(chString + '?')
-        else:
+        if coupling is not None:
             coupling = coupling.upper()
             if coupling not in COUPLINGS:
                 raise Exception('Coupling must be either: "AC", "DC", "GND"')
             else:
                 yield dev.write(chString + ' ' + coupling)
-                resp = yield dev.query(chString + '?')
+
+        resp = yield dev.query(chString + '?')
         returnValue(resp)
 
     @setting(112, channel = 'i', scale = 'v', returns = ['v'])
@@ -120,13 +94,12 @@ class RigolDS1000ZServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         chString = ':CHAN%d:SCAL' %channel
 
-        if scale is None:
-            resp = yield dev.query(chString + '?')
-        else:
+        if scale is not None:
             scale = format(scale['V'],'E')
-            yield dev.write(chString + str(scale) + 'V')
+            yield dev.write(chString + ' ' + str(scale) + 'V')
             resp = yield dev.query(':CHAN%d:SCAL?' %channel)
 
+        resp = yield dev.query(chString + '?')
         scale = (Value(float(resp),'V'))
         returnValue(scale)
 
@@ -138,13 +111,12 @@ class RigolDS1000ZServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         chString = ':CHAN%d:PROB' %channel
 
-        if factor is None:
-            resp = yield dev.query(chString + '?')
-        elif factor in PROBE_FACTORS:
-            yield dev.write(chString+':PROB%d' %factor)
-            resp = yield dev.query(chString+':PROB?')
-        else:
+        if factor in PROBE_FACTORS:
+            yield dev.write(chString + ' ' + str(factor))
+        elif factor is not None:
             raise Exception('Probe attenuation factor not in ' + str(PROBE_FACTORS))
+
+        resp = yield dev.query(chString + '?')
         returnValue(resp)
 
     @setting(114, channel = 'i', state = 'i', returns = 'i')
@@ -156,14 +128,14 @@ class RigolDS1000ZServer(GPIBManagedServer):
         chString = ':CHAN%d:DISP' %channel
 
         if state in [0, 1]:
-            yield dev.write(chString + str(state))
+            yield dev.write(chString + ' ' + str(state))
         elif state is not None:
             raise Exception('state must be either 0 or 1')
 
         resp = yield dev.query(chString + '?')
         returnValue(int(resp))
 
-    @setting(115, channel = 'i', invert = 'i', returns = '')
+    @setting(115, channel = 'i', invert = 'i', returns = 'i')
     def channel_invert(self, c, channel, invert = None):
         """
         Get/set the inversion status of a channel
@@ -171,13 +143,13 @@ class RigolDS1000ZServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         chString = ":CHAN:%d:INV" %channel
 
-        if invert is None:
-            resp = yield dev.query(chString + '?')
-        elif invert in [0, 1]:
-            yield dev.write(chString + str(invert))
-        else:
+        if invert in [0, 1]:
+            yield dev.write(chString + ' ' + str(invert))
+        elif invert is not None:
             raise Exception('state must be either 0 (disable) or 1 (enable)')
-        returnValue(invert)
+
+        resp = yield dev.query(chString + '?')
+        returnValue(int(resp))
 
     @setting(116, channel = 'i', position = 'v', returns = ['v'])
     def channel_offset_y(self, c, channel, position = None):
@@ -188,12 +160,11 @@ class RigolDS1000ZServer(GPIBManagedServer):
         resp = yield dev.query(':CHAN%d:SCAL?' %channel)
         scale_V = float(resp)
 
-        if position is None:
-            resp = yield dev.query(':CHAN%d:OFFS?' %channel)
-        else:
+        if position is not None:
             pos_V = - position * scale_V
-            yield dev.write((':CHAN%d:OFFS %g V') % (channel, pos_V))
-            resp = yield dev.query(':CHAN%d:OFFS?' % channel)
+            yield dev.write((':CHAN%d:OFFS %g') % (channel, pos_V))
+
+        resp = yield dev.query(':CHAN%d:OFFS?' % channel)
         position = float(resp) / scale_V
         returnValue(position)
 
@@ -209,9 +180,7 @@ class RigolDS1000ZServer(GPIBManagedServer):
         chString = ':TRIG:EDG:SLOP'
         dev = self.selectedDevice(c)
 
-        if slope is None:
-            resp = yield dev.query(chString + '?')
-        else:
+        if slope is not None:
             slope = slope.upper()
             if slope not in ['RFAL', 'POS', 'NEG']:
                 raise Exception('Slope must be either: "RFAL", "POS", "NEG" ')
@@ -221,7 +190,8 @@ class RigolDS1000ZServer(GPIBManagedServer):
                 else:
                     slope = 'NEG'
                 yield dev.write(chString + ' ' + slope)
-                resp = yield dev.query(chString + '?')
+
+        resp = yield dev.query(chString + '?')
         returnValue(resp)
 
     @setting(132, level = 'v', returns = ['v'])
@@ -232,11 +202,10 @@ class RigolDS1000ZServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         chString = ':TRIG:EDG:LEV'
 
-        if level is None:
-            resp = yield dev.query(chString + '?')
-        else:
-            yield dev.write(chString + ' ' + level)
-            resp = yield dev.query(chString + '?')
+        if level is not None:
+            yield dev.write(chString + ' ' + str(level))
+
+        resp = yield dev.query(chString + '?')
         level = Value(float(resp), 'V')
         returnValue(level)
 
@@ -248,20 +217,17 @@ class RigolDS1000ZServer(GPIBManagedServer):
         """
         dev = self.selectedDevice(c)
 
-        if channel in ['CH1','CH2','CH3','CH4']:
+        if channel in TRIG_CHANNELS:
             channel = int(channel[-1])
-        if isinstance(channel, str):
-            channel = channel.upper()
-        if isinstance(channel, int):
-            channel = 'CHAN%d' %channel
-
-        if channel is None:
-            resp = yield dev.query(':TRIG:EDG:SOUR?')
-        elif channel in TRIG_CHANNELS:
-            yield dev.write(':TRIG:EDG:SOUR '+channel)
-            resp = yield dev.query(':TRIG:EDG:SOUR?')
+            if isinstance(channel, str):
+                channel = channel.upper()
+            if isinstance(channel, int):
+                channel = 'CHAN%d' %channel
+            yield dev.write(':TRIG:EDG:SOUR '+ str(channel)) # ***
         else:
             raise Exception('Select valid trigger channel')
+
+        resp = yield dev.query(':TRIG:EDG:SOUR?')
         returnValue(resp)
 
     @setting(134, mode = 's', returns = ['s'])
@@ -273,15 +239,11 @@ class RigolDS1000ZServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         chString = ':TRIG:SWE'
 
-        if mode is None:
-            resp = yield dev.query(chString + '?')
-        elif mode in ['AUTO', 'NONE', 'SING']:
-            resp = yield dev.write(chString + ' ' + mode)
-
-        if mode == 'AUTO':
+        if mode in ['AUTO', 'NONE', 'SING']:
             yield dev.write(chString + ' ' + mode)
-        elif mode == 'NORM':
-            yield dev.write(':TRIG:SWE NORM')
+        else:
+            raise Exception('Select valid trigger mode')
+
         ans = yield dev.query(":TRIG:SWE?")
         returnValue(str(ans))
 
@@ -293,11 +255,10 @@ class RigolDS1000ZServer(GPIBManagedServer):
         Get/set the horizontal trigger offset in seconds
         """
         dev = self.selectedDevice(c)
-        if offset is None:
-            resp = yield dev.query(':TIM:OFFS?')
-        else:
+        if offset is not None:
             yield dev.write(':TIM:OFFS %g' %pos)
-            resp = yield dev.query(':TIM:OFFS?')
+
+        resp = yield dev.query(':TIM:OFFS?')
         offset = float(resp)
         returnValue(offset)
 
@@ -309,11 +270,10 @@ class RigolDS1000ZServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         chString = ':TIM:SCAL'
 
-        if scale is None:
-            resp = yield dev.query(chString + '?')
-        else:
+        if scale is not None:
             yield dev.write(chString + ' ' + scale)
-            resp = yield dev.query(chString + '?')
+
+        resp = yield dev.query(chString + '?')
         scale = float(resp)
         returnValue(scale)
 
@@ -430,9 +390,3 @@ def _parseByteData(data):
     tmc_length = data[2: 2 + tmc_N]
 
     return data[2 + tmc_N:2 + tmc_N + tmc_length]
-
-__server__ = RigolDS1000ZServer()
-
-if __name__ == '__main__':
-    from labrad import util
-    util.runServer(__server__)
