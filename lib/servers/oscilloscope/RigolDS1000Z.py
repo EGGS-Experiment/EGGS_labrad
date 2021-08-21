@@ -1,6 +1,5 @@
 from labrad import types as T, util
 from labrad.gpib import GPIBDeviceWrapper
-from labrad.server import setting
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.types import Value
 from labrad.units import mV, ns
@@ -18,28 +17,20 @@ PROBE_FACTORS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200,
 class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
     #Base settings
-    @setting(11, returns=[])
-    def reset(self, c):
-        dev = self.selectedDevice(c)
-        yield dev.write('*RST')
+    @inlineCallbacks
+    def reset(self):
+        yield self.write('*RST')
         # TODO wait for reset to complete
 
-    @setting(12, returns=[])
-    def clear_buffers(self, c):
-        dev = self.selectedDevice(c)
-        yield dev.write('*CLS')
+    @inlineCallbacks
+    def clear_buffers(self):
+        yield self.write('*CLS')
 
     #Channel settings: main
-    @setting(100, channel = 'i', returns = '(vvvvsvss)')
-    def channel_info(self, c, channel):
-        """
-        channel(int channel)
-        Get information on one of the scope channels.
-        OUTPUT
-        Tuple of (probeAtten, termination, scale, position, coupling, bwLimit, invert, units)
-        """
-        dev = self.selectedDevice(c)
-        resp = yield dev.query(':CHAN%d?' %channel)
+    @inlineCallbacks
+    def channel_info(self, channel):
+        #returns a tuple of (probeAtten, termination, scale, position, coupling, bwLimit, invert, units)
+        resp = yield self.query(':CHAN%d?' %channel)
         #example of resp:
         #a=':CHAN1:RANG +40.0E+00;OFFS +0.00000E+00;COUP DC;IMP ONEM;DISP 1;BWL 0;INV 0;LAB "1";UNIT VOLT;PROB +10E+00;PROB:SKEW +0.00E+00;STYP SING'
         vals=[]
@@ -67,140 +58,98 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         invert = invert
         returnValue((probeAtten,termination,scale,position,coupling,bwLimit,invert,unit))
 
-    @setting(111, channel = 'i', coupling = 's', returns=['s'])
-    def channel_coupling(self, c, channel, coupling = None):
-        """
-        Get/set the coupling of a specified channel
-        Coupling can be "AC", "DC", or "GND"
-        """
+    @inlineCallbacks
+    def channel_coupling(self, channel, coupling = None):
         chString = ':CHAN%d:COUP' %channel
-        dev = self.selectedDevice(c)
-
         if coupling is not None:
             coupling = coupling.upper()
             if coupling not in COUPLINGS:
                 raise Exception('Coupling must be either: "AC", "DC", "GND"')
             else:
-                yield dev.write(chString + ' ' + coupling)
-
-        resp = yield dev.query(chString + '?')
+                yield self.write(chString + ' ' + coupling)
+        resp = yield self.query(chString + '?')
         returnValue(resp)
 
-    @setting(112, channel = 'i', scale = 'v', returns = ['v'])
-    def channel_scale(self, c, channel, scale = None):
-        """
-        Get/set the vertical scale per div of a channel in Volts
-        """
+    @inlineCallbacks
+    def channel_scale(self, channel, scale = None):
+        #value is in volts
         dev = self.selectedDevice(c)
         chString = ':CHAN%d:SCAL' %channel
-
         if scale is not None:
             scale = format(scale['V'],'E')
-            yield dev.write(chString + ' ' + str(scale) + 'V')
-            resp = yield dev.query(':CHAN%d:SCAL?' %channel)
-
-        resp = yield dev.query(chString + '?')
+            yield self.write(chString + ' ' + str(scale) + 'V')
+            resp = yield self.query(':CHAN%d:SCAL?' %channel)
+        resp = yield self.query(chString + '?')
         scale = (Value(float(resp),'V'))
         returnValue(scale)
 
-    @setting(113, channel = 'i', factor = 'i', returns = ['s'])
-    def channel_probe(self, c, channel, factor = None):
-        """
-        Get/set the probe attenuation factor.
-        """
-        dev = self.selectedDevice(c)
+    @inlineCallbacks
+    def channel_probe(self, channel, factor = None):
         chString = ':CHAN%d:PROB' %channel
-
         if factor in PROBE_FACTORS:
-            yield dev.write(chString + ' ' + str(factor))
+            yield self.write(chString + ' ' + str(factor))
         elif factor is not None:
             raise Exception('Probe attenuation factor not in ' + str(PROBE_FACTORS))
-
-        resp = yield dev.query(chString + '?')
+        resp = yield self.query(chString + '?')
         returnValue(resp)
 
-    @setting(114, channel = 'i', state = 'i', returns = 'i')
-    def channel_onoff(self, c, channel, state = None):
-        """
-        Get/set whether channel display is on/off
-        """
-        dev = self.selectedDevice(c)
+    @inlineCallbacks
+    def channel_onoff(self, channel, state = None):
         chString = ':CHAN%d:DISP' %channel
-
         if state in [0, 1]:
-            yield dev.write(chString + ' ' + str(state))
+            yield self.write(chString + ' ' + str(state))
         elif state is not None:
             raise Exception('state must be either 0 or 1')
-
-        resp = yield dev.query(chString + '?')
+        resp = yield self.query(chString + '?')
         returnValue(int(resp))
 
-    @setting(115, channel = 'i', invert = 'i', returns = 'i')
-    def channel_invert(self, c, channel, invert = None):
-        """
-        Get/set the inversion status of a channel
-        """
-        dev = self.selectedDevice(c)
+    @inlineCallbacks
+    def channel_invert(self, channel, invert = None):
         chString = ":CHAN:%d:INV" %channel
 
         if invert in [0, 1]:
-            yield dev.write(chString + ' ' + str(invert))
+            yield self.write(chString + ' ' + str(invert))
         elif invert is not None:
             raise Exception('state must be either 0 (disable) or 1 (enable)')
 
-        resp = yield dev.query(chString + '?')
+        resp = yield self.query(chString + '?')
         returnValue(int(resp))
 
-    @setting(116, channel = 'i', position = 'v', returns = ['v'])
-    def channel_offset(self, c, channel, position = None):
-        """
-        Get/set the vertical zero of a channel in divs - for Tektronix compatibility
-        """
-        dev = self.selectedDevice(c)
-        resp = yield dev.query(':CHAN%d:SCAL?' %channel)
+    @inlineCallbacks
+    def channel_offset(self, channel, position = None):
+        #value is in divs
+        resp = yield self.query(':CHAN%d:SCAL?' %channel)
         scale_V = float(resp)
 
         if position is not None:
             pos_V = - position * scale_V
-            yield dev.write((':CHAN%d:OFFS %g') % (channel, pos_V))
+            yield self.write((':CHAN%d:OFFS %g') % (channel, pos_V))
 
-        resp = yield dev.query(':CHAN%d:OFFS?' % channel)
+        resp = yield self.query(':CHAN%d:OFFS?' % channel)
         position = float(resp) / scale_V
         returnValue(position)
 
 
     #trigger settings
-    @setting(131, channel = '?', returns = ['s'])
-    def trigger_channel(self, c, channel = None):
-        """
-        Get/set the trigger source
-        Must be one of "EXT","LINE", 1, 2, 3, 4, CHAN1, CHAN2...
-        """
-        dev = self.selectedDevice(c)
-
+    @inlineCallbacks
+    def trigger_channel(self, channel = None):
+        #trigger source must be one of "EXT","LINE", 1, 2, 3, 4, CHAN1, CHAN2...
         if channel in TRIG_CHANNELS:
             channel = int(channel[-1])
             if isinstance(channel, str):
                 channel = channel.upper()
             if isinstance(channel, int):
                 channel = 'CHAN%d' %channel
-            yield dev.write(':TRIG:EDG:SOUR '+ str(channel)) # ***
+            yield self.write(':TRIG:EDG:SOUR '+ str(channel)) # ***
         else:
             raise Exception('Select valid trigger channel')
-
-        resp = yield dev.query(':TRIG:EDG:SOUR?')
+        resp = yield self.query(':TRIG:EDG:SOUR?')
         returnValue(resp)
 
-    @setting(132, slope = 's', returns = ['s'])
-    def trigger_slope(self, c, slope = None):
-        """
-        Change slope trigger
-        Must be 'RISE' or 'FALL'
-        only edge triggering is implemented here
-        """
+    @inlineCallbacks
+    def trigger_slope(self, slope = None):
+        #trigger can only be 'RFAL', 'POS', 'NEG'; only edge triggering is implemented here
         chString = ':TRIG:EDG:SLOP'
-        dev = self.selectedDevice(c)
-
         if slope is not None:
             slope = slope.upper()
             if slope not in ['RFAL', 'POS', 'NEG']:
@@ -210,99 +159,73 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
                     slope = 'POS'
                 else:
                     slope = 'NEG'
-                yield dev.write(chString + ' ' + slope)
-
-        resp = yield dev.query(chString + '?')
+                yield self.write(chString + ' ' + slope)
+        resp = yield self.query(chString + '?')
         returnValue(resp)
 
-    @setting(133, level = 'v', returns = ['v'])
-    def trigger_level(self, c, level = None):
-        """
-        Get/set the vertical zero position of a channel in voltage
-        """
-        dev = self.selectedDevice(c)
+    @inlineCallbacks
+    def trigger_level(self, level = None):
+        #Get/set the vertical zero position of a channel in voltage
         chString = ':TRIG:EDG:LEV'
-
         if level is not None:
-            yield dev.write(chString + ' ' + str(level))
-
-        resp = yield dev.query(chString + '?')
+            yield self.write(chString + ' ' + str(level))
+        resp = yield self.query(chString + '?')
         level = Value(float(resp), 'V')
         returnValue(level)
 
-    @setting(134, mode = 's', returns = ['s'])
-    def trigger_mode(self, c, mode=None):
-        """
-        Get/set the trigger mode.
-        Allowed values = AUTO, NONE, SING
-        """
-        dev = self.selectedDevice(c)
+    @inlineCallbacks
+    def trigger_mode(self, mode=None):
+        #Allowed values = AUTO, NONE, SING
         chString = ':TRIG:SWE'
-
         if mode in ['AUTO', 'NONE', 'SING']:
-            yield dev.write(chString + ' ' + mode)
+            yield self.write(chString + ' ' + mode)
         elif mode is not None:
             raise Exception('Select valid trigger mode')
-
-        ans = yield dev.query(":TRIG:SWE?")
+        ans = yield self.query(":TRIG:SWE?")
         returnValue(str(ans))
 
 
     #horizontal settings
-    @setting(151, offset = 'v', returns = ['v'])
-    def horiz_offset(self, c, offset = None):
-        """
-        Get/set the horizontal trigger offset in seconds
-        """
-        dev = self.selectedDevice(c)
+    @inlineCallbacks
+    def horiz_offset(self, offset = None):
+        #Get/set the horizontal trigger offset in seconds
         chString = ':TIM:OFFS'
-
         if offset is not None:
-            yield dev.write(chString + ' ' + offset)
-
-        resp = yield dev.query(chstring + '?')
+            yield self.write(chString + ' ' + offset)
+        resp = yield self.query(chstring + '?')
         offset = float(resp)
         returnValue(offset)
 
-    @setting(152, scale = 'v', returns = ['v'])
-    def horiz_scale(self, c, scale = None):
-        """
-        Get/set the horizontal scale value in s per div
-        """
-        dev = self.selectedDevice(c)
+    @inlineCallbacks
+    def horiz_scale(self, scale = None):
+        #Get/set the horizontal scale value in s per div
         chString = ':TIM:SCAL'
-
         if scale is not None:
-            yield dev.write(chString + ' ' + scale)
-
-        resp = yield dev.query(chString + '?')
+            yield self.write(chString + ' ' + scale)
+        resp = yield self.query(chString + '?')
         scale = float(resp)
         returnValue(scale)
 
 
     #Data acquisition settings
-    @setting(201, channel = 'i', returns='*v[ns] {time axis} *v[mV] {scope trace}')
-    def get_trace(self, c, channel):
-        """
-        Get a trace from the scope.
-        OUTPUT - (array voltage in volts, array time in seconds)
-        removed start and stop: start = 'i', stop = 'i' (,start=1, stop=10000)
-        """
-        dev = self.selectedDevice(c)
+    @inlineCallbacks
+    def get_trace(self, channel):
+        #returns (array voltage in volts, array time in seconds)
+        #removed start and stop: start = 'i', stop = 'i' (,start=1, stop=10000)
 
         #set trace parameters
-        yield dev.write(':WAV:SOUR CHAN%d' %channel)
+        yield self.write(':WAV:SOUR CHAN%d' %channel)
         #trace mode (default normal since easiest right now)
-        yield dev.write(':WAV:MODE NORM')
+        yield self.write(':WAV:MODE NORM')
         #return format (default byte since easiest right now)
-        yield dev.write(':WAV:FORM BYTE')
+        yield self.write(':WAV:FORM BYTE')
 
         #transfer waveform preamble
-        preamble = yield dev.query(':WAV:PRE?')
-        offset = yield dev.query(':TIM:OFFS?')
+        preamble = yield self.query(':WAV:PRE?')
+        offset = yield self.query(':TIM:OFFS?')
 
         #get waveform data
-        data = yield dev.query(':WAV:DATA?')
+        data = yield self.query(':WAV:DATA?')
 
         #parse waveform preamble
         points, xincrement, xorigin, xreference, yincrement, yorigin, yreference = _parsePreamble(preamble)
@@ -319,17 +242,13 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         timeAxis = (numpy.arange(points) * xincrement + xorigin) * timeUnitScaler
         returnValue((timeAxis, traceVolts))
 
-    @setting(210)
+    @inlineCallbacks
     def measure_start(self, c):
-        '''
-        (re-)start measurement statistics
-        (see measure)
-        '''
-        dev = self.selectedDevice(c)
-        dev.write(":MEAS:STAT:RES")
+        #(re-)start measurement statistics
+        self.write(":MEAS:STAT:RES")
 
     # @setting(211, count = 'i{count}', wait='v', returns='*(s{name} v{current} v{min} v{max} v{mean} v{std dev} v{count})')
-    # def measure(self, c, count=0, wait=Value(0.5, 's')):
+    # def measure(self, count=0, wait=Value(0.5, 's')):
     #     '''
     #     returns the values from the measure function of the scope. if count >0, wait until
     #     scope has >= count stats before returning, waiting _wait_ time between calls.
@@ -339,7 +258,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     #     dev = self.selectedDevice(c)
     #
     #     #take all statistics
-    #     yield dev.write(":MEAS:STAT ON")
+    #     yield self.write(":MEAS:STAT ON")
     #
     #     def parse(s):
     #         s = s.split(',')
@@ -351,7 +270,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     #
     #     d = []
     #     while True:
-    #         d = yield dev.query(":MEAS:RES?")
+    #         d = yield self.query(":MEAS:RES?")
     #         d = parse(d)
     #         counts = [x[-1] for x in d]
     #         if min(counts) >= count:
