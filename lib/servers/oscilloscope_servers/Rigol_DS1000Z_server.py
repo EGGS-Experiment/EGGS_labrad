@@ -17,7 +17,7 @@ timeout = 20
 
 
 from labrad import types as T, util
-from labrad.gpib import GPIBManagedServer
+from labrad.gpib import GPIBManagedServer, GPIBDeviceWrapper
 from labrad.server import setting
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.types import Value
@@ -34,9 +34,14 @@ HORZ_DIVISIONS = 10.0
 SCALES = []
 PROBE_FACTORS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
 
+class RigolDS1000ZWrapper(GPIBDeviceWrapper):
+    pass
+
 class RigolDS1000ZServer(GPIBManagedServer):
     name = 'Rigol DS1104Z Oscilloscope'
-    deviceName = 'Rigol DS1104Z Oscilloscope'
+    #deviceName = 'Rigol DS1104Z Oscilloscope'
+    deviceName = 'RIGOL TECHNOLOGIES,DS1104Z Plus,DS1ZC221401223,00.04.04.SP4'  # returned from *IDN?
+    deviceWrapper = RigolDS1000ZWrapper
 
     #Base settings
     @setting(11, returns=[])

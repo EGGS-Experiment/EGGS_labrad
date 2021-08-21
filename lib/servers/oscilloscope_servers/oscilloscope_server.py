@@ -25,7 +25,6 @@ from labrad.server import setting
 from oscilloscope.agilent.DSOX4104A import DSOX4104AWrapper
 from oscilloscope.agilent.DSO91304A import DSO91304AWrapper
 
-
 class OscilloscopeServer(GPIBManagedServer):
     """Manges communication with oscilloscopes. ALL the oscilloscopes."""
 
