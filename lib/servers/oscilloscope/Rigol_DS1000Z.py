@@ -120,7 +120,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         returnValue(resp)
 
     @setting(114, channel = 'i', state = 'i', returns = 'i')
-    def channel_OnOff(self, c, channel, state = None):
+    def channel_onoff(self, c, channel, state = None):
         """
         Get/set whether channel display is on/off
         """
@@ -152,7 +152,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         returnValue(int(resp))
 
     @setting(116, channel = 'i', position = 'v', returns = ['v'])
-    def channel_offset_y(self, c, channel, position = None):
+    def channel_offset(self, c, channel, position = None):
         """
         Get/set the vertical zero of a channel in divs - for Tektronix compatibility
         """
@@ -170,46 +170,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
 
     #trigger settings
-    @setting(131, slope = 's', returns = ['s'])
-    def trigger_slope(self, c, slope = None):
-        """
-        Turn on or off a scope channel display
-        Must be 'RISE' or 'FALL'
-        only edge triggering is implemented here
-        """
-        chString = ':TRIG:EDG:SLOP'
-        dev = self.selectedDevice(c)
-
-        if slope is not None:
-            slope = slope.upper()
-            if slope not in ['RFAL', 'POS', 'NEG']:
-                raise Exception('Slope must be either: "RFAL", "POS", "NEG" ')
-            else:
-                if slope == 'RFAL':
-                    slope = 'POS'
-                else:
-                    slope = 'NEG'
-                yield dev.write(chString + ' ' + slope)
-
-        resp = yield dev.query(chString + '?')
-        returnValue(resp)
-
-    @setting(132, level = 'v', returns = ['v'])
-    def trigger_level(self, c, level = None):
-        """
-        Get/set the vertical zero position of a channel in voltage
-        """
-        dev = self.selectedDevice(c)
-        chString = ':TRIG:EDG:LEV'
-
-        if level is not None:
-            yield dev.write(chString + ' ' + str(level))
-
-        resp = yield dev.query(chString + '?')
-        level = Value(float(resp), 'V')
-        returnValue(level)
-
-    @setting(133, channel = '?', returns = ['s'])
+    @setting(131, channel = '?', returns = ['s'])
     def trigger_channel(self, c, channel = None):
         """
         Get/set the trigger source
@@ -230,6 +191,45 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         resp = yield dev.query(':TRIG:EDG:SOUR?')
         returnValue(resp)
 
+    @setting(132, slope = 's', returns = ['s'])
+    def trigger_slope(self, c, slope = None):
+        """
+        Change slope trigger
+        Must be 'RISE' or 'FALL'
+        only edge triggering is implemented here
+        """
+        chString = ':TRIG:EDG:SLOP'
+        dev = self.selectedDevice(c)
+
+        if slope is not None:
+            slope = slope.upper()
+            if slope not in ['RFAL', 'POS', 'NEG']:
+                raise Exception('Slope must be either: "RFAL", "POS", "NEG" ')
+            else:
+                if slope == 'RFAL':
+                    slope = 'POS'
+                else:
+                    slope = 'NEG'
+                yield dev.write(chString + ' ' + slope)
+
+        resp = yield dev.query(chString + '?')
+        returnValue(resp)
+
+    @setting(133, level = 'v', returns = ['v'])
+    def trigger_level(self, c, level = None):
+        """
+        Get/set the vertical zero position of a channel in voltage
+        """
+        dev = self.selectedDevice(c)
+        chString = ':TRIG:EDG:LEV'
+
+        if level is not None:
+            yield dev.write(chString + ' ' + str(level))
+
+        resp = yield dev.query(chString + '?')
+        level = Value(float(resp), 'V')
+        returnValue(level)
+
     @setting(134, mode = 's', returns = ['s'])
     def trigger_mode(self, c, mode=None):
         """
@@ -241,7 +241,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
         if mode in ['AUTO', 'NONE', 'SING']:
             yield dev.write(chString + ' ' + mode)
-        else:
+        elif mode is not None:
             raise Exception('Select valid trigger mode')
 
         ans = yield dev.query(":TRIG:SWE?")
@@ -255,10 +255,12 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         Get/set the horizontal trigger offset in seconds
         """
         dev = self.selectedDevice(c)
-        if offset is not None:
-            yield dev.write(':TIM:OFFS %g' %pos)
+        chString = ':TIM:OFFS'
 
-        resp = yield dev.query(':TIM:OFFS?')
+        if offset is not None:
+            yield dev.write(chString + ' ' + offset)
+
+        resp = yield dev.query(chstring + '?')
         offset = float(resp)
         returnValue(offset)
 

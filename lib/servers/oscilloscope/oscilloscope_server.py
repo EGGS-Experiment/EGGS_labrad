@@ -46,22 +46,21 @@ class OscilloscopeServer(GPIBManagedServer):
         yield dev.clear_buffers()
 
     #CHANNEL
-    @setting(50, channel='i', state='b', returns='b')
-    def channel_on(self, c, channel, state=None):
-        """Set or query channel on/off state.
+    @setting(100, channel='i', returns='(vvvvsvss)')
+    def channel_info(self, c, channel):
+        """
+        Get channel information
 
         Args:
-            channel (int): Which channel.
-            state (bool): True->On, False->Off. If None (default), then we
-                only query the state without setting it.
+            channel (int): channel to get information on
 
         Returns:
-            (bool): The channel state.
+            Tuple of (probeAtten, termination, scale, position, coupling, bwLimit, invert, units)
         """
-        return self.selectedDevice(c).channel_on(channel, state)
+        return self.selectedDevice(c).channel_info(channel)
 
-    @setting(51, channel='i', coup='s', returns='s')
-    def coupling(self, c, channel, coup=None):
+    @setting(111, channel='i', coup='s', returns='s')
+    def channel_coupling(self, c, channel, coup=None):
         """Set or query channel coupling.
 
         Args:
@@ -72,10 +71,52 @@ class OscilloscopeServer(GPIBManagedServer):
         Returns:
             string indicating the channel's coupling.
         """
-        return self.selectedDevice(c).coupling(channel, coup)
+        return self.selectedDevice(c).channel_coupling(channel, coup)
 
-    @setting(52, channel='i', invert='b', returns='b')
-    def invert(self, c, channel, invert=None):
+    @setting(112, channel='i', scale='v[V]', returns='v[V]')
+    def channel_scale(self, c, channel, scale=None):
+        """Get or set the vertical scale.
+
+        Args:
+            channel (int): The channel to get or set.
+            scale (Value[V]): The vertical scale, i.e. voltage per division. If
+                None (the default), we just query.
+
+        Returns:
+            (Value[V]): The vertical scale.
+        """
+        return self.selectedDevice(c).channel_scale(channel, scale)
+
+    @setting(113, channel = 'i', factor = 'i', returns = ['s'])
+    def channel_probe(self, c, channel, factor = None):
+        """
+        Get/set the probe attenuation factor.
+
+        Args:
+            channel (int): the channel to get/set
+            factor (int): the probe attenuation factor
+
+        Returns:
+            (string): the probe attenuation factor
+        """
+        return self.selectedDevice(c).channel_probe(channel, factor)
+
+    @setting(114, channel='i', state='b', returns='b')
+    def channel_onoff(self, c, channel, state=None):
+        """Set or query channel on/off state.
+
+        Args:
+            channel (int): Which channel.
+            state (bool): True->On, False->Off. If None (default), then we
+                only query the state without setting it.
+
+        Returns:
+            (bool): The channel state.
+        """
+        return self.selectedDevice(c).channel_onoff(channel, state)
+
+    @setting(115, channel='i', invert='b', returns='b')
+    def channel_invert(self, c, channel, invert=None):
         """Get or set channel inversion.
 
         Args:
@@ -86,80 +127,36 @@ class OscilloscopeServer(GPIBManagedServer):
         Returns:
             (int): 0: not inverted, 1: inverted.
         """
-        return self.selectedDevice(c).invert(channel, invert)
+        return self.selectedDevice(c).channel_invert(channel, invert)
 
-    @setting(53, channel='i', term='i', returns='i')
-    def termination(self, c, channel, term=None):
+    @setting(116, channel='i', offset='v[]', returns='v[]')
+    def channel_offset(self, c, channel, offset=None):
+        """Get or set the vertical offset.
+
+        Args:
+            channel (int): Which channel to get/set.
+            offset (float): Vertical offset in units of divisions. If None,
+                (the default), then we only query.
+
+        Returns:
+            (float): Vertical offset in units of divisions.
+        """
+        return self.selectedDevice(c).channel_offset(channel, offset)
+
+    @setting(117, channel='i', term='i', returns='i')
+    def channel_termination(self, c, channel, term=None):
         """Set channel termination
 
         Args:
             channel (int): Which channel to set termination.
             term (int): Termination in Ohms. Either 50 or 1,000,000.
         """
-        return self.selectedDevice(c).termination(channel, term)
+        return self.selectedDevice(c).channel_termination(channel, term)
 
-    # VERTICAL
-
-    @setting(20, channel='i', scale='v[V]', returns='v[V]')
-    def scale(self, c, channel, scale=None):
-        """Get or set the vertical scale.
-
-        Args:
-            channel (int): The channel to get or set.
-            scale (Value[V]): The vertical scale, i.e. voltage per division. If
-                None (the default), we just query.
-
-        Returns:
-            Value[V]: The vertical scale.
-        """
-        return self.selectDevice(c).vert_scale(channel, scale)
-
-    @setting(21, channel='i', position='v[]', returns='v[]')
-    def position(self, c, channel, position=None):
-        """Get or set the vertical position.
-
-        Args:
-            channel (int): Which channel to get/set.
-            position (float): Vertical position in units of divisions. If None,
-                (the default), then we only query.
-
-        Returns:
-            (float): Vertical position in units of divisions.
-        """
-        return self.selectedDevice(c).vert_position(channel, position)
-
-    # HORIZONTAL
-
-    @setting(30, scale='v[s]', returns='v[s]')
-    def horiz_scale(self, c, scale=None):
-        """Set or query the horizontal scale.
-
-        Args:
-            scale (Value[s]): Horizontal scale, i.e. time per division. If None,
-                (the default), then we just query.
-
-        Returns:
-            (Value[s]): The horizontal scale.
-        """
-        return self.selectedDevice(c).horiz_scale(scale)
-
-    @setting(31, position='v[]', returns='v[]')
-    def horiz_position(self, c, position=None):
-        """Set or query the horizontal position.
-
-        Args:
-            position (float): Horizontal position in units of division.
-
-        Returns:
-            (float): The horizontal position in units of divisions.
-        """
-        return self.selectedDevice(c).horiz_position(position)
-
-    # TRIGGER
-
-    @setting(71, source='s', returns='s')
-    def trigger_source(self, c, source=None):
-        """Set or query trigger source.
+    #TRIGGER
+    @setting(131, source='s', returns='s')
+    def trigger_channel(self, c, source=None):
+        """Set or query trigger channel.
 
         Args:
             source (str): 'EXT', 'LINE', 'CHANX' where X is channel number. If
@@ -168,9 +165,9 @@ class OscilloscopeServer(GPIBManagedServer):
         Returns:
             (str): Trigger source.
         """
-        return self.selectedDevice(c).trigger_source(source)
+        return self.selectedDevice(c).trigger_channel(source)
 
-    @setting(72, slope='s', returns='s')
+    @setting(132, slope='s', returns='s')
     def trigger_slope(self, c, slope=None):
         """Set or query trigger slope.
 
@@ -183,7 +180,7 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectDevice(c).trigger_slope(slope)
 
-    @setting(73, level='v[V]', returns='v[V]')
+    @setting(133, level='v[V]', returns='v[V]')
     def trigger_level(self, c, level=None):
         """Set or query the trigger level.
 
@@ -196,7 +193,7 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).trigger_level(level)
 
-    @setting(74, mode='s', returns='s')
+    @setting(134, mode='s', returns='s')
     def trigger_mode(self, c, mode=None):
         """Set or query the trigger mode.
 
@@ -207,31 +204,34 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).trigger_mode(mode)
 
-    # ACQUISITION
-
-    @setting(60, average_on='b', returns='b')
-    def average_on_off(self, c, average_on=None):
-        """Turn averaging on or off.
-
-        Args:
-            average_on (bool): If True, turn averaging on.
-
-        Returns (bool): Whether averaging is one or off.
-        """
-        return self.selectedDevice(c).average_on_off(average_on)
-
-    @setting(61, averages='i', returns='i')
-    def average_number(self, c, averages=None):
-        """Set number of averages.
+    #HORIZONTAL
+    @setting(151, position='v[]', returns='v[]')
+    def horiz_offset(self, c, position=None):
+        """Set or query the horizontal offset.
 
         Args:
-            averages (int): Number of averages.
+            position (float): Horizontal offset in units of division.
 
-        Returns (int): Number of averages.
+        Returns:
+            (float): The horizontal offset in units of divisions.
         """
-        return self.selectedDevice(c).average_number(averages)
+        return self.selectedDevice(c).horiz_offset(position)
 
-    @setting(68, channel='i', returns='*v[s]*v[V]')
+    @setting(152, scale='v[s]', returns='v[s]')
+    def horiz_scale(self, c, scale=None):
+        """Set or query the horizontal scale.
+
+        Args:
+            scale (Value[s]): Horizontal scale, i.e. time per division. If None,
+                (the default), then we just query.
+
+        Returns:
+            (Value[s]): The horizontal scale.
+        """
+        return self.selectedDevice(c).horiz_scale(scale)
+
+    #ACQUISITION
+    @setting(201, channel='i', returns='*v[s]*v[V]')
     def get_trace(self, c, channel):
         """Get a trace for a single channel.
 
@@ -243,6 +243,36 @@ class OscilloscopeServer(GPIBManagedServer):
             (ValueArray[V]): Voltages.
         """
         return self.selectedDevice(c).get_trace(channel)
+
+    @setting(210)
+    def measure_start(self, c):
+        '''
+        (re-)start measurement statistics
+        (see measure)
+        '''
+        return self.selectedDevice(c).measure_start(channel)
+
+    @setting(221, average_on='b', returns='b')
+    def average_on_off(self, c, average_on=None):
+        """Turn averaging on or off.
+
+        Args:
+            average_on (bool): If True, turn averaging on.
+
+        Returns (bool): Whether averaging is one or off.
+        """
+        return self.selectedDevice(c).average_on_off(average_on)
+
+    @setting(222, averages='i', returns='i')
+    def average_number(self, c, averages=None):
+        """Set number of averages.
+
+        Args:
+            averages (int): Number of averages.
+
+        Returns (int): Number of averages.
+        """
+        return self.selectedDevice(c).average_number(averages)
 
 
 if __name__ == '__main__':
