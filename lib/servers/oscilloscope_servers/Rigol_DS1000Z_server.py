@@ -1,9 +1,9 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Rigol DS1104 Oscilloscope
+name = Rigol DS1104Z Oscilloscope
 version = 0.9.1
-description = Talks to the Rigol DS1104 Oscilloscope
+description = Talks to the Rigol DS1104Z Oscilloscope
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -39,9 +39,9 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
 class RigolDS1000ZServer(GPIBManagedServer):
     name = 'Rigol DS1104Z Oscilloscope'
-    #deviceName = 'Rigol DS1104Z Oscilloscope'
-    deviceName = 'RIGOL TECHNOLOGIES,DS1104Z Plus,DS1ZC221401223,00.04.04.SP4'  # returned from *IDN?
-    deviceWrapper = RigolDS1000ZWrapper
+    deviceWrappers = {
+        'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper
+    }
 
     #Base settings
     @setting(11, returns=[])
@@ -147,7 +147,7 @@ class RigolDS1000ZServer(GPIBManagedServer):
             raise Exception('Probe attenuation factor not in ' + str(PROBE_FACTORS))
         returnValue(resp)
 
-    @setting(114, channel = 'i', state = 'i', returns = '')
+    @setting(114, channel = 'i', state = 'i', returns = 'i')
     def channel_OnOff(self, c, channel, state = None):
         """
         Get/set whether channel display is on/off
@@ -155,13 +155,13 @@ class RigolDS1000ZServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         chString = ':CHAN%d:DISP' %channel
 
-        if state is None:
-            resp = yield dev.query(chString + '?')
-        elif state in [0, 1]:
+        if state in [0, 1]:
             yield dev.write(chString + str(state))
-        else:
+        elif state is not None:
             raise Exception('state must be either 0 or 1')
-        returnValue(resp)
+
+        resp = yield dev.query(chString + '?')
+        returnValue(int(resp))
 
     @setting(115, channel = 'i', invert = 'i', returns = '')
     def channel_invert(self, c, channel, invert = None):
