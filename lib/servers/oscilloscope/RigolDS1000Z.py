@@ -12,10 +12,11 @@ VERT_DIVISIONS = 8.0
 HORZ_DIVISIONS = 10.0
 SCALES = []
 PROBE_FACTORS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
+TRIGGER_MODES = ['AUTO', 'NONE', 'SING']
 
 class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
-    #Base settings
+    #system
     @inlineCallbacks
     def reset(self):
         yield self.write('*RST')
@@ -25,7 +26,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     def clear_buffers(self):
         yield self.write('*CLS')
 
-    #Channel settings: main
+    #channel
     @inlineCallbacks
     def channel_info(self, channel):
         #returns a tuple of (probeAtten, termination, scale, position, coupling, bwLimit, invert, units)
@@ -63,7 +64,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         if coupling is not None:
             coupling = coupling.upper()
             if coupling not in COUPLINGS:
-                raise Exception('Coupling must be either: "AC", "DC", "GND"')
+                raise Exception('Coupling must be either: ' + str(COUPLINGS))
             else:
                 yield self.write(chString + ' ' + coupling)
         resp = yield self.query(chString + '?')
@@ -72,7 +73,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def channel_scale(self, channel, scale = None):
         #value is in volts
-        dev = self.selectedDevice(c)
         chString = ':CHAN%d:SCAL' %channel
         if scale is not None:
             scale = format(scale['V'],'E')
@@ -100,30 +100,26 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         elif state is not None:
             raise Exception('state must be either 0 or 1')
         resp = yield self.query(chString + '?')
-        returnValue(int(resp))
+        returnValue(bool(resp))
 
     @inlineCallbacks
     def channel_invert(self, channel, invert = None):
         chString = ":CHAN:%d:INV" %channel
-
         if invert in [0, 1]:
             yield self.write(chString + ' ' + str(invert))
         elif invert is not None:
             raise Exception('state must be either 0 (disable) or 1 (enable)')
-
         resp = yield self.query(chString + '?')
-        returnValue(int(resp))
+        returnValue(bool(resp))
 
     @inlineCallbacks
     def channel_offset(self, channel, position = None):
         #value is in divs
         resp = yield self.query(':CHAN%d:SCAL?' %channel)
         scale_V = float(resp)
-
         if position is not None:
             pos_V = - position * scale_V
             yield self.write((':CHAN%d:OFFS %g') % (channel, pos_V))
-
         resp = yield self.query(':CHAN%d:OFFS?' % channel)
         position = float(resp) / scale_V
         returnValue(position)
@@ -174,14 +170,13 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def trigger_mode(self, mode=None):
-        #Allowed values = AUTO, NONE, SING
         chString = ':TRIG:SWE'
-        if mode in ['AUTO', 'NONE', 'SING']:
+        if mode in TRIGGER_MODES:
             yield self.write(chString + ' ' + mode)
         elif mode is not None:
             raise Exception('Select valid trigger mode')
-        ans = yield self.query(":TRIG:SWE?")
-        returnValue(str(ans))
+        resp = yield self.query(":TRIG:SWE?")
+        returnValue(resp)
 
 
     #horizontal settings
@@ -206,7 +201,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         returnValue(scale)
 
 
-    #Data acquisition settings
+    #data acquisition settings
     @inlineCallbacks
     def get_trace(self, channel):
         #returns (array voltage in volts, array time in seconds)

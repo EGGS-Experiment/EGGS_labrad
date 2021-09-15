@@ -153,6 +153,7 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).channel_termination(channel, term)
 
+
     #TRIGGER
     @setting(131, source='s', returns='s')
     def trigger_channel(self, c, source=None):
