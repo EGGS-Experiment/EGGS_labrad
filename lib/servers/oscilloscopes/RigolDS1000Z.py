@@ -232,8 +232,8 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         timeUnitScaler = 1.0e9 * ns
 
         #convert data to volts
+        traceVolts = (trace - -yorigin - yreference) * yincrement * voltUnitScaler
         timeAxis = (np.arange(points) * xincrement + xorigin) * timeUnitScaler
-        traceVolts = (trace - yreference) * yincrement * voltUnitScaler
         returnValue((timeAxis, traceVolts))
 
     @inlineCallbacks
@@ -294,6 +294,7 @@ def _parsePreamble(preamble):
     yincrement = float(fields[7])
     yorigin = float(fields[8])
     yreference = int(fields[9])
+    print(yincrement, yorigin, yreference)
     return (points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)
 
 def _parseByteData(data):
@@ -303,5 +304,4 @@ def _parseByteData(data):
     #get tmc header in #NXXXXXXXXX format
     tmc_N = int(data[1])
     tmc_length = int(data[2: 2 + tmc_N])
-
-    return data[2 + tmc_N : 2 + tmc_N + tmc_length]
+    return np.frombuffer(data[2 + tmc_N :], dtype=np.int8)
