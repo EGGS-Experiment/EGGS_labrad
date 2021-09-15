@@ -4,8 +4,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.types import Value
 from labrad.units import mV, ns
 
-import time
-import numpy, re
+import numpy as np
 
 COUPLINGS = ['AC', 'DC', 'GND']
 TRIG_CHANNELS = ['EXT','CHAN1','CHAN2','CHAN3','CHAN4','LINE']
@@ -238,8 +237,8 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         timeUnitScaler = 1.0e9 * ns
 
         #convert data to volts
-        traceVolts = (trace - yreference) * yincrement * voltUnitScaler
-        timeAxis = (numpy.arange(points) * xincrement + xorigin) * timeUnitScaler
+        traceVolts = (trace - -yorigin - yreference) * yincrement * voltUnitScaler
+        timeAxis = (np.arange(points) * xincrement + xorigin) * timeUnitScaler
         returnValue((timeAxis, traceVolts))
 
     @inlineCallbacks
@@ -300,6 +299,7 @@ def _parsePreamble(preamble):
     yincrement = float(fields[7])
     yorigin = float(fields[8])
     yreference = int(fields[9])
+    print(yincrement, yorigin, yreference)
     return (points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)
 
 def _parseByteData(data):
@@ -307,7 +307,6 @@ def _parseByteData(data):
     Parse byte data
     """
     #get tmc header in #NXXXXXXXXX format
-    tmc_N = data[1]
-    tmc_length = data[2: 2 + tmc_N]
-
-    return data[2 + tmc_N:2 + tmc_N + tmc_length]
+    tmc_N = int(data[1])
+    tmc_length = int(data[2: 2 + tmc_N])
+    return np.frombuffer(data[2 + tmc_N :], dtype=np.int8)
