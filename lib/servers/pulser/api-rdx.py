@@ -21,10 +21,16 @@ class api(object):
         if self.xem is None: raise Exception("FPGA not connected")
 
     def connectOKBoard(self):
+        """
+        Connect to the first available FPGA
+
+        Returns:
+            (bool): Whether an FPGA has been connected to
+        """
         fp = ok.FrontPanel()
         module_count = fp.GetDeviceCount()
-        print
-        "Found {} unused modules".format(module_count)
+        print("Found {} unused modules".format(module_count))
+        #connect to first available board via serial
         for i in range(module_count):
             serial = fp.GetDeviceListSerial(i)
             tmp = ok.FrontPanel()
@@ -32,16 +38,18 @@ class api(object):
             iden = tmp.GetDeviceID()
             if iden == self.okDeviceID:
                 self.xem = tmp
-                print
-                'Connected to {}'.format(iden)
+                print('Connected to {}'.format(iden))
                 self.programOKBoard()
                 return True
         return False
 
     def programOKBoard(self):
+        """
+        Programs the FPGA with the file specified in the hardwareconfig file
+        """
         prog = self.xem.ConfigureFPGA(self.okDeviceFile)
         if prog: raise Exception("Not able to program FPGA")
-        # this configure the PLL for the XEM6010. Probably need to change for other OK module
+        #this configures the PLL for the XEM6010. Probably need to change for other OK module
         pll = ok.PLL22150()
         self.xem.GetEepromPLL22150Configuration(pll)
         pll.SetDiv1(pll.DivSrc_VCO, 4)

@@ -24,7 +24,7 @@ from labrad.server import setting
 from RigolDS1000Z import RigolDS1000ZWrapper
 
 class OscilloscopeServer(GPIBManagedServer):
-    """Manges communication with oscilloscopes. ALL the oscilloscopes."""
+    """Manages communication with oscilloscopes. ALL the oscilloscopes."""
 
     name = 'Oscilloscope Server'
 
@@ -35,7 +35,7 @@ class OscilloscopeServer(GPIBManagedServer):
     #SYSTEM
     @setting(11, returns='')
     def reset(self, c):
-        """Reset the oscilloscope to factory settings."""
+        """Reset the oscilloscopes to factory settings."""
         dev = self.selectedDevice(c)
         yield dev.reset()
 
