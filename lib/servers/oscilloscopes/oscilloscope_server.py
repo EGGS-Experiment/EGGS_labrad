@@ -260,7 +260,8 @@ class OscilloscopeServer(GPIBManagedServer):
         Args:
             average_on (bool): If True, turn averaging on.
 
-        Returns (bool): Whether averaging is one or off.
+        Returns:
+            (bool): Whether averaging is one or off.
         """
         return self.selectedDevice(c).average_on_off(average_on)
 
@@ -271,7 +272,8 @@ class OscilloscopeServer(GPIBManagedServer):
         Args:
             averages (int): Number of averages.
 
-        Returns (int): Number of averages.
+        Returns:
+            (int): Number of averages.
         """
         return self.selectedDevice(c).average_number(averages)
 
