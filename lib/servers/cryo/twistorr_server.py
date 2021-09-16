@@ -34,24 +34,21 @@ class TwisTorr74Server(SerialDeviceServer):
     regKey = 'TwisTorr74Server'
     serNode = getNodeName()
 
-    STX_msg = 0x02
-    ADDR_msg = 0x80
-    READ_msg = 0x30
-    WRITE_msg = 0x31
-    ETX_msg = 0x03
+    STX_msg = b'\x02'
+    ADDR_msg = b'\x80'
+    READ_msg = b'\x30'
+    WRITE_msg = b'\x31'
+    ETX_msg = b'\x03'
 
-    # def initServer(self):
-    #     #temp workaround since serial server is a pos
-    #     self.ser = Serial(port = 'COM24', baudrate = BAUDRATE, bytesize = BYTESIZE, parity = PARITY, stopbits = STOPBITS)
-    #     self.ser.timeout = TIMEOUT
+    error_response = [] *** use dict
 
     @inlineCallbacks
     def initServer( self ):
         # if not self.regKey or not self.serNode: raise SerialDeviceError( 'Must define regKey and serNode attributes' )
         # port = yield self.getPortFromReg( self.regKey )
-        port = 'COM24'
+        port = 'COM25'
         self.port = port
-        #self.timeout = TIMEOUT
+        self.timeout = TIMEOUT
         try:
             serStr = yield self.findSerial( self.serNode )
             print(serStr)
@@ -74,32 +71,43 @@ class TwisTorr74Server(SerialDeviceServer):
         Returns:
             (float): pump pressure in ***
         """
-        message = _create_message()
+        #create and send message to device
+        message = yield self._create_message(CMD_msg = b'300', DIR_msg = self.READ_msg)
         yield self.ser.write(message)
+
+        #read and parse answer
         resp = yield self.ser.read()
-        resp = _parse_answer(resp)
+        resp = yield self._parse_answer(resp)
         #convert resp to float
         returnValue(resp)
 
-    def _create_message(self, CMD_msg, DIR_msg, DATA_msg = 0x00):
-        #0x02, 0x80, 0xe0 (cmd), 0x30 (read), 0x03, CRC (xor from 0x80 to incl 0x03)
+    def _create_message(self, CMD_msg, DIR_msg, DATA_msg = b''):
+        msg = self.STX_msg + self.ADDR_msg + CMD_msg + DIR_msg + DATA_msg + self.ETX_msg
+        msg = bytearray(msg)
 
-        #checksum calculated by XORing all bits after STX
-        CRC_msg = ADDR_msg ^ CMD_msg ^ DIR_msg ^ DATA_msg ^ ETX_msg
-        #only add data to message if we are writing to controller
-        if DIR_msg == WRITE_msg:
-            msg = [STX_msg, ADDR_msg, CMD_msg, DIR_msg, DATA_msg, ETX_msg, CRC_msg]
-        else if DIR_msg == READ_msg:
-            msg = [STX_msg, ADDR_msg, CMD_msg, DIR_msg, ETX_msg, CRC_msg]
+        CRC_msg = 0x00
+        for byte in msg[1:]:
+            CRC_msg ^= byte
+        msg.append(CRC_msg)
+
+        msg = bytes(msg)
         return msg
 
     def _parse_answer(self, answer):
-        #0x02, 0x80, 0xe0 (cmd), 0x30 (read), data (x.x e xx, 10b alphanumeric), 0x03, crc
+        if answer == ''):
+            raise Exception ('No response from device')
+
+        ans = bytearray(answer)
         #remove STX, ADDR, and CRC
-        ans = answer[2:-3]
+        ans = ans[2:-3]
+
         #check if we have CMD and DIR and remove them if so
         if len(ans) > 1:
             ans = ans[4:]
+            ans = ans.decode()
+        #elif len(ans) == 1 and
+
+        #process for errors
         return ans
 
 if __name__ == '__main__':
