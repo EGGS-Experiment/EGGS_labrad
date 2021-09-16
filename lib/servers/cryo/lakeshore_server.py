@@ -21,11 +21,9 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from common.lib.servers.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad.server import setting
 from labrad.support import getNodeName
-
 from serial import PARITY_ODD
 
 import numpy as np
-import time #tmp
 
 SERVERNAME = 'lakeshore336Server'
 TIMEOUT = 1.0
@@ -79,7 +77,7 @@ class Lakeshore336Server(SerialDeviceServer):
         if channel not in CHANNELS:
             raise Exception('Channel must be one of: ' + str(CHANNELS))
         yield self.ser.write('KRDG? ' + str(channel) + '\r\n')
-        time.sleep(0.1)
+        #time.sleep(0.1)
         resp = yield self.ser.read()
         resp = np.array(resp.split(','), dtype=float)
         returnValue(resp)
