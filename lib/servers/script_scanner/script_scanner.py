@@ -111,7 +111,7 @@ class ScriptScanner(ScriptSignalsServer):
     @setting(2, "get_running", returns='*(ws)')
     def get_running(self, c):
         '''
-        Returns the list of currently running scripts and their IDs.
+        Returns the list of currently running experiments and their IDs.
         '''
         return self.scheduler.get_running()
 
@@ -347,11 +347,11 @@ class ScriptScanner(ScriptSignalsServer):
     @inlineCallbacks
     def stopServer(self):
         '''
-        stop all the running scripts and exit
+        stop all the running experiments and exit
         '''
         yield None
         try:
-            # cancel all scheduled scripts
+            # cancel all scheduled experiments
             for scheduled, name, loop in self.scheduler.get_scheduled():
                 self.scheduler.cancel_scheduled_script(scheduled)
             for ident, scan, priority in self.scheduler.get_queue():

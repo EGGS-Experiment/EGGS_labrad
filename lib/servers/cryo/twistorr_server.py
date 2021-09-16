@@ -64,8 +64,8 @@ class TwisTorr74Server(SerialDeviceServer):
             else: raise
 
     # READ PRESSURE
-    @setting(111,'read_temperature', returns='v')
-    def read_temperature(self, c, channel):
+    @setting(111,'read_pressure', returns='v')
+    def read_temperature(self, c):
         """
         Get pump pressure
         Returns:
