@@ -21,7 +21,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
-from RigolDS1000Z import RigolDS1000ZWrapper
+from lakeshore336 import Lakeshore336Wrapper
 
 class TemperatureControllerServer(GPIBManagedServer):
     """
@@ -31,7 +31,7 @@ class TemperatureControllerServer(GPIBManagedServer):
     name = 'Temperature Controller Server'
 
     deviceWrappers = {
-        '***': Lakeshore336Wrapper
+        'LSCI MODEL 336 LSA2CBI': Lakeshore336Wrapper
     }
 
     #SYSTEM
@@ -65,4 +65,4 @@ class TemperatureControllerServer(GPIBManagedServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(OscilloscopeServer())
+    util.runServer(TemperatureControllerServer())
