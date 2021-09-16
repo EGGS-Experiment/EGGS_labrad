@@ -36,14 +36,16 @@ class Lakeshore336Server(SerialDeviceServer):
     port = None
     serNode = getNodeName()
 
+    @inlineCallbacks
     def initServer(self):
         # if not self.regKey or not self.serNode: raise SerialDeviceError('Must define regKey and serNode attributes')
         # port = yield self.getPortFromReg(self.regKey)
         # self.port = port
-        port=24 #tmp
+        self.port = 24 #tmp
         try:
+            #finds serial server and initiates connection
             serStr = yield self.findSerial(self.serNode)
-            self.initSerial(serStr, port, baudrate=BAUDRATE)
+            self.initSerial(serStr, port, baudrate = BAUDRATE)
         except SerialConnectionError, e:
             self.ser = None
             if e.code == 0:
@@ -61,7 +63,7 @@ class Lakeshore336Server(SerialDeviceServer):
 
     # READ TEMPERATURE
     @setting(111,'read_temperature', channel = 's', returns='*1v')
-    def read_temperature(self, c, channel):
+    def read_temperature(self, c, channel = None):
         """
         Get sensor temperature
         Args:
@@ -69,7 +71,6 @@ class Lakeshore336Server(SerialDeviceServer):
         Returns:
             (*float): sensor temperature in Kelvin
         """
-    def read_temperature(self, c, channel = None):
         if channel not in CHANNELS:
             raise Exception('Channel must be one of: ' + str(CHANNELS))
         yield self.ser.write('KRDG? %d' % channel)
