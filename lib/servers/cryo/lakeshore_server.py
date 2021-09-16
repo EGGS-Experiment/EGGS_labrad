@@ -20,6 +20,10 @@ from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
 from common.lib.servers.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks
 from labrad.server import setting
+from labrad.support import getNodeName
+
+import numpy as np
+import time #tmp
 
 SERVERNAME = 'lakeshore336Server'
 TIMEOUT = 1.0
@@ -31,7 +35,6 @@ class Lakeshore336Server(SerialDeviceServer):
     regKey = 'Lakeshore336Server'
     port = None
     serNode = getNodeName()
-    timeout = T.Value(TIMEOUT,'s')
 
     def initServer(self):
         # if not self.regKey or not self.serNode: raise SerialDeviceError('Must define regKey and serNode attributes')
@@ -57,7 +60,7 @@ class Lakeshore336Server(SerialDeviceServer):
                 raise
 
     # READ TEMPERATURE
-    @setting(111, channel='s', returns='*1v')
+    @setting(111,'read_temperature', channel = 's', returns='*1v')
     def read_temperature(self, c, channel):
         """
         Get sensor temperature
@@ -66,18 +69,15 @@ class Lakeshore336Server(SerialDeviceServer):
         Returns:
             (*float): sensor temperature in Kelvin
         """
+    def read_temperature(self, c, channel = None):
         if channel not in CHANNELS:
             raise Exception('Channel must be one of: ' + str(CHANNELS))
         yield self.ser.write('KRDG? %d' % channel)
-        resp = yield self.ser.read()
+        time.sleep(.2)
+        resp = self.ser.read()
         resp = np.array(resp.split(','))
         returnValue(resp)
 
-
-    @inlineCallbacks
-    def read_temperature(self, channel = None):
-        if channel not in CHANNELS:
-            raise Exception('Channel must be one of: ' + str(CHANNELS))
-        resp = yield self.query('KRDG? %d' % channel)
-        resp = np.array(resp.split(','))
-        returnValue(resp)
+if __name__ == '__main__':
+    from labrad import util
+    util.runServer(Lakeshore336Server())
