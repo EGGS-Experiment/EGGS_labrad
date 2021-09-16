@@ -249,7 +249,7 @@ class scheduler(object):
             should_launch = False
             non_conflicting = self.get_non_conflicting()
             if not self.running or scan.script_cls.name in non_conflicting:
-                # no running scripts or current one has no conflicts
+                # no running experiments or current one has no conflicts
                 should_launch = True
                 pause_running = False
             elif self.is_higher_priority_than_running(priority):
