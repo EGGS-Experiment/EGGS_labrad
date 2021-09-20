@@ -179,11 +179,15 @@ class SerialDeviceServer( LabradServer ):
             y = yield reg.dir()
             print y
             if not regKey:
-                if self.name: regKey = self.name[:4].lower()
-                else: raise SerialDeviceError( 'name attribute is None' )
+                if self.name:
+                    regKey = self.name[:4].lower()
+                else:
+                    raise SerialDeviceError( 'name attribute is None' )
             portStrKey = filter( lambda x: regKey in x , y[1] )
-            if portStrKey: portStrKey = portStrKey[0]
-            else: raise PortRegError( 1 )
+            if portStrKey:
+                portStrKey = portStrKey[0]
+            else:
+                raise PortRegError( 1 )
             portStrVal = yield reg.get( portStrKey )
             reg.cd(tmp)
             returnValue( portStrVal )

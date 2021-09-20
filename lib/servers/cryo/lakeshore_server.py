@@ -18,7 +18,7 @@ timeout = 20
 
 from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
-from common.lib.servers.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
+from EGGS_Control.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad.server import setting
 from labrad.support import getNodeName
 from serial import PARITY_ODD
@@ -72,6 +72,12 @@ class Lakeshore336Server(SerialDeviceServer):
         """
         Checks user input for errors
         """
+        if output_channel not in OUTPUT_CHANNELS:
+            raise Exception('Channel must be one of: ' + str(OUTPUT_CHANNELS))
+        if input_channel not in INPUT_CHANNELS:
+            raise Exception('Channel must be one of: ' + str(INPUT_CHANNELS))
+        if mode is not None and is not in OUTPUT_MODES:
+            raise Exception ('Mode must be one of: ' + str(self.OUTPUT_MODES))
 
     # TEMPERATURE DIODES
     @setting(111,'Read Temperature', output_channel = 's', returns='*1v')
@@ -107,19 +113,13 @@ class Lakeshore336Server(SerialDeviceServer):
         chString = 'OUTMODE'
 
         #check for errors
-        if output_channel not in OUTPUT_CHANNELS:
-            raise Exception('Channel must be one of: ' + str(OUTPUT_CHANNELS))
-        if input_channel not in INPUT_CHANNELS:
-            raise Exception('Channel must be one of: ' + str(INPUT_CHANNELS))
-        if mode is not None and is not in OUTPUT_MODES:
-            raise Exception ('Mode must be one of: ' + str(self.OUTPUT_MODES))
 
         #send message if not querying
         if mode is not None:
             output_msg = ' ' + str(output_channel) + ',' + str(mode) + ',' + str(input_channel) + ',0' + TERMINATOR
             yield self.write(chString + output_msg)
 
-        #get data
+        #issue query
         resp = yield self.query(chString + '?' + TERMINATOR)
         #*** process result
         returnValue(resp)
@@ -138,11 +138,7 @@ class Lakeshore336Server(SerialDeviceServer):
         """
         chString = 'HTRSET'
 
-        #check for errors
-        if output_channel or input_channel not in OUTPUT_CHANNELS:
-            raise Exception('Channel must be one of: ' + str(INPUT_CHANNELS))
-        if mode is not None and is not in OUTPUT_MODES:
-            raise Exception ('Mode must be one of: ' + str(self.OUTPUT_MODES))
+        #check for errors***
 
         #send message if not querying
         if mode is not None:
@@ -164,14 +160,9 @@ class Lakeshore336Server(SerialDeviceServer):
         Returns:
             (int): the heater range
         """
-        heater_range = [0, 1, 2, 3]
         chString = 'RANGE'
 
-        #check for errors
-        if output_channel not in OUTPUT_CHANNELS:
-            raise Exception('Channel must be one of: ' + str(OUTPUT_CHANNELS))
-        if range is not None and is not in heater_range:
-            raise Exception ('Mode must be one of: ' + str(heater_range))
+        #check for errors ***
 
         if range is not None:
             output_msg = ' ' + str(output_channel) + ',' + str(range) + TERMINATOR
@@ -194,9 +185,7 @@ class Lakeshore336Server(SerialDeviceServer):
         """
         chString = 'MOUT'
 
-        #check for errors
-        if output_channel not in OUTPUT_CHANNELS:
-            raise Exception('Channel must be one of: ' + str(OUTPUT_CHANNELS))
+        #check for errors ***
 
         if power is not None:
             output_msg = ' ' + str(output_channel) + ',' + str(power) + TERMINATOR

@@ -18,16 +18,17 @@ timeout = 20
 
 from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
-from common.lib.servers.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
+from EGGS_Control.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad.server import setting
 from labrad.support import getNodeName
 from serial import PARITY_ODD
 
 import numpy as np
 
-SERVERNAME = 'twistorr74server'
+SERVERNAME = 'NIOPS03Server'
 TIMEOUT = 1.0
 BAUDRATE = 115200
+TERMINATOR = '\r\n'
 
 class NIOPS03Server(SerialDeviceServer):
     name = 'NIOPS03Server'
