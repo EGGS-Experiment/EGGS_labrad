@@ -21,7 +21,6 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from common.lib.servers.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad.server import setting
 from labrad.support import getNodeName
-from serial import PARITY_ODD
 
 import numpy as np
 
@@ -40,7 +39,13 @@ class TwisTorr74Server(SerialDeviceServer):
     WRITE_msg = b'\x31'
     ETX_msg = b'\x03'
 
-    error_response = [] *** use dict
+    ERRORS_msg = {
+        b'\x15': "Execution failed",
+        b'\x32': "Unknown window"
+        b'\x33': "Data type error"
+        b'\x34': "Value out of range"
+        b'\x35': "Window disabled"
+    }
 
     @inlineCallbacks
     def initServer( self ):
@@ -78,7 +83,9 @@ class TwisTorr74Server(SerialDeviceServer):
         #read and parse answer
         resp = yield self.ser.read()
         resp = yield self._parse_answer(resp)
+
         #convert resp to float
+        #***
         returnValue(resp)
 
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg = b''):
@@ -105,9 +112,10 @@ class TwisTorr74Server(SerialDeviceServer):
         if len(ans) > 1:
             ans = ans[4:]
             ans = ans.decode()
-        #elif len(ans) == 1 and
+        #otherwise process return message for errors
+        elif len(ans) == 1 and ans in self.ERRORS_msg:
+            raise Exception(ERRORS_msg[ans])
 
-        #process for errors
         return ans
 
 if __name__ == '__main__':
