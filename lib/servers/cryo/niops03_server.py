@@ -1,9 +1,9 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = TwisTorr 74 Turbopump Server
+name = NIOPS-03 Power Supply Controller
 version = 1.0.0
-description = Talks to the TwisTorr 74 Turbopump
+description = Controls NIOPS-03 Power Supply which controls ion pumps
 instancename = TwisTorr74Server
 
 [startup]
@@ -21,16 +21,17 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from common.lib.servers.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad.server import setting
 from labrad.support import getNodeName
+from serial import PARITY_ODD
 
 import numpy as np
 
 SERVERNAME = 'twistorr74server'
 TIMEOUT = 1.0
-BAUDRATE = 9600
+BAUDRATE = 115200
 
-class TwisTorr74Server(SerialDeviceServer):
-    name = 'TwisTorr74Server'
-    regKey = 'TwisTorr74Server'
+class NIOPS03Server(SerialDeviceServer):
+    name = 'NIOPS03Server'
+    regKey = 'NIOPS03Server'
     serNode = getNodeName()
 
     STX_msg = b'\x02'
@@ -39,13 +40,7 @@ class TwisTorr74Server(SerialDeviceServer):
     WRITE_msg = b'\x31'
     ETX_msg = b'\x03'
 
-    ERRORS_msg = {
-        b'\x15': "Execution failed",
-        b'\x32': "Unknown window"
-        b'\x33': "Data type error"
-        b'\x34': "Value out of range"
-        b'\x35': "Window disabled"
-    }
+    error_response = [] *** use dict
 
     @inlineCallbacks
     def initServer( self ):
@@ -69,8 +64,8 @@ class TwisTorr74Server(SerialDeviceServer):
             else: raise
 
     # READ PRESSURE
-    @setting(111,'Read Pressure', returns='v')
-    def pressure_read(self, c):
+    @setting(111,'read_pressure', returns='v')
+    def read_temperature(self, c):
         """
         Get pump pressure
         Returns:
@@ -82,13 +77,9 @@ class TwisTorr74Server(SerialDeviceServer):
 
         #read and parse answer
         resp = yield self.ser.read()
-        try:
-            resp = yield self._parse_answer(resp)
-        except Exception as e:
-            print e
-
+        resp = yield self._parse_answer(resp)
         #convert resp to float
-        #***
+
         returnValue(resp)
 
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg = b''):
@@ -115,12 +106,11 @@ class TwisTorr74Server(SerialDeviceServer):
         if len(ans) > 1:
             ans = ans[4:]
             ans = ans.decode()
-        #otherwise process return message for errors
-        elif len(ans) == 1 and ans in self.ERRORS_msg:
-            raise Exception(ERRORS_msg[ans])
+        #elif len(ans) == 1 and
 
+        #process for errors
         return ans
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(TwisTorr74Server())
+    util.runServer(NIOPS03Server())

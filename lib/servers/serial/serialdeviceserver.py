@@ -41,11 +41,20 @@ Created on Dec 22, 2010
 # Got rid of checkConnection decorator, replaced with method SerialDeviceServer.checkConnection.
 #===============================================================================
 
+#===============================================================================
+# 2021 - 09 - 20
+#
+# Added SerialManagedServer class inheriting from ManagedDeviceServer, similar to GPIBManagedServer
+#
+# Added SerialDeviceWrapper class inheriting from DeviceWrapper, similar to GPIBDeviceWrapper
+#===============================================================================
+
 
 from twisted.internet.defer import returnValue, inlineCallbacks
 
 from labrad.server import LabradServer, setting
 from labrad.types import Error
+from labrad.gpib import ManagedDeviceServer
 
 class SerialDeviceError( Exception ):
     def __init__( self, value ):
@@ -271,3 +280,15 @@ class SerialDeviceServer( LabradServer ):
         """
         if self.ser:
             self.ser.close()
+
+class SerialManagedServer(ManagedDeviceServer, SerialDeviceServer):
+    """
+    A server for a Seroal device.
+     Creates a SerialDeviceWrapper for each device it finds that
+     is appropriately named.  Provides standard settings for listing
+     devices, selecting a device for the current context, and
+     refreshing the list of devices.  Also, allows us to read from,
+     write to, and query the selected GPIB device directly.
+     """
+
+class SerialDeviceWrapper(DeviceWrapper):
