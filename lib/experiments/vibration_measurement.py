@@ -52,7 +52,7 @@ class vibration_measurement(experiment):
                 break
 
             # pressure = self.pump.read_pressure()
-            tmp tempK = self.tempcontroller.read_temperature('0')
+            tempK = self.tempcontroller.read_temperature('0')
             # trace = self.oscope.get_trace('1')
 
             try:
