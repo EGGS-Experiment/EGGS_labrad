@@ -145,7 +145,7 @@ class SerialDeviceServer( LabradServer ):
         print '\nAttempting to connect at:'
         print '\n\tserver:\t%s' % serStr
         print '\n\tport:\t%s' % port
-        print '\n\timeout:\t%s\n\n' % ( str( self.timeout ) if kwargs.get('timeout') is not None else 'No timeout' )
+        print '\n\ttimeout:\t%s\n\n' % ( str( self.timeout ) if kwargs.get('timeout') is not None else 'No timeout' )
         cli = self.client
         try:
             # get server wrapper for serial server

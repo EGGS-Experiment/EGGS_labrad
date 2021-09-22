@@ -24,6 +24,7 @@ from labrad.server import setting
 from labrad.support import getNodeName
 from labrad.types import Value
 
+import time
 import numpy as np
 
 SERVERNAME = 'twistorr74server'
@@ -70,7 +71,7 @@ class TwisTorr74Server(SerialDeviceServer):
             else: raise
 
     # READ PRESSURE
-    @setting(111,'Read Pressure', returns='s')
+    @setting(111,'Read Pressure', returns='v')
     def pressure_read(self, c):
         """
         Get pump pressure
@@ -78,10 +79,11 @@ class TwisTorr74Server(SerialDeviceServer):
             (float): pump pressure in ***
         """
         #create and send message to device
-        message = yield self._create_message(CMD_msg = b'300', DIR_msg = self.READ_msg)
+        message = yield self._create_message(CMD_msg = b'224', DIR_msg = self.READ_msg)
         yield self.ser.write(message)
 
         #read and parse answer
+        time.sleep(1.0)
         resp = yield self.ser.read()
         try:
             resp = yield self._parse_answer(resp)
@@ -89,8 +91,7 @@ class TwisTorr74Server(SerialDeviceServer):
             print(e)
             raise
 
-        #convert resp to float
-        #***
+        float(resp)
         returnValue(resp)
 
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg = b''):
@@ -100,8 +101,9 @@ class TwisTorr74Server(SerialDeviceServer):
         CRC_msg = 0x00
         for byte in msg[1:]:
             CRC_msg ^= byte
-        msg.append(CRC_msg)
 
+        CRC_msg = hex(CRC_msg)[2:]
+        msg.extend(CRC_msg)
         msg = bytes(msg)
         return msg
 
@@ -118,9 +120,11 @@ class TwisTorr74Server(SerialDeviceServer):
             ans = ans[4:]
             ans = ans.decode()
         #otherwise process return message for errors
-        elif len(ans) == 1 and bytes(ans) in self.ERRORS_msg:
+        elif len(ans) == 1:
             ans = bytes(ans)
-            raise Exception(self.ERRORS_msg[ans])
+            print(ans)
+            if ans in self.ERRORS_msg:
+                raise Exception(self.ERRORS_msg[ans])
 
         return bytes(ans)
 
