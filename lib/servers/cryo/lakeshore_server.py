@@ -22,6 +22,7 @@ from EGGs_Control.lib.servers.serial.serialdeviceserver import SerialDeviceServe
 from labrad.server import setting
 from labrad.support import getNodeName
 from serial import PARITY_ODD
+import time
 
 import numpy as np
 
@@ -76,12 +77,12 @@ class Lakeshore336Server(SerialDeviceServer):
             raise Exception('Channel must be one of: ' + str(OUTPUT_CHANNELS))
         if input_channel not in INPUT_CHANNELS:
             raise Exception('Channel must be one of: ' + str(INPUT_CHANNELS))
-        if mode is not None and is not in OUTPUT_MODES:
-            raise Exception ('Mode must be one of: ' + str(self.OUTPUT_MODES))
+        # if mode is not None and not in OUTPUT_MODES:
+        #     raise Exception ('Mode must be one of: ' + str(self.OUTPUT_MODES))
 
     # TEMPERATURE DIODES
     @setting(111,'Read Temperature', output_channel = 's', returns='*1v')
-    def temperature_read(self, c, channel):
+    def temperature_read(self, c, output_channel):
         """
         Get sensor temperature
         Args:
@@ -92,7 +93,7 @@ class Lakeshore336Server(SerialDeviceServer):
         if output_channel not in INPUT_CHANNELS:
             raise Exception('Channel must be one of: ' + str(INPUT_CHANNELS))
         yield self.ser.write('KRDG? ' + str(output_channel) + TERMINATOR)
-        #time.sleep(0.1)
+        time.sleep(0.1)
         resp = yield self.ser.read()
         resp = np.array(resp.split(','), dtype=float)
         returnValue(resp)

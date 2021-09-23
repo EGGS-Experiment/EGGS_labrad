@@ -9,3 +9,4 @@ class SerialManagedServer(ManagedDeviceServer, SerialDeviceServer):
      """
 
 class SerialDeviceWrapper(DeviceWrapper):
+    """A wrapper for a serial device."""
