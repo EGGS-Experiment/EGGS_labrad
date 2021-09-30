@@ -33,11 +33,14 @@ class vibration_measurement(experiment):
 
         #device servers
         #self.oscope = self.cxn.oscilloscope_server
-        self.tempcontroller = self.cxn.lakeshore336server
+        #self.tempcontroller = self.cxn.lakeshore336server
         #self.pump = self.cxn.twistorr74server
 
         #set scannable parameters
         self.time_interval = self.p.VibrationMeasurement.dt
+        self.time_interval = 1.0
+
+        #convert parameter to labrad type
 
         #dataset context
         self.c_temp_1 = self.cxn.context()
@@ -49,32 +52,30 @@ class vibration_measurement(experiment):
         self.set_up_datavault()
 
     def run(self, cxn, context, replacement_parameters={}):
-        self.prevtime = time.time()
+        prevtime = time.time()
+        starttime = time.time()
 
-        while (time.time() - self.prevtime) <= self.time_interval:
-            should_stop = self.pause_or_stop()
-            if should_stop:
+        while (True):
+            if (self.pause_or_stop() == True):
                 break
+            if (time.time() - prevtime) <= self.time_interval:
+                continue
 
             # pressure = self.pump.read_pressure()
-            tempK = self.tempcontroller.read_temperature('0')
+            #tempK = self.tempcontroller.read_temperature('0')
+            tempK = np.array([0.1,0.2,0.3,0.4],dtype=float)
             # trace = self.oscope.get_trace('1')
-
-            # crt_time = datetime.datetime.now()
-            # hournow = str(crt_time.hour)
-            # minnow = str(crt_time.minute)
-            # secnow = str(crt_time.second)
-            # formatted_time = hournow + ":" + minnow + ":" + secnow
             #print(tempK)
+            elapsedtime = time.time() - starttime
             try:
-                self.dv.add(time.time(), tempK[0], context = self.c_temp_1)
-                self.dv.add(time.time(), tempK[1], context = self.c_temp_2)
-                self.dv.add(time.time(), tempK[2], context = self.c_temp_3)
-                self.dv.add(time.time(), tempK[3], context = self.c_temp_4)
+                self.dv.add(elapsedtime, tempK[0], context = self.c_temp_1)
+                self.dv.add(elapsedtime, tempK[1], context = self.c_temp_2)
+                self.dv.add(elapsedtime, tempK[2], context = self.c_temp_3)
+                self.dv.add(elapsedtime, tempK[3], context = self.c_temp_4)
             except:
                 pass
 
-            self.prevtime = time.time()
+            crt_time = time.time()
 
     def finalize(self, cxn, context):
         self.cxn.disconnect()
@@ -83,18 +84,22 @@ class vibration_measurement(experiment):
         #set up folder
         date = datetime.datetime.now()
         year  = str(date.year)
-        month = '%02d' % date.month  # Padded with a zero if one digit
-        day   = '%02d' % date.day    # Padded with a zero if one digit
+        month = '%02d' % date.month     # Padded with a zero if one digit
+        day   = '%02d' % date.day       # Padded with a zero if one digit
+        hour  = '%02d' % date.hour      # Padded with a zero if one digit
+        minute = '%02d' % date.minute   # Padded with a zero if one digit
+
         trunk = year + '_' + month + '_' + day
+        trunk2 = self.name + '_' + hour + ':' + minute
 
         #create datasets
-        self.dv.cd(['',year,month,trunk], True, context = self.c_temp_1)
+        self.dv.cd(['',year,month,trunk,trunk2], True, context = self.c_temp_1)
         dataset_temp1 = self.dv.new('Lakeshore 336 Temperature Controller',[('time', 't')], [('Temperature Diode 1', 'Temperature', 'K')], context = self.c_temp_1)
-        self.dv.cd(['', year, month, trunk], True, context=self.c_temp_2)
+        self.dv.cd(['', year, month, trunk,trunk2], True, context=self.c_temp_2)
         dataset_temp2 = self.dv.new('Lakeshore 336 Temperature Controller',[('time', 't')], [('Temperature Diode 2', 'Temperature', 'K')], context = self.c_temp_2)
-        self.dv.cd(['', year, month, trunk], True, context=self.c_temp_3)
-        dataset_temp = self.dv.new('Lakeshore 336 Temperature Controller', [('time', 't')], [('Temperature Diode 4', 'Temperature', 'K')], context = self.c_temp_3)
-        self.dv.cd(['', year, month, trunk], True, context=self.c_temp_4)
+        self.dv.cd(['', year, month, trunk,trunk2], True, context=self.c_temp_3)
+        dataset_temp = self.dv.new('Lakeshore 336 Temperature Controller', [('time', 't')], [('Temperature Diode 3', 'Temperature', 'K')], context = self.c_temp_3)
+        self.dv.cd(['', year, month, trunk,trunk2], True, context=self.c_temp_4)
         dataset_temp = self.dv.new('Lakeshore 336 Temperature Controller', [('time', 't')], [('Temperature Diode 4', 'Temperature', 'K')], context = self.c_temp_4)
         #dataset_pressure = self.dv.new('TwisTorr 74 Pressure Controller',[('time', 't')], [('Pump Pressure', 'Pressure', 'mTorr')], context = self.c_result)
         #dataset_oscope = self.dv.new('Rigol DS1104z Oscilloscope',[('time', 't')], [('Scope Trace', 'Scope Trace', '1')], context = self.c_result)
