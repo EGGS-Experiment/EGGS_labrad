@@ -1,66 +1,55 @@
 from artiq.experiment import *
 
-import labrad
+import labrad, array
 import numpy as np
-import array
 
 
 class api(EnvExperiment):
+    kernel_invariants = {}
 
     def build(self):
         self.setattr_device("core")
         self.setattr_device("core_dma")
         self.setattr_device("scheduler")
 
+        #get devices
         self.ttl_list = [self.get_device()]
 
-    def _parseSequence(self, sequence):
-        '''
-        Converts the ttl sequence from parseTTL() into a more ARTIQ-friendly format
+        #initialize devices?
 
-        Args:
-            sequence (bytearray): the ttl pulse sequence from parseTTL()
+        #setup variables
+        #find timestep
+        self.ms_to_mu = us/self.core.ref_period
 
-        Returns:
-
-        '''
-        sequence = np.array(sequence)
-        sequence = sequence.reshape(len(sequence), 4)
-
-        pulse_times = np.sum(sequence[::2], 1)
-        ttl_sequence = sequence[1::2]
-
-        delay_lengths = pulse_times[1:] - pulse_times[:-1]
-        ttl_change = ttl_sequence[1:] - ttl_sequence[:-1]
-
-        ttl_commands =
-
-        return
-
-    @kernel
+    @kernel(flags = {"fast-math"})
     def programBoard(self, sequence):
-        parsed_sequence = _parseSequence(sequence)
         with self.core_dma.record("pulse_sequence"):
-            for delay_val_us, ttlCommands in parsed_sequence:
+            for timestamp, ttlCommandArr in sequence:
+                self.core.set_time_mu(int(timestamp * self.ms_to_mu))
                 with parallel:
-                    for command in ttlCommands:
-                        self.command
-                delay(delay_val_us * us)
+                    for i in range(sequence.channelTotal):
+                        if ttlCommandArr[i] = 1:
+                            self.ttl_list[i].on()
+                        elif ttlCommandArr[i] = -1:
+                            self.ttl_list[i].off()
+
 
     def startLooped(self):
         '''
         Start the pulse sequence and make it loop forever
         '''
 
+
     def stopLooped(self):
         '''
-        Stop the pulse sequence (but will loop forever again if started
+        Stop the pulse sequence (but will loop forever again if started)
         '''
 
     def startSingle(self):
         '''
         Start a single iteration of the pulse sequence
         '''
+        self.core_dma.playback("pulse_sequence")
 
     def stopSingle(self):
         '''
@@ -76,6 +65,7 @@ class api(EnvExperiment):
         '''
         Reset the ram position of the pulser. Important to do this before writing the new sequence.
         '''
+        self.core_dma.erase("pulse_sequence")
 
     def resetSeqCounter(self):
         '''
@@ -109,7 +99,7 @@ class api(EnvExperiment):
 
     def isSeqDone(self):
         '''
-        check if the pulse sequece is done executing or not
+        check if the pulse sequence is done executing or not
         '''
 
     def getResolvedTotal(self):
@@ -182,6 +172,7 @@ class api(EnvExperiment):
         Padding function to make the data a multiple of 16
         '''
 
+    @kernel
     def programDDS(self, prog):
         '''
         program the dds channel with a list of frequencies and amplitudes. The channel of the particular channel must be selected first
