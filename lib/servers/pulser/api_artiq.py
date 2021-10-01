@@ -18,6 +18,7 @@ class api(EnvExperiment):
         #initialize devices?
 
         #setup variables
+        self.
         #find timestep
         self.ms_to_mu = us/self.core.ref_period
 
@@ -25,6 +26,7 @@ class api(EnvExperiment):
     def programBoard(self, sequence):
         with self.core_dma.record("pulse_sequence"):
             for timestamp, ttlCommandArr in sequence:
+                #convert time to machine units and set cursor to correct time
                 self.core.set_time_mu(int(timestamp * self.ms_to_mu))
                 with parallel:
                     for i in range(sequence.channelTotal):
