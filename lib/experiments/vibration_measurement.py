@@ -45,6 +45,7 @@ class vibration_measurement(experiment):
 
         #dataset context
         self.c_temp = self.cxn.context()
+        self.c_press = self.cxn.context()
 
         #set up data vault
         self.set_up_datavault()
@@ -59,13 +60,15 @@ class vibration_measurement(experiment):
             if (time.time() - prevtime) <= self.time_interval:
                 continue
 
-            # pressure = self.pump.read_pressure()
             #tempK = self.tempcontroller.read_temperature('0')
+            #pressure = self.pump.read_pressure()
+            pressure = 3
             tempK = np.array([0.1,0.2,0.3,0.4],dtype=float)
             # trace = self.oscope.get_trace('1')
             elapsedtime = time.time() - starttime
             try:
                 self.dv.add(elapsedtime, tempK[0], tempK[1], tempK[2], tempK[3], context = self.c_temp)
+                self.dv.add(elapsedtime, pressure, context = self.c_press)
             except:
                 pass
 
@@ -90,12 +93,15 @@ class vibration_measurement(experiment):
         self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_temp)
         dataset_temp = self.dv.new('Lakeshore 336 Temperature Controller',[('time', 't')], [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'), \
                                                                                              ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')] , context = self.c_temp)
-        #dataset_pressure = self.dv.new('TwisTorr 74 Pressure Controller',[('time', 't')], [('Pump Pressure', 'Pressure', 'mTorr')], context = self.c_result)
+
+        self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_press)
+        dataset_pressure = self.dv.new('TwisTorr 74 Pressure Controller',[('time', 't')], [('Pump Pressure', 'Pressure', 'mTorr')], context = self.c_press)
         #dataset_oscope = self.dv.new('Rigol DS1104z Oscilloscope',[('time', 't')], [('Scope Trace', 'Scope Trace', '1')], context = self.c_result)
 
         #add parameters to data vault
         for parameter in self.p:
             self.dv.add_parameter(parameter, self.p[parameter], context = self.c_temp)
+            self.dv.add_parameter(parameter, self.p[parameter], context = self.c_press)
 
         #set live plotting
         #self.grapher.plot(dataset, 'bright/dark', False)
