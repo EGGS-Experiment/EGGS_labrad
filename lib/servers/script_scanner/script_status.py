@@ -72,7 +72,7 @@ class script_semaphore(object):
         actually paused'''
         if should_pause:
             request = Deferred()
-            print 'made request', request
+            print('made request', request)
             self.pause_requests.append(request)
             if not self.pause_lock.locked:
                 # if not already paused
@@ -83,7 +83,7 @@ class script_semaphore(object):
                                                     self.percentage_complete))
 
             else:
-                print 'not acquiring because locked'
+                print('not acquiring because locked')
         else:
             if not self.pause_lock.locked:
                 raise Exception("Trying to unpause script that was not paused")

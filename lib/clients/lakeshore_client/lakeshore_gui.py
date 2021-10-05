@@ -6,6 +6,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_LAKESHORE_UI(object):
@@ -37,4 +38,13 @@ class Ui_LAKESHORE_UI(object):
         _translate = QtCore.QCoreApplication.translate
         LAKESHORE_UI.setWindowTitle(_translate("LAKESHORE_UI", "MainWindow"))
         self.button_open.setText(_translate("LAKESHORE_UI", "PushButton"))
+
+def main():
+    app = QtWidgets.QApplication(sys.argv)
+    main = Ui_LAKESHORE_UI()
+    main.show()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
 

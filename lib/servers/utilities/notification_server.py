@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = CameraServer
+name = NotificationServer
 version = 1.0
 description =
-instancename = CameraServer
+instancename = NotificationServer
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -17,28 +17,26 @@ timeout = 5
 """
 from labrad.server import LabradServer, Signal
 from twisted.internet.defer import returnValue
-from labrad.support import getNodeName
 import time
 
-SERVERNAME = 'CameraServer'
+SERVERNAME = 'NotificationServer'
 
-class CameraServer(LabradServer):
-    name = 'CameraServer'
-    regKey = 'CameraServer'
-    timeout = T.Value(TIMEOUT, 's')
+class NotificationServer(LabradServer):
+    name = 'NotificationServer'
+    regKey = 'NotificationServer'
 
     @inlineCallbacks
     def initServer(self):
         pass
 
     # ***
-    @setting(111, 'fd', msg='s', returns='')
-    def fd(self, c, msg=None):
+    @setting(111, 'email', msg='s', returns='')
+    def email(self, c, msg=None):
         """
-        fd
+        Send an email
         """
         pass
 
 if __name__ == "__main__":
     from labrad import util
-    util.runServer(CameraServer())
+    util.runServer(NotificationServer())

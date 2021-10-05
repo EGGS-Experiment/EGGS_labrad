@@ -80,13 +80,13 @@ class ScriptScanner(ScriptSignalsServer):
                 module = sys.modules[import_path]
                 cls = getattr(module, class_name)
             except ImportError as e:
-                print 'Script Control Error importing: ', e
+                print('Script Control Error importing: ', e)
             except AttributeError:
-                print 'There is no class {0} in module {1}'.format(class_name, module)
+                print('There is no class {0} in module {1}'.format(class_name, module))
             except SyntaxError as e:
-                print 'Incorrect syntax in file {0}'.format(import_path, class_name)
+                print('Incorrect syntax in file {0}'.format(import_path, class_name))
             except Exception as e:
-                print 'There was an error in {0} : {1}'.format(class_name, e)
+                print('There was an error in {0} : {1}'.format(class_name, e))
             else:
                 try:
                     name = cls.name
@@ -94,7 +94,7 @@ class ScriptScanner(ScriptSignalsServer):
                 except AttributeError:
                     name_not_provided = 'Name is not provided for class {0} in'
                     name_not_provided += ' module {1}'
-                    print name_not_provided.format(class_name, module)
+                    print(name_not_provided.format(class_name, module))
                 else:
                     self.script_parameters[name] = script_class_parameters(name, cls, parameters)
 

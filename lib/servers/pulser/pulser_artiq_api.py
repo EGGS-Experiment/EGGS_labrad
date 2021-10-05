@@ -1,29 +1,56 @@
 from artiq.experiment import *
+from devices import Devices
+from labrad import util
+from sipyco.pc_rpc import Server
 
-import labrad, array
 import numpy as np
-
 
 class api(EnvExperiment):
     kernel_invariants = {}
 
+    #ARTIQ experiment functions
     def build(self):
+        #get core
         self.setattr_device("core")
         self.setattr_device("core_dma")
         self.setattr_device("scheduler")
 
-        #get devices
-        self.ttl_list = [self.get_device()]
+        #get device names
+        self.device_db = self.get_device_db()
+            #get ttl names
+        ttl_names = [key for key, val in self.device_db if val['class'] == 'TTLOut' or 'TTLInOut']
+            #get dds names
+        dds_names = [key for key, val in self.device_db if val['class'] == 'AD9910' or 'AD9912']
+            #get urukul names
+        urukul_names = [key for key, val in self.device_db if val['class'] == 'CPLD']
 
-        #initialize devices?
+        #todo: do DAC and ADC
+        #todo: do PMT via TTL
+
+        #set device attributes
+        for name in ttl_names + dds_names + urukul_names:
+            self.setattr_device(name)
+
+        #get devices
+        self.ttl_list = [self.get_device(name) for name in ttl_names]
+        self.dds_list = [self.get_device(name) for name in dds_names]
+        self.urukul_list = [self.get_device(name) for name in urukul_names]
+
+        #initialize devices
+        for device in self.dds_list + urukul_list:
+            device.init()
 
         #setup variables
-        self.
-        #find timestep
+            #convert pulse_sequence timesteps to machine units
         self.ms_to_mu = us/self.core.ref_period
 
+    def run(self):
+        #todo: implement server
+
+    #Pulse sequencer functions
     @kernel(flags = {"fast-math"})
-    def programBoard(self, sequence):
+    def programSequence(self, sequence):
+        #TODO: program dds
         with self.core_dma.record("pulse_sequence"):
             for timestamp, ttlCommandArr in sequence:
                 #convert time to machine units and set cursor to correct time
@@ -35,44 +62,20 @@ class api(EnvExperiment):
                         elif ttlCommandArr[i] = -1:
                             self.ttl_list[i].off()
 
+        #get sequence handle to minimize overhead when we have to run sequence
+        self.sequence_handle = self.core_dma.get_handle("pulse_sequence")
 
-    def startLooped(self):
-        '''
-        Start the pulse sequence and make it loop forever
-        '''
+    @kernel
+    def runSequence(self):
+        self.core.reset()
+        self.core_dma.playback_handle(self.sequence_handle)
 
-
-    def stopLooped(self):
-        '''
-        Stop the pulse sequence (but will loop forever again if started)
-        '''
-
-    def startSingle(self):
-        '''
-        Start a single iteration of the pulse sequence
-        '''
-        self.core_dma.playback("pulse_sequence")
-
-    def stopSingle(self):
-        '''
-        Stop the single iteration of the pulse sequence
-        '''
-
-    def setNumberRepeatitions(self, number):
-        '''
-        For a finite number of iteration, set the number of iteration
-        '''
-
+    @kernel
     def resetRam(self):
         '''
         Reset the ram position of the pulser. Important to do this before writing the new sequence.
         '''
         self.core_dma.erase("pulse_sequence")
-
-    def resetSeqCounter(self):
-        '''
-        Reset the counter to see how many iterations have been executed.
-        '''
 
     def resetFIFONormal(self):
         '''
@@ -134,11 +137,6 @@ class api(EnvExperiment):
         Get the readout count data.
         '''
 
-    def howManySequencesDone(self):
-        '''
-        Get the number of iteratione executed.
-        '''
-
     def setPMTCountRate(self, time):
         '''
 
@@ -184,6 +182,9 @@ class api(EnvExperiment):
         '''
         force reprogram of all dds chips during initialization
         '''
+        for device in self.dds_list + urukul_list:
+            device.init()
+        #todo: check if this actually works
 
     def enableLineTrigger(self, delay = 0):
         '''

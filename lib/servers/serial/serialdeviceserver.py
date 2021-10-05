@@ -108,7 +108,7 @@ class SerialDeviceServer( LabradServer ):
         
         @raise labrad.types.Error: Error in opening serial connection   
         """
-        def __init__( self, ser, port, **kwargs ):
+        def __init__(self, ser, port, **kwargs):
             timeout = kwargs.get('timeout')
             baudrate = kwargs.get('baudrate')
             bytesize = kwargs.get('bytesize')
@@ -118,10 +118,9 @@ class SerialDeviceServer( LabradServer ):
             if baudrate is not None: ser.baudrate( baudrate )
             if bytesize is not None: ser.bytesize(bytesize)
             if parity is not None: ser.parity(parity)
-            self.write = lambda s: ser.write( s )
-            self.write_line = lambda s: ser.write_line( s )
-            self.read = lambda x = 0: ser.read( x )
-            self.read_line = lambda: ser.read_line()
+            self.write = lambda s: ser.write(s)
+            self.read = lambda x = 0: ser.read(x)
+            self.read_until = lambda x = '\r': ser.read_until(x)
             self.read_as_words = lambda x = 0: ser.read_as_words( x ) # changed here
             self.close = lambda: ser.close()
             self.flushinput = lambda: ser.flushinput()
@@ -142,17 +141,17 @@ class SerialDeviceServer( LabradServer ):
         @raise SerialConnectionError: Error code 1.  Raised if we could not create serial connection.
         """
         if kwargs.get('timeout') is None and self.timeout: kwargs['timeout'] = self.timeout
-        print '\nAttempting to connect at:'
-        print '\n\tserver:\t%s' % serStr
-        print '\n\tport:\t%s' % port
-        print '\n\ttimeout:\t%s\n\n' % ( str( self.timeout ) if kwargs.get('timeout') is not None else 'No timeout' )
+        print('\nAttempting to connect at:')
+        print('\n\tserver:\t%s' % serStr)
+        print('\n\tport:\t%s' % port)
+        print('\n\ttimeout:\t%s\n\n' % ( str( self.timeout ) if kwargs.get('timeout') is not None else 'No timeout' ))
         cli = self.client
         try:
             # get server wrapper for serial server
             ser = cli.servers[ serStr ]
             # instantiate SerialConnection convenience class
             self.ser = self.SerialConnection( ser = ser, port = port, **kwargs )
-            print 'Serial connection opened.'
+            print('Serial connection opened.')
         except Error:
             self.ser = None
             raise SerialConnectionError( 1 )
@@ -177,7 +176,7 @@ class SerialDeviceServer( LabradServer ):
             tmp = yield reg.cd()
             yield reg.cd( ['', 'Ports'] )
             y = yield reg.dir()
-            print y
+            print(y)
             if not regKey:
                 if self.name:
                     regKey = self.name[:4].lower()
@@ -191,7 +190,7 @@ class SerialDeviceServer( LabradServer ):
             portStrVal = yield reg.get( portStrKey )
             reg.cd(tmp)
             returnValue( portStrVal )
-        except Error, e:
+        except Error as e:
             reg.cd(tmp)
             if e.code == 17: raise PortRegError( 0 )
             else: raise
@@ -218,15 +217,15 @@ class SerialDeviceServer( LabradServer ):
                  [str( i ) for i in range( len( portKeys ) )] ,
                  portKeys )
             for key in keyDict:
-                print key, ':', keyDict[key]
+                print(key, ':', keyDict[key])
             selection = None
             while True:
-                print 'Select the number corresponding to the device you are using:'
+                print('Select the number corresponding to the device you are using:')
                 selection = raw_input( '' )
                 if selection in keyDict:
                     portStr = yield reg.get( keyDict[selection] )
                     returnValue( portStr )
-        except Error, e:
+        except Error as e:
             if e.code == 13: raise PortRegError( 0 )
             else: raise
 
@@ -270,12 +269,12 @@ class SerialDeviceServer( LabradServer ):
         """Check to see if we can connect to serial server now"""
         if self.ser is None and None not in ( self.port, self.serNode ) and self._matchSerial( self.serNode, name ):
             self.initSerial( name, self.port)
-            print 'Serial server connected after we connected'
+            print('Serial server connected after we connected')
 
     def serverDisconnected( self, ID, name ):
         """Close connection (if we are connected)"""
         if self.ser and self.ser.ID == ID:
-            print 'Serial server disconnected.  Relaunch the serial server'
+            print('Serial server disconnected.  Relaunch the serial server')
             self.ser = None
 
     def stopServer( self ):

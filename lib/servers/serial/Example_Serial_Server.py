@@ -41,7 +41,7 @@ class dummyDevice(DeviceWrapper):
     def connect(self, server, port):
         """Here we make a connection to the serial server in LabRAD where all
         the serial communication is handled"""
-        print 'connecting to "%s" on port "%s"...' % (server.name, port),
+        print('connecting to "%s" on port "%s"...' % (server.name, port))
         self.server = server
         self.ctx = server.context()  # grabs an identification number from the server
         self.port = port
@@ -88,7 +88,7 @@ class ExampleSerialServer(DeviceServer):
         Makes a connection to the registry where port information and other server
         specific settings can be retrieved.
         """
-        print 'loading config info...',
+        print('loading config info...')
         self.reg = self.client.registry()
         yield self.loadConfigInfo()
         yield DeviceServer.initServer(self)  # starts server after configurations loaded

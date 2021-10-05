@@ -105,6 +105,7 @@ class vibration_measurement(experiment):
         #add parameters to data vault
         for parameter in self.p:
             self.dv.add_parameter(parameter, self.p[parameter], context = self.c_temp)
+            self.dv.add_parameter(parameter, self.p[parameter], context = self.c_press)
 
         #set live plotting
         #self.grapher.plot(dataset, 'bright/dark', False)

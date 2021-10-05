@@ -18,7 +18,7 @@ timeout = 20
 
 from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
-from EGGs_Control.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
+from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad.server import setting
 from labrad.support import getNodeName
 from serial import PARITY_ODD
@@ -48,14 +48,14 @@ class NIOPS03Server(SerialDeviceServer):
             serStr = yield self.findSerial( self.serNode )
             print(serStr)
             self.initSerial( serStr, port, baudrate = BAUDRATE)
-        except SerialConnectionError, e:
+        except SerialConnectionError as e:
             self.ser = None
             if e.code == 0:
-                print 'Could not find serial server for node: %s' % self.serNode
-                print 'Please start correct serial server'
+                print('Could not find serial server for node: %s' % self.serNode)
+                print('Please start correct serial server')
             elif e.code == 1:
-                print 'Error opening serial connection'
-                print 'Check set up and restart serial server'
+                print('Error opening serial connection')
+                print('Check set up and restart serial server')
             else: raise
 
     # ON/OFF

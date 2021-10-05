@@ -7,13 +7,13 @@ class fft_spectrum(experiment):
     required_parameters = []
     
     def initialize(self, cxn, context, ident):
-        print 'init'
+        print('init')
         
     def run(self, cxn, context):
-        print 'running'
+        print('running')
             
     def finalize(self, cxn, context):
-        print 'finalize'
+        print('finalize')
 
 class conflicting_experiment(fft_spectrum):
     
@@ -31,7 +31,7 @@ class crashing_example(fft_spectrum):
     name = 'crashing_example'
 
     def initialize(self, cxn, context, ident):
-        print 'in initialize', self.name(), ident
+        print('in initialize', self.name(), ident)
         raise Exception ("In a case of a crash, real message would follow")
 
 if __name__ == '__main__':

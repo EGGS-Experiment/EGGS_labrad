@@ -53,7 +53,7 @@ class experiment(experiment_info):
             self._finalize(self.cxn, self.context)
         except Exception as e:
             reason = traceback.format_exc()
-            print reason
+            print(reason)
             if hasattr(self, 'sc'):
                 self.sc.error_finish_confirmed(self.ident, reason)
         finally:
@@ -81,7 +81,7 @@ class experiment(experiment_info):
             try:
                 value = self.pv.get_parameter(collection, parameter_name)
             except Exception as e:
-                print e
+                print(e)
                 message = "In {}: Parameter {} not found among Parameter Vault parameters"
                 raise Exception (message.format(self.name, (collection, parameter_name)))
             else:

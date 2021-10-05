@@ -1,8 +1,8 @@
 import sys
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from lakeshore_gui import Ui_notepad
 from twisted.internet.defer import inlineCallbacks, returnValue
-from EGGs_Control.lib.clients.lakeshore_client import LAKESHORE_GUI
+from EGGS_labrad.lib.clients.lakeshore_client import LAKESHORE_GUI
 
 class LAKESHORE_CLIENT(LAKESHORE_GUI):
     def __init__(self, parent = None):

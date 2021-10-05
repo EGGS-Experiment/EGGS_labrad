@@ -17,10 +17,10 @@
    <widget class="PlotWidget" name="graphWidget" native="true">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>120</y>
-      <width>120</width>
-      <height>80</height>
+      <x>129</x>
+      <y>30</y>
+      <width>601</width>
+      <height>371</height>
      </rect>
     </property>
    </widget>
@@ -31,7 +31,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>24</height>
     </rect>
    </property>
   </widget>
