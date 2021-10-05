@@ -41,7 +41,7 @@ class NIOPS03Server(SerialDeviceServer):
     def initServer( self ):
         # if not self.regKey or not self.serNode: raise SerialDeviceError( 'Must define regKey and serNode attributes' )
         # port = yield self.getPortFromReg( self.regKey )
-        port = 'COM25'
+        port = 'COM3'
         self.port = port
         self.timeout = TIMEOUT
         try:

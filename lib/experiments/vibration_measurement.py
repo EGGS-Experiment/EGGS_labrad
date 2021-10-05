@@ -32,19 +32,22 @@ class vibration_measurement(experiment):
         #self.grapher = self.cxn.real_simple_grapher
 
         #device servers
-        #self.oscope = self.cxn.oscilloscope_server
-        #self.tempcontroller = self.cxn.lakeshore336server
-        #self.pump = self.cxn.twistorr74server
+        self.oscope = self.cxn.oscilloscope_server
+        self.oscope.select_device()
+        self.tempcontroller = self.cxn.lakeshore336server
+        self.pump = self.cxn.twistorr74server
 
         #set scannable parameters
         self.time_interval = self.p.VibrationMeasurement.dt
-        self.time_interval = 1.0
+        self.time_interval = 5.0
 
         #convert parameter to labrad type
         #welp, todo
 
         #dataset context
         self.c_temp = self.cxn.context()
+        self.c_press = self.cxn.context()
+        self.c_oscope = self.cxn.context()
 
         #set up data vault
         self.set_up_datavault()
@@ -59,13 +62,14 @@ class vibration_measurement(experiment):
             if (time.time() - prevtime) <= self.time_interval:
                 continue
 
-            # pressure = self.pump.read_pressure()
-            #tempK = self.tempcontroller.read_temperature('0')
-            tempK = np.array([0.1,0.2,0.3,0.4],dtype=float)
-            # trace = self.oscope.get_trace('1')
+            pressure = self.pump.read_pressure()
+            tempK = self.tempcontroller.read_temperature('0')
+            trace = self.oscope.get_trace(1)
             elapsedtime = time.time() - starttime
             try:
                 self.dv.add(elapsedtime, tempK[0], tempK[1], tempK[2], tempK[3], context = self.c_temp)
+                self.dv.add(elapsedtime, pressure, context=self.c_press)
+                self.dv.add(trace[0], trace[1], context = self.c_oscope)
             except:
                 pass
 
@@ -87,11 +91,16 @@ class vibration_measurement(experiment):
         trunk2 = self.name + '_' + hour + ':' + minute
 
         #create datasets
+            #temp controller
         self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_temp)
         dataset_temp = self.dv.new('Lakeshore 336 Temperature Controller',[('time', 't')], [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'), \
                                                                                              ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')] , context = self.c_temp)
-        #dataset_pressure = self.dv.new('TwisTorr 74 Pressure Controller',[('time', 't')], [('Pump Pressure', 'Pressure', 'mTorr')], context = self.c_result)
-        #dataset_oscope = self.dv.new('Rigol DS1104z Oscilloscope',[('time', 't')], [('Scope Trace', 'Scope Trace', '1')], context = self.c_result)
+            #pressure
+        self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_press)
+        dataset_pressure = self.dv.new('TwisTorr 74 Pressure Controller',[('time', 't')], [('Pump Pressure', 'Pressure', 'mTorr')], context = self.c_press)
+            #oscope
+        self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_oscope)
+        dataset_oscope = self.dv.new('Rigol DS1104z Oscilloscope',[('time', 't')], [('Scope Trace', 'Scope Trace', '1')], context = self.c_oscope)
 
         #add parameters to data vault
         for parameter in self.p:

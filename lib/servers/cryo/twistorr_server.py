@@ -55,7 +55,7 @@ class TwisTorr74Server(SerialDeviceServer):
     def initServer( self ):
         # if not self.regKey or not self.serNode: raise SerialDeviceError( 'Must define regKey and serNode attributes' )
         # port = yield self.getPortFromReg( self.regKey )
-        self.port = 'COM32'
+        self.port = 'COM5'
         try:
             serStr = yield self.findSerial( self.serNode )
             print(serStr)
