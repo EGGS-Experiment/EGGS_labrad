@@ -60,14 +60,14 @@ class TwisTorr74Server(SerialDeviceServer):
             serStr = yield self.findSerial( self.serNode )
             print(serStr)
             self.initSerial( serStr, self.port, baudrate = BAUDRATE, timeout = self.timeout)
-        except SerialConnectionError, e:
+        except SerialConnectionError as e:
             self.ser = None
             if e.code == 0:
-                print 'Could not find serial server for node: %s' % self.serNode
-                print 'Please start correct serial server'
+                print('Could not find serial server for node: %s' % self.serNode)
+                print('Please start correct serial server')
             elif e.code == 1:
-                print 'Error opening serial connection'
-                print 'Check set up and restart serial server'
+                print('Error opening serial connection')
+                print('Check set up and restart serial server')
             else: raise
 
     # READ PRESSURE

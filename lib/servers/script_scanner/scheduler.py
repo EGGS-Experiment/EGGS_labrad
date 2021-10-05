@@ -200,7 +200,7 @@ class scheduler(object):
         return scan_id
 
     def remove_from_running(self, deferred_result, running_id):
-        print 'removing from running now', running_id
+        print('removing from running now', running_id)
         del self.running[running_id]
 
     def remove_if_external(self, running_id):
