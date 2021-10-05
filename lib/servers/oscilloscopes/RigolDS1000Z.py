@@ -207,12 +207,19 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         #returns (array voltage in volts, array time in seconds)
         #removed start and stop: start = 'i', stop = 'i' (,start=1, stop=10000)
 
+        #first need to stop to record
+        yield self.write(':WAV:STOP')
+
         #set trace parameters
         yield self.write(':WAV:SOUR CHAN%d' %channel)
-        #trace mode (default normal since easiest right now)
-        yield self.write(':WAV:MODE NORM')
-        #return format (default byte since easiest right now)
+        #trace mode
+        yield self.write(':WAV:MODE RAW')
+        #return format (default byte)
         yield self.write(':WAV:FORM BYTE')
+        #start point position
+        yield self.write(':WAV:STAR 1')
+        #stop point position
+        yield self.write(':WAV:STOP 120000')
 
         #transfer waveform preamble
         preamble = yield self.query(':WAV:PRE?')
@@ -221,6 +228,9 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         #get waveform data
         data = yield self.query(':WAV:DATA?')
 
+        #start oscope back up
+        yield self.write(':RUN')
+
         #parse waveform preamble
         points, xincrement, xorigin, xreference, yincrement, yorigin, yreference = _parsePreamble(preamble)
 
@@ -228,8 +238,8 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         trace = _parseByteData(data)
 
         #timeUnitScaler = 1 #Value(1, timeUnits)['s']
-        voltUnitScaler = 1000.0 * mV
-        timeUnitScaler = 1.0e9 * ns
+        voltUnitScaler = 1.0# * mV
+        timeUnitScaler = 1.0# * us
 
         #convert data to volts
         traceVolts = (trace - -yorigin - yreference) * yincrement * voltUnitScaler
@@ -294,7 +304,7 @@ def _parsePreamble(preamble):
     yincrement = float(fields[7])
     yorigin = float(fields[8])
     yreference = int(fields[9])
-    print(yincrement, yorigin, yreference)
+    #print(yincrement, yorigin, yreference)
     return (points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)
 
 def _parseByteData(data):
@@ -304,4 +314,6 @@ def _parseByteData(data):
     #get tmc header in #NXXXXXXXXX format
     tmc_N = int(data[1])
     tmc_length = int(data[2: 2 + tmc_N])
+    print("tmc_N: " + str(tmc_N))
+    print("tmc_length: " + str(tmc_length))
     return np.frombuffer(data[2 + tmc_N :], dtype=np.int8)

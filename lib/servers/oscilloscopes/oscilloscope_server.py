@@ -232,7 +232,7 @@ class OscilloscopeServer(GPIBManagedServer):
         return self.selectedDevice(c).horiz_scale(scale)
 
     #ACQUISITION
-    @setting(201, channel='i', returns='*v[s]*v[V]')
+    @setting(201, channel='i', returns='(*v*v)')
     def get_trace(self, c, channel):
         """Get a trace for a single channel.
 
@@ -240,8 +240,7 @@ class OscilloscopeServer(GPIBManagedServer):
             channel: The channel for which we want to get the trace.
 
         Returns:
-            (ValueArray[s]): Time axis.
-            (ValueArray[V]): Voltages.
+            Tuple of ((ValueArray[s]) Time axis, (ValueArray[V]) Voltages).
         """
         return self.selectedDevice(c).get_trace(channel)
 
