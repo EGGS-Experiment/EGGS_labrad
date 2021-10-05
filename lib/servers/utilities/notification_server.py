@@ -17,17 +17,13 @@ timeout = 5
 """
 from labrad.server import LabradServer, Signal
 from twisted.internet.defer import returnValue
-from labrad.support import getNodeName
 import time
 
 SERVERNAME = 'NotificationServer'
 
 class NotificationServer(LabradServer):
-    name = 'SLSServer'
-    regKey = 'SLSServer'
-    port = None
-    serNode = getNodeName()
-    timeout = T.Value(TIMEOUT, 's')
+    name = 'NotificationServer'
+    regKey = 'NotificationServer'
 
     @inlineCallbacks
     def initServer(self):

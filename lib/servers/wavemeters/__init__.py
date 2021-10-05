@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = CameraServer
+name = WavemeterServer
 version = 1.0
 description =
-instancename = CameraServer
+instancename = WavemeterServer
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -22,10 +22,8 @@ import time
 
 SERVERNAME = 'CameraServer'
 
-class CameraServer(LabradServer):
-    name = 'CameraServer'
-    regKey = 'CameraServer'
-    timeout = T.Value(TIMEOUT, 's')
+class WavemeterServer(LabradServer):
+    name = 'WavemeterServer'
 
     @inlineCallbacks
     def initServer(self):
@@ -41,4 +39,4 @@ class CameraServer(LabradServer):
 
 if __name__ == "__main__":
     from labrad import util
-    util.runServer(CameraServer())
+    util.runServer(WavemeterServer())

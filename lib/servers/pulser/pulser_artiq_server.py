@@ -23,6 +23,11 @@ from sequence import Sequence
 import numpy as np
 
 from sipyco.pc_rpc import Client
+from devices import Devices
+
+SERVERNAME = 'Pulser_artiq'
+HOST = "::1"
+PORT = 3249
 
 class Pulser_artiq(LabradServer):
     name = 'Pulser_artiq'
@@ -31,7 +36,8 @@ class Pulser_artiq(LabradServer):
     onSwitch = Signal(611051, 'signal: switch toggled', '(ss)')
 
     def initServer(self):
-        self.api = api()
+        self.api = Client(HOST, PORT, )
+
         self.channelDict = hardwareConfiguration.channelDict
         self.collectionTime = hardwareConfiguration.collectionTime
         self.collectionMode = hardwareConfiguration.collectionMode
@@ -44,12 +50,13 @@ class Pulser_artiq(LabradServer):
         self.sequenceTimeRange = hardwareConfiguration.sequenceTimeRange
         self.haveSecondPMT = hardwareConfiguration.secondPMT
         self.haveDAC = hardwareConfiguration.DAC
+
         self.inCommunication = DeferredLock()
         self.clear_next_pmt_counts = 0
+
         LineTrigger.initialize(self)
         yield self.initializeRemote()
         self.initializeSettings()
-        yield self.initializeDDS()
         self.listeners = set()
 
         self.programmed_sequence = None
@@ -213,10 +220,10 @@ class Pulser_artiq(LabradServer):
     def humanReadableTTL(self, c, getProgrammed = None):
         """
         Args:
-        getProgrammed (bool): False/None(default) to get the sequence added by current context,
+            getProgrammed (bool): False/None(default) to get the sequence added by current context,
                               True to get the last programmed sequence
         Returns:
-        a readable form of TTL sequence
+            a readable form of TTL sequence
         """
         sequence = c.get('sequence')
         if getProgrammed:
@@ -229,10 +236,10 @@ class Pulser_artiq(LabradServer):
     def humanReadableDDS(self, c, getProgrammed = None):
         """
         Args:
-        getProgrammed (bool): False/None(default) to get the sequence added by current context,
+            getProgrammed (bool): False/None(default) to get the sequence added by current context,
                               True to get the last programmed sequence
         Returns:
-        a readable form of DDS sequence
+            a readable form of DDS sequence
         """
         sequence = c.get('sequence')
         if getProgrammed:
@@ -257,14 +264,17 @@ class Pulser_artiq(LabradServer):
         Switches the given channel into the manual mode, by default will go into the last remembered state but can also
         pass the argument which state it should go into.
         """
-        if channelName not in self.channelDict.keys(): raise Exception("Incorrect Channel")
+        if channelName not in self.channelDict.keys():
+            raise Exception("Incorrect Channel")
         channel = self.channelDict[channelName]
         channelNumber = channel.channelnumber
         channel.ismanual = True
+
         if state is not None:
             channel.manualstate = state
         else:
             state = channel.manualstate
+
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.setManual, channelNumber, self.cnot(channel.manualinv, state))
         self.inCommunication.release()
@@ -319,7 +329,9 @@ class Pulser_artiq(LabradServer):
 
     @setting(17, 'Repeatitions Completed', returns = 'w')
     def repeatitionsCompleted(self, c):
-        """Check how many repeatitions have been completed in for the infinite or number modes"""
+        """
+        Check how many repetitions have been completed in for the infinite or number modes
+        """
         returnValue(self.num)
 
     #PMT functions

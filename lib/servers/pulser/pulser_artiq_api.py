@@ -1,4 +1,5 @@
 from artiq.experiment import *
+from devices import Devices
 from labrad import util
 from sipyco.pc_rpc import Server
 
@@ -8,7 +9,6 @@ class api(EnvExperiment):
     kernel_invariants = {}
 
     #ARTIQ experiment functions
-
     def build(self):
         #get core
         self.setattr_device("core")
@@ -48,7 +48,6 @@ class api(EnvExperiment):
         #todo: implement server
 
     #Pulse sequencer functions
-
     @kernel(flags = {"fast-math"})
     def programSequence(self, sequence):
         #TODO: program dds
@@ -138,11 +137,6 @@ class api(EnvExperiment):
         Get the readout count data.
         '''
 
-    def howManySequencesDone(self):
-        '''
-        Get the number of iteratione executed.
-        '''
-
     def setPMTCountRate(self, time):
         '''
 
@@ -188,6 +182,9 @@ class api(EnvExperiment):
         '''
         force reprogram of all dds chips during initialization
         '''
+        for device in self.dds_list + urukul_list:
+            device.init()
+        #todo: check if this actually works
 
     def enableLineTrigger(self, delay = 0):
         '''
