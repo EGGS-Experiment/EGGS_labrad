@@ -219,7 +219,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         #start point position
         yield self.write(':WAV:STAR 1')
         #stop point position
-        yield self.write(':WAV:STOP 120000')
+        yield self.write(':WAV:STOP 12000')
 
         #transfer waveform preamble
         preamble = yield self.query(':WAV:PRE?')
@@ -242,7 +242,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         timeUnitScaler = 1.0# * us
 
         #convert data to volts
-        traceVolts = (trace - -yorigin - yreference) * yincrement * voltUnitScaler
+        traceVolts = (trace - yorigin - yreference) * yincrement * voltUnitScaler
         timeAxis = (np.arange(points) * xincrement + xorigin) * timeUnitScaler
         returnValue((timeAxis, traceVolts))
 
@@ -316,4 +316,4 @@ def _parseByteData(data):
     tmc_length = int(data[2: 2 + tmc_N])
     print("tmc_N: " + str(tmc_N))
     print("tmc_length: " + str(tmc_length))
-    return np.frombuffer(data[2 + tmc_N :], dtype=np.int8)
+    return np.frombuffer(data[2 + tmc_N :], dtype=np.uint8)

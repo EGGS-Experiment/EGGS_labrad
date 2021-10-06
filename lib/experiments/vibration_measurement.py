@@ -39,7 +39,7 @@ class vibration_measurement(experiment):
 
         #set scannable parameters
         self.time_interval = self.p.VibrationMeasurement.dt
-        self.time_interval = 5.0
+        self.time_interval = 2.0
 
         #convert parameter to labrad type
         #welp, todo
@@ -65,13 +65,14 @@ class vibration_measurement(experiment):
             pressure = self.pump.read_pressure()
             tempK = self.tempcontroller.read_temperature('0')
             trace = self.oscope.get_trace(1)
+            trace = np.array([trace[0], trace[1]]).transpose()
             elapsedtime = time.time() - starttime
             try:
                 self.dv.add(elapsedtime, tempK[0], tempK[1], tempK[2], tempK[3], context = self.c_temp)
                 self.dv.add(elapsedtime, pressure, context=self.c_press)
-                self.dv.add(trace[0], trace[1], context = self.c_oscope)
-            except:
-                pass
+                self.dv.add_ex(trace, context = self.c_oscope)
+            except Exception as e:
+                print(e)
 
             crt_time = time.time()
 
