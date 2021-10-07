@@ -66,7 +66,6 @@ class Lakeshore336Server(SerialDeviceServer):
                 print('Check set up and restart serial server')
             else:
                 raise Exception('Unknown connection error')
-        #todo: make sure in kelvin
 
     @inlineCallbacks
     def _check_errors(self, input, valid_inputs):
@@ -221,6 +220,38 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = np.array(resp.split(','), dtype=float)
         returnValue(resp)
+
+    @setting(224, 'Set Heater Setpoint', output_channel = 'i', setpoint = 'v', returns = 'v')
+    def heater_setpoint(self, c, output_channel, setpoint = None):
+        """
+        Set or query heater setpoint.
+        Args:
+            output_channel  (int): the heater channel
+            setpoint        (float): the setpoint
+        Returns:
+                            (float): the setpoint
+        """
+        chString = 'SETP'
+        if power is not None:
+            output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint)+ TERMINATOR
+            yield self.write(output_msg)
+
+        #issue query
+        resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
+        returnValue(float(resp))
+
+    @setting(224, 'Get Heater Output', output_channel = 'i', returns = 'v')
+    def heater_output(self, c, output_channel):
+        """
+        Get the heater output in % of max. current
+        Args:
+            output_channel  (int): the heater channel
+        Returns:
+                            (float): the heater output in %
+        """
+
+        resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
+        returnValue(float(resp))
 
 if __name__ == '__main__':
     from labrad import util
