@@ -70,7 +70,7 @@ class queued_list(QtWidgets.QTableWidget):
         self.on_cancel.emit(ident)
 
     def setupLayout(self):
-        self.horizontalHeader().setResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.setColumnCount(1)
         self.setRowCount(1)
         self.horizontalHeader().hide()

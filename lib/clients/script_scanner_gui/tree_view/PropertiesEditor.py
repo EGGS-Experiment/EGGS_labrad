@@ -1,16 +1,16 @@
 from PyQt5 import uic
-from Data import ParameterNode, ScanNode, BoolNode, StringNode, SelectionSimpleNode, LineSelectionNode, EventNode
-from Data import SidebandElectorNode, DurationBandwidthNode, SpectrumSensitivityNode
-from editors.parameter_editor import ParameterEditor
-from editors.scan_editor import ScanEditor
-from editors.bool_editor import BoolEditor
-from editors.string_editor import StringEditor
-from editors.selection_editor import SelectionSimpleEditor
-from editors.line_selection_editor import line_selection_editor
-from editors.sideband_selection_editor import sideband_selection_editor
-from editors.duration_bandwidth_editor import DurationBandwidthEditor
-from editors.spectrum_sensitivity_editor import spectrum_sensitivity_editor
-from editors.event_editor import EventEditor
+from .Data import ParameterNode, ScanNode, BoolNode, StringNode, SelectionSimpleNode, LineSelectionNode, EventNode
+from .Data import SidebandElectorNode, DurationBandwidthNode, SpectrumSensitivityNode
+from .editors.parameter_editor import ParameterEditor
+from .editors.scan_editor import ScanEditor
+from .editors.bool_editor import BoolEditor
+from .editors.string_editor import StringEditor
+from .editors.selection_editor import SelectionSimpleEditor
+from .editors.line_selection_editor import line_selection_editor
+from .editors.sideband_selection_editor import sideband_selection_editor
+from .editors.duration_bandwidth_editor import DurationBandwidthEditor
+from .editors.spectrum_sensitivity_editor import spectrum_sensitivity_editor
+from .editors.event_editor import EventEditor
 
 import os
 basepath =  os.path.dirname(__file__)

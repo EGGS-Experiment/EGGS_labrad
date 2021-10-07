@@ -3,7 +3,6 @@ from numpy import linspace
 import os
 
 basepath =  os.path.dirname(__file__)
-#todo: fix
 path = os.path.join(basepath,"..","..","Views", "ScanEditor.ui")
 scanBase, scanForm = uic.loadUiType(path)
 
@@ -52,11 +51,9 @@ class scan_delegate(QtWidgets.QAbstractItemDelegate):
             value = editor.text()
         else:
             value = editor.value()
-            #todo: fix
         model.setData(index, QtCore.QVariant(value))
 
 class ScanWidget(scanBase, scanForm):
-    #todo:fix
     on_new_scan = QtCore.pyqtSignal(float,float,int)
     
     def __init__(self, parent=None):

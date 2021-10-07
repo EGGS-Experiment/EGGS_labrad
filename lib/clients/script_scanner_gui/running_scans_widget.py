@@ -27,7 +27,6 @@ class fixed_width_button(QtWidgets.QPushButton):
 
 
 class script_status_widget(QtWidgets.QWidget):
-    #todo: change signals
     on_pause = QtCore.pyqtSignal()
     on_continue = QtCore.pyqtSignal()
     on_stop = QtCore.pyqtSignal()
@@ -96,7 +95,6 @@ class script_status_widget(QtWidgets.QWidget):
 
 
 class running_scans_list(QtWidgets.QTableWidget):
-    #todo: change signals
     on_pause = QtCore.pyqtSignal(int, bool)
     on_stop = QtCore.pyqtSignal(int)
 
@@ -124,7 +122,7 @@ class running_scans_list(QtWidgets.QTableWidget):
         self.on_pause.emit(ident, False)
 
     def setupLayout(self):
-        self.horizontalHeader().setResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.setColumnCount(1)
         self.horizontalHeader().hide()
         self.verticalHeader().hide()

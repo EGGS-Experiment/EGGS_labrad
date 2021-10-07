@@ -41,10 +41,15 @@ class script_scanner_gui(QtWidgets.QWidget):
             raise
             print('script_scanner_gui: servers not available')
             self.disable(True)
-        yield self.cxn.add_on_connect('ScriptScanner',self.reinitialize_scriptscanner)
-        yield self.cxn.add_on_connect('ParameterVault',self.reinitialize_parameter_vault)
-        yield self.cxn.add_on_disconnect('ScriptScanner',self.disable)
-        yield self.cxn.add_on_disconnect('ParameterVault',self.disable)
+        yield self.cxn.add_on_connect('Script Scanner',self.reinitialize_scriptscanner)
+        yield self.cxn.add_on_connect('Parameter Vault',self.reinitialize_parameter_vault)
+        yield self.cxn.add_on_disconnect('Script Scanner',self.disable)
+        yield self.cxn.add_on_disconnect('Parameter Vault',self.disable)
+        try:
+            yield self.cxn.get_server('Parameter Vault')
+        except Exception as e:
+            print(e)
+
 
     @inlineCallbacks
     def reinitialize_scriptscanner(self):
@@ -52,7 +57,7 @@ class script_scanner_gui(QtWidgets.QWidget):
         yield self.populateExperiments()
         yield self.setupListenersScriptScanner()
         try:
-            yield self.cxn.get_server('ScriptScanner')
+            yield self.cxn.get_server('Script Scanner')
             self.disable(False)
         except Exception as e:
             print(e)
@@ -63,7 +68,7 @@ class script_scanner_gui(QtWidgets.QWidget):
         yield self.populateParameters()
         yield self.setupListenersParameterVault()
         try:
-            yield self.cxn.get_server('ParameterVault')
+            yield self.cxn.get_server('Parameter Vault')
             self.disable(False)
         except Exception as e:
             print(e)
@@ -78,7 +83,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def populateExperiments(self):
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         available = yield sc.get_available_scripts(context=self.context)
         queued = yield sc.get_queue(context=self.context)
         running = yield sc.get_running(context=self.context)
@@ -94,7 +99,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def populateParameters(self):
-        pv = yield self.cxn.get_server('ParameterVault')
+        pv = yield self.cxn.get_server('Parameter Vault')
         collections = yield pv.get_collections(context=self.context)
         for collection in collections:
             self.ParametersEditor.add_collection_node(collection)
@@ -106,7 +111,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def setupListenersScriptScanner(self):
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         # connect server signals
         yield sc.signal_on_queued_new_script(self.SIGNALID,
                                              context=self.context)
@@ -164,7 +169,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def setupListenersParameterVault(self):
-        pv = yield self.cxn.get_server('ParameterVault')
+        pv = yield self.cxn.get_server('Parameter Vault')
         yield pv.signal__parameter_change(self.SIGNALID + 10,
                                           context=self.context)
         if not self.subscribedParametersVault:
@@ -176,7 +181,7 @@ class script_scanner_gui(QtWidgets.QWidget):
     @inlineCallbacks
     def on_pv_parameter_change(self, signal, info):
         collection, name = info
-        pv = yield self.cxn.get_server('ParameterVault')
+        pv = yield self.cxn.get_server('Parameter Vault')
         full_info = yield pv.get_parameter(collection, name, False,
                                            context=self.context)
         self.ParametersEditor.set_parameter(collection, name, full_info)
@@ -242,7 +247,7 @@ class script_scanner_gui(QtWidgets.QWidget):
         collection, parameter_name = parameter
         steps = int(steps)
         units = str(units)
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         try:
             yield sc.new_script_scan(scan_script, measure_script, collection,
                                      parameter_name, minim, maxim, steps,
@@ -252,7 +257,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def on_experiment_selected(self, selected_experiment):
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         selected_experiment = str(selected_experiment)
         if selected_experiment:
             try:
@@ -267,7 +272,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def on_new_parameter(self, path, value):
-        pv = yield self.cxn.get_server('ParameterVault')
+        pv = yield self.cxn.get_server('Parameter Vault')
         try:
             yield pv.set_parameter(path[0], path[1], value, True,
                                    context=self.context)
@@ -278,7 +283,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def running_stop(self, ident):
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         ident = int(ident)
         try:
             yield sc.stop_script(ident)
@@ -289,7 +294,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def running_pause(self, ident, should_pause):
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         ident = int(ident)
         try:
             yield sc.pause_script(ident, should_pause)
@@ -300,7 +305,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def scheduled_duration(self, ident, duration):
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         ident = int(ident)
         duration = self.WithUnit(float(duration), 's')
         try:
@@ -311,7 +316,7 @@ class script_scanner_gui(QtWidgets.QWidget):
     @inlineCallbacks
     def scheduled_cancel(self, ident):
         ident = int(ident)
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         try:
             yield sc.cancel_scheduled_script(ident)
         except self.Error as e:
@@ -321,7 +326,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def schedule_script(self, name, duration, priority, start_now):
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         name = str(name)
         priority = str(priority)
         duration = self.WithUnit(duration, 's')
@@ -334,7 +339,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def repeat_script(self, name, repeatitions, save):
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         name = str(name)
         try:
             yield sc.new_script_repeat(name, repeatitions, save)
@@ -345,7 +350,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def on_cancel_queued(self, ident):
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         ident = int(ident)
         try:
             yield sc.remove_queued_script(ident, context=self.context)
@@ -356,8 +361,8 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     @inlineCallbacks
     def refresh_script(self, ident):
-        sc = yield self.cxn.get_server('ScriptScanner')
-        pv = yield self.cxn.get_server('ParameterVault')
+        sc = yield self.cxn.get_server('Script Scanner')
+        pv = yield self.cxn.get_server('Parameter Vault')
         ident = int(ident)
         sc.reload_available_scripts()
         pv.reload_parameters()
@@ -370,7 +375,7 @@ class script_scanner_gui(QtWidgets.QWidget):
         """
         The "Run" button calls this function.
         """
-        sc = yield self.cxn.get_server('ScriptScanner')
+        sc = yield self.cxn.get_server('Script Scanner')
         script = str(script)
         try:
             yield sc.new_experiment(script, context=self.context)

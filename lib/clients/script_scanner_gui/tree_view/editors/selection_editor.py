@@ -1,4 +1,4 @@
-from PyQt4 import QtWidgets, QtCore, uic
+from PyQt5 import QtWidgets, QtCore, uic
 import os
 
 basepath =  os.path.dirname(__file__)

@@ -1,7 +1,7 @@
 from PyQt5 import QtCore
-from Data import ParameterNode, CollectionNode, ScanNode, BoolNode
-from Data import StringNode, SelectionSimpleNode, LineSelectionNode, SidebandElectorNode, EventNode
-from Data import DurationBandwidthNode, SpectrumSensitivityNode
+from .Data import ParameterNode, CollectionNode, ScanNode, BoolNode
+from .Data import StringNode, SelectionSimpleNode, LineSelectionNode, SidebandElectorNode, EventNode
+from .Data import DurationBandwidthNode, SpectrumSensitivityNode
 
 class ParametersTreeModel(QtCore.QAbstractItemModel):
     

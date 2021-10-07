@@ -1,8 +1,8 @@
 from PyQt5 import QtCore, uic
-from Data import Node
-from FilterModel import FilterModel
-from Models import ParametersTreeModel
-from PropertiesEditor import PropertiesEditor
+from .Data import Node
+from .FilterModel import FilterModel
+from .Models import ParametersTreeModel
+from .PropertiesEditor import PropertiesEditor
 import os
 
 basepath = os.path.dirname(__file__)

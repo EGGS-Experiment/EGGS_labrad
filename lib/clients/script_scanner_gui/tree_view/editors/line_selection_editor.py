@@ -2,7 +2,6 @@ from PyQt5 import QtWidgets, QtGui, QtCore, uic
 import os
 
 basepath =  os.path.dirname(__file__)
-#todo: fix
 path = os.path.join(basepath,"..","..","Views", "SelectionEditor.ui")
 base, form = uic.loadUiType(path)
 
@@ -29,7 +28,6 @@ class line_selection_delegate(QtWidgets.QAbstractItemDelegate):
     def setModelData(self, editor, model, index):
         if index.column() == 3:
             data = self.parent.uiValue.itemData(self.parent.uiValue.currentIndex() )
-            #todo: fix
             model.setData(index, QtCore.QVariant(data.toString()))
 
 class line_selection_editor(base, form):

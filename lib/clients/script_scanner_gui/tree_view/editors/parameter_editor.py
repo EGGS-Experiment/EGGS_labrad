@@ -2,7 +2,6 @@ from PyQt5 import QtWidgets, QtCore, uic
 import os
 
 basepath =  os.path.dirname(__file__)
-#todo: fix
 path = os.path.join(basepath,"..","..","Views", "ParameterEditor.ui")
 paramBase, paramForm = uic.loadUiType(path)
 

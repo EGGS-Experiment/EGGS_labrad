@@ -3,7 +3,6 @@ import numpy as np
 import os
 
 basepath =  os.path.dirname(__file__)
-#todo: change this
 path = os.path.join(basepath,"..","..","Views", "DurationBandwidthEditor.ui")
 base, form = uic.loadUiType(path)
 

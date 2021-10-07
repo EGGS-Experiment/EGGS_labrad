@@ -1,8 +1,7 @@
-from PyQt5 import QtGui, uic
+from PyQt5 import QtWidgets, uic
 import os
 
 basepath =  os.path.dirname(__file__)
-#todo: fix
 path = os.path.join(basepath,"..","..","Views", "EventEditor.ui")
 base, form = uic.loadUiType(path)
 

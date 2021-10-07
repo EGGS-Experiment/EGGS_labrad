@@ -4,10 +4,9 @@ import os
 
 basepath = os.path.dirname(__file__)
 path = os.path.join(basepath, "Views", "selectScan.ui")
-uic.loadUi(path)
+base, form=uic.loadUiType(path)
 
-
-class dialog_ui(base, ):
+class dialog_ui(base, form):
     def __init__(self, parent=None):
         super(dialog_ui, self).__init__(parent)
         self.setupUi(self)
@@ -16,7 +15,6 @@ class dialog_ui(base, ):
 class scan_dialog(QtWidgets.QDialog, dialog_ui):
     def __init__(self, selected, experiment_list, parameter_info, parent=None):
         QtWidgets.QDialog.__init__(self)
-        #todo: change
         dialog_ui.__init__(self, parent)
         self.setWindowTitle('Scan')
         self.parameter_info = {}
@@ -236,7 +234,7 @@ class experiment_selector_widget(QtWidgets.QWidget):
     on_run = QtCore.pyqtSignal(str)
     on_repeat = QtCore.pyqtSignal(str, int, bool)
     on_schedule = QtCore.pyqtSignal(str, float, str, bool)
-    on_experiment_selected = QtCore.pyqtSignal(str)
+    on_experiment_selected = QtCore.pyqtSignal(int)
     on_scan = QtCore.pyqtSignal(str, str, tuple, float, float, int, str)
 
     def __init__(self, reactor, parent, font=None):
@@ -252,7 +250,7 @@ class experiment_selector_widget(QtWidgets.QWidget):
 
     def setupLayout(self):
         layout = QtWidgets.QGridLayout()
-        label = QtGui.QLabel("Experiment", font=self.font)
+        label = QtWidgets.QLabel("Experiment", font=self.font)
         self.dropdown = QtWidgets.QComboBox()
         self.dropdown.setMaxVisibleItems(30)
         self.dropdown.addItem('')  # add empty item for no selection state
@@ -291,8 +289,9 @@ class experiment_selector_widget(QtWidgets.QWidget):
         self.repeat_button.pressed.connect(self.on_repeat_button)
         self.schedule_button.pressed.connect(self.on_schedule_button)
         self.scan_button.pressed.connect(self.on_scan_button)
-        self.dropdown.currentIndexChanged[QtCore.QString].connect(self.on_experiment_selected)
-        self.dropdown.currentIndexChanged[QtCore.QString].connect(self.check_button_disable)
+        #todo: fix, should it be signal emit?
+        self.dropdown.currentIndexChanged.connect(self.on_experiment_selected)
+        self.dropdown.currentIndexChanged.connect(self.check_button_disable)
 
     def check_button_disable(self, selection):
         """

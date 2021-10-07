@@ -58,7 +58,6 @@ class scheduled_widget(QtWidgets.QWidget):
 
 
 class scheduled_list(QtWidgets.QTableWidget):
-    #todo: signal
     on_cancel = QtCore.pyqtSignal(int)
     on_new_duration = QtCore.pyqtSignal(int, float)
 
@@ -86,7 +85,7 @@ class scheduled_list(QtWidgets.QTableWidget):
         self.on_new_duration.emit(ident, duration)
 
     def setupLayout(self):
-        self.horizontalHeader().setResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.horizontalHeader().hide()
         self.verticalHeader().hide()
         self.setColumnCount(1)

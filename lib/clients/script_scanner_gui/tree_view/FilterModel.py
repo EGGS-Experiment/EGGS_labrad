@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 
-class FilterModel(QtWidgets.QSortFilterProxyModel):
+class FilterModel(QtCore.QSortFilterProxyModel):
     def __init__(self, parent):
         super(FilterModel, self).__init__(parent)
         #filtering
@@ -14,7 +14,7 @@ class FilterModel(QtWidgets.QSortFilterProxyModel):
     def filterAcceptsRow(self, row, index):
         model_index = self.sourceModel().index(row, 0, index)
         filter_text = str(self.sourceModel().data(model_index, self.filterRole()))
-        contains_filter = filter_text.contains(self.filterRegExp())
+        contains_filter = str(self.filterRegExp()) in filter_text
         in_show_only = self._is_in_show_only(filter_text)
         return contains_filter and in_show_only
     
