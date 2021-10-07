@@ -25,28 +25,36 @@ class lakeshore_gui(QtWidgets.QFrame):
 
         #temperature readout
             #diode 1
+        self.temp1_label = QLabel('Diode 1')
         self.temp1 = QtWidgets.QLabel('Diode 1')
         self.temp1.setFont(QtGui.QFont(shell_font, pointSize=25))
         self.temp1.setAlignment(QtCore.Qt.AlignCenter)
         self.temp1.setStyleSheet('color: blue')
             #diode 2
+        self.temp2_label = QLabel('Diode 2')
         self.temp2 = QtWidgets.QLabel('Diode 2')
         self.temp2.setFont(QtGui.QFont(shell_font, pointSize=25))
         self.temp2.setAlignment(QtCore.Qt.AlignCenter)
         self.temp2.setStyleSheet('color: blue')
             #diode 3
+        self.temp3_label = QLabel('Diode 3')
         self.temp3 = QtWidgets.QLabel('Diode 3')
         self.temp3.setFont(QtGui.QFont(shell_font, pointSize=25))
         self.temp3.setAlignment(QtCore.Qt.AlignCenter)
         self.temp3.setStyleSheet('color: blue')
             #diode 4
+        self.temp4_label = QLabel('Diode 4')
         self.temp4 = QtWidgets.QLabel('Diode 4')
         self.temp4.setFont(QtGui.QFont(shell_font, pointSize=25))
         self.temp4.setAlignment(QtCore.Qt.AlignCenter)
         self.temp4.setStyleSheet('color: blue')
 
-        # Create lock button
-        self.lockSwitch = TextChangingButton(('Locked', 'Unlocked'))
+        #heaters
+        self.lockswitch = TextChangingButton(('Locked', 'Unlocked'))
+
+            #heater 1
+        self.heat1_toggle = TextChangingButton(('On', 'Off'))
+        self.heat1_update = QtWidgets.QPushButton('Update')
 
         # # frequency switch label
         # lockName = QLabel('Lock Frequency')
@@ -143,10 +151,15 @@ class lakeshore_gui(QtWidgets.QFrame):
         # self.clear_lock.setFont(QFont('MS Shell Dlg 2', pointSize=12))
 
         layout.addWidget(chanName, 1, 1)
-        layout.addWidget(self.temp1, 2, 0, 6, 2)
-        layout.addWidget(self.temp2, 7, 0, 6, 2)
-        layout.addWidget(self.temp3, 12, 0, 6, 2)
-        layout.addWidget(self.temp4, 17, 0, 6, 2)
+        layout.addWidget(self.temp1_label, 2, 0)
+        layout.addWidget(self.temp1, 2, 2, 3, 2)
+        layout.addWidget(self.temp2_label, 7, 0)
+        layout.addWidget(self.temp2, 7, 2, 3, 2)
+        layout.addWidget(self.temp3_label, 12, 0)
+        layout.addWidget(self.temp3, 12, 2, 3, 2)
+        layout.addWidget(self.temp4_label, 17, 0)
+        layout.addWidget(self.temp4, 17, 2, 3, 2)
+
         layout.addWidget(self.lockSwitch, 1, 3, 1, 1)
 
         # layout.addWidget(lockName, 10, 0, 1, 1)
@@ -166,13 +179,12 @@ class lakeshore_gui(QtWidgets.QFrame):
         # layout.addWidget(self.clear_lock, 1, 0, 1, 1)
 
         layout.minimumSize()
-
         self.setLayout(layout)
 
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    icon = lakeshore_gui('cooling laser')
+    icon = lakeshore_gui('Lakeshore 336 Temperature Controller')
     icon.show()
     app.exec_()
 
