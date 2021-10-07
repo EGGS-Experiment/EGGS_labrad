@@ -1,11 +1,11 @@
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 from twisted.internet.defer import inlineCallbacks
 from scripting_widget import scripting_widget
 from common.lib.clients.connection import connection
 from tree_view.Controllers import ParametersEditor
 
 
-class script_scanner_gui(QtGui.QWidget):
+class script_scanner_gui(QtWidgets.QWidget):
 
     SIGNALID = 319245
 
@@ -380,7 +380,7 @@ class script_scanner_gui(QtGui.QWidget):
     def setupWidgets(self):
         self.scripting_widget = scripting_widget(self.reactor, self)
         self.ParametersEditor = ParametersEditor(self.reactor)
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.scripting_widget)
         layout.addWidget(self.ParametersEditor)
         self.setLayout(layout)
@@ -388,7 +388,7 @@ class script_scanner_gui(QtGui.QWidget):
 
     def displayError(self, text):
         # runs the message box in a non-blocking method
-        message = QtGui.QMessageBox(self.scripting_widget)
+        message = QtWidgets.QMessageBox(self.scripting_widget)
         message.setText(text)
         message.open()
         message.show()
@@ -398,9 +398,9 @@ class script_scanner_gui(QtGui.QWidget):
         self.reactor.stop()
 
 if __name__ == "__main__":
-    a = QtGui.QApplication(["Script Scanner"])
-    import qt4reactor
-    qt4reactor.install()
+    a = QtWidgets.QApplication(["Script Scanner"])
+    import qt5reactor
+    qt5reactor.install()
     from twisted.internet import reactor
     gui = script_scanner_gui(reactor)
     gui.show()

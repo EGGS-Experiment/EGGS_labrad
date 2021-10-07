@@ -1,4 +1,4 @@
-from PyQt4 import  uic
+from PyQt5 import uic
 from Data import ParameterNode, ScanNode, BoolNode, StringNode, SelectionSimpleNode, LineSelectionNode, EventNode
 from Data import SidebandElectorNode, DurationBandwidthNode, SpectrumSensitivityNode
 from editors.parameter_editor import ParameterEditor

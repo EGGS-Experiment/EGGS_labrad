@@ -1,11 +1,12 @@
-from PyQt4 import QtCore, QtGui, uic
+from PyQt5 import QtWidgets, QtCore, uic
 import os
 
 basepath =  os.path.dirname(__file__)
+#todo: fix
 path = os.path.join(basepath,"..","..","Views", "ParameterEditor.ui")
 paramBase, paramForm = uic.loadUiType(path)
 
-class parameter_delegate(QtGui.QAbstractItemDelegate):
+class parameter_delegate(QtWidgets.QAbstractItemDelegate):
     def __init__(self, parent):
         super(parameter_delegate, self).__init__()
         self.parent = parent
@@ -43,11 +44,11 @@ class parameter_delegate(QtGui.QAbstractItemDelegate):
     def setModelData(self, editor, model, index):
         if index.column() == 6:
             return
-        elif isinstance(editor, QtGui.QLineEdit):
+        elif isinstance(editor, QtWidgets.QLineEdit):
             value = editor.text()
         else:
             value = editor.value()
-        model.setData(index, QtCore.QVariant(value))
+        model.setData(index, QtWidgets.QVariant(value))
 
 class ParameterEditor(paramBase, paramForm):
     
@@ -56,7 +57,7 @@ class ParameterEditor(paramBase, paramForm):
     def __init__(self, parent=None):
         super(ParameterEditor, self).__init__(parent)
         self.setupUi(self)
-        self._dataMapper = QtGui.QDataWidgetMapper(self)
+        self._dataMapper = QtWidgets.QDataWidgetMapper(self)
         self._dataMapper.setItemDelegate(parameter_delegate(self))
         self.connect_signals()
     
@@ -76,7 +77,7 @@ class ParameterEditor(paramBase, paramForm):
         self._dataMapper.addMapping(self.uiMin, 3)
         self._dataMapper.addMapping(self.uiMax, 4)
         self._dataMapper.addMapping(self.uiValue, 5)
-        self._dataMapper.addMapping(QtGui.QWidget(self), 6)
+        self._dataMapper.addMapping(QtWidgets.QWidget(self), 6)
      
     def setSelection(self, current):
         parent = current.parent()
