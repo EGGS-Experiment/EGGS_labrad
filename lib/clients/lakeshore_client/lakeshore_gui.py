@@ -20,7 +20,7 @@ class lakeshore_gui(QtWidgets.QFrame):
 
         shell_font = 'MS Shell Dlg 2'
         chanName = QtWidgets.QLabel(name)
-        chanName.setFont(QtCore.QFont(shell_font, pointSize=16))
+        chanName.setFont(QtGui.QFont(shell_font, pointSize=16))
         chanName.setAlignment(QtCore.Qt.AlignCenter)
 
         #temperature readout
@@ -40,10 +40,10 @@ class lakeshore_gui(QtWidgets.QFrame):
         self.temp3.setAlignment(QtCore.Qt.AlignCenter)
         self.temp3.setStyleSheet('color: blue')
             #diode 4
-        self.wavelength = QtWidgets.QLabel('Diode 4')
-        self.wavelength.setFont(QtGui.QFont(shell_font, pointSize=25))
-        self.wavelength.setAlignment(QtCore.Qt.AlignCenter)
-        self.wavelength.setStyleSheet('color: blue')
+        self.temp4 = QtWidgets.QLabel('Diode 4')
+        self.temp4.setFont(QtGui.QFont(shell_font, pointSize=25))
+        self.temp4.setAlignment(QtCore.Qt.AlignCenter)
+        self.temp4.setStyleSheet('color: blue')
 
         # Create lock button
         self.lockSwitch = TextChangingButton(('Locked', 'Unlocked'))
@@ -143,10 +143,10 @@ class lakeshore_gui(QtWidgets.QFrame):
         # self.clear_lock.setFont(QFont('MS Shell Dlg 2', pointSize=12))
 
         layout.addWidget(chanName, 1, 1)
-        layout.addWidget(self.temp1, 1, 2, 0, 6, 2)
-        layout.addWidget(self.temp2, 2, 2, 0, 6, 2)
-        layout.addWidget(self.temp3, 3, 2, 0, 6, 2)
-        layout.addWidget(self.temp4, 4, 2, 0, 6, 2)
+        layout.addWidget(self.temp1, 2, 0, 6, 2)
+        layout.addWidget(self.temp2, 7, 0, 6, 2)
+        layout.addWidget(self.temp3, 12, 0, 6, 2)
+        layout.addWidget(self.temp4, 17, 0, 6, 2)
         layout.addWidget(self.lockSwitch, 1, 3, 1, 1)
 
         # layout.addWidget(lockName, 10, 0, 1, 1)
@@ -171,8 +171,8 @@ class lakeshore_gui(QtWidgets.QFrame):
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    icon = software_laser_lock_channel('cooling laser')
+    app = QtWidgets.QApplication(sys.argv)
+    icon = lakeshore_gui('cooling laser')
     icon.show()
     app.exec_()
 
