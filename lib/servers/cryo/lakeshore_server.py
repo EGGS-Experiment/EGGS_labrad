@@ -16,10 +16,9 @@ timeout = 20
 ### END NODE INFO
 """
 
-from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
-from labrad.server import setting
+from labrad.server import setting, Signal
 from labrad.support import getNodeName
 from serial import PARITY_ODD
 import time
@@ -36,16 +35,15 @@ INPUT_CHANNELS = ['A', 'B', 'C', 'D', '0']
 OUTPUT_CHANNELS = [1, 2, 3, 4]
 TERMINATOR = '\r\n'
 
+TEMPSIGNAL = 122485
+
 class Lakeshore336Server(SerialDeviceServer):
     name = 'Lakeshore 336 Server'
     regKey = 'Lakeshore336Server'
     serNode = getNodeName()
     OUTPUT_MODES = [0, 1, 2, 3, 4, 5]
 
-    # def initServer(self):
-    #     #temp workaround since serial server is a pos
-    #     self.ser = Serial(port = 'COM24', baudrate = BAUDRATE, bytesize = BYTESIZE, parity = PARITY, stopbits = STOPBITS)
-    #     self.ser.timeout = TIMEOUT
+    tempupdate = Signal(TEMPSIGNAL, 'signal: temperature update', '*v')
 
     @inlineCallbacks
     def initServer(self):
@@ -94,6 +92,7 @@ class Lakeshore336Server(SerialDeviceServer):
         time.sleep(0.1)
         resp = yield self.ser.read()
         resp = np.array(resp.split(','), dtype=float)
+        self.tempchanged(resp)
         returnValue(resp)
 
     # HEATER
