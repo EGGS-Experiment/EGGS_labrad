@@ -3,12 +3,11 @@ from numpy import linspace
 import os
 
 basepath = os.path.dirname(__file__)
-#todo: change
 path = os.path.join(basepath, "Views", "selectScan.ui")
-base, form = uic.loadUi(path)
+uic.loadUi(path)
 
 
-class dialog_ui(base, form):
+class dialog_ui(base, ):
     def __init__(self, parent=None):
         super(dialog_ui, self).__init__(parent)
         self.setupUi(self)
