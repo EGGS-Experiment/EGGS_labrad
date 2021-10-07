@@ -18,7 +18,7 @@ timeout = 20
 
 from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
-from labrad.server import setting, LabradServer
+from labrad.server import setting, LabradServer, Signal
 from labrad.support import getNodeName
 import time
 
@@ -30,12 +30,6 @@ class InterlockServer(LabradServer):
     name = 'Interlock Server'
     regKey = 'InterlockServer'
     serNode = getNodeName()
-    OUTPUT_MODES = [0, 1, 2, 3, 4, 5]
-
-    # def initServer(self):
-    #     #temp workaround since serial server is a pos
-    #     self.ser = Serial(port = 'COM24', baudrate = BAUDRATE, bytesize = BYTESIZE, parity = PARITY, stopbits = STOPBITS)
-    #     self.ser.timeout = TIMEOUT
 
     @inlineCallbacks
     def initServer(self):
@@ -46,6 +40,11 @@ class InterlockServer(LabradServer):
             serStr = yield self.findSerial( self.serNode )
             print(serStr)
             self.initSerial( serStr, port, baudrate = BAUDRATE, bytesize = BYTESIZE, parity = PARITY, stopbits = STOPBITS)
+
+    #todo: run inf loop polling device
+    #todo: get poll interval from reg
+    #todo: switch off niops
+    #todo: print interlock message
 
     # HEATER
     @setting(211, 'Configure Heater', output_channel = 'i', mode = 'i', input_channel = 'i', returns = '*1v')
