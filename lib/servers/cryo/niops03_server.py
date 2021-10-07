@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = NIOPS-03 Power Supply Controller
+name = NIOPS03 Server
 version = 1.0.0
 description = Controls NIOPS-03 Power Supply which controls ion pumps
-instancename = TwisTorr74Server
+instancename = NIOPS03 Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -25,13 +25,13 @@ from serial import PARITY_ODD
 
 import numpy as np
 
-SERVERNAME = 'NIOPS03Server'
+SERVERNAME = 'NIOPS03 Server'
 TIMEOUT = 1.0
 BAUDRATE = 115200
 TERMINATOR = '\r\n'
 
 class NIOPS03Server(SerialDeviceServer):
-    name = 'NIOPS03Server'
+    name = 'NIOPS03 Server'
     regKey = 'NIOPS03Server'
     serNode = getNodeName()
 
@@ -56,7 +56,8 @@ class NIOPS03Server(SerialDeviceServer):
             elif e.code == 1:
                 print('Error opening serial connection')
                 print('Check set up and restart serial server')
-            else: raise
+            else:
+                raise Exception('Unknown connection error')
 
     # ON/OFF
     @setting(111,'Toggle IP', power = 'b')

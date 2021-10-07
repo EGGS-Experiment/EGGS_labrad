@@ -193,7 +193,6 @@ class SerialDeviceServer( LabradServer ):
         except Error as e:
             reg.cd(tmp)
             if e.code == 17: raise PortRegError( 0 )
-            else: raise
 
     @inlineCallbacks
     def selectPortFromReg( self ):
@@ -227,7 +226,6 @@ class SerialDeviceServer( LabradServer ):
                     returnValue( portStr )
         except Error as e:
             if e.code == 13: raise PortRegError( 0 )
-            else: raise
 
     @inlineCallbacks
     def findSerial( self, serNode = None ):

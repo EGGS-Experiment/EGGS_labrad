@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = NotificationServer
+name = Notification Server
 version = 1.0
 description =
-instancename = NotificationServer
+instancename = Notification Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -19,10 +19,10 @@ from labrad.server import LabradServer, Signal
 from twisted.internet.defer import returnValue
 import time
 
-SERVERNAME = 'NotificationServer'
+SERVERNAME = 'Notification Server'
 
 class NotificationServer(LabradServer):
-    name = 'NotificationServer'
+    name = 'Notification Server'
     regKey = 'NotificationServer'
 
     @inlineCallbacks

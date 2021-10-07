@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = ParameterVault
+name = Parameter Vault
 version = 2.0
-description =
-instancename = ParameterVault
+description = Loads experiment parameters from data vault
+instancename = Parameter Vault
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -23,7 +23,7 @@ class ParameterVault(LabradServer):
     """
     Data Server for storing ongoing experimental parameters
     """
-    name = "ParameterVault"
+    name = "Parameter Vault"
     registryDirectory = ['', 'Servers', 'Parameter Vault']
     onParameterChange = Signal(612512, 'signal: parameter change', '(ss)')
 

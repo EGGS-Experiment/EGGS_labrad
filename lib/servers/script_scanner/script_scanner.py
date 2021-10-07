@@ -1,10 +1,10 @@
 '''
 ### BEGIN NODE INFO
 [info]
-name = ScriptScanner
+name = Script Scanner
 version = 0.9
-description =
-instancename = ScriptScanner
+description = Runs scripts
+instancename = Script Scanner
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -58,7 +58,7 @@ class ScriptScanner(ScriptSignalsServer):
         script_class_parameters instances.
     """
 
-    name = 'ScriptScanner'
+    name = 'Script Scanner'
 
     def initServer(self):
 

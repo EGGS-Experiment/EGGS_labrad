@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = WavemeterServer
+name = Wavemeter Server
 version = 1.0
 description =
-instancename = WavemeterServer
+instancename = Wavemeter Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -20,10 +20,10 @@ from twisted.internet.defer import returnValue
 from labrad.support import getNodeName
 import time
 
-SERVERNAME = 'CameraServer'
+SERVERNAME = 'Wavemeter Server'
 
 class WavemeterServer(LabradServer):
-    name = 'WavemeterServer'
+    name = 'Wavemeter Server'
 
     @inlineCallbacks
     def initServer(self):

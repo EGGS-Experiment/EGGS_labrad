@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = TwisTorr 74 Turbopump Server
+name = TwisTorr74 Server
 version = 1.0.0
 description = Talks to the TwisTorr 74 Turbopump
-instancename = TwisTorr74Server
+instancename = TwisTorr74 Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -27,12 +27,12 @@ from labrad.types import Value
 import time
 import numpy as np
 
-SERVERNAME = 'twistorr74server'
+SERVERNAME = 'TwisTorr74 Server'
 TIMEOUT = 5.0
 BAUDRATE = 9600
 
 class TwisTorr74Server(SerialDeviceServer):
-    name = 'TwisTorr74Server'
+    name = 'TwisTorr74 Server'
     regKey = 'TwisTorr74Server'
     serNode = getNodeName()
     timeout = Value(TIMEOUT, 's')
@@ -68,7 +68,8 @@ class TwisTorr74Server(SerialDeviceServer):
             elif e.code == 1:
                 print('Error opening serial connection')
                 print('Check set up and restart serial server')
-            else: raise
+            else:
+                raise Exception('Unknown connection error')
 
     # READ PRESSURE
     @setting(111,'Read Pressure', returns='v')

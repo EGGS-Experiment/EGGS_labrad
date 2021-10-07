@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = CameraServer
+name = Camera Server
 version = 1.0
 description =
-instancename = CameraServer
+instancename = Camera Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -20,10 +20,10 @@ from twisted.internet.defer import returnValue
 from labrad.support import getNodeName
 import time
 
-SERVERNAME = 'CameraServer'
+SERVERNAME = 'Camera Server'
 
 class CameraServer(LabradServer):
-    name = 'CameraServer'
+    name = 'Camera Server'
     regKey = 'CameraServer'
     timeout = T.Value(TIMEOUT, 's')
 

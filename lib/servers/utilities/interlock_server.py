@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Lakeshore 336 Server
+name = Interlock Server
 version = 1.0.0
-description = Talks to the Lakeshore 336 Temperature Controller
-instancename = Lakeshore 336 Server
+description = Runs interlocks for different devices
+instancename = Interlock Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -18,27 +18,17 @@ timeout = 20
 
 from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
-from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
-from labrad.server import setting
+from labrad.server import setting, LabradServer
 from labrad.support import getNodeName
-from serial import PARITY_ODD
 import time
 
 import numpy as np
 
-SERVERNAME = 'Lakeshore 336 Server'
-TIMEOUT = 1.0
-BAUDRATE = 57600
-BYTESIZE = 7
-PARITY = PARITY_ODD #0 is odd parity
-STOPBITS = 1
-INPUT_CHANNELS = ['A', 'B', 'C', 'D', '0']
-OUTPUT_CHANNELS = [1, 2, 3, 4]
-TERMINATOR = '\r\n'
+SERVERNAME = 'Interlock Server'
 
 class Lakeshore336Server(SerialDeviceServer):
-    name = 'Lakeshore 336 Server'
-    regKey = 'Lakeshore336Server'
+    name = 'Interlock Server'
+    regKey = 'InterlockServer'
     serNode = getNodeName()
     OUTPUT_MODES = [0, 1, 2, 3, 4, 5]
 
@@ -49,52 +39,14 @@ class Lakeshore336Server(SerialDeviceServer):
 
     @inlineCallbacks
     def initServer(self):
-        # if not self.regKey or not self.serNode: raise SerialDeviceError( 'Must define regKey and serNode attributes' )
+        if not self.regKey or not self.serNode:
+            raise SerialDeviceError( 'Must define regKey and serNode attributes' )
         # port = yield self.getPortFromReg( self.regKey )
-        port = 'COM6'
-        self.port = port
-        #self.timeout = TIMEOUT
         try:
             serStr = yield self.findSerial( self.serNode )
             print(serStr)
             self.initSerial( serStr, port, baudrate = BAUDRATE, bytesize = BYTESIZE, parity = PARITY, stopbits = STOPBITS)
-        except SerialConnectionError as e:
-            self.ser = None
-            if e.code == 0:
-                print('Could not find serial server for node: %s' % self.serNode)
-                print('Please start correct serial server')
-            elif e.code == 1:
-                print('Error opening serial connection')
-                print('Check set up and restart serial server')
-            else:
-                raise Exception('Unknown connection error')
         #todo: make sure in kelvin
-
-    @inlineCallbacks
-    def _check_errors(self, input, valid_inputs):
-        """
-        Checks user input for errors
-        """
-        if input not in valid_inputs:
-            raise Exception("Value must be one of: " + str(valid_inputs))
-
-    # TEMPERATURE DIODES
-    @setting(111,'Read Temperature', output_channel = 's', returns='*1v')
-    def temperature_read(self, c, output_channel):
-        """
-        Get sensor temperature
-        Args:
-            channel (str): sensor channel to measure
-        Returns:
-            (*float): sensor temperature in Kelvin
-        """
-        if output_channel not in INPUT_CHANNELS:
-            raise Exception('Channel must be one of: ' + str(INPUT_CHANNELS))
-        yield self.ser.write('KRDG? ' + str(output_channel) + TERMINATOR)
-        time.sleep(0.1)
-        resp = yield self.ser.read()
-        resp = np.array(resp.split(','), dtype=float)
-        returnValue(resp)
 
     # HEATER
     @setting(211, 'Configure Heater', output_channel = 'i', mode = 'i', input_channel = 'i', returns = '*1v')
@@ -173,54 +125,6 @@ class Lakeshore336Server(SerialDeviceServer):
         #issue query
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield int(self.ser.read())
-        returnValue(resp)
-
-    @setting(222, 'Set Heater Power', output_channel = 'i', power = 'v', returns = 'v')
-    def heater_power(self, c, output_channel, power = None):
-        """
-        Set or query heater power. Only available if heater is in Manual mode.
-        Args:
-            output_channel (int): the heater channel
-            power (float): the heater power as aa percentage of max amount
-        Returns:
-            (float): the heater power
-        """
-        chString = 'MOUT'
-
-        #todo: check for errors
-
-        if power is not None:
-            output_msg = ' ' + str(output_channel) + ',' + str(power) + TERMINATOR
-            yield self.ser.write(chString + output_msg)
-
-        #issue query
-        yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = yield float(self.ser.read())
-        returnValue(resp)
-
-    @setting(223, 'Set Heater PID', output_channel = 'i', prop = 'v', int = 'v', diff = 'v', returns = 'v')
-    def heater_PID(self, c, output_channel, prop = None, int = None, diff = None):
-        """
-        Set or query heater PID parameters. Only available if heater is in PID mode.
-        Args:
-            output_channel (int): the heater channel
-            prop           (float): Proportional
-            int            (float): Integral
-            diff           (float): Derivative
-        Returns:
-                            [float, float, float]: the PID parameters
-        """
-        chString = 'PID'
-
-        #check for errors ***
-
-        if all(vals != None for vals in [prop, int, diff]):
-            output_msg = chString + ' ' + str(output_channel) + ',' + str(prop) + ',' + str(int) + ',' + str(diff) + TERMINATOR
-            yield self.write(output_msg)
-
-        #issue query
-        resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = np.array(resp.split(','), dtype=float)
         returnValue(resp)
 
 if __name__ == '__main__':

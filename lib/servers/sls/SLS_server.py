@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = SLSServer
+name = SLS Server
 version = 1.0
 description =
-instancename = SLSServer
+instancename = SLS Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -26,13 +26,13 @@ from labrad.support import getNodeName
 import time
 from labrad.units import WithUnit as U
 
-SERVERNAME = 'SLSServer'
+SERVERNAME = 'SLS Server'
 TIMEOUT = 1.0
 BAUDRATE = 115200
 TERMINATOR = '\r\n'
 
 class SLSServer(SerialDeviceServer):
-    name = 'SLSServer'
+    name = 'SLS Server'
     regKey = 'SLSServer'
     port = None
     serNode = getNodeName()
