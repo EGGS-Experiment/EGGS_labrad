@@ -26,7 +26,7 @@ import numpy as np
 
 SERVERNAME = 'Interlock Server'
 
-class Lakeshore336Server(SerialDeviceServer):
+class InterlockServer(LabradServer):
     name = 'Interlock Server'
     regKey = 'InterlockServer'
     serNode = getNodeName()
@@ -46,7 +46,6 @@ class Lakeshore336Server(SerialDeviceServer):
             serStr = yield self.findSerial( self.serNode )
             print(serStr)
             self.initSerial( serStr, port, baudrate = BAUDRATE, bytesize = BYTESIZE, parity = PARITY, stopbits = STOPBITS)
-        #todo: make sure in kelvin
 
     # HEATER
     @setting(211, 'Configure Heater', output_channel = 'i', mode = 'i', input_channel = 'i', returns = '*1v')
@@ -104,29 +103,7 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = [int(resp[0]), int(resp[1]), float(resp[2])]
         returnValue(resp)
 
-    @setting(221, 'Set Heater Range', output_channel = 'i', range = 'i', returns = 'i')
-    def heater_range(self, c, output_channel, range = None):
-        """
-        Set or query heater range. Only available if heater is in Zone mode.
-        Args:
-            output_channel (int): the heater channel
-            range (int): the heater range (0 = off, 1 = Low, 2 = Medium, 3 = High)
-        Returns:
-            (int): the heater range
-        """
-        chString = 'RANGE'
-
-        #check for errors
-
-        if range is not None:
-            output_msg = ' ' + str(output_channel) + ',' + str(range) + TERMINATOR
-            yield self.ser.write(chString + output_msg)
-
-        #issue query
-        yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = yield int(self.ser.read())
-        returnValue(resp)
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(Lakeshore336Server())
+    util.runServer(InterlockServer())
