@@ -1,7 +1,5 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QApplication
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, \
     QGridLayout
@@ -16,7 +14,7 @@ SIGNALID3 = 445569
 SIGNALID4 = 445570
 
 
-class software_laser_lock_client(QWidget):
+class lakeshore_client(QWidget):
 
     def __init__(self, reactor, parent=None):
         super(software_laser_lock_client, self).__init__()
