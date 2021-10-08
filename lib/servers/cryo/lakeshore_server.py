@@ -130,9 +130,9 @@ class Lakeshore336Server(SerialDeviceServer):
         Args:
             output_channel  (int): the heater channel
             resistance      (int): the heater resistance setting (1 = 25 Ohms, 2 = 50 Ohms)
-            max_current     (int): maximum heater output current
+            max_current     (float): maximum heater output current
         Returns:
-                            ([]): fd
+                            (int, float): Tuple of (resistance, max_current)
         """
         chString = 'HTRSET'
 
@@ -147,7 +147,7 @@ class Lakeshore336Server(SerialDeviceServer):
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read()
         resp = resp.split(',')
-        resp = [int(resp[0]), int(resp[1]), float(resp[2])]
+        resp = [int(resp[1]), float(resp[2])]
         returnValue(resp)
 
     @setting(221, 'Set Heater Range', output_channel = 'i', range = 'i', returns = 'i')
@@ -241,14 +241,14 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
         returnValue(float(resp))
 
-    @setting(225, 'Get Heater Output', output_channel = 'i', returns = 'v')
+    @setting(230, 'Get Heater Output', output_channel = 'i', returns = 'v')
     def heater_output(self, c, output_channel):
         """
         Get the heater output in % of max. current
         Args:
             output_channel  (int): the heater channel
         Returns:
-                            (float): the heater output in %
+                            (float): the heater output
         """
 
         resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)

@@ -20,6 +20,7 @@ class lakeshore_gui(QtWidgets.QFrame):
         shell_font = 'MS Shell Dlg 2'
 
         #temperature readout
+        self.tempAll_label = QtWidgets.QLabel('Temperature Readout')
             #diode 1
         self.temp1_label = QtWidgets.QLabel('Diode 1')
         self.temp1 = QtWidgets.QLabel('Diode 1')
@@ -48,68 +49,62 @@ class lakeshore_gui(QtWidgets.QFrame):
         self.record = TextChangingButton(('Start Recording', 'Stop Recording'))
 
         #heaters
+        self.heatAll_label = QtWidgets.QLabel('Heater Configuration')
         self.lockswitch = TextChangingButton(('Locked', 'Unlocked'))
             #heater 1
+        self.heat1_label = QtWidgets.QLabel('Heater 1')
+        self.heat1 = QtWidgets.QLabel('Current 1')
+        self.heat1.setFont(QtGui.QFont(shell_font, pointSize=25))
+        self.heat1.setAlignment(QtCore.Qt.AlignCenter)
+        self.heat1.setStyleSheet('color: red')
         self.heat1_toggle = TextChangingButton(('On', 'Off'))
         self.heat1_update = QtWidgets.QPushButton('Update')
+                #mode function
+        self.heat1_mode = QtWidgets.QComboBox()
+        self.heat1_mode.addItem('Off')
+        self.heat1_mode.addItem('PID')
+        self.heat1_mode.addItem('Zone')
+        self.heat1_mode.addItem('Manual')
+                #input control
+        self.heat1_in = QtWidgets.QComboBox()
+        self.heat1_in.addItem('1')
+        self.heat1_in.addItem('2')
+        self.heat1_in.addItem('3')
+        self.heat1_in.addItem('4')
+                #resistance
+        self.heat1_res = QtWidgets.QComboBox()
+        self.heat1_res.addItem('25')
+        self.heat1_res.addItem('50')
+                #max current
+        self.spinGain = QDoubleSpinBox()
+        self.spinGain.setFont(QFont(shell_font, pointSize=16))
+        self.spinGain.setDecimals(3)
+        self.spinGain.setSingleStep(1e-3)
+        self.spinGain.setRange(0, 2)
+        self.spinGain.setKeyboardTracking(False)
 
         # # gain  label
         # gainName = QLabel('Gain')
         # gainName.setFont(QFont(shell_font, pointSize=16))
         # gainName.setAlignment(QtCore.Qt.AlignCenter)
-        #
-        # # gain
-        # self.spinGain = QDoubleSpinBox()
-        # self.spinGain.setFont(QFont(shell_font, pointSize=16))
-        # self.spinGain.setDecimals(6)
-        # self.spinGain.setSingleStep(1e-6)
-        # self.spinGain.setRange(1e-6, 1)
-        # self.spinGain.setKeyboardTracking(False)
-        #
         # # rails  label
         # lowRail = QLabel('Low Rail')
         # lowRail.setFont(QFont(shell_font, pointSize=16))
         # lowRail.setAlignment(QtCore.Qt.AlignCenter)
-        #
-        # # low rail
-        # self.spinLowRail = QDoubleSpinBox()
-        # self.spinLowRail.setFont(QFont(shell_font, pointSize=16))
-        # self.spinLowRail.setDecimals(3)
-        # self.spinLowRail.setSingleStep(.001)
-        # self.spinLowRail.setRange(0, 100)
-        # self.spinLowRail.setKeyboardTracking(False)
-        #
         # # high rails  label
         # highRail = QLabel('High Rail')
         # highRail.setFont(QFont(shell_font, pointSize=16))
         # highRail.setAlignment(QtCore.Qt.AlignCenter)
-        #
-        # # high rail
-        # self.spinHighRail = QDoubleSpinBox()
-        # self.spinHighRail.setFont(QFont(shell_font, pointSize=16))
-        # self.spinHighRail.setDecimals(3)
-        # self.spinHighRail.setSingleStep(.001)
-        # self.spinHighRail.setRange(0, 100)
-        # self.spinHighRail.setKeyboardTracking(False)
-        #
         # # dac voltage  label
         # setDacVoltage = QLabel(' Set Dac Voltage')
         # setDacVoltage.setFont(QtGui.QFont(shell_font, pointSize=16))
         # setDacVoltage.setAlignment(QtCore.Qt.AlignCenter)
-        #
-        # # set dac voltage
-        # self.spinDacVoltage = QDoubleSpinBox()
-        # self.spinDacVoltage.setFont(QFont(shell_font, pointSize=16))
-        # self.spinDacVoltage.setDecimals(3)
-        # self.spinDacVoltage.setSingleStep(.001)
-        # self.spinDacVoltage.setRange(0, 100)
-        # self.spinDacVoltage.setKeyboardTracking(False)
-        #
         # # clear lock button for voltage stuck too high
         # self.clear_lock = QPushButton('Clear Lock Voltage')
         # self.clear_lock.setMaximumHeight(30)
         # self.clear_lock.setFont(QFont('MS Shell Dlg 2', pointSize=12))
 
+        layout.addWidget(self.tempAll_label, 1, 3)
         layout.addWidget(self.temp1, 2, 2, 3, 2)
         layout.addWidget(self.temp2, 7, 2, 3, 2)
         layout.addWidget(self.temp3, 12, 2, 3, 2)
@@ -120,8 +115,8 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.addWidget(self.temp3_label, 11, 2)
         layout.addWidget(self.temp4_label, 16, 2)
 
-
         layout.addWidget(self.lockswitch, 1, 3, 1, 1)
+        layout.addWidget(self.heat)
         # layout.addWidget(gainName, 2, 3, 1, 1)
         # layout.addWidget(self.spinGain, 3, 3, 1, 1)
         # layout.addWidget(lowRail, 4, 3, 1, 1)
