@@ -70,6 +70,12 @@ class lakeshore_client(QWidget):
         self.gui.temp2.setText(str(temp[1]))
         self.gui.temp3.setText(str(temp[2]))
         self.gui.temp4.setText(str(temp[3]))
+        if ***:
+            curr1 = yield self.ls.get_heater_output(1)
+            self.gui.heat1.setText(str(curr1))
+        if ***:
+            curr2 = yield self.ls.get_heater_output(2)
+            self.gui.heat2.setText(str(temp[0]))
         #todo: heater?
 
 

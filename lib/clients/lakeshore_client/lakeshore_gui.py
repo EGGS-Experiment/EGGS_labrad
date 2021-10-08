@@ -22,7 +22,7 @@ class lakeshore_gui(QtWidgets.QFrame):
 
         #temperature readout
         self.tempAll_label = QtWidgets.QLabel('Temperature Readout')
-        self.tempAll_label.setFont(QFont(shell_font, pointSize= 17))
+        self.tempAll_label.setFont(QFont(shell_font, pointSize= 20))
         self.tempAll_label.setAlignment(QtCore.Qt.AlignCenter)
             #diode 1
         self.temp1_label = QtWidgets.QLabel('Diode 1')
@@ -53,7 +53,7 @@ class lakeshore_gui(QtWidgets.QFrame):
 
         #heaters
         self.heatAll_label = QtWidgets.QLabel('Heater Configuration')
-        self.heatAll_label.setFont(QFont(shell_font, pointSize= 17))
+        self.heatAll_label.setFont(QFont(shell_font, pointSize= 20))
         self.heatAll_label.setAlignment(QtCore.Qt.AlignCenter)
         self.lockswitch = TextChangingButton(('Locked', 'Unlocked'))
             #heater 1
@@ -65,38 +65,41 @@ class lakeshore_gui(QtWidgets.QFrame):
         self.heat1_toggle = TextChangingButton(('On', 'Off'))
         self.heat1_update = QtWidgets.QPushButton('Update')
                 #mode function
+        self.heat1_mode_label = QtWidgets.QLabel('Mode')
         self.heat1_mode = QtWidgets.QComboBox()
         self.heat1_mode.addItem('Off')
         self.heat1_mode.addItem('PID')
         self.heat1_mode.addItem('Zone')
         self.heat1_mode.addItem('Manual')
                 #input control
+        self.heat1_in_label = QtWidgets.QLabel('Input')
         self.heat1_in = QtWidgets.QComboBox()
         self.heat1_in.addItem('1')
         self.heat1_in.addItem('2')
         self.heat1_in.addItem('3')
         self.heat1_in.addItem('4')
                 #resistance
+        self.heat1_res_label = QtWidgets.QLabel('Resistance (Ohms)')
         self.heat1_res = QtWidgets.QComboBox()
         self.heat1_res.addItem('25')
         self.heat1_res.addItem('50')
                 #max current
-        self.spinGain = QtWidgets.QDoubleSpinBox()
-        self.spinGain.setFont(QFont(shell_font, pointSize=16))
-        self.spinGain.setDecimals(3)
-        self.spinGain.setSingleStep(1e-3)
-        self.spinGain.setRange(0, 2)
-        self.spinGain.setKeyboardTracking(False)
+        self.heat1_curr_label = QtWidgets.QLabel('Max. Current (A)')
+        self.heat1_curr = QtWidgets.QDoubleSpinBox()
+        self.heat1_curr.setFont(QFont(shell_font, pointSize=16))
+        self.heat1_curr.setDecimals(3)
+        self.heat1_curr.setSingleStep(1e-3)
+        self.heat1_curr.setRange(0, 2)
+        self.heat1_curr.setKeyboardTracking(False)
+                #setpoint
+        self.heat1_set_label = QtWidgets.QLabel('Set Point (K)')
+        self.heat1_set = QtWidgets.QDoubleSpinBox()
+        self.heat1_set.setFont(QFont(shell_font, pointSize=16))
+        self.heat1_set.setDecimals(3)
+        self.heat1_set.setSingleStep(1e-3)
+        self.heat1_set.setRange(0, 2)
+        self.heat1_set.setKeyboardTracking(False)
 
-        # # gain  label
-        # gainName = QLabel('Gain')
-        # gainName.setFont(QFont(shell_font, pointSize=16))
-        # gainName.setAlignment(QtCore.Qt.AlignCenter)
-        # # rails  label
-        # lowRail = QLabel('Low Rail')
-        # lowRail.setFont(QFont(shell_font, pointSize=16))
-        # lowRail.setAlignment(QtCore.Qt.AlignCenter)
-        # # high rails  label
         # highRail = QLabel('High Rail')
         # highRail.setFont(QFont(shell_font, pointSize=16))
         # highRail.setAlignment(QtCore.Qt.AlignCenter)
@@ -120,7 +123,8 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.addWidget(self.temp3_label, 12, 2)
         layout.addWidget(self.temp4_label, 17, 2)
 
-        layout.addWidget(self.heatAll_label, 1, 10)
+        layout.addWidget(self.heatAll_label, 1, 15)
+
         # layout.addWidget(gainName, 2, 3, 1, 1)
         # layout.addWidget(self.spinGain, 3, 3, 1, 1)
         # layout.addWidget(lowRail, 4, 3, 1, 1)

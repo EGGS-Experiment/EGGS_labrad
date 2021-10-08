@@ -254,6 +254,8 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
         returnValue(float(resp))
 
+        #todo: autotune
+
 if __name__ == '__main__':
     from labrad import util
     util.runServer(Lakeshore336Server())
