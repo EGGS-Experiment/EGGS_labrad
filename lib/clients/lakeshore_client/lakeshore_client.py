@@ -1,172 +1,83 @@
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, \
-    QGridLayout
+import os, socket
+
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
 from twisted.internet.defer import inlineCallbacks, returnValue
-import sys, os, socket, twisted
-from config.multiplexerclient_config import multiplexer_config
-from common.lib.clients.qtui.q_custom_text_changing_button import TextChangingButton
-
-SIGNALID1 = 445567
-SIGNALID2 = 445568
-SIGNALID3 = 445569
-SIGNALID4 = 445570
-
+from twisted.internet import task
+from .lakeshore_gui import lakeshore_gui
 
 class lakeshore_client(QWidget):
 
-    def __init__(self, reactor, parent=None):
-        super(software_laser_lock_client, self).__init__()
-        self.reactor = reactor
-        self.lasers = {}
-        self.channel_GUIs = {}
-        self.connect()
+    LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
+    def __init__(self, reactor, parent=None):
+        super(lakeshore_client, self).__init__()
+        self.reactor = reactor
+        self.connect()
+        self.initializeGUI()
+        self.set_signal_listeners()
+
+        #create and start loop to poll server for temperature
+        self.temp_loop = task.LoopingCall(self.poll)
+        self.start_polling()
+
+    #Setup functions
     @inlineCallbacks
     def connect(self):
-        ##        """Creates an Asynchronous connection to the wavemeter computer and
-        ##        connects incoming signals to relavent functions
-        ##        """
+        """
+        Creates an asynchronous connection to lakeshore server
+        and relevant labrad servers
+        """
         from labrad.wrappers import connectAsync
-        self.password = os.environ['LABRADPASSWORD']
-        self.wm_cxn = yield connectAsync(multiplexer_config.ip, name=socket.gethostname() + ' Single Channel Lock',
-                                         password=self.password)
-        self.wm = yield self.wm_cxn.multiplexerserver
-        self.cxn = yield connectAsync('localhost', name=socket.gethostname() + ' Single Channel Lock',
-                                      password=self.password)
-        self.lock_server = yield self.cxn.software_laser_lock_server
-        self.piezo = yield self.cxn.piezo_controller
-        self.registry = self.cxn.registry
+        self.cxn = yield connectAsync('localhost', name = 'Lakeshore 336 Client', password = self.password)
+        self.registry = yield self.cxn.registry
+        self.ls = yield self.cxn.lakeshore_336_server
 
-        # Get lasers to lock
-        yield self.registry.cd(['Servers', 'software_laser_lock'])
-        lasers_to_lock = yield self.registry.get('lasers')
-        for chan in lasers_to_lock:
-            self.lasers[chan] = yield self.registry.get(chan)
-
-        self.initializeGUI()
+        # get polling time
+        yield self.registry.cd(['Clients', 'Lakeshore 336 Client'])
+        self.poll_time = yield self.registry.get('poll_time')
 
     @inlineCallbacks
     def initializeGUI(self):
+        #set layout
         layout = QGridLayout()
-        # layout = QHboxLayout()
         qBox = QGroupBox('Single Channel Software Lock')
         subLayout = QGridLayout()
         qBox.setLayout(subLayout)
-        layout.addWidget(qBox, 0, 0)  # , returnValue
-        for chan in self.lasers:
-            laser = software_laser_lock_channel(chan)
-            from common.lib.clients.qtui import RGBconverter as RGB
-            RGB = RGB.RGBconverter()
-            color = int(2.998e8 / (float(self.lasers[chan][0]) * 1e3))
-            color = RGB.wav2RGB(color)
-            color = tuple(color)
-            laser.wavelength.setStyleSheet('color: rgb' + str(color))
-            init_freq1 = yield self.lock_server.get_lock_frequency(chan)
-            laser.spinFreq1.setValue(init_freq1)
-            laser.spinFreq1.valueChanged.connect(lambda freq=laser.spinFreq1.value(), chan=chan \
-                                                     : self.freqChanged(freq, chan))
+        layout.addWidget(qBox, 0, 0)
 
-            state = yield self.lock_server.get_lock_state(chan)
-            laser.lockSwitch.setChecked(state)
-            laser.lockSwitch.toggled.connect(lambda state=laser.lockSwitch.isDown(), chan=chan \
-                                                 : self.set_lock(state, chan))
+        #initialize main GUI
+        self.gui = lakeshore_gui
 
-            init_exp = yield self.wm.get_exposure(self.lasers[chan][1])
-            laser.spinExposure.setValue(init_exp)
-            laser.spinExposure.valueChanged.connect(lambda exp=laser.spinExposure.value(), \
-                                                           chan=chan,: self.expChanged(exp, chan))
+        #connect signals to slots
+        #todo: connect
 
-            init_gain = yield self.lock_server.get_gain(chan)
-            laser.spinGain.setValue(init_gain)
-            laser.spinGain.valueChanged.connect(lambda gain=laser.spinGain.value(), \
-                                                       chan=chan: self.gainChanged(gain, chan))
-
-            init_rails = yield self.lock_server.get_rails(chan)
-            laser.spinLowRail.setValue(init_rails[0])
-            laser.spinLowRail.valueChanged.connect(lambda rail=laser.spinLowRail.value(), \
-                                                          chan=chan: self.lowRailChanged(rail, chan))
-
-            laser.spinHighRail.setValue(init_rails[1])
-            laser.spinHighRail.valueChanged.connect(lambda rail=laser.spinHighRail.value(), \
-                                                           chan=chan: self.highRailChanged(rail, chan))
-
-            laser.clear_lock.clicked.connect(lambda state=laser.clear_lock.isDown(), chan=chan: self.reset_lock(chan))
-
-            laser.spinDacVoltage.valueChanged.connect(lambda voltage=laser.spinDacVoltage.value(), \
-                                                             chan=chan: self.voltageChanged(voltage, chan))
-
-            self.channel_GUIs[chan] = laser
-            subLayout.addWidget(laser, self.lasers[chan][2][0], self.lasers[chan][2][1], 1, 1)
-            self.setLayout(layout)
-
-        self.set_signal_listeners()
-
-    @inlineCallbacks
-    def set_signal_listeners(self):
-        yield self.wm.signal__frequency_changed(SIGNALID1)
-        yield self.wm.addListener(listener=self.updateFrequency, source=None, ID=SIGNALID1)
-
-    @inlineCallbacks
-    def tempChanged(self, freq, chan):
-        yield self.lock_server.set_lock_frequency(freq, chan)
-
-    @inlineCallbacks
-    def voltageChanged(self, voltage, chan):
-        yield self.lock_server.set_dac_voltage(float(voltage), chan)
-
-    @inlineCallbacks
-    def expChanged(self, exp, chan):
-        yield self.wm.set_exposure_time(self.lasers[chan][1], int(exp))
-
-    @inlineCallbacks
-    def gainChanged(self, gain, chan):
-        yield self.lock_server.set_gain(gain, chan)
-
+    #Slot functions
+    #todo: write them
     @inlineCallbacks
     def lowRailChanged(self, value, chan):
         yield self.lock_server.set_low_rail(value, chan)
 
-    @inlineCallbacks
-    def highRailChanged(self, value, chan):
-        yield self.lock_server.set_high_rail(value, chan)
+    #Polling functions
+    def start_polling(self):
+        self.temp_loop.start(self.poll_time)
 
-    @inlineCallbacks
-    def updateFrequency(self, c, signal):
-        for chan in self.lasers:
-            if signal[0] == self.lasers[chan][1]:  # and self.lasers[chan][4] != 4:
-                laser = self.channel_GUIs[chan]
-                laser.wavelength.setText(str(signal[1])[0:10])
-                voltage = yield self.lock_server.get_dac_voltage(chan)
-                laser.dacVoltage.setText(str(voltage)[0:5])
+    def stop_polling(self):
+        self.temp_loop.stop()
 
-    @inlineCallbacks
-    def updateBristolFrequency(self, c, signal):
-        for chan in self.lasers:
-            if self.lasers[chan][4] == 4:
-                laser = self.channel_GUIs[chan]
-                laser.wavelength.setText('{:.6f}'.format(signal))
-                voltage = yield self.piezo.get_voltage(4)
-                laser.dacVoltage.setText(str(voltage)[0:5])
-
-    @inlineCallbacks
-    def set_lock(self, state, chan):
-        yield self.lock_server.lock_channel(state, chan)
-
-    @inlineCallbacks
-    def reset_lock(self, chan):
-        yield self.lock_server.reset_lock(chan)
+    def poll(self):
+        temp = yield self.ls.read_temperature('0')
+        self.gui.temp1.setText(str(temp[0]))
+        self.gui.temp2.setText(str(temp[1]))
+        self.gui.temp3.setText(str(temp[2]))
+        self.gui.temp4.setText(str(temp[3]))
+        #todo: heater?
 
 
 if __name__ == "__main__":
     a = QApplication([])
     import qt5reactor
-
     qt5reactor.install()
     from twisted.internet import reactor
-
     software_lock = software_laser_lock_client(reactor)
     software_lock.show()
-
     reactor.run()

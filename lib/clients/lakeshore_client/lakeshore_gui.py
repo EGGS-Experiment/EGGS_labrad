@@ -1,8 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 
-from common.lib.clients.qtui.q_custom_text_changing_button import \
-    TextChangingButton as _TextChangingButton
+from common.lib.clients.qtui.q_custom_text_changing_button import TextChangingButton as _TextChangingButton
 
 class TextChangingButton(_TextChangingButton):
     def __init__(self, button_text=None, parent=None):
@@ -10,13 +9,13 @@ class TextChangingButton(_TextChangingButton):
         self.setMaximumHeight(30)
 
 class lakeshore_gui(QtWidgets.QFrame):
-    def __init__(self, chanName, parent=None):
+    def __init__(self, parent=None):
         window = QtWidgets.QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
-        self.makeLayout(chanName)
-        self.setWindowTitle(chanName)
+        self.makeLayout()
+        self.setWindowTitle("Lakeshore 336 Temperature Controller")
 
-    def makeLayout(self, name):
+    def makeLayout(self):
         layout = QtWidgets.QGridLayout()
         shell_font = 'MS Shell Dlg 2'
 
@@ -53,8 +52,6 @@ class lakeshore_gui(QtWidgets.QFrame):
             #heater 1
         self.heat1_toggle = TextChangingButton(('On', 'Off'))
         self.heat1_update = QtWidgets.QPushButton('Update')
-
-
 
         # # gain  label
         # gainName = QLabel('Gain')

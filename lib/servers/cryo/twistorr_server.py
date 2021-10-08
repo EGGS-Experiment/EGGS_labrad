@@ -16,7 +16,6 @@ timeout = 5
 ### END NODE INFO
 """
 
-from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 #from common.lib.servers.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
@@ -27,7 +26,6 @@ from labrad.types import Value
 import time
 import numpy as np
 
-SERVERNAME = 'TwisTorr74 Server'
 TIMEOUT = 5.0
 BAUDRATE = 9600
 
