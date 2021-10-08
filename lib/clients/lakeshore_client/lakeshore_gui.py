@@ -124,7 +124,10 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.addWidget(self.temp4_label, 17, 2)
 
         layout.addWidget(self.heatAll_label, 1, 15)
-
+        layout.addWidget(self.heat1_label, 2, 7)
+        layout.addWidget(self.heat1, 3, 10)
+        layout.addWidget(self.heat1_mode_label, 5, 10)
+        layout.addWidget(self.heat1_mode, 5, 7)
         # layout.addWidget(gainName, 2, 3, 1, 1)
         # layout.addWidget(self.spinGain, 3, 3, 1, 1)
         # layout.addWidget(lowRail, 4, 3, 1, 1)
