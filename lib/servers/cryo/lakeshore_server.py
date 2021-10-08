@@ -240,7 +240,7 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
         returnValue(float(resp))
 
-    @setting(224, 'Get Heater Output', output_channel = 'i', returns = 'v')
+    @setting(225, 'Get Heater Output', output_channel = 'i', returns = 'v')
     def heater_output(self, c, output_channel):
         """
         Get the heater output in % of max. current
