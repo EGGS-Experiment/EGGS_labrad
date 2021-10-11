@@ -13,11 +13,11 @@ class lakeshore_gui(QtWidgets.QFrame):
     def __init__(self, parent=None):
         window = QtWidgets.QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
+        self.makeWidgets()
         self.makeLayout()
         self.setWindowTitle("Lakeshore 336 Temperature Controller")
 
-    def makeLayout(self):
-        layout = QtWidgets.QGridLayout()
+    def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
 
         #temperature readout
@@ -140,11 +140,58 @@ class lakeshore_gui(QtWidgets.QFrame):
         self.heat2_set.setSingleStep(1e-3)
         self.heat2_set.setRange(0, 2)
         self.heat2_set.setKeyboardTracking(False)
+                #control 1
+        self.heat1_p1_label = QtWidgets.QLabel('Parameter 1')
+        self.heat1_p1 = QtWidgets.QDoubleSpinBox()
+        self.heat1_p1.setFont(QFont(shell_font, pointSize=16))
+        self.heat1_p1.setDecimals(3)
+        self.heat1_p1.setSingleStep(1e-3)
+        #self.heat1_p1.setRange(0, 2)
+        self.heat1_p1.setKeyboardTracking(False)
 
-        # # clear lock button for voltage stuck too high
-        # self.clear_lock = QPushButton('Clear Lock Voltage')
-        # self.clear_lock.setMaximumHeight(30)
-        # self.clear_lock.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        self.heat2_p1_label = QtWidgets.QLabel('Parameter 1')
+        self.heat2_p1 = QtWidgets.QDoubleSpinBox()
+        self.heat2_p1.setFont(QFont(shell_font, pointSize=16))
+        self.heat2_p1.setDecimals(3)
+        self.heat2_p1.setSingleStep(1e-3)
+        #self.heat2_p1.setRange(0, 2)
+        self.heat2_p1.setKeyboardTracking(False)
+                #control 2
+        self.heat1_p2_label = QtWidgets.QLabel('Parameter 1')
+        self.heat1_p2 = QtWidgets.QDoubleSpinBox()
+        self.heat1_p2.setFont(QFont(shell_font, pointSize=16))
+        self.heat1_p2.setDecimals(3)
+        self.heat1_p2.setSingleStep(1e-3)
+        #self.heat1_p2.setRange(0, 2)
+        self.heat1_p2.setKeyboardTracking(False)
+
+        self.heat2_p2_label = QtWidgets.QLabel('Parameter 1')
+        self.heat2_p2 = QtWidgets.QDoubleSpinBox()
+        self.heat2_p2.setFont(QFont(shell_font, pointSize=16))
+        self.heat2_p2.setDecimals(3)
+        self.heat2_p2.setSingleStep(1e-3)
+        #self.heat2_p2.setRange(0, 2)
+        self.heat2_p2.setKeyboardTracking(False)
+                #control 3
+        self.heat1_p3_label = QtWidgets.QLabel('Parameter 1')
+        self.heat1_p3 = QtWidgets.QDoubleSpinBox()
+        self.heat1_p3.setFont(QFont(shell_font, pointSize=16))
+        self.heat1_p3.setDecimals(3)
+        self.heat1_p3.setSingleStep(1e-3)
+        #self.heat1_p3.setRange(0, 2)
+        self.heat1_p3.setKeyboardTracking(False)
+
+        self.heat2_p3_label = QtWidgets.QLabel('Parameter 1')
+        self.heat2_p3 = QtWidgets.QDoubleSpinBox()
+        self.heat2_p3.setFont(QFont(shell_font, pointSize=16))
+        self.heat2_p3.setDecimals(3)
+        self.heat2_p3.setSingleStep(1e-3)
+        #self.heat2_p3.setRange(0, 2)
+        self.heat2_p3.setKeyboardTracking(False)
+
+    def makeLayout(self):
+        layout = QtWidgets.QGridLayout()
+        shell_font = 'MS Shell Dlg 2'
 
         layout.addWidget(self.tempAll_label, 1, 3)
         layout.addWidget(self.temp1, 3, 2, 3, 2)
@@ -159,6 +206,7 @@ class lakeshore_gui(QtWidgets.QFrame):
 
         layout.addWidget(self.heatAll_label, 1, 11)
         layout.addWidget(self.heat1_label, 2, 9)
+        layout.addWidget(self.lockswitch, 3, 9)
         layout.addWidget(self.heat1, 3, 10)
         layout.addWidget(self.heat1_mode_label, 5, 8)
         layout.addWidget(self.heat1_mode, 5, 10)
@@ -170,6 +218,13 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.addWidget(self.heat1_curr, 10, 10)
         layout.addWidget(self.heat1_set_label, 12, 8)
         layout.addWidget(self.heat1_set, 12, 10)
+        layout.addWidget(self.heat1_p1_label, 14, 8)
+        layout.addWidget(self.heat1_p1, 14, 10)
+        layout.addWidget(self.heat1_p2_label, 16, 8)
+        layout.addWidget(self.heat1_p2, 16, 10)
+        layout.addWidget(self.heat1_p3_label, 18, 8)
+        layout.addWidget(self.heat1_p3, 18, 10)
+        layout.addWidget(self.heat1_update, 20, 10)
 
         layout.addWidget(self.heat2_label, 2, 13)
         layout.addWidget(self.heat2, 3, 14)
@@ -183,6 +238,13 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.addWidget(self.heat2_curr, 10, 14)
         layout.addWidget(self.heat2_set_label, 12, 12)
         layout.addWidget(self.heat2_set, 12, 14)
+        layout.addWidget(self.heat2_p1_label, 14, 12)
+        layout.addWidget(self.heat2_p1, 14, 14)
+        layout.addWidget(self.heat2_p2_label, 16, 12)
+        layout.addWidget(self.heat2_p2, 16, 14)
+        layout.addWidget(self.heat2_p3_label, 18, 12)
+        layout.addWidget(self.heat2_p3, 18, 14)
+        layout.addWidget(self.heat1_update, 20, 14)
 
         layout.minimumSize()
         self.setLayout(layout)
