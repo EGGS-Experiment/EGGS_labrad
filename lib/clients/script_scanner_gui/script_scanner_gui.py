@@ -1,7 +1,4 @@
 from PyQt5 import QtWidgets
-a = QtWidgets.QApplication(["Script Scanner"])
-import qt5reactor
-qt5reactor.install()
 from twisted.internet.defer import inlineCallbacks
 from scripting_widget import scripting_widget
 from common.lib.clients.connection import connection
@@ -49,6 +46,7 @@ class script_scanner_gui(QtWidgets.QWidget):
             yield self.cxn.get_server('Parameter Vault')
         except Exception as e:
             print(e)
+
 
 
     @inlineCallbacks
@@ -112,6 +110,7 @@ class script_scanner_gui(QtWidgets.QWidget):
     @inlineCallbacks
     def setupListenersScriptScanner(self):
         sc = yield self.cxn.get_server('Script Scanner')
+        print('th1')
         # connect server signals
         yield sc.signal_on_queued_new_script(self.SIGNALID,
                                              context=self.context)
@@ -405,6 +404,9 @@ class script_scanner_gui(QtWidgets.QWidget):
         self.reactor.stop()
 
 if __name__ == "__main__":
+    a = QtWidgets.QApplication(["Script Scanner"])
+    import qt5reactor
+    qt5reactor.install()
     from twisted.internet import reactor
     gui = script_scanner_gui(reactor)
     gui.show()

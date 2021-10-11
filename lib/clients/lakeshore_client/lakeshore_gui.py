@@ -3,6 +3,8 @@ from PyQt5.QtGui import QFont
 import sys
 
 from common.lib.clients.qtui.q_custom_text_changing_button import TextChangingButton as _TextChangingButton
+from common.lib.clients.connection import connection
+
 
 class TextChangingButton(_TextChangingButton):
     def __init__(self, button_text=None, parent=None):
@@ -74,7 +76,7 @@ class lakeshore_gui(QtWidgets.QFrame):
         self.heat1_mode_label = QtWidgets.QLabel('Mode')
         self.heat1_mode = QtWidgets.QComboBox()
         self.heat1_mode.addItem('Off')
-        self.heat2_mode.addItem('Autotune')
+        self.heat1_mode.addItem('Autotune')
         self.heat1_mode.addItem('PID')
         self.heat1_mode.addItem('Manual')
         #self.heat1_mode.addItem('Zone')
@@ -249,10 +251,10 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.addWidget(self.heat1_res, heat_box_start + 2 * heat_box_step, heat1_box_col)
         layout.addWidget(self.heat1_curr_label, heat_box_start + 3 * heat_box_step, heat1_label_col)
         layout.addWidget(self.heat1_curr, heat_box_start + 3 * heat_box_step, heat1_box_col)
-        layout.addWidget(self.heat1_set_label, heat_box_start + 4 * heat_box_step, heat1_label_col)
-        layout.addWidget(self.heat1_set, heat_box_start + 4 * heat_box_step, heat1_box_col)
-        layout.addWidget(self.heat2_range_label, heat_box_start + 5 * heat_box_step, heat2_label_col)
-        layout.addWidget(self.heat2_range, heat_box_start + 5 * heat_box_step, heat2_box_col)
+        layout.addWidget(self.heat1_range_label, heat_box_start + 4 * heat_box_step, heat1_label_col)
+        layout.addWidget(self.heat1_range, heat_box_start + 4 * heat_box_step, heat1_box_col)
+        layout.addWidget(self.heat1_set_label, heat_box_start + 5 * heat_box_step, heat1_label_col)
+        layout.addWidget(self.heat1_set, heat_box_start + 5 * heat_box_step, heat1_box_col)
         layout.addWidget(self.heat1_p1_label, heat_box_start + 6 * heat_box_step, heat1_label_col)
         layout.addWidget(self.heat1_p1, heat_box_start + 6 * heat_box_step, heat1_box_col)
         layout.addWidget(self.heat1_p2_label, heat_box_start + 7 * heat_box_step, heat1_label_col)
@@ -271,10 +273,10 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.addWidget(self.heat2_res, heat_box_start + 2 * heat_box_step, heat2_box_col)
         layout.addWidget(self.heat2_curr_label, heat_box_start + 3 * heat_box_step, heat2_label_col)
         layout.addWidget(self.heat2_curr, heat_box_start + 3 * heat_box_step, heat2_box_col)
-        layout.addWidget(self.heat2_set_label, heat_box_start + 4 * heat_box_step, heat2_label_col)
-        layout.addWidget(self.heat2_set, heat_box_start + 4 * heat_box_step, heat2_box_col)
-        layout.addWidget(self.heat2_range_label, heat_box_start + 5 * heat_box_step, heat2_label_col)
-        layout.addWidget(self.heat2_range, heat_box_start + 5 * heat_box_step, heat2_box_col)
+        layout.addWidget(self.heat2_range_label, heat_box_start + 4 * heat_box_step, heat2_label_col)
+        layout.addWidget(self.heat2_range, heat_box_start + 4 * heat_box_step, heat2_box_col)
+        layout.addWidget(self.heat2_set_label, heat_box_start + 5 * heat_box_step, heat2_label_col)
+        layout.addWidget(self.heat2_set, heat_box_start + 5 * heat_box_step, heat2_box_col)
         layout.addWidget(self.heat2_p1_label, heat_box_start + 6 * heat_box_step, heat2_label_col)
         layout.addWidget(self.heat2_p1, heat_box_start + 6 * heat_box_step, heat2_box_col)
         layout.addWidget(self.heat2_p2_label, heat_box_start + 7 * heat_box_step, heat2_label_col)
