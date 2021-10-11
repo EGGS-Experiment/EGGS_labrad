@@ -3,7 +3,7 @@ import os, socket
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
-from lakeshore_gui import lakeshore_gui
+from .lakeshore_gui import lakeshore_gui
 
 from common.lib.clients.connection import connection
 

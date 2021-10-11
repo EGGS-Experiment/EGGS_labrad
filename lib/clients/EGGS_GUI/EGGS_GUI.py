@@ -5,11 +5,11 @@ from barium.lib.clients.gui.detachable_tab import DetachableTabWidget
 
 class EGGS_GUI(QMainWindow):
     def __init__(self, reactor, clipboard, parent=None):
-        super(BARIUM_GUI, self).__init__(parent)
+        super(EGGS_GUI, self).__init__(parent)
         self.clipboard = clipboard
         self.reactor = reactor
         self.connect()
-        self.makeLayout(cxn)
+        self.makeLayout(self.cxn)
 
     @inlineCallbacks
     def connect(self):
@@ -18,29 +18,20 @@ class EGGS_GUI(QMainWindow):
         yield self.cxn.connect()
 
     #Highest level adds tabs to big GUI
-    def makeLayout(self):
+    def makeLayout(self, cxn):
 	    #creates central layout
         centralWidget = QWidget()
         layout = QHBoxLayout()
 
 	    #create subwidgets to be added to tabs
         script_scanner = self.makeScriptScannerWidget(reactor, cxn)
-        wavemeter = self.makeWavemeterWidget(reactor)
-        laser_control = self.makeLaserControlWidget(reactor)
-        control = self.makeControlWidget(reactor)
-        frequency = self.makeFrequencyWidget(reactor)
-        switch = self.makePMTCameraSwitchWidget(reactor)
+        cryo = self.makeCryoWidget(reactor)
 
         # add tabs
         self.tabWidget = QTabWidget()
         #self.tabWidget = DetachableTabWidget()
-        self.tabWidget.addTab(laser_control, '&Laser Control')
-        self.tabWidget.addTab(wavemeter, '&Wavemeter')
-        self.tabWidget.addTab(control, '&Trap Control')
-        self.tabWidget.addTab(frequency, '&Oscillators')
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryo, '&Cryo')
-        self.tabWidget.addTab(switch, '&Switches')
 
         layout.addWidget(self.tabWidget)
         centralWidget.setLayout(layout)

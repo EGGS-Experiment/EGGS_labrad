@@ -1,8 +1,8 @@
 from PyQt5 import QtWidgets
 from twisted.internet.defer import inlineCallbacks
-from scripting_widget import scripting_widget
+from .scripting_widget import scripting_widget
 from common.lib.clients.connection import connection
-from tree_view.Controllers import ParametersEditor
+from .tree_view.Controllers import ParametersEditor
 
 class script_scanner_gui(QtWidgets.QWidget):
 
