@@ -60,15 +60,17 @@ class lakeshore_client(QWidget):
         self.gui.tempAll_record.toggled.connect(lambda: self.record_temp())
 
             #update heater setting
-        self.gui.heat1_update.toggled.connect(lambda chan = 1: self.update_heater(chan = chan))
-        self.gui.heat2_update.toggled.connect(lambda chan = 2: self.update_heater(chan = chan))
+        self.gui.heat1_update.toggled.connect(lambda: self.update_heater(chan = 1))
+        self.gui.heat2_update.toggled.connect(lambda: self.update_heater(chan = 2))
 
             #lock heater settings
-        self.gui.heatAll_lockswitch.toggled.connect(self.lock_heaters)
+        self.gui.heatAll_lockswitch.toggled.connect(lambda: self.lock_heaters())
 
             #mode changed
-        self.gui.heat1_mode.currentIndexChanged.connect(lambda chan = 1, mode = self.gui.heat1_mode.currentIndex(): self.heater_mode_changed(chan = chan, mode = mode))
-        self.gui.heat2_mode.currentIndexChanged.connect(lambda chan = 2, mode = self.gui.heat1_mode.currentIndex(): self.heater_mode_changed(chan = chan, mode = mode))
+        self.gui.heat1_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan = 1))
+        self.gui.heat2_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan = 2))
+
+        #start up data
 
 
     #Slot functions
@@ -86,14 +88,45 @@ class lakeshore_client(QWidget):
                                         ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_temp)
         #todo: set colors of button?
 
+    @inlineCallbacks
     def update_heater(self, chan):
         """
-        fd
+        Sends the heater config and parameters to the lakeshore server
         """
-        #todo: check mode
-        #todo: config
-        #todo: setup
-        #todo: set param
+        if chan == 1:
+            mode = self.gui.heat1_mode.currentIndex()
+            input_channel = self.gui.heat1_in.currentData()
+            resistance = self.gui.heat1_res.currentData()
+            max_curr = self.gui.heat1_curr.currentData()
+            h_range = self.gui.heat1_range.currentData()
+            set = self.gui.heat1_set.currentData()
+            p1 = self.gui.heat1_p1.currentData()
+            if mode == 2:
+                p2 = self.gui.heat1_p2.currentData()
+                p3 = self.gui.heat1_p3.currentData()
+        elif chan == 2:
+            mode = self.gui.heat2_mode.currentIndex()
+            input_channel = self.gui.heat2_in.currentData()
+            resistance = self.gui.heat2_res.currentData()
+            max_curr = self.gui.heat2_curr.currentData()
+            h_range = self.gui.heat2_range.currentData()
+            set = self.gui.heat2_set.currentData()
+            p1 = self.gui.heat2_p1.currentData()
+            if mode == 2:
+                p2 = self.gui.heat2_p2.currentData()
+                p3 = self.gui.heat2_p3.currentData()
+
+        yield self.ls.configure_heater(chan, mode, input_channel)
+        yield self.ls.setup_heater(chan, resistance, max_curr)
+        yield self.ls.set_heater_range(chan, h_range)
+        yield self.ls.set_heater_setpoint(chan, set)
+
+        if mode == 1:
+            yield self.ls.autotune_heater(chan, input_channel, p1)
+        elif mode == 2:
+            yield self.ls.autotune_heater(chan, p1, p2, p3)
+        elif mode == 3:
+            yield self.ls.set_heater_power(chan, p1)
 
     def lock_heaters(self):
         """
@@ -103,11 +136,12 @@ class lakeshore_client(QWidget):
         self.gui.heat1_update.setEnabled(lock_status)
         self.gui.heat2_update.setEnabled(lock_status)
 
-    def heater_mode_changed(self, chan, mode):
+    def heater_mode_changed(self, chan):
         """
-        fd
+        Disables and enables the relevant settings for each mode
         """
         if chan == 1:
+            mode = self.gui.heat1_mode.currentIndex()
             if mode == 0:
                 self.gui.heat1_in.setEnabled(False)
                 self.gui.heat1_curr.setEnabled(False)
@@ -129,9 +163,9 @@ class lakeshore_client(QWidget):
                 self.gui.heat1_p1_label.setText('P-I-D')
                 self.gui.heat1_p2_label.setText('')
                 self.gui.heat1_p3_label.setText('')
-                self.heat1_p1.setDecimals(0)
-                self.heat1_p1.setSingleStep(1)
-                self.heat1_p1.setRange(0, 2)
+                self.gui.heat1_p1.setDecimals(0)
+                self.gui.heat1_p1.setSingleStep(1)
+                self.gui.heat1_p1.setRange(0, 2)
             elif mode == 2:
                 self.gui.heat1_in.setEnabled(True)
                 self.gui.heat1_curr.setEnabled(True)
@@ -144,9 +178,9 @@ class lakeshore_client(QWidget):
                 self.gui.heat1_p1_label.setText('P')
                 self.gui.heat1_p2_label.setText('I')
                 self.gui.heat1_p3_label.setText('D')
-                self.heat1_p1.setDecimals(1)
-                self.heat1_p1.setSingleStep(1e-1)
-                self.heat1_p1.setRange(0, 1000)
+                self.gui.heat1_p1.setDecimals(1)
+                self.gui.heat1_p1.setSingleStep(1e-1)
+                self.gui.heat1_p1.setRange(0, 1000)
             elif mode == 3:
                 self.gui.heat1_in.setEnabled(True)
                 self.gui.heat1_curr.setEnabled(True)
@@ -159,10 +193,11 @@ class lakeshore_client(QWidget):
                 self.gui.heat1_p1_label.setText('Current (A)')
                 self.gui.heat1_p2_label.setText('')
                 self.gui.heat1_p3_label.setText('')
-                self.heat1_p1.setDecimals(2)
-                self.heat1_p1.setSingleStep(1e-2)
-                self.heat1_p1.setRange(0, self.gui.heat1_curr.value())
+                self.gui.heat1_p1.setDecimals(2)
+                self.gui.heat1_p1.setSingleStep(1e-2)
+                self.gui.heat1_p1.setRange(0, self.gui.heat1_curr.value())
         elif chan == 2:
+            mode = self.gui.heat2_mode.currentIndex()
             if mode == 0:
                 self.gui.heat2_in.setEnabled(False)
                 self.gui.heat2_curr.setEnabled(False)
@@ -184,9 +219,9 @@ class lakeshore_client(QWidget):
                 self.gui.heat2_p1_label.setText('P-I-D')
                 self.gui.heat2_p2_label.setText('')
                 self.gui.heat2_p3_label.setText('')
-                self.heat2_p1.setDecimals(0)
-                self.heat2_p1.setSingleStep(1)
-                self.heat2_p1.setRange(0, 2)
+                self.gui.heat2_p1.setDecimals(0)
+                self.gui.heat2_p1.setSingleStep(1)
+                self.gui.heat2_p1.setRange(0, 2)
             elif mode == 2:
                 self.gui.heat2_in.setEnabled(True)
                 self.gui.heat2_curr.setEnabled(True)
@@ -199,9 +234,9 @@ class lakeshore_client(QWidget):
                 self.gui.heat2_p1_label.setText('P')
                 self.gui.heat2_p2_label.setText('I')
                 self.gui.heat2_p3_label.setText('D')
-                self.heat2_p1.setDecimals(1)
-                self.heat2_p1.setSingleStep(1e-1)
-                self.heat2_p1.setRange(0, 1000)
+                self.gui.heat2_p1.setDecimals(1)
+                self.gui.heat2_p1.setSingleStep(1e-1)
+                self.gui.heat2_p1.setRange(0, 1000)
             elif mode == 3:
                 self.gui.heat2_in.setEnabled(True)
                 self.gui.heat2_curr.setEnabled(True)
@@ -214,9 +249,9 @@ class lakeshore_client(QWidget):
                 self.gui.heat2_p1_label.setText('Current (A)')
                 self.gui.heat2_p2_label.setText('')
                 self.gui.heat2_p3_label.setText('')
-                self.heat2_p1.setDecimals(2)
-                self.heat2_p1.setSingleStep(1e-2)
-                self.heat2_p1.setRange(0, self.gui.heat1_curr.value())
+                self.gui.heat2_p1.setDecimals(2)
+                self.gui.heat2_p1.setSingleStep(1e-2)
+                self.gui.heat2_p1.setRange(0, self.gui.heat1_curr.value())
 
     #Polling functions
     def start_polling(self):

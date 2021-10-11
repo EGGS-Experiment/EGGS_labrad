@@ -150,7 +150,50 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = [int(resp[1]), float(resp[2])]
         returnValue(resp)
 
-    @setting(213, 'Autotune Heater', output_channel = 'i', input_channel = 'i', mode = 'i', returns = '*1v')
+    @setting(213, 'Set Heater Range', output_channel = 'i', range = 'i', returns = 'i')
+    def heater_range(self, c, output_channel, range = None):
+        """
+        Set or query heater range.
+        Args:
+            output_channel (int): the heater channel
+            range (int): the heater range (0 = off, 1 = 1% of max, 2 = 10% of max, 3 = 100% of max)
+        Returns:
+            (int): the heater range
+        """
+        chString = 'RANGE'
+
+        #check for errors
+
+        if range is not None:
+            output_msg = ' ' + str(output_channel) + ',' + str(range) + TERMINATOR
+            yield self.ser.write(chString + output_msg)
+
+        #issue query
+        yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
+        resp = yield int(self.ser.read())
+        returnValue(resp)
+
+    @setting(214, 'Set Heater Setpoint', output_channel = 'i', setpoint = 'v', returns = 'v')
+    def heater_setpoint(self, c, output_channel, setpoint = None):
+        """
+        Set or query heater setpoint.
+        Args:
+            output_channel  (int): the heater channel
+            setpoint        (float): the setpoint
+        Returns:
+                            (float): the setpoint
+        """
+
+        chString = 'SETP'
+        if power is not None:
+            output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint)+ TERMINATOR
+            yield self.write(output_msg)
+
+        #issue query
+        resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
+        returnValue(float(resp))
+
+    @setting(221, 'Autotune Heater', output_channel = 'i', input_channel = 'i', mode = 'i', returns = '*1v')
     def heater_setup(self, c, output_channel, input_channel = None, mode = None):
         """
         Set up or query the desired heater
@@ -175,29 +218,6 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = yield self.ser.read()
         resp = resp.split(',')
         resp = [int(resp[1]), float(resp[2])]
-        returnValue(resp)
-
-    @setting(221, 'Set Heater Range', output_channel = 'i', range = 'i', returns = 'i')
-    def heater_range(self, c, output_channel, range = None):
-        """
-        Set or query heater range.
-        Args:
-            output_channel (int): the heater channel
-            range (int): the heater range (0 = off, 1 = 1% of max, 2 = 10% of max, 3 = 100% of max)
-        Returns:
-            (int): the heater range
-        """
-        chString = 'RANGE'
-
-        #check for errors
-
-        if range is not None:
-            output_msg = ' ' + str(output_channel) + ',' + str(range) + TERMINATOR
-            yield self.ser.write(chString + output_msg)
-
-        #issue query
-        yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = yield int(self.ser.read())
         returnValue(resp)
 
     @setting(222, 'Set Heater Power', output_channel = 'i', power = 'v', returns = 'v')
@@ -249,26 +269,6 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = np.array(resp.split(','), dtype=float)
         returnValue(resp)
-
-    @setting(224, 'Set Heater Setpoint', output_channel = 'i', setpoint = 'v', returns = 'v')
-    def heater_setpoint(self, c, output_channel, setpoint = None):
-        """
-        Set or query heater setpoint.
-        Args:
-            output_channel  (int): the heater channel
-            setpoint        (float): the setpoint
-        Returns:
-                            (float): the setpoint
-        """
-
-        chString = 'SETP'
-        if power is not None:
-            output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint)+ TERMINATOR
-            yield self.write(output_msg)
-
-        #issue query
-        resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
-        returnValue(float(resp))
 
     @setting(230, 'Get Heater Output', output_channel = 'i', returns = 'v')
     def heater_output(self, c, output_channel):
