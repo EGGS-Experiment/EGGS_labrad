@@ -53,21 +53,21 @@ class lakeshore_client(QWidget):
         layout.addWidget(self.gui)
         self.setLayout(layout)
         self.setWindowTitle('Lakeshore 336 Client')
-        #
+
         # #connect signals to slots
-        #     #record temperature
-        # self.gui.tempAll_record.toggled.connect(self.record_temp)
-        #
-        #     #update heater setting
-        # #self.gui.heat1_update.toggled.connect(self.update_heater(1))
-        # #self.gui.heat2_update.toggled.connect(self.update_heater(2))
-        #
-        #     #lock heater settings
-        # self.gui.heatAll_lockswitch.toggled.connect(self.lock_heaters)
-        #
-        #     #mode changed
-        # self.gui.heat1_mode.activated.connect(self.heater_mode_changed)
-        # self.gui.heat1_mode.activated.connect(self.heater_mode_changed)
+            #record temperature
+        self.gui.tempAll_record.toggled.connect(self.record_temp)
+
+            #update heater setting
+        self.gui.heat1_update.toggled.connect(self.update_heater(chan = 1))
+        self.gui.heat2_update.toggled.connect(self.update_heater(chan = 2))
+
+            #lock heater settings
+        self.gui.heatAll_lockswitch.toggled.connect(self.lock_heaters)
+
+            #mode changed
+        self.gui.heat1_mode.activated.connect(self.heater_mode_changed)
+        self.gui.heat2_mode.activated.connect(self.heater_mode_changed)
 
 
     #Slot functions
@@ -95,7 +95,6 @@ class lakeshore_client(QWidget):
         #todo: setup
         #todo: set param
 
-    @inlineCallbacks
     def lock_heaters(self):
         """
         Locks heater updating
@@ -103,65 +102,120 @@ class lakeshore_client(QWidget):
         lock_status = self.gui.heatAll_lockswitch.isChecked()
         self.gui.heat1_update.setEnabled(lock_status)
 
-    @inlineCallbacks
-    def heater_mode_changed(self, mode):
+    def heater_mode_changed(self, chan, mode):
         """
         fd
         """
-        if mode == 0:
-            self.gui.heat1_in.setEnabled(False)
-            self.gui.heat1_curr.setEnabled(False)
-            self.gui.heat1_res.setEnabled(False)
-            self.gui.heat1_set.setEnabled(False)
-            self.gui.heat1_range.setEnabled(False)
-            self.gui.heat1_p1.setEnabled(False)
-            self.gui.heat1_p2.setEnabled(False)
-            self.gui.heat1_p3.setEnabled(False)
-        elif mode == 1:
-            self.gui.heat1_in.setEnabled(True)
-            self.gui.heat1_curr.setEnabled(True)
-            self.gui.heat1_res.setEnabled(True)
-            self.gui.heat1_set.setEnabled(True)
-            self.gui.heat1_range.setEnabled(True)
-            self.gui.heat1_p1.setEnabled(True)
-            self.gui.heat1_p2.setEnabled(False)
-            self.gui.heat1_p3.setEnabled(False)
-            self.gui.heat1_p1_label.setText('P-I-D')
-            self.gui.heat1_p2_label.setText('')
-            self.gui.heat1_p3_label.setText('')
-            self.heat1_p1.setDecimals(0)
-            self.heat1_p1.setSingleStep(1)
-            self.heat1_p1.setRange(0, 2)
-        elif mode == 2:
-            self.gui.heat1_in.setEnabled(True)
-            self.gui.heat1_curr.setEnabled(True)
-            self.gui.heat1_res.setEnabled(True)
-            self.gui.heat1_set.setEnabled(True)
-            self.gui.heat1_range.setEnabled(True)
-            self.gui.heat1_p1.setEnabled(True)
-            self.gui.heat1_p2.setEnabled(True)
-            self.gui.heat1_p3.setEnabled(True)
-            self.gui.heat1_p1_label.setText('P')
-            self.gui.heat1_p2_label.setText('I')
-            self.gui.heat1_p3_label.setText('D')
-            self.heat1_p1.setDecimals(1)
-            self.heat1_p1.setSingleStep(1e-1)
-            self.heat1_p1.setRange(0, 1000)
-        elif mode == 3:
-            self.gui.heat1_in.setEnabled(True)
-            self.gui.heat1_curr.setEnabled(True)
-            self.gui.heat1_res.setEnabled(True)
-            self.gui.heat1_set.setEnabled(True)
-            self.gui.heat1_range.setEnabled(True)
-            self.gui.heat1_p1.setEnabled(True)
-            self.gui.heat1_p2.setEnabled(False)
-            self.gui.heat1_p3.setEnabled(False)
-            self.gui.heat1_p1_label.setText('Current (A)')
-            self.gui.heat1_p2_label.setText('')
-            self.gui.heat1_p3_label.setText('')
-            self.heat1_p1.setDecimals(2)
-            self.heat1_p1.setSingleStep(1e-2)
-            self.heat1_p1.setRange(0, self.gui.heat1_curr.value())
+        if chan == 1:
+            if mode == 0:
+                self.gui.heat1_in.setEnabled(False)
+                self.gui.heat1_curr.setEnabled(False)
+                self.gui.heat1_res.setEnabled(False)
+                self.gui.heat1_set.setEnabled(False)
+                self.gui.heat1_range.setEnabled(False)
+                self.gui.heat1_p1.setEnabled(False)
+                self.gui.heat1_p2.setEnabled(False)
+                self.gui.heat1_p3.setEnabled(False)
+            elif mode == 1:
+                self.gui.heat1_in.setEnabled(True)
+                self.gui.heat1_curr.setEnabled(True)
+                self.gui.heat1_res.setEnabled(True)
+                self.gui.heat1_set.setEnabled(True)
+                self.gui.heat1_range.setEnabled(True)
+                self.gui.heat1_p1.setEnabled(True)
+                self.gui.heat1_p2.setEnabled(False)
+                self.gui.heat1_p3.setEnabled(False)
+                self.gui.heat1_p1_label.setText('P-I-D')
+                self.gui.heat1_p2_label.setText('')
+                self.gui.heat1_p3_label.setText('')
+                self.heat1_p1.setDecimals(0)
+                self.heat1_p1.setSingleStep(1)
+                self.heat1_p1.setRange(0, 2)
+            elif mode == 2:
+                self.gui.heat1_in.setEnabled(True)
+                self.gui.heat1_curr.setEnabled(True)
+                self.gui.heat1_res.setEnabled(True)
+                self.gui.heat1_set.setEnabled(True)
+                self.gui.heat1_range.setEnabled(True)
+                self.gui.heat1_p1.setEnabled(True)
+                self.gui.heat1_p2.setEnabled(True)
+                self.gui.heat1_p3.setEnabled(True)
+                self.gui.heat1_p1_label.setText('P')
+                self.gui.heat1_p2_label.setText('I')
+                self.gui.heat1_p3_label.setText('D')
+                self.heat1_p1.setDecimals(1)
+                self.heat1_p1.setSingleStep(1e-1)
+                self.heat1_p1.setRange(0, 1000)
+            elif mode == 3:
+                self.gui.heat1_in.setEnabled(True)
+                self.gui.heat1_curr.setEnabled(True)
+                self.gui.heat1_res.setEnabled(True)
+                self.gui.heat1_set.setEnabled(True)
+                self.gui.heat1_range.setEnabled(True)
+                self.gui.heat1_p1.setEnabled(True)
+                self.gui.heat1_p2.setEnabled(False)
+                self.gui.heat1_p3.setEnabled(False)
+                self.gui.heat1_p1_label.setText('Current (A)')
+                self.gui.heat1_p2_label.setText('')
+                self.gui.heat1_p3_label.setText('')
+                self.heat1_p1.setDecimals(2)
+                self.heat1_p1.setSingleStep(1e-2)
+                self.heat1_p1.setRange(0, self.gui.heat1_curr.value())
+        elif chan == 2:
+            if mode == 0:
+                self.gui.heat2_in.setEnabled(False)
+                self.gui.heat2_curr.setEnabled(False)
+                self.gui.heat2_res.setEnabled(False)
+                self.gui.heat2_set.setEnabled(False)
+                self.gui.heat2_range.setEnabled(False)
+                self.gui.heat2_p1.setEnabled(False)
+                self.gui.heat2_p2.setEnabled(False)
+                self.gui.heat2_p3.setEnabled(False)
+            elif mode == 1:
+                self.gui.heat2_in.setEnabled(True)
+                self.gui.heat2_curr.setEnabled(True)
+                self.gui.heat2_res.setEnabled(True)
+                self.gui.heat2_set.setEnabled(True)
+                self.gui.heat2_range.setEnabled(True)
+                self.gui.heat2_p1.setEnabled(True)
+                self.gui.heat2_p2.setEnabled(False)
+                self.gui.heat2_p3.setEnabled(False)
+                self.gui.heat2_p1_label.setText('P-I-D')
+                self.gui.heat2_p2_label.setText('')
+                self.gui.heat2_p3_label.setText('')
+                self.heat2_p1.setDecimals(0)
+                self.heat2_p1.setSingleStep(1)
+                self.heat2_p1.setRange(0, 2)
+            elif mode == 2:
+                self.gui.heat2_in.setEnabled(True)
+                self.gui.heat2_curr.setEnabled(True)
+                self.gui.heat2_res.setEnabled(True)
+                self.gui.heat2_set.setEnabled(True)
+                self.gui.heat2_range.setEnabled(True)
+                self.gui.heat2_p1.setEnabled(True)
+                self.gui.heat2_p2.setEnabled(True)
+                self.gui.heat2_p3.setEnabled(True)
+                self.gui.heat2_p1_label.setText('P')
+                self.gui.heat2_p2_label.setText('I')
+                self.gui.heat2_p3_label.setText('D')
+                self.heat2_p1.setDecimals(1)
+                self.heat2_p1.setSingleStep(1e-1)
+                self.heat2_p1.setRange(0, 1000)
+            elif mode == 3:
+                self.gui.heat2_in.setEnabled(True)
+                self.gui.heat2_curr.setEnabled(True)
+                self.gui.heat2_res.setEnabled(True)
+                self.gui.heat2_set.setEnabled(True)
+                self.gui.heat2_range.setEnabled(True)
+                self.gui.heat2_p1.setEnabled(True)
+                self.gui.heat2_p2.setEnabled(False)
+                self.gui.heat2_p3.setEnabled(False)
+                self.gui.heat2_p1_label.setText('Current (A)')
+                self.gui.heat2_p2_label.setText('')
+                self.gui.heat2_p3_label.setText('')
+                self.heat2_p1.setDecimals(2)
+                self.heat2_p1.setSingleStep(1e-2)
+                self.heat2_p1.setRange(0, self.gui.heat1_curr.value())
 
     #Polling functions
     def start_polling(self):
