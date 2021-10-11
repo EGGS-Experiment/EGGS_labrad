@@ -1,10 +1,9 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTabWidget
 from PyQt5.QtGui import QIcon
 from twisted.internet.defer import inlineCallbacks, returnValue
-import sys
 from barium.lib.clients.gui.detachable_tab import DetachableTabWidget
 
-class BARIUM_GUI(QMainWindow):
+class EGGS_GUI(QMainWindow):
     def __init__(self, reactor, clipboard, parent=None):
         super(BARIUM_GUI, self).__init__(parent)
         self.clipboard = clipboard
@@ -77,47 +76,22 @@ class BARIUM_GUI(QMainWindow):
         scriptscanner = script_scanner_gui(reactor, cxn = cxn)
         return scriptscanner
 
-    # def makeWavemeterWidget(self, reactor):
-    #     from common.lib.clients.Multiplexer.multiplexerclient import wavemeterclient
-    #     wavemeter = wavemeterclient(reactor)
-    #     return wavemeter
-    #
-    # def makeLaserControlWidget(self, reactor):
-    #     from barium.lib.clients.Software_Laser_Lock_Client.laser_control_client import laser_control_client
-    #     control = laser_control_client(reactor)
-    #     return control
-    #
-    # def makeControlWidget(self, reactor):
-    #     from barium.lib.clients.TrapControl_client.TrapControl_client import TrapControlClient
-    #     control = TrapControlClient(reactor)
-    #     return control
-    #
-    # def makeFrequencyWidget(self,reactor):
-    #     from barium.lib.clients.FrequencyControl_client.FrequencyControl_client import FrequencyControlClient
-    #     frequency = FrequencyControlClient(reactor)
-    #     return frequency
-    #
-    # def makePMTCameraSwitchWidget(self,reactor):
-    #     from barium.lib.clients.PMTCameraSwitch_client.PMTCameraSwitch_client import PMTCameraSwitchClient
-    #     switch = PMTCameraSwitchClient(reactor)
-    #     return switch
-
-    def makeCryoWidget(self,reactor):
-        from EGGS_labrad.lib.clients.PMTCameraSwitch_client.PMTCameraSwitch_client import PMTCameraSwitchClient
-        switch = PMTCameraSwitchClient(reactor)
-        return switch
+    def makeCryoWidget(self, reactor):
+        from EGGS_labrad.lib.clients.lakeshore_client.lakeshore_client import lakeshore_client
+        lakeshore = lakeshore_client(reactor)
+        return lakeshore
 
     def closeEvent(self, x):
         self.reactor.stop()
 
 if __name__=="__main__":
-    a = QApplication( sys.argv )
+    import sys, qt5reactor
+    a = QApplication(sys.argv)
     clipboard = a.clipboard()
-    import qt5reactor
     qt5reactor.install()
     from twisted.internet import reactor
-    BariumGUI = BARIUM_GUI(reactor, clipboard)
-    #BariumGUI.setWindowIcon(QIcon('C:/Users/barium133/Code/barium/BARIUM_IONS.png'))
-    BariumGUI.setWindowTitle('EGGS GUI')
-    BariumGUI.show()
+    EGGSGUI = EGGS_GUI(reactor, clipboard)
+    #EGGSGUI.setWindowIcon(QIcon('C:/Users/barium133/Code/barium/BARIUM_IONS.png'))
+    EGGSGUI.setWindowTitle('EGGS GUI')
+    EGGSGUI.show()
     reactor.run()

@@ -71,7 +71,7 @@ class lakeshore_client(QWidget):
         self.gui.heat2_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan = 2))
 
         #start up data
-
+        #todo: start up data
 
     #Slot functions
     @inlineCallbacks
@@ -86,7 +86,6 @@ class lakeshore_client(QWidget):
             yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')], \
                                        [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'), \
                                         ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_temp)
-        #todo: set colors of button?
 
     @inlineCallbacks
     def update_heater(self, chan):
