@@ -40,6 +40,7 @@ class BARIUM_GUI(QMainWindow):
         self.tabWidget.addTab(control, '&Trap Control')
         self.tabWidget.addTab(frequency, '&Oscillators')
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
+        self.tabWidget.addTab(cryo, '&Cryo')
         self.tabWidget.addTab(switch, '&Switches')
 
         layout.addWidget(self.tabWidget)
@@ -72,32 +73,37 @@ class BARIUM_GUI(QMainWindow):
 
 
     def makeScriptScannerWidget(self, reactor, cxn):
-        from common.lib.clients.script_scanner_gui.script_scanner_gui import script_scanner_gui
+        from EGGS_labrad.lib.clients.script_scanner_gui.script_scanner_gui import script_scanner_gui
         scriptscanner = script_scanner_gui(reactor, cxn = cxn)
         return scriptscanner
 
-    def makeWavemeterWidget(self, reactor):
-        from common.lib.clients.Multiplexer.multiplexerclient import wavemeterclient
-        wavemeter = wavemeterclient(reactor)
-        return wavemeter
+    # def makeWavemeterWidget(self, reactor):
+    #     from common.lib.clients.Multiplexer.multiplexerclient import wavemeterclient
+    #     wavemeter = wavemeterclient(reactor)
+    #     return wavemeter
+    #
+    # def makeLaserControlWidget(self, reactor):
+    #     from barium.lib.clients.Software_Laser_Lock_Client.laser_control_client import laser_control_client
+    #     control = laser_control_client(reactor)
+    #     return control
+    #
+    # def makeControlWidget(self, reactor):
+    #     from barium.lib.clients.TrapControl_client.TrapControl_client import TrapControlClient
+    #     control = TrapControlClient(reactor)
+    #     return control
+    #
+    # def makeFrequencyWidget(self,reactor):
+    #     from barium.lib.clients.FrequencyControl_client.FrequencyControl_client import FrequencyControlClient
+    #     frequency = FrequencyControlClient(reactor)
+    #     return frequency
+    #
+    # def makePMTCameraSwitchWidget(self,reactor):
+    #     from barium.lib.clients.PMTCameraSwitch_client.PMTCameraSwitch_client import PMTCameraSwitchClient
+    #     switch = PMTCameraSwitchClient(reactor)
+    #     return switch
 
-    def makeLaserControlWidget(self, reactor):
-        from barium.lib.clients.Software_Laser_Lock_Client.laser_control_client import laser_control_client
-        control = laser_control_client(reactor)
-        return control
-
-    def makeControlWidget(self, reactor):
-        from barium.lib.clients.TrapControl_client.TrapControl_client import TrapControlClient
-        control = TrapControlClient(reactor)
-        return control
-
-    def makeFrequencyWidget(self,reactor):
-        from barium.lib.clients.FrequencyControl_client.FrequencyControl_client import FrequencyControlClient
-        frequency = FrequencyControlClient(reactor)
-        return frequency
-
-    def makePMTCameraSwitchWidget(self,reactor):
-        from barium.lib.clients.PMTCameraSwitch_client.PMTCameraSwitch_client import PMTCameraSwitchClient
+    def makeCryoWidget(self,reactor):
+        from EGGS_labrad.lib.clients.PMTCameraSwitch_client.PMTCameraSwitch_client import PMTCameraSwitchClient
         switch = PMTCameraSwitchClient(reactor)
         return switch
 
