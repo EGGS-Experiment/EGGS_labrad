@@ -67,8 +67,8 @@ class lakeshore_client(QWidget):
         self.gui.heatAll_lockswitch.toggled.connect(self.lock_heaters)
 
             #mode changed
-        self.gui.heat1_mode.activated.connect(lambda chan = 1, mode = self.gui.heat1_mode.currentIndex(): self.heater_mode_changed(chan = chan, mode = mode))
-        self.gui.heat2_mode.activated.connect(lambda chan = 2, mode = self.gui.heat1_mode.currentIndex(): self.heater_mode_changed(chan = chan, mode = mode))
+        self.gui.heat1_mode.currentIndexChanged.connect(lambda chan = 1, mode = self.gui.heat1_mode.currentIndex(): self.heater_mode_changed(chan = chan, mode = mode))
+        self.gui.heat2_mode.currentIndexChanged.connect(lambda chan = 2, mode = self.gui.heat1_mode.currentIndex(): self.heater_mode_changed(chan = chan, mode = mode))
 
 
     #Slot functions
