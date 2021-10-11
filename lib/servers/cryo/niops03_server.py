@@ -77,7 +77,7 @@ class NIOPS03Server(SerialDeviceServer):
         return
 
     @setting(112,'Toggle NP', power = 'b')
-    def toggle_ip(self, c, power = None):
+    def toggle_np(self, c, power = None):
         """
         Set or query whether getter is off or on
         Args:

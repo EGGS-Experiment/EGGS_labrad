@@ -2,7 +2,7 @@ import os, socket
 
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
 from twisted.internet.defer import inlineCallbacks, returnValue
-from twisted.internet import task
+from twisted.internet.task import LoopingCall
 from .lakeshore_gui import lakeshore_gui
 
 class lakeshore_client(QWidget):
@@ -17,7 +17,7 @@ class lakeshore_client(QWidget):
         self.set_signal_listeners()
 
         #create and start loop to poll server for temperature
-        self.temp_loop = task.LoopingCall(self.poll)
+        self.temp_loop = LoopingCall(self.poll)
         self.start_polling()
 
     #Setup functions
@@ -29,11 +29,11 @@ class lakeshore_client(QWidget):
         """
         from labrad.wrappers import connectAsync
         self.cxn = yield connectAsync('localhost', name = 'Lakeshore 336 Client', password = self.password)
-        self.registry = yield self.cxn.registry
+        self.reg = yield self.cxn.registry
         self.ls = yield self.cxn.lakeshore_336_server
 
         # get polling time
-        yield self.registry.cd(['Clients', 'Lakeshore 336 Client'])
+        yield self.reg.cd(['Clients', 'Lakeshore 336 Client'])
         self.poll_time = yield self.registry.get('poll_time')
 
     @inlineCallbacks
@@ -70,10 +70,10 @@ class lakeshore_client(QWidget):
         self.gui.temp2.setText(str(temp[1]))
         self.gui.temp3.setText(str(temp[2]))
         self.gui.temp4.setText(str(temp[3]))
-        if ***:
+        if self.heat1_mode.currentText() is not 'Off':
             curr1 = yield self.ls.get_heater_output(1)
             self.gui.heat1.setText(str(curr1))
-        if ***:
+        if self.heat2_mode.currentText() is not 'Off':
             curr2 = yield self.ls.get_heater_output(2)
             self.gui.heat2.setText(str(temp[0]))
         #todo: heater?

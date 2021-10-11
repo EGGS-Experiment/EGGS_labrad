@@ -69,8 +69,32 @@ class TwisTorr74Server(SerialDeviceServer):
             else:
                 raise Exception('Unknown connection error')
 
-    # READ PRESSURE
-    @setting(111,'Read Pressure', returns='v')
+    #TOGGLE
+    @setting(111,'toggle', onoff = 'b', returns='')
+    def pressure_read(self, c, onoff):
+        """
+        Start or stop the pump
+        Args:
+            onoff   (bool): whether to start or stop pump
+        Returns:
+                    (bool): pump state
+        """
+        #create and send message to device
+        message = yield self._create_message(CMD_msg = b'000', DIR_msg = self.WRITE_msg, DATA_msg = b'1')
+        yield self.ser.write(message)
+
+        #read and parse answer
+        time.sleep(1.0)
+        resp = yield self.ser.read()
+        try:
+            resp = yield self._parse_answer(resp)
+        except Exception as e:
+            print(e)
+            raise
+        print(resp)
+
+    #READ PRESSURE
+    @setting(211, 'Read Pressure', returns='v')
     def pressure_read(self, c):
         """
         Get pump pressure
@@ -89,8 +113,7 @@ class TwisTorr74Server(SerialDeviceServer):
         except Exception as e:
             print(e)
             raise
-
-        float(resp)
+        resp = float(resp)
         returnValue(resp)
 
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg = b''):
@@ -121,7 +144,9 @@ class TwisTorr74Server(SerialDeviceServer):
         #otherwise process return message for errors
         elif len(ans) == 1:
             ans = bytes(ans)
-            print(ans)
+            if ans == b'\x6':
+                ans = 'Acknowledged'
+            #print(ans)
             if ans in self.ERRORS_msg:
                 raise Exception(self.ERRORS_msg[ans])
 
