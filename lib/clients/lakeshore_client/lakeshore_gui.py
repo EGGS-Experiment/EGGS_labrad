@@ -193,33 +193,36 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout = QtWidgets.QGridLayout()
         shell_font = 'MS Shell Dlg 2'
 
+        temp_label_col = 2
+        temp_box_col = 2
+
         heatAll_col = 11
 
-        heat1_label_col = 8
-        heat1_box_col = 10
+        heat1_label_col = 9
+        heat1_box_col = 11
 
-        heat2_label_col = 12
-        heat2_box_col = 14
+        heat2_label_col = 13
+        heat2_box_col = 15
 
-        heat_box_start = 5
+        heat_box_start = 6
         heat_box_step = 1
 
-        layout.addWidget(self.tempAll_label, 1, 3)
-        layout.addWidget(self.temp1, 3, 2, 3, 2)
-        layout.addWidget(self.temp2, 8, 2, 3, 2)
-        layout.addWidget(self.temp3, 13, 2, 3, 2)
-        layout.addWidget(self.temp4, 18, 2, 3, 2)
+        layout.addWidget(self.tempAll_label, 1, 2)
+        layout.addWidget(self.temp1, 4, temp_box_col, 3, 2)
+        layout.addWidget(self.temp2, 6, temp_box_col, 3, 2)
+        layout.addWidget(self.temp3, 8, temp_box_col, 3, 2)
+        layout.addWidget(self.temp4, 10, temp_box_col, 3, 2)
 
-        layout.addWidget(self.temp1_label, 2, 2)
-        layout.addWidget(self.temp2_label, 7, 2)
-        layout.addWidget(self.temp3_label, 12, 2)
-        layout.addWidget(self.temp4_label, 17, 2)
+        layout.addWidget(self.temp1_label, 4, temp_label_col)
+        layout.addWidget(self.temp2_label, 6, temp_label_col)
+        layout.addWidget(self.temp3_label, 8, temp_label_col)
+        layout.addWidget(self.temp4_label, 10, temp_label_col)
 
-        layout.addWidget(self.heatAll_label, 1, heatAll_col)
-        layout.addWidget(self.lockswitch, 2, heatAll_col)
+        layout.addWidget(self.heatAll_label, 1, heatAll_col, 1, 5)
+        layout.addWidget(self.lockswitch, 2, heatAll_col + 1, 1, 2)
 
-        layout.addWidget(self.heat1_label, 2, heat1_label_col)
-        layout.addWidget(self.heat1, 3, heat1_box_col)
+        layout.addWidget(self.heat1_label, 3, heat1_box_col)
+        layout.addWidget(self.heat1, 4, heat1_box_col)
         layout.addWidget(self.heat1_mode_label, heat_box_start, heat1_label_col)
         layout.addWidget(self.heat1_mode, heat_box_start, heat1_box_col)
         layout.addWidget(self.heat1_in_label, heat_box_start + 1 * heat_box_step, heat1_label_col)
@@ -236,27 +239,27 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.addWidget(self.heat1_p2, heat_box_start + 6 * heat_box_step, heat1_box_col)
         layout.addWidget(self.heat1_p3_label, heat_box_start + 7 * heat_box_step, heat1_label_col)
         layout.addWidget(self.heat1_p3, heat_box_start + 7 * heat_box_step, heat1_box_col)
-        layout.addWidget(self.heat1_update, heat_box_start + 8 * heat_box_step, 10)
+        layout.addWidget(self.heat1_update, heat_box_start + 8 * heat_box_step, heat1_box_col)
 
-        layout.addWidget(self.heat2_label, 2, heat2_label_col)
-        layout.addWidget(self.heat2, 3, heat2_box_col)
-        layout.addWidget(self.heat2_mode_label, 5, heat1_label_col)
-        layout.addWidget(self.heat2_mode, 5, heat2_box_col)
-        layout.addWidget(self.heat2_in_label, 7, heat1_label_col)
-        layout.addWidget(self.heat2_in, 7, heat2_box_col)
-        layout.addWidget(self.heat2_res_label, 8, heat1_label_col)
-        layout.addWidget(self.heat2_res, 8, heat2_box_col)
-        layout.addWidget(self.heat2_curr_label, 10, heat1_label_col)
-        layout.addWidget(self.heat2_curr, 10, heat2_box_col)
-        layout.addWidget(self.heat2_set_label, 12, heat1_label_col)
-        layout.addWidget(self.heat2_set, 12, heat2_box_col)
-        layout.addWidget(self.heat2_p1_label, 14, heat1_label_col)
-        layout.addWidget(self.heat2_p1, 14, heat2_box_col)
-        layout.addWidget(self.heat2_p2_label, 16, heat1_label_col)
-        layout.addWidget(self.heat2_p2, 16, heat2_box_col)
-        layout.addWidget(self.heat2_p3_label, 18, heat1_label_col)
-        layout.addWidget(self.heat2_p3, 18, heat2_box_col)
-        layout.addWidget(self.heat2_update, 20, heat2_box_col)
+        layout.addWidget(self.heat2_label, 3, heat2_box_col)
+        layout.addWidget(self.heat2, 4, heat2_box_col)
+        layout.addWidget(self.heat2_mode_label, heat_box_start, heat2_label_col)
+        layout.addWidget(self.heat2_mode, heat_box_start, heat2_box_col)
+        layout.addWidget(self.heat2_in_label, heat_box_start + 1 * heat_box_step, heat2_label_col)
+        layout.addWidget(self.heat2_in, heat_box_start + 1 * heat_box_step, heat2_box_col)
+        layout.addWidget(self.heat2_res_label, heat_box_start + 2 * heat_box_step, heat2_label_col)
+        layout.addWidget(self.heat2_res, heat_box_start + 2 * heat_box_step, heat2_box_col)
+        layout.addWidget(self.heat2_curr_label, heat_box_start + 3 * heat_box_step, heat2_label_col)
+        layout.addWidget(self.heat2_curr, heat_box_start + 3 * heat_box_step, heat2_box_col)
+        layout.addWidget(self.heat2_set_label, heat_box_start + 4 * heat_box_step, heat2_label_col)
+        layout.addWidget(self.heat2_set, heat_box_start + 4 * heat_box_step, heat2_box_col)
+        layout.addWidget(self.heat2_p1_label, heat_box_start + 5 * heat_box_step, heat2_label_col)
+        layout.addWidget(self.heat2_p1, heat_box_start + 5 * heat_box_step, heat2_box_col)
+        layout.addWidget(self.heat2_p2_label, heat_box_start + 6 * heat_box_step, heat2_label_col)
+        layout.addWidget(self.heat2_p2, heat_box_start + 6 * heat_box_step, heat2_box_col)
+        layout.addWidget(self.heat2_p3_label, heat_box_start + 7 * heat_box_step, heat2_label_col)
+        layout.addWidget(self.heat2_p3, heat_box_start + 7 * heat_box_step, heat2_box_col)
+        layout.addWidget(self.heat2_update, heat_box_start + 8 * heat_box_step, heat2_box_col)
 
         layout.minimumSize()
         self.setLayout(layout)
