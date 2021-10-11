@@ -266,13 +266,6 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.minimumSize()
         self.setLayout(layout)
 
-    def lock(self):
-        """
-        fd
-        """
-        #todo: write
-
-
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     icon = lakeshore_gui()

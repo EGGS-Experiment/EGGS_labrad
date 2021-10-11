@@ -1,27 +1,28 @@
-from PyQt4 import QtGui
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTabWidget
+from PyQt5.QtGui import QIcon
 from twisted.internet.defer import inlineCallbacks, returnValue
 import sys
 from barium.lib.clients.gui.detachable_tab import DetachableTabWidget
 
-class BARIUM_GUI(QtGui.QMainWindow):
+class BARIUM_GUI(QMainWindow):
     def __init__(self, reactor, clipboard, parent=None):
         super(BARIUM_GUI, self).__init__(parent)
         self.clipboard = clipboard
         self.reactor = reactor
-        self.connect_labrad()
+        self.connect()
+        self.makeLayout(cxn)
 
     @inlineCallbacks
-    def connect_labrad(self):
+    def connect(self):
         from common.lib.clients.connection import connection
-        cxn = connection(name = 'Barium GUI Client')
-        yield cxn.connect()
-        self.create_layout(cxn)
+        self.cxn = connection(name = 'EGGS GUI Client')
+        yield self.cxn.connect()
 
     #Highest level adds tabs to big GUI
-    def create_layout(self, cxn):
+    def makeLayout(self):
 	    #creates central layout
-        centralWidget = QtGui.QWidget()
-        layout = QtGui.QHBoxLayout()
+        centralWidget = QWidget()
+        layout = QHBoxLayout()
 
 	    #create subwidgets to be added to tabs
         script_scanner = self.makeScriptScannerWidget(reactor, cxn)
@@ -32,7 +33,7 @@ class BARIUM_GUI(QtGui.QMainWindow):
         switch = self.makePMTCameraSwitchWidget(reactor)
 
         # add tabs
-        self.tabWidget = QtGui.QTabWidget()
+        self.tabWidget = QTabWidget()
         #self.tabWidget = DetachableTabWidget()
         self.tabWidget.addTab(laser_control, '&Laser Control')
         self.tabWidget.addTab(wavemeter, '&Wavemeter')
@@ -104,13 +105,13 @@ class BARIUM_GUI(QtGui.QMainWindow):
         self.reactor.stop()
 
 if __name__=="__main__":
-    a = QtGui.QApplication( sys.argv )
+    a = QApplication( sys.argv )
     clipboard = a.clipboard()
-    import qt4reactor
-    qt4reactor.install()
+    import qt5reactor
+    qt5reactor.install()
     from twisted.internet import reactor
     BariumGUI = BARIUM_GUI(reactor, clipboard)
-    BariumGUI.setWindowIcon(QtGui.QIcon('C:/Users/barium133/Code/barium/BARIUM_IONS.png'))
-    BariumGUI.setWindowTitle('Barium GUI')
+    #BariumGUI.setWindowIcon(QIcon('C:/Users/barium133/Code/barium/BARIUM_IONS.png'))
+    BariumGUI.setWindowTitle('EGGS GUI')
     BariumGUI.show()
     reactor.run()

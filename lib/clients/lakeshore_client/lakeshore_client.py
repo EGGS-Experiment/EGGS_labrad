@@ -30,11 +30,16 @@ class lakeshore_client(QWidget):
         from labrad.wrappers import connectAsync
         self.cxn = yield connectAsync('localhost', name = 'Lakeshore 336 Client', password = self.password)
         self.reg = yield self.cxn.registry
+        self.dv = yield.self.cxn.data_vault
         self.ls = yield self.cxn.lakeshore_336_server
 
         # get polling time
         yield self.reg.cd(['Clients', 'Lakeshore 336 Client'])
         self.poll_time = yield self.registry.get('poll_time')
+
+        # set recording stuff
+        self.c_temp = self.cxn.context()
+        self.recording = False
 
     @inlineCallbacks
     def initializeGUI(self):
@@ -52,10 +57,39 @@ class lakeshore_client(QWidget):
         #todo: connect
 
     #Slot functions
-    #todo: write them
     @inlineCallbacks
-    def lowRailChanged(self, value, chan):
-        yield self.lock_server.set_low_rail(value, chan)
+    def record_temp(self):
+        """
+        Creates a new dataset to record temperature and tells polling loop
+        to add data to data vault
+        """
+        yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_temp)
+        yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')], \
+                                   [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'), \
+                                    ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_temp)
+        self.recording = True
+        #todo: set colors of button?
+
+    @inlineCallbacks
+    def update_heater(self):
+        """
+        fd
+        """
+        #todo: write
+
+    @inlineCallbacks
+    def lock_heater(self):
+        """
+        fd
+        """
+        # todo: write
+
+    @inlineCallbacks
+    def heater_mode_changed(self):
+        """
+        fd
+        """
+        # todo: write
 
     #Polling functions
     def start_polling(self):
@@ -66,6 +100,7 @@ class lakeshore_client(QWidget):
 
     def poll(self):
         temp = yield self.ls.read_temperature('0')
+        self.dv.add(elapsedtime, temp[0], temp[1], temp[2], temp[3], context=self.c_temp)
         self.gui.temp1.setText(str(temp[0]))
         self.gui.temp2.setText(str(temp[1]))
         self.gui.temp3.setText(str(temp[2]))
@@ -75,15 +110,13 @@ class lakeshore_client(QWidget):
             self.gui.heat1.setText(str(curr1))
         if self.heat2_mode.currentText() is not 'Off':
             curr2 = yield self.ls.get_heater_output(2)
-            self.gui.heat2.setText(str(temp[0]))
-        #todo: heater?
-
+            self.gui.heat2.setText(str(curr2))
 
 if __name__ == "__main__":
     a = QApplication([])
     import qt5reactor
     qt5reactor.install()
     from twisted.internet import reactor
-    software_lock = software_laser_lock_client(reactor)
+    software_lock = lakeshore_client(reactor)
     software_lock.show()
     reactor.run()

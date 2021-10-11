@@ -62,15 +62,15 @@ class vibration_measurement(experiment):
             if (time.time() - prevtime) <= self.time_interval:
                 continue
 
-            pressure = self.pump.read_pressure()
-            tempK = self.tempcontroller.read_temperature('0')
-            trace = self.oscope.get_trace(1)
+            pressure = yield self.pump.read_pressure()
+            tempK = yield self.tempcontroller.read_temperature('0')
+            trace = yield self.oscope.get_trace(1)
             trace = np.array([trace[0], trace[1]]).transpose()
             elapsedtime = time.time() - starttime
             try:
-                self.dv.add(elapsedtime, tempK[0], tempK[1], tempK[2], tempK[3], context = self.c_temp)
-                self.dv.add(elapsedtime, pressure, context=self.c_press)
-                self.dv.add_ex(trace, context = self.c_oscope)
+                yield self.dv.add(elapsedtime, tempK[0], tempK[1], tempK[2], tempK[3], context = self.c_temp)
+                yield self.dv.add(elapsedtime, pressure, context=self.c_press)
+                yield self.dv.add_ex(trace, context = self.c_oscope)
             except Exception as e:
                 print(e)
 
@@ -93,15 +93,15 @@ class vibration_measurement(experiment):
 
         #create datasets
             #temp controller
-        self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_temp)
-        dataset_temp = self.dv.new('Lakeshore 336 Temperature Controller',[('time', 't')], [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'), \
+        self.dv.cd(['', 'Experiments', year, month, trunk1, trunk2], True, context = self.c_temp)
+        dataset_temp = self.dv.new('Lakeshore 336 Temperature Controller',[('Elapsed time', 't')], [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'), \
                                                                                              ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')] , context = self.c_temp)
             #pressure
-        self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_press)
-        dataset_pressure = self.dv.new('TwisTorr 74 Pressure Controller',[('time', 't')], [('Pump Pressure', 'Pressure', 'mTorr')], context = self.c_press)
+        self.dv.cd(['', 'Experiments', year, month, trunk1, trunk2], True, context=self.c_press)
+        dataset_pressure = self.dv.new('TwisTorr 74 Pressure Controller',[('Elapsed time', 't')], [('Pump Pressure', 'Pressure', 'mTorr')], context = self.c_press)
             #oscope
-        self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_oscope)
-        dataset_oscope = self.dv.new('Rigol DS1104z Oscilloscope',[('time', 't')], [('Scope Trace', 'Scope Trace', '1')], context = self.c_oscope)
+        self.dv.cd(['','Experiments', year, month, trunk1, trunk2], True, context=self.c_oscope)
+        dataset_oscope = self.dv.new('Rigol DS1104z Oscilloscope',[('Elapsed time', 't')], [('Scope Trace', 'Scope Trace', '1')], context = self.c_oscope)
 
         #add parameters to data vault
         for parameter in self.p:
