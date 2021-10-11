@@ -205,8 +205,9 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.addWidget(self.temp4_label, 17, 2)
 
         layout.addWidget(self.heatAll_label, 1, 11)
+        layout.addWidget(self.lockswitch, 2, 11)
+
         layout.addWidget(self.heat1_label, 2, 9)
-        layout.addWidget(self.lockswitch, 3, 9)
         layout.addWidget(self.heat1, 3, 10)
         layout.addWidget(self.heat1_mode_label, 5, 8)
         layout.addWidget(self.heat1_mode, 5, 10)
@@ -244,7 +245,7 @@ class lakeshore_gui(QtWidgets.QFrame):
         layout.addWidget(self.heat2_p2, 16, 14)
         layout.addWidget(self.heat2_p3_label, 18, 12)
         layout.addWidget(self.heat2_p3, 18, 14)
-        layout.addWidget(self.heat1_update, 20, 14)
+        layout.addWidget(self.heat2_update, 20, 14)
 
         layout.minimumSize()
         self.setLayout(layout)
