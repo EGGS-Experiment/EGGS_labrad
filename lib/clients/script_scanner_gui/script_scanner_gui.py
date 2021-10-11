@@ -24,7 +24,7 @@ class script_scanner_gui(QtWidgets.QWidget):
         self.subscribedScriptScanner = False
         self.subscribedParametersVault = False
         if self.cxn is None:
-            self.cxn = connection()
+            self.cxn = connection(name = 'Script Scanner Client')
             yield self.cxn.connect()
         self.context = yield self.cxn.context()
         try:
@@ -110,7 +110,6 @@ class script_scanner_gui(QtWidgets.QWidget):
     @inlineCallbacks
     def setupListenersScriptScanner(self):
         sc = yield self.cxn.get_server('Script Scanner')
-        print('th1')
         # connect server signals
         yield sc.signal_on_queued_new_script(self.SIGNALID,
                                              context=self.context)

@@ -5,17 +5,17 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 from lakeshore_gui import lakeshore_gui
 
+from common.lib.clients.connection import connection
+
 class lakeshore_client(QWidget):
 
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
-    def __init__(self, reactor, clipboard, parent=None):
+    def __init__(self, reactor, parent=None):
         super(lakeshore_client, self).__init__()
         self.reactor = reactor
-        self.clipboard = clipboard
         self.connect()
         self.initializeGUI()
-        #self.set_signal_listeners()
 
         #create and start loop to poll server for temperature
         # self.temp_loop = LoopingCall(self.poll)
@@ -28,8 +28,11 @@ class lakeshore_client(QWidget):
         Creates an asynchronous connection to lakeshore server
         and relevant labrad servers
         """
-        from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name = 'Lakeshore 336 Client', password = self.LABRADPASSWORD)
+        #from labrad.wrappers import connectAsync
+        #self.cxn = yield connectAsync('localhost', name = 'Lakeshore 336 Client', password = self.LABRADPASSWORD)
+        self.cxn = connection(name = 'Lakeshore 336 Client')
+        yield self.cxn.connect()
+        self.context = yield self.cxn.context()
         self.reg = yield self.cxn.registry
         self.dv = yield self.cxn.data_vault
         #self.ls = yield self.cxn.lakeshore_336_server
@@ -46,26 +49,25 @@ class lakeshore_client(QWidget):
     def initializeGUI(self):
         #initialize main GUI
         layout = QGridLayout()
-        qBox = QGroupBox('th1')
-        subLayout = QGridLayout()
-        qBox.setLayout(subLayout)
-        self.gui = lakeshore_gui()
-        layout.addWidget(self.gui, 0, 0)
-
-        #connect signals to slots
-            #record temperature
-        self.gui.tempAll_record.toggled.connect(self.record_temp)
-
-            #update heater setting
-        #self.gui.heat1_update.toggled.connect(self.update_heater(1))
-        #self.gui.heat2_update.toggled.connect(self.update_heater(2))
-
-            #lock heater settings
-        self.gui.heatAll_lockswitch.toggled.connect(self.lock_heaters)
-
-            #mode changed
-        self.gui.heat1_mode.activated.connect(self.heater_mode_changed)
-        self.gui.heat1_mode.activated.connect(self.heater_mode_changed)
+        self.gui = lakeshore_gui(parent = self)
+        layout.addWidget(self.gui)
+        self.setLayout(layout)
+        self.setWindowTitle('Lakeshore 336 Client')
+        #
+        # #connect signals to slots
+        #     #record temperature
+        # self.gui.tempAll_record.toggled.connect(self.record_temp)
+        #
+        #     #update heater setting
+        # #self.gui.heat1_update.toggled.connect(self.update_heater(1))
+        # #self.gui.heat2_update.toggled.connect(self.update_heater(2))
+        #
+        #     #lock heater settings
+        # self.gui.heatAll_lockswitch.toggled.connect(self.lock_heaters)
+        #
+        #     #mode changed
+        # self.gui.heat1_mode.activated.connect(self.heater_mode_changed)
+        # self.gui.heat1_mode.activated.connect(self.heater_mode_changed)
 
 
     #Slot functions
@@ -183,12 +185,14 @@ class lakeshore_client(QWidget):
             curr2 = yield self.ls.get_heater_output(2)
             self.gui.heat2.setText(str(curr2))
 
+    def closeEvent(self, event):
+        self.reactor.stop()
+
 if __name__ == "__main__":
     a = QApplication([])
-    clipboard = a.clipboard()
     import qt5reactor
     qt5reactor.install()
     from twisted.internet import reactor
-    lakeshore_interface = lakeshore_client(reactor, clipboard)
+    lakeshore_interface = lakeshore_client(reactor)
     lakeshore_interface.show()
     reactor.run()

@@ -3,7 +3,6 @@ from PyQt5.QtGui import QFont
 import sys
 
 from common.lib.clients.qtui.q_custom_text_changing_button import TextChangingButton as _TextChangingButton
-from common.lib.clients.connection import connection
 
 
 class TextChangingButton(_TextChangingButton):
