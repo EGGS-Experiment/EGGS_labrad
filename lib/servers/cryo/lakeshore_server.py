@@ -150,13 +150,40 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = [int(resp[1]), float(resp[2])]
         returnValue(resp)
 
+    @setting(213, 'Autotune Heater', output_channel = 'i', input_channel = 'i', mode = 'i', returns = '*1v')
+    def heater_setup(self, c, output_channel, input_channel = None, mode = None):
+        """
+        Set up or query the desired heater
+        Args:
+            output_channel  (int): the heater channel
+            input_channel   (int): the input channel for control
+            mode            (int): autotune mode (0 = P only, 1 = P & I only, 2 = PID)
+        Returns:
+                            (int, float): Tuple of (resistance, max_current)
+        """
+        chString = 'HTRSET'
+
+        #check for errors
+
+        #send message if not querying
+        if resistance is not None and max_current is not None:
+            output_msg = ' ' + str(output_channel) + ',' + str(resistance) + ',0,' + str(max_current) + ',2' + TERMINATOR
+            yield self.ser.write(chString + output_msg)
+
+        #issue query
+        yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
+        resp = yield self.ser.read()
+        resp = resp.split(',')
+        resp = [int(resp[1]), float(resp[2])]
+        returnValue(resp)
+
     @setting(221, 'Set Heater Range', output_channel = 'i', range = 'i', returns = 'i')
     def heater_range(self, c, output_channel, range = None):
         """
-        Set or query heater range. Only available if heater is in Zone mode.
+        Set or query heater range.
         Args:
             output_channel (int): the heater channel
-            range (int): the heater range (0 = off, 1 = Low, 2 = Medium, 3 = High)
+            range (int): the heater range (0 = off, 1 = 1% of max, 2 = 10% of max, 3 = 100% of max)
         Returns:
             (int): the heater range
         """
@@ -176,7 +203,9 @@ class Lakeshore336Server(SerialDeviceServer):
     @setting(222, 'Set Heater Power', output_channel = 'i', power = 'v', returns = 'v')
     def heater_power(self, c, output_channel, power = None):
         """
-        Set or query heater power. Only available if heater is in Manual mode.
+        Set or query heater power.
+        If heater is in manual mode, then heater directly controls power/current.
+        If heater is in closed loop mode, then heater sets power/current offset for PID.
         Args:
             output_channel (int): the heater channel
             power (float): the heater power as aa percentage of max amount
