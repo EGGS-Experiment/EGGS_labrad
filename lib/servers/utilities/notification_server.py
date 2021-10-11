@@ -15,7 +15,7 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-from labrad.server import LabradServer
+from labrad.server import LabradServer, setting
 from twisted.internet.defer import inlineCallbacks, returnValue
 import smtplib
 from email.message import EmailMessage
@@ -26,9 +26,9 @@ class NotificationServer(LabradServer):
     name = 'Notification Server'
     regKey = 'NotificationServer'
 
-    @inlineCallbacks
-    def initServer(self):
-        pass
+    # @inlineCallbacks
+    # def initServer(self):
+    #     pass
 
     #setup email
     @setting(111, 'email', msg='s', recipient = 's',returns='')
