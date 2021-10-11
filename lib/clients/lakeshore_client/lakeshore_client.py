@@ -33,14 +33,15 @@ class lakeshore_client(QWidget):
         self.cxn = connection(name = 'Lakeshore 336 Client')
         yield self.cxn.connect()
         self.context = yield self.cxn.context()
-        self.reg = yield self.cxn.registry
-        self.dv = yield self.cxn.data_vault
+        self.reg = yield self.cxn.get_server('Registry')
+        self.dv = yield self.cxn.get_server('Data Vault')
         #self.ls = yield self.cxn.lakeshore_336_server
 
         # get polling time
         yield self.reg.cd(['Clients', 'Lakeshore 336 Client'])
-        self.poll_time = yield float(self.reg.get('poll_time'))
-        print('here2')
+        self.poll_time = yield self.reg.get('poll_time')
+        self.poll_time = float(self.poll_time)
+
         # set recording stuff
         self.c_temp = self.cxn.context()
         self.recording = False
@@ -56,18 +57,18 @@ class lakeshore_client(QWidget):
 
         # #connect signals to slots
             #record temperature
-        self.gui.tempAll_record.toggled.connect(self.record_temp)
+        self.gui.tempAll_record.toggled.connect(lambda: self.record_temp())
 
             #update heater setting
-        self.gui.heat1_update.toggled.connect(self.update_heater(chan = 1))
-        self.gui.heat2_update.toggled.connect(self.update_heater(chan = 2))
+        self.gui.heat1_update.toggled.connect(lambda chan = 1: self.update_heater(chan = chan))
+        self.gui.heat2_update.toggled.connect(lambda chan = 2: self.update_heater(chan = chan))
 
             #lock heater settings
         self.gui.heatAll_lockswitch.toggled.connect(self.lock_heaters)
 
             #mode changed
-        self.gui.heat1_mode.activated.connect(self.heater_mode_changed)
-        self.gui.heat2_mode.activated.connect(self.heater_mode_changed)
+        self.gui.heat1_mode.activated.connect(lambda chan = 1, mode = self.gui.heat1_mode.currentIndex(): self.heater_mode_changed(chan = chan, mode = mode))
+        self.gui.heat2_mode.activated.connect(lambda chan = 2, mode = self.gui.heat1_mode.currentIndex(): self.heater_mode_changed(chan = chan, mode = mode))
 
 
     #Slot functions
@@ -85,7 +86,6 @@ class lakeshore_client(QWidget):
                                         ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_temp)
         #todo: set colors of button?
 
-    @inlineCallbacks
     def update_heater(self, chan):
         """
         fd
@@ -101,6 +101,7 @@ class lakeshore_client(QWidget):
         """
         lock_status = self.gui.heatAll_lockswitch.isChecked()
         self.gui.heat1_update.setEnabled(lock_status)
+        self.gui.heat2_update.setEnabled(lock_status)
 
     def heater_mode_changed(self, chan, mode):
         """

@@ -56,7 +56,7 @@ class lakeshore_gui(QtWidgets.QFrame):
         self.heatAll_label = QtWidgets.QLabel('Heater Configuration')
         self.heatAll_label.setFont(QFont(shell_font, pointSize= 20))
         self.heatAll_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.heatAll_lockswitch = TextChangingButton(('Locked', 'Unlocked'))
+        self.heatAll_lockswitch = TextChangingButton(('Lock', 'Unlock'))
             #heater output
         self.heat1_label = QtWidgets.QLabel('Heater 1')
         self.heat1 = QtWidgets.QLabel('Current 1')
