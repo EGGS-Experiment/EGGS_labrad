@@ -24,6 +24,8 @@ class lakeshore_gui(QtWidgets.QFrame):
         self.tempAll_label = QtWidgets.QLabel('Temperature Readout')
         self.tempAll_label.setFont(QFont(shell_font, pointSize= 20))
         self.tempAll_label.setAlignment(QtCore.Qt.AlignCenter)
+            #record button
+        self.tempAll_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             #diode 1
         self.temp1_label = QtWidgets.QLabel('Diode 1')
         self.temp1 = QtWidgets.QLabel('Diode 1')
@@ -48,8 +50,6 @@ class lakeshore_gui(QtWidgets.QFrame):
         self.temp4.setFont(QFont(shell_font, pointSize=25))
         self.temp4.setAlignment(QtCore.Qt.AlignCenter)
         self.temp4.setStyleSheet('color: blue')
-            #record button
-        self.record = TextChangingButton(('Start Recording', 'Stop Recording'))
 
         #heaters
         self.heatAll_label = QtWidgets.QLabel('Heater Configuration')
@@ -208,6 +208,8 @@ class lakeshore_gui(QtWidgets.QFrame):
         heat_box_step = 1
 
         layout.addWidget(self.tempAll_label, 1, 2)
+        layout.addWidget(self.tempAll_record, 2, 2)
+
         layout.addWidget(self.temp1, 4, temp_box_col, 3, 2)
         layout.addWidget(self.temp2, 6, temp_box_col, 3, 2)
         layout.addWidget(self.temp3, 8, temp_box_col, 3, 2)
