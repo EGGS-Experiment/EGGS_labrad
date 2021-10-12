@@ -1,0 +1,1 @@
+1;8;ASC;RI;MSB;"Ch1, DC coupling, 100.0mV/div, 400.0ms/div, 125000 points, Sample mode";100000;Y;"s";32.0000E-6;-2.0000;0;"V";4.0000E-3;-75.5000;0.0E+0;COMPOSITE_YT;125000;200000000
