@@ -1,4 +1,4 @@
-import os, socket
+import os, socket, datetime as datetime
 
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -7,8 +7,10 @@ from EGGS_labrad.lib.clients.lakeshore_client.lakeshore_gui import lakeshore_gui
 
 from common.lib.clients.connection import connection
 
+
 class lakeshore_client(QWidget):
 
+    name = 'Lakeshore 336 Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
@@ -30,7 +32,7 @@ class lakeshore_client(QWidget):
         """
         #from labrad.wrappers import connectAsync
         #self.cxn = yield connectAsync('localhost', name = 'Lakeshore 336 Client', password = self.LABRADPASSWORD)
-        self.cxn = connection(name = 'Lakeshore 336 Client')
+        self.cxn = connection(name = self.name)
         yield self.cxn.connect()
         self.context = yield self.cxn.context()
         self.reg = yield self.cxn.get_server('Registry')
@@ -38,7 +40,7 @@ class lakeshore_client(QWidget):
         #self.ls = yield self.cxn.get_server('lakeshore_336_server')
 
         # get polling time
-        yield self.reg.cd(['Clients', 'Lakeshore 336 Client'])
+        yield self.reg.cd(['Clients', self.name])
         self.poll_time = yield self.reg.get('poll_time')
         self.poll_time = float(self.poll_time)
 
@@ -53,7 +55,7 @@ class lakeshore_client(QWidget):
         self.gui = lakeshore_gui(parent = self)
         layout.addWidget(self.gui)
         self.setLayout(layout)
-        self.setWindowTitle('Lakeshore 336 Client')
+        self.setWindowTitle(self.name)
 
         #connect signals to slots
             #record temperature
@@ -82,6 +84,15 @@ class lakeshore_client(QWidget):
         """
         self.recording = self.gui.tempAll_record.isChecked()
         if self.recording == True:
+            date = datetime.datetime.now()
+            year = str(date.year)
+            month = '%02d' % date.month  # Padded with a zero if one digit
+            day = '%02d' % date.day  # Padded with a zero if one digit
+            hour = '%02d' % date.hour  # Padded with a zero if one digit
+            minute = '%02d' % date.minute  # Padded with a zero if one digit
+
+            trunk1 = year + '_' + month + '_' + day
+            trunk2 = self.name + '_' + hour + ':' + minute
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_temp)
             yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')], \
                                        [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'), \

@@ -9,6 +9,7 @@ from common.lib.clients.connection import connection
 
 class twistorr_client(QWidget):
 
+    name = 'Twistorr 74 Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
@@ -30,7 +31,7 @@ class twistorr_client(QWidget):
         """
         #from labrad.wrappers import connectAsync
         #self.cxn = yield connectAsync('localhost', name = 'Twistorr 74 Client', password = self.LABRADPASSWORD)
-        self.cxn = connection(name = 'Twistorr 74 Client')
+        self.cxn = connection(name = self.name)
         yield self.cxn.connect()
         self.context = yield self.cxn.context()
         self.reg = yield self.cxn.get_server('Registry')
@@ -38,7 +39,7 @@ class twistorr_client(QWidget):
         #self.pump = yield self.cxn.get_server('twistorr_74_server')
 
         # get polling time
-        yield self.reg.cd(['Clients', 'Twistorr 74 Client'])
+        yield self.reg.cd(['Clients', self.name])
         self.poll_time = yield self.reg.get('poll_time')
         self.poll_time = float(self.poll_time)
 
@@ -53,11 +54,11 @@ class twistorr_client(QWidget):
         self.gui = twistorr_gui(parent = self)
         layout.addWidget(self.gui)
         self.setLayout(layout)
-        self.setWindowTitle('Twistorr 74 Client')
+        self.setWindowTitle(self.name)
 
         #connect signals to slots
         self.gui.toggle_lockswitch.toggled.connect(lambda: self.lock_power())
-        self.gui.power_button.toggled.connect(lambda onoff = self.gui.power_button.isChecked(): self.toggle_power(onoff))
+        self.gui.power_button.toggled.connect(lambda: self.toggle_power())
         self.gui.press_record.toggled.connect(lambda: self.record_pressure())
 
         #start up data
@@ -78,7 +79,7 @@ class twistorr_client(QWidget):
         """
         Locks power status of pump
         """
-        lock_status = self.gui.heatAll_lockswitch.isChecked()
+        lock_status = self.gui.toggle_lockswitch.isChecked()
         self.gui.power_button.setEnabled(lock_status)
 
     @inlineCallbacks
