@@ -34,15 +34,16 @@ class twistorr_gui(QtWidgets.QFrame):
         self.toggle_lockswitch = TextChangingButton(('Lock', 'Unlock'))
         self.power_button = TextChangingButton(('On', 'Off'))
 
+
     def makeLayout(self):
         layout = QtWidgets.QGridLayout()
         shell_font = 'MS Shell Dlg 2'
 
         layout.addWidget(self.press_label, 1, 1)
-        layout.addWidget(self.press_display, 2, 2, 3, 2)
-        layout.addWidget(self.press_record, 3, 2)
-        layout.addWidget(self.power_button, 5, 2)
-        layout.addWidget(self.toggle_lockswitch, 6, 2)
+        layout.addWidget(self.press_display, 2, 1, 3, 5)
+        layout.addWidget(self.power_button, 6, 1, 1, 5)
+        layout.addWidget(self.toggle_lockswitch, 7, 1, 1, 5)
+        layout.addWidget(self.press_record, 8, 1, 1, 5)
 
         layout.minimumSize()
         self.setLayout(layout)
