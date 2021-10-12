@@ -1,4 +1,4 @@
-from common.lib.servers.script_scanner.scan_methods import experiment
+from EGGS_labrad.lib.servers.script_scanner.scan_methods import experiment
 
 import labrad
 import numpy as np

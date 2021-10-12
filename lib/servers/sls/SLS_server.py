@@ -16,7 +16,7 @@ timeout = 5
 ### END NODE INFO
 """
 #todo: check and sanitize input for each setting
-from common.lib.servers.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
+from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from twisted.internet import reactor
 from labrad.server import Signal
 from labrad import types as T

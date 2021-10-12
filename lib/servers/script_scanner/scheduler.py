@@ -4,7 +4,7 @@ from twisted.internet.defer import Deferred, DeferredList
 try:
     from config.scriptscanner_config import config
 except:
-    from common.lib.config.scriptscanner_config import config
+    from EGGS_labrad.lib.config.scriptscanner_config import config
 
 from twisted.internet.task import LoopingCall
 from script_status import script_semaphore

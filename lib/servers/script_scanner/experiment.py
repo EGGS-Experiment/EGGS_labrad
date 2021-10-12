@@ -1,7 +1,7 @@
 import traceback
 import labrad
 from treedict import TreeDict
-from common.lib.servers.script_scanner.experiment_info import experiment_info
+from EGGS_labrad.lib.servers.script_scanner.experiment_info import experiment_info
 
 
 class experiment(experiment_info):
@@ -28,7 +28,7 @@ class experiment(experiment_info):
         try:
             self.sc = self.cxn.servers['Script Scanner']
         except KeyError as error:
-            error_message = str(error) + '\n' + "Script Scanner is not running"
+            error_message = error + '\n' + "Script Scanner is not running"
             raise KeyError(error_message)
         try:
             self.pv = self.cxn.servers['Parameter Vault']

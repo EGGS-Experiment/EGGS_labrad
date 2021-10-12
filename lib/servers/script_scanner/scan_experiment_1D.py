@@ -1,7 +1,7 @@
 import numpy as np
 from time import localtime, strftime
 from labrad.units import WithUnit
-from common.lib.servers.script_scanner.experiment import experiment
+from EGGS_labrad.lib.servers.script_scanner.experiment import experiment
         
     
 class scan_experiment_1D(experiment):
