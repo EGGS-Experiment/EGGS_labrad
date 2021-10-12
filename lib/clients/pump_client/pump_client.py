@@ -3,17 +3,17 @@ import os, socket
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
-from EGGS_labrad.lib.clients.twistorr_client.twistorr_gui import twistorr_gui
+from EGGS_labrad.lib.clients.pump_client.pump_gui import pump_gui
 
 from common.lib.clients.connection import connection
 
-class twistorr_client(QWidget):
+class pump_client(QWidget):
 
-    name = 'Twistorr 74 Client'
+    name = 'Pump Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
-        super(twistorr_client, self).__init__()
+        super(pump_client, self).__init__()
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -26,17 +26,18 @@ class twistorr_client(QWidget):
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to Twistorr server
+        Creates an asynchronous connection to pump servers
         and relevant labrad servers
         """
         #from labrad.wrappers import connectAsync
-        #self.cxn = yield connectAsync('localhost', name = 'Twistorr 74 Client', password = self.LABRADPASSWORD)
+        #self.cxn = yield connectAsync('localhost', name = 'Pump Client', password = self.LABRADPASSWORD)
         self.cxn = connection(name = self.name)
         yield self.cxn.connect()
         self.context = yield self.cxn.context()
         self.reg = yield self.cxn.get_server('Registry')
         self.dv = yield self.cxn.get_server('Data Vault')
-        #self.pump = yield self.cxn.get_server('twistorr_74_server')
+        #self.turbo = yield self.cxn.get_server('twistorr_74_server')
+        #self.ionpump = yield self.cxn.get_server('niops03_server')
 
         # get polling time
         yield self.reg.cd(['Clients', self.name])
@@ -51,7 +52,7 @@ class twistorr_client(QWidget):
     def initializeGUI(self):
         #initialize main GUI
         layout = QGridLayout()
-        self.gui = twistorr_gui(parent = self)
+        self.gui = pump_gui(parent = self)
         layout.addWidget(self.gui)
         self.setLayout(layout)
         self.setWindowTitle(self.name)
@@ -110,6 +111,6 @@ if __name__ == "__main__":
     import qt5reactor
     qt5reactor.install()
     from twisted.internet import reactor
-    twistorr_interface = twistorr_client(reactor)
-    twistorr_interface.show()
+    pump_interface = pump_client(reactor)
+    pump_interface.show()
     reactor.run()
