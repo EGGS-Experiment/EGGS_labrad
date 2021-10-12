@@ -19,10 +19,7 @@ from labrad.server import setting
 from labrad.units import WithUnit
 from twisted.internet.defer import inlineCallbacks, DeferredList, returnValue
 from script_signals_server import ScriptSignalsServer
-try:
-    import config.scriptscanner_config as sc_config
-except:
-    import common.lib.config.scriptscanner_config as sc_config
+import EGGS_labrad.lib.config.scriptscanner_config as sc_config
 import scan_methods
 from scheduler import scheduler
 import sys

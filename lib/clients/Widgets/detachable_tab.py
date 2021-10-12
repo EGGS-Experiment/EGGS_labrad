@@ -250,7 +250,7 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
             mimeData = event.mimeData()
             formats = mimeData.formats()
 
-            if formats.contains('action') and mimeData.data('action') == 'application/tab-detach':
+            if ('action' in formats) and mimeData.data('action') == 'application/tab-detach':
                 event.acceptProposedAction()
 
             QtGui.QTabBar.dragMoveEvent(self, event)
