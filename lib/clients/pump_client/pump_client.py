@@ -62,7 +62,7 @@ class pump_client(QWidget):
         self.gui.twistorr_record.toggled.connect(lambda: self.record_pressure())
 
         self.gui.niops_lockswitch.toggled.connect(lambda: self.lock_niops())
-        self.gui.niops_button.toggled.connect(lambda: self.toggle_niops())
+        self.gui.niops_power.toggled.connect(lambda: self.toggle_niops())
 
         #start up data
 
