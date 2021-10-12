@@ -91,7 +91,7 @@ class scheduler(object):
         self.scan_ID_counter = 0
 
     def running_deferred_list(self):
-        return [script.defer_on_done for script in self.running.itervalues() if not script.externally_launched]
+        return [script.defer_on_done for script in self.running.values() if not script.externally_launched]
 
     def get_running_external(self):
         return [ident for (ident, script) in self.running.items() if script.externally_launched]
@@ -129,7 +129,7 @@ class scheduler(object):
                 self.queue.remove_object((script_ID, scan, priority))
                 self.signals.on_queued_removed(script_ID)
         if not removed:
-            raise Exception("Tring to remove scirpt ID {0} from queue but it's not in the queue".format(script_ID))
+            raise Exception("Trying to remove scirpt ID {0} from queue but it's not in the queue".format(script_ID))
 
     def add_scan_to_queue(self, scan, priority='Normal'):
         """
@@ -165,7 +165,7 @@ class scheduler(object):
 
     def is_higher_priority_than_running(self, priority):
         try:
-            priorities = [running.priority for running in self.running.itervalues()]
+            priorities = [running.priority for running in self.running.values()]
             priorities.sort()
             highest_running = priorities[0]
             return priority < highest_running

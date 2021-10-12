@@ -114,7 +114,7 @@ class vibration_measurement(experiment):
 
 if __name__ == '__main__':
     cxn = labrad.connect()
-    scanner = cxn.scriptscanner
+    scanner = cxn.script_scanner
     exprt = vibration_measurement(cxn = cxn)
     ident = scanner.register_external_launch(exprt.name)
     exprt.execute(ident)

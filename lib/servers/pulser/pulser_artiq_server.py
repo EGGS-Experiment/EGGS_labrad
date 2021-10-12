@@ -70,7 +70,7 @@ class Pulser_artiq(LabradServer):
         self.runInf = False
 
     def initializeSettings(self):
-        for channel in self.channelDict.itervalues():
+        for channel in self.channelDict.values():
             channelnumber = channel.channelnumber
             if channel.ismanual:
                 state = self.cnot(channel.manualinv, channel.manualstate)

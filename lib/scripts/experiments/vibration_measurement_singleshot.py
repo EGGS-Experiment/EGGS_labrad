@@ -1,4 +1,4 @@
-from common.lib.servers.script_scanner.scan_methods import experiment
+from EGGS_labrad.lib.servers.script_scanner.scan_methods import experiment
 
 import labrad
 import numpy as np
@@ -20,21 +20,24 @@ class vibration_measurement_ss(experiment):
         return cls.exp_parameters
 
     def initialize(self, cxn, context, ident):
-        #properties
-        self.ident = ident
-        self.cxn = labrad.connect(name = self.name)
+        try:        #properties
+            self.ident = ident
+            self.cxn = labrad.connect(name = self.name)
 
-        #servers
-        self.dv = self.cxn.data_vault
-        self.grapher = self.cxn.real_simple_grapher
-        self.oscope = self.cxn.oscilloscope_server
-        self.oscope.select_device()
+            #servers
+            self.dv = self.cxn.data_vault
+            self.grapher = self.cxn.real_simple_grapher
+            self.oscope = self.cxn.oscilloscope_server
+            self.oscope.select_device()
 
-        #dataset context
-        self.c_oscope = self.cxn.context()
+            #dataset context
+            self.c_oscope = self.cxn.context()
 
-        #set up data vault
-        self.set_up_datavault()
+            #set up data vault
+            self.set_up_datavault()
+            print('reached end')
+        except Exception as e:
+            print(e)
 
     def run(self, cxn, context, replacement_parameters={}):
         try:
@@ -52,6 +55,7 @@ class vibration_measurement_ss(experiment):
         self.cxn.disconnect()
 
     def set_up_datavault(self):
+        print('yzde')
         #set up folder
         date = datetime.datetime.now()
         year  = str(date.year)
@@ -74,7 +78,7 @@ class vibration_measurement_ss(experiment):
 
 if __name__ == '__main__':
     cxn = labrad.connect()
-    scanner = cxn.scriptscanner
+    scanner = cxn.script_scanner
     exprt = vibration_measurement_ss(cxn = cxn)
     ident = scanner.register_external_launch(exprt.name)
     exprt.execute(ident)
