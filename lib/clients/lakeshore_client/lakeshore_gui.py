@@ -27,25 +27,25 @@ class lakeshore_gui(QtWidgets.QFrame):
             #record button
         self.tempAll_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             #diode 1
-        self.temp1_label = QtWidgets.QLabel('Diode 1')
+        self.temp1_label = QtWidgets.QLabel('Diode 1 (K)')
         self.temp1 = QtWidgets.QLabel('Diode 1')
         self.temp1.setFont(QFont(shell_font, pointSize=25))
         self.temp1.setAlignment(QtCore.Qt.AlignCenter)
         self.temp1.setStyleSheet('color: blue')
             #diode 2
-        self.temp2_label = QtWidgets.QLabel('Diode 2')
+        self.temp2_label = QtWidgets.QLabel('Diode 2 (K)')
         self.temp2 = QtWidgets.QLabel('Diode 2')
         self.temp2.setFont(QFont(shell_font, pointSize=25))
         self.temp2.setAlignment(QtCore.Qt.AlignCenter)
         self.temp2.setStyleSheet('color: blue')
             #diode 3
-        self.temp3_label = QtWidgets.QLabel('Diode 3')
+        self.temp3_label = QtWidgets.QLabel('Diode 3 (K)')
         self.temp3 = QtWidgets.QLabel('Diode 3')
         self.temp3.setFont(QFont(shell_font, pointSize=25))
         self.temp3.setAlignment(QtCore.Qt.AlignCenter)
         self.temp3.setStyleSheet('color: blue')
             #diode 4
-        self.temp4_label = QtWidgets.QLabel('Diode 4')
+        self.temp4_label = QtWidgets.QLabel('Diode 4 (K)')
         self.temp4 = QtWidgets.QLabel('Diode 4')
         self.temp4.setFont(QFont(shell_font, pointSize=25))
         self.temp4.setAlignment(QtCore.Qt.AlignCenter)

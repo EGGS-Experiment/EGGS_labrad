@@ -55,7 +55,7 @@ class lakeshore_client(QWidget):
         self.setLayout(layout)
         self.setWindowTitle('Lakeshore 336 Client')
 
-        # #connect signals to slots
+        #connect signals to slots
             #record temperature
         self.gui.tempAll_record.toggled.connect(lambda: self.record_temp())
 
