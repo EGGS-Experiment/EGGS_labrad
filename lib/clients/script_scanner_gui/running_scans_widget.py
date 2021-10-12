@@ -5,7 +5,7 @@ class progress_bar(QtWidgets.QProgressBar):
     def __init__(self, reactor, parent=None):
         super(progress_bar, self).__init__(parent)
         self.reactor = reactor
-        self.setSizePolicy(QQtWidgetstGui.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self.set_status('', 0.0)
 
     def set_status(self, status_name, percentage):

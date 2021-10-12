@@ -1,4 +1,4 @@
-from common.lib.servers.script_scanner.scan_methods import experiment
+from EGGS_labrad.lib.servers.script_scanner.scan_methods import experiment
 
 import labrad
 import numpy as np
@@ -24,7 +24,7 @@ class vibration_measurement(experiment):
     def initialize(self, cxn, context, ident):
         #properties
         self.ident = ident
-        self.cxn = labrad.connect(name = 'Vibration Measurement')
+        self.cxn = labrad.connect(name = self.name)
 
         #base servers
         self.dv = self.cxn.data_vault
@@ -114,7 +114,7 @@ class vibration_measurement(experiment):
 
 if __name__ == '__main__':
     cxn = labrad.connect()
-    scanner = cxn.scriptscanner
+    scanner = cxn.script_scanner
     exprt = vibration_measurement(cxn = cxn)
     ident = scanner.register_external_launch(exprt.name)
     exprt.execute(ident)

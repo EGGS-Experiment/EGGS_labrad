@@ -4,8 +4,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGr
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 from EGGS_labrad.lib.clients.lakeshore_client.lakeshore_gui import lakeshore_gui
-
-from common.lib.clients.connection import connection
+from EGGS_labrad.lib.clients.connection import connection
 
 
 class lakeshore_client(QWidget):

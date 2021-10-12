@@ -1,7 +1,7 @@
 import traceback
 import labrad
 from treedict import TreeDict
-from common.lib.servers.script_scanner.experiment_info import experiment_info
+from EGGS_labrad.lib.servers.script_scanner.experiment_info import experiment_info
 
 
 class experiment(experiment_info):
@@ -26,14 +26,14 @@ class experiment(experiment_info):
                 error_message = error + '\n' + "Not able to connect to LabRAD"
                 raise Exception(error_message)
         try:
-            self.sc = self.cxn.servers['ScriptScanner']
+            self.sc = self.cxn.servers['Script Scanner']
         except KeyError as error:
-            error_message = error + '\n' + "ScriptScanner is not running"
+            error_message = error + '\n' + "Script Scanner is not running"
             raise KeyError(error_message)
         try:
-            self.pv = self.cxn.servers['ParameterVault']
+            self.pv = self.cxn.servers['Parameter Vault']
         except KeyError as error:
-            error_message = error + '\n' + "ParameterVault is not running"
+            error_message = error + '\n' + "Parameter Vault is not running"
             raise KeyError(error_message)
         try:
             self.context = self.cxn.context()
@@ -95,7 +95,7 @@ class experiment(experiment_info):
         '''
         if isinstance(parameter_dict, dict):
             udpate_dict = TreeDict()
-            for (collection,parameter_name), value in parameter_dict.iteritems():
+            for (collection,parameter_name), value in parameter_dict.items():
                 udpate_dict['{0}.{1}'.format(collection, parameter_name)] = value
         elif isinstance(parameter_dict, TreeDict):
             udpate_dict = parameter_dict

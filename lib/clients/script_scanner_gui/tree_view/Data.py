@@ -51,7 +51,7 @@ class Node(object):
             return self._parent._children.index(self)
 
     def data(self, column):
-        if column is 0: return self.name()
+        if column == 0: return self.name()
     
     def setData(self, column, value):
         pass
@@ -430,7 +430,7 @@ class LineSelectionNode(Node):
         return '{0}   ( {1} )'.format(show, self._value)
     
     def full_parameter(self):
-        return ('line_selection', (str(self._value), list(self._dict.iteritems() ) ) )
+        return ('line_selection', (str(self._value), list(self._dict.items() ) ) )
     
     def path(self):
         return (self._collection, self.name())

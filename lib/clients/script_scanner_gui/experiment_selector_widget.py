@@ -234,7 +234,7 @@ class experiment_selector_widget(QtWidgets.QWidget):
     on_run = QtCore.pyqtSignal(str)
     on_repeat = QtCore.pyqtSignal(str, int, bool)
     on_schedule = QtCore.pyqtSignal(str, float, str, bool)
-    on_experiment_selected = QtCore.pyqtSignal(int)
+    on_experiment_selected = QtCore.pyqtSignal(str)
     on_scan = QtCore.pyqtSignal(str, str, tuple, float, float, int, str)
 
     def __init__(self, reactor, parent, font=None):
@@ -290,8 +290,8 @@ class experiment_selector_widget(QtWidgets.QWidget):
         self.schedule_button.pressed.connect(self.on_schedule_button)
         self.scan_button.pressed.connect(self.on_scan_button)
         #todo: fix, should it be signal emit?
-        self.dropdown.currentIndexChanged.connect(self.on_experiment_selected)
-        self.dropdown.currentIndexChanged.connect(self.check_button_disable)
+        self.dropdown.currentTextChanged.connect(self.on_experiment_selected)
+        self.dropdown.currentTextChanged.connect(self.check_button_disable)
 
     def check_button_disable(self, selection):
         """

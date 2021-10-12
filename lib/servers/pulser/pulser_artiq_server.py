@@ -70,7 +70,7 @@ class Pulser_artiq(LabradServer):
         self.runInf = False
 
     def initializeSettings(self):
-        for channel in self.channelDict.itervalues():
+        for channel in self.channelDict.values():
             channelnumber = channel.channelnumber
             if channel.ismanual:
                 state = self.cnot(channel.manualinv, channel.manualstate)
@@ -83,7 +83,7 @@ class Pulser_artiq(LabradServer):
         self.remoteConnections = {}
         if len(self.remoteChannels):
             from labrad.wrappers import connectAsync
-            for name,rc in self.remoteChannels.iteritems():
+            for name,rc in self.remoteChannels.items():
                 try:
                     self.remoteConnections[name] = yield connectAsync(rc.ip)
                     print('Connected to {}'.format(name))

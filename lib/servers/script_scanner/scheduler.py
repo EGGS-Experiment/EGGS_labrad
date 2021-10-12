@@ -4,7 +4,7 @@ from twisted.internet.defer import Deferred, DeferredList
 try:
     from config.scriptscanner_config import config
 except:
-    from common.lib.config.scriptscanner_config import config
+    from EGGS_labrad.lib.config.scriptscanner_config import config
 
 from twisted.internet.task import LoopingCall
 from script_status import script_semaphore
@@ -91,14 +91,14 @@ class scheduler(object):
         self.scan_ID_counter = 0
 
     def running_deferred_list(self):
-        return [script.defer_on_done for script in self.running.itervalues() if not script.externally_launched]
+        return [script.defer_on_done for script in self.running.values() if not script.externally_launched]
 
     def get_running_external(self):
-        return [ident for (ident, script) in self.running.iteritems() if script.externally_launched]
+        return [ident for (ident, script) in self.running.items() if script.externally_launched]
 
     def get_running(self):
         running = []
-        for ident, script in self.running.iteritems():
+        for ident, script in self.running.items():
             running.append((ident, script.name))
         return running
 
@@ -111,7 +111,7 @@ class scheduler(object):
 
     def get_scheduled(self):
         scheduled = []
-        for ident, (scan_name, loop) in self.scheduled.iteritems():
+        for ident, (scan_name, loop) in self.scheduled.items():
             scheduled.append([ident, scan_name, loop.interval])
         return scheduled
 
@@ -129,7 +129,7 @@ class scheduler(object):
                 self.queue.remove_object((script_ID, scan, priority))
                 self.signals.on_queued_removed(script_ID)
         if not removed:
-            raise Exception("Tring to remove scirpt ID {0} from queue but it's not in the queue".format(script_ID))
+            raise Exception("Trying to remove scirpt ID {0} from queue but it's not in the queue".format(script_ID))
 
     def add_scan_to_queue(self, scan, priority='Normal'):
         """
@@ -165,7 +165,7 @@ class scheduler(object):
 
     def is_higher_priority_than_running(self, priority):
         try:
-            priorities = [running.priority for running in self.running.itervalues()]
+            priorities = [running.priority for running in self.running.values()]
             priorities.sort()
             highest_running = priorities[0]
             return priority < highest_running
@@ -178,7 +178,7 @@ class scheduler(object):
         running experiments
         '''
         non_conflicting = []
-        for running, script in self.running.iteritems():
+        for running, script in self.running.items():
             cls_name = script.scan.script_cls.name
             non_conf = config.allowed_concurrent.get(cls_name, None)
             if non_conf is not None:
@@ -278,7 +278,7 @@ class scheduler(object):
     def pause_running(self, result, scan, current_ident):
         paused_idents = []
         paused_deferred = []
-        for ident, script in self.running.iteritems():
+        for ident, script in self.running.items():
             non_conf = config.allowed_concurrent.get(script.name, [])
             if not scan.script_cls.name in non_conf and not script.status.status == 'Paused':
                 # don't pause unless it's a conflicting experiment and it's not

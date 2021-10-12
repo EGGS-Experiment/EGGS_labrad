@@ -49,7 +49,7 @@ class pump_gui(QtWidgets.QFrame):
         shell_font = 'MS Shell Dlg 2'
 
         pump1_col = 1
-        pump2_col = 7
+        pump2_col = 9
 
         layout.addWidget(self.twistorr_label, 1, pump1_col)
         layout.addWidget(self.twistorr_display_label, 2, pump1_col)
@@ -58,9 +58,9 @@ class pump_gui(QtWidgets.QFrame):
         layout.addWidget(self.twistorr_lockswitch, 8, pump1_col, 1, 5)
         layout.addWidget(self.twistorr_record, 9, pump1_col, 1, 5)
 
-        layout.addWidget(self.niops_label, 1, pump2_col)
-        layout.addWidget(self.niops_power, 3, pump2_col)
-        layout.addWidget(self.niops_lockswitch, 4, pump2_col)
+        layout.addWidget(self.niops_label, 1, pump2_col, 1, 5)
+        layout.addWidget(self.niops_power, 7, pump2_col, 1, 5)
+        layout.addWidget(self.niops_lockswitch, 8, pump2_col, 1, 5)
 
         layout.minimumSize()
         self.setLayout(layout)

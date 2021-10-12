@@ -80,7 +80,7 @@ class ParameterVault(LabradServer):
     def save_parameters(self):
         '''save the latest parameters into registry'''
         regDir = self.registryDirectory
-        for key, value in self.parameters.iteritems():
+        for key, value in self.parameters.items():
             key = list(key)
             parameter_name = key.pop()
             fullDir = regDir + key

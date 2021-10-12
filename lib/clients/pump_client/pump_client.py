@@ -5,10 +5,10 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 from EGGS_labrad.lib.clients.pump_client.pump_gui import pump_gui
 
-from common.lib.clients.connection import connection
+from EGGS_labrad.lib.clients.connection import connection
 
 class pump_client(QWidget):
-
+    #todo: make connections inheritable
     name = 'Pump Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
@@ -41,8 +41,7 @@ class pump_client(QWidget):
 
         # get polling time
         yield self.reg.cd(['Clients', self.name])
-        self.poll_time = yield self.reg.get('poll_time')
-        self.poll_time = float(self.poll_time)
+        self.poll_time = yield float(self.reg.get('poll_time'))
 
         # set recording stuff
         self.c_press = self.cxn.context()
@@ -58,9 +57,12 @@ class pump_client(QWidget):
         self.setWindowTitle(self.name)
 
         #connect signals to slots
-        self.gui.toggle_lockswitch.toggled.connect(lambda: self.lock_power())
-        self.gui.power_button.toggled.connect(lambda: self.toggle_power())
-        self.gui.press_record.toggled.connect(lambda: self.record_pressure())
+        self.gui.twistorr_lockswitch.toggled.connect(lambda: self.lock_twistorr())
+        self.gui.twistorr_power.toggled.connect(lambda: self.toggle_twistorr())
+        self.gui.twistorr_record.toggled.connect(lambda: self.record_pressure())
+
+        self.gui.niops_lockswitch.toggled.connect(lambda: self.lock_niops())
+        self.gui.niops_power.toggled.connect(lambda: self.toggle_niops())
 
         #start up data
 
@@ -76,19 +78,35 @@ class pump_client(QWidget):
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_press)
             yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')], [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_press)
 
-    def lock_power(self):
-        """
-        Locks power status of pump
-        """
-        lock_status = self.gui.toggle_lockswitch.isChecked()
-        self.gui.power_button.setEnabled(lock_status)
-
     @inlineCallbacks
-    def toggle_power(self):
+    def toggle_niops(self):
         """
         Sets pump power on or off
         """
+        power_status = self.gui.niops_power.isChecked()
+        yield self.niops.toggle_ip(power_status)
+
+    @inlineCallbacks
+    def toggle_twistorr(self):
+        """
+        Sets pump power on or off
+        """
+        power_status = self.gui.niops_power.isChecked()
         yield self.pump.toggle(power_status)
+
+    def lock_niops(self):
+        """
+        Locks power status of pump
+        """
+        lock_status = self.gui.niops_lockswitch.isChecked()
+        self.gui.niops_power.setEnabled(lock_status)
+
+    def lock_twistorr(self):
+        """
+        Locks power status of pump
+        """
+        lock_status = self.gui.twistorr_lockswitch.isChecked()
+        self.gui.twistorr_power.setEnabled(lock_status)
 
     #Polling functions
     def start_polling(self):

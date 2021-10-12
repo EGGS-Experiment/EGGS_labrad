@@ -1,12 +1,13 @@
 from PyQt5 import QtWidgets
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.lib.clients.script_scanner_gui.scripting_widget import scripting_widget
-from common.lib.clients.connection import connection
+from EGGS_labrad.lib.clients.connection import connection
 from EGGS_labrad.lib.clients.script_scanner_gui.tree_view.Controllers import ParametersEditor
 
 class script_scanner_gui(QtWidgets.QWidget):
 
     SIGNALID = 319245
+    name = 'Script Scanner Client'
 
     def __init__(self, reactor, cxn=None):
         super(script_scanner_gui, self).__init__()
@@ -24,7 +25,7 @@ class script_scanner_gui(QtWidgets.QWidget):
         self.subscribedScriptScanner = False
         self.subscribedParametersVault = False
         if self.cxn is None:
-            self.cxn = connection(name = 'Script Scanner Client')
+            self.cxn = connection(name = self.name)
             yield self.cxn.connect()
         self.context = yield self.cxn.context()
         try:
@@ -46,8 +47,6 @@ class script_scanner_gui(QtWidgets.QWidget):
             yield self.cxn.get_server('Parameter Vault')
         except Exception as e:
             print(e)
-
-
 
     @inlineCallbacks
     def reinitialize_scriptscanner(self):
