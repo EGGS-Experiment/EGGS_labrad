@@ -58,7 +58,7 @@ class twistorr_client(QWidget):
         #connect signals to slots
         self.gui.toggle_lockswitch.toggled.connect(lambda: self.lock_power())
         self.gui.power_button.toggled.connect(lambda onoff = self.gui.power_button.isChecked(): self.toggle_power(onoff))
-        self.gui.press_record.connect(lambda: self.record_pressure())
+        self.gui.press_record.toggled.connect(lambda: self.record_pressure())
 
         #start up data
 
