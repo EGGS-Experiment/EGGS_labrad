@@ -12,9 +12,14 @@ VERT_DIVISIONS = 8.0
 HORZ_DIVISIONS = 10.0
 SCALES = []
 PROBE_FACTORS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
-TRIGGER_MODES = ['AUTO', 'NONE', 'SING']
+TRIGGER_MODES = ['AUTO', 'NONE', 'SING']]
+TIMEOUT = 20 #in ms
 
 class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
+
+    #startup
+    def initialize(self):
+        self.timeout(TIMEOU)
 
     #system
     @inlineCallbacks
@@ -205,34 +210,23 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def get_trace(self, channel):
         #returns (array voltage in volts, array time in seconds)
-        #removed start and stop: start = 'i', stop = 'i' (,start=1, stop=10000)
-
-        #first need to stop to record
-        yield self.write(':STOP')
 
         #set trace parameters
-        yield self.write(':WAV:SOUR CHAN%d' %channel)
-        #trace mode
-        yield self.write(':WAV:MODE RAW')
-        #return format (default byte)
-        yield self.write(':WAV:FORM BYTE')
+        yield self.write('DAT:SOUR CH%d' %channel)
         #start point position
-        yield self.write(':WAV:STAR 1')
+        yield self.write('DAT:STAR 1')
         #stop point position
-        yield self.write(':WAV:STOP 12000')
-
+        yield self.write('DAT:STOP 100000')
+        #set encoding
+        yield self.write('DAT:ENC ASCI')
         #transfer waveform preamble
-        preamble = yield self.query(':WAV:PRE?')
-        offset = yield self.query(':TIM:OFFS?')
+        preamble = yield self.query('WFMO?')
 
         #get waveform data
-        data = yield self.query(':WAV:DATA?')
-
-        #start oscope back up
-        yield self.write(':RUN')
+        data = yield self.query('CURV?')
 
         #parse waveform preamble
-        points, xincrement, xorigin, xreference, yincrement, yorigin, yreference = _parsePreamble(preamble)
+        points, xincrement, xorigin, yincrement, yorigin, yreference = _parsePreamble(preamble)
 
         #parse data
         trace = _parseByteData(data)
@@ -242,7 +236,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         timeUnitScaler = 1.0# * us
 
         #convert data to volts
-        traceVolts = (trace - yorigin - yreference) * yincrement * voltUnitScaler
+        traceVolts = ((trace - yorigin) * yincrement + yrefrence)* voltUnitScaler
         timeAxis = (np.arange(points) * xincrement + xorigin) * timeUnitScaler
         returnValue((timeAxis, traceVolts))
 
@@ -289,23 +283,19 @@ def _parsePreamble(preamble):
                      <type 16-bit NR1>,
                      <points 32-bit NR1>,
                      <count 32-bit NR1>,
-                     <xincrement 64-bit floating point NR3>,
                      <xorigin 64-bit floating point NR3>,
                      <xreference 32-bit NR1>,
                      <yincrement 32-bit floating point NR3>,
                      <yorigin 32-bit floating point NR3>,
-                     <yreference 32-bit NR1>
     '''
-    fields = preamble.split(',')
-    points = int(fields[2])
-    xincrement = float(fields[4])
-    xorigin = float(fields[5])
-    xreference = int(fields[6])
-    yincrement = float(fields[7])
-    yorigin = float(fields[8])
-    yreference = int(fields[9])
-    #print(yincrement, yorigin, yreference)
-    return (points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)
+    fields = preamble.split(';')
+    points = int(fields[6])
+    xincrement = float(fields[9])
+    xorigin = float(fields[10])
+    yincrement = float(fields[13])
+    yorigin = float(fields[14])
+    yreference = float(fields[15])
+    return (points, xincrement, xorigin, yincrement, yorigin, yreference)
 
 def _parseByteData(data):
     """

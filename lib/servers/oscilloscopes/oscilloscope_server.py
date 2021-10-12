@@ -19,7 +19,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
 from RigolDS1000Z import RigolDS1000ZWrapper
-from TektronixMSO2000 import TektronixMSO2000BWrapper
+from TektronixMSO2000 import TektronixMSO2000Wrapper
 
 class OscilloscopeServer(GPIBManagedServer):
     """Manages communication with oscilloscopes. ALL the oscilloscopes."""
@@ -27,8 +27,8 @@ class OscilloscopeServer(GPIBManagedServer):
     name = 'Oscilloscope Server'
 
     deviceWrappers = {
-        'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper
-        'TEKTRONIX MSO2024B': TektronixMSO2000BWrapper
+        'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper,
+        'TEKTRONIX MSO2024B': TektronixMSO2000Wrapper
     }
 
     #SYSTEM
