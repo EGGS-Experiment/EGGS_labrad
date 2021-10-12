@@ -51,7 +51,7 @@ class Node(object):
             return self._parent._children.index(self)
 
     def data(self, column):
-        if column is 0: return self.name()
+        if column == 0: return self.name()
     
     def setData(self, column, value):
         pass

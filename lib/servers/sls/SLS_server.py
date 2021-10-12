@@ -124,7 +124,7 @@ class SLSServer(SerialDeviceServer):
         Adjust PID servo for given parameter
         '''
         #check parameter has been specified
-        if type(param) is str:
+        if type(param) == str:
             param = param.upper()
             #check parameter is valid
             if param == 'CURRENT':
