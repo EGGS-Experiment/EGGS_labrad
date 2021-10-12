@@ -208,7 +208,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         #removed start and stop: start = 'i', stop = 'i' (,start=1, stop=10000)
 
         #first need to stop to record
-        yield self.write(':WAV:STOP')
+        yield self.write(':STOP')
 
         #set trace parameters
         yield self.write(':WAV:SOUR CHAN%d' %channel)

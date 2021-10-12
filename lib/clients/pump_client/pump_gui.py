@@ -22,6 +22,8 @@ class pump_gui(QtWidgets.QFrame):
 
         #twistorr 74
         self.twistorr_label = QtWidgets.QLabel('Twistorr 74 Pump')
+        self.twistorr_label.setFont(QFont(shell_font, pointSize= 20))
+        self.twistorr_label.setAlignment(QtCore.Qt.AlignCenter)
             #readout
         self.twistorr_display_label = QtWidgets.QLabel('Pressure (mbar)')
         self.twistorr_display = QtWidgets.QLabel('Pressure')
@@ -35,20 +37,30 @@ class pump_gui(QtWidgets.QFrame):
         self.twistorr_power = TextChangingButton(('On', 'Off'))
 
         #niops03
-
-
+        self.niops_label = QtWidgets.QLabel('NIOPS 03 Pump')
+        self.niops_label.setFont(QFont(shell_font, pointSize= 20))
+        self.niops_label.setAlignment(QtCore.Qt.AlignCenter)
+            #power
+        self.niops_lockswitch = TextChangingButton(('Lock', 'Unlock'))
+        self.niops_power = TextChangingButton(('On', 'Off'))
 
     def makeLayout(self):
         layout = QtWidgets.QGridLayout()
         shell_font = 'MS Shell Dlg 2'
 
         pump1_col = 1
+        pump2_col = 7
+
         layout.addWidget(self.twistorr_label, 1, pump1_col)
         layout.addWidget(self.twistorr_display_label, 2, pump1_col)
         layout.addWidget(self.twistorr_display, 3, pump1_col, 3, 5)
         layout.addWidget(self.twistorr_power, 7, pump1_col, 1, 5)
         layout.addWidget(self.twistorr_lockswitch, 8, pump1_col, 1, 5)
         layout.addWidget(self.twistorr_record, 9, pump1_col, 1, 5)
+
+        layout.addWidget(self.niops_label, 1, pump2_col)
+        layout.addWidget(self.niops_power, 3, pump2_col)
+        layout.addWidget(self.niops_lockswitch, 4, pump2_col)
 
         layout.minimumSize()
         self.setLayout(layout)
