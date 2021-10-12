@@ -183,7 +183,6 @@ class Lakeshore336Server(SerialDeviceServer):
         Returns:
                             (float): the setpoint
         """
-
         chString = 'SETP'
         if power is not None:
             output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint)+ TERMINATOR

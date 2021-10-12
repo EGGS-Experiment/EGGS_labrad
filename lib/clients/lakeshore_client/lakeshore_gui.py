@@ -2,8 +2,7 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QFont
 import sys
 
-from common.lib.clients.qtui.q_custom_text_changing_button import TextChangingButton as _TextChangingButton
-
+from EGGS_labrad.lib.clients.Widgets.q_custom_text_changing_button import TextChangingButton as _TextChangingButton
 
 class TextChangingButton(_TextChangingButton):
     def __init__(self, button_text=None, parent=None):
