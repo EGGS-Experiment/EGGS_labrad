@@ -35,7 +35,7 @@ class lakeshore_client(QWidget):
         self.context = yield self.cxn.context()
         self.reg = yield self.cxn.get_server('Registry')
         self.dv = yield self.cxn.get_server('Data Vault')
-        #self.ls = yield self.cxn.lakeshore_336_server
+        #self.ls = yield self.cxn.get_server('lakeshore_336_server')
 
         # get polling time
         yield self.reg.cd(['Clients', 'Lakeshore 336 Client'])
@@ -81,7 +81,7 @@ class lakeshore_client(QWidget):
         to add data to data vault
         """
         self.recording = self.gui.tempAll_record.isChecked()
-        if self.gui.recording == True:
+        if self.recording == True:
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_temp)
             yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')], \
                                        [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'), \

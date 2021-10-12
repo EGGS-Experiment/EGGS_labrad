@@ -71,7 +71,7 @@ class TwisTorr74Server(SerialDeviceServer):
 
     #TOGGLE
     @setting(111,'toggle', onoff = 'b', returns='')
-    def pressure_read(self, c, onoff):
+    def toggle(self, c, onoff):
         """
         Start or stop the pump
         Args:
