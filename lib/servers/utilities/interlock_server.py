@@ -16,11 +16,10 @@ timeout = 20
 ### END NODE INFO
 """
 
-from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.server import setting, LabradServer, Signal
 from labrad.support import getNodeName
-import time
+from twisted.internet.task import LoopingCall
 
 import numpy as np
 
@@ -33,74 +32,39 @@ class InterlockServer(LabradServer):
 
     @inlineCallbacks
     def initServer(self):
-        if not self.regKey or not self.serNode:
-            raise SerialDeviceError( 'Must define regKey and serNode attributes' )
-        # port = yield self.getPortFromReg( self.regKey )
-        try:
-            serStr = yield self.findSerial( self.serNode )
-            print(serStr)
-            self.initSerial( serStr, port, baudrate = BAUDRATE, bytesize = BYTESIZE, parity = PARITY, stopbits = STOPBITS)
+        #connect to labrad
+        self.cxn = labrad.connect()
 
-    #todo: run inf loop polling device
-    #todo: get poll interval from reg
-    #todo: switch off niops
-    #todo: print interlock message
+        #connect servers
+        self.reg = self.cxn.registry
+        self.niops = self.cxn.niops03_server
+        self.pump = self.cxn.twistorr74server
 
-    # HEATER
-    @setting(211, 'Configure Heater', output_channel = 'i', mode = 'i', input_channel = 'i', returns = '*1v')
-    def heater_mode(self, c, output_channel, mode = None, input_channel = None):
+        #get polling interval
+        yield self.reg.cd(['', 'Servers', 'Interlock Server'])
+        self.poll_time = self.reg.get('poll_time')
+
+        #setup poll loop
+        self.poll_loop = LoopingCall(self.poll)
+
+    #Polling functions
+    @setting(111, 'Toggle Interlock', onoff = 'b', returns = '')
+    def toggle_interlock(self, c, onoff):
         """
-        Configure or query the desired heater
+        Switch the interlock on or off
         Args:
-            output_channel  (int): the heater channel
-            mode            (int): heater operation mode (0 = off, 1 = PID, 2 = zone, 3  = open loop,
-                                                        4 = monitor out, 5 = warmup)
-            input_channel   (int): the temperature diode channel to control the output
-        Returns:
-                            ([int, int]): the output mode and linked input
+            onoff       (bool): desired interlock state
         """
-        chString = 'OUTMODE'
+        if onoff == True:
+            self.poll_loop.start(self.poll_time)
+        elif onoff == False:
+            self.poll_loop.stop()
 
-        #check for errors
-
-        #send message if not querying
-        if mode is not None and input_channel in INPUT_CHANNELS:
-            output_msg = chString + ' ' + str(output_channel) + ',' + str(mode) + ',' + str(input_channel) + ',0' + TERMINATOR
-            yield self.ser.write(output_msg)
-
-        #issue query
-        yield self.ser.write(chString + '?' + TERMINATOR)
-        resp = yield self.ser.read()
-        resp = np.array(resp.split(','), dtype=int)
-        resp = resp[:2]
-        returnValue(resp)
-
-    @setting(212, 'Setup Heater', output_channel = 'i', resistance = 'i', max_current = 'v', returns = '*1v')
-    def heater_setup(self, c, output_channel, resistance = None, max_current = None):
-        """
-        Set up or query the desired heater
-        Args:
-            output_channel  (int): the heater channel
-            resistance      (int): the heater resistance setting (1 = 25 Ohms, 2 = 50 Ohms)
-            max_current     (int): maximum heater output current
-        Returns:
-                            ([]): fd
-        """
-        chString = 'HTRSET'
-
-        #check for errors
-
-        #send message if not querying
-        if resistance is not None and max_current is not None:
-            output_msg = ' ' + str(output_channel) + ',' + str(resistance) + ',0,' + str(max_current) + ',2' + TERMINATOR
-            yield self.ser.write(chString + output_msg)
-
-        #issue query
-        yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = yield self.ser.read()
-        resp = resp.split(',')
-        resp = [int(resp[0]), int(resp[1]), float(resp[2])]
-        returnValue(resp)
+    def poll(self):
+        pressure = yield self.pump.read_pressure()
+        if pressure > 1e-6:
+            self.niops.toggle_ip(False)
+            print("Interlock activated: switched off ion pump since pressure exceeded 1e-6 mbar")
 
 
 if __name__ == '__main__':

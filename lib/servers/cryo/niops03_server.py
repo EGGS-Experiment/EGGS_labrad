@@ -16,7 +16,6 @@ timeout = 20
 ### END NODE INFO
 """
 
-from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad.server import setting
@@ -25,7 +24,6 @@ from serial import PARITY_ODD
 
 import numpy as np
 
-SERVERNAME = 'NIOPS03 Server'
 TIMEOUT = 1.0
 BAUDRATE = 115200
 TERMINATOR = '\r\n'
@@ -79,7 +77,7 @@ class NIOPS03Server(SerialDeviceServer):
         return
 
     @setting(112,'Toggle NP', power = 'b')
-    def toggle_ip(self, c, power = None):
+    def toggle_np(self, c, power = None):
         """
         Set or query whether getter is off or on
         Args:

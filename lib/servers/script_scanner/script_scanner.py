@@ -97,6 +97,7 @@ class ScriptScanner(ScriptSignalsServer):
                     print(name_not_provided.format(class_name, module))
                 else:
                     self.script_parameters[name] = script_class_parameters(name, cls, parameters)
+            #todo: make it get all experiments in experiments folders
 
     @setting(0, "get_available_scripts", returns='*s')
     def get_available_scripts(self, c):

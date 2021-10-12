@@ -15,10 +15,7 @@ timeout = 20
 ### END NODE INFO
 """
 
-from __future__ import absolute_import
-
 from twisted.internet.defer import inlineCallbacks, returnValue
-
 from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
 from RigolDS1000Z import RigolDS1000ZWrapper

@@ -1,11 +1,8 @@
 from PyQt5 import QtWidgets
-a = QtWidgets.QApplication(["Script Scanner"])
-import qt5reactor
-qt5reactor.install()
 from twisted.internet.defer import inlineCallbacks
-from scripting_widget import scripting_widget
+from EGGS_labrad.lib.clients.script_scanner_gui.scripting_widget import scripting_widget
 from common.lib.clients.connection import connection
-from tree_view.Controllers import ParametersEditor
+from EGGS_labrad.lib.clients.script_scanner_gui.tree_view.Controllers import ParametersEditor
 
 class script_scanner_gui(QtWidgets.QWidget):
 
@@ -27,7 +24,7 @@ class script_scanner_gui(QtWidgets.QWidget):
         self.subscribedScriptScanner = False
         self.subscribedParametersVault = False
         if self.cxn is None:
-            self.cxn = connection()
+            self.cxn = connection(name = 'Script Scanner Client')
             yield self.cxn.connect()
         self.context = yield self.cxn.context()
         try:
@@ -49,6 +46,7 @@ class script_scanner_gui(QtWidgets.QWidget):
             yield self.cxn.get_server('Parameter Vault')
         except Exception as e:
             print(e)
+
 
 
     @inlineCallbacks
@@ -405,6 +403,9 @@ class script_scanner_gui(QtWidgets.QWidget):
         self.reactor.stop()
 
 if __name__ == "__main__":
+    a = QtWidgets.QApplication(["Script Scanner"])
+    import qt5reactor
+    qt5reactor.install()
     from twisted.internet import reactor
     gui = script_scanner_gui(reactor)
     gui.show()

@@ -15,7 +15,6 @@ timeout = 20
 ### END NODE INFO
 """
 
-from __future__ import absolute_import
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.server import LabradServer, setting
 
