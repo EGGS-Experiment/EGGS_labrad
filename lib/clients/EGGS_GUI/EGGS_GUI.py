@@ -49,7 +49,15 @@ class EGGS_GUI(QMainWindow):
         from EGGS_labrad.lib.clients.lakeshore_client.lakeshore_client import lakeshore_client
         from EGGS_labrad.lib.clients.pump_client.pump_client import pump_client
         lakeshore = lakeshore_client(reactor)
-        return lakeshore
+        pumps = pump_client(reactor)
+
+        #main layout
+        holder_widget = QWidget()
+        holder_layout = QGridLayout()
+        holder_widget.setLayout(holder_layout)
+        holder_layout.addWidget(lakeshore, 0, 0)
+        holder_layout.addWidget(pumps, 1, 1)
+        return holder_widget
 
     def closeEvent(self, x):
         self.reactor.stop()

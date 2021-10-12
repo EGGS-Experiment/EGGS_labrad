@@ -8,7 +8,7 @@ from EGGS_labrad.lib.clients.pump_client.pump_gui import pump_gui
 from EGGS_labrad.lib.clients.connection import connection
 
 class pump_client(QWidget):
-
+    #todo: make connections inheritable
     name = 'Pump Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
