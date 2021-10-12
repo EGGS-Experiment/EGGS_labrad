@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTabWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout
 from PyQt5.QtGui import QIcon
 from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.lib.clients.Widgets.detachable_tab import DetachableTabWidget
@@ -55,8 +55,9 @@ class EGGS_GUI(QMainWindow):
         holder_widget = QWidget()
         holder_layout = QGridLayout()
         holder_widget.setLayout(holder_layout)
-        holder_layout.addWidget(lakeshore, 0, 0)
-        holder_layout.addWidget(pumps, 1, 1)
+        holder_layout.addWidget(lakeshore, 0, 0, 2, 3)
+        holder_layout.addWidget(pumps, 0, 3, 1, 1)
+        #todo: try size policy
         return holder_widget
 
     def closeEvent(self, x):
