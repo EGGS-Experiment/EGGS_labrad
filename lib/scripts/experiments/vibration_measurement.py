@@ -24,7 +24,7 @@ class vibration_measurement(experiment):
     def initialize(self, cxn, context, ident):
         #properties
         self.ident = ident
-        self.cxn = labrad.connect(name = 'Vibration Measurement')
+        self.cxn = labrad.connect(name = self.name)
 
         #base servers
         self.dv = self.cxn.data_vault

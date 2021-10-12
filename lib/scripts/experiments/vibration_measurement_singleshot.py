@@ -4,6 +4,7 @@ import labrad
 import numpy as np
 import time
 import datetime as datetime
+import
 
 class vibration_measurement_ss(experiment):
 
@@ -35,7 +36,6 @@ class vibration_measurement_ss(experiment):
 
             #set up data vault
             self.set_up_datavault()
-            print('reached end')
         except Exception as e:
             print(e)
 
