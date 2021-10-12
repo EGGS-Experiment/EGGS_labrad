@@ -76,14 +76,17 @@ class ScriptScanner(ScriptSignalsServer):
         config = sc_config.config
         for import_path, class_name in config.scripts:
             try:
+                #imports path???
                 __import__(import_path)
+                #gets the file
                 module = sys.modules[import_path]
+                #gets the class from the file
                 cls = getattr(module, class_name)
             except ImportError as e:
                 print('Script Control Error importing: ', e)
             except AttributeError:
                 print('There is no class {0} in module {1}'.format(class_name, module))
-            except SyntaxError as e:
+            except SyntaxError:
                 print('Incorrect syntax in file {0}'.format(import_path, class_name))
             except Exception as e:
                 print('There was an error in {0} : {1}'.format(class_name, e))
@@ -92,8 +95,7 @@ class ScriptScanner(ScriptSignalsServer):
                     name = cls.name
                     parameters = cls.all_required_parameters()
                 except AttributeError:
-                    name_not_provided = 'Name is not provided for class {0} in'
-                    name_not_provided += ' module {1}'
+                    name_not_provided = 'Name is not provided for class {0} in module {1}'
                     print(name_not_provided.format(class_name, module))
                 else:
                     self.script_parameters[name] = script_class_parameters(name, cls, parameters)

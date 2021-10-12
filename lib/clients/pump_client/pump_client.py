@@ -5,7 +5,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 from EGGS_labrad.lib.clients.pump_client.pump_gui import pump_gui
 
-from common.lib.clients.connection import connection
+from EGGS_labrad.lib.clients.connection import connection
 
 class pump_client(QWidget):
 

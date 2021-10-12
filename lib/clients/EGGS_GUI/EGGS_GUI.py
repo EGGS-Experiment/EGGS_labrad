@@ -4,6 +4,9 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.lib.clients.Widgets.detachable_tab import DetachableTabWidget
 
 class EGGS_GUI(QMainWindow):
+
+    name = 'EGGS GUI'
+
     def __init__(self, reactor, clipboard, parent=None):
         super(EGGS_GUI, self).__init__(parent)
         self.clipboard = clipboard
@@ -13,54 +16,29 @@ class EGGS_GUI(QMainWindow):
 
     @inlineCallbacks
     def connect(self):
-        from common.lib.clients.connection import connection
-        self.cxn = connection(name = 'EGGS GUI Client')
+        from EGGS_labrad.lib.clients.connection import connection
+        self.cxn = connection(name = self.name)
         yield self.cxn.connect()
 
-    #Highest level adds tabs to big GUI
     def makeLayout(self, cxn):
-	    #creates central layout
+        #central layout
         centralWidget = QWidget()
         layout = QHBoxLayout()
+        self.tabWidget = QTabWidget()
 
-	    #create subwidgets to be added to tabs
+        #create subwidgets
         script_scanner = self.makeScriptScannerWidget(reactor, cxn)
         cryo = self.makeCryoWidget(reactor)
 
-        # add tabs
-        self.tabWidget = QTabWidget()
-        #self.tabWidget = DetachableTabWidget()
+        #create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryo, '&Cryo')
 
+        #put it all together
         layout.addWidget(self.tabWidget)
         centralWidget.setLayout(layout)
         self.setCentralWidget(centralWidget)
-        self.setWindowTitle('Barium GUI')
-
-#################### Here we will connect to individual clients and add sub-tabs #####################
-
-######sub tab layout example#############
-#    def makeLaserSubTab(self, reactor, cxn):
-#        centralWidget = QtGui.QWidget()
-#        layout = QtGui.QHBoxLayout()
-
-#	wavemeter = self.makeWavemeterWidget(reactor, cxn)
-#	M2 = self.makeM2Widget(reactor, cxn)
-#	M2pump = self.makeM2PumpWidget(reactor, cxn)
-#
-#	subtabWidget = QtGui.QTabWidget()
-#
-#	subtabWidget.addTab(wavemeter, '&Wavemeter')
-#	subtabWidget.addTab(M2, '&M2')
-#	subtabWidget.addTab(M2pump, '&PumpM2')
-#
-#       self.setCentralWidget(centralWidget)
-#        self.setWindowTitle('Lasers')
-#	return subtabWidget
-
-######create widgets with shared connection######
-
+        self.setWindowTitle(self.name)
 
     def makeScriptScannerWidget(self, reactor, cxn):
         from EGGS_labrad.lib.clients.script_scanner_gui.script_scanner_gui import script_scanner_gui
@@ -69,6 +47,7 @@ class EGGS_GUI(QMainWindow):
 
     def makeCryoWidget(self, reactor):
         from EGGS_labrad.lib.clients.lakeshore_client.lakeshore_client import lakeshore_client
+        from EGGS_labrad.lib.clients.pump_client.pump_client import pump_client
         lakeshore = lakeshore_client(reactor)
         return lakeshore
 
@@ -82,7 +61,7 @@ if __name__=="__main__":
     qt5reactor.install()
     from twisted.internet import reactor
     EGGSGUI = EGGS_GUI(reactor, clipboard)
-    #EGGSGUI.setWindowIcon(QIcon('C:/Users/barium133/Code/barium/BARIUM_IONS.png'))
+    EGGSGUI.setWindowIcon(QIcon('C:/Users/EGGS1/Documents/Code/EGGS_labrad/lib/eggs.png'))
     EGGSGUI.setWindowTitle('EGGS GUI')
     EGGSGUI.show()
     reactor.run()

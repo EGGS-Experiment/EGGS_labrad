@@ -48,6 +48,7 @@ class vibration_measurement_ss(experiment):
     def finalize(self, cxn, context):
         #todo: convert to csv
         #todo: fft
+
         self.cxn.disconnect()
 
     def set_up_datavault(self):
