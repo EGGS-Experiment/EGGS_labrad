@@ -430,7 +430,7 @@ class LineSelectionNode(Node):
         return '{0}   ( {1} )'.format(show, self._value)
     
     def full_parameter(self):
-        return ('line_selection', (str(self._value), list(self._dict.iteritems() ) ) )
+        return ('line_selection', (str(self._value), list(self._dict.items() ) ) )
     
     def path(self):
         return (self._collection, self.name())

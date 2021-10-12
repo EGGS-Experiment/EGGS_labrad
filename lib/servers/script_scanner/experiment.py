@@ -95,7 +95,7 @@ class experiment(experiment_info):
         '''
         if isinstance(parameter_dict, dict):
             udpate_dict = TreeDict()
-            for (collection,parameter_name), value in parameter_dict.iteritems():
+            for (collection,parameter_name), value in parameter_dict.items():
                 udpate_dict['{0}.{1}'.format(collection, parameter_name)] = value
         elif isinstance(parameter_dict, TreeDict):
             udpate_dict = parameter_dict

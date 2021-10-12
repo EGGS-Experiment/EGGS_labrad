@@ -107,7 +107,7 @@ class ParametersEditor(base, form):
 
     def get_scannable_parameters(self):
         scannable = []
-        for (collection, param), index in self._scannable_parameter.iteritems():
+        for (collection, param), index in self._scannable_parameter.items():
             if (collection, param) in self._proxyModel.shown():
                 parameter_node = index.internalPointer()
                 minim = parameter_node.data(3)
