@@ -12,14 +12,14 @@ VERT_DIVISIONS = 8.0
 HORZ_DIVISIONS = 10.0
 SCALES = []
 PROBE_FACTORS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
-TRIGGER_MODES = ['AUTO', 'NONE', 'SING']]
+TRIGGER_MODES = ['AUTO', 'NONE', 'SING']
 TIMEOUT = 20 #in ms
 
 class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
 
     #startup
     def initialize(self):
-        self.timeout(TIMEOU)
+        self.timeout(TIMEOUT)
 
     #system
     @inlineCallbacks
