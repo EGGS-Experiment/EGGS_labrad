@@ -125,10 +125,10 @@ class GPIBBusServer(LabradServer):
                 del self.devices[addr]
                 self.sendDeviceMessage('GPIB Device Disconnect', addr)
         except Exception as e:
-            print 'Problem while refreshing devices:', str(e)
+            print('Problem while refreshing devices:', str(e))
 
     def sendDeviceMessage(self, msg, addr):
-        print msg + ': ' + addr
+        print(msg + ': ' + addr)
         self.client.manager.send_named_message(msg, (self.name, addr))
 
     def initContext(self, c):
