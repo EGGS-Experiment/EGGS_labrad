@@ -10,7 +10,7 @@ dependencies:
   - binutils-or1k-linux=2.30=0
   - blas=1.0=mkl
   - brotli=1.0.9=ha925a31_2
-  - ca-certificates=2021.7.5=haa95532_1
+  - ca-certificates=2021.9.30=haa95532_1
   - cached-property=1.5.2=py_0
   - certifi=2021.5.30=py38haa95532_0
   - cffi=1.14.6=py38h2bbff1b_0
@@ -87,7 +87,7 @@ dependencies:
   - zope=1.0=py38_1
   - zope.interface=5.4.0=py38h2bbff1b_0
   - zstd=1.4.9=h19a0ad4_0
-  - pip==21.2.2:
+  - pip:
     - argparse==1.4.0
     - arrow==1.2.0
     - binaryornot==0.4.4
@@ -107,7 +107,7 @@ dependencies:
     - jinja2-time==0.2.0
     - markupsafe==2.0.1
     - pager==3.3
-    - pip==21.2.4
+    - pip==21.3
     - poyo==0.5.0
     - pyasn1-modules==0.2.8
     - pylabrad==0.98.1
