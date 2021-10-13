@@ -120,7 +120,7 @@ class GPIBBusServer(LabradServer):
                     self.devices[addr] = instr
                     self.sendDeviceMessage('GPIB Device Connect', addr)
                 except Exception as e:
-                    print 'Failed to add ' + addr + ':' + str(e)
+                    print('Failed to add ' + addr + ':' + str(e))
             for addr in deletions:
                 del self.devices[addr]
                 self.sendDeviceMessage('GPIB Device Disconnect', addr)
