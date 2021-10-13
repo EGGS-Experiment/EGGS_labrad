@@ -233,7 +233,7 @@ class _MetadataTest(_TestCase):
     def test_iterate_get_comments(self):
         data = self.get_data()
         data.initialize_info('FooTitle', _INDEPENDENTS, _DEPENDENTS)
-        for i in xrange(3):
+        for i in range(3):
             data.addComment('user {}'.format(i), '{}'.format(i))
         self.assertEqual(data.getComments(0, 0), ([], 0))
         comments_0, next_pos = data.getComments(1, 0)
