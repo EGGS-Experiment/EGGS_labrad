@@ -101,7 +101,7 @@ class DataVault(LabradServer):
             return c['path']
 
         temp = c['path'][:] # copy the current path
-        if isinstance(path, (int, long)):
+        if isinstance(path, (int, int)):
             if path > 0:
                 temp = temp[:-path]
                 if not len(temp):

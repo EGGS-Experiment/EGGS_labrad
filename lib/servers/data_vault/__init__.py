@@ -250,14 +250,14 @@ class Session(object):
 
     def openDataset(self, name):
         # first lookup by number if necessary
-        if isinstance(name, (int, long)):
+        if isinstance(name, (int, int)):
             for oldName in self.listDatasets():
                 num = int(oldName[:5])
                 if name == num:
                     name = oldName
                     break
         # if it's still a number, we didn't find the set
-        if isinstance(name, (int, long)):
+        if isinstance(name, (int, int)):
             raise errors.DatasetNotFoundError(name)
 
         filename = filename_encode(name)

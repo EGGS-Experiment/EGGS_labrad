@@ -206,7 +206,7 @@ class SerialServer(LabradServer):
         else:
             if data in baudrates:
                 ser.baudrate = data
-            return long(ser.baudrate)
+            return int(ser.baudrate)
 
     @setting(21, 'Bytesize',
              data=[': List bytesizes',
@@ -222,7 +222,7 @@ class SerialServer(LabradServer):
         else:
             if data in bytesizes:
                 ser.bytesize = data
-            return long(ser.bytesize)
+            return int(ser.bytesize)
 
     @setting(22, 'Parity',
              data=[': List parities',
@@ -255,7 +255,7 @@ class SerialServer(LabradServer):
         else:
             if data in stopbits:
                 ser.stopbits = data
-            return long(ser.stopbits)
+            return int(ser.stopbits)
 
     @setting(25, 'Timeout',
              data=[': Return immediately',
@@ -290,7 +290,7 @@ class SerialServer(LabradServer):
         if not isinstance(data, str):
             data = ''.join(chr(x & 255) for x in data)
         ser.write(data)
-        return long(len(data))
+        return int(len(data))
 
     @setting(41, 'Write Line', data=['s: Data to send'],
              returns=['w: Bytes sent'])
@@ -298,7 +298,7 @@ class SerialServer(LabradServer):
         """Sends data over the port appending CR LF."""
         ser = self.getPort(c)
         ser.write(data + '\r\n')
-        return long(len(data) + 2)
+        return int(len(data) + 2)
 
     @setting(42, 'Pause', duration='v[s]: Time to pause', returns=[])
     def pause(self, c, duration):
@@ -393,7 +393,7 @@ class SerialServer(LabradServer):
     def read_as_words(self, c, data=0):
         """Read data from the port."""
         ans = yield self.readSome(c, data)
-        returnValue([long(ord(x)) for x in ans])
+        returnValue([int(ord(x)) for x in ans])
 
     @setting(52, 'Read Line',
              data=[': Read until LF, ignoring CRs',
