@@ -41,7 +41,7 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.internet.reactor import callLater
 from labrad.errors import DeviceNotSelectedError
 import labrad.units as units
-import visa
+import pyvisa as visa
 
 
 """
