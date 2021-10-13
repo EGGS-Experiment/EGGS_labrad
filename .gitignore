@@ -1,5 +1,4 @@
-*.pyc
-.DS_Store
-
-.idea/
+**/*.pyc
+**/.DS_Store
 **/__pycache__
+#.idea/
