@@ -39,6 +39,7 @@
 from labrad.server import LabradServer, setting
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.reactor import callLater
+from twisted.internet.task import LoopingCall
 from labrad.errors import DeviceNotSelectedError
 import labrad.units as units
 import pyvisa as visa
@@ -78,7 +79,7 @@ class GPIBBusServer(LabradServer):
         # start refreshing only after we have started serving
         # this ensures that we are added to the list of available
         # servers before we start sending messages
-        callLater(0.1, self.startRefreshing)
+        callLater(1, self.startRefreshing)
 
     def startRefreshing(self):
         """Start periodically refreshing the list of devices.
@@ -87,16 +88,15 @@ class GPIBBusServer(LabradServer):
         When the refresh loop is shutdown, we will wait for this
         deferred to fire to indicate that it has terminated.
         """
-        # self.refresher = LoopingCall(self.refreshDevices)
-        #self.refresherDone = self.refresher.start(self.refreshInterval, now=True)
-        self.refreshDevices()
+        self.refresher = LoopingCall(self.refreshDevices)
+        self.refresherDone = self.refresher.start(self.refreshInterval)
 
     @inlineCallbacks
     def stopServer(self):
         """Kill the device refresh loop and wait for it to terminate."""
         if hasattr(self, 'refresher'):
             self.refresher.stop()
-            yield self.refresherDone
+            #yield self.refresherDone
 
     def refreshDevices(self):
         """Refresh the list of known devices on this bus.
@@ -184,7 +184,9 @@ class GPIBBusServer(LabradServer):
             ans = instr.read_raw()
         else:
             ans = instr.read_raw(n_bytes)
-        return str(ans).strip()
+        #convert from bytes to string for python 3
+        ans = ans.strip().decode()
+        return ans
 
     @setting(5, data='s', returns='s')
     def query(self, c, data):
@@ -196,7 +198,9 @@ class GPIBBusServer(LabradServer):
         instr = self.getDevice(c)
         instr.write(data)
         ans = instr.read_raw()
-        return str(ans).strip()
+        # convert from bytes to string for python 3
+        ans = ans.strip().decode()
+        return ans
 
     @setting(7, n_bytes='w', returns='y')
     def read_raw(self, c, n_bytes=None):
