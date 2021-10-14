@@ -112,7 +112,7 @@ class GPIBBusServer(LabradServer):
                 try:
                     if not addr.startswith(KNOWN_DEVICE_TYPES):
                         continue
-                    instr = rm.get_instrument(addr)
+                    instr = rm.open_resource(addr)
                     instr.write_termination = ''
                     instr.clear()
                     if addr.endswith('SOCKET'):

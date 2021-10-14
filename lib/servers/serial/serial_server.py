@@ -289,6 +289,8 @@ class SerialServer(LabradServer):
         ser = self.getPort(c)
         if not isinstance(data, str):
             data = ''.join(chr(x & 255) for x in data)
+        elif type(data) == str:
+            data = data.encode()
         ser.write(data)
         return int(len(data))
 
@@ -297,6 +299,8 @@ class SerialServer(LabradServer):
     def write_line(self, c, data):
         """Sends data over the port appending CR LF."""
         ser = self.getPort(c)
+        if type(data) == str:
+            data = data.encode()
         ser.write(data + '\r\n')
         return int(len(data) + 2)
 
