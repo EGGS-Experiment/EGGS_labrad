@@ -73,8 +73,9 @@ class GPIBDeviceManager(LabradServer):
         self.identLock = DeferredLock()
         
         # named messages are sent with source ID first, which we ignore
-        connect_func = lambda c, s, payload: self.gpib_device_connect(*payload)
-        disconnect_func = lambda c, s, payload: self.gpib_device_disconnect(*payload)
+        # python 3 no longer supports tuple unpacking, so we have to unpack it manually
+        connect_func = lambda c, msg: self.gpib_device_connect(*msg[1])
+        disconnect_func = lambda c, msg: self.gpib_device_disconnect(*msg[1])
         mgr = self.client.manager
         self._cxn.addListener(connect_func, source=mgr.ID, ID=10)
         self._cxn.addListener(disconnect_func, source=mgr.ID, ID=11)
