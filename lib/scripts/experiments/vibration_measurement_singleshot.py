@@ -39,7 +39,6 @@ class vibration_measurement_ss(experiment):
 
             #data: tmp
             self.dataDJ = None
-            self.filename = 'th1.csv'
 
         except Exception as e:
             print(e)
@@ -55,7 +54,7 @@ class vibration_measurement_ss(experiment):
             raise
 
     def finalize(self, cxn, context):
-        np.savetxt(self.filename, self.dataDJ, delimiter = ',')
+        np.savetxt('data.csv', self.dataDJ, delimiter = ',')
         #todo: fft
         self.cxn.disconnect()
 
