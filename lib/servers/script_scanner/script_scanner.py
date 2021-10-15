@@ -23,6 +23,7 @@ import EGGS_labrad.lib.config.scriptscanner_config as sc_config
 import scan_methods
 from scheduler import scheduler
 import sys
+from importlib import reload
 
 
 class script_class_parameters(object):
@@ -100,7 +101,7 @@ class ScriptScanner(ScriptSignalsServer):
 
     @setting(0, "get_available_scripts", returns='*s')
     def get_available_scripts(self, c):
-        return self.script_parameters.keys()
+        return list(self.script_parameters.keys())
 
     @setting(1, "get_script_parameters", script='s', returns='*(ss)')
     def get_script_parameters(self, c, script):

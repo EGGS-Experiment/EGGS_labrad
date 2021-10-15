@@ -216,7 +216,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         #start point position
         yield self.write('DAT:STAR 1')
         #stop point position
-        yield self.write('DAT:STOP 100000')
+        yield self.write('DAT:STOP 1000')
         #set encoding
         yield self.write('DAT:ENC ASCI')
         #transfer waveform preamble
@@ -236,7 +236,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         timeUnitScaler = 1.0# * us
 
         #convert data to volts
-        traceVolts = ((trace - yorigin) * yincrement + yrefrence)* voltUnitScaler
+        traceVolts = ((trace - yorigin) * yincrement + yreference)* voltUnitScaler
         timeAxis = (np.arange(points) * xincrement + xorigin) * timeUnitScaler
         returnValue((timeAxis, traceVolts))
 
@@ -295,15 +295,12 @@ def _parsePreamble(preamble):
     yincrement = float(fields[13])
     yorigin = float(fields[14])
     yreference = float(fields[15])
+    print(fields)
     return (points, xincrement, xorigin, yincrement, yorigin, yreference)
 
 def _parseByteData(data):
     """
     Parse byte data
     """
-    #get tmc header in #NXXXXXXXXX format
-    tmc_N = int(data[1])
-    tmc_length = int(data[2: 2 + tmc_N])
-    print("tmc_N: " + str(tmc_N))
-    print("tmc_length: " + str(tmc_length))
-    return np.frombuffer(data[2 + tmc_N :], dtype=np.uint8)
+    trace = np.array(data.split(','), dtype = float)
+    return trace
