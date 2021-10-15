@@ -39,6 +39,9 @@ class test_experiment(experiment):
         self.param1 = self.p.Test.param1
         self.param1 = 2.0
 
+        self.param2 = self.p.Test.param2
+        self.param2 = 10.0
+
         #convert parameter to labrad type
         #welp, todo
 
@@ -50,6 +53,7 @@ class test_experiment(experiment):
         self.set_up_datavault()
 
     def run(self, cxn, context, replacement_parameters={}):
+        print('here3')
         prevtime = time.time()
         starttime = time.time()
 
@@ -58,9 +62,10 @@ class test_experiment(experiment):
         yield self.dv.add_ex(data2, context=self.c_data2)
 
         while (True):
-            if (self.pause_or_stop() == True):
-                break
-            if (time.time() - prevtime) <= self.time_interval:
+            # if (self.pause_or_stop() == True):
+            #     break
+            print('here')
+            if (time.time() - prevtime) <= 1:
                 continue
 
             data1 = np.array([1, 2, 3, 4])
@@ -87,17 +92,17 @@ class test_experiment(experiment):
 
         #create datasets
             #data 1
-        self.dv.cd(['', 'Experiments', year, month, trunk1, trunk2], True, context = self.c_temp)
+        self.dv.cd(['', 'Experiments', year, month, trunk1, trunk2], True, context = self.c_data1)
         dataset_1 = self.dv.new('Test Data 1',[('Elapsed time', 't')], [('Trend 1', 'Value', 'arb'), ('Trend 2', 'Value', 'arb'), \
                                                                                              ('Trend 3', 'Value', 'arb'), ('Trend 4', 'Value', 'arb')] , context = self.c_data1)
             #data 2
-        self.dv.cd(['','Experiments', year, month, trunk1, trunk2], True, context=self.c_oscope)
+        self.dv.cd(['','Experiments', year, month, trunk1, trunk2], True, context=self.c_data2)
         dataset_2 = self.dv.new('Test Data 2',[('Elapsed time', 't')], [('Trend 2.1', 'Value 2', 'arb')], context = self.c_data2)
 
         #add parameters to data vault
-        for parameter in self.p:
-            self.dv.add_parameter(parameter, self.p[parameter], context = self.c_data1)
-            self.dv.add_parameter(parameter, self.p[parameter], context=self.c_data2)
+        # for parameter in self.p:
+        #     self.dv.add_parameter(parameter, self.p[parameter], context = self.c_data1)
+        #     self.dv.add_parameter(parameter, self.p[parameter], context=self.c_data2)
 
         #set live plotting
         #self.grapher.plot(dataset, 'bright/dark', False)

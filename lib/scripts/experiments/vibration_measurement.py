@@ -103,7 +103,7 @@ class vibration_measurement(experiment):
         dataset_pressure = self.dv.new('TwisTorr 74 Pressure Controller',[('Elapsed time', 't')], [('Pump Pressure', 'Pressure', 'mTorr')], context = self.c_press)
             #oscope
         self.dv.cd(['','Experiments', year, month, trunk1, trunk2], True, context=self.c_oscope)
-        dataset_oscope = self.dv.new('Rigol DS1104z Oscilloscope',[('Elapsed time', 't')], [('Scope Trace', 'Voltage, 'V')], context = self.c_oscope)
+        dataset_oscope = self.dv.new('Rigol DS1104z Oscilloscope',[('Elapsed time', 't')], [('Scope Trace', 'Voltage', 'V')], context = self.c_oscope)
 
         #add parameters to data vault
         for parameter in self.p:

@@ -84,7 +84,8 @@ class ScriptScanner(ScriptSignalsServer):
                 print('Script Control Error importing: ', e)
             except AttributeError:
                 print('There is no class {0} in module {1}'.format(class_name, module))
-            except SyntaxError:
+            except SyntaxError as e:
+                print(e)
                 print('Incorrect syntax in file {0}'.format(import_path, class_name))
             except Exception as e:
                 print('There was an error in {0} : {1}'.format(class_name, e))
