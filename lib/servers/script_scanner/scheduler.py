@@ -1,10 +1,7 @@
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import Deferred, DeferredList
 
-try:
-    from config.scriptscanner_config import config
-except:
-    from EGGS_labrad.lib.config.scriptscanner_config import config
+from EGGS_labrad.lib.config.scriptscanner_config import config
 
 from twisted.internet.task import LoopingCall
 from script_status import script_semaphore
@@ -248,7 +245,7 @@ class scheduler(object):
         else:
             should_launch = False
             non_conflicting = self.get_non_conflicting()
-            if not self.running or scan.script_cls.name in non_conflicting:
+            if (not self.running) or scan.script_cls.name in non_conflicting:
                 # no running experiments or current one has no conflicts
                 should_launch = True
                 pause_running = False

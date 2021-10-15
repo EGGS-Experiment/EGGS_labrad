@@ -68,7 +68,11 @@ class experiment(experiment_info):
         self.sc.launch_confirmed(ident)
 
     def _run(self, cxn, context):
-        self.run(cxn, context)
+        try:
+            self.run(cxn, context)
+        except Exception as e:
+            print('Problem in run(): ')
+            print(e)
 
     def _load_required_parameters(self, overwrite=False):
         d = self._load_parameters_dict(self.required_parameters)

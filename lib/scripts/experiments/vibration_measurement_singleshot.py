@@ -46,9 +46,9 @@ class vibration_measurement_ss(experiment):
 
     def run(self, cxn, context, replacement_parameters={}):
         try:
-            trace = yield self.oscope.get_trace(1)
+            trace = self.oscope.get_trace(1)
             trace = np.array([trace[0], trace[1]]).transpose()
-            yield self.dv.add_ex(trace, context = self.c_oscope)
+            self.dv.add_ex(trace, context = self.c_oscope)
             self.dataDJ = trace
         except Exception as e:
             print(e)

@@ -53,25 +53,22 @@ class test_experiment(experiment):
         self.set_up_datavault()
 
     def run(self, cxn, context, replacement_parameters={}):
-        print('here3')
         prevtime = time.time()
         starttime = time.time()
-
         data2 = (np.arange(0, 1000), np.random.rand(1000))
-        data2 = np.array([trace[0], trace[1]]).transpose()
-        yield self.dv.add_ex(data2, context=self.c_data2)
+        data2 = np.array([data2[0], data2[1]]).transpose()
+        self.dv.add_ex(data2, context=self.c_data2)
 
         while (True):
-            # if (self.pause_or_stop() == True):
-            #     break
-            print('here')
-            if (time.time() - prevtime) <= 1:
+            if (self.pause_or_stop() == True):
+                break
+            elif (time.time() - prevtime) <= 1:
                 continue
-
             data1 = np.array([1, 2, 3, 4])
             elapsedtime = time.time() - starttime
+            prevtime = time.time()
             try:
-                yield self.dv.add(elapsedtime, data1[0], data1[1], data1[2], data[3], context = self.c_data1)
+                self.dv.add(elapsedtime, data1[0], data1[1], data1[2], data1[3], context = self.c_data1)
             except Exception as e:
                 print(e)
 
