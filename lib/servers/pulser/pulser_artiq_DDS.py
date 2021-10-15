@@ -71,7 +71,8 @@ class DDS(LabradServer):
         input in the form of a list [(name, start, duration, frequency, amplitude, phase, ramp_rate, amp_ramp_rate)]
         '''
         sequence = c.get('sequence')
-        if not sequence: raise Exception ("Please create new sequence first")
+        if not sequence:
+            raise Exception("Please create new sequence first")
         for value in values:
             try:
                 name, start, dur, freq, ampl = value

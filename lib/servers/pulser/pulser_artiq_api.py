@@ -1,15 +1,14 @@
-from artiq.experiment import *
-from devices import Devices
 from labrad import util
 
+from artiq.experiment import *
 from pulser_artiq_server import Pulser_artiq
+from devices import Devices
 
 import numpy as np
 
 class api(EnvExperiment):
     kernel_invariants = {}
 
-    #ARTIQ experiment functions
     def build(self):
         #get core
         self.setattr_device("core")
@@ -169,11 +168,6 @@ class api(EnvExperiment):
         select the dds chip for communication
         '''
 
-    def padTo16(self,data):
-        '''
-        Padding function to make the data a multiple of 16
-        '''
-
     @kernel
     def programDDS(self, prog):
         '''
@@ -199,5 +193,4 @@ class api(EnvExperiment):
         '''
 
     def run(self):
-        from labrad import util
         util.runServer(Pulser_artiq(self))

@@ -223,8 +223,9 @@ class Pulser_artiq(DDS, LineTrigger):
         sequence = c.get('sequence')
         if getProgrammed:
             sequence = self.programmed_sequence
-        if not sequence: raise Exception ("Please create new sequence first")
-        ttl,dds = sequence.humanRepresentation()
+        if not sequence:
+            raise Exception ("Please create new sequence first")
+        ttl, dds = sequence.humanRepresentation()
         return ttl.tolist()
 
     @setting(11, "Human Readable DDS", getProgrammed = 'b', returns = '*(svv)')
@@ -239,8 +240,9 @@ class Pulser_artiq(DDS, LineTrigger):
         sequence = c.get('sequence')
         if getProgrammed:
             sequence = self.programmed_sequence
-        if not sequence: raise Exception ("Please create new sequence first")
-        ttl,dds = sequence.humanRepresentation()
+        if not sequence:
+            raise Exception("Please create new sequence first")
+        ttl, dds = sequence.humanRepresentation()
         return dds
 
     @setting(12, 'Get Channels', returns = '*(sw)')
@@ -274,9 +276,9 @@ class Pulser_artiq(DDS, LineTrigger):
         yield deferToThread(self.api.setManual, channelNumber, self.cnot(channel.manualinv, state))
         self.inCommunication.release()
         if state:
-            self.notifyOtherListeners(c,(channelName,'ManualOn'), self.onSwitch)
+            self.notifyOtherListeners(c, (channelName, 'ManualOn'), self.onSwitch)
         else:
-            self.notifyOtherListeners(c,(channelName,'ManualOff'), self.onSwitch)
+            self.notifyOtherListeners(c, (channelName, 'ManualOff'), self.onSwitch)
 
     @setting(14, 'Switch Auto', channelName = 's', invert= 'b')
     def switchAuto(self, c, channelName, invert = None):
@@ -295,7 +297,7 @@ class Pulser_artiq(DDS, LineTrigger):
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.setAuto, channelNumber, invert)
         self.inCommunication.release()
-        self.notifyOtherListeners(c,(channelName,'Auto'), self.onSwitch)
+        self.notifyOtherListeners(c, (channelName, 'Auto'), self.onSwitch)
 
     @setting(15, 'Get State', channelName = 's', returns = '(bbbb)')
     def getState(self, c, channelName):
@@ -345,7 +347,8 @@ class Pulser_artiq(DDS, LineTrigger):
         In the differential mode, the FPGA uses triggers the pulse sequence
         frequency and to know when the repumping light is switched on or off.
         """
-        if mode not in self.collectionTime.keys(): raise Exception("Incorrect mode")
+        if mode not in self.collectionTime.keys():
+            raise Exception("Incorrect mode")
         self.collectionMode = mode
         countRate = self.collectionTime[mode]
         yield self.inCommunication.acquire()
