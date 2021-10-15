@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Pulser_artiq
+name = ARTIQ Pulser
 version = 3.0
 description = Pulser using the ARTIQ box
-instancename = Pulser_artiq
+instancename = ARTIQ_Pulser
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -16,28 +16,30 @@ timeout = 20
 ### END NODE INFO
 """
 from labrad.server import LabradServer, setting, Signal
+from pulser_artiq_DDS import DDS
+from pulser_artiq_linetrigger import LineTrigger
+
 from twisted.internet import reactor
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
 from twisted.internet.threads import deferToThread
+
 from sequence import Sequence
 import numpy as np
 
-from sipyco.pc_rpc import Client
 from devices import Devices
 
-SERVERNAME = 'Pulser_artiq'
-HOST = "::1"
-PORT = 3249
+class Pulser_artiq(DDS, LineTrigger):
 
-class Pulser_artiq(LabradServer):
-    name = 'Pulser_artiq'
+    name = 'ARTIQ Pulser'
     regKey = 'Pulser_artiq'
 
     onSwitch = Signal(611051, 'signal: switch toggled', '(ss)')
 
-    def initServer(self):
-        self.api = Client(HOST, PORT, )
+    def __init__(self, api):
+        self.api = api
+        LabradServer.__init__(self)
 
+    def initServer(self):
         self.channelDict = hardwareConfiguration.channelDict
         self.collectionTime = hardwareConfiguration.collectionTime
         self.collectionMode = hardwareConfiguration.collectionMode
@@ -61,13 +63,8 @@ class Pulser_artiq(LabradServer):
 
         self.programmed_sequence = None
 
-        #new stuff
-        self.connectARTIQ()
-
         #new variables
-        self.numRepetitions = 0
-        self.numSeqLeft = 0
-        self.runInf = False
+        self.maxRuns = 0
 
     def initializeSettings(self):
         for channel in self.channelDict.values():
@@ -91,14 +88,6 @@ class Pulser_artiq(LabradServer):
                     print('Not Able to connect to {}'.format(name))
                     self.remoteConnections[name] = None
 
-    @inlineCallbacks
-    def loopSequence(self):
-        while (self.numSeqLeft > 0 or self.runInf):
-            self.numRepetitions += 1
-            if self.runInf is False:
-                self.numLeft -= 1
-            self.api.runSequence()
-
     #TTL Sequence functions
     @setting(0, "New Sequence", returns = '')
     def newSequence(self, c):
@@ -114,9 +103,10 @@ class Pulser_artiq(LabradServer):
         Saves the current sequence to self.programmed_sequence.
         """
         sequence = c.get('sequence')
-        if not sequence: raise Exception("Please create new sequence first")
+        if not sequence:
+            raise Exception("Please create new sequence first")
         self.programmed_sequence = sequence
-        dds,ttl = sequence.progRepresentation()
+        dds, ttl = sequence.progRepresentation()
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.programBoard, ttl)
         if dds is not None:
@@ -125,21 +115,22 @@ class Pulser_artiq(LabradServer):
         self.isProgrammed = True
 
     @setting(2, "Start Infinite", returns = '')
-    def startInfinite(self,c):
+    def startInfinite(self, c):
         if not self.isProgrammed:
-            raise Exception ("No Programmed Sequence")
+            raise Exception("No Programmed Sequence")
         yield self.inCommunication.acquire()
-        self.runInf = True
-        self.numRepetitions = 0
-        self.numSeqLeft = 0
+        self.api.maxRuns = np.inf
+        self.maxRuns = np.inf
+        self.api.runSequence()
         self.inCommunication.release()
 
     @setting(3, "Complete Infinite Iteration", returns = '')
-    def completeInfinite(self,c):
+    def completeInfinite(self, c):
         if self.runInf is False:
             raise Exception("Not Running Infinite Sequence")
         yield self.inCommunication.acquire()
-        self.runInf = False
+        self.api.maxRuns = 0
+        self.maxRuns = 0
         self.inCommunication.release()
 
     @setting(4, "Start Single", returns = '')
@@ -147,8 +138,9 @@ class Pulser_artiq(LabradServer):
         if not self.isProgrammed:
             raise Exception ("No Programmed Sequence")
         yield self.inCommunication.acquire()
-        self.numRepetitions = 0
-        self.numSeqLeft = 1
+        self.api.maxRuns = 1
+        self.maxRuns = 1
+        self.api.runSequence()
         self.inCommunication.release()
 
     @setting(5, 'Add TTL Pulse', channel = 's', start = 'v[s]', duration = 'v[s]')
@@ -162,11 +154,13 @@ class Pulser_artiq(LabradServer):
         start = start['s']
         duration = duration['s']
         #simple error checking
-        if not ((self.sequenceTimeRange[0] <= start <= self.sequenceTimeRange[1]) and \
+        if not ((self.sequenceTimeRange[0] <= start <= self.sequenceTimeRange[1]) and
                  (self.sequenceTimeRange[0] <= start + duration <= self.sequenceTimeRange[1])):
             raise Exception("Time boundaries are out of range")
-        if not duration >= self.timeResolution: raise Exception("Incorrect duration")
-        if not sequence: raise Exception("Please create new sequence first")
+        if not duration >= self.timeResolution:
+            raise Exception("Incorrect duration")
+        if not sequence:
+            raise Exception("Please create new sequence first")
         sequence.addPulse(hardwareAddr, start, duration)
 
     @setting(6, 'Add TTL Pulses', pulses = '*(sv[s]v[s])')
@@ -196,8 +190,9 @@ class Pulser_artiq(LabradServer):
         Stops any currently running sequence
         """
         yield self.inCommunication.acquire()
+        self.api.maxRuns = 0
+        self.maxRuns = 0
         yield deferToThread(self.api.resetRam)
-        self.numSeqLeft = 0
         self.inCommunication.release()
         self.ddsLock = False
 
@@ -207,13 +202,13 @@ class Pulser_artiq(LabradServer):
         Starts the repetition number of iterations
         """
         if not self.isProgrammed:
-            raise Exception ("No Programmed Sequence")
-        if not 1 <= repetition <= (2**16 - 1):
-            raise Exception ("Incorrect number of pulses")
-
+            raise Exception("No Programmed Sequence")
+        if not 1 <= repetitions <= (2**16 - 1):
+            raise Exception("Incorrect number of pulses")
         yield self.inCommunication.acquire()
-        self.numRepetitions = 0
-        self.numSeqLeft = repetitions
+        self.api.maxRuns = repetitions
+        self.maxRuns = repetitions
+        self.api.runSequence()
         self.inCommunication.release()
 
     @setting(10, "Human Readable TTL", getProgrammed = 'b', returns = '*2s')
@@ -256,7 +251,7 @@ class Pulser_artiq(LabradServer):
         d = self.channelDict
         keys = d.keys()
         numbers = [d[key].channelnumber for key in keys]
-        return zip(keys,numbers)
+        return zip(keys, numbers)
 
     @setting(13, 'Switch Manual', channelName = 's', state= 'b')
     def switchManual(self, c, channelName, state = None):
@@ -288,7 +283,8 @@ class Pulser_artiq(LabradServer):
         """
         Switches the given channel into the automatic mode, with an optional inversion.
         """
-        if channelName not in self.channelDict.keys(): raise Exception("Incorrect Channel")
+        if channelName not in self.channelDict.keys():
+            raise Exception("Incorrect Channel")
         channel = self.channelDict[channelName]
         channelNumber = channel.channelnumber
         channel.ismanual = False
@@ -308,7 +304,7 @@ class Pulser_artiq(LabradServer):
         """
         if channelName not in self.channelDict.keys(): raise Exception("Incorrect Channel")
         channel = self.channelDict[channelName]
-        answer = (channel.ismanual,channel.manualstate,channel.manualinv,channel.autoinv)
+        answer = (channel.ismanual, channel.manualstate, channel.manualinv, channel.autoinv)
         return answer
 
     @setting(16, 'Wait Sequence Done', timeout = 'v', returns = 'b')
@@ -316,23 +312,29 @@ class Pulser_artiq(LabradServer):
         """
         Returns true if the sequence has completed within a timeout period
         """
+        #todo: make loopingcall instead
         if timeout is None:
             timeout = self.sequenceTimeRange[1]
-        requestCalls = int(timeout / 0.001 ) #number of request calls
+
+        requestCalls = int(timeout * 1000)
         for i in range(requestCalls):
             yield self.inCommunication.acquire()
-            done = yield deferToThread(self.api.isSeqDone)
+            done = yield deferToThread(self.api.isSeqDone() >= self.maxRuns)
             self.inCommunication.release()
-            if done: returnValue(True)
+            if done:
+                returnValue(True)
             yield self.wait(0.001)
         returnValue(False)
 
     @setting(17, 'Repeatitions Completed', returns = 'w')
     def repeatitionsCompleted(self, c):
         """
-        Check how many repetitions have been completed in for the infinite or number modes
+        Check how many repetitions have been completed in the infinite or number modes
         """
-        returnValue(self.num)
+        yield self.inCommunication.acquire()
+        completed = yield deferToThread(self.api.isSeqDone())
+        self.inCommunication.release()
+        returnValue(completed)
 
     #PMT functions
     @setting(21, 'Set Mode', mode = 's', returns = '')
@@ -341,7 +343,7 @@ class Pulser_artiq(LabradServer):
         Set the counting mode, either 'Normal' or 'Differential'
         In the Normal Mode, the FPGA automatically sends the counts with a preset frequency
         In the differential mode, the FPGA uses triggers the pulse sequence
-        frequency and to know when the repumping light is swtiched on or off.
+        frequency and to know when the repumping light is switched on or off.
         """
         if mode not in self.collectionTime.keys(): raise Exception("Incorrect mode")
         self.collectionMode = mode
@@ -355,7 +357,6 @@ class Pulser_artiq(LabradServer):
             yield deferToThread(self.api.setModeDifferential)
         self.clear_next_pmt_counts = 3 #assign to clear next two counts
         self.inCommunication.release()
-        print('Defer Released')
 
     @setting(22, 'Set Collection Time', new_time = 'v', mode = 's', returns = '')
     def setCollectTime(self, c, new_time, mode):
@@ -363,8 +364,10 @@ class Pulser_artiq(LabradServer):
         Sets how long to collect photonslist in either 'Normal' or 'Differential' mode of operation
         """
         new_time = new_time['s']
-        if not self.collectionTimeRange[0]<=new_time<=self.collectionTimeRange[1]: raise Exception('incorrect collection time')
-        if mode not in self.collectionTime.keys(): raise("Incorrect mode")
+        if not self.collectionTimeRange[0] <= new_time <= self.collectionTimeRange[1]:
+            raise Exception('Incorrect collection time')
+        if mode not in self.collectionTime.keys():
+            raise Exception("Incorrect mode")
         if mode == 'Normal':
             self.collectionTime[mode] = new_time
             yield self.inCommunication.acquire()
@@ -483,7 +486,7 @@ class Pulser_artiq(LabradServer):
         return count
 
     def convertKCperSec(self, inp):
-        [rawCount,typ] = inp
+        [rawCount, typ] = inp
         countKCperSec = float(rawCount) / self.collectionTime[self.collectionMode] / 1000.
         return [countKCperSec, typ]
 
@@ -566,7 +569,7 @@ class Pulser_artiq(LabradServer):
         """
         notified = self.listeners.copy()
         notified.remove(context.ID)
-        f(message,notified)
+        f(message, notified)
 
     def initContext(self, c):
         """Initialize a new context object."""

@@ -59,7 +59,7 @@ timeout = 20
 
 [shutdown]
 message = 987654321
-timeout = 20
+timeout = 100
 ### END NODE INFO
 """
 

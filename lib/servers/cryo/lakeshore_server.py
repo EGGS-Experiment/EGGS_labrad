@@ -91,7 +91,6 @@ class Lakeshore336Server(SerialDeviceServer):
         time.sleep(0.1)
         resp = yield self.ser.read()
         resp = np.array(resp.split(','), dtype=float)
-        self.tempchanged(resp)
         returnValue(resp)
 
     # HEATER

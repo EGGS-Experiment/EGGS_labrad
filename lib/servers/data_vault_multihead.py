@@ -103,7 +103,7 @@ class DataVaultConnector(Service):
         self.connected = False
 
     def report(self, message):
-        print '{}:{} - {}'.format(self.host, self.port, message)
+        print('{}:{} - {}'.format(self.host, self.port, message))
 
     @inlineCallbacks
     def startService(self):
@@ -289,14 +289,14 @@ class DataVaultServiceHost(MultiService):
         return 'DataVaultServiceHost(%s)' % (managers,)
 
     def wrapSignal(self, signal):
-        print 'wrapping signal:', signal
+        print('wrapping signal:', signal)
         def relay(data, contexts=None, tag=None):
             for c in contexts:
                 try:
                     sig = getattr(c.server, signal)
                     sig(data, [c.context], tag)
                 except Exception:
-                    print '{}:{} - error relaying signal {}'.format(
+                    print('{}:{} - error relaying signal {}'.format()
                             c.server.host, c.server.port, signal)
                     traceback.print_exc()
         setattr(self, signal, relay)
@@ -377,8 +377,8 @@ def main(argv=sys.argv):
                 settings = load_settings_cmdline(argv)
             start_server(settings)
         except Exception as e:
-            print e
-            print 'usage: %s /path/to/vault/directory [password@]host[:port] [password2]@host2[:port2] ...' % (argv[0])
+            print(e)
+            print('usage: %s /path/to/vault/directory [password@]host[:port] [password2]@host2[:port2] ...' % (argv[0]))
             reactor.callWhenRunning(reactor.stop)
 
     _ = start()

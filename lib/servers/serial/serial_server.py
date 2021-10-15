@@ -33,11 +33,8 @@ timeout = 20
 ### END NODE INFO
 """
 
-import collections
-import os
+import collections, sys, time, os
 import os.path
-import sys
-import time
 from time import sleep
 
 from labrad import types as T
@@ -130,8 +127,7 @@ class SerialServer(LabradServer):
         except:
             raise NoPortSelectedError()
 
-    @setting(1, 'List Serial Ports',
-             returns=['*s: List of serial ports'])
+    @setting(1, 'List Serial Ports', returns=['*s: List of serial ports'])
     def list_serial_ports(self, c):
         """Retrieves a list of all serial ports.
 
@@ -143,9 +139,7 @@ class SerialServer(LabradServer):
 
         return port_list
 
-    @setting(10, 'Open',
-             port=[': Open the first available port',
-                   's: Port to open, e.g. COM4'],
+    @setting(10, 'Open', port=[': Open the first available port', 's: Port to open, e.g. COM4'],
              returns=['s: Opened port'])
     def open(self, c, port=''):
         """Opens a serial port in the current context.
@@ -193,9 +187,7 @@ class SerialServer(LabradServer):
             c['PortObject'].close()
             del c['PortObject']
 
-    @setting(20, 'Baudrate',
-             data=[': List baudrates',
-                   'w: Set baudrate (0: query current)'],
+    @setting(20, 'Baudrate', data=[': List baudrates', 'w: Set baudrate (0: query current)'],
              returns=['w: Selected baudrate', '*w: Available baudrates'])
     def baudrate(self, c, data=None):
         """Sets the baudrate."""
@@ -208,11 +200,7 @@ class SerialServer(LabradServer):
                 ser.baudrate = data
             return int(ser.baudrate)
 
-    @setting(21, 'Bytesize',
-             data=[': List bytesizes',
-                   'w: Set bytesize (0: query current)'],
-             returns=['*w: Available bytesizes',
-                      'w: Selected bytesize'])
+    @setting(21, 'Bytesize', data=[': List bytesizes', 'w: Set bytesize (0: query current)'], returns=['*w: Available bytesizes', 'w: Selected bytesize'])
     def bytesize(self, c, data=None):
         """Sets the bytesize."""
         ser = self.getPort(c)
@@ -224,11 +212,7 @@ class SerialServer(LabradServer):
                 ser.bytesize = data
             return int(ser.bytesize)
 
-    @setting(22, 'Parity',
-             data=[': List parities',
-                   's: Set parity (empty: query current)'],
-             returns=['*s: Available parities',
-                      's: Selected parity'])
+    @setting(22, 'Parity', data=[': List parities', 's: Set parity (empty: query current)'], returns=['*s: Available parities', 's: Selected parity'])
     def parity(self, c, data=None):
         """Sets the parity."""
         ser = self.getPort(c)
@@ -241,11 +225,8 @@ class SerialServer(LabradServer):
                 ser.parity = data
             return ser.parity
 
-    @setting(23, 'Stopbits',
-             data=[': List stopbits',
-                   'w: Set stopbits (0: query current)'],
-             returns=['*w: Available stopbits',
-                      'w: Selected stopbits'])
+    @setting(23, 'Stopbits', data=[': List stopbits', 'w: Set stopbits (0: query current)'],
+             returns=['*w: Available stopbits', 'w: Selected stopbits'])
     def stopbits(self, c, data=None):
         """Sets the number of stop bits."""
         ser = self.getPort(c)
@@ -257,9 +238,7 @@ class SerialServer(LabradServer):
                 ser.stopbits = data
             return int(ser.stopbits)
 
-    @setting(25, 'Timeout',
-             data=[': Return immediately',
-                   'v[s]: Timeout to use (max: 5min)'],
+    @setting(25, 'Timeout', data=[': Return immediately', 'v[s]: Timeout to use (max: 5min)'],
              returns=['v[s]: Timeout being used (0 for immediate return)'])
     def timeout(self, c, data=T.Value(0, 's')):
         """Sets a timeout for read operations."""
@@ -280,9 +259,7 @@ class SerialServer(LabradServer):
         ser.dtr = int(data)
         return data
 
-    @setting(40, 'Write',
-             data=['s: Data to send',
-                   '*w: Byte-data to send'],
+    @setting(40, 'Write', data=['s: Data to send', '*w: Byte-data to send'],
              returns=['w: Bytes sent'])
     def write(self, c, data):
         """Sends data over the port."""
@@ -376,8 +353,7 @@ class SerialServer(LabradServer):
             recd += r
         returnValue(recd)
 
-    @setting(50, 'Read', count=[': Read all bytes in buffer',
-                                'w: Read this many bytes'],
+    @setting(50, 'Read', count=[': Read all bytes in buffer', 'w: Read this many bytes'],
              returns=['s: Received data'])
     def read(self, c, count=0):
         """Read data from the port.
@@ -390,18 +366,14 @@ class SerialServer(LabradServer):
         """
         return self.readSome(c, count)
 
-    @setting(51, 'Read as Words',
-             data=[': Read all bytes in buffer',
-                   'w: Read this many bytes'],
+    @setting(51, 'Read as Words', data=[': Read all bytes in buffer', 'w: Read this many bytes'],
              returns=['*w: Received data'])
     def read_as_words(self, c, data=0):
         """Read data from the port."""
         ans = yield self.readSome(c, data)
         returnValue([int(ord(x)) for x in ans])
 
-    @setting(52, 'Read Line',
-             data=[': Read until LF, ignoring CRs',
-                   's: Other delimiter to use'],
+    @setting(52, 'Read Line', data=[': Read until LF, ignoring CRs', 's: Other delimiter to use'],
              returns=['s: Received data'])
     def read_line(self, c, data=''):
         """Read data from the port, up to but not including the specified
