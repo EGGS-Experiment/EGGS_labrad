@@ -179,12 +179,12 @@ class DDS(LabradServer):
         self.ddsLock = True
         for name,channel in self.ddsDict.items():
             buf = dds[name]
-            yield self.program_dds_chanel(channel, buf)
+            yield self.program_dds_channel(channel, buf)
 
     @inlineCallbacks
     def _setParameters(self, channel, freq, ampl):
         buf = self.settings_to_buf(channel, freq, ampl)
-        yield self.program_dds_chanel(channel, buf)
+        yield self.program_dds_channel(channel, buf)
 
     def settings_to_buf(self, channel, freq, ampl):
         num = self.settings_to_num(channel, freq, ampl)
@@ -205,7 +205,7 @@ class DDS(LabradServer):
         return num
 
     @inlineCallbacks
-    def program_dds_chanel(self, channel, buf):
+    def program_dds_channel(self, channel, buf):
         addr = channel.channelnumber
         if not channel.remote:
             yield deferToThread(self._setDDSLocal, addr, buf)
@@ -226,7 +226,7 @@ class DDS(LabradServer):
             yield cxn.servers[server][reset]()
             yield cxn.servers[server][program]([(channel.channelnumber, buf)])
         except (KeyError, AttributeError):
-            print('Not programing remote channel {}'.format(channel.remote))
+            print('Not programming remote channel {}'.format(channel.remote))
 
     def _getCurrentDDS(self):
         '''
