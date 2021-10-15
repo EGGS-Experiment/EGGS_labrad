@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="82b4476a-c96d-482b-9747-9edc582f5259" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/lib/scripts/experiments/test_experiment.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/start_labrad_devices.bat" beforeDir="false" afterPath="$PROJECT_DIR$/bin/start_labrad_devices.bat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/servers/gpib/gpib_device_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/lib/servers/gpib/gpib_device_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/scripts/experiments/vibration_measurement.py" beforeDir="false" afterPath="$PROJECT_DIR$/lib/scripts/experiments/vibration_measurement.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,6 +23,9 @@
     </file-type-list>
   </component>
   <component name="ProjectId" id="1zRbZcbjlfxYmpVba8L3s1elYGU" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -31,7 +34,13 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/lib/scripts/experiments" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/lib/scripts/experiments" />
+    </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -43,5 +52,17 @@
       <updated>1634113904068</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
 </project>

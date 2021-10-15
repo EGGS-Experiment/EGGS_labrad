@@ -53,20 +53,23 @@ class vibration_measurement(experiment):
         self.set_up_datavault()
 
     def run(self, cxn, context, replacement_parameters={}):
-        prevtime = time.time()
         starttime = time.time()
 
         while (True):
             if (self.pause_or_stop() == True):
                 break
-            if (time.time() - prevtime) <= self.time_interval:
+
+            #only take data at certain time intervals
+            elapsedtime = time.time() - starttime
+            if (elapsedtime) <= self.time_interval:
                 continue
 
+            #get data
             pressure = yield self.pump.read_pressure()
             tempK = yield self.tempcontroller.read_temperature('0')
             trace = yield self.oscope.get_trace(1)
             trace = np.array([trace[0], trace[1]]).transpose()
-            elapsedtime = time.time() - starttime
+
             try:
                 yield self.dv.add(elapsedtime, tempK[0], tempK[1], tempK[2], tempK[3], context = self.c_temp)
                 yield self.dv.add(elapsedtime, pressure, context=self.c_press)
@@ -74,7 +77,6 @@ class vibration_measurement(experiment):
             except Exception as e:
                 print(e)
 
-            crt_time = time.time()
 
     def finalize(self, cxn, context):
         self.cxn.disconnect()
@@ -101,7 +103,7 @@ class vibration_measurement(experiment):
         dataset_pressure = self.dv.new('TwisTorr 74 Pressure Controller',[('Elapsed time', 't')], [('Pump Pressure', 'Pressure', 'mTorr')], context = self.c_press)
             #oscope
         self.dv.cd(['','Experiments', year, month, trunk1, trunk2], True, context=self.c_oscope)
-        dataset_oscope = self.dv.new('Rigol DS1104z Oscilloscope',[('Elapsed time', 't')], [('Scope Trace', 'Scope Trace', '1')], context = self.c_oscope)
+        dataset_oscope = self.dv.new('Rigol DS1104z Oscilloscope',[('Elapsed time', 't')], [('Scope Trace', 'Voltage, 'V')], context = self.c_oscope)
 
         #add parameters to data vault
         for parameter in self.p:
