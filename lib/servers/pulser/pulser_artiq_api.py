@@ -1,7 +1,8 @@
 from artiq.experiment import *
 from devices import Devices
 from labrad import util
-from sipyco.pc_rpc import Server
+
+from pulser_artiq_server import Pulser_artiq
 
 import numpy as np
 
@@ -41,11 +42,8 @@ class api(EnvExperiment):
             device.init()
 
         #setup variables
-            #convert pulse_sequence timesteps to machine units
-        self.ms_to_mu = us/self.core.ref_period
-
-    def run(self):
-        #todo: implement server
+        self.numRuns = 0
+        self.maxRuns = 0
 
     #Pulse sequencer functions
     @kernel(flags = {"fast-math"})
@@ -54,12 +52,12 @@ class api(EnvExperiment):
         with self.core_dma.record("pulse_sequence"):
             for timestamp, ttlCommandArr in sequence:
                 #convert time to machine units and set cursor to correct time
-                self.core.set_time_mu(int(timestamp * self.ms_to_mu))
+                self.core.set_time_mu(timestamp)
                 with parallel:
                     for i in range(sequence.channelTotal):
-                        if ttlCommandArr[i] = 1:
+                        if ttlCommandArr[i] == 1:
                             self.ttl_list[i].on()
-                        elif ttlCommandArr[i] = -1:
+                        elif ttlCommandArr[i] == -1:
                             self.ttl_list[i].off()
 
         #get sequence handle to minimize overhead when we have to run sequence
@@ -67,8 +65,10 @@ class api(EnvExperiment):
 
     @kernel
     def runSequence(self):
-        self.core.reset()
-        self.core_dma.playback_handle(self.sequence_handle)
+        while self.numRuns < self.maxRuns:
+            self.core.reset()
+            self.core_dma.playback_handle(self.sequence_handle)
+            self.numRuns += 1
 
     @kernel
     def resetRam(self):
@@ -102,10 +102,12 @@ class api(EnvExperiment):
         pulse sequence controls the PMT counting rate
         """
 
+    @kernel(flags={"fast-math"})
     def isSeqDone(self):
         '''
         check if the pulse sequence is done executing or not
         '''
+        return self.numRuns
 
     def getResolvedTotal(self):
         '''
@@ -195,3 +197,7 @@ class api(EnvExperiment):
         '''
 
         '''
+
+    def run(self):
+        from labrad import util
+        util.runServer(Pulser_artiq(self))
