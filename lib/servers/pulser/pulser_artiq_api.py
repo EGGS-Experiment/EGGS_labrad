@@ -46,11 +46,10 @@ class api(EnvExperiment):
 
     #Pulse sequencer functions
     @kernel(flags = {"fast-math"})
-    def programSequence(self, sequence):
-        #TODO: program dds
+    def programSequence(self, ttl_sequence, dds_sequence):
+        #record pulse sequence in memory
         with self.core_dma.record("pulse_sequence"):
-            for timestamp, ttlCommandArr in sequence:
-                #convert time to machine units and set cursor to correct time
+            for timestamp, ttlCommandArr in ttl_sequence:
                 self.core.set_time_mu(timestamp)
                 with parallel:
                     for i in range(sequence.channelTotal):
@@ -58,19 +57,20 @@ class api(EnvExperiment):
                             self.ttl_list[i].on()
                         elif ttlCommandArr[i] == -1:
                             self.ttl_list[i].off()
-
-        #get sequence handle to minimize overhead when we have to run sequence
-        self.sequence_handle = self.core_dma.get_handle("pulse_sequence")
+            for timestamp, ttlCommandArr in ttl_sequence:
 
     @kernel
     def runSequence(self):
+        #get sequence handle to minimize overhead
+        self.sequence_handle = self.core_dma.get_handle("pulse_sequence")
+
         while self.numRuns < self.maxRuns:
             self.core.reset()
             self.core_dma.playback_handle(self.sequence_handle)
             self.numRuns += 1
 
     @kernel
-    def resetRam(self):
+    def eraseSequence(self):
         '''
         Reset the ram position of the pulser. Important to do this before writing the new sequence.
         '''
@@ -153,34 +153,42 @@ class api(EnvExperiment):
         Set the logic of the TTL to be manual or not
         '''
 
+    @kernel
     def resetAllDDS(self):
         '''
         Reset the ram position of all dds chips to 0
         '''
 
+
+    @kernel
     def advanceAllDDS(self):
         '''
         Advance the ram position of all dds chips
         '''
 
-    def setDDSchannel(self, chan):
-        '''
-        select the dds chip for communication
-        '''
 
     @kernel
-    def programDDS(self, prog):
+    def programDDS(self, chan, prog):
         '''
-        program the dds channel with a list of frequencies and amplitudes. The channel of the particular channel must be selected first
+        Program a dds with a list of frequencies and amplitudes
         '''
+
 
     def initializeDDS(self):
         '''
         force reprogram of all dds chips during initialization
         '''
-        for device in self.dds_list + urukul_list:
-            device.init()
-        #todo: check if this actually works
+        self.core.reset()
+        for device in self.dds_list + self.urukul_list:
+            try:
+                device.init()
+            except RTIOUnderflow:
+                self.core.break_realtime()
+                device.init()
+
+    @kernel
+    def setDDSParam(self, chan, _asf, _ftw):
+        self.dds_list[chan].set_mu(ftw = _ftw, asf = _asf)
 
     def enableLineTrigger(self, delay = 0):
         '''

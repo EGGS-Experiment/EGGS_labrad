@@ -3,7 +3,7 @@
 [info]
 name = ARTIQ Pulser
 version = 3.0
-description = Pulser using the ARTIQ box
+description = Pulser using the ARTIQ box. Backwards compatible with old pulse sequences and experiments.
 instancename = ARTIQ_Pulser
 
 [startup]
@@ -15,15 +15,21 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+
+#labrad and server imports
 from labrad.server import LabradServer, setting, Signal
 from pulser_artiq_DDS import DDS
 from pulser_artiq_linetrigger import LineTrigger
 
+#async imports
 from twisted.internet import reactor
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
 from twisted.internet.threads import deferToThread
 
+#wrapper imports
 from sequence import Sequence
+
+#function imports
 import numpy as np
 
 from devices import Devices
@@ -31,12 +37,18 @@ from devices import Devices
 class Pulser_artiq(DDS, LineTrigger):
 
     name = 'ARTIQ Pulser'
-    regKey = 'Pulser_artiq'
+    regKey = 'ARTIQ_Pulser'
 
     onSwitch = Signal(611051, 'signal: switch toggled', '(ss)')
 
     def __init__(self, api):
         self.api = api
+
+        #conversions
+        self.seconds_to_mu = api.core.seconds_to_mu
+        self.amplitude_to_asf = api.dds_list[0].amplitude_to_asf
+        self.frequency_to_ftw = api.dds_list[0].frequency_to_ftw
+
         LabradServer.__init__(self)
 
     def initServer(self):
@@ -51,7 +63,6 @@ class Pulser_artiq(DDS, LineTrigger):
         self.collectionTimeRange = hardwareConfiguration.collectionTimeRange
         self.sequenceTimeRange = hardwareConfiguration.sequenceTimeRange
         self.haveSecondPMT = hardwareConfiguration.secondPMT
-        self.haveDAC = hardwareConfiguration.DAC
 
         self.inCommunication = DeferredLock()
         self.clear_next_pmt_counts = 0
@@ -80,7 +91,7 @@ class Pulser_artiq(DDS, LineTrigger):
         self.remoteConnections = {}
         if len(self.remoteChannels):
             from labrad.wrappers import connectAsync
-            for name,rc in self.remoteChannels.items():
+            for name, rc in self.remoteChannels.items():
                 try:
                     self.remoteConnections[name] = yield connectAsync(rc.ip)
                     print('Connected to {}'.format(name))
@@ -108,11 +119,17 @@ class Pulser_artiq(DDS, LineTrigger):
         self.programmed_sequence = sequence
         dds, ttl = sequence.progRepresentation()
         yield self.inCommunication.acquire()
-        yield deferToThread(self.api.programBoard, ttl)
-        if dds is not None:
-            yield self._programDDSSequence(dds)
+        if dds is None:
+            dds = {}
+        dds_single, dds_ramp = self.artiq_convert_dds(dds)
+        yield deferToThread(self.api.programBoard, ttl, dds_single, dds_ramp)
         self.inCommunication.release()
         self.isProgrammed = True
+
+    def artiq_convert_dds(self, dds_seq):
+
+        return dds_single_seq, dds_ramp_seq
+
 
     @setting(2, "Start Infinite", returns = '')
     def startInfinite(self, c):

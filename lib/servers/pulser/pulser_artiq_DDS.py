@@ -21,6 +21,7 @@ class DDS(LabradServer):
             self._checkRange('amplitude', channel, ampl)
             self._checkRange('frequency', channel, freq)
             yield self.inCommunication.run(self._setParameters, channel, freq, ampl)
+        #todo: convert time to mu and dbm amplitude to fractional value
 
     @setting(41, "Get DDS Channels", returns = '*s')
     def getDDSChannels(self, c):
@@ -35,12 +36,12 @@ class DDS(LabradServer):
             raise dds_access_locked()
         channel = self._getChannel(c, name)
         if amplitude is not None:
-            #setting the ampplitude
+            #set amplitude
             amplitude = amplitude['dBm']
             self._checkRange('amplitude', channel, amplitude)
             if channel.state:
-                #only send to hardware if the channel is on
-                yield self._setAmplitude(channel, amplitude)
+                #only send to hardware if channel is on
+                yield self._setDDSParam(channel, amp=amplitude)
             channel.amplitude = amplitude
             self.notifyOtherListeners(c, (name, 'amplitude', channel.amplitude), self.on_dds_param)
         amplitude = WithUnit(channel.amplitude, 'dBm')
@@ -54,12 +55,12 @@ class DDS(LabradServer):
             raise dds_access_locked()
         channel = self._getChannel(c, name)
         if frequency is not None:
-            #setting the frequency
+            #set frequency
             frequency = frequency['MHz']
             self._checkRange('frequency', channel, frequency)
             if channel.state:
                 #only send to hardware if the channel is on
-                yield self._setFrequency(channel, frequency)
+                yield self._setDDSParam(channel, freq=frequency)
             channel.frequency = frequency
             self.notifyOtherListeners(c, (name, 'frequency', channel.frequency), self.on_dds_param)
         frequency = WithUnit(channel.frequency, 'MHz')
@@ -125,7 +126,7 @@ class DDS(LabradServer):
 
     @setting(48, 'Output', name= 's', state = 'b', returns =' b')
     def output(self, c, name = None, state = None):
-        """To turn off and on the dds. Turning off the DDS sets the frequency and amplitude
+        """Turns the dds on and off. Turning off the DDS sets the frequency and amplitude
         to the off_parameters provided in the configuration.
         """
         if self.ddsLock and state is not None:
@@ -157,66 +158,22 @@ class DDS(LabradServer):
         return channel
 
     @inlineCallbacks
-    def _setAmplitude(self, channel, ampl):
-        freq = channel.frequency
-        yield self.inCommunication.run(self._setParameters, channel, freq, ampl)
-
-    @inlineCallbacks
-    def _setFrequency(self, channel, freq):
-        ampl = channel.amplitude
-        yield self.inCommunication.run(self._setParameters, channel, freq, ampl)
+    def _setDDSParam(self, channel, ampl = None, freq = None):
+        if ampl is None:
+            ampl = self.amplitude_to_asf(channel.amplitude)
+        if freq is None:
+            freq = self.frequency_to_ftw(channel.frequency)
+        yield self.inCommunication.run(self.api.setDDSParam, channel.channelnumber, freq, ampl)
 
     @inlineCallbacks
     def _setOutput(self, channel, state):
-        if state and not channel.state: #if turning on, and is currently off
-            yield self.inCommunication.run(self._setParameters, channel, channel.frequency, channel.amplitude)
-        elif (channel.state and not state): #if turning off and is currenly on
-            freq,ampl = channel.off_parameters
-            yield self.inCommunication.run(self._setParameters, channel, freq, ampl)
-
-    @inlineCallbacks
-    def _programDDSSequence(self, dds):
-        '''takes the parsed dds sequence and programs the board with it'''
-        self.ddsLock = True
-        for name,channel in self.ddsDict.items():
-            buf = dds[name]
-            yield self.program_dds_channel(channel, buf)
-
-    @inlineCallbacks
-    def _setParameters(self, channel, freq, ampl):
-        buf = self.settings_to_buf(channel, freq, ampl)
-        yield self.program_dds_channel(channel, buf)
-
-    def settings_to_buf(self, channel, freq, ampl):
-        num = self.settings_to_num(channel, freq, ampl)
-        if not channel.phase_coherent_model:
-            buf = self._intToBuf(num)
-        else:
-            buf = self._intToBuf_coherent(num)
-        #buf = buf + '\x00\x00' #adding termination
-        #buf = bytearray.fromhex(u'0000') + buf
-        #print(buf)
-        return buf
-
-    def settings_to_num(self, channel, freq, ampl, phase = 0.0, ramp_rate = 0.0, amp_ramp_rate = 0.0):
-        if not channel.phase_coherent_model:
-            num = self._valToInt(channel, freq, ampl)
-        else:
-            num = self._valToInt_coherent(channel, freq, ampl, phase, ramp_rate, amp_ramp_rate)
-        return num
-
-    @inlineCallbacks
-    def program_dds_channel(self, channel, buf):
-        addr = channel.channelnumber
-        if not channel.remote:
-            yield deferToThread(self._setDDSLocal, addr, buf)
-        else:
-            yield self._setDDSRemote(channel, addr, buf)
-
-    def _setDDSLocal(self, addr, buf):
-        self.api.resetAllDDS()
-        self.api.setDDSchannel(addr)
-        self.api.programDDS(buf)
+        # off to on
+        if state and not channel.state:
+            yield self.inCommunication.run(self._setDDSParam, channel, channel.frequency, channel.amplitude)
+        # on to off
+        elif channel.state and not state:
+            freq, ampl = channel.off_parameters
+            yield self.inCommunication.run(self._setDDSParam, channel, freq, ampl)
 
     @inlineCallbacks
     def _setDDSRemote(self, channel, addr, buf):
@@ -231,7 +188,7 @@ class DDS(LabradServer):
 
     def _getCurrentDDS(self):
         '''
-        Returns a dictionary {name:num} with the reprsentation of the current dds state
+        Returns a dictionary {name:num} with the representation of the current dds state
         '''
         d = dict([(name, self._channel_to_num(channel)) for (name, channel) in self.ddsDict.items()])
         return d
@@ -248,100 +205,5 @@ class DDS(LabradServer):
         num = self.settings_to_num(channel, freq, ampl)
         return num
 
-    def _valToInt_coherent(self, channel, freq, ampl, phase = 0, ramp_rate = 0, amp_ramp_rate = 0): ### add ramp for ramping functionality
-        '''
-        takes the frequency and amplitude values for the specific channel and returns integer representation of the dds setting
-        freq is in MHz
-        power is in dbm
-        '''
-        ans = 0
-        ## changed the precision from 32 to 64 to handle super fine frequency tuning
-        for val, r, m, precision in [(freq, channel.boardfreqrange, 1, 64), (ampl, channel.boardamplrange, 2 ** 64,  16), (phase, channel.boardphaserange, 2**80, 16)]:
-            minim, maxim = r
-            #print r
-            resolution = (maxim - minim) / float(2**precision - 1)
-            #print resolution
-            seq = int((val - minim)/resolution) #sequential representation
-            #print seq
-            ans += m*seq
+    #todo: ramp conversion
 
-        ### add ramp rate
-        minim, maxim = channel.boardramprange
-        resolution = (maxim - minim) / float(2**16 - 1)
-        if ramp_rate < minim: ### if the ramp rate is smaller than the minim, thenn treat it as no rampp
-            seq = 0
-        elif ramp_rate > maxim:
-            seq = 2**16-1
-        else:
-            seq = int((ramp_rate-minim)/resolution)
-
-        ans += 2**96*seq
-
-        ### add amp ramp rate
-
-        minim, maxim = channel.board_amp_ramp_range
-        minim_slope = 1/maxim
-        maxim_slope = 1/minim
-        resolution = (maxim_slope - minim_slope) / float(2**16 - 1)
-        if (amp_ramp_rate < minim):
-            seq_amp_ramp = 0
-        elif (amp_ramp_rate>maxim):
-            seq_amp_ramp = 1
-        else:
-            slope = 1/amp_ramp_rate
-            seq_amp_ramp = int(np.ceil((slope - minim_slope)/resolution))  # return ceiling of the number
-
-        ans += 2**112*seq_amp_ramp
-
-        return ans
-
-#         ans = 0
-#         for val,r,m, precision in [(freq,channel.boardfreqrange, 1, 32), (ampl,channel.boardamplrange, 2 ** 32,  16), (phase,channel.boardphaserange, 2 ** 48,  16)]:
-#             minim, maxim = r
-#             resolution = (maxim - minim) / float(2**precision - 1)
-#             seq = int((val - minim)/resolution) #sequential representation
-#             ans += m*seq
-#         return ans
-
-    def _intToBuf_coherent(self, num):
-        '''
-        takes the integer representing the setting and returns the buffer string for dds programming
-        '''
-
-        freq_num = (num % 2**64)  # change according to the new DDS which supports 64 bit tuning of the frequency. Used to be #freq_num = (num % 2**32)*2**32
-        b = bytearray(8)          # initialize the byte array to sent to the pusesr later
-        for i in range(8):
-            b[i]=(freq_num//(2**(i*8)))%256
-            #print i, "=", (freq_num//(2**(i*8)))%256
-
-        #phase
-        phase_num = (num // 2**80)%(2**16)
-        phase = bytearray(2)
-        phase[0] = phase_num%256
-        phase[1] = (phase_num//256)%256
-
-
-        ### amplitude
-        ampl_num = (num // 2**64)%(2**16)
-        amp = bytearray(2)
-        amp[0] = ampl_num%256
-        amp[1] = (ampl_num//256)%256
-
-        ### ramp rate. 16 bit tunability from roughly 116 Hz/ms to 7.5 MHz/ms
-        ramp_rate = (num // 2**96)%(2**16)
-        ramp = bytearray(2)
-        ramp[0] = ramp_rate%256
-        ramp[1] = (ramp_rate//256)%256
-
-        ##  amplitude ramp rate
-        amp_ramp_rate = (num // 2**112)%(2**16)
-        #print "amp_ramp is" , amp_ramp_rate
-        amp_ramp = bytearray(2)
-        amp_ramp[0] = amp_ramp_rate%256
-        amp_ramp[1] = (amp_ramp_rate//256)%256
-
-        ##a = bytearray.fromhex(u'0000') + amp + bytearray.fromhex(u'0000 0000')
-        a = phase + amp + amp_ramp + ramp
-
-        ans = a + b
-        return ans
