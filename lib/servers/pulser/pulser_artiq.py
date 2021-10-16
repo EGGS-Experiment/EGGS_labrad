@@ -67,15 +67,14 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         self.inCommunication = DeferredLock()
         self.clear_next_pmt_counts = 0
 
-        LineTrigger.initialize(self)
+        LineTrigger_artiq.initialize(self)
         yield self.initializeRemote()
         self.initializeSettings()
         self.listeners = set()
 
-        self.programmed_sequence = None
-
-        #new variables
+        #pulser variables
         self.maxRuns = 0
+        self.programmed_sequence = None
 
     def initializeSettings(self):
         for channel in self.channelDict.values():

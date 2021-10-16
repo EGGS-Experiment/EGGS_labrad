@@ -57,6 +57,21 @@ class NIOPS03Server(SerialDeviceServer):
             else:
                 raise Exception('Unknown connection error')
 
+    #STATUS
+    @setting(11,'Status')
+    def get_status(self, c, power = None):
+        """
+        Set or query whether ion pump is off or on
+        Args:
+            (bool): whether pump is to be on or off
+        Returns:
+            (float): pump power status
+        """
+        #create and send message to device
+        self.ser.write('TS' + TERMINATOR)
+        resp = yield self.ser.read()
+        return resp
+
     # ON/OFF
     @setting(111,'Toggle IP', power = 'b')
     def toggle_ip(self, c, power = None):
@@ -76,6 +91,25 @@ class NIOPS03Server(SerialDeviceServer):
         resp = yield self.ser.read()
         return
 
+    @setting(112,'Toggle NP', power = 'b')
+    def toggle_np(self, c, power = None):
+        """
+        Set or query whether getter is off or on
+        Args:
+            (bool): whether getter is to be on or off
+        Returns:
+            (float): getter power status
+        """
+        #create and send message to device
+        if power == True:
+            self.ser.write('GN' + TERMINATOR)
+        elif power == False:
+            self.ser.write('BN' + TERMINATOR)
+
+        resp = yield self.ser.read()
+        return resp
+
+    #
     @setting(112,'Toggle NP', power = 'b')
     def toggle_np(self, c, power = None):
         """

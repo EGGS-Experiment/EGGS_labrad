@@ -1,8 +1,10 @@
 from labrad.server import LabradServer, setting, Signal
+from labrad.units import WithUnit
+
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.threads import deferToThread
 
-from labrad.units import WithUnit
+from common.lib.config.pulser.hardwareConfiguration import hardwareConfiguration
 
 class LineTrigger_artiq(LabradServer):
     """Contains the Line Trigger Functionality for the ARTIQ Pulser Server"""
@@ -21,6 +23,7 @@ class LineTrigger_artiq(LabradServer):
 
     @setting(61, 'Line Trigger State', enable='b', returns='b')
     def line_trigger_state(self, c, enable=None):
+        """Enable or disable the line trigger"""
         if enable is not None:
             if enable:
                 yield self.inCommunication.run(self._enableLineTrigger, self.linetrigger_duration)
@@ -33,7 +36,7 @@ class LineTrigger_artiq(LabradServer):
 
     @setting(62, "Line Trigger Duration", duration='v[us]', returns='v[us]')
     def line_trigger_duration(self, c, duration=None):
-        """enable or disable line triggering. if enabling, can specify the offset_duration"""
+        """Get/set the line trigger offset_duration"""
         if duration is not None:
             if self.linetrigger_enabled:
                 yield self.inCommunication.run(self._enableLineTrigger, duration)
@@ -42,11 +45,10 @@ class LineTrigger_artiq(LabradServer):
                                       self.on_line_trigger_param)
         returnValue(self.linetrigger_duration)
 
-    @inlineCallbacks
     def _enableLineTrigger(self, delay):
-        delay = int(delay['us'])
-        yield deferToThread(self.api.enableLineTrigger, delay)
+        self.api.linetrigger_delay = int(delay['us'])
+        self.api.linetrigger_enabled = True
 
     @inlineCallbacks
     def _disableLineTrigger(self):
-        yield deferToThread(self.api.disableLineTrigger)
+        self.api.linetrigger_delay = False

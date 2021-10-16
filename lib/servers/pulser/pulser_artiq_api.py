@@ -1,7 +1,7 @@
 from labrad import util
 
 from artiq.experiment import *
-from pulser_artiq_server import Pulser_artiq
+from pulser_artiq import Pulser_artiq
 from devices import Devices
 
 import numpy as np
@@ -18,7 +18,9 @@ class api(EnvExperiment):
         #get device names
         self.device_db = self.get_device_db()
             #get ttl names
-        ttl_names = [key for key, val in self.device_db if val['class'] == 'TTLOut' or 'TTLInOut']
+        ttl_names = [key for key, val in self.device_db if val['class'] == 'TTLOut']
+            #get ttl names
+        ttlin_names = [key for key, val in self.device_db if val['class'] == 'TTLInOut']
             #get dds names
         dds_names = [key for key, val in self.device_db if val['class'] == 'AD9910' or 'AD9912']
             #get urukul names
@@ -26,24 +28,34 @@ class api(EnvExperiment):
 
         #todo: do DAC and ADC
         #todo: do PMT via TTL
+        #todo: linetrigger via TTL
 
         #set device attributes
-        for name in ttl_names + dds_names + urukul_names:
+        for name in ttl_names + ttlin_names + dds_names + urukul_names:
             self.setattr_device(name)
 
         #get devices
         self.ttl_list = [self.get_device(name) for name in ttl_names]
+        self.ttlin_list = [self.get_device(name) for name in ttlin_names]
         self.dds_list = [self.get_device(name) for name in dds_names]
         self.urukul_list = [self.get_device(name) for name in urukul_names]
         #todo: convert to dictionary so we can take names
 
-        #initialize devices
-        for device in self.dds_list + self.urukul_list:
-            device.init()
-
         #setup variables
         self.numRuns = 0
         self.maxRuns = 0
+        self.linetrigger_delay = 0
+        self.linetrigger_active = False
+
+    @kernel
+    def prepare(self):
+        #initialize devices
+            #set ttlinout devices to be input
+        for device in self.ttlin_list:
+            device.input()
+            #initialize DDSs
+        for device in self.dds_list + self.urukul_list:
+            device.init()
 
     #Pulse sequencer functions
     @kernel(flags = {"fast-math"})
@@ -52,7 +64,7 @@ class api(EnvExperiment):
         with self.core_dma.record("pulse_sequence"):
             #add ttl sequence
             for timestamp, ttlCommandArr in ttl_sequence:
-                self.core.set_time_mu(timestamp)
+                at_mu(timestamp)
                 with parallel:
                     for i in range(ttl_sequence.channelTotal):
                         if ttlCommandArr[i] == 1:
@@ -60,15 +72,27 @@ class api(EnvExperiment):
                         elif ttlCommandArr[i] == -1:
                             self.ttl_list[i].off()
 
-
     @kernel
     def runSequence(self):
         #get sequence handle to minimize overhead
-        self.sequence_handle = self.core_dma.get_handle("pulse_sequence")
+        sequence_handle = self.core_dma.get_handle("pulse_sequence")
+
+        #wait until line trigger receives input or we disable the line trigger
+        while self.linetrigger_active:
+            #wait in blocks of 10ms
+            time_gate = self.ttlin_list['LineTrigger'].gate_rising(10 * ms)
+            time_trig = self.ttlin_list['LineTrigger'].timestamp_mu(time_gate)
+            #time_trig returns -1 if we dont receive a signal
+            if time_trig > 0:
+                #set time to now and do an offset delay
+                at_mu(time_trig)
+                delay(self.linetrigger_delay * us)
+                break
+
         #start running
         while self.numRuns < self.maxRuns:
             self.core.reset()
-            self.core_dma.playback_handle(self.sequence_handle)
+            self.core_dma.playback_handle(sequence_handle)
             self.numRuns += 1
 
     @kernel
@@ -203,12 +227,14 @@ class api(EnvExperiment):
 
     def enableLineTrigger(self, delay = 0):
         '''
-        sets delay value in microseconds
+        Enable line trigger with some delay (in microseconds)
         '''
+        self.linetrigger_active = True
+        self.linetrigger_delay =
 
     def disableLineTrigger(self):
         '''
-
+        Disable the line trigger
         '''
 
     def run(self):

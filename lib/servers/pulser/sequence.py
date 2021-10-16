@@ -175,17 +175,17 @@ class Sequence():
                 for a, b, c, d in chunks(arr, 4):
                     freq_num = (256*b + a)
                     ampl_num = (256*d + c)
-                    freq = freq_min +  freq_num * (freq_max - freq_min) / float(16**4 - 1)
-                    ampl = ampl_min +  ampl_num * (ampl_max - ampl_min) / float(16**4 - 1)
-                    program.append((name, freq,ampl))
+                    freq = freq_min + freq_num * (freq_max - freq_min) / float(16**4 - 1)
+                    ampl = ampl_min + ampl_num * (ampl_max - ampl_min) / float(16**4 - 1)
+                    program.append((name, freq, ampl))
             else:
                 for a0, a1, amp0, amp1, a2, a3, a4, a5, f0, f1, f2, f3, f4, f5, f6, f7, in chunks(arr, 16):
-                    freq_num = 256**2*(256*f7 + f6) + (256*f5 + f4)
+                    freq_num = (256**2)*(256*f7 + f6) + (256*f5 + f4)
                     ampl_num = 256*amp1 + amp0
-                    freq = freq_min +  freq_num * (freq_max - freq_min) / float(16**8 - 1)
-                    print("freq is ", freq)
-                    ampl = ampl_min +  ampl_num * (ampl_max - ampl_min) / float(16**4 - 1)
-                    print(" ampl is ", ampl)
+                    freq = freq_min + freq_num * (freq_max - freq_min) / float(16**8 - 1)
+                    print("freq: ", freq)
+                    ampl = ampl_min + ampl_num * (ampl_max - ampl_min) / float(16**4 - 1)
+                    print("ampl: ", ampl)
                     program.append((name, freq, ampl))
         return program
 

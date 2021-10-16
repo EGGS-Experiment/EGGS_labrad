@@ -197,11 +197,12 @@ class DDS_artiq(LabradServer):
         '''
         Returns a dictionary {name:num} with the representation of the current dds state
         '''
-        d = dict([(name, self._channel_to_num(channel)) for (name, channel) in self.ddsDict.items()])
-        return d
+        return dict([(name, self._channel_to_num(channel)) for (name, channel) in self.ddsDict.items()])
 
     def _channel_to_num(self, channel):
-        '''returns the current state of the channel in the num represenation'''
+        '''
+        Returns the current state of the channel in the num representation
+        '''
         if channel.state:
             #if on, use current values. else, use off values
             freq, ampl = (channel.frequency, channel.amplitude)
@@ -213,7 +214,7 @@ class DDS_artiq(LabradServer):
         return num
 
     def artiq_convert_dds(self, dds_seq):
-
+        #todo: get parameters for the ramp
         return dds_single_seq, dds_ramp_seq
 
     # needed for backwards compatibility
