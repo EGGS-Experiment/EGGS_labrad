@@ -35,9 +35,10 @@ class api(EnvExperiment):
         self.ttl_list = [self.get_device(name) for name in ttl_names]
         self.dds_list = [self.get_device(name) for name in dds_names]
         self.urukul_list = [self.get_device(name) for name in urukul_names]
+        #todo: convert to dictionary so we can take names
 
         #initialize devices
-        for device in self.dds_list + urukul_list:
+        for device in self.dds_list + self.urukul_list:
             device.init()
 
         #setup variables
@@ -46,24 +47,25 @@ class api(EnvExperiment):
 
     #Pulse sequencer functions
     @kernel(flags = {"fast-math"})
-    def programSequence(self, ttl_sequence, dds_sequence):
+    def programSequence(self, ttl_sequence, dds_single_sequence, dds_ramp_sequence):
         #record pulse sequence in memory
         with self.core_dma.record("pulse_sequence"):
+            #add ttl sequence
             for timestamp, ttlCommandArr in ttl_sequence:
                 self.core.set_time_mu(timestamp)
                 with parallel:
-                    for i in range(sequence.channelTotal):
+                    for i in range(ttl_sequence.channelTotal):
                         if ttlCommandArr[i] == 1:
                             self.ttl_list[i].on()
                         elif ttlCommandArr[i] == -1:
                             self.ttl_list[i].off()
-            for timestamp, ttlCommandArr in ttl_sequence:
+
 
     @kernel
     def runSequence(self):
         #get sequence handle to minimize overhead
         self.sequence_handle = self.core_dma.get_handle("pulse_sequence")
-
+        #start running
         while self.numRuns < self.maxRuns:
             self.core.reset()
             self.core_dma.playback_handle(self.sequence_handle)
@@ -72,7 +74,7 @@ class api(EnvExperiment):
     @kernel
     def eraseSequence(self):
         '''
-        Reset the ram position of the pulser. Important to do this before writing the new sequence.
+        Removes the pulse sequence from memory
         '''
         self.core_dma.erase("pulse_sequence")
 
@@ -96,12 +98,14 @@ class api(EnvExperiment):
         user selects PMT counting rate
         """
 
+
     def setModeDifferential(self):
         """
         pulse sequence controls the PMT counting rate
         """
 
-    @kernel(flags={"fast-math"})
+
+    @kernel
     def isSeqDone(self):
         '''
         check if the pulse sequence is done executing or not
@@ -113,70 +117,75 @@ class api(EnvExperiment):
         Get the number of photons counted in the FIFO for the time-resolved photon counter.
         '''
 
+
     def getResolvedCounts(self, number):
         '''
         Get the time-tagged photon data.
         '''
+
 
     def getNormalTotal(self):
         '''
         Get the number of normal PMT counts. (How many data in the FIFO)
         '''
 
+
     def getNormalCounts(self, number):
         '''
         Get the normal PMT counts from the FIFO.
         '''
+
 
     def getReadoutTotal(self):
         '''
         Get the number of readout count.
         '''
 
+
     def getReadoutCounts(self, number):
         '''
         Get the readout count data.
         '''
+
 
     def setPMTCountRate(self, time):
         '''
 
         '''
 
+
     def setAuto(self, channel, inversion):
         '''
         Set the logic of the TTL to be auto or not
         '''
+
 
     def setManual(self, channel, state):
         '''
         Set the logic of the TTL to be manual or not
         '''
 
+
     @kernel
     def resetAllDDS(self):
         '''
         Reset the ram position of all dds chips to 0
         '''
-
+        #not easily possible since FPGA RAM isn't exposed as part of artiq API
+        pass
 
     @kernel
     def advanceAllDDS(self):
         '''
         Advance the ram position of all dds chips
         '''
-
+        # not easily possible since FPGA RAM isn't exposed as part of artiq API
+        pass
 
     @kernel
-    def programDDS(self, chan, prog):
-        '''
-        Program a dds with a list of frequencies and amplitudes
-        '''
-
-
     def initializeDDS(self):
         '''
-        force reprogram of all dds chips during initialization
+        Force reprogram of all dds chips during initialization
         '''
         self.core.reset()
         for device in self.dds_list + self.urukul_list:
@@ -187,8 +196,10 @@ class api(EnvExperiment):
                 device.init()
 
     @kernel
-    def setDDSParam(self, chan, _asf, _ftw):
+    def setDDSParam(self, chan, _asf, _ftw, **kwargs):
         self.dds_list[chan].set_mu(ftw = _ftw, asf = _asf)
+        if kwargs is not None:
+            self.dds_list[chan].set_mu(kwargs)
 
     def enableLineTrigger(self, delay = 0):
         '''
@@ -201,4 +212,5 @@ class api(EnvExperiment):
         '''
 
     def run(self):
+        #run the labrad server and expose class methods to the server
         util.runServer(Pulser_artiq(self))

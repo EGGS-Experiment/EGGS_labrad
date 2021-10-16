@@ -2,12 +2,19 @@ from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import returnValue, inlineCallbacks
 from twisted.internet.threads import deferToThread
 from labrad.units import WithUnit
-from errors import dds_access_locked
 import numpy as np
 
-class DDS(LabradServer):
 
-    """Contains the DDS functionality for the Artiq Pulser server"""
+class dds_access_locked(Error):
+    def __init__(self):
+        super(dds_access_locked, self).__init__(
+            msg='DDS Access Locked: running a pulse sequence',
+            code=1
+        )
+
+class DDS_artiq(LabradServer):
+
+    """Contains the DDS functionality for the ARTIQ Pulser server"""
 
     on_dds_param = Signal(142006, 'signal: new dds parameter', '(ssv)')
 
@@ -205,5 +212,51 @@ class DDS(LabradServer):
         num = self.settings_to_num(channel, freq, ampl)
         return num
 
-    #todo: ramp conversion
+    def artiq_convert_dds(self, dds_seq):
+
+        return dds_single_seq, dds_ramp_seq
+
+    # needed for backwards compatibility
+    def _intToBuf_coherent(self, num):
+        '''
+        takes the integer representing the setting and returns the buffer string for dds programming
+        '''
+
+        freq_num = (num % 2**64)  # change according to the new DDS which supports 64 bit tuning of the frequency. Used to be #freq_num = (num % 2**32)*2**32
+        b = bytearray(8)          # initialize the byte array to sent to the pusler later
+        for i in range(8):
+            b[i]=(freq_num//(2**(i*8)))%256
+            #print i, "=", (freq_num//(2**(i*8)))%256
+
+        #phase
+        phase_num = (num // 2**80)%(2**16)
+        phase = bytearray(2)
+        phase[0] = phase_num%256
+        phase[1] = (phase_num//256)%256
+
+
+        ### amplitude
+        ampl_num = (num // 2**64)%(2**16)
+        amp = bytearray(2)
+        amp[0] = ampl_num%256
+        amp[1] = (ampl_num//256)%256
+
+        ### ramp rate. 16 bit tunability from roughly 116 Hz/ms to 7.5 MHz/ms
+        ramp_rate = (num // 2**96)%(2**16)
+        ramp = bytearray(2)
+        ramp[0] = ramp_rate%256
+        ramp[1] = (ramp_rate//256)%256
+
+        ##  amplitude ramp rate
+        amp_ramp_rate = (num // 2**112)%(2**16)
+        #print "amp_ramp is" , amp_ramp_rate
+        amp_ramp = bytearray(2)
+        amp_ramp[0] = amp_ramp_rate%256
+        amp_ramp[1] = (amp_ramp_rate//256)%256
+
+        ##a = bytearray.fromhex(u'0000') + amp + bytearray.fromhex(u'0000 0000')
+        a = phase + amp + amp_ramp + ramp
+
+        ans = a + b
+        return ans
 

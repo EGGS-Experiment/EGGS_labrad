@@ -18,8 +18,8 @@ timeout = 20
 
 #labrad and server imports
 from labrad.server import LabradServer, setting, Signal
-from pulser_artiq_DDS import DDS
-from pulser_artiq_linetrigger import LineTrigger
+from pulser_artiq_DDS import DDS_artiq
+from pulser_artiq_linetrigger import LineTrigger_artiq
 
 #async imports
 from twisted.internet import reactor
@@ -34,7 +34,7 @@ import numpy as np
 
 from devices import Devices
 
-class Pulser_artiq(DDS, LineTrigger):
+class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
 
     name = 'ARTIQ Pulser'
     regKey = 'ARTIQ_Pulser'
@@ -126,11 +126,6 @@ class Pulser_artiq(DDS, LineTrigger):
         self.inCommunication.release()
         self.isProgrammed = True
 
-    def artiq_convert_dds(self, dds_seq):
-
-        return dds_single_seq, dds_ramp_seq
-
-
     @setting(2, "Start Infinite", returns = '')
     def startInfinite(self, c):
         if not self.isProgrammed:
@@ -197,8 +192,10 @@ class Pulser_artiq(DDS, LineTrigger):
         Allows to optionally extend the total length of the sequence beyond the last TTL pulse.
         """
         sequence = c.get('sequence')
-        if not (self.sequenceTimeRange[0] <= timeLength['s'] <= self.sequenceTimeRange[1]): raise Exception ("Time boundaries are out of range")
-        if not sequence: raise Exception ("Please create new sequence first")
+        if not (self.sequenceTimeRange[0] <= timeLength['s'] <= self.sequenceTimeRange[1]):
+            raise Exception("Time boundaries are out of range")
+        if not sequence:
+            raise Exception("Please create new sequence first")
         sequence.extendSequenceLength(timeLength['s'])
 
     @setting(8, "Stop Sequence")

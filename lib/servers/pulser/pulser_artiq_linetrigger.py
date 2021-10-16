@@ -2,16 +2,10 @@ from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.threads import deferToThread
 
-try:
-    from config.pulser.hardwareConfiguration import hardwareConfiguration
-except:
-    from common.lib.config.pulser.hardwareConfiguration import hardwareConfiguration
-
 from labrad.units import WithUnit
 
-
-class LineTrigger(LabradServer):
-    """Contains the Line Trigger Functionality for the Pulser Server"""
+class LineTrigger_artiq(LabradServer):
+    """Contains the Line Trigger Functionality for the ARTIQ Pulser Server"""
 
     on_line_trigger_param = Signal(142007, 'signal: new line trigger parameter', '(bv)')
 
