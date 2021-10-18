@@ -30,7 +30,7 @@ class NIOPS03Server(SerialDeviceServer):
     name = 'NIOPS03 Server'
     regKey = 'NIOPS03Server'
     port = 'COM3'
-    serNode = getNodeName()
+    serNode = 'wanchai'
 
     timeout = WithUnit(3.0, 's')
     baudrate = 115200
@@ -62,6 +62,7 @@ class NIOPS03Server(SerialDeviceServer):
         elif power == False:
             yield self.ser.write('B' + TERMINATOR)
         resp = yield self.ser.read()
+        resp = resp.strip()
         return resp
 
     @setting(112,'Toggle NP', power = 'b')
@@ -81,8 +82,8 @@ class NIOPS03Server(SerialDeviceServer):
         return resp
 
     #PARAMETERS
-    @setting(211,'Get Pressure', returns = 'v')
-    def get_pressure(self, c):
+    @setting(211,'Get IP Pressure', returns = 'v')
+    def get_pressure_ip(self, c):
         """
         Get ion pump pressure
         Returns:
@@ -99,33 +100,21 @@ class NIOPS03Server(SerialDeviceServer):
         Returns:
             (float): ion pump voltage
         """
-        yield self.ser.write('Tb' + TERMINATOR)
-        resp = yield self.ser.read()
-        return float(resp)
-
-    @setting(222,'Get NP Voltage', returns = 'v')
-    def get_voltage_np(self, c):
-        """
-        Get getter voltage
-        Returns:
-            (float): getter voltage
-        """
         yield self.ser.write('u' + TERMINATOR)
         resp = yield self.ser.read()
         return float(resp)
-        #todo: need to convert from hex to decimal, 4 integer values
 
     @setting(231,'Get Working Time', returns = 's')
     def get_time_working(self, c):
         """
-        Get getter voltage
+        Gets working time of IP & NP
         Returns:
             (float): getter voltage
         """
-        yield self.ser.write('u' + TERMINATOR)
+        yield self.ser.write('TM' + TERMINATOR)
         resp = yield self.ser.read()
-        return float(resp)
-        #todo: write correctly
+        return resp
+        #todo: get multiple lines
 
 
 if __name__ == '__main__':
