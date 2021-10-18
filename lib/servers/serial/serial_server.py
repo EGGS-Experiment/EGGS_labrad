@@ -67,7 +67,6 @@ class SerialServer(LabradServer):
     refreshInterval = 10
 
     def initServer(self):
-        self.SerialPorts = []
         self.enumerate_serial_pyserial()
         #start looping call to periodically update
         #serial devices
@@ -90,6 +89,7 @@ class SerialServer(LabradServer):
         possibly doesn't work right on windows for COM ports above 4.
         http://stackoverflow.com/questions/12090503/listing-available-com-ports-with-python
         """
+        self.SerialPorts = []
         print('Searching for COM ports:')
         for a in range(1, 40):
             COMexists = True
@@ -118,6 +118,7 @@ class SerialServer(LabradServer):
         Following the example from the above windows version, we try to open
         each port and ignore it if we can't.
         """
+        self.SerialPorts = []
         dev_list = serial.tools.list_ports.comports()
         for d in dev_list:
             dev_path = d[0]
