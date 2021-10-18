@@ -1,3 +1,4 @@
+#todo: remove toPyObject
 class Node(object):
     def __init__(self, name, parent=None): 
         super(Node, self).__init__()
