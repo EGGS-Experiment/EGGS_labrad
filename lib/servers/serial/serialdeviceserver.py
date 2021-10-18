@@ -156,7 +156,7 @@ class SerialDeviceServer(LabradServer):
         try:
             serStr = yield self.findSerial(self.serNode)
             print(serStr)
-            self.initSerial(serStr, port, baudrate = BAUDRATE, timeout = self.timeout,
+            self.initSerial(serStr, self.port, baudrate = self.baudrate, timeout = self.timeout,
                             bytesize = self.bytesize, parity = self.parity)
         except SerialConnectionError as e:
             self.ser = None
