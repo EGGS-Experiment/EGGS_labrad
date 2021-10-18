@@ -59,12 +59,11 @@ class api(EnvExperiment):
         #pmt variables
         self.pmtInterval = 0
         self.pmtMode = 0 #0 is normal/automatic, 1 is differential
-        #todo: add correct number of samples
-        self.setattr_dataset('PMT_count', np.full(num_samples, np.na))
+        self.pmtArrayLength = 10000
+        self.setattr_dataset('PMT_count', np.full(self.pmtArrayLength, np.nan))
         #linetrigger variables
         self.linetrigger_delay = 0 * us
         self.linetrigger_active = False
-        #todo: PMT FIFO
 
     @kernel
     def _initializeDevices(self):
@@ -82,9 +81,10 @@ class api(EnvExperiment):
     #Sequence functions
     @kernel(flags = {"fast-math"})
     def programSequence(self, ttl_sequence, dds_single_sequence, dds_ramp_sequence):
-        #record pulse sequence in memory
         PMT_device = self.ttlin_list['PMT']
-        #todo: calculate number of PMT recordings needd
+        #todo: calculate number of PMT recordings need
+        #todo: ensure num doesn't exceed pmt array length
+        #record pulse sequence in memory
         with self.core_dma.record("pulse_sequence"):
             #add ttl sequence
             for timestamp, ttlCommandArr in ttl_sequence:
@@ -127,10 +127,7 @@ class api(EnvExperiment):
             self.core.reset()
             self.core_dma.playback_handle(sequence_handle)
             self.numRuns += 1
-            #todo: is this possible? can we change variables?
-
         #todo: process data
-        #todo: transfer data
 
     @kernel
     def stopSequence(self):
@@ -188,14 +185,13 @@ class api(EnvExperiment):
         Get the readout count data.
         '''
         #remove np.nan
-        return self.
+        return self.PMT_count
 
     def resetReadoutCounts(self):
         '''
         Reset the FIFO on the FPGA for the read-out count.
         '''
-        #todo: calculate num samples
-        self.set_dataset('PMT_count', np.full(num_samples, np.nan))
+        self.set_dataset('PMT_count', np.full(self.pmtArrayLength, np.nan))
 
     #DDS functions
     @kernel

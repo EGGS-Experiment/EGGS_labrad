@@ -1,0 +1,69 @@
+from distutils.core import setup
+
+if sys.version_info[:2] < (3, 7):
+    raise Exception("You need Python 3.7+")
+
+
+# Depends on PyQt5, but setuptools cannot check for it.
+requirements = [
+    "numpy", "scipy",
+    "python-dateutil", "prettytable", "h5py",
+    "qasync", "pyqtgraph", "pygit2",
+    "llvmlite", "pythonparser", "python-Levenshtein",
+]
+
+console_scripts = [
+    "artiq_client = artiq.frontend.artiq_client:main",
+    "artiq_compile = artiq.frontend.artiq_compile:main",
+    "artiq_coreanalyzer = artiq.frontend.artiq_coreanalyzer:main",
+    "artiq_coremgmt = artiq.frontend.artiq_coremgmt:main",
+    "artiq_ddb_template = artiq.frontend.artiq_ddb_template:main",
+    "artiq_master = artiq.frontend.artiq_master:main",
+    "artiq_mkfs = artiq.frontend.artiq_mkfs:main",
+    "artiq_rtiomon = artiq.frontend.artiq_rtiomon:main",
+    "artiq_sinara_tester = artiq.frontend.artiq_sinara_tester:main",
+    "artiq_session = artiq.frontend.artiq_session:main",
+    "artiq_route = artiq.frontend.artiq_route:main",
+    "artiq_run = artiq.frontend.artiq_run:main",
+    "artiq_flash = artiq.frontend.artiq_flash:main",
+    "aqctl_corelog = artiq.frontend.aqctl_corelog:main",
+]
+
+gui_scripts = [
+    "artiq_browser = artiq.frontend.artiq_browser:main",
+    "artiq_dashboard = artiq.frontend.artiq_dashboard:main",
+]
+
+setup(
+    name="EGGS_labrad",
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
+    author='Clayton Ho',
+    author_email="claytonho@g.ucla.edu",
+    url="https://github.com/EGGS-Experiment",
+    description="Experimental Control System for the EGGS Experiment",
+    long_description=open("README.rst", encoding="utf-8").read(),
+    license="LGPLv3+",
+    classifiers="""\
+Development Status :: 5 - Production/Stable
+Environment :: Console
+Environment :: X11 Applications :: Qt
+Intended Audience :: Science/Research
+License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)
+Operating System :: Microsoft :: Windows
+Operating System :: POSIX :: Linux
+Programming Language :: Python :: 3.7
+Topic :: Scientific/Engineering :: Physics
+Topic :: System :: Hardware
+""".splitlines(),
+    install_requires=requirements,
+    extras_require={},
+    packages=find_packages(),
+    namespace_packages=[],
+    include_package_data=True,
+    ext_modules=[],
+    entry_points={
+        "console_scripts": console_scripts,
+        "gui_scripts": gui_scripts,
+    }
+)

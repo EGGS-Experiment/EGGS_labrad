@@ -17,10 +17,6 @@ TIMEOUT = 20000 #in ms
 
 class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
 
-    #startup
-    def initialize(self):
-        self.timeout(TIMEOUT)
-
     #system
     @inlineCallbacks
     def reset(self):
