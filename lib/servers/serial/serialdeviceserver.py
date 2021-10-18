@@ -102,18 +102,24 @@ class SerialDeviceServer(LabradServer):
     serNode: Name of node running desired serial server.  Used to identify correct serial server.
     timeOut: Time to wait for response before giving up.
     """
+    #node parameters
     name = NAME
     port = None
     regKey = None
     serNode = None
-    timeout = None
 
+    #serial connection parameters
+    timeout = None
+    baudrate = None
+    bytesize = None
+    parity = None
+
+    #can skip all of this and just initialize with a connection
     ser = None
 
     class SerialConnection():
         """
-        Wrapper for our server's client connection to the serial server.   
-        
+        Wrapper for our server's client connection to the serial server.
         @raise labrad.types.Error: Error in opening serial connection   
         """
         def __init__(self, ser, port, **kwargs):
@@ -135,6 +141,34 @@ class SerialDeviceServer(LabradServer):
             self.flushoutput = lambda: ser.flushoutput()
             self.ID = ser.ID
 
+    def initServer(self):
+        """
+        Start server.
+
+        Attempts to connect to serial device on the given node and port.
+        """
+        #node always needs to be specified
+        if not self.serNode:
+            raise SerialDeviceError('Must define serNode attributes')
+        #if port is not specified, get port details from registry
+        if (not self.port) and (not self.regKey):
+            self.port = yield self.getPortFromReg(self.regKey)
+        try:
+            serStr = yield self.findSerial(self.serNode)
+            print(serStr)
+            self.initSerial(serStr, port, baudrate = BAUDRATE, timeout = self.timeout,
+                            bytesize = self.bytesize, parity = self.parity)
+        except SerialConnectionError as e:
+            self.ser = None
+            if e.code == 0:
+                print('Could not find serial server for node: %s' % self.serNode)
+                print('Please start correct serial server')
+            elif e.code == 1:
+                print('Error opening serial connection')
+                print('Check set up and restart serial server')
+            else:
+                raise Exception('Unknown connection error')
+
     def initSerial( self, serStr, port, **kwargs):
         """
         Initialize serial connection.
@@ -149,20 +183,20 @@ class SerialDeviceServer(LabradServer):
         @raise SerialConnectionError: Error code 1.  Raised if we could not create serial connection.
         """
         if kwargs.get('timeout') is None and self.timeout: kwargs['timeout'] = self.timeout
-        print('\nAttempting to connect at:')
-        print('\n\tserver:\t%s' % serStr)
-        print('\n\tport:\t%s' % port)
-        print('\n\ttimeout:\t%s\n\n' % ( str( self.timeout ) if kwargs.get('timeout') is not None else 'No timeout' ))
+        print('Attempting to connect at:')
+        print('\tserver:\t%s' % serStr)
+        print('\tport:\t%s' % port)
+        print('\ttimeout:\t%s\n\n' % (str(self.timeout) if kwargs.get('timeout') is not None else 'No timeout'))
         cli = self.client
         try:
             # get server wrapper for serial server
-            ser = cli.servers[ serStr ]
+            ser = cli.servers[serStr]
             # instantiate SerialConnection convenience class
-            self.ser = self.SerialConnection( ser = ser, port = port, **kwargs )
+            self.ser = self.SerialConnection( ser = ser, port = port, **kwargs)
             print('Serial connection opened.')
         except Error:
             self.ser = None
-            raise SerialConnectionError( 1 )
+            raise SerialConnectionError(1)
 
     @inlineCallbacks
     def getPortFromReg( self, regKey = None ):
@@ -182,7 +216,7 @@ class SerialDeviceServer(LabradServer):
         #There must be a 'Ports' directory at the root of the registry folder
         try:
             tmp = yield reg.cd()
-            yield reg.cd( ['', 'Ports'] )
+            yield reg.cd(['', 'Ports'])
             y = yield reg.dir()
             print(y)
             if not regKey:
@@ -236,7 +270,7 @@ class SerialDeviceServer(LabradServer):
             if e.code == 13: raise PortRegError( 0 )
 
     @inlineCallbacks
-    def findSerial( self, serNode = None ):
+    def findSerial(self, serNode = None):
         """
         Find appropriate serial server
         

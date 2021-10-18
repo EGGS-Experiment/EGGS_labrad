@@ -77,6 +77,12 @@ class SerialServer(LabradServer):
         self.refresher = LoopingCall(self.enumerate_serial_pyserial)
         self.refresherDone = self.refresher.start(self.refreshInterval)
 
+    @inlineCallbacks
+    def stopServer(self):
+        if hasattr(self, 'refresher'):
+            self.refresher.stop()
+            #yield self.refresherDone
+
     def enumerate_serial_windows(self):
         """Manually Enumerate the first 20 COM ports.
 
