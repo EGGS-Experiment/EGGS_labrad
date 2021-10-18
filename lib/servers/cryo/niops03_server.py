@@ -20,20 +20,18 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad.server import setting
 from labrad.support import getNodeName
-from serial import PARITY_ODD
 
 import numpy as np
 
 TIMEOUT = 3.0
 BAUDRATE = 115200
 TERMINATOR = '\r\n'
+QUERY_msg = b'\x05'
 
 class NIOPS03Server(SerialDeviceServer):
     name = 'NIOPS03 Server'
     regKey = 'NIOPS03Server'
     serNode = getNodeName()
-
-    QUERY_msg = b'\x05'
 
     @inlineCallbacks
     def initServer( self ):
@@ -115,7 +113,7 @@ class NIOPS03Server(SerialDeviceServer):
         return float(resp)
 
     @setting(221,'Get IP Voltage', returns = 'v')
-    def get_pressure(self, c):
+    def get_voltage_ip(self, c):
         """
         Get ion pump voltage
         Returns:
@@ -126,7 +124,7 @@ class NIOPS03Server(SerialDeviceServer):
         return float(resp)
 
     @setting(222,'Get NP Voltage', returns = 'v')
-    def get_pressure(self, c):
+    def get_voltage_np(self, c):
         """
         Get getter voltage
         Returns:
@@ -138,7 +136,7 @@ class NIOPS03Server(SerialDeviceServer):
         #todo: need to convert from hex to decimal, 4 integer values
 
     @setting(231,'Get Working Time', returns = 'str')
-    def get_pressure(self, c):
+    def get_time_working(self, c):
         """
         Get getter voltage
         Returns:

@@ -49,6 +49,12 @@ Created on Dec 22, 2010
 # Added SerialDeviceWrapper class inheriting from DeviceWrapper, similar to GPIBDeviceWrapper
 #===============================================================================
 
+#===============================================================================
+# 2021 - 10 - 17
+#
+# Added COM port connection to SerialDeviceServer class
+#===============================================================================
+
 
 from twisted.internet.defer import returnValue, inlineCallbacks
 
@@ -56,6 +62,7 @@ from labrad.server import LabradServer, setting
 from labrad.types import Error
 from labrad.gpib import ManagedDeviceServer
 
+#Error Classes
 class SerialDeviceError( Exception ):
     def __init__( self, value ):
         self.value = value
@@ -73,12 +80,13 @@ class SerialConnectionError( Exception ):
     def __str__( self ):
         return self.errorDict[self.code]
 
-class PortRegError( SerialConnectionError ):
+class PortRegError(SerialConnectionError):
     errorDict = { 0:'Registry not properly configured' , 1:'Key not found in registry' , 2:'No keys in registry' }
 
+#Device Class
 NAME = 'SerialDevice'
 
-class SerialDeviceServer( LabradServer ):
+class SerialDeviceServer(LabradServer):
     """
     Base class for serial device servers.
     
@@ -113,7 +121,7 @@ class SerialDeviceServer( LabradServer ):
             baudrate = kwargs.get('baudrate')
             bytesize = kwargs.get('bytesize')
             parity = kwargs.get('parity')
-            ser.open( port )
+            ser.open(port)
             if timeout is not None: ser.timeout( timeout )
             if baudrate is not None: ser.baudrate( baudrate )
             if bytesize is not None: ser.bytesize(bytesize)
@@ -121,7 +129,7 @@ class SerialDeviceServer( LabradServer ):
             self.write = lambda s: ser.write(s)
             self.read = lambda x = 0: ser.read(x)
             self.read_until = lambda x = '\r': ser.read_until(x)
-            self.read_as_words = lambda x = 0: ser.read_as_words( x ) # changed here
+            self.read_as_words = lambda x = 0: ser.read_as_words(x) # changed here
             self.close = lambda: ser.close()
             self.flushinput = lambda: ser.flushinput()
             self.flushoutput = lambda: ser.flushoutput()

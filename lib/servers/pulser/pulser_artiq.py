@@ -22,7 +22,7 @@ from pulser_artiq_DDS import DDS_artiq
 from pulser_artiq_linetrigger import LineTrigger_artiq
 
 #async imports
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
 from twisted.internet.threads import deferToThread
 
@@ -49,13 +49,13 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         self.amplitude_to_asf = api.dds_list[0].amplitude_to_asf
         self.frequency_to_ftw = api.dds_list[0].frequency_to_ftw
 
+        #start
         LabradServer.__init__(self)
 
     def initServer(self):
         self.channelDict = hardwareConfiguration.channelDict
         self.collectionTime = hardwareConfiguration.collectionTime
         self.collectionMode = hardwareConfiguration.collectionMode
-        self.isProgrammed = hardwareConfiguration.isProgrammed
         self.timeResolution = float(hardwareConfiguration.timeResolution)
         self.ddsDict = hardwareConfiguration.ddsDict
         self.timeResolvedResolution = hardwareConfiguration.timeResolvedResolution
@@ -65,7 +65,9 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         self.haveSecondPMT = hardwareConfiguration.secondPMT
 
         self.inCommunication = DeferredLock()
-        self.clear_next_pmt_counts = 0
+
+        #appropriated variables
+        self.isProgrammed = False
 
         LineTrigger_artiq.initialize(self)
         yield self.initializeRemote()
@@ -130,9 +132,8 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         if not self.isProgrammed:
             raise Exception("No Programmed Sequence")
         yield self.inCommunication.acquire()
-        self.api.maxRuns = np.inf
         self.maxRuns = np.inf
-        self.api.runSequence()
+        yield deferToThread(self.api.runSequence, np.inf)
         self.inCommunication.release()
 
     @setting(3, "Complete Infinite Iteration", returns = '')
@@ -140,7 +141,7 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         if self.runInf is False:
             raise Exception("Not Running Infinite Sequence")
         yield self.inCommunication.acquire()
-        self.api.maxRuns = 0
+        yield deferToThread(self.api.stopSequence)
         self.maxRuns = 0
         self.inCommunication.release()
 
@@ -149,9 +150,8 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         if not self.isProgrammed:
             raise Exception ("No Programmed Sequence")
         yield self.inCommunication.acquire()
-        self.api.maxRuns = 1
         self.maxRuns = 1
-        self.api.runSequence()
+        self.api.runSequence(1)
         self.inCommunication.release()
 
     @setting(5, 'Add TTL Pulse', channel = 's', start = 'v[s]', duration = 'v[s]')
@@ -202,10 +202,10 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         """
         Stops any currently running sequence
         """
-        yield self.inCommunication.acquire()
-        self.api.maxRuns = 0
         self.maxRuns = 0
-        yield deferToThread(self.api.resetRam)
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.stopSequence)
+        yield deferToThread(self.api.eraseSequence)
         self.inCommunication.release()
         self.ddsLock = False
 
@@ -285,9 +285,12 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         else:
             state = channel.manualstate
 
+        state = self.cnot(channel.manualinv, state)
+
         yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setManual, channelNumber, self.cnot(channel.manualinv, state))
+        yield deferToThread(self.api.setManual, channelNumber, state)
         self.inCommunication.release()
+
         if state:
             self.notifyOtherListeners(c, (channelName, 'ManualOn'), self.onSwitch)
         else:
@@ -303,13 +306,16 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         channel = self.channelDict[channelName]
         channelNumber = channel.channelnumber
         channel.ismanual = False
+
         if invert is not None:
             channel.autoinv = invert
         else:
             invert = channel.autoinv
+
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.setAuto, channelNumber, invert)
         self.inCommunication.release()
+
         self.notifyOtherListeners(c, (channelName, 'Auto'), self.onSwitch)
 
     @setting(15, 'Get State', channelName = 's', returns = '(bbbb)')
@@ -317,7 +323,8 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         """
         Returns the current state of the switch: in the form (Manual/Auto, ManualOn/Off, ManualInversionOn/Off, AutoInversionOn/Off)
         """
-        if channelName not in self.channelDict.keys(): raise Exception("Incorrect Channel")
+        if channelName not in self.channelDict.keys():
+            raise Exception("Incorrect Channel")
         channel = self.channelDict[channelName]
         answer = (channel.ismanual, channel.manualstate, channel.manualinv, channel.autoinv)
         return answer
@@ -327,19 +334,23 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         """
         Returns true if the sequence has completed within a timeout period
         """
-        #todo: make loopingcall instead
         if timeout is None:
             timeout = self.sequenceTimeRange[1]
-
-        requestCalls = int(timeout * 1000)
+        requestCalls = int(timeout*1000)
         for i in range(requestCalls):
             yield self.inCommunication.acquire()
-            done = yield deferToThread(self.api.isSeqDone() >= self.maxRuns)
+            numRuns = yield deferToThread(self.api.numRepetitions)
             self.inCommunication.release()
-            if done:
+            if numRuns >= self.maxRuns:
                 returnValue(True)
             yield self.wait(0.001)
         returnValue(False)
+
+    def wait(self, seconds, result=None):
+        """Returns a deferred that will be fired later"""
+        d = Deferred()
+        reactor.callLater(seconds, d.callback, result)
+        return d
 
     @setting(17, 'Repeatitions Completed', returns = 'w')
     def repeatitionsCompleted(self, c):
@@ -347,31 +358,31 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         Check how many repetitions have been completed in the infinite or number modes
         """
         yield self.inCommunication.acquire()
-        completed = yield deferToThread(self.api.isSeqDone())
+        completed = self.api.numRuns
         self.inCommunication.release()
         returnValue(completed)
 
     #PMT functions
+    #todo: ensure in ms for times pmt
     @setting(21, 'Set Mode', mode = 's', returns = '')
     def setMode(self, c, mode):
         """
         Set the counting mode, either 'Normal' or 'Differential'
-        In the Normal Mode, the FPGA automatically sends the counts with a preset frequency
-        In the differential mode, the FPGA uses triggers the pulse sequence
+        In 'Normal', the FPGA automatically sends the counts with a preset frequency
+        In 'Differential', the FPGA uses triggers the pulse sequence
         frequency and to know when the repumping light is switched on or off.
         """
         if mode not in self.collectionTime.keys():
             raise Exception("Incorrect mode")
         self.collectionMode = mode
-        countRate = self.collectionTime[mode]
+        countInterval = self.collectionTime[mode]
         yield self.inCommunication.acquire()
         if mode == 'Normal':
             #set the mode on the device and set update time for normal mode
-            yield deferToThread(self.api.setModeNormal)
-            yield deferToThread(self.api.setPMTCountRate, countRate)
+            yield deferToThread(self.api.setMode, 0)
+            yield deferToThread(self.api.setPMTCountInterval, countInterval)
         elif mode == 'Differential':
-            yield deferToThread(self.api.setModeDifferential)
-        self.clear_next_pmt_counts = 3 #assign to clear next two counts
+            yield deferToThread(self.api.setMode, 1)
         self.inCommunication.release()
 
     @setting(22, 'Set Collection Time', new_time = 'v', mode = 's', returns = '')
@@ -379,70 +390,58 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         """
         Sets how long to collect photonslist in either 'Normal' or 'Differential' mode of operation
         """
-        new_time = new_time['s']
         if not self.collectionTimeRange[0] <= new_time <= self.collectionTimeRange[1]:
             raise Exception('Incorrect collection time')
         if mode not in self.collectionTime.keys():
             raise Exception("Incorrect mode")
-        if mode == 'Normal':
-            self.collectionTime[mode] = new_time
-            yield self.inCommunication.acquire()
-            yield deferToThread(self.api.setPMTCountRate, new_time)
-            self.clear_next_pmt_counts = 3 #assign to clear next two counts
-            self.inCommunication.release()
-        elif mode == 'Differential':
-            self.collectionTime[mode] = new_time
-            self.clear_next_pmt_counts = 3 #assign to clear next two counts
 
-    @setting(23, 'Get Collection Time', returns = '(vv)')
+        self.collectionTime[mode] = new_time
+        if mode == 'Normal':
+            yield self.inCommunication.acquire()
+            yield deferToThread(self.api.setPMTCountInterval, new_time)
+            self.inCommunication.release()
+
+    @setting(23, 'Get Collection Mode', returns = 's')
+    def getMode(self, c):
+        return self.collectionMode
+
+    @setting(24, 'Get Collection Time', returns = '(vv)')
     def getCollectTime(self, c):
         return self.collectionTimeRange
 
-    @setting(24, 'Reset FIFO Normal', returns = '')
-    def resetFIFONormal(self,c):
-        """
-        Resets the FIFO on board, deleting all queued counts
-        """
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.resetFIFONormal)
-        self.inCommunication.release()
-
-    @setting(25, 'Get PMT Counts', returns = '*(vsv)')
-    def getALLCounts(self, c):
-        """
-        Returns the list of counts stored on the FPGA in the form (v,s1,s2) where v is the count rate in KC/SEC
-        and s can be 'ON' in normal mode or in Differential mode with 866 on and 'OFF' for differential
-        mode when 866 is off. s2 is the approximate time of acquisition.
-        NOTE: For some reason, FGPA ReadFromBlockPipeOut never time outs, so can not implement requesting more packets than
-        currently stored because it may hang the device.
-        """
-        yield self.inCommunication.acquire()
-        countlist = yield deferToThread(self.doGetAllCounts)
-        self.inCommunication.release()
-        returnValue(countlist)
-
-    @setting(26, 'Get Readout Counts', returns = '*v')
+    @setting(25, 'Get Readout Counts', returns = '*v')
     def getReadoutCounts(self, c):
         yield self.inCommunication.acquire()
-        countlist = yield deferToThread(self.doGetReadoutCounts)
+        countlist = yield deferToThread(self.api.getReadoutCounts)
         self.inCommunication.release()
         returnValue(countlist)
 
-    @setting(27, 'Reset Readout Counts')
+    @setting(26, 'Reset Readout Counts')
     def resetReadoutCounts(self, c):
         yield self.inCommunication.acquire()
-        yield deferToThread(self.api.resetFIFOReadout)
+        yield deferToThread(self.api.resetReadoutCounts)
         self.inCommunication.release()
 
-    #debugging settings
+    def convertKCperSec(self, inp):
+        [rawCount, typ] = inp
+        countKCperSec = float(rawCount) / self.collectionTime[self.collectionMode] / 1000.
+        return [countKCperSec, typ]
+
+    #DDS settings
     @setting(90, 'Internal Reset DDS', returns = '')
     def internal_reset_dds(self, c):
+        """
+        Reset all DDSs
+        """
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.resetAllDDS)
         self.inCommunication.release()
 
     @setting(91, 'Internal Advance DDS', returns = '')
     def internal_advance_dds(self, c):
+        """
+        Advance DDSs to the next RAM position
+        """
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.advanceAllDDS)
         self.inCommunication.release()
@@ -456,129 +455,12 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         yield deferToThread(self.api.initializeDDS)
         self.inCommunication.release()
 
-    def doGetAllCounts(self):
-        inFIFO = self.api.getNormalTotal()
-        reading = self.api.getNormalCounts(inFIFO)
-        split = self.split_len(reading, 4)
-        countlist = map(self.infoFromBuf, split)
-        countlist = map(self.convertKCperSec, countlist)
-        countlist = self.appendTimes(countlist, time.time())
-        countlist = self.clear_pmt_counts(countlist)
-        return countlist
-
-    def clear_pmt_counts(self, l):
-        '''removes clear_next_pmt_counts count from the list'''
-        try:
-            while self.clear_next_pmt_counts:
-                cleared = l.pop(0)
-                self.clear_next_pmt_counts -= 1
-            return l
-        except IndexError:
-            return []
-
-    def doGetReadoutCounts(self):
-        inFIFO = self.api.getReadoutTotal()
-        reading = self.api.getReadoutCounts(inFIFO)
-        split = self.split_len(reading, 4)
-        countlist = map(self.infoFromBuf_readout, split)
-        return countlist
-
-    @staticmethod
-    def infoFromBuf(buf):
-        #converts the received buffer into useful information
-        #the most significant digit of the buffer indicates wheter 866 is on or off
-        count = 65536*(256*ord(buf[1])+ord(buf[0]))+(256*ord(buf[3])+ord(buf[2]))
-        if count >= 2**31:
-            status = 'OFF'
-            count = count % 2**31
-        else:
-            status = 'ON'
-        return [count, status]
-
-    #should make nicer by combining with above.
-    @staticmethod
-    def infoFromBuf_readout(buf):
-        count = 65536*(256*ord(buf[1])+ord(buf[0]))+(256*ord(buf[3])+ord(buf[2]))
-        return count
-
-    def convertKCperSec(self, inp):
-        [rawCount, typ] = inp
-        countKCperSec = float(rawCount) / self.collectionTime[self.collectionMode] / 1000.
-        return [countKCperSec, typ]
-
-    def appendTimes(self, l, timeLast):
-        #in the case that we received multiple PMT counts, uses the current time
-        #and the collectionTime to guess the arrival time of the previous readings
-        #i.e ( [[1,2],[2,3]] , timeLAst = 1.0, normalupdatetime = 0.1) ->
-        # ( [(1,2,0.9),(2,3,1.0)])
-        collectionTime = self.collectionTime[self.collectionMode]
-        for i in range(len(l)):
-            l[-i - 1].append(timeLast - i * collectionTime)
-            l[-i - 1] = tuple(l[-i - 1])
-        return l
-
-    def split_len(self,seq, length):
-        '''useful for splitting a string in length-long pieces'''
-        return [seq[i:i+length] for i in range(0, len(seq), length)]
-
-    @setting(28, 'Get Collection Mode', returns = 's')
-    def getMode(self, c):
-        return self.collectionMode
-
-    @setting(31, "Reset Timetags")
-    def resetTimetags(self, c):
-        """Reset the time resolved FIFO to clear any residual timetags"""
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.resetFIFOResolved)
-        self.inCommunication.release()
-
-    @setting(32, "Get Timetags", returns = '*v')
-    def getTimetags(self, c):
-        """Get the time resolved timetags"""
-        yield self.inCommunication.acquire()
-        counted = yield deferToThread(self.api.getResolvedTotal)
-        raw = yield deferToThread(self.api.getResolvedCounts, counted)
-        self.inCommunication.release()
-        arr = numpy.fromstring(raw, dtype = numpy.uint16)
-        del(raw)
-        arr = arr.reshape(-1,2)
-        timetags =( 65536 * arr[:,0] + arr[:,1]) * self.timeResolvedResolution
-        returnValue(timetags)
-
-    @setting(33, "Get TimeTag Resolution", returns = 'v')
-    def getTimeTagResolution(self, c):
-        return self.timeResolvedResolution
-
-    #Methods relating to using the optional second PMT
-    @setting(36, 'Get Secondary PMT Counts', returns = '*(vsv)')
-    def getAllSecondaryCounts(self, c):
-        if not self.haveSecondPMT: raise Exception ("No Second PMT")
-        yield self.inCommunication.acquire()
-        countlist = yield deferToThread(self.doGetAllSecondaryCounts)
-        self.inCommunication.release()
-        returnValue(countlist)
-
-    def doGetAllSecondaryCounts(self):
-        if not self.haveSecondPMT: raise Exception ("No Second PMT")
-        inFIFO = self.api.getSecondaryNormalTotal()
-        reading = self.api.getSecondaryNormalCounts(inFIFO)
-        split = self.split_len(reading, 4)
-        countlist = map(self.infoFromBuf, split)
-        countlist = map(self.convertKCperSec, countlist)
-        countlist = self.appendTimes(countlist, time.time())
-        return countlist
-
-    def wait(self, seconds, result=None):
-        """Returns a deferred that will be fired later"""
-        d = Deferred()
-        reactor.callLater(seconds, d.callback, result)
-        return d
-
     def cnot(self, control, inp):
         if control:
             inp = not inp
         return inp
 
+    #Signal/Context functions
     def notifyOtherListeners(self, context, message, f):
         """
         Notifies all listeners except the one in the given context, executing function f
