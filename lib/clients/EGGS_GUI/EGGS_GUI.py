@@ -41,7 +41,7 @@ class EGGS_GUI(QMainWindow):
         self.setWindowTitle(self.name)
 
     def makeScriptScannerWidget(self, reactor, cxn):
-        from EGGS_labrad.lib.clients.script_scanner_gui.script_scanner_gui import script_scanner_gui
+        from EGGS_labrad.lib.clients.script_scanner_gui import script_scanner_gui
         scriptscanner = script_scanner_gui(reactor, cxn = cxn)
         return scriptscanner
 
