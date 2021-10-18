@@ -20,7 +20,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad.server import setting
 from labrad.support import getNodeName
-
+from labrad.units import WithUnit
 import numpy as np
 
 TERMINATOR = '\r\n'
@@ -32,7 +32,7 @@ class NIOPS03Server(SerialDeviceServer):
     port = 'COM3'
     serNode = getNodeName()
 
-    timeout = 3.0
+    timeout = WithUnit(3.0, 's')
     baudrate = 115200
 
     #STATUS
@@ -80,52 +80,52 @@ class NIOPS03Server(SerialDeviceServer):
         resp = yield self.ser.read()
         return resp
 
-    #PARAMETERS
-    @setting(211,'Get Pressure', returns = 'v')
-    def get_pressure(self, c):
-        """
-        Get ion pump pressure
-        Returns:
-            (float): ion pump pressure
-        """
-        yield self.ser.write('Tb' + TERMINATOR)
-        resp = yield self.ser.read()
-        return float(resp)
-
-    @setting(221,'Get IP Voltage', returns = 'v')
-    def get_voltage_ip(self, c):
-        """
-        Get ion pump voltage
-        Returns:
-            (float): ion pump voltage
-        """
-        yield self.ser.write('Tb' + TERMINATOR)
-        resp = yield self.ser.read()
-        return float(resp)
-
-    @setting(222,'Get NP Voltage', returns = 'v')
-    def get_voltage_np(self, c):
-        """
-        Get getter voltage
-        Returns:
-            (float): getter voltage
-        """
-        yield self.ser.write('u' + TERMINATOR)
-        resp = yield self.ser.read()
-        return float(resp)
-        #todo: need to convert from hex to decimal, 4 integer values
-
-    @setting(231,'Get Working Time', returns = 'str')
-    def get_time_working(self, c):
-        """
-        Get getter voltage
-        Returns:
-            (float): getter voltage
-        """
-        yield self.ser.write('u' + TERMINATOR)
-        resp = yield self.ser.read()
-        return float(resp)
-        #todo: write correctly
+    # #PARAMETERS
+    # @setting(211,'Get Pressure', returns = 'v')
+    # def get_pressure(self, c):
+    #     """
+    #     Get ion pump pressure
+    #     Returns:
+    #         (float): ion pump pressure
+    #     """
+    #     yield self.ser.write('Tb' + TERMINATOR)
+    #     resp = yield self.ser.read()
+    #     return float(resp)
+    #
+    # @setting(221,'Get IP Voltage', returns = 'v')
+    # def get_voltage_ip(self, c):
+    #     """
+    #     Get ion pump voltage
+    #     Returns:
+    #         (float): ion pump voltage
+    #     """
+    #     yield self.ser.write('Tb' + TERMINATOR)
+    #     resp = yield self.ser.read()
+    #     return float(resp)
+    #
+    # @setting(222,'Get NP Voltage', returns = 'v')
+    # def get_voltage_np(self, c):
+    #     """
+    #     Get getter voltage
+    #     Returns:
+    #         (float): getter voltage
+    #     """
+    #     yield self.ser.write('u' + TERMINATOR)
+    #     resp = yield self.ser.read()
+    #     return float(resp)
+    #     #todo: need to convert from hex to decimal, 4 integer values
+    #
+    # @setting(231,'Get Working Time', returns = 'str')
+    # def get_time_working(self, c):
+    #     """
+    #     Get getter voltage
+    #     Returns:
+    #         (float): getter voltage
+    #     """
+    #     yield self.ser.write('u' + TERMINATOR)
+    #     resp = yield self.ser.read()
+    #     return float(resp)
+    #     #todo: write correctly
 
 
 if __name__ == '__main__':

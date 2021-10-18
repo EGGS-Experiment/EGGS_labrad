@@ -17,18 +17,10 @@ timeout = 5
 """
 #todo: check and sanitize input for each setting
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
-from twisted.internet import reactor
-from labrad.server import Signal
 from labrad import types as T
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import returnValue
 from labrad.support import getNodeName
-import time
-from labrad.units import WithUnit as U
 
-SERVERNAME = 'SLS Server'
-TIMEOUT = 1.0
-BAUDRATE = 115200
 TERMINATOR = '\r\n'
 
 class SLSServer(SerialDeviceServer):
@@ -36,29 +28,9 @@ class SLSServer(SerialDeviceServer):
     regKey = 'SLSServer'
     port = None
     serNode = getNodeName()
-    timeout = T.Value(TIMEOUT,'s')
 
-    @inlineCallbacks
-    def initServer( self ):
-        #get serial connection parameters
-        if not self.regKey or not self.serNode: raise SerialDeviceError('Must define regKey and serNode attributes')
-        port = yield self.getPortFromReg(self.regKey)
-        self.port = port
-
-        #attempt serial connection
-        try:
-            serStr = yield self.findSerial( self.serNode )
-            self.initSerial( serStr, port, baudrate = BAUDRATE, timeout = TIMEOUT)
-        except SerialConnectionError as e:
-            self.ser = None
-            if e.code is 0:
-                print('Could not find serial server for node: {%s}'.format(self.serNode))
-                print('Please start correct serial server')
-            elif e.code == 1:
-                print('Error opening serial connection')
-                print('Check set up and restart serial server')
-            else:
-                raise
+    baudrate = 115200
+    timeout = T.Value(1.0, 's')
 
     #Autolock
     @setting(111,'autolock toggle', enable = 's', returns = 's')

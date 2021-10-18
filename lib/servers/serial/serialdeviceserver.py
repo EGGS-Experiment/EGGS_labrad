@@ -60,7 +60,6 @@ from twisted.internet.defer import returnValue, inlineCallbacks
 
 from labrad.server import LabradServer, setting
 from labrad.types import Error
-from labrad.gpib import ManagedDeviceServer
 
 #Error Classes
 class SerialDeviceError( Exception ):
@@ -128,8 +127,8 @@ class SerialDeviceServer(LabradServer):
             bytesize = kwargs.get('bytesize')
             parity = kwargs.get('parity')
             ser.open(port)
-            if timeout is not None: ser.timeout( timeout )
-            if baudrate is not None: ser.baudrate( baudrate )
+            if timeout is not None: ser.timeout(timeout)
+            if baudrate is not None: ser.baudrate(baudrate)
             if bytesize is not None: ser.bytesize(bytesize)
             if parity is not None: ser.parity(parity)
             self.write = lambda s: ser.write(s)

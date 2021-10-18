@@ -25,14 +25,12 @@ from labrad.types import Value
 import time
 import numpy as np
 
-TIMEOUT = 5.0
-BAUDRATE = 9600
-
 class TwisTorr74Server(SerialDeviceServer):
     name = 'TwisTorr74 Server'
     regKey = 'TwisTorr74Server'
     serNode = getNodeName()
-    timeout = Value(TIMEOUT, 's')
+    timeout = Value(5.0, 's')
+    baudrate = 9600
 
     STX_msg = b'\x02'
     ADDR_msg = b'\x80'
