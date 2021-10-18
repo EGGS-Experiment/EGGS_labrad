@@ -36,8 +36,9 @@ class Lakeshore336Server(SerialDeviceServer):
     name = 'Lakeshore 336 Server'
     regKey = 'Lakeshore336Server'
     serNode = getNodeName()
+    port = 'COM6'
 
-    timeout = WithUint(1.0, 's')
+    timeout = WithUnit(1.0, 's')
     baudrate = 57600
     bytesize = 7
     parity = PARITY_ODD  # 0 is odd parity
