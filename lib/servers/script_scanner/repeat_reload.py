@@ -1,6 +1,6 @@
 from time import localtime, strftime
 
-from EGGS_labrad.lib.servers.script_scanner.experiment import experiment
+from experiment import experiment
 
 class repeat_reload(experiment):
     '''
