@@ -23,37 +23,17 @@ from labrad.support import getNodeName
 
 import numpy as np
 
-TIMEOUT = 3.0
-BAUDRATE = 115200
 TERMINATOR = '\r\n'
 QUERY_msg = b'\x05'
 
 class NIOPS03Server(SerialDeviceServer):
     name = 'NIOPS03 Server'
     regKey = 'NIOPS03Server'
+    port = 'COM3'
     serNode = getNodeName()
 
-    @inlineCallbacks
-    def initServer( self ):
-        # if not self.regKey or not self.serNode: raise SerialDeviceError( 'Must define regKey and serNode attributes' )
-        # port = yield self.getPortFromReg( self.regKey )
-        port = 'COM3'
-        self.port = port
-        self.timeout = TIMEOUT
-        try:
-            serStr = yield self.findSerial( self.serNode )
-            print(serStr)
-            self.initSerial( serStr, port, baudrate = BAUDRATE)
-        except SerialConnectionError as e:
-            self.ser = None
-            if e.code == 0:
-                print('Could not find serial server for node: %s' % self.serNode)
-                print('Please start correct serial server')
-            elif e.code == 1:
-                print('Error opening serial connection')
-                print('Check set up and restart serial server')
-            else:
-                raise Exception('Unknown connection error')
+    timeout = 3.0
+    baudrate = 115200
 
     #STATUS
     @setting(11,'Status', returns = 's')

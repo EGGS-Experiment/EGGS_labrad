@@ -141,6 +141,7 @@ class SerialDeviceServer(LabradServer):
             self.flushoutput = lambda: ser.flushoutput()
             self.ID = ser.ID
 
+    @inlineCallbacks
     def initServer(self):
         """
         Start server.
