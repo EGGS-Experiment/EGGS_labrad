@@ -422,11 +422,6 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         yield deferToThread(self.api.resetReadoutCounts)
         self.inCommunication.release()
 
-    def convertKCperSec(self, inp):
-        [rawCount, typ] = inp
-        countKCperSec = float(rawCount) / self.collectionTime[self.collectionMode] / 1000.
-        return [countKCperSec, typ]
-
     #DDS settings
     @setting(90, 'Internal Reset DDS', returns = '')
     def internal_reset_dds(self, c):

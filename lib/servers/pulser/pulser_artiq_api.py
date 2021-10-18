@@ -181,7 +181,7 @@ class api(EnvExperiment):
         '''
         Set count rate of PMT in ms
         '''
-        self.pmtInterval = time * ms
+        self.pmtInterval = time * us
 
     def getReadoutCounts(self, number):
         '''

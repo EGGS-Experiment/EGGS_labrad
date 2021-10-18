@@ -42,11 +42,11 @@ from labrad.errors import Error
 from labrad.server import LabradServer, setting
 from twisted.internet import reactor, threads
 from twisted.internet.defer import inlineCallbacks, returnValue
-from twisted.internet.task import deferLater
+from twisted.internet.task import deferLater, LoopingCall
+
 from serial import Serial
 from serial.serialutil import SerialException
 import serial.tools.list_ports
-
 
 class NoPortSelectedError(Error):
     """Please open a port first."""
@@ -64,9 +64,18 @@ SerialDevice = collections.namedtuple('SerialDevice', ['name', 'devicepath'])
 class SerialServer(LabradServer):
     """Provides access to a computer's serial (COM) ports."""
     name = '%LABRADNODE% Serial Server'
+    refreshInterval = 10
 
     def initServer(self):
+        self.SerialPorts = []
         self.enumerate_serial_pyserial()
+        #start looping call to periodically update
+        #serial devices
+        reactor.callLater(1, self.startRefreshing)
+
+    def startRefreshing(self):
+        self.refresher = LoopingCall(self.enumerate_serial_pyserial)
+        self.refresherDone = self.refresher.start(self.refreshInterval)
 
     def enumerate_serial_windows(self):
         """Manually Enumerate the first 20 COM ports.
@@ -75,7 +84,6 @@ class SerialServer(LabradServer):
         possibly doesn't work right on windows for COM ports above 4.
         http://stackoverflow.com/questions/12090503/listing-available-com-ports-with-python
         """
-        self.SerialPorts = []
         print('Searching for COM ports:')
         for a in range(1, 40):
             COMexists = True
@@ -105,7 +113,6 @@ class SerialServer(LabradServer):
         each port and ignore it if we can't.
         """
         dev_list = serial.tools.list_ports.comports()
-        self.SerialPorts = []
         for d in dev_list:
             dev_path = d[0]
             try:
