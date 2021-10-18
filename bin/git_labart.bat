@@ -1,12 +1,9 @@
 @ECHO OFF
 
-conda activate labart
-CD %HOME%/Code/EGGS_labrad/lib/misc
-::todo: need to set name
-SET name = labart and %hostname%
-::todo: make sure this is done correctly
-conda env create --file %name%.yml
-
-git add %name%.yml
-git commit -m "updated conda env file"
-git push origin main
+SET "filename=labart_%COMPUTERNAME%.yml"
+CALL activate labart
+CD "%HOME%\Code\EGGS_labrad\lib\misc"
+CALL conda env export --name labart > %filename%
+CALL git add %filename%
+CALL git commit -m "updated labart environment yml file"
+CALL git push origin main

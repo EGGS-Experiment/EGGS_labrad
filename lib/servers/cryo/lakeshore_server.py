@@ -35,7 +35,7 @@ TEMPSIGNAL = 122485
 class Lakeshore336Server(SerialDeviceServer):
     name = 'Lakeshore 336 Server'
     regKey = 'Lakeshore336Server'
-    serNode = getNodeName()
+    serNode = 'wanchai'
     port = 'COM6'
 
     timeout = WithUnit(1.0, 's')
