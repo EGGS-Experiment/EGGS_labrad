@@ -388,7 +388,7 @@ class script_scanner_gui(QtWidgets.QWidget):
         layout.addWidget(self.scripting_widget)
         layout.addWidget(self.ParametersEditor)
         self.setLayout(layout)
-        self.setWindowTitle('Script Scanner Gui')
+        self.setWindowTitle('Script Scanner GUI')
 
     def displayError(self, text):
         # runs the message box in a non-blocking method

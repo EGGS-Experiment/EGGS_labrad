@@ -50,8 +50,7 @@ class parameter_delegate(QtWidgets.QAbstractItemDelegate):
             value = editor.text()
         else:
             value = editor.value()
-            #todo: change this
-        model.setData(index, QtCore.QVariant(value))
+        model.setData(index, value)
 
 class DurationBandwidthEditor(base, form):
     

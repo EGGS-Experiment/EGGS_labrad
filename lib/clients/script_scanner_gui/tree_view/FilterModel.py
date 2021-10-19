@@ -10,18 +10,20 @@ class FilterModel(QtCore.QSortFilterProxyModel):
         self.setDynamicSortFilter(True)
         self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
         self._show_only = []
-    
+
     def filterAcceptsRow(self, row, index):
         model_index = self.sourceModel().index(row, 0, index)
-        filter_text = str(self.sourceModel().data(model_index, self.filterRole()))
-        contains_filter = str(self.filterRegExp()) in filter_text
+        filter_text = self.sourceModel().data(model_index, self.filterRole())
+        contains_filter = self.filterRegExp().pattern() in filter_text
         in_show_only = self._is_in_show_only(filter_text)
         return contains_filter and in_show_only
     
     def _is_in_show_only(self, filter_text):
-        if not len(self._show_only): return True
-        for collection,parameter in self._show_only:
-            if (collection+parameter) in filter_text: return True
+        if not len(self._show_only):
+            return False
+        for collection, parameter in self._show_only:
+            if (collection+parameter) in filter_text:
+                return True
         return False
     
     def filterAcceptsColumn(self, column, index):
@@ -37,3 +39,4 @@ class FilterModel(QtCore.QSortFilterProxyModel):
     
     def shown(self):
         return self._show_only
+

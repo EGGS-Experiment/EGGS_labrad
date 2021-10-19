@@ -50,13 +50,21 @@ class EGGS_GUI(QMainWindow):
         from EGGS_labrad.lib.clients.pump_client.pump_client import pump_client
         lakeshore = lakeshore_client(reactor)
         pumps = pump_client(reactor)
+        pumps2 = pump_client(reactor)
 
         #main layout
         holder_widget = QWidget()
         holder_layout = QGridLayout()
         holder_widget.setLayout(holder_layout)
-        holder_layout.addWidget(lakeshore, 0, 0, 2, 3)
-        holder_layout.addWidget(pumps, 0, 3, 1, 1)
+        holder_layout.addWidget(lakeshore, 0, 0, 2, 2)
+        holder_layout.addWidget(pumps, 0, 2, 1, 1)
+        holder_layout.addWidget(pumps2, 1, 2, 1, 1)
+        holder_layout.setColumnStretch(0, 1)
+        holder_layout.setColumnStretch(1, 1)
+        holder_layout.setColumnStretch(2, 1)
+        holder_layout.setRowStretch(0, 1)
+        holder_layout.setRowStretch(1, 1)
+        holder_layout.setRowStretch(2, 1)
         #todo: try size policy
         return holder_widget
 

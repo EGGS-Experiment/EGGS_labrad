@@ -47,7 +47,7 @@ class parameter_delegate(QtWidgets.QAbstractItemDelegate):
             value = editor.text()
         else:
             value = editor.value()
-        model.setData(index, QtWidgets.QVariant(value))
+        model.setData(index, value)
 
 class ParameterEditor(paramBase, paramForm):
     

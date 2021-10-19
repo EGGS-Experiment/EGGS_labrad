@@ -289,7 +289,6 @@ class experiment_selector_widget(QtWidgets.QWidget):
         self.repeat_button.pressed.connect(self.on_repeat_button)
         self.schedule_button.pressed.connect(self.on_schedule_button)
         self.scan_button.pressed.connect(self.on_scan_button)
-        #todo: fix, should it be signal emit?
         self.dropdown.currentTextChanged.connect(self.on_experiment_selected)
         self.dropdown.currentTextChanged.connect(self.check_button_disable)
 
