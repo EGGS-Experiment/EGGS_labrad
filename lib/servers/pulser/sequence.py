@@ -167,37 +167,43 @@ class Sequence():
             coherent = channel.phase_coherent_model
             freq_min, freq_max = channel.boardfreqrange
             ampl_min, ampl_max = channel.boardamplrange
+            #get conversion from binary to values, 65535 = 16 bit max
+            freq_conv = (freq_max - freq_min) / float(65535)
+            ampl_conv = (ampl_max - ampl_min) / float(65535)
             def chunks(l, n):
                 """ Yield successive n-sized chunks from l."""
                 for i in range(0, len(l), n):
                     yield l[i:i+n]
-            if not coherent:
-                for a, b, c, d in chunks(arr, 4):
-                    freq_num = (256*b + a)
-                    ampl_num = (256*d + c)
-                    freq = freq_min + freq_num * (freq_max - freq_min) / float(16**4 - 1)
-                    ampl = ampl_min + ampl_num * (ampl_max - ampl_min) / float(16**4 - 1)
+            if coherent:
+                for a0, a1, amp0, amp1, a2, a3, a4, a5, f0, f1, f2, f3, f4, f5, f6, f7, in chunks(arr, 16):
+                    freq_num = (f7 << 24) + (f6 << 16) + (f5 << 8) + f4
+                    ampl_num = (amp1 << 8) + amp0
+                    freq = freq_min + freq_num * freq_conv
+                    print("freq: ", freq)
+                    ampl = ampl_min + ampl_num * ampl_conv
+                    print("ampl: ", ampl)
                     program.append((name, freq, ampl))
             else:
-                for a0, a1, amp0, amp1, a2, a3, a4, a5, f0, f1, f2, f3, f4, f5, f6, f7, in chunks(arr, 16):
-                    freq_num = (256**2)*(256*f7 + f6) + (256*f5 + f4)
-                    ampl_num = 256*amp1 + amp0
-                    freq = freq_min + freq_num * (freq_max - freq_min) / float(16**8 - 1)
-                    print("freq: ", freq)
-                    ampl = ampl_min + ampl_num * (ampl_max - ampl_min) / float(16**4 - 1)
-                    print("ampl: ", ampl)
+                for a, b, c, d in chunks(arr, 4):
+                    freq_num = (b << 8) + a
+                    ampl_num = (d << 8) + c
+                    freq = freq_min + freq_num * freq_conv
+                    ampl = ampl_min + ampl_num * ampl_conv
                     program.append((name, freq, ampl))
         return program
 
     def ttlHumanRepresentation(self, rep):
-        rep = str(rep) ### recast rep from bytearray into string
-        arr = numpy.fromstring(rep, dtype = numpy.uint16) #does the decoding from the string
+        # recast rep from bytearray into string
+        rep = str(rep)
+        # does the decoding from the string
+        arr = numpy.fromstring(rep, dtype = numpy.uint16)
         #arr = numpy.frombuffer(rep, dtype = numpy.uint16)
-        arr = numpy.array(arr, dtype = numpy.uint32) #once decoded, need to be able to manipulate large numbers
+        # once decoded, need to be able to manipulate large numbers
+        arr = numpy.array(arr, dtype = numpy.uint32)
         #arr = numpy.array(rep,dtype = numpy.uint16)
         arr = arr.reshape(-1,4)
-        times = (65536 * arr[:,0] + arr[:,1]) * float(self.timeResolution)
-        channels = (65536 * arr[:,2] + arr[:,3])
+        times = ((arr[:,0] << 16) + arr[:,1]) * float(self.timeResolution)
+        channels = ((arr[:,2] << 16) + arr[:,3])
 
         def expandChannel(ch):
             '''function for getting the binary representation, i.e 2**32 is 1000...0'''

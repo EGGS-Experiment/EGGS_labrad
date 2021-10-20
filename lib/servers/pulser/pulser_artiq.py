@@ -48,6 +48,7 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         self.seconds_to_mu = api.core.seconds_to_mu
         self.amplitude_to_asf = api.dds_list[0].amplitude_to_asf
         self.frequency_to_ftw = api.dds_list[0].frequency_to_ftw
+        self.turns_to_ftw = api.dds_list[0].turns_to_ftw
 
         #start
         LabradServer.__init__(self)

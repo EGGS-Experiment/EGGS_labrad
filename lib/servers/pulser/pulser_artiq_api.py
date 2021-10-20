@@ -96,11 +96,12 @@ class api(EnvExperiment):
                             self.ttl_list[i].on()
                         elif ttlCommandArr[i] == -1:
                             self.ttl_list[i].off()
-            #todo: program DDS
             for i in range():
-                time_pmt = PMT_device.gate_rising(self.pmtInterval)
+                time_pmt = PMT_device.gate_rising_mu(self.pmtInterval)
                 counts_pmt = PMT_device.count(time_pmt)
                 self.mutate_dataset(self.PMT_count, i, counts_pmt)
+            #todo: program dds
+            #todo: program ttls for dds's
 
 
     @kernel
@@ -169,22 +170,19 @@ class api(EnvExperiment):
         """
         User selects PMT counting rate
         """
-        if mode == 0:
-            self.pmtMode = 0
-        elif mode == 1:
-            self.pmtMode = 1
+        self.pmtMode = mode
 
     def setPMTCountInterval(self, time):
         '''
-        Set count rate of PMT in ms
+        Set count rate of PMT in us
         '''
-        self.pmtInterval = time * us
+        self.pmtInterval = time
 
     def getReadoutCounts(self, number):
         '''
         Get the readout count data.
         '''
-        #remove np.nan
+        #todo: remove np.nan
         return self.PMT_count
 
     def resetReadoutCounts(self):
@@ -194,21 +192,6 @@ class api(EnvExperiment):
         self.set_dataset('PMT_count', np.full(self.pmtArrayLength, np.nan))
 
     #DDS functions
-    @kernel
-    def resetAllDDS(self):
-        '''
-        Reset the ram position of all dds chips to 0
-        '''
-
-
-    @kernel
-    def advanceAllDDS(self):
-        '''
-        Advance the ram position of all dds chips
-        '''
-        # not easily possible since FPGA RAM isn't exposed as part of artiq API
-
-
     @kernel
     def initializeDDS(self):
         '''
@@ -231,12 +214,31 @@ class api(EnvExperiment):
             except RTIOUnderflow:
                 self.core.break_realtime()
                 device.init()
+        self.core.reset()
 
     @kernel
-    def setDDSParam(self, chan, _asf, _ftw, **kwargs):
-        self.dds_list[chan].set_mu(ftw = _ftw, asf = _asf)
-        if kwargs is not None:
-            self.dds_list[chan].set_mu(kwargs)
+    def setDDSParam(self, chan, _asf, _ftw, _pow):
+        self.dds_list[chan].set_mu(ftw = _ftw, asf = _asf, pow = _pow)
+
+    @kernel
+    def setDDSRAM(self, chan, addr_start, addr_stop, data, _profile):
+        #todo: cpld set profile
+        self.dds_list[chan].set_profile_ram(addr_start, addr_stop, profile = _profile)
+        self.dds_list[chan].write_ram(data)
+
+    @kernel
+    def resetAllDDS(self):
+        '''
+        Reset the ram position of all dds chips to 0
+        '''
+        #todo
+
+    @kernel
+    def advanceAllDDS(self):
+        '''
+        Advance the ram position of all dds chips
+        '''
+        #todo
 
     #LineTrigger functions
     def enableLineTrigger(self, delay = 0):
