@@ -122,7 +122,7 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         self.programmed_sequence = sequence
         #todo: calculate number of PMT recordings need
         #todo: ensure num doesn't exceed pmt array length
-        dds, ttl = sequence.progRepresentation()
+        _, ttl = sequence.progRepresentation()
         if dds is None:
             dds = {}
         #use ddsSettinglist since that is more ARTIQ-friendly

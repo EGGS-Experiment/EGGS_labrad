@@ -28,6 +28,7 @@ class DDS_artiq(LabradServer):
             self._checkRange('amplitude', channel, ampl)
             self._checkRange('frequency', channel, freq)
             yield self.inCommunication.run(self._setDDSParam, channel, freq, ampl, phase)
+        self.ddsSequenceARTIQ = {}
         #todo: get io update alignment
 
     @setting(41, "Get DDS Channels", returns = '*s')
@@ -63,14 +64,14 @@ class DDS_artiq(LabradServer):
         channel = self._getChannel(c, name)
         if frequency is not None:
             #set frequency
-            frequency = frequency['Hz']
+            frequency = frequency['MHz']
             self._checkRange('frequency', channel, frequency)
             if channel.state:
                 #only send to hardware if the channel is on
                 yield self._setDDSParam(channel, freq=frequency)
             channel.frequency = frequency
             self.notifyOtherListeners(c, (name, 'frequency', channel.frequency), self.on_dds_param)
-        frequency = WithUnit(channel.frequency, 'Hz')
+        frequency = WithUnit(channel.frequency, 'MHz')
         returnValue(frequency)
 
     @setting(44, "Phase", name = 's', phase = ['v'], returns = ['v'])
@@ -147,8 +148,8 @@ class DDS_artiq(LabradServer):
                 self._checkRange('frequency', channel, freq)
                 self._checkRange('amplitude', channel, ampl)
             #convert DDS settings to RAM data
-            num = self._settingstoRAM(channel, freq, ampl, phase, ramp_rate, amp_ramp_rate)
-            num_off = self._settingstoRAM(channel, freq, ampl_off, phase, ramp_rate, amp_ramp_rate)
+            num = self.settings_to_num(channel, freq, ampl, phase, ramp_rate, amp_ramp_rate)
+            num_off = self.settings_to_num(channel, freq, ampl_off, phase, ramp_rate, amp_ramp_rate)
             #note < sign, because start can not be 0.
             #this would overwrite the 0 position of the ram, and cause the dds to change before pulse sequence is launched
             if not self.sequenceTimeRange[0] < start <= self.sequenceTimeRange[1]:
@@ -158,6 +159,8 @@ class DDS_artiq(LabradServer):
             if not dur == 0:    #0 length pulses are ignored
                 sequence.addDDS(name, start, num, 'start')
                 sequence.addDDS(name, start + dur, num_off, 'stop')
+                self.ddsSequenceARTIQ.append((name, start, (freq, ampl, phase, ramp_rate, amp_ramp_rate), 'start'))
+                self.ddsSequenceARTIQ.append((name, start + dur, (freq, ampl, phase, ramp_rate, amp_ramp_rate), 'start'))
 
     @setting(47, 'Get DDS Amplitude Range', name = 's', returns = '(vv)')
     def getDDSAmplRange(self, c, name = None):
@@ -179,28 +182,69 @@ class DDS_artiq(LabradServer):
             ampl = self.dmb_to_fampl(channel.amplitude) #convert to fractional amplitude
             ampl = self.amplitude_to_asf(ampl)
         if freq is None:
-            freq = self.frequency_to_ftw(channel.frequency)
+            freq = self.frequency_to_ftw(channel.frequency/1000000) #MHz to Hz
         if phase is None:
             phase = self.turns_to_pow(channel.phase)
         yield self.inCommunication.run(self.api.setDDSParam, channel.channelnumber, freq, ampl, phase)
-
-    #not used
-    def _settingstoRAM(self, channel, freq, ampl, phase = 0.0, ramp_rate = 0.0, amp_ramp_rate = 0.0):
-        """
-        Converts the DDS settings to RAM data
-        """
-        freq = self.frequency_to_ftw(freq)
-        ampl = self.dbm_to_fampl(ampl)
-        ampl = self.amplitude_to_asw(ampl)
-        phase = self.turns_to_pow(phase)
-        #no need if only 8 profiles and no ramp
-        if (ramp_rate == 0) and (amp_ramp_rate == 0):
-            return (freq, ampl, phase)
 
     def _artiqParseDDS(self, dds_seq):
         #get each DDS pulse as (name, time, RAM, on/off)
         dds_seq = sorted(self.ddsSettingList, key = lambda t: t[1])
         entries =
+        if not self.userAddedDDS():
+            return None
+        state = self.parent._getCurrentDDS()
+        #keeps track of end time and
+        pulses_end = {}.fromkeys(state, (0, 'stop'))
+        dds_program = {}.fromkeys(state, '')
+        lastTime = 0
+        #get each DDS pulse as (name, time, RAM, on/off)
+        entries = sorted(self.ddsSettingList, key = lambda t: t[1] ) #sort by starting time
+        possibleError = (0, '')
+        while True:
+            try:
+                name, start, num, typ = entries.pop(0)
+            except IndexError:
+                if start  == lastTime:
+                    #still have unprogrammed entries
+                    self.addToProgram(dds_program, state)
+                    self._addNewSwitch(lastTime, self.advanceDDS, 1)
+                    self._addNewSwitch(lastTime + self.resetstepDuration, self.advanceDDS, -1)
+                #add termination
+                for name in iter(dds_program):
+                    dds_program[name] += '\x00\x00'
+                #at the end of the sequence, reset dds
+                lastTTL = max(self.switchingTimes.keys())
+                self._addNewSwitch(lastTTL, self.resetDDS, 1)
+                self._addNewSwitch(lastTTL + self.resetstepDuration, self.resetDDS, -1)
+                return dds_program
+            end_time, end_typ = pulses_end[name]
+            # the time has advanced, so need to program the previous state
+            if start > lastTime:
+                #raise exception if error exists and belongs to that time
+                if possibleError[0] == lastTime and len(possibleError[1]):
+                    raise Exception(possibleError[1])
+                self.addToProgram(dds_program, state)
+                #move RAM to next position
+                if not lastTime == 0:
+                    self._addNewSwitch(lastTime,self.advanceDDS,1)
+                    self._addNewSwitch(lastTime + self.resetstepDuration, self.advanceDDS, -1)
+                lastTime = start
+            #move to next dds pulse
+            if start == end_time:
+                if end_typ == 'stop' and typ == 'start':
+                    possibleError = (0, '')
+                    state[name] = num
+                    pulses_end[name] = (start, typ)
+                elif end_typ == 'start' and typ == 'stop':
+                    possibleError = (0, '')
+            elif end_typ == typ:
+                possibleError = (start, 'Found Overlap Of Two Pulses for channel {}'.format(name))
+                state[name] = num
+                pulses_end[name] = (start, typ)
+            else:
+                state[name] = num
+                pulses_end[name] = (start, typ)
 
     #needed for compatibility with sequence object (sequence.py)
     @inlineCallbacks
@@ -234,3 +278,103 @@ class DDS_artiq(LabradServer):
         except KeyError:
             raise Exception("Channel {0} not found".format(name))
         return channel
+
+    def settings_to_num(self, channel, freq, ampl, phase = 0.0, ramp_rate = 0.0, amp_ramp_rate = 0.0):
+        if not channel.phase_coherent_model:
+            num = self._valToInt(channel, freq, ampl)
+        else:
+            num = self._valToInt_coherent(channel, freq, ampl, phase, ramp_rate, amp_ramp_rate)
+        return num
+
+    def _valToInt_coherent(self, channel, freq, ampl, phase=0, ramp_rate=0,
+                           amp_ramp_rate=0):  ### add ramp for ramping functionality
+        '''
+        takes the frequency and amplitude values for the specific channel and returns integer representation of the dds setting
+        freq is in MHz
+        power is in dbm
+        '''
+        ans = 0
+        ## changed the precision from 32 to 64 to handle super fine frequency tuning
+        for val, r, m, precision in [(freq, channel.boardfreqrange, 1, 64),
+                                     (ampl, channel.boardamplrange, 2 ** 64, 16),
+                                     (phase, channel.boardphaserange, 2 ** 80, 16)]:
+            minim, maxim = r
+            # print r
+            resolution = (maxim - minim) / float(2 ** precision - 1)
+            # print resolution
+            seq = int((val - minim) / resolution)  # sequential representation
+            # print seq
+            ans += m * seq
+
+        ### add ramp rate
+        minim, maxim = channel.boardramprange
+        resolution = (maxim - minim) / float(2 ** 16 - 1)
+        if ramp_rate < minim:  ### if the ramp rate is smaller than the minim, thenn treat it as no rampp
+            seq = 0
+        elif ramp_rate > maxim:
+            seq = 2 ** 16 - 1
+        else:
+            seq = int((ramp_rate - minim) / resolution)
+
+        ans += 2 ** 96 * seq
+
+        ### add amp ramp rate
+
+        minim, maxim = channel.board_amp_ramp_range
+        minim_slope = 1 / maxim
+        maxim_slope = 1 / minim
+        resolution = (maxim_slope - minim_slope) / float(2 ** 16 - 1)
+        if (amp_ramp_rate < minim):
+            seq_amp_ramp = 0
+        elif (amp_ramp_rate > maxim):
+            seq_amp_ramp = 1
+        else:
+            slope = 1 / amp_ramp_rate
+            seq_amp_ramp = int(np.ceil((slope - minim_slope) / resolution))  # return ceiling of the number
+
+        ans += 2 ** 112 * seq_amp_ramp
+
+        return ans
+
+    def _intToBuf_coherent(self, num):
+        '''
+        takes the integer representing the setting and returns the buffer string for dds programming
+        '''
+
+        freq_num = (
+                    num % 2 ** 64)  # change according to the new DDS which supports 64 bit tuning of the frequency. Used to be #freq_num = (num % 2**32)*2**32
+        b = bytearray(8)  # initialize the byte array to sent to the pusler later
+        for i in range(8):
+            b[i] = (freq_num // (2 ** (i * 8))) % 256
+            # print i, "=", (freq_num//(2**(i*8)))%256
+
+        # phase
+        phase_num = (num // 2 ** 80) % (2 ** 16)
+        phase = bytearray(2)
+        phase[0] = phase_num % 256
+        phase[1] = (phase_num // 256) % 256
+
+        ### amplitude
+        ampl_num = (num // 2 ** 64) % (2 ** 16)
+        amp = bytearray(2)
+        amp[0] = ampl_num % 256
+        amp[1] = (ampl_num // 256) % 256
+
+        ### ramp rate. 16 bit tunability from roughly 116 Hz/ms to 7.5 MHz/ms
+        ramp_rate = (num // 2 ** 96) % (2 ** 16)
+        ramp = bytearray(2)
+        ramp[0] = ramp_rate % 256
+        ramp[1] = (ramp_rate // 256) % 256
+
+        ##  amplitude ramp rate
+        amp_ramp_rate = (num // 2 ** 112) % (2 ** 16)
+        # print "amp_ramp is" , amp_ramp_rate
+        amp_ramp = bytearray(2)
+        amp_ramp[0] = amp_ramp_rate % 256
+        amp_ramp[1] = (amp_ramp_rate // 256) % 256
+
+        ##a = bytearray.fromhex(u'0000') + amp + bytearray.fromhex(u'0000 0000')
+        a = phase + amp + amp_ramp + ramp
+
+        ans = a + b
+        return ans

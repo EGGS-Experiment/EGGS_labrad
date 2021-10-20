@@ -128,12 +128,11 @@ class Sequence():
 
     def addToProgram(self, prog, state):
         for name, num in state.items():
-            # if not hardwareConfiguration.ddsDict[name].phase_coherent_model:
-            #     buf = self.parent._intToBuf(num)
-            # else:
-            #     buf = self.parent._intToBuf_coherent(num)
-            # prog[name] += buf
-            prog[name].append(num)
+            if not hardwareConfiguration.ddsDict[name].phase_coherent_model:
+                buf = self.parent._intToBuf(num)
+            else:
+                buf = self.parent._intToBuf_coherent(num)
+            prog[name] += buf
 
     def parseTTL(self):
         """Returns the representation of the sequence for programming the FPGA"""
