@@ -199,8 +199,7 @@ class api(EnvExperiment):
         '''
         Reset the ram position of all dds chips to 0
         '''
-        #not easily possible since FPGA RAM isn't exposed as part of artiq API
-        pass
+
 
     @kernel
     def advanceAllDDS(self):
@@ -208,7 +207,7 @@ class api(EnvExperiment):
         Advance the ram position of all dds chips
         '''
         # not easily possible since FPGA RAM isn't exposed as part of artiq API
-        pass
+
 
     @kernel
     def initializeDDS(self):

@@ -115,7 +115,7 @@ class Sequence():
                 elif end_typ == 'start' and typ == 'stop':
                     possibleError = (0, '')
             elif end_typ == typ:
-                possibleError = (start, 'Found Overlap Of Two Pules for channel {}'.format(name))
+                possibleError = (start, 'Found Overlap Of Two Pulses for channel {}'.format(name))
                 state[name] = num
                 pulses_end[name] = (start, typ)
             else:
