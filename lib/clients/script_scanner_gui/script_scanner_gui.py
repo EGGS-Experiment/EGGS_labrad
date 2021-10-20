@@ -1,8 +1,15 @@
 from PyQt5 import QtWidgets
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.lib.clients.connection import connection
-from EGGS_labrad.lib.clients.script_scanner_gui.scripting_widget import scripting_widget
-from EGGS_labrad.lib.clients.script_scanner_gui.tree_view.Controllers import ParametersEditor
+
+#import constituent widgets
+#need to use try/except since relative imports don't work when called externally
+try:
+    from scripting import scripting_widget
+    from tree_view import ParametersEditor
+except:
+    from .scripting import scripting_widget
+    from .tree_view import ParametersEditor
 
 class script_scanner_gui(QtWidgets.QWidget):
 

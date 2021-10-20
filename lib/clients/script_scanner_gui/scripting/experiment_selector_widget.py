@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from numpy import linspace
 import os
 
-basepath = os.path.dirname(__file__)
+basepath = os.path.dirname(os.path.dirname(__file__))
 path = os.path.join(basepath, "Views", "selectScan.ui")
 base, form=uic.loadUiType(path)
 

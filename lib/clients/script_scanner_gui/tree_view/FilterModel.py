@@ -20,7 +20,7 @@ class FilterModel(QtCore.QSortFilterProxyModel):
     
     def _is_in_show_only(self, filter_text):
         if not len(self._show_only):
-            return False
+            return True
         for collection, parameter in self._show_only:
             if (collection+parameter) in filter_text:
                 return True
