@@ -16,10 +16,12 @@ timeout = 20
 ### END NODE INFO
 """
 
-#labrad and server imports
+#labrad and artiq imports
 from labrad.server import LabradServer, setting, Signal
 from pulser_artiq_DDS import DDS_artiq
 from pulser_artiq_linetrigger import LineTrigger_artiq
+from artiq.language import units
+#todo: make sure we have us, ms, etc.
 
 #async imports
 from twisted.internet import reactor, task
@@ -70,7 +72,6 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         self.maxRuns = 0
         self.programmed_sequence = None
 
-
         #conversions
         self.seconds_to_mu = self.api.core.seconds_to_mu
         self.amplitude_to_asf = self.api.dds_list[0].amplitude_to_asf
@@ -83,7 +84,7 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         for channel in self.channelDict.values():
             channelnumber = channel.channelnumber
             if channel.ismanual:
-                state = self.cnot(channel.manualinv, channel.manualstate)
+                state = channel.manualin ^ channel.manualstate
                 self.api.setManual(channelnumber, state)
             else:
                 self.api.setAuto(channelnumber, channel.autoinv)
@@ -119,11 +120,14 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         if not sequence:
             raise Exception("Please create new sequence first")
         self.programmed_sequence = sequence
+        #todo: calculate number of PMT recordings need
+        #todo: ensure num doesn't exceed pmt array length
         dds, ttl = sequence.progRepresentation()
-        yield self.inCommunication.acquire()
         if dds is None:
             dds = {}
-        dds_single, dds_ramp = self.artiq_convert_dds(dds)
+        #use ddsSettinglist since that is more ARTIQ-friendly
+        dds_single, dds_ramp = self._artiqParseDDS(sequence.ddsSettingList)
+        yield self.inCommunication.acquire()
         yield deferToThread(self.api.programBoard, ttl, dds_single, dds_ramp)
         self.inCommunication.release()
         self.isProgrammed = True
@@ -208,6 +212,7 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.stopSequence)
         yield deferToThread(self.api.eraseSequence)
+        #todo: do we really need to erase?
         self.inCommunication.release()
         self.ddsLock = False
 
@@ -285,7 +290,7 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         else:
             state = channel.manualstate
 
-        state = self.cnot(channel.manualinv, state)
+        state = channel.manualinv ^ state
 
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.setManual, channelNumber, state)
@@ -301,6 +306,7 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         """
         Switches the given channel into the automatic mode, with an optional inversion.
         """
+        #todo: maybe this doesn't need to do anything, just invert in code
         if channelName not in self.channelDict.keys():
             raise Exception("Incorrect Channel")
         channel = self.channelDict[channelName]
@@ -353,17 +359,16 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         return d
 
     @setting(17, 'Repeatitions Completed', returns = 'w')
-    def repeatitionsCompleted(self, c):
+    def repetitionsCompleted(self, c):
         """
         Check how many repetitions have been completed in the infinite or number modes
         """
         yield self.inCommunication.acquire()
-        completed = self.api.numRuns
+        completed = yield deferToThread(self.api.numRepetitions)
         self.inCommunication.release()
         returnValue(completed)
 
     #PMT functions
-    #todo: ensure in ms for times pmt
     @setting(21, 'Set Mode', mode = 's', returns = '')
     def setMode(self, c, mode):
         """
@@ -396,9 +401,11 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
             raise Exception("Incorrect mode")
 
         self.collectionTime[mode] = new_time
+        #convert to machine units from microseconds
+        mu_time = self.seconds_to_mu(new_time * us)
         if mode == 'Normal':
             yield self.inCommunication.acquire()
-            yield deferToThread(self.api.setPMTCountInterval, new_time)
+            yield deferToThread(self.api.setPMTCountInterval, mu_time)
             self.inCommunication.release()
 
     @setting(23, 'Get Collection Mode', returns = 's')
@@ -449,11 +456,6 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.initializeDDS)
         self.inCommunication.release()
-
-    def cnot(self, control, inp):
-        if control:
-            inp = not inp
-        return inp
 
     #Signal/Context functions
     def notifyOtherListeners(self, context, message, f):

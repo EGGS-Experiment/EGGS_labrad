@@ -74,9 +74,11 @@ class Sequence():
         if not self.userAddedDDS():
             return None
         state = self.parent._getCurrentDDS()
-        pulses_end = {}.fromkeys(state, (0, 'stop')) #time / boolean whether in a middle of a pulse
+        #keeps track of end time and
+        pulses_end = {}.fromkeys(state, (0, 'stop'))
         dds_program = {}.fromkeys(state, '')
         lastTime = 0
+        #get each DDS pulse as (name, time, RAM, on/off)
         entries = sorted(self.ddsSettingList, key = lambda t: t[1] ) #sort by starting time
         possibleError = (0, '')
         while True:
@@ -97,17 +99,19 @@ class Sequence():
                 self._addNewSwitch(lastTTL + self.resetstepDuration, self.resetDDS, -1)
                 return dds_program
             end_time, end_typ = pulses_end[name]
+            # the time has advanced, so need to program the previous state
             if start > lastTime:
-                #the time has advanced, so need to program the previous state
+                #raise exception if error exists and belongs to that time
                 if possibleError[0] == lastTime and len(possibleError[1]):
-                    raise Exception(possibleError[1]) #if error exists and belongs to that time
+                    raise Exception(possibleError[1])
                 self.addToProgram(dds_program, state)
+                #move RAM to next position
                 if not lastTime == 0:
                     self._addNewSwitch(lastTime,self.advanceDDS,1)
                     self._addNewSwitch(lastTime + self.resetstepDuration, self.advanceDDS, -1)
                 lastTime = start
+            #move to next dds pulse
             if start == end_time:
-                #overwite only when extending pulse
                 if end_typ == 'stop' and typ == 'start':
                     possibleError = (0, '')
                     state[name] = num
@@ -123,12 +127,13 @@ class Sequence():
                 pulses_end[name] = (start, typ)
 
     def addToProgram(self, prog, state):
-        for name,num in state.items():
-            if not hardwareConfiguration.ddsDict[name].phase_coherent_model:
-                buf = self.parent._intToBuf(num)
-            else:
-                buf = self.parent._intToBuf_coherent(num)
-            prog[name] += buf
+        for name, num in state.items():
+            # if not hardwareConfiguration.ddsDict[name].phase_coherent_model:
+            #     buf = self.parent._intToBuf(num)
+            # else:
+            #     buf = self.parent._intToBuf_coherent(num)
+            # prog[name] += buf
+            prog[name].append(num)
 
     def parseTTL(self):
         """Returns the representation of the sequence for programming the FPGA"""

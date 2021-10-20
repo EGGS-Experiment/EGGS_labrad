@@ -43,14 +43,14 @@ class api(EnvExperiment):
         for name, params in self.device_db:
             self.setattr(name)
             if params['class'] == 'TTLInOut':
-                self.ttlin_list[name] = {'device': self.get_device(name)}
+                self.ttlin_list[name] = self.get_device(name)
             elif (params['class'] == 'TTLOut'):
                 if 'pmt' in name:
-                    self.pmt_list[name] = {'device': self.get_device(name)}
+                    self.pmt_list[name] = self.get_device(name)
                 elif 'linetrigger' in name:
-                    self.linetrigger_list[name] = {'device': self.get_device(name)}
+                    self.linetrigger_list[name] = self.get_device(name)
                 elif 'urukul' not in name:
-                    self.ttlout_list[name] = {'device': self.get_device(name)}
+                    self.ttlout_list[name] = self.get_device(name)
             elif params['class'] == 'AD9910':
                 #get DDS component names and devices
                 args = params['arguments']
@@ -107,11 +107,9 @@ class api(EnvExperiment):
     @kernel(flags = {"fast-math"})
     def programSequence(self, ttl_sequence, dds_single_sequence, dds_ramp_sequence):
         PMT_device = self.ttlin_list['PMT']
-        #todo: calculate number of PMT recordings need
-        #todo: ensure num doesn't exceed pmt array length
         #record pulse sequence in memory
         with self.core_dma.record("pulse_sequence"):
-            #add ttl sequence
+            #program ttl sequence
             for timestamp, ttlCommandArr in ttl_sequence:
                 at_mu(timestamp)
                 with parallel:
@@ -121,6 +119,11 @@ class api(EnvExperiment):
                             self.ttlout_list[i].on()
                         elif ttlCommandArr[i] == -1:
                             self.ttlout_list[i].off()
+            #program DDS sequence
+            for timestamp, params in dds_single_sequence:
+
+            #program DDS Ramp
+            #program PMT input
             for i in range():
                 time_pmt = PMT_device.gate_rising_mu(self.pmtInterval)
                 counts_pmt = PMT_device.count(time_pmt)
@@ -182,13 +185,17 @@ class api(EnvExperiment):
         '''
         Set the logic of the TTL to be auto or not
         '''
-        #todo
+        #todo:
 
+    @kernel
     def setManual(self, channel, state):
         '''
         Set the logic of the TTL to be manual or not
         '''
-        #todo
+        if state:
+            self.ttlout_list[channel].on()
+        else:
+            self.ttlout_list[channel].on()
 
     #PMT functions
     def setMode(self, mode):
@@ -244,6 +251,12 @@ class api(EnvExperiment):
     @kernel
     def setDDSParam(self, chan, _asf, _ftw, _pow):
         self.dds_list[chan].set_mu(ftw = _ftw, asf = _asf, pow = _pow)
+
+    @kernel
+    def setDDSSingle(self, chan, addr_start, addr_stop, data, _profile):
+        #todo: cpld set profile
+        self.dds_list[chan].set_profile_ram(addr_start, addr_stop, profile = _profile)
+        self.dds_list[chan].write_ram(data)
 
     @kernel
     def setDDSRAM(self, chan, addr_start, addr_stop, data, _profile):
