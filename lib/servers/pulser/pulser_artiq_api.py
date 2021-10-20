@@ -31,26 +31,51 @@ class api(EnvExperiment):
 
         #get device names
         self.device_db = self.get_device_db()
-            #get ttl names
-        ttl_names = [key for key, val in self.device_db if val['class'] == 'TTLOut']
-            #get ttl names
-        ttlin_names = [key for key, val in self.device_db if val['class'] == 'TTLInOut']
-            #get dds names
-        dds_names = [key for key, val in self.device_db if val['class'] == 'AD9910' or 'AD9912']
-            #get urukul names
-        urukul_names = [key for key, val in self.device_db if val['class'] == 'CPLD']
+            #create holding dictionaries
+        self.ttlout_list = dict()
+        self.ttlin_list = dict()
+        self.dds_list = dict()
+        self.urukul_list = dict()
+        self.pmt_list = dict()
+        self.linetrigger_list = dict()
 
+        #assign names and devices
+        for name, params in self.device_db:
+            self.setattr(name)
+            if params['class'] == 'TTLInOut':
+                self.ttlin_list[name] = {'device': self.get_device(name)}
+            elif (params['class'] == 'TTLOut'):
+                if 'pmt' in name:
+                    self.pmt_list[name] = {'device': self.get_device(name)}
+                elif 'linetrigger' in name:
+                    self.linetrigger_list[name] = {'device': self.get_device(name)}
+                elif 'urukul' not in name:
+                    self.ttlout_list[name] = {'device': self.get_device(name)}
+            elif params['class'] == 'AD9910':
+                #get DDS component names and devices
+                args = params['arguments']
+                    #CPLD (i.e. urukul)
+                cpld_name = args['cpld_device']
+                cpld_dev = self.get_device(cpld_name)
+                    #DDS on/off switch
+                sw_name = args['sw_device']
+                sw_dev = self.get_device(sw_name)
+                    #set devices
+                self.dds_list[name] = {'device': self.get_device(name),
+                                       'chip_sel': args['chip_select'],
+                                       'cpld': cpld_dev,
+                                       'switch': sw_dev}
+            elif params['class'] == 'CPLD':
+                #get urukul component names and devices
+                args = params['arguments']
+                    #get io-update switch
+                update_name = args['io_update_device']
+                update_dev = self.get_device(update_name)
+                self.urukul_list[cpld_name] = {'device': self.get_device(cpld_name),
+                                               'update': self.get_device(update_dev),
+                                               'clk': args['refclk']}
         #todo: do DAC and ADC
 
-        #set device attributes
-        for name in ttl_names + ttlin_names + dds_names + urukul_names:
-            self.setattr_device(name)
-
-        #get devices
-        self.ttl_list = {name: self.get_device(name) for name in ttl_names}
-        self.ttlin_list = {name: self.get_device(name) for name in ttlin_names}
-        self.dds_list = {name: self.get_device(name) for name in dds_names}
-        self.urukul_list = {name: self.get_device(name) for name in urukul_names}
 
     def _setVariables(self):
         #sequencer variables
@@ -69,13 +94,13 @@ class api(EnvExperiment):
     def _initializeDevices(self):
         #initialize devices
             #set ttlinout devices to be input
-        for device in self.ttlin_list.values():
-            device.input()
+        for component_list in self.ttlin_list.values():
+            component_list['device'].input()
             #initialize DDSs
-        for device in self.dds_list.values():
-            device.init()
-        for device in self.urukul_list.values():
-            device.init()
+        for component_list in self.dds_list.values():
+            component_list['device'].init()
+        for component_list in self.urukul_list.values():
+            component_list['device'].init()
         #todo: set attenuator, etc
 
     #Sequence functions
@@ -93,9 +118,9 @@ class api(EnvExperiment):
                     #todo: convert to name format
                     for i in range(ttl_sequence.channelTotal):
                         if ttlCommandArr[i] == 1:
-                            self.ttl_list[i].on()
+                            self.ttlout_list[i].on()
                         elif ttlCommandArr[i] == -1:
-                            self.ttl_list[i].off()
+                            self.ttlout_list[i].off()
             for i in range():
                 time_pmt = PMT_device.gate_rising_mu(self.pmtInterval)
                 counts_pmt = PMT_device.count(time_pmt)
@@ -115,7 +140,7 @@ class api(EnvExperiment):
         #wait until line trigger receives input or we disable the line trigger
         while self.linetrigger_active:
             #wait in blocks of 10ms
-            time_gate = self.ttlin_list['LineTrigger'].gate_rising(10 * ms)
+            time_gate = self.ttlin_list['LineTrigger'].gate_rising_mu(10 * ms)
             time_trig = self.ttlin_list['LineTrigger'].timestamp_mu(time_gate)
             #time_trig returns -1 if we dont receive a signal
             if time_trig > 0:
@@ -157,13 +182,13 @@ class api(EnvExperiment):
         '''
         Set the logic of the TTL to be auto or not
         '''
-
+        #todo
 
     def setManual(self, channel, state):
         '''
         Set the logic of the TTL to be manual or not
         '''
-
+        #todo
 
     #PMT functions
     def setMode(self, mode):
@@ -227,26 +252,33 @@ class api(EnvExperiment):
         self.dds_list[chan].write_ram(data)
 
     @kernel
+    def toggleDDS(self, dds, state):
+        '''
+        Turn the DDS on/off.
+        '''
+        self.dds_list[dds].cfg_sw(state)
+
+    @kernel
     def resetAllDDS(self):
         '''
         Reset the ram position of all dds chips to 0
         '''
-        #todo
+        pass
 
     @kernel
     def advanceAllDDS(self):
         '''
         Advance the ram position of all dds chips
         '''
-        #todo
+        pass
 
     #LineTrigger functions
     def enableLineTrigger(self, delay = 0):
         '''
-        Enable line trigger with some delay (in microseconds)
+        Enable line trigger with some delay (in machine units)
         '''
         self.linetrigger_active = True
-        self.linetrigger_delay = delay * us
+        self.linetrigger_delay = delay
 
     def disableLineTrigger(self):
         '''

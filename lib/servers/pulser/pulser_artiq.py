@@ -43,13 +43,6 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
 
     def __init__(self, api):
         self.api = api
-
-        #conversions
-        self.seconds_to_mu = api.core.seconds_to_mu
-        self.amplitude_to_asf = api.dds_list[0].amplitude_to_asf
-        self.frequency_to_ftw = api.dds_list[0].frequency_to_ftw
-        self.turns_to_ftw = api.dds_list[0].turns_to_ftw
-
         #start
         LabradServer.__init__(self)
 
@@ -63,8 +56,6 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         self.remoteChannels = hardwareConfiguration.remoteChannels
         self.collectionTimeRange = hardwareConfiguration.collectionTimeRange
         self.sequenceTimeRange = hardwareConfiguration.sequenceTimeRange
-        self.haveSecondPMT = hardwareConfiguration.secondPMT
-
         self.inCommunication = DeferredLock()
 
         #appropriated variables
@@ -79,7 +70,16 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         self.maxRuns = 0
         self.programmed_sequence = None
 
+
+        #conversions
+        self.seconds_to_mu = self.api.core.seconds_to_mu
+        self.amplitude_to_asf = self.api.dds_list[0].amplitude_to_asf
+        self.frequency_to_ftw = self.api.dds_list[0].frequency_to_ftw
+        self.turns_to_pow = self.api.dds_list[0].turns_to_pow
+        self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
+
     def initializeSettings(self):
+        #initialize TTLs
         for channel in self.channelDict.values():
             channelnumber = channel.channelnumber
             if channel.ismanual:
@@ -142,17 +142,17 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         if self.runInf is False:
             raise Exception("Not Running Infinite Sequence")
         yield self.inCommunication.acquire()
-        yield deferToThread(self.api.stopSequence)
         self.maxRuns = 0
+        yield deferToThread(self.api.stopSequence)
         self.inCommunication.release()
 
     @setting(4, "Start Single", returns = '')
     def start(self, c):
         if not self.isProgrammed:
-            raise Exception ("No Programmed Sequence")
+            raise Exception("No Programmed Sequence")
         yield self.inCommunication.acquire()
         self.maxRuns = 1
-        self.api.runSequence(1)
+        yield deferToThread(self.api.runSequence, 1)
         self.inCommunication.release()
 
     @setting(5, 'Add TTL Pulse', channel = 's', start = 'v[s]', duration = 'v[s]')
@@ -160,7 +160,8 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         """
         Add a TTL Pulse to the sequence, times are in seconds
         """
-        if channel not in self.channelDict.keys(): raise Exception("Unknown Channel {}".format(channel))
+        if channel not in self.channelDict.keys():
+            raise Exception("Unknown Channel {}".format(channel))
         hardwareAddr = self.channelDict.get(channel).channelnumber
         sequence = c.get('sequence')
         start = start['s']
@@ -217,12 +218,11 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         """
         if not self.isProgrammed:
             raise Exception("No Programmed Sequence")
-        if not 1 <= repetitions <= (2**16 - 1):
+        if not 1 <= repetitions <= 65535: #max 16-bit value
             raise Exception("Incorrect number of pulses")
         yield self.inCommunication.acquire()
-        self.api.maxRuns = repetitions
         self.maxRuns = repetitions
-        self.api.runSequence()
+        yield deferToThread(self.api.runSequence, repetitions)
         self.inCommunication.release()
 
     @setting(10, "Human Readable TTL", getProgrammed = 'b', returns = '*2s')
@@ -278,7 +278,6 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         if channelName not in self.channelDict.keys():
             raise Exception("Incorrect Channel")
         channel = self.channelDict[channelName]
-        channelNumber = channel.channelnumber
         channel.ismanual = True
 
         if state is not None:

@@ -93,9 +93,11 @@ class DDS_artiq(LabradServer):
 
     @setting(45, 'Output', name= 's', state = 'b', returns =' b')
     def output(self, c, name = None, state = None):
-        """Turns the dds on and off. Turning off the DDS sets the frequency and amplitude
+        """
+        Turns the dds on and off. Turning off the DDS sets the frequency and amplitude
         to the off_parameters provided in the configuration.
         """
+        #todo: change units
         if self.ddsLock and state is not None:
             raise dds_access_locked()
         channel = self._getChannel(c, name)
@@ -140,7 +142,7 @@ class DDS_artiq(LabradServer):
             amp_ramp_rate = amp_ramp_rate['dB']
             freq_off, ampl_off = channel.off_parameters
             #only check range if dds won't be off
-            if freq == 0 or ampl == 0:
+            if (freq == 0) or (ampl == 0):
                 freq, ampl = freq_off, ampl_off
             else:
                 self._checkRange('frequency', channel, freq)
