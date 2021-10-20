@@ -14,4 +14,4 @@ with labrad.connect() as cxn:
     pulser.start_number(10)
     pulser.wait_sequence_done()
     pulser.stop_sequence()
-print 'done'
+print('done')
