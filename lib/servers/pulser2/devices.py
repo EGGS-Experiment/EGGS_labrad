@@ -1,5 +1,7 @@
 from artiq_master.device_db import device_db
 
+#todo: need get_devices; device_mgr?
+
 class Devices:
     def __init__(self):
         self.device_db = device_db

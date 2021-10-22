@@ -54,13 +54,9 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         self.collectionMode = hardwareConfiguration.collectionMode
         self.timeResolution = float(hardwareConfiguration.timeResolution)
         self.ddsDict = hardwareConfiguration.ddsDict
-        self.timeResolvedResolution = hardwareConfiguration.timeResolvedResolution
-        self.remoteChannels = hardwareConfiguration.remoteChannels
         self.collectionTimeRange = hardwareConfiguration.collectionTimeRange
         self.sequenceTimeRange = hardwareConfiguration.sequenceTimeRange
         self.inCommunication = DeferredLock()
-
-        #appropriated variables
         self.isProgrammed = False
 
         LineTrigger_artiq.initialize(self)
@@ -223,7 +219,7 @@ class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
         """
         if not self.isProgrammed:
             raise Exception("No Programmed Sequence")
-        if not 1 <= repetitions <= 65535: #max 16-bit value
+        if not 1 <= repetitions <= 65535:
             raise Exception("Incorrect number of pulses")
         yield self.inCommunication.acquire()
         self.maxRuns = repetitions

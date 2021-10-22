@@ -2,7 +2,6 @@ from labrad import util
 
 from artiq.experiment import *
 from pulser_artiq import Pulser_artiq
-from devices import Devices
 
 import numpy as np
 #todo: convert all time units to seconds

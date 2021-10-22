@@ -34,8 +34,6 @@ from sequence import Sequence
 #function imports
 import numpy as np
 
-from devices import Devices
-
 class Pulser_artiq(DDS_artiq, ARTIQ_LineTrigger):
 
     name = 'ARTIQ Pulser'
