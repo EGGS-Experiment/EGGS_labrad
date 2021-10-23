@@ -49,12 +49,12 @@ class Pulser_api(EnvExperiment):
         #get device names
         self.device_db = self.get_device_db()
             #create holding dictionaries
-        self.ttlout_list = dict()
-        self.ttlin_list = dict()
-        self.dds_list = dict()
-        self.urukul_list = dict()
-        self.pmt_list = dict()
-        self.linetrigger_list = dict()
+        self.ttlout_list = {}
+        self.ttlin_list = {}
+        self.dds_list = {}
+        self.urukul_list = {}
+        self.pmt_list = {}
+        self.linetrigger_list = {}
 
         #assign names and devices
         for name, params in self.device_db.items():
@@ -82,7 +82,6 @@ class Pulser_api(EnvExperiment):
         Set up internal variables
         """
         #sequencer variables
-        #self.set_dataset('numRuns', 0, broadcast = True, persist = True)
         #pmt variables
         self.pmtInterval = 0
         self.pmtMode = 0 #0 is normal/automatic, 1 is differential
@@ -131,17 +130,48 @@ class Pulser_api(EnvExperiment):
         val1 = self.get_dataset('numRuns')
         return val1[0]
 
+    def disconnect(self):
+        self.core.close()
+        self.scheduler.pause()
+
     @kernel
     def eraseSequence(self, sequencename):
         self.core.reset()
         self.core_dma.erase(sequencename)
 
-    @kernel
     def setTTL(self, ttlname, state):
-        ttl_device = self.get_device(ttlname)
-        print(ttl_device)
+        self.core.reset()
+        self.ttl_dev = self.ttlout_list[ttlname]
+        self._setTTL(state)
 
-    def disconnect(self):
-        self.core.close()
-        self.scheduler.pause()
+    @kernel
+    def _setTTL(self, state):
+        self.core.reset()
+        if state:
+            self.ttl_dev.on()
+        else:
+            self.ttl_dev.off()
 
+    @kernel
+    def initializeDDS(self):
+        '''
+        Force reprogram of all dds chips during initialization
+        '''
+        #reset dds
+        self.core.reset()
+        for device in self.dds_list.values():
+            try:
+                device.init()
+            except RTIOUnderflow:
+                self.core.break_realtime()
+                device.init()
+        self.core.reset()
+
+        #reset urukul cpld
+        for device in self.urukul_list.values():
+            try:
+                device.init()
+            except RTIOUnderflow:
+                self.core.break_realtime()
+                device.init()
+        self.core.reset()

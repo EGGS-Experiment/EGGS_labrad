@@ -85,11 +85,27 @@ class Pulser_server(LabradServer):
         """
         if not sequencename:
             sequencename = 'default'
-        self.inCommunication.acquire()
+        yield self.inCommunication.acquire()
         print(sequencename)
         yield deferToThread(self.api.record, sequencename)
         self.inCommunication.release()
         self.ps_programmed = True
+
+        # sequence = c.get('sequence')
+        # if not sequence:
+        #     raise Exception("Please create new sequence first")
+        # self.programmed_sequence = sequence
+        # #todo: calculate number of PMT recordings need
+        # #todo: ensure num doesn't exceed pmt array length
+        # _, ttl = sequence.progRepresentation()
+        # if dds is None:
+        #     dds = {}
+        # #use ddsSettinglist since that is more ARTIQ-friendly
+        # dds_single, dds_ramp = self._artiqParseDDS(sequence.ddsSettingList)
+        # yield self.inCommunication.acquire()
+        # yield deferToThread(self.api.programBoard, ttl, dds_single, dds_ramp)
+        # self.inCommunication.release()
+        # self.isProgrammed = True
 
     @setting(2, "Run Sequence", numruns = 'i', returns='')
     def runSequence(self, c, numruns):
@@ -109,7 +125,7 @@ class Pulser_server(LabradServer):
                     'arguments': {'maxRuns': numruns}}
 
         #run sequence then wait for experiment to submit
-        self.inCommunication.acquire()
+        yield self.inCommunication.acquire()
         self.ps_rid = yield deferToThread(self.scheduler.submit, pipeline_name = ps_pipeline, expid = ps_expid, priority = ps_priority)
         self.inCommunication.release()
 
@@ -120,7 +136,7 @@ class Pulser_server(LabradServer):
         """
         if not self.ps_rid:
             raise Exception('No pulse sequence currently running')
-        self.inCommunication.acquire()
+        yield self.inCommunication.acquire()
         yield deferToThread(self.scheduler.delete, self.ps_rid)
         self.inCommunication.release()
         self.ps_rid = None
@@ -136,7 +152,7 @@ class Pulser_server(LabradServer):
             raise Exception("No Programmed Sequence")
         if not sequencename:
             sequencename = 'default'
-        self.inCommunication.acquire()
+        yield self.inCommunication.acquire()
         yield deferToThread(self.api.eraseSequence, sequencename)
         self.ps_programmed = False
         self.ps_rid = None
@@ -155,7 +171,10 @@ class Pulser_server(LabradServer):
     @setting(11, "Set TTL", ttlname = 's', state = 'b', returns='')
     def setTTL(self, c, ttlname, state):
         """
-        Switches a TTL to the given state
+        Switches a TTL to the given state.
+        Arguments:
+            ttlname (str)   : name of the ttl
+            state   (bool)  : ttl power state
         """
         self.inCommunication.acquire()
         yield deferToThread(self.api.setTTL, ttlname, state)
@@ -174,9 +193,19 @@ class Pulser_server(LabradServer):
             phase   (float) :
         """
         #tdodo: convert
-        self.inCommunication.acquire()
+        yield self.inCommunication.acquire()
         yield deferToThread(self.api.setDDS, ddsname, freq = freq, ampl = ampl, phase = phase)
         self.inCommunication.release()
+
+    @setting(22, "Initialize DDS", returns = '')
+    def reinitializeDDS(self, c):
+        """
+        Reprograms the DDS chip to its initial state
+        """
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.initializeDDS)
+        self.inCommunication.release()
+
 
     #PMT functions
     @setting(31, 'Set Mode', mode = 's', returns = '')
@@ -219,7 +248,7 @@ class Pulser_server(LabradServer):
 
     @setting(33, 'Get Collection Mode', returns = 's')
     def getMode(self, c):
-        return self.collectionMode
+        return self.pmt_mode
 
     @setting(34, 'Get Collection Time', returns = '(vv)')
     def getCollectTime(self, c):
