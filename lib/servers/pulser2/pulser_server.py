@@ -18,8 +18,9 @@ timeout = 20
 
 #labrad and artiq imports
 from labrad.server import LabradServer, setting, Signal
-from artiq.experiment import *
+from labrad.units import WithUnit
 #from pulser_legacy import Pulser_legacy
+from artiq.experiment import *
 
 #async imports
 from twisted.internet import reactor, task
@@ -28,7 +29,6 @@ from twisted.internet.threads import deferToThread
 
 #function imports
 import numpy as np
-from time import sleep
 
 class Pulser_server(LabradServer):
 
@@ -59,8 +59,10 @@ class Pulser_server(LabradServer):
         self.pmt_interval = 0 * us
 
         #linetrigger variables
-        self.linetrigger_active = False
+        self.linetrigger_enabled = False
         self.linetrigger_delay = 0 * ms
+            #todo: change in config
+        self.linetrigger_ttl = 'ttl0'
 
         #conversions
         self.seconds_to_mu = self.api.core.seconds_to_mu
@@ -122,7 +124,10 @@ class Pulser_server(LabradServer):
         ps_expid = {'log_level': 30,
                     'file': self.ps_filename,
                     'class_name': None,
-                    'arguments': {'maxRuns': numruns}}
+                    'arguments': {'maxRuns': numruns,
+                                  'linetrigger_enabled': self.linetrigger_enabled,
+                                  'linetrigger_delay_us': self.linetrigger_delay,
+                                  'linetrigger_ttl_name': self.linetrigger_ttl}}
 
         #run sequence then wait for experiment to submit
         yield self.inCommunication.acquire()
@@ -134,12 +139,13 @@ class Pulser_server(LabradServer):
         """
         Stops any currently running sequence.
         """
-        if not self.ps_rid:
+        #see if pulse sequence is currently running
+        if self.ps_rid not in self.scheduler.get_status().keys():
             raise Exception('No pulse sequence currently running')
         yield self.inCommunication.acquire()
         yield deferToThread(self.scheduler.delete, self.ps_rid)
-        self.inCommunication.release()
         self.ps_rid = None
+        self.inCommunication.release()
 
     @setting(4, "Erase Sequence", sequencename = 's', returns='')
     def eraseSequence(self, c, sequencename = None):
@@ -234,7 +240,7 @@ class Pulser_server(LabradServer):
         Sets how long to collect photonslist in either 'Normal' or 'Differential' mode of operation
         """
         if not self.collectionTimeRange[0] <= new_time <= self.collectionTimeRange[1]:
-            raise Exception('Incorrect collection time')
+            raise Exception('Invalid collection time')
         if mode not in self.collectionTime.keys():
             raise Exception("Incorrect mode")
 
@@ -252,7 +258,7 @@ class Pulser_server(LabradServer):
 
     @setting(34, 'Get Collection Time', returns = '(vv)')
     def getCollectTime(self, c):
-        return self.collectionTimeRange
+        return self.pmt_interval
 
     @setting(35, 'Get Readout Counts', returns = '*v')
     def getReadoutCounts(self, c):
@@ -260,3 +266,20 @@ class Pulser_server(LabradServer):
         countlist = yield deferToThread(self.api.getReadoutCounts)
         self.inCommunication.release()
         returnValue(countlist)
+
+    #Line Trigger functions
+    @setting(41, 'Linetrigger State', enable='b', returns='b')
+    def linetrigger_state(self, c, enable=None):
+        """Enable or disable the line trigger"""
+        if enable is not None:
+            self.linetrigger_enabled = enable
+            #self.notifyOtherListeners(c, (self.linetrigger_enabled, self.linetrigger_duration), self.on_line_trigger_param)
+        return self.linetrigger_enabled
+
+    @setting(42, "Linetrigger Delay", duration='v[us]', returns='v[us]')
+    def linetrigger_delay(self, c, duration=None):
+        """Get/set the line trigger offset_duration"""
+        if duration is not None:
+            self.linetrigger_duration = duration['us']
+            #self.notifyOtherListeners(c, (self.linetrigger_enabled, self.linetrigger_duration), self.on_line_trigger_param)
+        return WithUnit(self.linetrigger_duration, 'us')

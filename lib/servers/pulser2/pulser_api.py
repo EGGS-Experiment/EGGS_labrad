@@ -83,9 +83,10 @@ class Pulser_api(EnvExperiment):
         """
         #sequencer variables
         #pmt variables
-        self.pmtInterval = 0
-        self.pmtMode = 0 #0 is normal/automatic, 1 is differential
-        self.pmtArrayLength = 10000
+        self.pmt_interval = 0
+        self.pmt_mode = 0 #0 is normal/automatic, 1 is differential
+        self.pmt_arraylength = 10000
+        self.set_dataset('pmt_counts', np.full(self.pmt_arraylength, np.nan))
         #linetrigger variables
         self.linetrigger_delay = 0
         self.linetrigger_active = False
