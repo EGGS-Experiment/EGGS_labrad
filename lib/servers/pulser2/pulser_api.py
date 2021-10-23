@@ -21,26 +21,23 @@ class Pulser_api(EnvExperiment):
     """
 
     def build(self):
-        self.setattr_device('core')
-        self.setattr_device('core_dma')
-        self.setattr_device('scheduler')
-        self.setattr_device('ttl4')
-        self.setattr_device('ttl5')
-        self.setattr_device('urukul0_cpld')
-        self.setattr_device('urukul0_ch0')
-        self.maxRuns = 0
-        self.numRuns = 0
-
-        #get devices
+        #setup
         self._getDevices()
-        #need to config hardware as well
+        self._setVariables()
+        self._getConfig()
 
+        #tmp
+        self.setattr_device("ttl4")
+        self.setattr_device("ttl5")
 
     def prepare(self):
-        pass
+        self._initializeDevices()
 
     def run(self):
         util.runServer(Pulser_server(self))
+
+    def analyze(self):
+        pass
 
     #Setup functions
     def _getDevices(self):
@@ -60,41 +57,25 @@ class Pulser_api(EnvExperiment):
         self.linetrigger_list = dict()
 
         #assign names and devices
-        for name, params in self.device_db:
-            self.setattr(name)
+        for name, params in self.device_db.items():
+            #only get devices with named class
+            if 'class' not in params:
+                continue
             devicetype = params['class']
+            device = self.get_device(name)
             if devicetype == 'TTLInOut':
-                self.ttlin_list[name] = self.get_device(name)
+                self.ttlin_list[name] = device
             elif devicetype == 'TTLOut':
                 if 'pmt' in name:
-                    self.pmt_list[name] = self.get_device(name)
+                    self.pmt_list[name] = device
                 elif 'linetrigger' in name:
-                    self.linetrigger_list[name] = self.get_device(name)
+                    self.linetrigger_list[name] = device
                 elif 'urukul' not in name:
-                    self.ttlout_list[name] = self.get_device(name)
+                    self.ttlout_list[name] = device
             elif devicetype == 'AD9910':
-                #get DDS component names and devices
-                args = params['arguments']
-                    #CPLD (i.e. urukul)
-                cpld_name = args['cpld_device']
-                cpld_dev = self.get_device(cpld_name)
-                    #DDS on/off switch
-                sw_name = args['sw_device']
-                sw_dev = self.get_device(sw_name)
-                    #set devices
-                self.dds_list[name] = {'device': self.get_device(name),
-                                       'chip_sel': args['chip_select'],
-                                       'cpld': cpld_dev,
-                                       'switch': sw_dev}
+                self.dds_list[name] = device
             elif devicetype == 'CPLD':
-                #get urukul component names and devices
-                args = params['arguments']
-                    #get io-update switch
-                update_name = args['io_update_device']
-                update_dev = self.get_device(update_name)
-                self.urukul_list[cpld_name] = {'device': self.get_device(cpld_name),
-                                               'update': self.get_device(update_dev),
-                                               'clk': args['refclk']}
+                self.urukul_list[name] = device
 
     def _setVariables(self):
         """
@@ -111,16 +92,32 @@ class Pulser_api(EnvExperiment):
         self.linetrigger_delay = 0
         self.linetrigger_active = False
 
+    def _getConfig(self):
+        """
+        Set up reelvant device config
+        """
+        pass
+
+    def _initializeDevices(self):
+        #pass
+        #initialize devices
+            #set ttlinout devices to be input
+        self.core.reset()
+        for name, device in self.ttlin_list.items():
+            try:
+                device.input()
+            except RTIOUnderflow:
+                self.core.break_realtime()
+            #initialize DDSs
+        # for component_list in self.dds_list.values():
+        #     component_list['device'].init()
+        # for component_list in self.urukul_list.values():
+        #     component_list['device'].init()
+        self.core.reset()
+
     #@rpc(flags = {'async'})
     def printlog(self, text):
         print('msg: ' + str(text))
-
-    @kernel
-    def _initializeDevices(self):
-        pass
-        # self.urukul0_cpld.init()
-        # self.urukul0_ch0.init()
-        # self.urukul0_ch0.cfg_sw(1)
 
     @kernel
     def _record(self):
@@ -144,6 +141,12 @@ class Pulser_api(EnvExperiment):
             self.maxRuns = 0
         except Exception as e:
             raise
+
+    #@kernel
+    def _disconnect(self):
+        self.core.close()
+        self.scheduler.pause()
+        print('thkim')
 
     @kernel
     def _stopSequence(self):

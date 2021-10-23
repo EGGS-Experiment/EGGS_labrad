@@ -26,6 +26,7 @@ from twisted.internet.threads import deferToThread
 
 #function imports
 import numpy as np
+from time import sleep
 
 class Pulser_server(LabradServer):
 
@@ -38,13 +39,9 @@ class Pulser_server(LabradServer):
         #start
         LabradServer.__init__(self)
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def initServer(self):
-        yield deferToThread(self.api._initializeDevices)
-        print('ok')
-
-        self.maxRuns = 0
-
+        self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser2\\run_ps.py'
 
     @setting(1, "Record", returns = '')
     def Record(self, c):
@@ -60,7 +57,25 @@ class Pulser_server(LabradServer):
         Programs Pulser with the current sequence.
         Saves the current sequence to self.programmed_sequence.
         """
-        yield deferToThread(self.api._runSequence, numruns)
+        #get pulser API status
+        api_status = None
+        for _, exp_status in self.scheduler.get_status().items():
+            if exp_status['pipeline'] == 'main':
+                api_status = exp_status
+        #pulse sequence runs in same pipeline as API
+        ps_pipeline = api_status['pipeline']
+        #set expid for pulse sequence
+        ps_expid = api_status['expid']
+        ps_expid['file'] = self.ps_filename
+        #set pulse sequence priority (must be greater than API priority to run
+        ps_priority = api_status['priority'] + 1
+        #run sequence
+        self.scheduler.submit(pipeline_name = ps_pipeline, expid = ps_expid, priority = ps_priority)
+        #wait until experiment has been completely submitted
+        while not self.scheduler.check_pause():
+            sleep(0.2)
+        self.api._disconnect()
+        self.scheduler.pause()
 
     @setting(3, "Stop Sequence", returns='')
     def stopSequence(self, c):
