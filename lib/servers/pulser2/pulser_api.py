@@ -63,6 +63,7 @@ class Pulser_api(EnvExperiment):
                 continue
             devicetype = params['class']
             device = self.get_device(name)
+            self.setattr_device(name)
             if devicetype == 'TTLInOut':
                 self.ttlin_list[name] = device
             elif devicetype == 'TTLOut':
@@ -120,13 +121,15 @@ class Pulser_api(EnvExperiment):
 
     @kernel
     def record(self, sequencename):
+        #th1 = {0:[1,1], 1:[-1,-1]}
         with self.core_dma.record(sequencename):
             for i in range(50):
                 with parallel:
-                    self.ttl4.pulse(1*ms)
+                    yz2['ttl4'].pulse(1*ms)
                     self.ttl5.pulse(1*ms)
                 delay(1.0*ms)
         # PMT_device = self.ttlin_list['PMT']
+        #tmax_us = 1000
         # #record pulse sequence in memory
         # with self.core_dma.record("pulse_sequence"):
         #     #program ttl sequence
@@ -144,8 +147,8 @@ class Pulser_api(EnvExperiment):
         #
         #     #program DDS Ramp
         #     #program PMT input
-        #     for i in range():
-        #         time_pmt = PMT_device.gate_rising_mu(self.pmtInterval)
+        #     for i in range(0, tmax_us, self.pmt_interval):
+        #         time_pmt = PMT_device.gate_rising_mu(self.pmtInterval * us)
         #         counts_pmt = PMT_device.count(time_pmt)
         #         self.mutate_dataset(self.PMT_count, i, counts_pmt)
         #     #todo: program dds
@@ -200,3 +203,9 @@ class Pulser_api(EnvExperiment):
                 self.core.break_realtime()
                 device.init()
         self.core.reset()
+
+    def setPMTMode(self, mode):
+        self.pmt_mode = mode
+
+    def setPMTInterval(self, time_us):
+        self.pmt_interval_us = time_us

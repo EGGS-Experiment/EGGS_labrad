@@ -88,7 +88,6 @@ class Pulser_server(LabradServer):
         if not sequencename:
             sequencename = 'default'
         yield self.inCommunication.acquire()
-        print(sequencename)
         yield deferToThread(self.api.record, sequencename)
         self.inCommunication.release()
         self.ps_programmed = True
@@ -213,7 +212,7 @@ class Pulser_server(LabradServer):
         self.inCommunication.release()
 
     #PMT functions
-    @setting(31, 'Set Mode', mode = 's', returns = '')
+    @setting(31, 'Set PMT Mode', mode = 's', returns = '')
     def setMode(self, c, mode):
         """
         Set the counting mode, either 'Normal' or 'Differential'
@@ -233,7 +232,7 @@ class Pulser_server(LabradServer):
             yield deferToThread(self.api.setMode, 1)
         self.inCommunication.release()
 
-    @setting(32, 'Set Collection Time', new_time = 'v', mode = 's', returns = '')
+    @setting(32, 'Set PMT Collection Time', new_time = 'v', mode = 's', returns = '')
     def setCollectTime(self, c, new_time, mode):
         """
         Sets how long to collect photonslist in either 'Normal' or 'Differential' mode of operation
@@ -245,7 +244,6 @@ class Pulser_server(LabradServer):
 
         self.collectionTime[mode] = new_time
         #convert to machine units from microseconds
-        mu_time = self.seconds_to_mu(new_time * us)
         if mode == 'Normal':
             yield self.inCommunication.acquire()
             yield deferToThread(self.api.setPMTCountInterval, mu_time)
