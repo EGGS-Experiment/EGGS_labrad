@@ -64,18 +64,15 @@ class Pulser_server(LabradServer):
                 api_status = exp_status
         #pulse sequence runs in same pipeline as API
         ps_pipeline = api_status['pipeline']
-        #set expid for pulse sequence
+        #set expid for pulse sequence and set priority greater than API
         ps_expid = api_status['expid']
         ps_expid['file'] = self.ps_filename
-        #set pulse sequence priority (must be greater than API priority to run
         ps_priority = api_status['priority'] + 1
-        #run sequence
+        #run sequence then wait for experiment to submit
         self.scheduler.submit(pipeline_name = ps_pipeline, expid = ps_expid, priority = ps_priority)
-        #wait until experiment has been completely submitted
         while not self.scheduler.check_pause():
             sleep(0.2)
-        self.api._disconnect()
-        self.scheduler.pause()
+        yield self.api._disconnect()
 
     @setting(3, "Stop Sequence", returns='')
     def stopSequence(self, c):

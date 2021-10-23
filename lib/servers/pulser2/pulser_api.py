@@ -146,7 +146,6 @@ class Pulser_api(EnvExperiment):
     def _disconnect(self):
         self.core.close()
         self.scheduler.pause()
-        print('thkim')
 
     @kernel
     def _stopSequence(self):
