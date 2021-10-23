@@ -33,23 +33,48 @@ class Pulser_server(LabradServer):
     name = 'ARTIQ Pulser'
     regKey = 'ARTIQ_Pulser'
 
+    onSwitch = Signal(611051, 'signal: switch toggled', '(ss)')
+
     def __init__(self, api):
         self.api = api
-        self.scheduler = self.api.scheduler
-        #start
         LabradServer.__init__(self)
 
-    #@inlineCallbacks
+    @inlineCallbacks
     def initServer(self):
-        self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser2\\run_ps.py'
+        yield self._setVariables()
 
-    @setting(1, "Record", returns = '')
-    def Record(self, c):
+    def _setVariables(self):
+        self.scheduler = self.api.scheduler
+        self.inCommunication = DeferredLock()
+
+        #pulse sequencer variables
+        self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser2\\run_ps.py'
+        self.ps_rid = None
+
+        #conversions
+        self.seconds_to_mu = self.api.core.seconds_to_mu
+        # self.amplitude_to_asf = self.api.dds_list[0].amplitude_to_asf
+        # self.frequency_to_ftw = self.api.dds_list[0].frequency_to_ftw
+        # self.turns_to_pow = self.api.dds_list[0].turns_to_pow
+        # self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
+
+    #Pulse sequencing
+    @setting(0, "New Sequence", returns = '')
+    def newSequence(self, c):
+        """
+        Create New Pulse Sequence
+        """
+        c['sequence'] = Sequence(self)
+
+    @setting(1, "Record Sequence", returns = '')
+    def record(self, c):
         """
         Programs Pulser with the current sequence.
         Saves the current sequence to self.programmed_sequence.
         """
-        yield deferToThread(self.api._record)
+        self.inCommunication.acquire()
+        yield deferToThread(self.api.record)
+        self.inCommunication.release()
 
     @setting(2, "Run Sequence", numruns = 'i', returns='')
     def runSequence(self, c, numruns):
@@ -57,22 +82,16 @@ class Pulser_server(LabradServer):
         Programs Pulser with the current sequence.
         Saves the current sequence to self.programmed_sequence.
         """
-        #get pulser API status
-        api_status = None
-        for _, exp_status in self.scheduler.get_status().items():
-            if exp_status['pipeline'] == 'main':
-                api_status = exp_status
-        #pulse sequence runs in same pipeline as API
-        ps_pipeline = api_status['pipeline']
-        #set expid for pulse sequence and set priority greater than API
-        ps_expid = api_status['expid']
-        ps_expid['file'] = self.ps_filename
-        ps_priority = api_status['priority'] + 1
+        #set pipeline, priority, and expid
+        ps_pipeline = 'PS'
+        ps_expid = {'log_level': 30, 'file': self.ps_filename, 'class_name': None, 'arguments': {}}
+        ps_priority = 1
+        #get current RID
+        self.ps_rid = self.scheduler.rid + 1
         #run sequence then wait for experiment to submit
-        self.scheduler.submit(pipeline_name = ps_pipeline, expid = ps_expid, priority = ps_priority)
-        while not self.scheduler.check_pause():
-            sleep(0.2)
-        yield self.api._disconnect()
+        self.inCommunication.acquire()
+        yield deferToThread(self.scheduler.submit, pipeline_name = ps_pipeline, expid = ps_expid, priority = ps_priority)
+        self.inCommunication.release()
 
     @setting(3, "Stop Sequence", returns='')
     def stopSequence(self, c):
@@ -80,6 +99,11 @@ class Pulser_server(LabradServer):
         Programs Pulser with the current sequence.
         Saves the current sequence to self.programmed_sequence.
         """
-        yield deferToThread(self.api._stopSequence)
+        if not self.ps_rid:
+            raise Exception('No pulse sequence currently running')
+        self.inCommunication.acquire()
+        yield deferToThread(self.scheduler.delete, self.ps_rid)
+        self.inCommunication.release()
+        self.ps_rid = None
 
 

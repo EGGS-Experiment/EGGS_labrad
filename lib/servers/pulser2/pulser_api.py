@@ -120,7 +120,7 @@ class Pulser_api(EnvExperiment):
         print('msg: ' + str(text))
 
     @kernel
-    def _record(self):
+    def record(self):
         with self.core_dma.record('ps'):
             for i in range(400):
                 with parallel:
@@ -129,7 +129,7 @@ class Pulser_api(EnvExperiment):
                 delay(1.0*ms)
 
     @kernel
-    def _runSequence(self, _maxruns):
+    def runSequence(self, _maxruns):
         try:
             handle = self.core_dma.get_handle('ps')
             self.maxRuns = _maxruns
@@ -143,12 +143,12 @@ class Pulser_api(EnvExperiment):
             raise
 
     #@kernel
-    def _disconnect(self):
+    def disconnect(self):
         self.core.close()
         self.scheduler.pause()
 
     @kernel
-    def _stopSequence(self):
+    def stopSequence(self):
         #self.maxRuns = 0
         self.core_dma.erase('ps')
         self.printlog(self.numRuns)

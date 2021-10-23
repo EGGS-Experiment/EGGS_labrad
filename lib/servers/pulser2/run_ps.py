@@ -12,7 +12,17 @@ class pulse_sequence(EnvExperiment):
     def run(self):
         handle = self.core_dma.get_handle('ps')
         self.core.reset()
-        for i in range(self.maxRuns):
-            self.core.reset()
-            self.core_dma.playback_handle(handle)
-        print('finished')
+        try:
+            for i in range(self.maxRuns):
+                try:
+                    self.core.reset()
+                    self.core_dma.playback_handle(handle)
+                    self.numRuns += 1
+                except RTIOUnderflow:
+                    self.core.reset()
+                    continue
+        except TerminationRequested:
+            self.set_dataset('numRuns', self.numRuns, broadcast=True)
+            print('Pulse Sequence Stopped')
+        self.set_dataset('numRuns', self.numRuns, broadcast = True)
+        print('Pulse Sequence Finished')
