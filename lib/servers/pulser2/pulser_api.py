@@ -82,8 +82,7 @@ class Pulser_api(EnvExperiment):
         Set up internal variables
         """
         #sequencer variables
-        self.numRuns = 0
-        self.maxRuns = 0
+        #self.set_dataset('numRuns', 0, broadcast = True, persist = True)
         #pmt variables
         self.pmtInterval = 0
         self.pmtMode = 0 #0 is normal/automatic, 1 is differential
@@ -120,37 +119,33 @@ class Pulser_api(EnvExperiment):
         print('msg: ' + str(text))
 
     @kernel
-    def record(self):
-        with self.core_dma.record('ps'):
-            for i in range(400):
+    def record(self, sequencename):
+        with self.core_dma.record(sequencename):
+            for i in range(50):
                 with parallel:
                     self.ttl4.pulse(1*ms)
                     self.ttl5.pulse(1*ms)
                 delay(1.0*ms)
 
-    @kernel
-    def runSequence(self, _maxruns):
-        try:
-            handle = self.core_dma.get_handle('ps')
-            self.maxRuns = _maxruns
-            self.core.reset()
-            while self.numRuns < self.maxRuns:
-                self.core_dma.playback_handle(handle)
-                self.numRuns += 1
-                self.core.reset()
-            self.maxRuns = 0
-        except Exception as e:
-            raise
+    def runsCompleted(self):
+        val1 = self.get_dataset('numRuns')
+        return val1[0]
 
-    #@kernel
+    @kernel
+    def eraseSequence(self, sequencename):
+        self.core.reset()
+        self.core_dma.erase(sequencename)
+
+    @kernel
+    def setTTL(self, ttlname, state):
+        print(ttlname)
+        print(self.ttlout_list)
+        if state:
+            self.ttlout_list[ttlname].on()
+        else:
+            self.ttlout_list[ttlname].off()
+
     def disconnect(self):
         self.core.close()
         self.scheduler.pause()
-
-    @kernel
-    def stopSequence(self):
-        #self.maxRuns = 0
-        self.core_dma.erase('ps')
-        self.printlog(self.numRuns)
-        self.printlog('stop success')
 
