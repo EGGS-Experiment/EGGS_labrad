@@ -1,9 +1,9 @@
 from artiq.experiment import *
 import numpy as np
 
-from artiq.language.environment import ProcessArgumentManager
-from artiq.master.worker_db import DeviceManager, DatasetManager
-from artiq.master.worker_impl import ParentDeviceDB, ParentDatasetDB, CCB, Scheduler
+# from artiq.language.environment import ProcessArgumentManager
+# from artiq.master.worker_db import DeviceManager, DatasetManager
+# from artiq.master.worker_impl import ParentDeviceDB, ParentDatasetDB, CCB, Scheduler
 
 from artiq.language.types import TInt32, TInt64, TStr, TNone, TTuple
 
@@ -138,12 +138,8 @@ class Pulser_api(EnvExperiment):
 
     @kernel
     def setTTL(self, ttlname, state):
-        print(ttlname)
-        print(self.ttlout_list)
-        if state:
-            self.ttlout_list[ttlname].on()
-        else:
-            self.ttlout_list[ttlname].off()
+        ttl_device = self.get_device(ttlname)
+        print(ttl_device)
 
     def disconnect(self):
         self.core.close()

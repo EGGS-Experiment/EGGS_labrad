@@ -18,6 +18,8 @@ timeout = 20
 
 #labrad and artiq imports
 from labrad.server import LabradServer, setting, Signal
+from artiq.experiment import *
+#from pulser_legacy import Pulser_legacy
 
 #async imports
 from twisted.internet import reactor, task
@@ -51,6 +53,14 @@ class Pulser_server(LabradServer):
         self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser2\\run_ps.py'
         self.ps_rid = None
         self.ps_programmed = False
+
+        #pmt variables
+        self.pmt_mode = 0
+        self.pmt_interval = 0 * us
+
+        #linetrigger variables
+        self.linetrigger_active = False
+        self.linetrigger_delay = 0 * ms
 
         #conversions
         self.seconds_to_mu = self.api.core.seconds_to_mu
@@ -147,30 +157,77 @@ class Pulser_server(LabradServer):
         """
         Switches a TTL to the given state
         """
-        #todo: fix
         self.inCommunication.acquire()
         yield deferToThread(self.api.setTTL, ttlname, state)
         self.inCommunication.release()
 
     #DDS functions
-    @setting(21, "Set DDS", ddsname = 's', state = 'b', freq = 'v', ampl = 'v', phase = 'v', returns='')
+    @setting(21, "Set DDS", ddsname = 's', state = 'b', freq = 'v[MHz]', ampl = 'v[dBm]', phase = 'v', returns='')
     def setDDS(self, c, ddsname, state = None, freq = None, ampl = None, phase = None):
         """
         Sets a DDS to the given parameters.
         Arguments:
-            ddsname (str)   :
-            state   (bool)  :
-            freq    (float) :
-            ampl    (float) :
+            ddsname (str)   : the name of the dds
+            state   (bool)  : power state
+            freq    (float) : frequency (in Hz)
+            ampl    (float) : amplitude (in
             phase   (float) :
         """
-        #convert
+        #tdodo: convert
         self.inCommunication.acquire()
         yield deferToThread(self.api.setDDS, ddsname, freq = freq, ampl = ampl, phase = phase)
         self.inCommunication.release()
 
+    #PMT functions
+    @setting(31, 'Set Mode', mode = 's', returns = '')
+    def setMode(self, c, mode):
+        """
+        Set the counting mode, either 'Normal' or 'Differential'
+        In 'Normal', the FPGA automatically sends the counts with a preset frequency
+        In 'Differential', the FPGA uses triggers the pulse sequence
+        frequency and to know when the repumping light is switched on or off.
+        """
+        if mode not in [0, 1]:
+            raise Exception('Incorrect Mode')
+        self.pmt_mode = mode
+        self.pmt_interval = self.collectionTime[mode] * us
+        yield self.inCommunication.acquire()
+        if mode == 'Normal':
+            #set the mode on the device and set update time for normal mode
+            yield deferToThread(self.api.setPMTCountInterval, countInterval)
+        elif mode == 'Differential':
+            yield deferToThread(self.api.setMode, 1)
+        self.inCommunication.release()
 
-    #stupid old pulser functions
+    @setting(32, 'Set Collection Time', new_time = 'v', mode = 's', returns = '')
+    def setCollectTime(self, c, new_time, mode):
+        """
+        Sets how long to collect photonslist in either 'Normal' or 'Differential' mode of operation
+        """
+        if not self.collectionTimeRange[0] <= new_time <= self.collectionTimeRange[1]:
+            raise Exception('Incorrect collection time')
+        if mode not in self.collectionTime.keys():
+            raise Exception("Incorrect mode")
 
+        self.collectionTime[mode] = new_time
+        #convert to machine units from microseconds
+        mu_time = self.seconds_to_mu(new_time * us)
+        if mode == 'Normal':
+            yield self.inCommunication.acquire()
+            yield deferToThread(self.api.setPMTCountInterval, mu_time)
+            self.inCommunication.release()
 
+    @setting(33, 'Get Collection Mode', returns = 's')
+    def getMode(self, c):
+        return self.collectionMode
 
+    @setting(34, 'Get Collection Time', returns = '(vv)')
+    def getCollectTime(self, c):
+        return self.collectionTimeRange
+
+    @setting(35, 'Get Readout Counts', returns = '*v')
+    def getReadoutCounts(self, c):
+        yield self.inCommunication.acquire()
+        countlist = yield deferToThread(self.api.getReadoutCounts)
+        self.inCommunication.release()
+        returnValue(countlist)
