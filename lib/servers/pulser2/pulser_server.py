@@ -212,7 +212,6 @@ class Pulser_server(LabradServer):
         yield deferToThread(self.api.initializeDDS)
         self.inCommunication.release()
 
-
     #PMT functions
     @setting(31, 'Set Mode', mode = 's', returns = '')
     def setMode(self, c, mode):

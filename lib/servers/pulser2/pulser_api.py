@@ -126,6 +126,30 @@ class Pulser_api(EnvExperiment):
                     self.ttl4.pulse(1*ms)
                     self.ttl5.pulse(1*ms)
                 delay(1.0*ms)
+        # PMT_device = self.ttlin_list['PMT']
+        # #record pulse sequence in memory
+        # with self.core_dma.record("pulse_sequence"):
+        #     #program ttl sequence
+        #     for timestamp, ttlCommandArr in ttl_sequence:
+        #         at_mu(timestamp)
+        #         with parallel:
+        #             #todo: convert to name format
+        #             for i in range(ttl_sequence.channelTotal):
+        #                 if ttlCommandArr[i] == 1:
+        #                     self.ttlout_list[i].on()
+        #                 elif ttlCommandArr[i] == -1:
+        #                     self.ttlout_list[i].off()
+        #     #program DDS sequence
+        #     for timestamp, params in dds_single_sequence:
+        #
+        #     #program DDS Ramp
+        #     #program PMT input
+        #     for i in range():
+        #         time_pmt = PMT_device.gate_rising_mu(self.pmtInterval)
+        #         counts_pmt = PMT_device.count(time_pmt)
+        #         self.mutate_dataset(self.PMT_count, i, counts_pmt)
+        #     #todo: program dds
+        #     #todo: program ttls for dds's
 
     def runsCompleted(self):
         val1 = self.get_dataset('numRuns')
