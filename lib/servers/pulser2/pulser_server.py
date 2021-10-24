@@ -29,6 +29,7 @@ from twisted.internet.threads import deferToThread
 
 #function imports
 import numpy as np
+from artiq.coredevice.ad9910 import AD9910
 
 class Pulser_server(LabradServer):
 
@@ -195,8 +196,8 @@ class Pulser_server(LabradServer):
         yield deferToThread(self.api.initializeDDS)
         self.inCommunication.release()
 
-    @setting(22, "Set DDS", ddsname = 's', state = 'b', freq = 'v[MHz]', ampl = 'v[dBm]', phase = 'v', returns='')
-    def setDDS(self, c, ddsname, state = None, freq = None, ampl = None, phase = None):
+    @setting(22, "Set DDS", ddsname = 's', freq = 'v[MHz]', ampl = 'v[dBm]', phase = 'v', profile = 'i', returns='')
+    def setDDS(self, c, ddsname, freq = None, ampl = None, phase = None, profile = None):
         """
         Sets a DDS to the given parameters.
         Arguments:
@@ -207,6 +208,7 @@ class Pulser_server(LabradServer):
             phase   (float) : phase     (in radians)
             profile (int)   : the DDS profile to set & change to
         """
+        #todo:
         #tdodo: convert
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.setDDS, ddsnum, params, profile)
