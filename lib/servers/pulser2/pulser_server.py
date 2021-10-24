@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = ARTIQ Pulser
-version = 3.0
+version = 1.0
 description = Pulser using the ARTIQ box. Backwards compatible with old pulse sequences and experiments.
 instancename = ARTIQ_Pulser
 
@@ -212,8 +212,8 @@ class Pulser_server(LabradServer):
         self.inCommunication.release()
 
     #PMT functions
-    @setting(31, 'Set PMT Mode', mode = 's', returns = '')
-    def setMode(self, c, mode):
+    @setting(31, 'PMT Mode', mode = 's', returns = 's')
+    def pmtMode(self, c, mode = None):
         """
         Set the counting mode, either 'Normal' or 'Differential'
         In 'Normal', the FPGA automatically sends the counts with a preset frequency
@@ -231,11 +231,17 @@ class Pulser_server(LabradServer):
         elif mode == 'Differential':
             yield deferToThread(self.api.setMode, 1)
         self.inCommunication.release()
+        return self.pmt_mode
 
-    @setting(32, 'Set PMT Collection Time', new_time = 'v', mode = 's', returns = '')
-    def setCollectTime(self, c, new_time, mode):
+    @setting(32, 'PMT Time', mode = 's', new_time = 'v', returns = '')
+    def pmtTime(self, c, mode, new_time = None):
         """
-        Sets how long to collect photonslist in either 'Normal' or 'Differential' mode of operation
+        Set time for each PMT bin in a given mode
+        Arguments:
+            new_time    (float) : PMT bin time in microseconds
+            mode        (str)   : PMT mode
+        Returns:
+            (float) : PMT bin time in microseconds
         """
         if not self.collectionTimeRange[0] <= new_time <= self.collectionTimeRange[1]:
             raise Exception('Invalid collection time')
@@ -243,19 +249,10 @@ class Pulser_server(LabradServer):
             raise Exception("Incorrect mode")
 
         self.collectionTime[mode] = new_time
-        #convert to machine units from microseconds
         if mode == 'Normal':
             yield self.inCommunication.acquire()
             yield deferToThread(self.api.setPMTCountInterval, mu_time)
             self.inCommunication.release()
-
-    @setting(33, 'Get Collection Mode', returns = 's')
-    def getMode(self, c):
-        return self.pmt_mode
-
-    @setting(34, 'Get Collection Time', returns = '(vv)')
-    def getCollectTime(self, c):
-        return self.pmt_interval
 
     @setting(35, 'Get Readout Counts', returns = '*v')
     def getReadoutCounts(self, c):

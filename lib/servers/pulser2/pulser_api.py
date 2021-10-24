@@ -17,7 +17,7 @@ from labrad import util
 
 class Pulser_api(EnvExperiment):
     """
-    Pulser api
+    Pulser API
     """
 
     def build(self):
@@ -25,10 +25,6 @@ class Pulser_api(EnvExperiment):
         self._getDevices()
         self._setVariables()
         self._getConfig()
-
-        #tmp
-        self.setattr_device("ttl4")
-        self.setattr_device("ttl5")
 
     def prepare(self):
         self._initializeDevices()
@@ -48,7 +44,7 @@ class Pulser_api(EnvExperiment):
 
         #get device names
         self.device_db = self.get_device_db()
-            #create holding dictionaries
+            #create holding lists (dict not supported in kernel methods)
         self.ttlout_list = list()
         self.ttlin_list = list()
         self.dds_list = list()
@@ -82,7 +78,7 @@ class Pulser_api(EnvExperiment):
 
     def _setVariables(self):
         """
-        Set up internal variables
+        Set up internal variables.
         """
         #sequencer variables
         #pmt variables
@@ -90,17 +86,17 @@ class Pulser_api(EnvExperiment):
         self.pmt_mode = 0 #0 is normal/automatic, 1 is differential
         self.pmt_arraylength = 10000
         self.set_dataset('pmt_counts', np.full(self.pmt_arraylength, np.nan))
-        #linetrigger variables
-        self.linetrigger_delay = 0
-        self.linetrigger_active = False
 
     def _getConfig(self):
         """
-        Set up reelvant device config
+        Set up relevant device configs from config file.
         """
         pass
 
     def _initializeDevices(self):
+        """
+        Initialize devices that need to be initialized.
+        """
         #pass
         #initialize devices
             #set ttlinout devices to be input
@@ -117,12 +113,8 @@ class Pulser_api(EnvExperiment):
         #     component_list['device'].init()
         self.core.reset()
 
-    #@rpc(flags = {'async'})
-    def printlog(self, text):
-        print('msg: ' + str(text))
-
     @kernel
-    def record(self, sequencename):
+    def _record(self, sequencename):
         with self.core_dma.record(sequencename):
             for i in range(50):
                 with parallel:
@@ -155,47 +147,55 @@ class Pulser_api(EnvExperiment):
         #     #todo: program dds
         #     #todo: program ttls for dds's
 
-    def processSequence(self):
+    def record(self):
         """
         Processes the TTL and DDS sequence into a format
-        more easily readable and processable by ARTIQ
+        more easily readable and processable by ARTIQ.
         """
         pass
 
     def runsCompleted(self):
-        val1 = self.get_dataset('numRuns')
-        return val1[0]
+        """
+        Return the number of pulse sequence runs completed.
+        """
+        runs = self.get_dataset('numRuns')
+        return runs[0]
 
     def disconnect(self):
+        """
+        Disconnect the API from the master.
+        """
         self.core.close()
         self.scheduler.pause()
 
     @kernel
     def eraseSequence(self, sequencename):
+        """
+        Erase the given pulse sequence from DMA.
+        """
         self.core.reset()
         self.core_dma.erase(sequencename)
 
-    def setTTL(self, ttlname, state):
-        self.core.reset()
-        self.ttl_dev = self.ttlout_list[ttlname]
-        self._setTTL(state)
-
     @kernel
-    def _setTTL(self, state):
+    def setTTL(self, ttlnum, state):
+        """
+        Manually set the state of a TTL.
+        """
         self.core.reset()
         if state:
-            self.ttl_dev.on()
+            self.ttlout_list[ttlnum].on()
         else:
-            self.ttl_dev.off()
+            self.ttlout_list[ttlnum].off()
 
+    #DDS functions
     @kernel
     def initializeDDS(self):
         '''
-        Force reprogram of all dds chips during initialization
+        Force reprogram of all dds chips during initialization.
         '''
         #reset dds
         self.core.reset()
-        for device in self.dds_list.values():
+        for device in self.dds_list:
             try:
                 device.init()
             except RTIOUnderflow:
@@ -204,7 +204,7 @@ class Pulser_api(EnvExperiment):
         self.core.reset()
 
         #reset urukul cpld
-        for device in self.urukul_list.values():
+        for device in self.urukul_list:
             try:
                 device.init()
             except RTIOUnderflow:
@@ -212,6 +212,13 @@ class Pulser_api(EnvExperiment):
                 device.init()
         self.core.reset()
 
+    @kernel
+    def setDDS(self, params, profile):
+        """
+         Manually set the state of a DDS.
+         """
+
+    #PMT functions
     def setPMTMode(self, mode):
         self.pmt_mode = mode
 
