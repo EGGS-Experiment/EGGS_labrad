@@ -17,7 +17,9 @@ from labrad import util
 
 class Pulser_api(EnvExperiment):
     """
-    Pulser API
+    Pulser API: an ARTIQ EnvExperiment class that hosts all necessary device functions.
+    Its main sequence runs a LabRAD server.
+    Needs to be submitted to the ARTIQ master to run properly.
     """
 
     def build(self):
@@ -97,7 +99,6 @@ class Pulser_api(EnvExperiment):
         """
         Initialize devices that need to be initialized.
         """
-        #pass
         #initialize devices
             #set ttlinout devices to be input
         self.core.reset()
@@ -147,12 +148,13 @@ class Pulser_api(EnvExperiment):
         #     #todo: program dds
         #     #todo: program ttls for dds's
 
-    def record(self):
+    def record(self, sequencename):
         """
         Processes the TTL and DDS sequence into a format
         more easily readable and processable by ARTIQ.
         """
-        pass
+        #todo: config
+        self._record(sequencename)
 
     def runsCompleted(self):
         """
@@ -193,7 +195,7 @@ class Pulser_api(EnvExperiment):
         '''
         Force reprogram of all dds chips during initialization.
         '''
-        #reset dds
+        #todo: test
         self.core.reset()
         for device in self.dds_list:
             try:
@@ -213,10 +215,20 @@ class Pulser_api(EnvExperiment):
         self.core.reset()
 
     @kernel
-    def setDDS(self, params, profile):
+    def toggleDDS(self, ddsnum, state):
+        self.dds_list[ddsnum].cfg_sw(state)
+
+    @kernel
+    def setDDS(self, ddsnum, params, _profile):
         """
          Manually set the state of a DDS.
          """
+        _ftw = params[0]
+        _asf = params[1]
+        _pow = params[2]
+        self.dds_list[ddsnum].set_mu(ftw = _freq, asf = _ampl, pow = _pow, profile = _profile)
+        #todo: do we need to change profile to desired one?
+        #todo: test
 
     #PMT functions
     def setPMTMode(self, mode):

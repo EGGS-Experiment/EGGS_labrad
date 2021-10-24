@@ -1,12 +1,9 @@
 #labrad and artiq imports
 from labrad.server import LabradServer, setting, Signal
-#from pulser_artiq_DDS import DDS_artiq
-#from pulser_artiq_linetrigger import LineTrigger_artiq
 
 #async imports
 from twisted.internet import reactor, task
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
-from twisted.internet.threads import deferToThread
 
 #wrapper imports
 from sequence import Sequence
@@ -19,9 +16,8 @@ class Pulser_legacy(LabradServer):
     """Contains legacy functionality for Pulser"""
 
     onSwitch = Signal(611051, 'signal: switch toggled', '(ss)')
-
-    def __init__(self):
-        LabradServer.__init__(self)
+    on_dds_param = Signal(142006, 'signal: new dds parameter', '(ssv)')
+    on_line_trigger_param = Signal(142007, 'signal: new line trigger parameter', '(bv)')
 
     def initServer(self):
         self.channelDict = hardwareConfiguration.channelDict
@@ -35,13 +31,20 @@ class Pulser_legacy(LabradServer):
         self.sequenceTimeRange = hardwareConfiguration.sequenceTimeRange
         self.inCommunication = DeferredLock()
 
-        #appropriated variables
-        self.isProgrammed = False
-
         yield self.initializeRemote()
         self.initializeSettings()
         self.listeners = set()
 
+        self.ddsLock = False
+        self.api.initializeDDS()
+        for name, channel in self.ddsDict.items():
+            channel.name = name
+            freq, ampl, phase = (channel.frequency, channel.amplitude, channel.phase)
+            self._checkRange('amplitude', channel, ampl)
+            self._checkRange('frequency', channel, freq)
+            yield self.inCommunication.run(self._setDDSParam, channel, freq, ampl, phase)
+        self.ddsSequenceARTIQ = {}
+        #todo: get io update alignment
 
     def initializeSettings(self):
         #initialize TTLs
@@ -165,6 +168,7 @@ class Pulser_legacy(LabradServer):
         answer = (channel.ismanual, channel.manualstate, channel.manualinv, channel.autoinv)
         return answer
 
+    #DDS functions
     @setting(121, "Get DDS Channels", returns = '*s')
     def getDDSChannels(self, c):
         """get the list of available channels"""
@@ -229,6 +233,17 @@ class Pulser_legacy(LabradServer):
     @setting(125, 'Clear DDS Lock')
     def clear_dds_lock(self, c):
         self.ddsLock = False
+
+    #Linetrigger functions
+    def initialize(self):
+        self.linetrigger_enabled = False
+        self.linetrigger_duration = WithUnit(0, 'us')
+        self.linetrigger_limits = [WithUnit(v, 'us') for v in hardwareConfiguration.lineTriggerLimits]
+
+    @setting(60, "Get Line Trigger Limits", returns='*v[us]')
+    def getLineTriggerLimits(self, c):
+        """get limits for duration of line triggering"""
+        return self.linetrigger_limits
 
 
     #Signal/Context functions

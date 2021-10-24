@@ -186,7 +186,16 @@ class Pulser_server(LabradServer):
         self.inCommunication.release()
 
     #DDS functions
-    @setting(21, "Set DDS", ddsname = 's', state = 'b', freq = 'v[MHz]', ampl = 'v[dBm]', phase = 'v', returns='')
+    @setting(22, "Initialize DDS", returns = '')
+    def initializeDDS(self, c):
+        """
+        Reprograms the DDS chip to its initial state
+        """
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.initializeDDS)
+        self.inCommunication.release()
+
+    @setting(22, "Set DDS", ddsname = 's', state = 'b', freq = 'v[MHz]', ampl = 'v[dBm]', phase = 'v', returns='')
     def setDDS(self, c, ddsname, state = None, freq = None, ampl = None, phase = None):
         """
         Sets a DDS to the given parameters.
@@ -194,21 +203,13 @@ class Pulser_server(LabradServer):
             ddsname (str)   : the name of the dds
             state   (bool)  : power state
             freq    (float) : frequency (in Hz)
-            ampl    (float) : amplitude (in
-            phase   (float) :
+            ampl    (float) : amplitude (in dBm)
+            phase   (float) : phase     (in radians)
+            profile (int)   : the DDS profile to set & change to
         """
         #tdodo: convert
         yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, ddsname, freq = freq, ampl = ampl, phase = phase)
-        self.inCommunication.release()
-
-    @setting(22, "Initialize DDS", returns = '')
-    def reinitializeDDS(self, c):
-        """
-        Reprograms the DDS chip to its initial state
-        """
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.initializeDDS)
+        yield deferToThread(self.api.setDDS, ddsnum, params, profile)
         self.inCommunication.release()
 
     #PMT functions
