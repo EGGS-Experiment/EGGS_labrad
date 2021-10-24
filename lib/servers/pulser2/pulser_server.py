@@ -29,14 +29,11 @@ from twisted.internet.threads import deferToThread
 
 #function imports
 import numpy as np
-from artiq.coredevice.ad9910 import AD9910
 
 class Pulser_server(LabradServer):
 
     name = 'ARTIQ Pulser'
     regKey = 'ARTIQ_Pulser'
-
-    onSwitch = Signal(611051, 'signal: switch toggled', '(ss)')
 
     def __init__(self, api):
         self.api = api
@@ -56,7 +53,7 @@ class Pulser_server(LabradServer):
         self.ps_programmed = False
 
         #pmt variables
-        self.pmt_mode = 0
+        self.pmt_mode = ''
         self.pmt_interval = 0 * us
 
         #linetrigger variables
@@ -109,8 +106,8 @@ class Pulser_server(LabradServer):
         # self.inCommunication.release()
         # self.isProgrammed = True
 
-    @setting(2, "Run Sequence", numruns = 'i', returns='')
-    def runSequence(self, c, numruns):
+    @setting(2, "Run Sequence", maxruns = 'i', returns='')
+    def runSequence(self, c, maxruns):
         """
         Run the pulse sequence a given number of times.
         Argument:
@@ -124,7 +121,7 @@ class Pulser_server(LabradServer):
         ps_expid = {'log_level': 30,
                     'file': self.ps_filename,
                     'class_name': None,
-                    'arguments': {'maxRuns': numruns,
+                    'arguments': {'maxRuns': maxruns,
                                   'linetrigger_enabled': self.linetrigger_enabled,
                                   'linetrigger_delay_us': self.linetrigger_delay,
                                   'linetrigger_ttl_name': self.linetrigger_ttl}}
@@ -145,6 +142,7 @@ class Pulser_server(LabradServer):
         yield self.inCommunication.acquire()
         yield deferToThread(self.scheduler.delete, self.ps_rid)
         self.ps_rid = None
+        #todo: make resetting of ps_rid contingent on defertothread completion
         self.inCommunication.release()
 
     @setting(4, "Erase Sequence", sequencename = 's', returns='')
@@ -162,6 +160,7 @@ class Pulser_server(LabradServer):
         yield deferToThread(self.api.eraseSequence, sequencename)
         self.ps_programmed = False
         self.ps_rid = None
+        #todo: catch errors
         self.inCommunication.release()
 
     @setting(5, "Runs Completed", returns='i')
@@ -208,7 +207,7 @@ class Pulser_server(LabradServer):
             phase   (float) : phase     (in radians)
             profile (int)   : the DDS profile to set & change to
         """
-        #todo:
+        #todo: toggle
         #tdodo: convert
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.setDDS, ddsnum, params, profile)
