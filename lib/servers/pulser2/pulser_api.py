@@ -116,11 +116,12 @@ class Pulser_api(EnvExperiment):
 
     @kernel
     def _record(self, sequencename):
+        self.core.reset()
         with self.core_dma.record(sequencename):
             for i in range(50):
                 with parallel:
-                    self.ttlin_list[0].pulse(1*ms)
-                    self.ttlin_list[1].pulse(1*ms)
+                    self.ttlout_list[0].pulse(1*ms)
+                    self.ttlout_list[1].pulse(1*ms)
                 delay(1.0*ms)
         # PMT_device = self.ttlin_list['PMT']
         #tmax_us = 1000

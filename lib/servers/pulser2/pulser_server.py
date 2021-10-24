@@ -173,7 +173,7 @@ class Pulser_server(LabradServer):
         returnValue(completed_runs)
 
     #TTL functions
-    @setting(11, "Set TTL", ttlname = 's', state = 'b', returns='')
+    @setting(11, "Set TTL", ttlname = 'i', state = 'b', returns='')
     def setTTL(self, c, ttlname, state):
         """
         Switches a TTL to the given state.
@@ -186,7 +186,7 @@ class Pulser_server(LabradServer):
         self.inCommunication.release()
 
     #DDS functions
-    @setting(22, "Initialize DDS", returns = '')
+    @setting(21, "Initialize DDS", returns = '')
     def initializeDDS(self, c):
         """
         Reprograms the DDS chip to its initial state
