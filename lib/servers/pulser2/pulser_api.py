@@ -49,34 +49,36 @@ class Pulser_api(EnvExperiment):
         #get device names
         self.device_db = self.get_device_db()
             #create holding dictionaries
-        self.ttlout_list = {}
-        self.ttlin_list = {}
-        self.dds_list = {}
-        self.urukul_list = {}
-        self.pmt_list = {}
-        self.linetrigger_list = {}
+        self.ttlout_list = list()
+        self.ttlin_list = list()
+        self.dds_list = list()
+        self.urukul_list = list()
+        self.pmt_list = list()
+        self.linetrigger_list = list()
+        self.th1 = {0:[1,1]}
 
         #assign names and devices
         for name, params in self.device_db.items():
             #only get devices with named class
             if 'class' not in params:
                 continue
+            #set device as attribute
             devicetype = params['class']
             device = self.get_device(name)
             self.setattr_device(name)
             if devicetype == 'TTLInOut':
-                self.ttlin_list[name] = device
+                self.ttlin_list.append(device)
             elif devicetype == 'TTLOut':
                 if 'pmt' in name:
-                    self.pmt_list[name] = device
+                    self.pmt_list.append(device)
                 elif 'linetrigger' in name:
-                    self.linetrigger_list[name] = device
+                    self.linetrigger_list.append(device)
                 elif 'urukul' not in name:
-                    self.ttlout_list[name] = device
+                    self.ttlout_list.append(device)
             elif devicetype == 'AD9910':
-                self.dds_list[name] = device
+                self.dds_list.append(device)
             elif devicetype == 'CPLD':
-                self.urukul_list[name] = device
+                self.urukul_list.append(device)
 
     def _setVariables(self):
         """
@@ -103,7 +105,7 @@ class Pulser_api(EnvExperiment):
         #initialize devices
             #set ttlinout devices to be input
         self.core.reset()
-        for name, device in self.ttlin_list.items():
+        for device in self.ttlin_list:
             try:
                 device.input()
             except RTIOUnderflow:
@@ -121,12 +123,11 @@ class Pulser_api(EnvExperiment):
 
     @kernel
     def record(self, sequencename):
-        #th1 = {0:[1,1], 1:[-1,-1]}
         with self.core_dma.record(sequencename):
             for i in range(50):
                 with parallel:
-                    yz2['ttl4'].pulse(1*ms)
-                    self.ttl5.pulse(1*ms)
+                    self.ttlin_list[0].pulse(1*ms)
+                    self.ttlin_list[1].pulse(1*ms)
                 delay(1.0*ms)
         # PMT_device = self.ttlin_list['PMT']
         #tmax_us = 1000
@@ -153,6 +154,13 @@ class Pulser_api(EnvExperiment):
         #         self.mutate_dataset(self.PMT_count, i, counts_pmt)
         #     #todo: program dds
         #     #todo: program ttls for dds's
+
+    def processSequence(self):
+        """
+        Processes the TTL and DDS sequence into a format
+        more easily readable and processable by ARTIQ
+        """
+        pass
 
     def runsCompleted(self):
         val1 = self.get_dataset('numRuns')

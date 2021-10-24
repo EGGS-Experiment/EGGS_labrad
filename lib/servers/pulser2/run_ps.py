@@ -29,8 +29,12 @@ class pulse_sequence(EnvExperiment):
                 break
         #run pulse sequence
         while self.numRuns < self.maxRuns:
-            self.core.reset()
-            self.core_dma.playback_handle(handle)
-            self.numRuns += 1
-            self.mutate_dataset('numRuns', 0, self.numRuns)
+            try:
+                self.core.reset()
+                self.core_dma.playback_handle(handle)
+                self.numRuns += 1
+                self.mutate_dataset('numRuns', 0, self.numRuns)
+            except:
+                print('Pulse Sequence Interrupted')
+                break
         print('Pulse Sequence Finished')
