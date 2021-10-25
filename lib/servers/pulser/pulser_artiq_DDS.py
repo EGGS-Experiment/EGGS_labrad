@@ -225,7 +225,7 @@ class DDS_artiq(LabradServer):
                 if possibleError[0] == lastTime and len(possibleError[1]):
                     raise Exception(possibleError[1])
                 self.addToProgram(dds_program, state)
-                #move RAM to next position
+                #set TTL to move RAM to next position
                 if not lastTime == 0:
                     self._addNewSwitch(lastTime,self.advanceDDS,1)
                     self._addNewSwitch(lastTime + self.resetstepDuration, self.advanceDDS, -1)
