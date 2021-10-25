@@ -93,17 +93,28 @@ class Pulser_server(LabradServer):
         self.inCommunication.release()
         self.ps_programmed = True
 
-        # sequence = c.get('sequence')
-        # if not sequence:
-        #     raise Exception("Please create new sequence first")
-        # self.programmed_sequence = sequence
-        # #todo: calculate number of PMT recordings need
-        # #todo: ensure num doesn't exceed pmt array length
-        # dds, ttl = sequence.progRepresentation()
-        # yield self.inCommunication.acquire()
-        # yield deferToThread(self.api.record, ttl, dds)
-        # self.inCommunication.release()
-        # self.isProgrammed = True
+    def _record(self, sequencename = None):
+        """
+        Programs Pulser with the current sequence.
+        Saves the current sequence to self.programmed_sequence.
+        """
+        if not sequencename:
+            sequencename = 'default'
+        sequence = c.get('sequence')
+        if not sequence:
+            raise Exception("Please create new sequence first")
+        self.programmed_sequence = sequence
+        #get TTL sequence
+        ttl_seq = self.sequence.switchingTimes
+        ttl_times = self.at_mu(list(ttl_seq.keys()))
+        ttl_commands = list(ttl_seq.values())
+        #get DDS sequence
+        dds_seq = self._artiqParseDDS()
+        #todo: use for loop to set profile data
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.record, ttl_times, ttl_commands, dds_times, dds_params)
+        self.inCommunication.release()
+        self.ps_programmed = True
 
     @setting(2, "Run Sequence", maxruns = 'i', returns='')
     def runSequence(self, c, maxruns):

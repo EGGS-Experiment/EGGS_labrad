@@ -45,7 +45,7 @@ class Pulser_legacy(LabradServer):
                 self.api.setAuto(channelnumber, channel.autoinv)
 
         #DDS
-        self.ddsLock = False
+        self._ddsSeq = list()
         self.api.initializeDDS()
 
         for name, channel in self.ddsDict.items():
@@ -213,6 +213,9 @@ class Pulser_legacy(LabradServer):
             #convert DDS settings to RAM data
             num = self.settings_to_num(channel, freq, ampl, phase, ramp_rate, amp_ramp_rate)
             num_off = self.settings_to_num(channel, freq, ampl_off, phase, ramp_rate, amp_ramp_rate)
+            #todo: convert
+            num_ARTIQ = (asf, ftw, pow)
+            num_off_ARTIQ = (asf, ftw, pow)
             #note < sign, because start can not be 0.
             #this would overwrite the 0 position of the ram, and cause the dds to change before pulse sequence is launched
             if not self.sequenceTimeRange[0] < start <= self.sequenceTimeRange[1]:
@@ -222,6 +225,8 @@ class Pulser_legacy(LabradServer):
             if not dur == 0:    #0 length pulses are ignored
                 sequence.addDDS(name, start, num, 'start')
                 sequence.addDDS(name, start + dur, num_off, 'stop')
+                self._ddsSeq.append(name, start, num_ARTIQ, 'start')
+                self._ddsSeq.append(name, start + dur, num_off_ARTIQ, 'start')
 
     @setting(123, 'Get DDS Amplitude Range', name = 's', returns = '(vv)')
     def getDDSAmplRange(self, c, name = None):
@@ -233,15 +238,10 @@ class Pulser_legacy(LabradServer):
         channel = self._getChannel(c, name)
         return channel.allowedfreqrange
 
-    @setting(125, 'Clear DDS Lock')
-    def clear_dds_lock(self, c):
-        self.ddsLock = False
-
     @setting(60, "Get Line Trigger Limits", returns='*v[us]')
     def getLineTriggerLimits(self, c):
         """get limits for duration of line triggering"""
         return self.linetrigger_limits
-
 
     #Signal/Context functions
     def notifyOtherListeners(self, context, message, f):
@@ -260,6 +260,61 @@ class Pulser_legacy(LabradServer):
         self.listeners.remove(c.ID)
 
     #Legacy/compatibility functions
+    def _artiqParseDDS(self):
+        if len(self._ddsSeq) == 0:
+            return None
+        state = self.parent._getCurrentDDS()
+        pulses_end = {}.fromkeys(state, (0, 'stop')) #time / boolean whether in a middle of a pulse
+        dds_program = {}.fromkeys(state, '')
+        lastTime = 0
+        # get each DDS pulse as (name, time, RAM, on/off), sorted by start time
+        entries = sorted(self._ddsSeq, key = lambda t: t[1])
+        possibleError = (0, '')
+        while True:
+            try:
+                name, start, num, typ = entries.pop(0)
+            #todo: change ttl to profile switch
+            #check if we have reached end of sequence
+            except IndexError:
+                if start  == lastTime:
+                    #still have unprogrammed entries
+                    self.addToProgram(dds_program, state)
+                    self._addNewSwitch(lastTime,self.advanceDDS,1)
+                    self._addNewSwitch(lastTime + self.resetstepDuration, self.advanceDDS, -1)
+                #at the end of the sequence, reset dds
+                lastTTL = max(self.switchingTimes.keys())
+                self._addNewSwitch(lastTTL, self.resetDDS, 1)
+                self._addNewSwitch(lastTTL + self.resetstepDuration, self.resetDDS, -1)
+                return dds_program
+            end_time, end_typ = pulses_end[name]
+            # the time has advanced, so need to program the previous state
+            if start > lastTime:
+                # raise exception if error exists and belongs to that time
+                if possibleError[0] == lastTime and len(possibleError[1]):
+                    raise Exception(possibleError[1])
+                self.addToProgram(dds_program, state)
+                # move RAM to next position
+                if not lastTime == 0:
+                    self._addNewSwitch(lastTime, self.advanceDDS, 1)
+                    self._addNewSwitch(lastTime + self.resetstepDuration, self.advanceDDS, -1)
+                lastTime = start
+            # move to next dds pulse
+            if start == end_time:
+                #overwite only when extending pulse
+                if end_typ == 'stop' and typ == 'start':
+                    possibleError = (0,'')
+                    state[name] = num
+                    pulses_end[name] = (start, typ)
+                elif end_typ == 'start' and typ == 'stop':
+                    possibleError = (0,'')
+            elif end_typ == typ:
+                possibleError = (start,'Found Overlap Of Two Pules for channel {}'.format(name))
+                state[name] = num
+                pulses_end[name] = (start, typ)
+            else:
+                state[name] = num
+                pulses_end[name] = (start, typ)
+
     @inlineCallbacks
     def _setDDSRemote(self, channel, addr, buf):
         cxn = self.remoteConnections[channel.remote]
