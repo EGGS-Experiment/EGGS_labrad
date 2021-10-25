@@ -3,7 +3,6 @@ from labrad.units import WithUnit
 from treedict import TreeDict
 
 class pulse_sequence(object):
-	
 	'''
 	Base class for all Pulse Sequences
 	Version 1.1

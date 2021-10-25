@@ -1,5 +1,7 @@
 @ECHO OFF
 
+::Starts all necessary components for a LabRAD node
+
 ::Core
 START "Labrad Web GUI" /min %HOME%/Code/scalabrad-web-server-2.0.6/bin/labrad-web.bat
 START "Labrad Node" /min CMD "/k activate labart && python %HOME%/Code/pylabrad/labrad/node/__init__.py"
