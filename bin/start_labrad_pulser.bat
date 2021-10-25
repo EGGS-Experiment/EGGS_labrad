@@ -6,6 +6,6 @@ start "ARTIQ Master" /min cmd "/k activate labart2 && artiq_master -g -r %ARTIQ_
 
 ::Submit pulser API to ARTIQ Master to be run
 conda activate labart2 &&
-artiq_client submit %HOME%/EGGS_labrad/lib/servers/pulser2/pulser_api.py
+artiq_client submit %HOME%/EGGS_labrad/lib/servers/pulser/pulser_api.py
 
 PAUSE
