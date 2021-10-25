@@ -94,6 +94,7 @@ dependencies:
   - zope=1.0=py38_1
   - zope.interface=5.4.0=py38h2bbff1b_0
   - zstd=1.4.9=h19a0ad4_0
+  - pip
   - pip:
     - argparse==1.4.0
     - arrow==1.2.0
