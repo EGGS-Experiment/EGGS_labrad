@@ -1,7 +1,7 @@
 from artiq.experiment import *
 import numpy as np
 
-class pulse_sequence(EnvExperiment):
+class pulse_runner(EnvExperiment):
     def build(self):
         self.setattr_device('core')
         self.setattr_device('core_dma')

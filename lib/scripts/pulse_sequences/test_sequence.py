@@ -1,7 +1,7 @@
 from EGGS_labrad.lib.scripts.pulse_sequences.test_sequence import pulse_sequence
 from labrad.units import WithUnit
 from treedict import TreeDict
-#from servers.pulser.pulse_sequences.plot_sequence import SequencePlotter
+#from servers.pulser.pulse_sequences.py.plot_sequence import SequencePlotter
 
 
 class sampleDDS(pulse_sequence):

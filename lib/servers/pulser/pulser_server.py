@@ -48,7 +48,7 @@ class Pulser_server(LabradServer):
         self.inCommunication = DeferredLock()
 
         #pulse sequencer variables
-        self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser2\\run_ps.py'
+        self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser\\run_ps.py'
         self.ps_rid = None
         self.ps_programmed = False
 
@@ -64,10 +64,13 @@ class Pulser_server(LabradServer):
 
         #conversions
         self.seconds_to_mu = self.api.core.seconds_to_mu
-        # self.amplitude_to_asf = self.api.dds_list[0].amplitude_to_asf
-        # self.frequency_to_ftw = self.api.dds_list[0].frequency_to_ftw
-        # self.turns_to_pow = self.api.dds_list[0].turns_to_pow
-        # self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
+            #get DDS conversions only if there are DDSs
+        if len(self.api.dds_list) > 0:
+            self.amplitude_to_asf = self.api.dds_list[0].amplitude_to_asf
+            self.frequency_to_ftw = self.api.dds_list[0].frequency_to_ftw
+            self.turns_to_pow = self.api.dds_list[0].turns_to_pow
+            self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
+        # todo: get io update alignment
 
     #Pulse sequencing
     @setting(0, "New Sequence", returns = '')
@@ -96,13 +99,9 @@ class Pulser_server(LabradServer):
         # self.programmed_sequence = sequence
         # #todo: calculate number of PMT recordings need
         # #todo: ensure num doesn't exceed pmt array length
-        # _, ttl = sequence.progRepresentation()
-        # if dds is None:
-        #     dds = {}
-        # #use ddsSettinglist since that is more ARTIQ-friendly
-        # dds_single, dds_ramp = self._artiqParseDDS(sequence.ddsSettingList)
+        # dds, ttl = sequence.progRepresentation()
         # yield self.inCommunication.acquire()
-        # yield deferToThread(self.api.programBoard, ttl, dds_single, dds_ramp)
+        # yield deferToThread(self.api.record, ttl, dds)
         # self.inCommunication.release()
         # self.isProgrammed = True
 

@@ -1,5 +1,4 @@
 import numpy, array
-
 from decimal import Decimal
 
 class Sequence():

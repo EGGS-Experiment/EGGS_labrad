@@ -20,34 +20,22 @@ class Pulser_legacy(LabradServer):
     on_line_trigger_param = Signal(142007, 'signal: new line trigger parameter', '(bv)')
 
     def initServer(self):
+        #todo: appropriate these variables
+            #device storage
         self.channelDict = hardwareConfiguration.channelDict
+        self.ddsDict = hardwareConfiguration.ddsDict
+        self.remoteChannels = hardwareConfiguration.remoteChannels
+            #pmt
         self.collectionTime = hardwareConfiguration.collectionTime
         self.collectionMode = hardwareConfiguration.collectionMode
-        self.timeResolution = float(hardwareConfiguration.timeResolution)
-        self.ddsDict = hardwareConfiguration.ddsDict
-        self.timeResolvedResolution = hardwareConfiguration.timeResolvedResolution
-        self.remoteChannels = hardwareConfiguration.remoteChannels
         self.collectionTimeRange = hardwareConfiguration.collectionTimeRange
+            #ttl
+        self.timeResolution = float(hardwareConfiguration.timeResolution)
         self.sequenceTimeRange = hardwareConfiguration.sequenceTimeRange
-        self.inCommunication = DeferredLock()
-
         yield self.initializeRemote()
-        self.initializeSettings()
         self.listeners = set()
 
-        self.ddsLock = False
-        self.api.initializeDDS()
-        for name, channel in self.ddsDict.items():
-            channel.name = name
-            freq, ampl, phase = (channel.frequency, channel.amplitude, channel.phase)
-            self._checkRange('amplitude', channel, ampl)
-            self._checkRange('frequency', channel, freq)
-            yield self.inCommunication.run(self._setDDSParam, channel, freq, ampl, phase)
-        self.ddsSequenceARTIQ = {}
-        #todo: get io update alignment
-
-    def initializeSettings(self):
-        #initialize TTLs
+        #TTLs
         for channel in self.channelDict.values():
             channelnumber = channel.channelnumber
             if channel.ismanual:
@@ -55,6 +43,21 @@ class Pulser_legacy(LabradServer):
                 self.api.setManual(channelnumber, state)
             else:
                 self.api.setAuto(channelnumber, channel.autoinv)
+
+        #DDS
+        self.ddsLock = False
+        self.api.initializeDDS()
+
+        for name, channel in self.ddsDict.items():
+            channel.name = name
+            freq, ampl, phase = (channel.frequency, channel.amplitude, channel.phase)
+            self._checkRange('amplitude', channel, ampl)
+            self._checkRange('frequency', channel, freq)
+            yield self.inCommunication.run(self._setDDSParam, channel, freq, ampl, phase)
+
+        #Linetrigger
+        self.linetrigger_limits = [WithUnit(v, 'us') for v in hardwareConfiguration.lineTriggerLimits]
+
 
     @inlineCallbacks
     def initializeRemote(self):
@@ -234,12 +237,6 @@ class Pulser_legacy(LabradServer):
     def clear_dds_lock(self, c):
         self.ddsLock = False
 
-    #Linetrigger functions
-    def initialize(self):
-        self.linetrigger_enabled = False
-        self.linetrigger_duration = WithUnit(0, 'us')
-        self.linetrigger_limits = [WithUnit(v, 'us') for v in hardwareConfiguration.lineTriggerLimits]
-
     @setting(60, "Get Line Trigger Limits", returns='*v[us]')
     def getLineTriggerLimits(self, c):
         """get limits for duration of line triggering"""
@@ -302,8 +299,7 @@ class Pulser_legacy(LabradServer):
             num = self._valToInt_coherent(channel, freq, ampl, phase, ramp_rate, amp_ramp_rate)
         return num
 
-    def _valToInt_coherent(self, channel, freq, ampl, phase=0, ramp_rate=0,
-                           amp_ramp_rate=0):  ### add ramp for ramping functionality
+    def _valToInt_coherent(self, channel, freq, ampl, phase=0, ramp_rate=0, amp_ramp_rate=0):  ### add ramp for ramping functionality
         '''
         takes the frequency and amplitude values for the specific channel and returns integer representation of the dds setting
         freq is in MHz

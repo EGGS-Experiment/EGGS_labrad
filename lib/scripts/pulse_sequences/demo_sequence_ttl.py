@@ -8,7 +8,7 @@ with labrad.connect() as cxn:
     channel_names = [chan[0] for chan in channels]
     for i in range(len(channels)):
         start = i * duration
-        print start
+        print(start)
         pulser.add_ttl_pulse((channel_names[i],  start, duration))
     pulser.program_sequence()
     pulser.start_number(10)
