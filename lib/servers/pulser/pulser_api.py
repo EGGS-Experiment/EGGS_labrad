@@ -159,7 +159,7 @@ class Pulser_api(EnvExperiment):
                             self.ttlout_list[i].off()
             #program DDS sequence
             for timestamp, params in dds_sequence:
-                self.
+                pass
             #program PMT input
             for i in range(0, tmax_us, self.pmt_interval):
                 #todo: convert to machine units
