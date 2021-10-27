@@ -58,7 +58,6 @@ class Pulser_legacy(LabradServer):
         #Linetrigger
         self.linetrigger_limits = [WithUnit(v, 'us') for v in hardwareConfiguration.lineTriggerLimits]
 
-
     @inlineCallbacks
     def initializeRemote(self):
         self.remoteConnections = {}
@@ -225,8 +224,6 @@ class Pulser_legacy(LabradServer):
             if not dur == 0:    #0 length pulses are ignored
                 sequence.addDDS(name, start, num, 'start')
                 sequence.addDDS(name, start + dur, num_off, 'stop')
-                self._ddsSeq.append(name, start, num_ARTIQ, 'start')
-                self._ddsSeq.append(name, start + dur, num_off_ARTIQ, 'start')
 
     @setting(123, 'Get DDS Amplitude Range', name = 's', returns = '(vv)')
     def getDDSAmplRange(self, c, name = None):
@@ -331,6 +328,18 @@ class Pulser_legacy(LabradServer):
         Returns a dictionary {name:num} with the representation of the current dds state
         '''
         return dict([(name, self._channel_to_num(channel)) for (name, channel) in self.ddsDict.items()])
+
+    def _channel_to_num(self, channel):
+        '''returns the current state of the channel in the num represenation'''
+        if channel.state:
+            #if on, use current values. else, use off values
+            freq, ampl = (channel.frequency, channel.amplitude)
+            self._checkRange('amplitude', channel, ampl)
+            self._checkRange('frequency', channel, freq)
+        else:
+            freq,ampl = channel.off_parameters
+        num = self.settings_to_num(channel, freq, ampl)
+        return num
 
     def _checkRange(self, t, channel, val):
         if t == 'amplitude':

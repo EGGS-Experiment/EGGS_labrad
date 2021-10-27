@@ -98,6 +98,7 @@ class Pulser_server(LabradServer):
         Programs Pulser with the current sequence.
         Saves the current sequence to self.programmed_sequence.
         """
+        #set sequencename to default if not specified
         if not sequencename:
             sequencename = 'default'
         sequence = c.get('sequence')
@@ -110,9 +111,11 @@ class Pulser_server(LabradServer):
         ttl_commands = list(ttl_seq.values())
         #get DDS sequence
         dds_seq = self._artiqParseDDS()
-        #todo: use for loop to set profile data
+        #dds_devices = list(dds_seq.keys())
+        #dds_params = list(dds_seq.values())
         yield self.inCommunication.acquire()
-        yield deferToThread(self.api.record, ttl_times, ttl_commands, dds_times, dds_params)
+        yield deferToThread(self.api.record, ttl_seq, dds_seq, sequencename)
+        #yield deferToThread(self.api.record, ttl_times, ttl_commands, dds_times, dds_params)
         self.inCommunication.release()
         self.ps_programmed = True
 
