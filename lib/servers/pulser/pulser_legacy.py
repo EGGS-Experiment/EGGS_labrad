@@ -35,7 +35,6 @@ class Pulser_legacy(LabradServer):
         self.timeResolution = float(hardwareConfiguration.timeResolution)
         self.sequenceTimeRange = hardwareConfiguration.sequenceTimeRange
             #DDSs
-        self.ddsDict = hardwareConfiguration.ddsDict
         for name, channel in self.ddsDict.items():
             channel.name = name
             freq, ampl, phase = (channel.frequency, channel.amplitude, channel.phase)

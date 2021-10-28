@@ -19,9 +19,9 @@ timeout = 20
 #labrad and artiq imports
 from labrad.server import LabradServer, setting, Signal
 from labrad.units import WithUnit
-#from pulser_legacy import Pulser_legacy
-#from sequence import Sequence
 from artiq.experiment import *
+from sequence import Sequence
+#from pulser_legacy import Pulser_legacy
 
 #async imports
 from twisted.internet import reactor, task
@@ -54,6 +54,12 @@ class Pulser_server(LabradServer):
         self.ps_is_programmed = False
         self.ps_programmed_sequence = None
 
+        #TTL variables
+        self.ttlDict = hardwareConfiguration.channelDict
+
+        #DDS variables
+        self.ddsDict = hardwareConfiguration.ddsDict
+
         #pmt variables
         self.pmt_mode = ''
         self.pmt_interval = 0 * us
@@ -80,7 +86,7 @@ class Pulser_server(LabradServer):
         """
         Create New Pulse Sequence
         """
-        c['sequence'] = Sequence(self)
+        c['sequence'] = Sequence()
 
     @setting(1, "Record Sequence", sequencename = 's', returns = '')
     def record(self, c, sequencename = None):
@@ -105,15 +111,10 @@ class Pulser_server(LabradServer):
         if not sequencename:
             sequencename = 'default'
 
-        #get sequence
+        #get sequence and check to see we have a sequence
         sequence = c.get('sequence')
-
-        #check to see we have a sequence
         if not sequence: raise Exception("Please create new sequence first")
-
         self.ps_programmed_sequence = sequence
-
-        #get sequence
         ttl_seq, dds_seq = self.sequence.progRepresentation()
 
         #process TTL sequence
