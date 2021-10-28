@@ -19,11 +19,10 @@ class Pulser_legacy(LabradServer):
 
     """Contains legacy functionality for Pulser"""
 
-
     def initServer(self):
         #device storage
             #PMT
-        self.collectionTimeRange = hardwareConfiguration.collectionTimeRange
+
             #DDSs
         for name, channel in self.ddsDict.items():
             channel.name = name
@@ -31,9 +30,6 @@ class Pulser_legacy(LabradServer):
             self._checkRange('amplitude', channel, ampl)
             self._checkRange('frequency', channel, freq)
             yield self.inCommunication.run(self._setDDSParam, channel, freq, ampl, phase)
-
-        #Linetrigger
-        self.linetrigger_limits = [WithUnit(v, 'us') for v in hardwareConfiguration.lineTriggerLimits]
 
         #Remote channels
         self.remoteChannels = hardwareConfiguration.remoteChannels
@@ -73,11 +69,6 @@ class Pulser_legacy(LabradServer):
     def getDDSFreqRange(self, c, name = None):
         channel = self._getChannel(c, name)
         return channel.allowedfreqrange
-
-    @setting(131, "Get Line Trigger Limits", returns='*v[us]')
-    def getLineTriggerLimits(self, c):
-        """get limits for duration of line triggering"""
-        return self.linetrigger_limits
 
     #Backwards compatibility
     @inlineCallbacks

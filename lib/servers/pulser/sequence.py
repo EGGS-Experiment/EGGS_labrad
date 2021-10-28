@@ -34,7 +34,6 @@ class Sequence():
         self.ddsSettingList = {}
         self.sectomu = lambda a: a
 
-
     #Sequence functions
     def progRepresentation(self):
         """Returns the programming representation of the sequence"""

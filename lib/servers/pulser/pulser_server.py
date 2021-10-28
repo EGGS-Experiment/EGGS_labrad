@@ -21,7 +21,6 @@ from labrad.server import LabradServer, setting, Signal
 from labrad.units import WithUnit
 from artiq.experiment import *
 from sequence import Sequence
-#from pulser_legacy import Pulser_legacy
 
 #async imports
 from twisted.internet import reactor, task
@@ -35,7 +34,6 @@ class Pulser_server(LabradServer):
 
     name = 'ARTIQ Pulser'
     regKey = 'ARTIQ_Pulser'
-
 
     onSwitch = Signal(611051, 'signal: switch toggled', '(ss)')
     on_dds_param = Signal(142006, 'signal: new dds parameter', '(ssv)')
@@ -73,12 +71,14 @@ class Pulser_server(LabradServer):
         #self.pmt_mode = hardwareConfiguration.collectionTime
         self.pmt_interval = 0 * us
         #self.pmt_interval = hardwareConfiguration.collectionMode
+        #self.pmt_interval_range = hardwareConfiguration.collectionTimeRange
 
         #linetrigger variables
         self.linetrigger_enabled = False
         self.linetrigger_delay = 0 * ms
             #todo: change in config
         self.linetrigger_ttl = 'ttl0'
+        self.linetrigger_limits = [WithUnit(v, 'us') for v in hardwareConfiguration.lineTriggerLimits]
 
         #conversions
         self.seconds_to_mu = self.api.core.seconds_to_mu
@@ -489,6 +489,11 @@ class Pulser_server(LabradServer):
             self.linetrigger_duration = duration['us']
             #self.notifyOtherListeners(c, (self.linetrigger_enabled, self.linetrigger_duration), self.on_line_trigger_param)
         return WithUnit(self.linetrigger_duration, 'us')
+
+    @setting(43, "Get Line Trigger Limits", returns='*v[us]')
+    def getLineTriggerLimits(self, c):
+        """get limits for duration of line triggering"""
+        return self.linetrigger_limits
 
     #Context functions
 
