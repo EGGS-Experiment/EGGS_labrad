@@ -234,7 +234,9 @@ class Pulser_api(EnvExperiment):
 
     @kernel
     def toggleDDS(self, ddsnum, state):
-        #todo: test
+        """
+        Toggle a DDS using the RF switch.
+        """
         self.dds_list[ddsnum].cfg_sw(state)
 
     @kernel

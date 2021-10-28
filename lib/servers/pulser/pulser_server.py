@@ -20,6 +20,7 @@ timeout = 20
 from labrad.server import LabradServer, setting, Signal
 from labrad.units import WithUnit
 #from pulser_legacy import Pulser_legacy
+#from sequence import Sequence
 from artiq.experiment import *
 
 #async imports
@@ -140,8 +141,9 @@ class Pulser_server(LabradServer):
         Argument:
             numruns (int): number of times to run the pulse sequence
         """
-        if not self.ps_is_programmed:
-            raise Exception("No Programmed Sequence")
+        #check to see if a sequence has been programmed
+        if not self.ps_is_programmed: raise Exception("No Programmed Sequence")
+
         #set pipeline, priority, and expid
         ps_pipeline = 'PS'
         ps_priority = 1
@@ -197,6 +199,102 @@ class Pulser_server(LabradServer):
         returnValue(completed_runs)
 
     #TTL functions
+    @setting(111, 'Add TTL Pulse', ttl_name = 's', start = 'v[s]', duration = 'v[s]')
+    def addTTLPulse(self, c, ttl_name, start, duration):
+        """
+        Add a TTL Pulse to the sequence, times are in seconds
+        """
+        sequence = c.get('sequence')
+
+        #simple error checking
+            #check to see that a sequence exists
+        if not sequence:
+            raise Exception("Please create new sequence first")
+            #check that channel exists
+        if ttl_name not in self.ttlDict.keys():
+            raise Exception("Unknown Channel {}".format(ttl_name))
+            #check that pulse is within time limit
+        if not ((self.sequenceTimeRange[0] <= start <= self.sequenceTimeRange[1]) and
+                 (self.sequenceTimeRange[0] <= start + duration <= self.sequenceTimeRange[1])):
+            raise Exception("Time boundaries are out of range")
+            #check to see that pulse is not too short
+        if not duration >= self.timeResolution:
+            raise Exception("Incorrect duration")
+
+        ttl_channel = self.ttlDict[ttl_name].channelnumber
+        start = start['s']
+        duration = duration['s']
+        sequence.addPulse(ttl_channel, start, duration)
+
+    @setting(112, 'Add TTL Pulses', pulses = '*(sv[s]v[s])')
+    def addTTLPulses(self, c, pulses):
+        """
+        Add multiple TTL Pulses to the sequence, times are in seconds.
+        The pulses are a list in the same format as 'add ttl pulse'.
+        """
+        for pulse in pulses:
+            ttl_name = pulse[0]
+            start = pulse[1]
+            duration = pulse[2]
+            yield self.addTTLPulse(c, ttl_name, start, duration)
+
+    @setting(113, "Extend Sequence Length", end_time = 'v[s]')
+    def extendSequenceLength(self, c, end_time):
+        """
+        Extends the TTL pulse sequence to the given time.
+        """
+        sequence = c.get('sequence')
+        if not (self.sequenceTimeRange[0] <= end_time['s'] <= self.sequenceTimeRange[1]):
+            raise Exception("Time boundaries are out of range")
+        if not sequence:
+            raise Exception("Please create new sequence first")
+        sequence.extendSequenceLength(end_time['s'])
+
+    @setting(114, "Human Readable TTL", getProgrammed = 'b', returns = '*2s')
+    def humanReadableTTL(self, c, getProgrammed = None):
+        """
+        Gets the TTL sequence in human-readable form.
+        Args:
+            getProgrammed (bool): False/None(default) to get the sequence added by current context,
+                              True to get the last programmed sequence
+        Returns:
+            a readable form of TTL sequence
+        """
+        sequence = c.get('sequence')
+
+        #get programmed sequence
+        if getProgrammed: sequence = self.ps_programmed_sequence
+        #check whether a sequence exists
+        if not sequence: raise Exception("Please create new sequence first")
+        ttl, _ = sequence.humanRepresentation()
+        return ttl.tolist()
+
+    @setting(115, "Human Readable DDS", getProgrammed = 'b', returns = '*(svv)')
+    def humanReadableDDS(self, c, getProgrammed = None):
+        """
+        Gets the DDS sequence in human-readable form.
+        Args:
+            getProgrammed (bool): False/None(default) to get the sequence added by current context,
+                              True to get the last programmed sequence
+        Returns:
+            a readable form of DDS sequence
+        """
+        sequence = c.get('sequence')
+        #get programmed sequence
+        if getProgrammed: sequence = self.ps_programmed_sequence
+        #check whether a sequence exists
+        _, dds = sequence.humanRepresentation()
+        return dds
+
+    @setting(116, 'Get TTLs', returns = '*(sw)')
+    def getChannels(self, c):
+        """
+        Returns all available TTL channels and their corresponding hardware numbers
+        """
+        keys = self.ttlDict.keys()
+        numbers = [d[key].channelnumber for key in keys]
+        return zip(keys, numbers)
+
     @setting(11, "Set TTL", ttl_name = 'i', state = 'b', returns='')
     def setTTL(self, c, ttl_name, state):
         """
@@ -211,6 +309,69 @@ class Pulser_server(LabradServer):
         self.inCommunication.release()
 
     #DDS functions
+    @setting(211, "Get DDS Channels", returns = '*s')
+    def getDDSChannels(self, c):
+        """get the list of available channels"""
+        return self.ddsDict.keys()
+
+    @setting(212, 'Add DDS Pulses', values = ['*(sv[s]v[s]v[MHz]v[dBm]v[deg]v[MHz]v[dB])'])
+    def addDDSPulses(self, c, values):
+        '''
+        Add DDS pulses to sequence.
+        Input in the form of a list [(name, start, duration, frequency, amplitude, phase, ramp_rate, amp_ramp_rate)]
+        '''
+        sequence = c.get('sequence')
+        #check whether a sequence exists
+        if not sequence: raise Exception("Please create new sequence first")
+        for value in values:
+            try:
+                name, start, dur, freq, ampl = value
+                phase = 0.0
+                ramp_rate = 0.0
+            except ValueError:
+                name, start, dur, freq, ampl, phase, ramp_rate, amp_ramp_rate = value
+            try:
+                channel = self.ddsDict[name]
+            except KeyError:
+                raise Exception("Unknown DDS channel {}".format(name))
+
+            #strip units
+            start = start['s']
+            dur = dur['s']
+            freq = freq['MHz']
+            ampl = ampl['dBm']
+            phase = phase['deg']
+            ramp_rate = ramp_rate['MHz']
+            amp_ramp_rate = amp_ramp_rate['dB']
+            freq_off, ampl_off = channel.off_parameters
+
+            #only check range if dds won't be off
+            if (freq == 0) or (ampl == 0):
+                freq, ampl = freq_off, ampl_off
+            else:
+                self._checkRange('frequency', channel, freq)
+                self._checkRange('amplitude', channel, ampl)
+
+            #convert parameters
+            #todo: convert
+            num_ARTIQ = (asf, ftw, pow)
+            num_off_ARTIQ = (asf, ftw, pow)
+
+            #check time is in range
+                #note < sign, because start can not be 0.
+                #this would overwrite the 0 position of the ram, and cause the dds to change before pulse sequence is launched
+            if not self.sequenceTimeRange[0] < start <= self.sequenceTimeRange[1]:
+                raise Exception("DDS start time out of acceptable input range for channel {0} at time {1}".format(name, start))
+            if not self.sequenceTimeRange[0] < start + dur <= self.sequenceTimeRange[1]:
+                raise Exception("DDS start time out of acceptable input range for channel {0} at time {1}".format(name, start + dur))
+
+            #ignore zero-length pulses
+            if not dur == 0:
+                #get the DDS channel number
+                dds_channel = channel.address
+                sequence.addDDS(dds_channel, start, num_ARTIQ, 'start')
+                sequence.addDDS(dds_channel, start + dur, num_off_ARTIQ, 'stop')
+
     @setting(21, "Initialize DDS", returns = '')
     def initializeDDS(self, c):
         """
@@ -220,19 +381,17 @@ class Pulser_server(LabradServer):
         yield deferToThread(self.api.initializeDDS)
         self.inCommunication.release()
 
-    @setting(22, "Toggle DDS", dds_name = 's', freq = 'v[MHz]', ampl = 'v[dBm]', phase = 'v', profile = 'i', returns='')
-    def toggleDDS(self, c, dds_name, freq = None, ampl = None, phase = None, profile = 0):
+    @setting(22, "Toggle DDS", dds_name = 's', state = 'b', returns='')
+    def toggleDDS(self, c, dds_name, state, profile = 0):
         """
         Manually toggle a DDS
         Arguments:
             ddsname (str)   : the name of the dds
             state   (bool)  : power state
         """
-        #todo: toggle
-        #tdodo: convert dds name to num
-        dds_num = self.ddsDict
+        dds_channel = self.ddsDict[dds_name].address
         yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, dds_num, params, profile)
+        yield deferToThread(self.api.toggleDDS, dds_channel, state, profile)
         self.inCommunication.release()
 
     @setting(23, "Set DDS", dds_name = 's', freq = 'v[MHz]', ampl = 'v[dBm]', phase = 'v', profile = 'i', returns='')
@@ -246,11 +405,9 @@ class Pulser_server(LabradServer):
             phase   (float) : phase     (in radians)
             profile (int)   : the DDS profile to set & change to
         """
-        #todo: toggle
-        #tdodo: convert dds name to num
-        par
+        dds_channel = self.ddsDict[dds_name].address
         yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, dds_num, params, profile)
+        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
         self.inCommunication.release()
 
     #PMT functions
