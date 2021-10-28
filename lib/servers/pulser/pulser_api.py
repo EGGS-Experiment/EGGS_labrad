@@ -133,16 +133,16 @@ class Pulser_api(EnvExperiment):
         #TTLs
         ttl_times = list(ttl_seq.keys())
         ttl_commands = list(ttl_seq.values())
+        #DDSs
+        dds_times = list(dds_seq.keys())
+        dds_commands = list(dds_seq.values())
+        dds_params = list(dds_seq.values())
+        self._record(ttl_times, ttl_commands, sequencename)
             #get max time for PMT
         max_time = ttl_times[-1]
-        #DDSs
-        dds_channel_nums = list(dds_seq.keys())
-        dds_list_tmp = [self.dds_list[channel_num] for channel_num in dds_channel_nums]
-        dds_params = list(dds_seq.values())
-        self._recordTTL(ttl_times, ttl_commands, sequencename)
 
     @kernel
-    def _recordTTL(self, ttl_times, ttl_commands, sequencename):
+    def _record(self, ttl_times, ttl_commands, sequencename):
         PMT_device = self.ttlin_list['PMT']
         #record pulse sequence in memory
         with self.core_dma.record(sequencename):
@@ -249,7 +249,6 @@ class Pulser_api(EnvExperiment):
         _pow = params[2]
         self.dds_list[ddsnum].set_mu(ftw = _freq, asf = _ampl, pow = _pow, profile = _profile)
         #todo: do we need to change profile to desired one?
-        #todo: test
 
     #PMT functions
     def setPMTMode(self, mode):

@@ -127,18 +127,9 @@ class Pulser_server(LabradServer):
         self.ps_programmed_sequence = sequence
         ttl_seq, dds_seq = self.sequence.progRepresentation()
 
-        #process TTL sequence
-        ttl_times = self.at_mu(list(ttl_seq.keys()))
-        ttl_commands = list(ttl_seq.values())
-
-        #process DDS sequence
-        #dds_devices = list(dds_seq.keys())
-        #dds_params = list(dds_seq.values())
-
         #send to API
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.record, ttl_seq, dds_seq, sequencename)
-        #yield deferToThread(self.api.record, ttl_times, ttl_commands, dds_times, dds_params)
         self.inCommunication.release()
 
         #set global variables
@@ -494,8 +485,6 @@ class Pulser_server(LabradServer):
     def getLineTriggerLimits(self, c):
         """get limits for duration of line triggering"""
         return self.linetrigger_limits
-
-    #Context functions
 
     #Signal/Context functions
     def notifyOtherListeners(self, context, message, f):
