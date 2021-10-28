@@ -5,39 +5,49 @@ Used by the pulser server to store a pulse sequence
 import numpy, array
 from decimal import Decimal
 
-#todo: use seconds to mu instead of sectostep
-
-from EGGS_labrad.lib.config.hardwareConfiguration import hardwareConfiguration
+#from EGGS_labrad.lib.config.hardwareConfiguration import hardwareConfiguration
 
 class Sequence():
     """Sequence for programming pulses"""
-    def __init__(self, parent):
-        self.channelTotal = hardwareConfiguration.channelTotal
-        self.timeResolution = Decimal(hardwareConfiguration.timeResolution)
-        self.MAX_SWITCHES = hardwareConfiguration.maxSwitches
 
-        #dictionary in the form time:which channels to switch
-        #time is expressed as timestep with the given resolution
-        #which channels to switch is a channelTotal-long array with 1 to switch ON, -1 to switch OFF, 0 to do nothing
+    # def __init__(self, parent):
+    #     self.channelTotal = hardwareConfiguration.channelTotal
+    #     self.timeResolution = Decimal(hardwareConfiguration.timeResolution)
+    #     self.MAX_SWITCHES = hardwareConfiguration.maxSwitches
+    #
+    #     #dictionary in the form time:which channels to switch
+    #     #time is expressed as timestep with the given resolution
+    #     #which channels to switch is a channelTotal-long array with 1 to switch ON, -1 to switch OFF, 0 to do nothing
+    #     self.switchingTimes = {0:numpy.zeros(self.channelTotal, dtype = numpy.int8)}
+    #     self.switches = 1 #keeps track of how many switches are to be performed (same as the number of keys in the switching Times dictionary)
+    #
+    #     #dictionary for storing information about dds switches, in the format:
+    #     #timestep: {channel_name: integer representing the state}
+    #     self.ddsSettingList = dict.fromkeys(self.parent.ddsDict.keys(), [])
+    #     self.sectomu = self.parent.sectomu
+
+    def __init__(self):
+        self.channelTotal = 8
+        self.timeResolution = 1
+        self.MAX_SWITCHES = 1000
+
         self.switchingTimes = {0:numpy.zeros(self.channelTotal, dtype = numpy.int8)}
-        self.switches = 1 #keeps track of how many switches are to be performed (same as the number of keys in the switching Times dictionary)
+        self.switches = 1
 
-        #dictionary for storing information about dds switches, in the format:
-        #timestep: {channel_name: integer representing the state}
-        self.ddsSettingList = dict.fromkeys(self.parent.ddsDict.keys(), [])
-        self.sectomu = self.parent.sectomu
+        self.ddsSettingList = {}
+        self.sectomu = lambda a: a
 
     #TTL functions
     def addPulse(self, channel, start, duration):
         """adding TTL pulse, times are in seconds"""
-        start = self.secToStep(start)
-        duration = self.secToStep(duration)
+        start = self.sectomu(start)
+        duration = self.sectomu(duration)
         self._addNewSwitch(start, channel, 1)
         self._addNewSwitch(start + duration, channel, -1)
 
     def extendSequenceLength(self, timeLength):
         """Allows to extend the total length of the sequence"""
-        timeLength = self.secToStep(timeLength)
+        timeLength = self.sectomu(timeLength)
         self._addNewSwitch(timeLength,0,0)
 
     def _addNewSwitch(self, timeStep, chan, value):
@@ -59,27 +69,7 @@ class Sequence():
     #DDS functions
     def addDDS(self, name, start_time, params, start_or_stop):
         start_time_mu = self.sectomu(start_time)
-        self.ddsSettingList[name].append((start_time, params, start_or_stop))
-
-    def parseDDS(self):
-        #sort settings by start time
-        for channel_name in self.ddsSettingList.keys():
-            self.ddsSettingList[channel_name] = sorted(dds_setting, key=lambda t: t[0])
-        # for channel_name, dds_settings in self.ddsSettingList.keys():
-        # # check for possible errors
-        #     # check if pulse endpoints meet
-        # if start_time == end_time:
-        #     # program if new pulse
-        #     if (end_typ == 'stop') and (new_typ == 'start'):
-        #         possibleError = (0, '')
-        #     # don't program if zero-length pulse
-        #     elif end_typ == 'start' and new_typ == 'stop':
-        #         possibleError = (0, '')
-        #         continue
-        # # check if pulses overlap
-        # elif end_typ == new_typ:
-        #     possibleError = (start_time, 'Found Overlap Of Two Pulses for channel {}'.format(name))
-
+        self.ddsSettingList[start_time_mu] = (name, start_time, params, start_or_stop)
 
     #Human representation
     def humanRepresentation(self):
