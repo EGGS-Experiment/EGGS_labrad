@@ -19,21 +19,11 @@ class Pulser_legacy(LabradServer):
 
     """Contains legacy functionality for Pulser"""
 
-    onSwitch = Signal(611051, 'signal: switch toggled', '(ss)')
-    on_dds_param = Signal(142006, 'signal: new dds parameter', '(ssv)')
-    on_line_trigger_param = Signal(142007, 'signal: new line trigger parameter', '(bv)')
 
     def initServer(self):
-        #todo: appropriate these variables
         #device storage
             #PMT
-        self.collectionTime = hardwareConfiguration.collectionTime
-        self.collectionMode = hardwareConfiguration.collectionMode
         self.collectionTimeRange = hardwareConfiguration.collectionTimeRange
-            #TTLs
-        self.ttlDict = hardwareConfiguration.channelDict
-        self.timeResolution = float(hardwareConfiguration.timeResolution)
-        self.sequenceTimeRange = hardwareConfiguration.sequenceTimeRange
             #DDSs
         for name, channel in self.ddsDict.items():
             channel.name = name
@@ -47,11 +37,7 @@ class Pulser_legacy(LabradServer):
 
         #Remote channels
         self.remoteChannels = hardwareConfiguration.remoteChannels
-
-        #Device initialization
-        self.api.initializeDDS()
         yield self.initializeRemote()
-        self.listeners = set()
 
     @inlineCallbacks
     def initializeRemote(self):
@@ -93,21 +79,6 @@ class Pulser_legacy(LabradServer):
         """get limits for duration of line triggering"""
         return self.linetrigger_limits
 
-    #Signal/Context functions
-    def notifyOtherListeners(self, context, message, f):
-        """
-        Notifies all listeners except the one in the given context, executing function f
-        """
-        notified = self.listeners.copy()
-        notified.remove(context.ID)
-        f(message, notified)
-
-    def initContext(self, c):
-        """Initialize a new context object."""
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        self.listeners.remove(c.ID)
 
     #Backwards compatibility
     @inlineCallbacks

@@ -36,6 +36,11 @@ class Pulser_server(LabradServer):
     name = 'ARTIQ Pulser'
     regKey = 'ARTIQ_Pulser'
 
+
+    onSwitch = Signal(611051, 'signal: switch toggled', '(ss)')
+    on_dds_param = Signal(142006, 'signal: new dds parameter', '(ssv)')
+    on_line_trigger_param = Signal(142007, 'signal: new line trigger parameter', '(bv)')
+
     def __init__(self, api):
         self.api = api
         LabradServer.__init__(self)
@@ -43,6 +48,7 @@ class Pulser_server(LabradServer):
     @inlineCallbacks
     def initServer(self):
         yield self._setVariables()
+        self.listeners = set()
 
     def _setVariables(self):
         self.scheduler = self.api.scheduler
@@ -56,13 +62,17 @@ class Pulser_server(LabradServer):
 
         #TTL variables
         self.ttlDict = hardwareConfiguration.channelDict
+        #self.timeResolution = float(hardwareConfiguration.timeResolution)
+        #self.sequenceTimeRange = hardwareConfiguration.sequenceTimeRange
 
         #DDS variables
         self.ddsDict = hardwareConfiguration.ddsDict
 
         #pmt variables
         self.pmt_mode = ''
+        #self.pmt_mode = hardwareConfiguration.collectionTime
         self.pmt_interval = 0 * us
+        #self.pmt_interval = hardwareConfiguration.collectionMode
 
         #linetrigger variables
         self.linetrigger_enabled = False
@@ -207,14 +217,19 @@ class Pulser_server(LabradServer):
         """
         sequence = c.get('sequence')
 
-        #simple error checking
-            #check to see that a sequence exists
+        #check to see that a sequence exists
         if not sequence:
             raise Exception("Please create new sequence first")
-            #check that channel exists
+        #check that channel exists
         if ttl_name not in self.ttlDict.keys():
             raise Exception("Unknown Channel {}".format(ttl_name))
-            #check that pulse is within time limit
+
+        #convert
+        ttl_channel = self.ttlDict[ttl_name].channelnumber
+        start = start['s']
+        duration = duration['s']
+
+        # check that pulse is within time limit
         if not ((self.sequenceTimeRange[0] <= start <= self.sequenceTimeRange[1]) and
                  (self.sequenceTimeRange[0] <= start + duration <= self.sequenceTimeRange[1])):
             raise Exception("Time boundaries are out of range")
@@ -222,9 +237,6 @@ class Pulser_server(LabradServer):
         if not duration >= self.timeResolution:
             raise Exception("Incorrect duration")
 
-        ttl_channel = self.ttlDict[ttl_name].channelnumber
-        start = start['s']
-        duration = duration['s']
         sequence.addPulse(ttl_channel, start, duration)
 
     @setting(112, 'Add TTL Pulses', pulses = '*(sv[s]v[s])')
@@ -293,7 +305,7 @@ class Pulser_server(LabradServer):
         Returns all available TTL channels and their corresponding hardware numbers
         """
         keys = self.ttlDict.keys()
-        numbers = [d[key].channelnumber for key in keys]
+        numbers = [self.ttlDict[key].channelnumber for key in keys]
         return zip(keys, numbers)
 
     @setting(11, "Set TTL", ttl_name = 'i', state = 'b', returns='')
@@ -478,4 +490,20 @@ class Pulser_server(LabradServer):
             #self.notifyOtherListeners(c, (self.linetrigger_enabled, self.linetrigger_duration), self.on_line_trigger_param)
         return WithUnit(self.linetrigger_duration, 'us')
 
-    #Helper functions
+    #Context functions
+
+    #Signal/Context functions
+    def notifyOtherListeners(self, context, message, f):
+        """
+        Notifies all listeners except the one in the given context, executing function f
+        """
+        notified = self.listeners.copy()
+        notified.remove(context.ID)
+        f(message, notified)
+
+    def initContext(self, c):
+        """Initialize a new context object."""
+        self.listeners.add(c.ID)
+
+    def expireContext(self, c):
+        self.listeners.remove(c.ID)
