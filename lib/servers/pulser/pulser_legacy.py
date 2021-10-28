@@ -1,5 +1,6 @@
 #labrad and artiq imports
 from labrad.server import LabradServer, setting, Signal
+from labrad.units import WithUnit
 
 #async imports
 from twisted.internet import reactor, task
@@ -11,6 +12,9 @@ from sequence import Sequence
 #function imports
 import numpy as np
 
+#config import
+#todo
+
 class Pulser_legacy(LabradServer):
 
     """Contains legacy functionality for Pulser"""
@@ -21,33 +25,17 @@ class Pulser_legacy(LabradServer):
 
     def initServer(self):
         #todo: appropriate these variables
-            #device storage
-        self.channelDict = hardwareConfiguration.channelDict
-        self.ddsDict = hardwareConfiguration.ddsDict
-        self.remoteChannels = hardwareConfiguration.remoteChannels
-            #pmt
+        #device storage
+            #PMT
         self.collectionTime = hardwareConfiguration.collectionTime
         self.collectionMode = hardwareConfiguration.collectionMode
         self.collectionTimeRange = hardwareConfiguration.collectionTimeRange
-            #ttl
+            #TTLs
+        self.ttlDict = hardwareConfiguration.channelDict
         self.timeResolution = float(hardwareConfiguration.timeResolution)
         self.sequenceTimeRange = hardwareConfiguration.sequenceTimeRange
-        yield self.initializeRemote()
-        self.listeners = set()
-
-        #TTLs
-        for channel in self.channelDict.values():
-            channelnumber = channel.channelnumber
-            if channel.ismanual:
-                state = channel.manualin ^ channel.manualstate
-                self.api.setManual(channelnumber, state)
-            else:
-                self.api.setAuto(channelnumber, channel.autoinv)
-
-        #DDS
-        self._ddsSeq = list()
-        self.api.initializeDDS()
-
+            #DDSs
+        self.ddsDict = hardwareConfiguration.ddsDict
         for name, channel in self.ddsDict.items():
             channel.name = name
             freq, ampl, phase = (channel.frequency, channel.amplitude, channel.phase)
@@ -57,6 +45,14 @@ class Pulser_legacy(LabradServer):
 
         #Linetrigger
         self.linetrigger_limits = [WithUnit(v, 'us') for v in hardwareConfiguration.lineTriggerLimits]
+
+        #Remote channels
+        self.remoteChannels = hardwareConfiguration.remoteChannels
+
+        #Device initialization
+        self.api.initializeDDS()
+        yield self.initializeRemote()
+        self.listeners = set()
 
     @inlineCallbacks
     def initializeRemote(self):
@@ -71,53 +67,61 @@ class Pulser_legacy(LabradServer):
                     print('Not Able to connect to {}'.format(name))
                     self.remoteConnections[name] = None
 
-    @setting(111, 'Add TTL Pulse', channel = 's', start = 'v[s]', duration = 'v[s]')
-    def addTTLPulse(self, c, channel, start, duration):
+    @setting(111, 'Add TTL Pulse', ttl_name = 's', start = 'v[s]', duration = 'v[s]')
+    def addTTLPulse(self, c, ttl_name, start, duration):
         """
         Add a TTL Pulse to the sequence, times are in seconds
         """
-        if channel not in self.channelDict.keys():
-            raise Exception("Unknown Channel {}".format(channel))
-        hardwareAddr = self.channelDict.get(channel).channelnumber
         sequence = c.get('sequence')
-        start = start['s']
-        duration = duration['s']
+
         #simple error checking
+            #check to see that a sequence exists
+        if not sequence:
+            raise Exception("Please create new sequence first")
+            #check that channel exists
+        if ttl_name not in self.ttlDict.keys():
+            raise Exception("Unknown Channel {}".format(ttl_name))
+            #check that pulse is within time limit
         if not ((self.sequenceTimeRange[0] <= start <= self.sequenceTimeRange[1]) and
                  (self.sequenceTimeRange[0] <= start + duration <= self.sequenceTimeRange[1])):
             raise Exception("Time boundaries are out of range")
+            #check to see that pulse is not too short
         if not duration >= self.timeResolution:
             raise Exception("Incorrect duration")
-        if not sequence:
-            raise Exception("Please create new sequence first")
-        sequence.addPulse(hardwareAddr, start, duration)
+
+        ttl_channel = self.ttlDict[ttl_name].channelnumber
+        start = start['s']
+        duration = duration['s']
+        sequence.addPulse(ttl_channel, start, duration)
 
     @setting(112, 'Add TTL Pulses', pulses = '*(sv[s]v[s])')
     def addTTLPulses(self, c, pulses):
         """
-        Add multiple TTL Pulses to the sequence, times are in seconds. The pulses are a list in the same format as 'add ttl pulse'.
+        Add multiple TTL Pulses to the sequence, times are in seconds.
+        The pulses are a list in the same format as 'add ttl pulse'.
         """
         for pulse in pulses:
-            channel = pulse[0]
+            ttl_name = pulse[0]
             start = pulse[1]
             duration = pulse[2]
-            yield self.addTTLPulse(c, channel, start, duration)
+            yield self.addTTLPulse(c, ttl_name, start, duration)
 
-    @setting(113, "Extend Sequence Length", timeLength = 'v[s]')
-    def extendSequenceLength(self, c, timeLength):
+    @setting(113, "Extend Sequence Length", end_time = 'v[s]')
+    def extendSequenceLength(self, c, end_time):
         """
-        Allows to optionally extend the total length of the sequence beyond the last TTL pulse.
+        Extends the TTL pulse sequence to the given time.
         """
         sequence = c.get('sequence')
-        if not (self.sequenceTimeRange[0] <= timeLength['s'] <= self.sequenceTimeRange[1]):
+        if not (self.sequenceTimeRange[0] <= end_time['s'] <= self.sequenceTimeRange[1]):
             raise Exception("Time boundaries are out of range")
         if not sequence:
             raise Exception("Please create new sequence first")
-        sequence.extendSequenceLength(timeLength['s'])
+        sequence.extendSequenceLength(end_time['s'])
 
     @setting(114, "Human Readable TTL", getProgrammed = 'b', returns = '*2s')
     def humanReadableTTL(self, c, getProgrammed = None):
         """
+        Gets the TTL sequence in human-readable form.
         Args:
             getProgrammed (bool): False/None(default) to get the sequence added by current context,
                               True to get the last programmed sequence
@@ -125,16 +129,18 @@ class Pulser_legacy(LabradServer):
             a readable form of TTL sequence
         """
         sequence = c.get('sequence')
-        if getProgrammed:
-            sequence = self.programmed_sequence
-        if not sequence:
-            raise Exception ("Please create new sequence first")
-        ttl, dds = sequence.humanRepresentation()
+
+        #get programmed sequence
+        if getProgrammed: sequence = self.ps_programmed_sequence
+        #check whether a sequence exists
+        if not sequence: raise Exception("Please create new sequence first")
+        ttl, _ = sequence.humanRepresentation()
         return ttl.tolist()
 
     @setting(115, "Human Readable DDS", getProgrammed = 'b', returns = '*(svv)')
     def humanReadableDDS(self, c, getProgrammed = None):
         """
+        Gets the DDS sequence in human-readable form.
         Args:
             getProgrammed (bool): False/None(default) to get the sequence added by current context,
                               True to get the last programmed sequence
@@ -142,31 +148,30 @@ class Pulser_legacy(LabradServer):
             a readable form of DDS sequence
         """
         sequence = c.get('sequence')
-        if getProgrammed:
-            sequence = self.programmed_sequence
-        if not sequence:
-            raise Exception("Please create new sequence first")
-        ttl, dds = sequence.humanRepresentation()
+        #get programmed sequence
+        if getProgrammed: sequence = self.ps_programmed_sequence
+        #check whether a sequence exists
+        _, dds = sequence.humanRepresentation()
         return dds
 
-    @setting(116, 'Get Channels', returns = '*(sw)')
+    @setting(116, 'Get TTLs', returns = '*(sw)')
     def getChannels(self, c):
         """
-        Returns all available channels, and the corresponding hardware numbers
+        Returns all available TTL channels and their corresponding hardware numbers
         """
-        d = self.channelDict
-        keys = d.keys()
+        d = self.ttlDict
+        keys = self.ttlDict.keys()
         numbers = [d[key].channelnumber for key in keys]
         return zip(keys, numbers)
 
-    @setting(117, 'Get State', channelName = 's', returns = '(bbbb)')
-    def getState(self, c, channelName):
+    @setting(117, 'Get State', channel_name = 's', returns = '(bbbb)')
+    def getState(self, c, channel_name):
         """
-        Returns the current state of the switch: in the form (Manual/Auto, ManualOn/Off, ManualInversionOn/Off, AutoInversionOn/Off)
+        Returns the current state of the TTL: in the form (Manual/Auto, ManualOn/Off, ManualInversionOn/Off, AutoInversionOn/Off)
         """
-        if channelName not in self.channelDict.keys():
+        if channel_name not in self.ttlDict.keys():
             raise Exception("Incorrect Channel")
-        channel = self.channelDict[channelName]
+        channel = self.ttlDict[channel_name]
         answer = (channel.ismanual, channel.manualstate, channel.manualinv, channel.autoinv)
         return answer
 
@@ -267,18 +272,6 @@ class Pulser_legacy(LabradServer):
             yield cxn.servers[server][program]([(channel.channelnumber, buf)])
         except (KeyError, AttributeError):
             print('Not programming remote channel {}'.format(channel.remote))
-
-    def _channel_to_num(self, channel):
-        '''returns the current state of the channel in the num represenation'''
-        if channel.state:
-            #if on, use current values. else, use off values
-            freq, ampl = (channel.frequency, channel.amplitude)
-            self._checkRange('amplitude', channel, ampl)
-            self._checkRange('frequency', channel, freq)
-        else:
-            freq,ampl = channel.off_parameters
-        num = self.settings_to_num(channel, freq, ampl)
-        return num
 
     def _checkRange(self, t, channel, val):
         if t == 'amplitude':

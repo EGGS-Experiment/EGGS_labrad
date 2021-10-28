@@ -1,7 +1,5 @@
 from lib.environment.pulser_config import channelConfiguration as ChConfig
 from ddsConfiguration import ddsConfiguration as ddsConfig
-# TODO: Does this really need to be imported, looks unused
-# Double checked this by searching for remoteChannel in the project
 
 
 class hardwareConfiguration(object):

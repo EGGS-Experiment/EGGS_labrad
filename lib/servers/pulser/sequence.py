@@ -12,17 +12,15 @@ class Sequence():
 
     # def __init__(self, parent):
     #     self.channelTotal = hardwareConfiguration.channelTotal
-    #     self.timeResolution = Decimal(hardwareConfiguration.timeResolution)
     #     self.MAX_SWITCHES = hardwareConfiguration.maxSwitches
     #
     #     #dictionary in the form time:which channels to switch
-    #     #time is expressed as timestep with the given resolution
     #     #which channels to switch is a channelTotal-long array with 1 to switch ON, -1 to switch OFF, 0 to do nothing
     #     self.switchingTimes = {0:numpy.zeros(self.channelTotal, dtype = numpy.int8)}
     #     self.switches = 1 #keeps track of how many switches are to be performed (same as the number of keys in the switching Times dictionary)
     #
     #     #dictionary for storing information about dds switches, in the format:
-    #     #timestep: {channel_name: integer representing the state}
+    #     #time: {channel_name: integer representing the state}
     #     self.ddsSettingList = dict.fromkeys(self.parent.ddsDict.keys(), [])
     #     self.sectomu = self.parent.sectomu
 
@@ -37,41 +35,12 @@ class Sequence():
         self.ddsSettingList = {}
         self.sectomu = lambda a: a
 
-    #TTL functions
-    def addPulse(self, channel, start, duration):
-        """adding TTL pulse, times are in seconds"""
-        start = self.sectomu(start)
-        duration = self.sectomu(duration)
-        self._addNewSwitch(start, channel, 1)
-        self._addNewSwitch(start + duration, channel, -1)
 
-    def extendSequenceLength(self, timeLength):
-        """Allows to extend the total length of the sequence"""
-        timeLength = self.sectomu(timeLength)
-        self._addNewSwitch(timeLength,0,0)
+    #Sequence functions
+    def progRepresentation(self):
+        """Returns the programming representation of the sequence"""
+        return self.ddsSettings, self.ttlProgram
 
-    def _addNewSwitch(self, timeStep, chan, value):
-        if timeStep in self.switchingTimes:
-            if self.switchingTimes[timeStep][chan]: # checks if 0 or 1/-1
-                # if set to turn off, but want on, replace with zero, fixes error adding 2 TTLs back to back
-                if self.switchingTimes[timeStep][chan] * value == -1:
-                    self.switchingTimes[timeStep][chan] = 0
-                else:
-                    raise Exception ('Double switch at time {} for channel {}'.format(timeStep, chan))
-            else:
-                self.switchingTimes[timeStep][chan] = value
-        else:
-            if self.switches == self.MAX_SWITCHES: raise Exception("Exceeded maximum number of switches {}".format(self.switches))
-            self.switchingTimes[timeStep] = numpy.zeros(self.channelTotal, dtype = numpy.int8)
-            self.switches += 1
-            self.switchingTimes[timeStep][chan] = value
-
-    #DDS functions
-    def addDDS(self, name, start_time, params, start_or_stop):
-        start_time_mu = self.sectomu(start_time)
-        self.ddsSettingList[start_time_mu] = (name, start_time, params, start_or_stop)
-
-    #Human representation
     def humanRepresentation(self):
         """Returns the human readable version of the sequence for FPGA for debugging"""
         ttl = self.ttlHumanRepresentation(self.ttlProgram)
@@ -136,3 +105,47 @@ class Sequence():
 
         channels = map(expandChannel, channels)
         return numpy.vstack((times, channels)).transpose()
+
+    #TTL functions
+    def addPulse(self, channel, start, duration):
+        """
+        Adds TTL pulse to sequence
+        Arguments:
+            channel     (int)   : the TTL channel number
+            start       (float) : the start time in seconds
+            duration    (float) : the pulse duration in seconds
+        """
+        start = self.sectomu(start)
+        duration = self.sectomu(duration)
+        self._addNewSwitch(start, channel, 1)
+        self._addNewSwitch(start + duration, channel, -1)
+
+    def extendSequenceLength(self, endtime):
+        """
+        Extend the total length of the TTL sequence
+        Arguments:
+            endtime (int): the TTL sequence endtime in seconds
+        """
+        endtime_mu = self.sectomu(endtime)
+        self._addNewSwitch(endtime_mu, 0, 0)
+
+    def _addNewSwitch(self, start_time, chan, value):
+        if start_time in self.switchingTimes:
+            if self.switchingTimes[start_time][chan]: # checks if 0 or 1/-1
+                # if set to turn off, but want on, replace with zero, fixes error adding 2 TTLs back to back
+                if self.switchingTimes[start_time][chan] * value == -1:
+                    self.switchingTimes[start_time][chan] = 0
+                else:
+                    raise Exception ('Double switch at time {} for channel {}'.format(start_time, chan))
+            else:
+                self.switchingTimes[start_time][chan] = value
+        else:
+            if self.switches == self.MAX_SWITCHES: raise Exception("Exceeded maximum number of switches {}".format(self.switches))
+            self.switchingTimes[start_time] = numpy.zeros(self.channelTotal, dtype = numpy.int8)
+            self.switches += 1
+            self.switchingTimes[start_time][chan] = value
+
+    #DDS functions
+    def addDDS(self, dds_num, start_time, params, start_or_stop):
+        start_time_mu = self.sectomu(start_time)
+        self.ddsSettingList[start_time_mu] = (dds_num, start_time, params, start_or_stop)

@@ -2,6 +2,8 @@
 **/*.pyc
 **/.DS_Store
 **/__pycache__
+**/*.pyon
+**/*.h5
 
 #all of .idea (pycharm's config files)
 .idea

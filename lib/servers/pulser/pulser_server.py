@@ -50,7 +50,8 @@ class Pulser_server(LabradServer):
         #pulse sequencer variables
         self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser\\run_ps.py'
         self.ps_rid = None
-        self.ps_programmed = False
+        self.ps_is_programmed = False
+        self.ps_programmed_sequence = None
 
         #pmt variables
         self.pmt_mode = ''
@@ -91,7 +92,8 @@ class Pulser_server(LabradServer):
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.record, sequencename)
         self.inCommunication.release()
-        self.ps_programmed = True
+        #todo: fix programmed sequence
+        self.ps_is_programmed = True
 
     def _record(self, sequencename = None):
         """
@@ -101,23 +103,35 @@ class Pulser_server(LabradServer):
         #set sequencename to default if not specified
         if not sequencename:
             sequencename = 'default'
+
+        #get sequence
         sequence = c.get('sequence')
-        if not sequence:
-            raise Exception("Please create new sequence first")
-        self.programmed_sequence = sequence
-        #get TTL sequence
-        ttl_seq = self.sequence.switchingTimes
+
+        #check to see we have a sequence
+        if not sequence: raise Exception("Please create new sequence first")
+
+        self.ps_programmed_sequence = sequence
+
+        #get sequence
+        ttl_seq, dds_seq = self.sequence.progRepresentation()
+
+        #process TTL sequence
         ttl_times = self.at_mu(list(ttl_seq.keys()))
         ttl_commands = list(ttl_seq.values())
-        #get DDS sequence
-        dds_seq = self._artiqParseDDS()
+
+        #process DDS sequence
         #dds_devices = list(dds_seq.keys())
         #dds_params = list(dds_seq.values())
+
+        #send to API
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.record, ttl_seq, dds_seq, sequencename)
         #yield deferToThread(self.api.record, ttl_times, ttl_commands, dds_times, dds_params)
         self.inCommunication.release()
-        self.ps_programmed = True
+
+        #set global variables
+        self.ps_is_programmed = True
+        self.ps_programmed_sequence = sequence
 
     @setting(2, "Run Sequence", maxruns = 'i', returns='')
     def runSequence(self, c, maxruns):
@@ -126,7 +140,7 @@ class Pulser_server(LabradServer):
         Argument:
             numruns (int): number of times to run the pulse sequence
         """
-        if not self.ps_programmed:
+        if not self.ps_is_programmed:
             raise Exception("No Programmed Sequence")
         #set pipeline, priority, and expid
         ps_pipeline = 'PS'
@@ -150,8 +164,7 @@ class Pulser_server(LabradServer):
         Stops any currently running sequence.
         """
         #see if pulse sequence is currently running
-        if self.ps_rid not in self.scheduler.get_status().keys():
-            raise Exception('No pulse sequence currently running')
+        if self.ps_rid not in self.scheduler.get_status().keys(): raise Exception('No pulse sequence currently running')
         yield self.inCommunication.acquire()
         yield deferToThread(self.scheduler.delete, self.ps_rid)
         self.ps_rid = None
@@ -165,65 +178,79 @@ class Pulser_server(LabradServer):
         Arguments:
             sequencename (str): the sequence to erase
         """
-        if not self.ps_programmed:
-            raise Exception("No Programmed Sequence")
-        if not sequencename:
-            sequencename = 'default'
+        #check to see a sequence has been programmed
+        if not self.ps_programmed_sequence: raise Exception("No Programmed Sequence")
+        #set sequence name to default if not specified
+        if not sequencename: sequencename = 'default'
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.eraseSequence, sequencename)
-        self.ps_programmed = False
+        self.ps_programmed_sequence = None
         self.ps_rid = None
-        #todo: catch errors
         self.inCommunication.release()
 
     @setting(5, "Runs Completed", returns='i')
     def runsCompleted(self, c):
         """
-        Programs Pulser with the current sequence.
-        Saves the current sequence to self.programmed_sequence.
+        Check how many pulse sequences have been completed.
         """
         completed_runs = yield self.api.runsCompleted()
         returnValue(completed_runs)
 
     #TTL functions
-    @setting(11, "Set TTL", ttlname = 'i', state = 'b', returns='')
-    def setTTL(self, c, ttlname, state):
+    @setting(11, "Set TTL", ttl_name = 'i', state = 'b', returns='')
+    def setTTL(self, c, ttl_name, state):
         """
-        Switches a TTL to the given state.
+        Manually set a TTL to the given state.
         Arguments:
             ttlname (str)   : name of the ttl
             state   (bool)  : ttl power state
         """
+        ttl_channel = self.ttlDict[ttl_name].channelnumber
         self.inCommunication.acquire()
-        yield deferToThread(self.api.setTTL, ttlname, state)
+        yield deferToThread(self.api.setTTL, ttl_channel, state)
         self.inCommunication.release()
 
     #DDS functions
     @setting(21, "Initialize DDS", returns = '')
     def initializeDDS(self, c):
         """
-        Reprograms the DDS chip to its initial state
+        Resets/initializes the DDSs
         """
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.initializeDDS)
         self.inCommunication.release()
 
-    @setting(22, "Set DDS", ddsname = 's', freq = 'v[MHz]', ampl = 'v[dBm]', phase = 'v', profile = 'i', returns='')
-    def setDDS(self, c, ddsname, freq = None, ampl = None, phase = None, profile = None):
+    @setting(22, "Toggle DDS", dds_name = 's', freq = 'v[MHz]', ampl = 'v[dBm]', phase = 'v', profile = 'i', returns='')
+    def toggleDDS(self, c, dds_name, freq = None, ampl = None, phase = None, profile = 0):
         """
-        Sets a DDS to the given parameters.
+        Manually toggle a DDS
         Arguments:
             ddsname (str)   : the name of the dds
             state   (bool)  : power state
+        """
+        #todo: toggle
+        #tdodo: convert dds name to num
+        dds_num = self.ddsDict
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.setDDS, dds_num, params, profile)
+        self.inCommunication.release()
+
+    @setting(23, "Set DDS", dds_name = 's', freq = 'v[MHz]', ampl = 'v[dBm]', phase = 'v', profile = 'i', returns='')
+    def setDDS(self, c, dds_name, freq = None, ampl = None, phase = None, profile = None):
+        """
+        Manually set a DDS to the given parameters.
+        Arguments:
+            ddsname (str)   : the name of the dds
             freq    (float) : frequency (in Hz)
             ampl    (float) : amplitude (in dBm)
             phase   (float) : phase     (in radians)
             profile (int)   : the DDS profile to set & change to
         """
         #todo: toggle
-        #tdodo: convert
+        #tdodo: convert dds name to num
+        par
         yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, ddsnum, params, profile)
+        yield deferToThread(self.api.setDDS, dds_num, params, profile)
         self.inCommunication.release()
 
     #PMT functions
@@ -292,3 +319,5 @@ class Pulser_server(LabradServer):
             self.linetrigger_duration = duration['us']
             #self.notifyOtherListeners(c, (self.linetrigger_enabled, self.linetrigger_duration), self.on_line_trigger_param)
         return WithUnit(self.linetrigger_duration, 'us')
+
+    #Helper functions
