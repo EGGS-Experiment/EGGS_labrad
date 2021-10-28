@@ -35,8 +35,8 @@ TEMPSIGNAL = 122485
 class Lakeshore336Server(SerialDeviceServer):
     name = 'Lakeshore 336 Server'
     regKey = 'Lakeshore336Server'
-    serNode = 'wanchai'
-    port = 'COM6'
+    serNode = 'causewaybay'
+    port = 'COM7'
 
     timeout = WithUnit(1.0, 's')
     baudrate = 57600

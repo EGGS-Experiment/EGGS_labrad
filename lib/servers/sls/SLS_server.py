@@ -26,8 +26,8 @@ TERMINATOR = '\r\n'
 class SLSServer(SerialDeviceServer):
     name = 'SLS Server'
     regKey = 'SLSServer'
-    port = None
-    serNode = getNodeName()
+    serNode = 'causewaybay'
+    port = 'COM6'
 
     baudrate = 115200
     timeout = T.Value(1.0, 's')

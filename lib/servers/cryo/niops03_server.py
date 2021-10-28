@@ -29,8 +29,8 @@ QUERY_msg = b'\x05'
 class NIOPS03Server(SerialDeviceServer):
     name = 'NIOPS03 Server'
     regKey = 'NIOPS03Server'
-    port = 'COM3'
-    serNode = 'wanchai'
+    serNode = 'causewaybay'
+    port = 'COM4'
 
     timeout = WithUnit(3.0, 's')
     baudrate = 115200
