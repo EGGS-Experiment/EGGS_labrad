@@ -50,7 +50,6 @@ Created on Dec 22, 2010
 
 
 from twisted.internet.defer import returnValue, inlineCallbacks
-
 from labrad.server import LabradServer, setting
 from labrad.types import Error
 
@@ -312,6 +311,13 @@ class SerialDeviceServer(LabradServer):
         if self.ser and self.ser.ID == ID:
             print('Serial server disconnected.  Relaunch the serial server')
             self.ser = None
+
+    @setting(111112, data = 's')
+    def query(self, c, data):
+        """Write any string and read the response"""
+        yield self.ser.write(data + '\r\n')
+        resp = yield self.ser.read()
+        return resp
 
     def stopServer( self ):
         """
