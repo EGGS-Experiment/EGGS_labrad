@@ -222,8 +222,8 @@ class Pulser_legacy(LabradServer):
             if not self.sequenceTimeRange[0] < start + dur <= self.sequenceTimeRange[1]:
                 raise Exception("DDS start time out of acceptable input range for channel {0} at time {1}".format(name, start + dur))
             if not dur == 0:    #0 length pulses are ignored
-                sequence.addDDS(name, start, num, 'start')
-                sequence.addDDS(name, start + dur, num_off, 'stop')
+                sequence.addDDS(name, start, num_ARTIQ, 'start')
+                sequence.addDDS(name, start + dur, num_off_ARTIQ, 'stop')
 
     @setting(123, 'Get DDS Amplitude Range', name = 's', returns = '(vv)')
     def getDDSAmplRange(self, c, name = None):
@@ -235,7 +235,7 @@ class Pulser_legacy(LabradServer):
         channel = self._getChannel(c, name)
         return channel.allowedfreqrange
 
-    @setting(60, "Get Line Trigger Limits", returns='*v[us]')
+    @setting(131, "Get Line Trigger Limits", returns='*v[us]')
     def getLineTriggerLimits(self, c):
         """get limits for duration of line triggering"""
         return self.linetrigger_limits
@@ -256,6 +256,7 @@ class Pulser_legacy(LabradServer):
     def expireContext(self, c):
         self.listeners.remove(c.ID)
 
+    #Backwards compatibility
     @inlineCallbacks
     def _setDDSRemote(self, channel, addr, buf):
         cxn = self.remoteConnections[channel.remote]
@@ -299,59 +300,3 @@ class Pulser_legacy(LabradServer):
         except KeyError:
             raise Exception("Channel {0} not found".format(name))
         return channel
-
-    def settings_to_num(self, channel, freq, ampl, phase = 0.0, ramp_rate = 0.0, amp_ramp_rate = 0.0):
-        if not channel.phase_coherent_model:
-            num = self._valToInt(channel, freq, ampl)
-        else:
-            num = self._valToInt_coherent(channel, freq, ampl, phase, ramp_rate, amp_ramp_rate)
-        return num
-
-    def _valToInt_coherent(self, channel, freq, ampl, phase=0, ramp_rate=0, amp_ramp_rate=0):  ### add ramp for ramping functionality
-        '''
-        takes the frequency and amplitude values for the specific channel and returns integer representation of the dds setting
-        freq is in MHz
-        power is in dbm
-        '''
-        ans = 0
-        ## changed the precision from 32 to 64 to handle super fine frequency tuning
-        for val, r, m, precision in [(freq, channel.boardfreqrange, 1, 64),
-                                     (ampl, channel.boardamplrange, 2 ** 64, 16),
-                                     (phase, channel.boardphaserange, 2 ** 80, 16)]:
-            minim, maxim = r
-            # print r
-            resolution = (maxim - minim) / float(2 ** precision - 1)
-            # print resolution
-            seq = int((val - minim) / resolution)  # sequential representation
-            # print seq
-            ans += m * seq
-
-        ### add ramp rate
-        minim, maxim = channel.boardramprange
-        resolution = (maxim - minim) / float(2 ** 16 - 1)
-        if ramp_rate < minim:  ### if the ramp rate is smaller than the minim, thenn treat it as no rampp
-            seq = 0
-        elif ramp_rate > maxim:
-            seq = 2 ** 16 - 1
-        else:
-            seq = int((ramp_rate - minim) / resolution)
-
-        ans += 2 ** 96 * seq
-
-        ### add amp ramp rate
-
-        minim, maxim = channel.board_amp_ramp_range
-        minim_slope = 1 / maxim
-        maxim_slope = 1 / minim
-        resolution = (maxim_slope - minim_slope) / float(2 ** 16 - 1)
-        if (amp_ramp_rate < minim):
-            seq_amp_ramp = 0
-        elif (amp_ramp_rate > maxim):
-            seq_amp_ramp = 1
-        else:
-            slope = 1 / amp_ramp_rate
-            seq_amp_ramp = int(np.ceil((slope - minim_slope) / resolution))  # return ceiling of the number
-
-        ans += 2 ** 112 * seq_amp_ramp
-
-        return ans

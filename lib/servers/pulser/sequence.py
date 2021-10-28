@@ -58,7 +58,7 @@ class Sequence():
             self.switchingTimes[timeStep][chan] = value
 
     def parseDDS(self):
-        #state holds num for each iteration, then adds it to sequence for each dds
+        #state holds DDS params for each iteration, then adds it to sequence for each dds
         state = self.parent._getCurrentDDS()
 
         # stop if there is no DDS sequence
@@ -70,53 +70,58 @@ class Sequence():
 
         #dds_program holds list of DDS parameters to program
         dds_program = {}.fromkeys(state, '')
-        lastTime = 0
+
+        #program all sequences
+        last_time_all = 0
 
         #get each DDS pulse as (name, time, RAM, on/off)
         entries = sorted(self.ddsSettingList, key = lambda t: t[1]) #sort by starting time
+
+        #store errors
         possibleError = (0, '')
+
         while True:
             #get parameters for pulse
             try:
-                name, start, num, typ = entries.pop(0)
+                name, start_time, num, new_typ = entries.pop(0)
             except IndexError:
-                if start == lastTime:
+                if start_time == lastTime:
                     #todo: add dds parameters to program
                     #todo: add timing to switch profiles
                 #at the end of the sequence, reset dds
                 #todo: add timing to switch profiles
                 return dds_program
 
-            #get pulse endtime and whether starting/stopping
+            #get pulse end time and whether starting/stopping
             end_time, end_typ = pulses_end[name]
 
             #add new DDS pulse
-            if start > lastTime:
+            if start_time > lastTime:
                 #raise exception if we have a possible error
                 if (possibleError[0] == lastTime) and (len(possibleError[1]) > 0): raise Exception(possibleError[1])
                 #todo: add dds parameters to program
                 #move RAM to next position
                 if lastTime != 0:
                     #todo: add timing to switch profiles
-                lastTime = start
+                lastTime = start_time
 
-            #move to next dds pulse
-            if start == end_time:
-                #
-                if end_typ == 'stop' and typ == 'start':
+            #check for possible errors
+                #check if pulse endpoints meet
+            if start_time == end_time:
+                #program if new pulse
+                if (end_typ == 'stop') and (new_typ == 'start'):
                     possibleError = (0, '')
-                    state[name] = num
-                    pulses_end[name] = (start, typ)
-                elif end_typ == 'start' and typ == 'stop':
+                #don't program if zero-length pulse
+                elif end_typ == 'start' and new_typ == 'stop':
                     possibleError = (0, '')
-            #check for pulse overlap
-            elif end_typ == typ:
-                possibleError = (start, 'Found Overlap Of Two Pulses for channel {}'.format(name))
-                state[name] = num
-                pulses_end[name] = (start, typ)
-            else:
-                state[name] = num
-                pulses_end[name] = (start, typ)
+                    continue
+            #check if pulses overlap
+            elif end_typ == new_typ:
+                possibleError = (start_time, 'Found Overlap Of Two Pulses for channel {}'.format(name))
+
+            #add pulse
+            state[name] = num
+            pulses_end[name] = (start_time, new_typ)
 
     def humanRepresentation(self):
         """Returns the human readable version of the sequence for FPGA for debugging"""
