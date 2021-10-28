@@ -357,9 +357,12 @@ class Pulser_server(LabradServer):
                 self._checkRange('amplitude', channel, ampl)
 
             #convert parameters
-            #todo: convert
-            num_ARTIQ = (asf, ftw, pow)
-            num_off_ARTIQ = (asf, ftw, pow)
+            _asf = self.dbm_to_fampl(ampl)
+            _asf = self.amplitude_to_asf(_asf)
+            _ftw = self.frequency_to_ftw(freq * 1e6)
+            _pow = self.turns_to_pow(phase / (2*np.pi))
+            num_ARTIQ = (_asf, _ftw, _pow)
+            num_off_ARTIQ = (0, 0, 0)
 
             #check time is in range
                 #note < sign, because start can not be 0.

@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = TwisTorr74 Server
-version = 1.0.0
+version = 1.0
 description = Talks to the TwisTorr 74 Turbopump
 instancename = TwisTorr74 Server
 

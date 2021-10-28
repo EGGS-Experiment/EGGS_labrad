@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = Lakeshore 336 Server
-version = 1.0.0
+version = 1.0
 description = Talks to the Lakeshore 336 Temperature Controller
 instancename = Lakeshore 336 Server
 

@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = Interlock Server
-version = 1.0.0
+version = 1.0
 description = Runs interlocks for different devices
 instancename = Interlock Server
 
