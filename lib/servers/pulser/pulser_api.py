@@ -115,7 +115,7 @@ class Pulser_api(EnvExperiment):
         self.core.reset()
 
     @kernel
-    def _record(self, sequencename):
+    def record(self, sequencename):
         self.core.reset()
         with self.core_dma.record(sequencename):
             for i in range(50):
@@ -124,11 +124,6 @@ class Pulser_api(EnvExperiment):
                     self.ttlout_list[1].pulse(1*ms)
                 delay(1.0*ms)
 
-    def record(self, sequencename):
-        """
-        TMP
-        """
-        self._record(sequencename)
 
     def record2(self, ttl_seq, dds_seq, sequencename):
         """
@@ -138,15 +133,19 @@ class Pulser_api(EnvExperiment):
         #TTLs
         ttl_times = list(ttl_seq.keys())
         ttl_commands = list(ttl_seq.values())
-        #get max time for PMT
+            #get max time for PMT
         max_time = ttl_times[-1]
-        self._record(ttl_times, ttl_commands, sequencename)
+        #DDSs
+        dds_channel_nums = list(dds_seq.keys())
+        dds_list_tmp = [self.dds_list[channel_num] for channel_num in dds_channel_nums]
+        dds_params = list(dds_seq.values())
+        self._recordTTL(ttl_times, ttl_commands, sequencename)
 
     @kernel
-    def _record2(self):
+    def _recordTTL(self, ttl_times, ttl_commands, sequencename):
         PMT_device = self.ttlin_list['PMT']
         #record pulse sequence in memory
-        with self.core_dma.record("pulse_sequence"):
+        with self.core_dma.record(sequencename):
             #program ttl sequence
             for timestamp, ttlCommandArr in ttl_sequence:
                 at_mu(timestamp)
@@ -159,7 +158,7 @@ class Pulser_api(EnvExperiment):
                             self.ttlout_list[i].off()
             #program DDS sequence
             for timestamp, params in dds_sequence:
-                self.
+                pass
             #program PMT input
             for i in range(0, tmax_us, self.pmt_interval):
                 #todo: convert to machine units
@@ -169,6 +168,10 @@ class Pulser_api(EnvExperiment):
                 self.mutate_dataset(self.PMT_count, i, counts_pmt)
             #todo: program dds
             #todo: program ttls for dds's
+
+    @kernel
+    def _recordDDS(self):
+        fd
 
     def runsCompleted(self):
         """
@@ -231,7 +234,9 @@ class Pulser_api(EnvExperiment):
 
     @kernel
     def toggleDDS(self, ddsnum, state):
-        #todo: test
+        """
+        Toggle a DDS using the RF switch.
+        """
         self.dds_list[ddsnum].cfg_sw(state)
 
     @kernel
