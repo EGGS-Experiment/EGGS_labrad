@@ -256,62 +256,6 @@ class Pulser_legacy(LabradServer):
     def expireContext(self, c):
         self.listeners.remove(c.ID)
 
-    #Legacy/compatibility functions
-    def _artiqParseDDS(self):
-        if len(self._ddsSeq) == 0:
-            return None
-        state = self.parent._getCurrentDDS()
-        pulses_end = {}.fromkeys(state, (0, 'stop')) #time / boolean whether in a middle of a pulse
-        dds_program = {}.fromkeys(state, '')
-        lastTime = 0
-        # get each DDS pulse as (name, time, RAM, on/off), sorted by start time
-        entries = sorted(self._ddsSeq, key = lambda t: t[1])
-        possibleError = (0, '')
-        while True:
-            try:
-                name, start, num, typ = entries.pop(0)
-            #todo: change ttl to profile switch
-            #check if we have reached end of sequence
-            except IndexError:
-                if start  == lastTime:
-                    #still have unprogrammed entries
-                    self.addToProgram(dds_program, state)
-                    self._addNewSwitch(lastTime,self.advanceDDS,1)
-                    self._addNewSwitch(lastTime + self.resetstepDuration, self.advanceDDS, -1)
-                #at the end of the sequence, reset dds
-                lastTTL = max(self.switchingTimes.keys())
-                self._addNewSwitch(lastTTL, self.resetDDS, 1)
-                self._addNewSwitch(lastTTL + self.resetstepDuration, self.resetDDS, -1)
-                return dds_program
-            end_time, end_typ = pulses_end[name]
-            # the time has advanced, so need to program the previous state
-            if start > lastTime:
-                # raise exception if error exists and belongs to that time
-                if possibleError[0] == lastTime and len(possibleError[1]):
-                    raise Exception(possibleError[1])
-                self.addToProgram(dds_program, state)
-                # move RAM to next position
-                if not lastTime == 0:
-                    self._addNewSwitch(lastTime, self.advanceDDS, 1)
-                    self._addNewSwitch(lastTime + self.resetstepDuration, self.advanceDDS, -1)
-                lastTime = start
-            # move to next dds pulse
-            if start == end_time:
-                #overwite only when extending pulse
-                if end_typ == 'stop' and typ == 'start':
-                    possibleError = (0,'')
-                    state[name] = num
-                    pulses_end[name] = (start, typ)
-                elif end_typ == 'start' and typ == 'stop':
-                    possibleError = (0,'')
-            elif end_typ == typ:
-                possibleError = (start,'Found Overlap Of Two Pules for channel {}'.format(name))
-                state[name] = num
-                pulses_end[name] = (start, typ)
-            else:
-                state[name] = num
-                pulses_end[name] = (start, typ)
-
     @inlineCallbacks
     def _setDDSRemote(self, channel, addr, buf):
         cxn = self.remoteConnections[channel.remote]
@@ -410,47 +354,4 @@ class Pulser_legacy(LabradServer):
 
         ans += 2 ** 112 * seq_amp_ramp
 
-        return ans
-
-    def _intToBuf_coherent(self, num):
-        '''
-        takes the integer representing the setting and returns the buffer string for dds programming
-        '''
-
-        freq_num = (
-                    num % 2 ** 64)  # change according to the new DDS which supports 64 bit tuning of the frequency. Used to be #freq_num = (num % 2**32)*2**32
-        b = bytearray(8)  # initialize the byte array to sent to the pusler later
-        for i in range(8):
-            b[i] = (freq_num // (2 ** (i * 8))) % 256
-            # print i, "=", (freq_num//(2**(i*8)))%256
-
-        # phase
-        phase_num = (num // 2 ** 80) % (2 ** 16)
-        phase = bytearray(2)
-        phase[0] = phase_num % 256
-        phase[1] = (phase_num // 256) % 256
-
-        ### amplitude
-        ampl_num = (num // 2 ** 64) % (2 ** 16)
-        amp = bytearray(2)
-        amp[0] = ampl_num % 256
-        amp[1] = (ampl_num // 256) % 256
-
-        ### ramp rate. 16 bit tunability from roughly 116 Hz/ms to 7.5 MHz/ms
-        ramp_rate = (num // 2 ** 96) % (2 ** 16)
-        ramp = bytearray(2)
-        ramp[0] = ramp_rate % 256
-        ramp[1] = (ramp_rate // 256) % 256
-
-        ##  amplitude ramp rate
-        amp_ramp_rate = (num // 2 ** 112) % (2 ** 16)
-        # print "amp_ramp is" , amp_ramp_rate
-        amp_ramp = bytearray(2)
-        amp_ramp[0] = amp_ramp_rate % 256
-        amp_ramp[1] = (amp_ramp_rate // 256) % 256
-
-        ##a = bytearray.fromhex(u'0000') + amp + bytearray.fromhex(u'0000 0000')
-        a = phase + amp + amp_ramp + ramp
-
-        ans = a + b
         return ans

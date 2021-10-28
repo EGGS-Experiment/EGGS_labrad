@@ -1,10 +1,15 @@
+"""
+Used by the pulser server to store a pulse sequence
+"""
+
 import numpy, array
 from decimal import Decimal
+
+#todo: use seconds to mu instead of sectostep
 
 class Sequence():
     """Sequence for programming pulses"""
     def __init__(self, parent):
-        self.parent = parent
         self.channelTotal = hardwareConfiguration.channelTotal
         self.timeResolution = Decimal(hardwareConfiguration.timeResolution)
         self.MAX_SWITCHES = hardwareConfiguration.maxSwitches
@@ -36,14 +41,6 @@ class Sequence():
         timeLength = self.secToStep(timeLength)
         self._addNewSwitch(timeLength,0,0)
 
-    def secToStep(self, sec):
-        '''converts seconds to time steps'''
-        start = '{0:.9f}'.format(sec) #round to nanoseconds
-        start = Decimal(start) #convert to decimal
-        step = ( start / self.timeResolution).to_integral_value()
-        step = int(step)
-        return step
-
     def _addNewSwitch(self, timeStep, chan, value):
         if timeStep in self.switchingTimes:
             if self.switchingTimes[timeStep][chan]: # checks if 0 or 1/-1
@@ -60,63 +57,59 @@ class Sequence():
             self.switches += 1
             self.switchingTimes[timeStep][chan] = value
 
-    def progRepresentation(self, parse = True):
-        if parse:
-            self.ddsSettings = self.parseDDS()
-            self.ttlProgram = self.parseTTL()
-        return self.ddsSettings, self.ttlProgram
-
-    def userAddedDDS(self):
-        return bool(len(self.ddsSettingList))
-
     def parseDDS(self):
-        if not self.userAddedDDS():
-            return None
+        #state holds num for each iteration, then adds it to sequence for each dds
         state = self.parent._getCurrentDDS()
-        #keeps track of end time and
+
+        # stop if there is no DDS sequence
+        if not bool(len(self.ddsSettingList)):
+            return state
+
+        #keeps track of end time and whether pulse is stopping or starting
         pulses_end = {}.fromkeys(state, (0, 'stop'))
+
+        #dds_program holds list of DDS parameters to program
         dds_program = {}.fromkeys(state, '')
         lastTime = 0
+
         #get each DDS pulse as (name, time, RAM, on/off)
-        entries = sorted(self.ddsSettingList, key = lambda t: t[1] ) #sort by starting time
+        entries = sorted(self.ddsSettingList, key = lambda t: t[1]) #sort by starting time
         possibleError = (0, '')
         while True:
+            #get parameters for pulse
             try:
                 name, start, num, typ = entries.pop(0)
             except IndexError:
-                if start  == lastTime:
-                    #still have unprogrammed entries
-                    self.addToProgram(dds_program, state)
-                    self._addNewSwitch(lastTime, self.advanceDDS, 1)
-                    self._addNewSwitch(lastTime + self.resetstepDuration, self.advanceDDS, -1)
-                #add termination
-                for name in iter(dds_program):
-                    dds_program[name] += '\x00\x00'
+                if start == lastTime:
+                    #todo: add dds parameters to program
+                    #todo: add timing to switch profiles
                 #at the end of the sequence, reset dds
-                lastTTL = max(self.switchingTimes.keys())
-                self._addNewSwitch(lastTTL, self.resetDDS, 1)
-                self._addNewSwitch(lastTTL + self.resetstepDuration, self.resetDDS, -1)
+                #todo: add timing to switch profiles
                 return dds_program
+
+            #get pulse endtime and whether starting/stopping
             end_time, end_typ = pulses_end[name]
-            # the time has advanced, so need to program the previous state
+
+            #add new DDS pulse
             if start > lastTime:
-                #raise exception if error exists and belongs to that time
-                if possibleError[0] == lastTime and len(possibleError[1]):
-                    raise Exception(possibleError[1])
-                self.addToProgram(dds_program, state)
+                #raise exception if we have a possible error
+                if (possibleError[0] == lastTime) and (len(possibleError[1]) > 0): raise Exception(possibleError[1])
+                #todo: add dds parameters to program
                 #move RAM to next position
-                if not lastTime == 0:
-                    self._addNewSwitch(lastTime,self.advanceDDS,1)
-                    self._addNewSwitch(lastTime + self.resetstepDuration, self.advanceDDS, -1)
+                if lastTime != 0:
+                    #todo: add timing to switch profiles
                 lastTime = start
+
             #move to next dds pulse
             if start == end_time:
+                #
                 if end_typ == 'stop' and typ == 'start':
                     possibleError = (0, '')
                     state[name] = num
                     pulses_end[name] = (start, typ)
                 elif end_typ == 'start' and typ == 'stop':
                     possibleError = (0, '')
+            #check for pulse overlap
             elif end_typ == typ:
                 possibleError = (start, 'Found Overlap Of Two Pulses for channel {}'.format(name))
                 state[name] = num
@@ -125,37 +118,10 @@ class Sequence():
                 state[name] = num
                 pulses_end[name] = (start, typ)
 
-    def addToProgram(self, prog, state):
-        for name, num in state.items():
-            if not hardwareConfiguration.ddsDict[name].phase_coherent_model:
-                buf = self.parent._intToBuf(num)
-            else:
-                buf = self.parent._intToBuf_coherent(num)
-            prog[name] += buf
-
-    def parseTTL(self):
-        """Returns the representation of the sequence for programming the FPGA"""
-        rep = ''
-        lastChannels = numpy.zeros(self.channelTotal)
-        powerArray = 2**numpy.arange(self.channelTotal, dtype = numpy.uint64)
-        for key, newChannels in sorted(self.switchingTimes.items()):
-            # computes the action of switching on the state
-            channels = lastChannels + newChannels
-            if (channels < 0).any():
-                raise Exception('Trying to switch off channel that is not already on')
-            channelInt = numpy.dot(channels, powerArray)
-            # converts the new state to hex and adds it to the sequence
-            rep = rep + hex(key) + hex(channelInt)
-            lastChannels = channels
-        # adding termination
-        rep = rep + 2*hex(0)
-        return rep
-
     def humanRepresentation(self):
         """Returns the human readable version of the sequence for FPGA for debugging"""
-        dds, ttl = self.progRepresentation(parse = False)
-        ttl = self.ttlHumanRepresentation(ttl)
-        dds = self.ddsHumanRepresentation(dds)
+        ttl = self.ttlHumanRepresentation(self.ttlProgram)
+        dds = self.ddsHumanRepresentation(self.ddsSettings)
         return ttl, dds
 
     def ddsHumanRepresentation(self, dds):
