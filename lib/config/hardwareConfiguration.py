@@ -1,5 +1,5 @@
-from lib.environment.pulser_config import channelConfiguration as ChConfig
-from ddsConfiguration import ddsConfiguration as ddsConfig
+from EGGS_labrad.lib.environment.pulser_config import channelConfiguration as ChConfig
+from EGGS_labrad.lib.environment.pulser_config import ddsConfiguration as ddsConfig
 
 
 class hardwareConfiguration(object):

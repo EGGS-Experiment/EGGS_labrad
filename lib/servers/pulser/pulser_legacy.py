@@ -79,7 +79,6 @@ class Pulser_legacy(LabradServer):
         """get limits for duration of line triggering"""
         return self.linetrigger_limits
 
-
     #Backwards compatibility
     @inlineCallbacks
     def _setDDSRemote(self, channel, addr, buf):
@@ -99,10 +98,3 @@ class Pulser_legacy(LabradServer):
             r = channel.allowedfreqrange
         if not r[0] <= val <= r[1]:
             raise Exception("channel {0} : {1} of {2} is outside the allowed range".format(channel.name, t, val))
-
-    def _getChannel(self, c, name):
-        try:
-            channel = self.ddsDict[name]
-        except KeyError:
-            raise Exception("Channel {0} not found".format(name))
-        return channel
