@@ -27,7 +27,7 @@ class SLSServer(SerialDeviceServer):
     name = 'SLS Server'
     regKey = 'SLSServer'
     serNode = 'causewaybay'
-    port = 'COM6'
+    port = 'COM5'
 
     baudrate = 115200
     timeout = T.Value(1.0, 's')
@@ -60,7 +60,6 @@ class SLSServer(SerialDeviceServer):
             yield self.ser.write('get ' + string + TERMINATOR)
             resp_tmp = yield self.ser.read()
             resp.append(resp_tmp)
-
         returnValue(resp)
 
     #PDH
@@ -124,6 +123,10 @@ class SLSServer(SerialDeviceServer):
         returnValue(resp)
 
     #Misc. settings
+
+    #Helper functions
+    def _removeEcho(self, string):
+        fd
 
 
 if __name__ == "__main__":
