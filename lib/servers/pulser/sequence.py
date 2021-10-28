@@ -21,14 +21,11 @@ class Sequence():
         self.switches = 1 #keeps track of how many switches are to be performed (same as the number of keys in the switching Times dictionary"
         #dictionary for storing information about dds switches, in the format:
         #timestep: {channel_name: integer representing the state}
-        self.ddsSettingList = []
-        self.advanceDDS = hardwareConfiguration.channelDict['AdvanceDDS'].channelnumber
-        self.resetDDS = hardwareConfiguration.channelDict['ResetDDS'].channelnumber
+            #todo: do another way instead of getcurrentdds, i.e. hardwareconfig
+        self.ddsSettingList = {}.fromkeys(self.parent._getCurrentDDS(), '')
+        self.sectomu=self.parent.sectomu
 
-    def addDDS(self, name, start, num, typ):
-        timeStep = self.secToStep(start)
-        self.ddsSettingList.append((name, timeStep, num, typ))
-
+    #TTL functions
     def addPulse(self, channel, start, duration):
         """adding TTL pulse, times are in seconds"""
         start = self.secToStep(start)
@@ -57,6 +54,34 @@ class Sequence():
             self.switches += 1
             self.switchingTimes[timeStep][chan] = value
 
+    #DDS functions
+    def addDDS(self, name, start_time, params, start_or_stop):
+        start_time_mu = self.sectomu(start_time)
+        self.ddsSettingList[name].append((start_time, params, start_or_stop))
+
+    def parseDDS(self):
+        """
+        fd
+        """
+        #sort settings by start time
+        for channel_name in self.ddsSettingList.keys():
+            self.ddsSettingList[channel_name] = sorted(dds_setting, key=lambda t: t[0])
+        for channel_name, dds_settings in self.ddsSettingList.keys():
+        # check for possible errors
+            # check if pulse endpoints meet
+        if start_time == end_time:
+            # program if new pulse
+            if (end_typ == 'stop') and (new_typ == 'start'):
+                possibleError = (0, '')
+            # don't program if zero-length pulse
+            elif end_typ == 'start' and new_typ == 'stop':
+                possibleError = (0, '')
+                continue
+        # check if pulses overlap
+        elif end_typ == new_typ:
+            possibleError = (start_time, 'Found Overlap Of Two Pulses for channel {}'.format(name))
+
+
     def parseDDS(self):
         #state holds DDS params for each iteration, then adds it to sequence for each dds
         state = self.parent._getCurrentDDS()
@@ -67,16 +92,12 @@ class Sequence():
 
         #keeps track of end time and whether pulse is stopping or starting
         pulses_end = {}.fromkeys(state, (0, 'stop'))
-
         #dds_program holds list of DDS parameters to program
         dds_program = {}.fromkeys(state, '')
-
         #program all sequences
         last_time_all = 0
-
         #get each DDS pulse as (name, time, RAM, on/off)
         entries = sorted(self.ddsSettingList, key = lambda t: t[1]) #sort by starting time
-
         #store errors
         possibleError = (0, '')
 
@@ -84,26 +105,25 @@ class Sequence():
             #get parameters for pulse
             try:
                 name, start_time, num, new_typ = entries.pop(0)
+                end_time, end_typ = pulses_end[name]
             except IndexError:
-                if start_time == lastTime:
+                if start_time == last_time_all:
                     #todo: add dds parameters to program
                     #todo: add timing to switch profiles
                 #at the end of the sequence, reset dds
                 #todo: add timing to switch profiles
                 return dds_program
 
-            #get pulse end time and whether starting/stopping
-            end_time, end_typ = pulses_end[name]
-
-            #add new DDS pulse
-            if start_time > lastTime:
+            #program all DDS pulses
+            if start_time > last_time_all:
                 #raise exception if we have a possible error
-                if (possibleError[0] == lastTime) and (len(possibleError[1]) > 0): raise Exception(possibleError[1])
+                if (possibleError[0] == lastTime) and (len(possibleError[1]) > 0):
+                    raise Exception(possibleError[1])
                 #todo: add dds parameters to program
                 #move RAM to next position
-                if lastTime != 0:
+                if last_time_all != 0:
                     #todo: add timing to switch profiles
-                lastTime = start_time
+                last_time_all = start_time
 
             #check for possible errors
                 #check if pulse endpoints meet
@@ -123,6 +143,7 @@ class Sequence():
             state[name] = num
             pulses_end[name] = (start_time, new_typ)
 
+    #Human representation
     def humanRepresentation(self):
         """Returns the human readable version of the sequence for FPGA for debugging"""
         ttl = self.ttlHumanRepresentation(self.ttlProgram)

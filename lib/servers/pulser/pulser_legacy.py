@@ -268,12 +268,6 @@ class Pulser_legacy(LabradServer):
         except (KeyError, AttributeError):
             print('Not programming remote channel {}'.format(channel.remote))
 
-    def _getCurrentDDS(self):
-        '''
-        Returns a dictionary {name:num} with the representation of the current dds state
-        '''
-        return dict([(name, self._channel_to_num(channel)) for (name, channel) in self.ddsDict.items()])
-
     def _channel_to_num(self, channel):
         '''returns the current state of the channel in the num represenation'''
         if channel.state:
