@@ -1,19 +1,13 @@
 #labrad and artiq imports
 from labrad.server import LabradServer, setting, Signal
 from labrad.units import WithUnit
-
-#async imports
-from twisted.internet import reactor, task
-from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
-
-#wrapper imports
 from sequence import Sequence
 
 #function imports
+from twisted.internet import reactor, task
+from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
 import numpy as np
 
-#config import
-#todo
 
 class Pulser_legacy(LabradServer):
 
@@ -21,8 +15,6 @@ class Pulser_legacy(LabradServer):
 
     def initServer(self):
         #device storage
-            #PMT
-
             #DDSs
         for name, channel in self.ddsDict.items():
             channel.name = name
@@ -81,11 +73,3 @@ class Pulser_legacy(LabradServer):
             yield cxn.servers[server][program]([(channel.channelnumber, buf)])
         except (KeyError, AttributeError):
             print('Not programming remote channel {}'.format(channel.remote))
-
-    def _checkRange(self, t, channel, val):
-        if t == 'amplitude':
-            r = channel.allowedamplrange
-        elif t == 'frequency':
-            r = channel.allowedfreqrange
-        if not r[0] <= val <= r[1]:
-            raise Exception("channel {0} : {1} of {2} is outside the allowed range".format(channel.name, t, val))

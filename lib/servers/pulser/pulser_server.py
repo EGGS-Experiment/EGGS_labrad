@@ -502,3 +502,12 @@ class Pulser_server(LabradServer):
 
     def expireContext(self, c):
         self.listeners.remove(c.ID)
+
+    #Helper functions
+    def _checkRange(self, t, channel, val):
+        if t == 'amplitude':
+            r = channel.allowedamplrange
+        elif t == 'frequency':
+            r = channel.allowedfreqrange
+        if not r[0] <= val <= r[1]:
+            raise Exception("channel {0} : {1} of {2} is outside the allowed range".format(channel.name, t, val))

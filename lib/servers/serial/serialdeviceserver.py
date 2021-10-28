@@ -32,7 +32,6 @@ Created on Dec 22, 2010
 #
 #===============================================================================
 
-
 #===============================================================================
 # 2011 - 01 - 31
 # 
@@ -42,17 +41,11 @@ Created on Dec 22, 2010
 #===============================================================================
 
 #===============================================================================
-# 2021 - 09 - 20
-#
-# Added SerialManagedServer class inheriting from ManagedDeviceServer, similar to GPIBManagedServer
-#
-# Added SerialDeviceWrapper class inheriting from DeviceWrapper, similar to GPIBDeviceWrapper
-#===============================================================================
-
-#===============================================================================
 # 2021 - 10 - 17
 #
 # Added COM port connection to SerialDeviceServer class
+#
+#
 #===============================================================================
 
 
@@ -150,9 +143,12 @@ class SerialDeviceServer(LabradServer):
         #node always needs to be specified
         if not self.serNode:
             raise SerialDeviceError('Must define serNode attributes')
+
         #if port is not specified, get port details from registry
         if (not self.port) and (not self.regKey):
             self.port = yield self.getPortFromReg(self.regKey)
+
+        #try to open serial connection
         try:
             serStr = yield self.findSerial(self.serNode)
             print(serStr)

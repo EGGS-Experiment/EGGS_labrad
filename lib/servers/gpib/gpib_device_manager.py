@@ -1,24 +1,10 @@
-# Copyright (C) 2008  Matthew Neeley
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 # Changelog
-# 1.3 Created serverConnected() to identify devices on a given server once
+# 1.3: Created serverConnected() to identify devices on a given server once
 #     it has completed its registration with the LabRAD manager. Before this
 #     device registration would fail if the server had a custom IDN handling
 #     function because this setting could not be properly accessed through the
 #     LabRAD manager at the time of execution.
+# 1.4: Updated for Python 3
 
 from twisted.internet.defer import DeferredList, DeferredLock
 from twisted.internet.reactor import callLater
@@ -30,7 +16,7 @@ from labrad.units import Unit,Value
 ### BEGIN NODE INFO
 [info]
 name = GPIB Device Manager
-version = 1.3
+version = 1.4
 description = Manages discovery and lookup of GPIB devices
 
 [startup]
