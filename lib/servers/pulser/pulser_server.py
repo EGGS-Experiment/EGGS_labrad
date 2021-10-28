@@ -29,7 +29,7 @@ from twisted.internet.threads import deferToThread
 
 #function imports
 import numpy as np
-
+#todo: make sure all units are right
 class Pulser_server(LabradServer):
 
     name = 'ARTIQ Pulser'
@@ -452,9 +452,10 @@ class Pulser_server(LabradServer):
             raise Exception("Incorrect mode")
 
         self.collectionTime[mode] = new_time
+        new_time_mu = self.seconds_to_mu(new_time * mu)
         if mode == 'Normal':
             yield self.inCommunication.acquire()
-            yield deferToThread(self.api.setPMTCountInterval, mu_time)
+            yield deferToThread(self.api.setPMTCountInterval, new_time_mu)
             self.inCommunication.release()
 
     @setting(35, 'Get Readout Counts', returns = '*v')

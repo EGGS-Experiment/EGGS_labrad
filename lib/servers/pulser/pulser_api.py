@@ -5,15 +5,14 @@ import numpy as np
 # from artiq.master.worker_db import DeviceManager, DatasetManager
 # from artiq.master.worker_impl import ParentDeviceDB, ParentDatasetDB, CCB, Scheduler
 
+# device_mgr = DeviceManager(ParentDeviceDB, virtual_devices={"scheduler": Scheduler(), "ccb": CCB()})
+# dataset_mgr = DatasetManager(ParentDatasetDB)
+# argument_mgr = ProcessArgumentManager([])
+
 from artiq.language.types import TInt32, TInt64, TStr, TNone, TTuple
 
 from pulser_server import Pulser_server
 from labrad import util
-
-
-# device_mgr = DeviceManager(ParentDeviceDB, virtual_devices={"scheduler": Scheduler(), "ccb": CCB()})
-# dataset_mgr = DatasetManager(ParentDatasetDB)
-# argument_mgr = ProcessArgumentManager([])
 
 class Pulser_api(EnvExperiment):
     """
@@ -53,7 +52,6 @@ class Pulser_api(EnvExperiment):
         self.urukul_list = list()
         self.pmt_list = list()
         self.linetrigger_list = list()
-        self.th1 = {0:[1,1]}
 
         #assign names and devices
         for name, params in self.device_db.items():
@@ -84,7 +82,7 @@ class Pulser_api(EnvExperiment):
         """
         #sequencer variables
         #pmt variables
-        self.pmt_interval = 0
+        self.pmt_interval_mu = 0
         self.pmt_mode = 0 #0 is normal/automatic, 1 is differential
         self.pmt_arraylength = 10000
         self.set_dataset('pmt_counts', np.full(self.pmt_arraylength, np.nan))
@@ -93,6 +91,7 @@ class Pulser_api(EnvExperiment):
         """
         Set up relevant device configs from config file.
         """
+
         pass
 
     def _initializeDevices(self):
@@ -124,7 +123,6 @@ class Pulser_api(EnvExperiment):
                     self.ttlout_list[1].pulse(1*ms)
                 delay(1.0*ms)
 
-
     def record2(self, ttl_seq, dds_seq, sequencename):
         """
         Processes the TTL and DDS sequence into a format
@@ -136,42 +134,44 @@ class Pulser_api(EnvExperiment):
         #DDSs
         dds_times = list(dds_seq.keys())
         dds_commands = list(dds_seq.values())
-        dds_params = list(dds_seq.values())
-        self._record(ttl_times, ttl_commands, sequencename)
-            #get max time for PMT
-        max_time = ttl_times[-1]
+        #send to kernel
+        self._record(ttl_times, ttl_commands, dds_times, dds_commands, sequencename)
 
     @kernel
-    def _record(self, ttl_times, ttl_commands, sequencename):
-        PMT_device = self.ttlin_list['PMT']
+    def _record(self, ttl_times, ttl_commands, dds_times, dds_commands, sequencename):
         #record pulse sequence in memory
         with self.core_dma.record(sequencename):
             #program ttl sequence
-            for timestamp, ttlCommandArr in ttl_sequence:
-                at_mu(timestamp)
+            for i in range(len(ttl_times)):
+                at_mu(ttl_times[i])
+                ttl_command_tmp = ttl_commands[i]
+                #iterate over each TTL
                 with parallel:
-                    #todo: convert to name format
-                    for i in range(ttl_sequence.channelTotal):
-                        if ttlCommandArr[i] == 1:
-                            self.ttlout_list[i].on()
-                        elif ttlCommandArr[i] == -1:
-                            self.ttlout_list[i].off()
+                    for j in range(len(ttl_command_tmp)):
+                        if j == 1:
+                            self.ttlout_list[j].on()
+                        elif j == -1:
+                            self.ttlout_list[j].off()
             #program DDS sequence
-            for timestamp, params in dds_sequence:
-                pass
+            for i in range(len(dds_times)):
+                at_mu(dds_times[i])
+                dds_command_tmp = dds_commands[i]
+                dds_device = self.dds_list[dds_command_tmp[0]]
+                params = dds_command_tmp[1]
+                start_or_stop = dds_command_tmp[-1]
+                if start_or_stop == 'start':
+                    dds_device.set_mu(ftw=params[0], asf=params[0], pow=params[0], profile=0)
+                    dds_device.cfg_sw(True)
+                else:
+                    dds_device.cfg_sw(False)
             #program PMT input
-            for i in range(0, tmax_us, self.pmt_interval):
-                #todo: convert to machine units
-                at_mu(tmax_us)
-                time_pmt = PMT_device.gate_rising(self.pmtInterval * us)
+            max_time_mu = ttl_times[-1]
+            PMT_device = self.pmt_list[0]
+            for i in range(0, max_time_mu, self.pmt_interval_mu):
+                at_mu(i)
+                time_pmt = PMT_device.gate_rising_mu(self.pmt_interval_mu)
                 counts_pmt = PMT_device.count(time_pmt)
                 self.mutate_dataset(self.PMT_count, i, counts_pmt)
-            #todo: program dds
-            #todo: program ttls for dds's
-
-    @kernel
-    def _recordDDS(self):
-        fd
 
     def runsCompleted(self):
         """
@@ -254,5 +254,5 @@ class Pulser_api(EnvExperiment):
     def setPMTMode(self, mode):
         self.pmt_mode = mode
 
-    def setPMTInterval(self, time_us):
-        self.pmt_interval_us = time_us
+    def setPMTInterval(self, time_mu):
+        self.pmt_interval_mu = time_mu

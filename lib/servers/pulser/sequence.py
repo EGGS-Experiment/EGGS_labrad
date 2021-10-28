@@ -21,7 +21,7 @@ class Sequence():
     #     #dictionary for storing information about dds switches, in the format:
     #     #time: {channel_name: integer representing the state}
     #     self.ddsSettingList = dict.fromkeys(hardwareConfiguration.ddsDict.keys(), [])
-    #     self.sectomu = self.parent.sectomu
+    #     self.seconds_to_mu = self.parent.seconds_to_mu
 
     def __init__(self):
         self.channelTotal = 8
@@ -32,7 +32,6 @@ class Sequence():
         self.switches = 1
 
         self.ddsSettingList = {}
-        self.sectomu = lambda a: a
 
     #Sequence functions
     def progRepresentation(self):
@@ -73,8 +72,8 @@ class Sequence():
             start       (float) : the start time in seconds
             duration    (float) : the pulse duration in seconds
         """
-        start = self.sectomu(start)
-        duration = self.sectomu(duration)
+        start = self.seconds_to_mu(start)
+        duration = self.seconds_to_mu(duration)
         self._addNewSwitch(start, channel, 1)
         self._addNewSwitch(start + duration, channel, -1)
 
@@ -84,7 +83,7 @@ class Sequence():
         Arguments:
             endtime (int): the TTL sequence endtime in seconds
         """
-        endtime_mu = self.sectomu(endtime)
+        endtime_mu = self.seconds_to_mu(endtime)
         self._addNewSwitch(endtime_mu, 0, 0)
 
     def _addNewSwitch(self, start_time, chan, value):
@@ -105,5 +104,5 @@ class Sequence():
 
     #DDS functions
     def addDDS(self, dds_num, start_time, params, start_or_stop):
-        start_time_mu = self.sectomu(start_time)
-        self.ddsSettingList[start_time_mu] = (dds_num, start_time, params, start_or_stop)
+        start_time_mu = self.seconds_to_mu(start_time)
+        self.ddsSettingList[start_time_mu] = (dds_num, params, start_or_stop)
