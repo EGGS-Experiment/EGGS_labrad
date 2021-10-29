@@ -1,5 +1,4 @@
 import configparser as cp
-
 import numpy as np
 
 

@@ -1,28 +1,10 @@
-import base64
-import collections
-import datetime
-import os
-import re
-import sys
-import time
-
-import h5py
+import base64, collections, datetime, os, re, sys, time, h5py
+import numpy as np
 from twisted.internet import reactor
-
-try:
-    import numpy as np
-    use_numpy = True
-except ImportError as e:
-    print(e)
-    print("Numpy not imported.  The DataVault will operate, but will be slower.")
-    use_numpy = False
-
 from labrad import types as T
 from . import errors, util
 
-
 ## Data types for variable defintions
-
 Independent = collections.namedtuple('Independent', ['label', 'shape', 'datatype', 'unit'])
 Dependent = collections.namedtuple('Dependent', ['label', 'legend', 'shape', 'datatype', 'unit'])
 
