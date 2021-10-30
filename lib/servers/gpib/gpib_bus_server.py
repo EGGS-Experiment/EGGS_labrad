@@ -1,18 +1,3 @@
-# Copyright (C) 2008  Matthew Neeley
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 # CHANGELOG
 #
 # 2011 December 10 - Peter O'Malley & Jim Wenner
@@ -35,6 +20,10 @@
 # as long as they weren't using raw socket protocol. The changes that
 # were made here and in the next few revisions are hacks to make socket
 # connections work, and should be improved.
+#
+# 2021 October 17 - Clayton Ho
+# Added back automatic device polling
+
 
 from labrad.server import LabradServer, setting
 from twisted.internet.defer import inlineCallbacks
@@ -49,7 +38,7 @@ import pyvisa as visa
 ### BEGIN NODE INFO
 [info]
 name = GPIB Bus
-version = 1.5.0-no-refresh
+version = 1.5.1
 description = Gives access to GPIB devices via pyvisa.
 instancename = %LABRADNODE% GPIB Bus
 

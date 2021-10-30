@@ -29,7 +29,7 @@ from twisted.internet.threads import deferToThread
 
 #function imports
 import numpy as np
-
+#todo: make sure all units are right
 class Pulser_server(LabradServer):
 
     name = 'ARTIQ Pulser'
@@ -127,18 +127,9 @@ class Pulser_server(LabradServer):
         self.ps_programmed_sequence = sequence
         ttl_seq, dds_seq = self.sequence.progRepresentation()
 
-        #process TTL sequence
-        ttl_times = self.at_mu(list(ttl_seq.keys()))
-        ttl_commands = list(ttl_seq.values())
-
-        #process DDS sequence
-        #dds_devices = list(dds_seq.keys())
-        #dds_params = list(dds_seq.values())
-
         #send to API
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.record, ttl_seq, dds_seq, sequencename)
-        #yield deferToThread(self.api.record, ttl_times, ttl_commands, dds_times, dds_params)
         self.inCommunication.release()
 
         #set global variables
@@ -366,9 +357,12 @@ class Pulser_server(LabradServer):
                 self._checkRange('amplitude', channel, ampl)
 
             #convert parameters
-            #todo: convert
-            num_ARTIQ = (asf, ftw, pow)
-            num_off_ARTIQ = (asf, ftw, pow)
+            _asf = self.dbm_to_fampl(ampl)
+            _asf = self.amplitude_to_asf(_asf)
+            _ftw = self.frequency_to_ftw(freq * 1e6)
+            _pow = self.turns_to_pow(phase / (2*np.pi))
+            num_ARTIQ = (_asf, _ftw, _pow)
+            num_off_ARTIQ = (0, 0, 0)
 
             #check time is in range
                 #note < sign, because start can not be 0.
@@ -461,9 +455,10 @@ class Pulser_server(LabradServer):
             raise Exception("Incorrect mode")
 
         self.collectionTime[mode] = new_time
+        new_time_mu = self.seconds_to_mu(new_time * mu)
         if mode == 'Normal':
             yield self.inCommunication.acquire()
-            yield deferToThread(self.api.setPMTCountInterval, mu_time)
+            yield deferToThread(self.api.setPMTCountInterval, new_time_mu)
             self.inCommunication.release()
 
     @setting(35, 'Get Readout Counts', returns = '*v')
@@ -495,8 +490,6 @@ class Pulser_server(LabradServer):
         """get limits for duration of line triggering"""
         return self.linetrigger_limits
 
-    #Context functions
-
     #Signal/Context functions
     def notifyOtherListeners(self, context, message, f):
         """
@@ -512,3 +505,12 @@ class Pulser_server(LabradServer):
 
     def expireContext(self, c):
         self.listeners.remove(c.ID)
+
+    #Helper functions
+    def _checkRange(self, t, channel, val):
+        if t == 'amplitude':
+            r = channel.allowedamplrange
+        elif t == 'frequency':
+            r = channel.allowedfreqrange
+        if not r[0] <= val <= r[1]:
+            raise Exception("channel {0} : {1} of {2} is outside the allowed range".format(channel.name, t, val))

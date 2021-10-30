@@ -32,7 +32,6 @@ Created on Dec 22, 2010
 #
 #===============================================================================
 
-
 #===============================================================================
 # 2011 - 01 - 31
 # 
@@ -42,22 +41,15 @@ Created on Dec 22, 2010
 #===============================================================================
 
 #===============================================================================
-# 2021 - 09 - 20
-#
-# Added SerialManagedServer class inheriting from ManagedDeviceServer, similar to GPIBManagedServer
-#
-# Added SerialDeviceWrapper class inheriting from DeviceWrapper, similar to GPIBDeviceWrapper
-#===============================================================================
-
-#===============================================================================
 # 2021 - 10 - 17
 #
 # Added COM port connection to SerialDeviceServer class
+#
+#
 #===============================================================================
 
 
 from twisted.internet.defer import returnValue, inlineCallbacks
-
 from labrad.server import LabradServer, setting
 from labrad.types import Error
 
@@ -150,9 +142,12 @@ class SerialDeviceServer(LabradServer):
         #node always needs to be specified
         if not self.serNode:
             raise SerialDeviceError('Must define serNode attributes')
+
         #if port is not specified, get port details from registry
         if (not self.port) and (not self.regKey):
             self.port = yield self.getPortFromReg(self.regKey)
+
+        #try to open serial connection
         try:
             serStr = yield self.findSerial(self.serNode)
             print(serStr)
@@ -316,6 +311,13 @@ class SerialDeviceServer(LabradServer):
         if self.ser and self.ser.ID == ID:
             print('Serial server disconnected.  Relaunch the serial server')
             self.ser = None
+
+    @setting(111112, data = 's')
+    def query(self, c, data):
+        """Write any string and read the response"""
+        yield self.ser.write(data + '\r\n')
+        resp = yield self.ser.read()
+        return resp
 
     def stopServer( self ):
         """

@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = Lakeshore 336 Server
-version = 1.0.0
+version = 1.0
 description = Talks to the Lakeshore 336 Temperature Controller
 instancename = Lakeshore 336 Server
 
@@ -35,8 +35,8 @@ TEMPSIGNAL = 122485
 class Lakeshore336Server(SerialDeviceServer):
     name = 'Lakeshore 336 Server'
     regKey = 'Lakeshore336Server'
-    serNode = 'wanchai'
-    port = 'COM6'
+    serNode = 'causewaybay'
+    port = 'COM7'
 
     timeout = WithUnit(1.0, 's')
     baudrate = 57600
