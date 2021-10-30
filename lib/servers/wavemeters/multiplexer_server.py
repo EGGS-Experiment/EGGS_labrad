@@ -84,8 +84,6 @@ class MultiplexerServer(LabradServer):
 
         self.measureChan()
 
-        
-        
 
     def set_pid_variables(self):
         """
