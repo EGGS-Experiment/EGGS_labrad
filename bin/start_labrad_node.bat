@@ -9,7 +9,7 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 
 ::Device Buses
 START "GPIB Bus Server" /min CMD "/k activate labart && python %HOME%/Code/EGGS_labrad/lib/servers/gpib/gpib_bus_server.py"
-START "Serial Server" /min CMD "/k activate labart && python %HOME%/Code/EGGS_labrad/lib/servers/serial/serial_server.py"
+START "Serial Server" /min CMD "/k activate labart && python %HOME%/Code/EGGS_labrad/lib/servers/serial/serial_bus_server.py"
 
 ::Clients
 START /min CMD /c %HOME%/Code/EGGS_labrad/bin/start_labrad_clients.bat
