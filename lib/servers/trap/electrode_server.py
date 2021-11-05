@@ -35,7 +35,9 @@ class ElectrodeServer(LabradServer):
         dev = self.selectedDevice(c)
         yield dev.reset()
 
-    @setting(12, returns='')
+
+    # STATUS
+    @setting(111, returns='')
     def clear_buffers(self, c):
         """Clear device status buffers."""
         dev = self.selectedDevice(c)
