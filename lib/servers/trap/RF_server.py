@@ -1,7 +1,7 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Signal Generator Server
+name = RF Server
 version = 1.0
 description = Talks to Trap Signal Generator
 
@@ -18,23 +18,23 @@ timeout = 20
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
-from RigolDS1000Z import RigolDS1000ZWrapper
-from TektronixMSO2000 import TektronixMSO2000Wrapper
 
-class SignalGeneratorServer(GPIBManagedServer):
-    """Manages communication with oscilloscopes. ALL the oscilloscopes."""
+#import wrappers
+from SMY01 import SMY01Wrapper
 
-    name = 'Oscilloscope Server'
+class RFServer(GPIBManagedServer):
+    """Manages communication with RF Signal Generators."""
+
+    name = 'RF Server'
 
     deviceWrappers = {
-        'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper,
-        'TEKTRONIX MSO2024B': TektronixMSO2000Wrapper
+        '***todo': SMY01Wrapper,
     }
 
     # SYSTEM
     @setting(11, returns='')
     def reset(self, c):
-        """Reset the oscilloscopes to factory settings."""
+        """Reset the signal generators to factory settings."""
         dev = self.selectedDevice(c)
         yield dev.reset()
 
@@ -47,4 +47,4 @@ class SignalGeneratorServer(GPIBManagedServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(SignalGeneratorServer())
+    util.runServer(RFServer())
