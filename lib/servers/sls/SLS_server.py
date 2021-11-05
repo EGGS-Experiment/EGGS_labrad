@@ -63,14 +63,15 @@ class SLSServer(SerialDeviceServer):
         returnValue(resp)
 
     #PDH
-    @setting(211, 'PDH', params = '*(vvvi)', returns = '*s')
-    def PDH(self, c, params = [None]*4):
+    @setting(211, 'PDH', param = 's', value = '?', returns = '*s')
+    def PDH(self, c, param, value = ):
         '''
         Adjust PDH settings
         Arguments:
-            params  : [mod_freq (float), mod_ind (float), ref_phase (float), filter (int)]
+            param   (string): the parameter to adjust, can be 'frequency', 'index', 'phase', or 'filter'
+
         '''
-        #chString = ['PDHFrequency', 'PDHPMIndex', 'PDHPhaseOffset', 'PDHPhaseNoOffset', 'PDHDemodFilter']
+        i f
         chString = ['PDHFrequency', 'PDHPMIndex', 'PDHPhaseOffset', 'PDHDemodFilter']
         resp = []
         #write and get immediately after each parameter
@@ -126,12 +127,21 @@ class SLSServer(SerialDeviceServer):
     #Helper functions
     @inlineCallbacks
     def _getValue(self, string):
+        """
+
+        """
         echo_length = yield self.ser.write('get ' + string + TERMINATOR)
         #echo_length += len(string)
         sleep(0.5)
         resp = yield self.ser.read()
         resp = resp[echo_length:STRIP_END]
         returnValue(resp)
+
+    @inlineCallbacks
+    def _processArg(self, string):
+        """
+
+        """
 
 
 if __name__ == "__main__":
