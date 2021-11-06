@@ -128,7 +128,7 @@ class SLSServer(SerialDeviceServer):
     @inlineCallbacks
     def _getValue(self, string):
         """
-
+        Strips the echo from the SLS
         """
         echo_length = yield self.ser.write('get ' + string + TERMINATOR)
         #echo_length += len(string)
