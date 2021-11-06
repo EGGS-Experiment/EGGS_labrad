@@ -83,5 +83,3 @@ class SMY01Wrapper(GPIBDeviceWrapper):
             yield self.write('PHM ' + str(dev))
         resp = yield float(self.query('PHM?'))
         returnValue(resp)
-
-
