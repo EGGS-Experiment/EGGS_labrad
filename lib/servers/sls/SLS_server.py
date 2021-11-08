@@ -64,63 +64,43 @@ class SLSServer(SerialDeviceServer):
         returnValue(resp)
 
     #PDH
-    @setting(211, 'PDH', param = 's', value = '?', returns = '*s')
-    def PDH(self, c, param, value = ):
+    @setting(211, 'PDH', param_name = 's', param_val = '?', returns = 's')
+    def PDH(self, c, param_name, param_val = None):
         '''
         Adjust PDH settings
         Arguments:
-            param   (string): the parameter to adjust, can be 'frequency', 'index', 'phase', or 'filter'
+            param_name      (string): the parameter to adjust, can be 'frequency', 'index', 'phase', or 'filter'
+            param_val       (): the value to set the parameter to
 
         '''
-        i f
-        chString = ['PDHFrequency', 'PDHPMIndex', 'PDHPhaseOffset', 'PDHDemodFilter']
-        resp = []
-        #write and get immediately after each parameter
-        for i in range(len(params)):
-            #setters
-            if params[i] is not None:
-                yield self.ser.write('set ' + chString[i] + ' ' + params[i] + TERMINATOR)
-            #getters
-            resp_tmp = yield self._getValue(chString[i])
-            resp.append(resp_tmp)
+        chstring = {'frequency': 'PDHFrequency', 'index': 'PDHPMIndex', 'phase': 'PDHPhaseOffset', 'filter': 'PDHDemodFilter'}
+        string_tmp = chstring[param_name.lower()]
+        if param_val:
+            yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
+        resp = yield self._getValue(string_tmp)
         returnValue(resp)
 
     #Offset lock
 
 
     #Servo
-    @setting(411, 'servo', param = 's', param_args = '*(vvvibi)', returns = '*s')
-    def servo(self, c, param, param_args = [None]*6):
+
+    @setting(411, 'servo', servo_target='s', param_name='s', param_val='?', returns='s')
+    def servo(self, c, servo_target, param_name, param_val=None):
         '''
         Adjust PID servo for given parameter
         Arguments:
-            params (string): the parameter to servo
-            param_args: [prop (float), int (float), diff (float), set (int), invert (bool), filter (int)]
+            servo_target    (string): target of the PID lock
+            param_name      (string): the parameter to change
+            param_val       (): value to change
         '''
-        #check parameter has been specified
-        if type(param) == str:
-            param = param.upper()
-            #check parameter is valid
-            if param == 'CURRENT':
-                param = 'Current'
-            elif param != ('PZT' and 'TX'):
-                raise Exception("Invalid parameter")
-        else:
-            raise Exception("Specify parameter to servo")
+        tgstring = {'current': 'Current', 'pzt': 'PZT', 'tx': 'TX'}
+        chstring = {'p': 'ServoPropGain', 'i': 'ServoIntGain', 'd': 'ServoDiffGain', 'set': 'ServoSetpoint', 'loop': 'ServoInvertLoop', 'filter': 'ServoOutputFilter'}
 
-        #array of parameters
-        chString = ['ServoPropGain', 'ServoIntGain', 'ServoDiffGain', 'ServoSetpoint', 'ServoInvertLoop', 'ServoOutputFilter']
-        chString = [param + string for string in chString]
-        resp = []
-
-        #write and get immediately after each parameter
-        for i in range(len(param_args)):
-            #setters
-            if param_args[i] is not None:
-                yield self.ser.write('set ' + chString[i] + ' ' + param_args[i] + TERMINATOR)
-            #getters
-            resp_tmp = yield self._getValue(chString[i])
-            resp.append(resp_tmp)
+        string_tmp = tgstring[servo_target.lower()] + chstring[param_name.lower()]
+        if param_val is not None:
+            yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
+        resp = yield self._getValue(string_tmp)
         returnValue(resp)
 
     #Misc. settings
@@ -137,12 +117,6 @@ class SLSServer(SerialDeviceServer):
         resp = yield self.ser.read()
         resp = resp[echo_length:STRIP_END]
         returnValue(resp)
-
-    @inlineCallbacks
-    def _processArg(self, string):
-        """
-
-        """
 
 
 if __name__ == "__main__":
