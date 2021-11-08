@@ -54,6 +54,7 @@ class script_class_parameters(object):
 
 
 class ScriptScanner(ScriptSignalsServer):
+    """Manages experiment scheduling"""
     """
     Attributes
     ----------

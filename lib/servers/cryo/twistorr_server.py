@@ -26,6 +26,7 @@ import time
 import numpy as np
 
 class TwisTorr74Server(SerialDeviceServer):
+    """Talks to the TwisTorr 74 Turbopump"""
     name = 'TwisTorr74 Server'
     regKey = 'TwisTorr74Server'
     serNode = getNodeName()

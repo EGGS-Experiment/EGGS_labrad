@@ -27,6 +27,7 @@ TERMINATOR = '\r\n'
 QUERY_msg = b'\x05'
 
 class NIOPS03Server(SerialDeviceServer):
+    """Controls NIOPS-03 Power Supply which controls ion pumps"""
     name = 'NIOPS03 Server'
     regKey = 'NIOPS03Server'
     serNode = 'causewaybay'

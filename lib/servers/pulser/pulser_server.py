@@ -31,7 +31,7 @@ from twisted.internet.threads import deferToThread
 import numpy as np
 #todo: make sure all units are right
 class Pulser_server(LabradServer):
-
+    """Pulser using the ARTIQ box. Backwards compatible with old pulse sequences and experiments."""
     name = 'ARTIQ Pulser'
     regKey = 'ARTIQ_Pulser'
 

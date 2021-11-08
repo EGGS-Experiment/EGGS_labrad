@@ -27,6 +27,7 @@ TERMINATOR = '\r\n'
 STRIP_END = -8
 
 class SLSServer(SerialDeviceServer):
+    """Connects to the 729nm SLS Laser"""
     name = 'SLS Server'
     regKey = 'SLSServer'
     serNode = 'causewaybay'

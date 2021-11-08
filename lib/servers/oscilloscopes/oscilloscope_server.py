@@ -22,7 +22,7 @@ from RigolDS1000Z import RigolDS1000ZWrapper
 from TektronixMSO2000 import TektronixMSO2000Wrapper
 
 class OscilloscopeServer(GPIBManagedServer):
-    """Manages communication with oscilloscopes. ALL the oscilloscopes."""
+    """Manages communication with all oscilloscopes."""
 
     name = 'Oscilloscope Server'
 
