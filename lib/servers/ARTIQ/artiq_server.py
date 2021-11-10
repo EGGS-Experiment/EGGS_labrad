@@ -26,7 +26,7 @@ from twisted.internet.threads import deferToThread
 from .artiq_api import ARTIQ_api
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
-from artiq.master.woker_db import DeviceManager
+from artiq.master.worker_db import DeviceManager
 from sipyco.pc_rpc import Client
 from sipyco.sync_struct import Subscriber
 
@@ -85,8 +85,7 @@ class ARTIQ_Server(LabradServer):
     def _setClients(self):
         """Sets clients to ARTIQ master"""
         self.scheduler = Client('::1', 3251, 'master_schedule')
-        #self.datasets = Client('::1', )
-        #todo: dataset listener for num runs
+        self.datasets = Client('::1', 3251)
 
     def _setVariables(self):
         """Sets variables"""
@@ -149,9 +148,9 @@ class ARTIQ_Server(LabradServer):
     @setting(124, "Runs Completed", returns='i')
     def runsCompleted(self, c):
         """
-        Check how many pulse sequences have been completed.
+        Check how many iterations of the experiment have been completed.
         """
-        completed_runs = yield self.api.runsCompleted()
+        completed_runs = yield self.datasets.get('numRuns')
         returnValue(completed_runs)
 
     #TTLs
