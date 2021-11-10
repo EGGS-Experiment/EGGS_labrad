@@ -239,7 +239,7 @@ class SerialDeviceServer(LabradServer):
             if e.code == 13: raise PortRegError( 0 )
 
     @inlineCallbacks
-    def findSerial(self, serNode = None):
+    def findSerial(self, serNode=None):
         """
         Find appropriate serial server
         
@@ -254,8 +254,8 @@ class SerialDeviceServer(LabradServer):
         # look for servers with 'serial' and serNode in the name, take first result
         servers = yield cli.manager.servers()
         try:
-            returnValue( [ i[1] for i in servers if self._matchSerial( serNode, i[1] ) ][0] )
-        except IndexError: raise SerialConnectionError( 0 )
+            returnValue( [ i[1] for i in servers if self._matchSerial(serNode, i[1]) ][0] )
+        except IndexError: raise SerialConnectionError(0)
 
     @staticmethod
     def _matchSerial( serNode, potMatch ):
@@ -271,16 +271,16 @@ class SerialDeviceServer(LabradServer):
         nodeMatch = serNode.lower() in potMatch.lower()
         return serMatch and nodeMatch
 
-    def checkConnection( self ):
-        if not self.ser: raise SerialConnectionError( 2 )
+    def checkConnection(self):
+        if not self.ser: raise SerialConnectionError(2)
 
-    def serverConnected( self, ID, name ):
+    def serverConnected(self, ID, name):
         """Check to see if we can connect to serial server now"""
         if self.ser is None and None not in ( self.port, self.serNode ) and self._matchSerial( self.serNode, name ):
             self.initSerial( name, self.port)
             print('Serial server connected after we connected')
 
-    def serverDisconnected( self, ID, name):
+    def serverDisconnected(self, ID, name):
         """Close connection (if we are connected)"""
         if self.ser and self.ser.ID == ID:
             print('Serial server disconnected.  Relaunch the serial server')
@@ -321,7 +321,7 @@ class SerialDeviceServer(LabradServer):
         if self.ser:
             self.ser.close()
             self.ser = None
-            print('Serial Connection Closed')
+            print('Serial Connection closed')
         else:
             raise Exception('No device selected')
 
