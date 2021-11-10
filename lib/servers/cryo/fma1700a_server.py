@@ -26,7 +26,7 @@ import numpy as np
 TERMINATOR = '\r\n'
 QUERY_msg = b'\x05'
 
-class NIOPS03Server(SerialDeviceServer):
+class FMA1700AServer(SerialDeviceServer):
     """Controls Omega FMA1700A Mass Flowmeter"""
     name = 'FMA1700A Server'
     regKey = 'FMA1700AServer'
@@ -120,4 +120,4 @@ class NIOPS03Server(SerialDeviceServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(NIOPS03Server())
+    util.runServer(FMA1700AServer())

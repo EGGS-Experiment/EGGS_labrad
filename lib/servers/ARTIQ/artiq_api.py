@@ -24,13 +24,13 @@ api_obj.on()
 class ARTIQ_api(object):
     """
     An API for the ARTIQ box.
-    Directly accesses the hardware on the box without having to use
+    Directly accesses the hardware on the box without having to use artiq_master.
     """
 
     def __init__(self):
         #setup
         self.devices = DeviceDB('C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db.py')
-        self.device_manager = DeviceManager(devices)
+        self.device_manager = DeviceManager(self.devices)
         self._getDevices()
         self._setVariables()
 

@@ -27,7 +27,8 @@ from .artiq_api import ARTIQ_api
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.woker_db import DeviceManager
-from sipyco.pc_rpc import Client as Client
+from sipyco.pc_rpc import Client
+from sipyco.sync_struct import Subscriber
 
 #function imports
 import numpy as np
@@ -47,11 +48,12 @@ class ARTIQ_Server(LabradServer):
     @inlineCallbacks
     def initServer(self):
         yield self._setDevices()
-        yield self._setScheduler()
+        yield self._setClients()
         yield self._setVariables()
         self.listeners = set()
 
     def _setDevices(self):
+        """Sets hardware names"""
         #set hardware
         device_db = self.devices.get_device_db()
         self.ttlin_list = list()
@@ -80,17 +82,19 @@ class ARTIQ_Server(LabradServer):
             elif devicetype == 'CPLD':
                 self.urukul_list.append(name)
 
-    def _setScheduler(self):
-
+    def _setClients(self):
+        """Sets clients to ARTIQ master"""
+        self.scheduler = Client('::1', 3251, 'master_schedule')
+        #self.datasets = Client('::1', )
+        #todo: dataset listener for num runs
 
     def _setVariables(self):
+        """Sets variables"""
         self.inCommunication = DeferredLock()
 
         #pulse sequencer variables
         self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser\\run_ps.py'
         self.ps_rid = None
-        self.ps_is_programmed = False
-        self.ps_programmed_sequence = None
 
         #conversions
         self.seconds_to_mu = self.api.core.seconds_to_mu
@@ -105,21 +109,19 @@ class ARTIQ_Server(LabradServer):
         return self.devices.get_device_db()
 
     #Pulse sequencing
-    @setting(121, "Run Sequence", path='s', maxruns = 'i', returns='')
-    def runSequence(self, c, maxruns):
+    @setting(121, "Run Experiment", path='s', maxruns = 'i', returns='')
+    def runExperiment(self, c, path, maxruns = 1):
         """
-        Run the pulse sequence a given number of times.
+        Run the experiment a given number of times.
         Argument:
             path    (string): the filepath to the ARTIQ experiment.
             maxruns (int)   : the number of times to run the experiment
         """
-        #check to see if a sequence has been programmed
-        if not self.ps_is_programmed: raise Exception("No Programmed Sequence")
         #set pipeline, priority, and expid
         ps_pipeline = 'PS'
         ps_priority = 1
         ps_expid = {'log_level': 30,
-                    'file': self.ps_filename,
+                    'file': path,
                     'class_name': None,
                     'arguments': {'maxRuns': maxruns,
                                   'linetrigger_enabled': self.linetrigger_enabled,
@@ -131,34 +133,17 @@ class ARTIQ_Server(LabradServer):
         self.ps_rid = yield deferToThread(self.scheduler.submit, pipeline_name = ps_pipeline, expid = ps_expid, priority = ps_priority)
         self.inCommunication.release()
 
-    @setting(122, "Stop Sequence", returns='')
+    @setting(122, "Stop Experiment", returns='')
     def stopSequence(self, c):
         """
         Stops any currently running sequence.
         """
-        #see if pulse sequence is currently running
-        if self.ps_rid not in self.scheduler.get_status().keys(): raise Exception('No pulse sequence currently running')
+        #check that an experiment is currently running
+        if self.ps_rid not in self.scheduler.get_status().keys(): raise Exception('No experiment currently running')
         yield self.inCommunication.acquire()
         yield deferToThread(self.scheduler.delete, self.ps_rid)
         self.ps_rid = None
         #todo: make resetting of ps_rid contingent on defertothread completion
-        self.inCommunication.release()
-
-    @setting(123, "Erase Sequence", sequencename = 's', returns='')
-    def eraseSequence(self, c, sequencename = None):
-        """
-        Erases the given pulse sequence from memory.
-        Arguments:
-            sequencename (str): the sequence to erase
-        """
-        #check to see a sequence has been programmed
-        if not self.ps_programmed_sequence: raise Exception("No Programmed Sequence")
-        #set sequence name to default if not specified
-        if not sequencename: sequencename = 'default'
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.eraseSequence, sequencename)
-        self.ps_programmed_sequence = None
-        self.ps_rid = None
         self.inCommunication.release()
 
     @setting(124, "Runs Completed", returns='i')
@@ -170,16 +155,14 @@ class ARTIQ_Server(LabradServer):
         returnValue(completed_runs)
 
     #TTLs
-    @setting(211, 'TTL Channels', returns = '*(sw)')
+    @setting(211, 'Get TTL', returns = '*s')
     def getTTL(self, c):
         """
-        Returns all available TTL channels and their corresponding hardware numbers
+        Returns all available TTL channels
         """
-        keys = self.ttlDict.keys()
-        numbers = [self.ttlDict[key].channelnumber for key in keys]
-        return zip(keys, numbers)
+        return self.ttlout_list
 
-    @setting(221, "TTL Set", ttl_name = 'i', state = 'b', returns='')
+    @setting(221, "Set TTL", ttl_name = 'i', state = 'b', returns='')
     def setTTL(self, c, ttl_name, state):
         """
         Manually set a TTL to the given state.
@@ -187,19 +170,18 @@ class ARTIQ_Server(LabradServer):
             ttlname (str)   : name of the ttl
             state   (bool)  : ttl power state
         """
-        ttl_channel = self.ttlDict[ttl_name].channelnumber
+        ttl_channel = self.ttlout_list[ttl_name]
         self.inCommunication.acquire()
         yield deferToThread(self.api.setTTL, ttl_channel, state)
         self.inCommunication.release()
 
     #DDS functions
-    @setting(311, "DDS Channels", returns = '*s')
-    def getDDSChannels(self, c):
+    @setting(311, "Get DDS", returns = '*s')
+    def getDDS(self, c):
         """get the list of available channels"""
-        #todo: adjust
-        return self.ddsDict.keys()
+        return self.dds_list
 
-    @setting(321, "DDS Initialize", returns = '')
+    @setting(321, "Initialize DDS", returns = '')
     def initializeDDS(self, c):
         """
         Resets/initializes the DDSs
@@ -208,7 +190,7 @@ class ARTIQ_Server(LabradServer):
         yield deferToThread(self.api.initializeDDS)
         self.inCommunication.release()
 
-    @setting(322, "DDS Toggle", dds_name = 's', state = 'b', returns='')
+    @setting(322, "Toggle DDS", dds_name = 's', state = 'b', returns='')
     def toggleDDS(self, c, dds_name, state, profile = 0):
         """
         Manually toggle a DDS
@@ -221,7 +203,7 @@ class ARTIQ_Server(LabradServer):
         yield deferToThread(self.api.toggleDDS, dds_channel, state, profile)
         self.inCommunication.release()
 
-    @setting(323, "DDS Set", dds_name = 's', freq = 'v', ampl = 'v', phase = 'v', profile = 'i', returns='')
+    @setting(323, "Set DDS", dds_name = 's', freq = 'v', ampl = 'v', phase = 'v', profile = 'i', returns='')
     def setDDS(self, c, dds_name, freq = None, ampl = None, phase = None, profile = None):
         """
         Manually set a DDS to the given parameters.
@@ -238,7 +220,7 @@ class ARTIQ_Server(LabradServer):
         self.inCommunication.release()
 
     #DAC
-    @setting(411, "DAC Set", dds_name = 's', freq = 'v', ampl = 'v', phase = 'v', profile = 'i', returns='')
+    @setting(411, "Set DAC", dds_name = 's', freq = 'v', ampl = 'v', phase = 'v', profile = 'i', returns='')
     def setDAC(self, c, dds_name, freq = None, ampl = None, phase = None, profile = None):
         """
         Manually set a DDS to the given parameters.
