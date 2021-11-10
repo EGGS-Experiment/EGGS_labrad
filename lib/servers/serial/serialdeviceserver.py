@@ -287,7 +287,7 @@ class SerialDeviceServer(LabradServer):
             self.ser = None
 
     @setting(111111, node='s', port='s', returns='')
-    def selectDevice(self, node, port):
+    def selectDevice(self, c, node, port):
         """
         Attempt to connect to serial device on the given node and port.
         """
@@ -317,7 +317,7 @@ class SerialDeviceServer(LabradServer):
                 raise Exception('Unknown connection error')
 
     @setting(111112, returns='')
-    def closeDevice(self):
+    def closeDevice(self, c):
         if self.ser:
             self.ser.close()
             self.ser = None
