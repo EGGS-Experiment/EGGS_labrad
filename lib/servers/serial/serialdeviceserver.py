@@ -286,7 +286,7 @@ class SerialDeviceServer(LabradServer):
             print('Serial server disconnected.  Relaunch the serial server')
             self.ser = None
 
-    @setting(111111, node='s', port='s', returns='')
+    @setting(111111, 'Select Device', node='s', port='s', returns='')
     def selectDevice(self, c, node, port):
         """
         Attempt to connect to serial device on the given node and port.
@@ -316,15 +316,16 @@ class SerialDeviceServer(LabradServer):
             else:
                 raise Exception('Unknown connection error')
 
-    @setting(111112, returns='')
+    @setting(111112, 'Close Device', returns='')
     def closeDevice(self, c):
         if self.ser:
             self.ser.close()
             self.ser = None
+            print('Serial Connection Closed')
         else:
             raise Exception('No device selected')
 
-    @setting(111113, data='s')
+    @setting(111113, 'Query', data='s')
     def query(self, c, data):
         """Write any string and read the response"""
         yield self.ser.write(data + '\r\n')
