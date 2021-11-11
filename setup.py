@@ -9,7 +9,7 @@ requirements = [
     "numpy", "scipy", "cython",
     "pyqt", "qt5reactor", "pyqtgraph",
     "sipyco", "twisted", "zope", "artiq-comtools",
-    "pyvisa", "pyserial"
+    "pyvisa", "pyserial",
     "h5py", "hdf5"
 ]
 
