@@ -8,7 +8,7 @@ from EGGS_labrad.lib.clients.connection import connection
 from EGGS_labrad.lib.clients.sls_client.sls_gui import sls_gui
 
 class sls_client(sls_gui):
-    name = 'Twistorr74 Client'
+    name = 'SLS Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
@@ -35,7 +35,7 @@ class sls_client(sls_gui):
         self.context = yield self.cxn.context()
         self.reg = yield self.cxn.get_server('Registry')
         self.dv = yield self.cxn.get_server('Data Vault')
-        #self.turbo = yield self.cxn.get_server('twistorr_74_server')
+        #self.turbo = yield self.cxn.get_server('sls_server')
 
         # get polling time
         yield self.reg.cd(['Clients', self.name])
