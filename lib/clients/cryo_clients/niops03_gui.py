@@ -22,7 +22,7 @@ class niops03_gui(QtWidgets.QFrame):
 
         #niops03
         self.niops_label = QtWidgets.QLabel('NIOPS 03 Pump')
-        self.niops_label.setFont(QFont(shell_font, pointSize= 20))
+        self.niops_label.setFont(QFont(shell_font, pointSize=20))
         self.niops_label.setAlignment(QtCore.Qt.AlignCenter)
             #pressure readout
         self.niops_pressure_display_label = QtWidgets.QLabel('Pressure (mbar)')

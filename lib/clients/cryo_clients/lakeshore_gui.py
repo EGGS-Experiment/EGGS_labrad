@@ -19,7 +19,9 @@ class lakeshore_gui(QtWidgets.QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-
+        self.lakeshore_label = QtWidgets.QLabel('Lakeshore 336 Controller')
+        self.lakeshore_label.setFont(QFont(shell_font, pointSize=20))
+        self.lakeshore_label.setAlignment(QtCore.Qt.AlignCenter)
         #temperature readout
         self.tempAll_label = QtWidgets.QLabel('Temperature Readout')
         self.tempAll_label.setFont(QFont(shell_font, pointSize= 20))
@@ -223,6 +225,7 @@ class lakeshore_gui(QtWidgets.QFrame):
         heat_box_start = 6
         heat_box_step = 1
 
+        layout.addWidget(self.lakeshore_label, 0, 8)
         layout.addWidget(self.tempAll_label, 1, 2)
         layout.addWidget(self.tempAll_record, 2, 2)
 
