@@ -13,7 +13,7 @@ class niops03_client(QWidget):
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
-        super(pump_client, self).__init__()
+        super(niops03_client, self).__init__()
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -26,7 +26,7 @@ class niops03_client(QWidget):
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to pump servers
+        Creates an asynchronous connection to NIOPS03 servers
         and relevant labrad servers
         """
         #from labrad.wrappers import connectAsync
@@ -77,23 +77,17 @@ class niops03_client(QWidget):
     @inlineCallbacks
     def toggle_niops(self):
         """
-        Sets pump power on or off
+        Sets ion pump power on or off
         """
         power_status = self.gui.niops_power.isChecked()
         yield self.niops.toggle_ip(power_status)
 
     def lock_niops(self):
         """
-        Locks power status of pump
+        Locks power status of ion pump
         """
         lock_status = self.gui.niops_lockswitch.isChecked()
-        self.gui.niops_power.setEnabled(lock_status)
-
-    def lock_niops(self):
-        """
-        Locks power status of pump
-        """
-        lock_status = self.gui.niops_lockswitch.isChecked()
+        self.gui.niops_voltage.setEnabled(lock_status)
         self.gui.niops_power.setEnabled(lock_status)
 
     #Polling functions

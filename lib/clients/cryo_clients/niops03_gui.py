@@ -30,12 +30,14 @@ class niops03_gui(QtWidgets.QFrame):
         self.niops_pressure_display.setFont(QFont(shell_font, pointSize=25))
         self.niops_pressure_display.setAlignment(QtCore.Qt.AlignCenter)
         self.niops_pressure_display.setStyleSheet('color: blue')
-            #voltage readout
-        self.niops_voltage_display_label = QtWidgets.QLabel('Voltage (V)')
-        self.niops_voltage_display = QtWidgets.QLabel('Voltage')
-        self.niops_voltage_display.setFont(QFont(shell_font, pointSize=25))
-        self.niops_voltage_display.setAlignment(QtCore.Qt.AlignCenter)
-        self.niops_voltage_display.setStyleSheet('color: blue')
+            #voltage setting
+        self.niops_voltage_label = QtWidgets.QLabel('Voltage (V)')
+        self.niops_voltage = QtWidgets.QDoubleSpinBox()
+        self.niops_voltage.setFont(QFont(shell_font, pointSize=16))
+        self.niops_voltage.setDecimals(0)
+        self.niops_voltage.setSingleStep(1)
+        self.niops_voltage.setRange(0, 3000)
+        self.niops_voltage.setKeyboardTracking(False)
             #record button
         self.niops_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             #power
@@ -51,11 +53,12 @@ class niops03_gui(QtWidgets.QFrame):
         layout.addWidget(self.niops_label, 1, pump1_col)
         layout.addWidget(self.niops_pressure_display_label, 2, pump1_col)
         layout.addWidget(self.niops_pressure_display, 3, pump1_col, 3, 5)
-        layout.addWidget(self.niops_voltage_display_label, 4, pump1_col)
-        layout.addWidget(self.niops_voltage_display, 5, pump1_col, 3, 5)
-        layout.addWidget(self.niops_power, 9, pump1_col, 1, 5)
-        layout.addWidget(self.niops_lockswitch, 10, pump1_col, 1, 5)
-        layout.addWidget(self.niops_record, 11, pump1_col, 1, 5)
+        layout.addWidget(self.niops_voltage_label, 9, pump1_col)
+        layout.addWidget(self.niops_voltage, 10, pump1_col, 3, 5)
+        layout.addWidget(self.niops_power, 16, pump1_col, 1, 5)
+        layout.addWidget(self.niops_lockswitch, 17, pump1_col, 1, 5)
+        layout.addWidget(self.niops_record, 18, pump1_col, 1, 5)
+
 
         layout.minimumSize()
         self.setLayout(layout)
