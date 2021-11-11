@@ -1,6 +1,6 @@
 import os, socket
 
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 from EGGS_labrad.lib.clients.cryo_clients.twistorr74_gui import twistorr74_gui

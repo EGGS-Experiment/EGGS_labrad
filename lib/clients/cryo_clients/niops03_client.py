@@ -7,9 +7,9 @@ from EGGS_labrad.lib.clients.cryo_clients.niops03_gui import niops03_gui
 
 from EGGS_labrad.lib.clients.connection import connection
 
-class niops03_client(QWidget):
+class niops03_client(niops03_gui):
     #todo: make connections inheritable
-    name = 'Pump Client'
+    name = 'NIOPS03 Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
@@ -49,16 +49,16 @@ class niops03_client(QWidget):
     #@inlineCallbacks
     def initializeGUI(self):
         #initialize main GUI
-        layout = QGridLayout()
-        self.gui = niops03_gui(parent = self)
-        layout.addWidget(self.gui)
-        self.setLayout(layout)
-        self.setWindowTitle(self.name)
+        # layout = QGridLayout()
+        # self.gui = niops03_gui(parent = self)
+        # layout.addWidget(self.gui)
+        # self.setLayout(layout)
+        # self.setWindowTitle(self.name)
 
         #connect signals to slots
-        self.gui.niops_lockswitch.toggled.connect(lambda: self.lock_niops())
-        self.gui.niops_power.toggled.connect(lambda: self.toggle_niop())
-        self.gui.niops_record.toggled.connect(lambda: self.record_pressure())
+        self.niops_lockswitch.toggled.connect(lambda: self.lock_niops())
+        self.niops_power.toggled.connect(lambda: self.toggle_niop())
+        self.niops_record.toggled.connect(lambda: self.record_pressure())
 
         #start up data
 
