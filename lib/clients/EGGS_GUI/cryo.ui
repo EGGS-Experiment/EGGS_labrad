@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1594</width>
+    <height>910</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>150</y>
+     <width>831</width>
+     <height>591</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0" rowspan="2">
+     <widget class="lakeshore" name="widget" native="true"/>
+    </item>
+    <item row="0" column="1">
+     <widget class="pump" name="widget_2" native="true"/>
+    </item>
+    <item row="1" column="1">
+     <widget class="pump" name="widget_3" native="true"/>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>lakeshore</class>
+   <extends>QWidget</extends>
+   <header location="global">%LABRAD_ROOT%\lib\clients\lakeshore_client\lakeshore_client.py</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>pump</class>
+   <extends>QWidget</extends>
+   <header>%LABRAD_ROOT%\lib\clients\pump_client\pump_client.py</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

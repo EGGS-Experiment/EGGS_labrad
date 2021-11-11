@@ -85,7 +85,7 @@ class ARTIQ_Server(LabradServer):
     def _setClients(self):
         """Sets clients to ARTIQ master"""
         self.scheduler = Client('::1', 3251, 'master_schedule')
-        self.datasets = Client('::1', 3251)
+        self.datasets = Client('::1', 3251, 'master_dataset_db')
 
     def _setVariables(self):
         """Sets variables"""
@@ -96,11 +96,13 @@ class ARTIQ_Server(LabradServer):
         self.ps_rid = None
 
         #conversions
+        from artiq.coredevice.ad9910 impo
         self.seconds_to_mu = self.api.core.seconds_to_mu
-        self.amplitude_to_asf = self.api.dds_list[0].amplitude_to_asf
+        self.amplitude_to_asf = amplitude_to_asf
         self.frequency_to_ftw = self.api.dds_list[0].frequency_to_ftw
         self.turns_to_pow = self.api.dds_list[0].turns_to_pow
         self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
+        self.voltage_to_mu = self.#todo: finish for zotino
 
     # Core
     @setting(21, "Get Devices", returns='')
@@ -108,7 +110,7 @@ class ARTIQ_Server(LabradServer):
         return self.devices.get_device_db()
 
     #Pulse sequencing
-    @setting(121, "Run Experiment", path='s', maxruns = 'i', returns='')
+    @setting(111, "Run Experiment", path='s', maxruns = 'i', returns='')
     def runExperiment(self, c, path, maxruns = 1):
         """
         Run the experiment a given number of times.
@@ -132,7 +134,7 @@ class ARTIQ_Server(LabradServer):
         self.ps_rid = yield deferToThread(self.scheduler.submit, pipeline_name = ps_pipeline, expid = ps_expid, priority = ps_priority)
         self.inCommunication.release()
 
-    @setting(122, "Stop Experiment", returns='')
+    @setting(112, "Stop Experiment", returns='')
     def stopSequence(self, c):
         """
         Stops any currently running sequence.
@@ -145,7 +147,7 @@ class ARTIQ_Server(LabradServer):
         #todo: make resetting of ps_rid contingent on defertothread completion
         self.inCommunication.release()
 
-    @setting(124, "Runs Completed", returns='i')
+    @setting(113, "Runs Completed", returns='i')
     def runsCompleted(self, c):
         """
         Check how many iterations of the experiment have been completed.
@@ -219,24 +221,21 @@ class ARTIQ_Server(LabradServer):
         self.inCommunication.release()
 
     #DAC
-    @setting(411, "Set DAC", dds_name = 's', freq = 'v', ampl = 'v', phase = 'v', profile = 'i', returns='')
-    def setDAC(self, c, dds_name, freq = None, ampl = None, phase = None, profile = None):
+    @setting(411, "Set DAC", channel='i', voltage='v', returns='')
+    def setDAC(self, c, freq = None, ampl = None, phase = None, profile = None):
         """
         Manually set a DDS to the given parameters.
         Arguments:
-            ddsname (str)   : the name of the dds
-            freq    (float) : frequency (in Hz)
-            ampl    (float) : amplitude (in dBm)
-            phase   (float) : phase     (in radians)
-            profile (int)   : the DDS profile to set & change to
+            channel (int)   : the channel to set
+            ddsname (str)   : the desired voltage (in V)
         """
-        dds_channel = self.ddsDict[dds_name].address
+        #todo: get mu
         yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
+        yield deferToThread(self.api.setDAC, channel, voltage)
         self.inCommunication.release()
 
     #Sampler
-    @setting()
+    @setting(511, "")
     def
 
     #Signal/Context functions

@@ -47,6 +47,8 @@ class ARTIQ_api(object):
         self.ttlin_list = list()
         self.dds_list = list()
         self.urukul_list = list()
+        self.adc = None
+        self.dac = None
 
         #assign names and devices
         for name, params in self.device_db.items():
@@ -70,24 +72,35 @@ class ARTIQ_api(object):
                 self.dds_list.append(device)
             elif devicetype == 'CPLD':
                 self.urukul_list.append(device)
+            elif devicetype == 'Zotino':
+                self.dac = device
+            elif devicetype == 'Sampler':
+                self.adc = device
+            elif devicetype == 'Grabber':
+                self.camera = device
 
     def initializeDevices(self):
         """
         Initialize devices that need to be initialized.
         """
-        #initialize devices
-            #set ttlinout devices to be input
+        #set ttlinout devices to be input
         self.core.reset()
         for device in self.ttlin_list:
             try:
                 device.input()
             except RTIOUnderflow:
                 self.core.break_realtime()
-            #initialize DDSs
-        # for component_list in self.dds_list.values():
-        #     component_list['device'].init()
-        # for component_list in self.urukul_list.values():
-        #     component_list['device'].init()
+                device.input()
+        #initialize DDSs
+        for component_list in self.dds_list.values():
+            self.core.break_realtime()
+            component_list['device'].init()
+        for component_list in self.urukul_list.values():
+            self.core.break_realtime()
+            component_list['device'].init()
+        #one-off device init
+        self.dac.init()
+        self.adc.init()
         self.core.reset()
 
     @kernel
@@ -138,7 +151,7 @@ class ARTIQ_api(object):
     @kernel
     def initializeDDS(self):
         '''
-        Force reprogram of all dds chips during initialization.
+        Initialize all DDSs
         '''
         self.core.reset()
         for device in self.dds_list:
@@ -177,4 +190,5 @@ class ARTIQ_api(object):
         #todo: do we need to change profile to desired one?
 
     @kernel
-    def setDAC(self):
+    def setDAC(self, channel, voltage):
+        self.dac.set_dac_mu([voltage], channels=[channel])
