@@ -1,10 +1,11 @@
 import os, socket, datetime as datetime
 
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
-from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
-from EGGS_labrad.lib.clients.lakeshore_client.lakeshore_gui import lakeshore_gui
+from twisted.internet.defer import inlineCallbacks, returnValue
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
+
 from EGGS_labrad.lib.clients.connection import connection
+from EGGS_labrad.lib.clients.cryo_clients.lakeshore_gui import lakeshore_gui
 
 
 class lakeshore_client(QWidget):

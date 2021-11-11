@@ -17,7 +17,7 @@ class EGGS_GUI(QMainWindow):
     @inlineCallbacks
     def connect(self):
         from EGGS_labrad.lib.clients.connection import connection
-        self.cxn = connection(name = self.name)
+        self.cxn = connection(name=self.name)
         yield self.cxn.connect()
 
     def makeLayout(self, cxn):

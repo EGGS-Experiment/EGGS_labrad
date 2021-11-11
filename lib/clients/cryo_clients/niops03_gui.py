@@ -59,14 +59,13 @@ class niops03_gui(QtWidgets.QFrame):
         layout.addWidget(self.niops_label, 1, pump1_col)
         layout.addWidget(self.niops_pressure_display_label, 2, pump1_col)
         layout.addWidget(self.niops_pressure_display, 3, pump1_col, 3, 5)
-        layout.addWidget(self.niops_voltage_label, 9, pump1_col)
-        layout.addWidget(self.niops_voltage, 10, pump1_col, 3, 5)
-        layout.addWidget(self.niops_workingtime_display_label, 14, pump1_col)
-        layout.addWidget(self.niops_workingtime_display, 15, pump1_col, 3, 5)
+        layout.addWidget(self.niops_workingtime_display_label, 9, pump1_col)
+        layout.addWidget(self.niops_workingtime_display, 10, pump1_col, 3, 5)
+        layout.addWidget(self.niops_voltage_label, 14, pump1_col)
+        layout.addWidget(self.niops_voltage, 15, pump1_col, 3, 5)
         layout.addWidget(self.niops_power, 19, pump1_col, 1, 5)
         layout.addWidget(self.niops_lockswitch, 20, pump1_col, 1, 5)
         layout.addWidget(self.niops_record, 21, pump1_col, 1, 5)
-
 
         layout.minimumSize()
         self.setLayout(layout)
