@@ -5,6 +5,7 @@ class ScriptSignalsServer(LabradServer):
     Holds all the signals needed for script scanning.
     """
 
+    # running scripts
     on_running_new_script = Signal(200000, "signal_on_running_new_script", '(ws)')
     on_running_new_status = Signal(200001, "signal_on_running_new_status", '(wsv)')
     on_running_script_paused = Signal(200002, "signal_on_running_script_paused", 'wb')
@@ -13,7 +14,7 @@ class ScriptSignalsServer(LabradServer):
     on_running_script_finished_error = Signal(200006, "signal_on_running_script_finished_error", 'ws')
 
     # queued experiments
-    on_queued_new_script = Signal(200010, "signal_on_queued_new_script", 'wsw')#identification, name, order
+    on_queued_new_script = Signal(200010, "signal_on_queued_new_script", 'wsw')
     on_queued_removed = Signal(200011, "signal_on_queued_removed", 'w')
 
     # scheduled script signals
