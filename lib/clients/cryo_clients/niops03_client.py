@@ -36,7 +36,7 @@ class niops03_client(QWidget):
         self.context = yield self.cxn.context()
         self.reg = yield self.cxn.get_server('Registry')
         self.dv = yield self.cxn.get_server('Data Vault')
-        #self.ionpump = yield self.cxn.get_server('niops03_server')
+        #self.niops = yield self.cxn.get_server('niops03_server')
 
         # get polling time
         yield self.reg.cd(['Clients', self.name])
@@ -93,8 +93,8 @@ class niops03_client(QWidget):
         """
         Locks power status of pump
         """
-        lock_status = self.gui.twistorr_lockswitch.isChecked()
-        self.gui.twistorr_power.setEnabled(lock_status)
+        lock_status = self.gui.niops_lockswitch.isChecked()
+        self.gui.niops_power.setEnabled(lock_status)
 
     #Polling functions
     def start_polling(self):
@@ -104,7 +104,7 @@ class niops03_client(QWidget):
         self.press_loop.stop()
 
     def poll(self):
-        pressure = yield self.ionpump.read_pressure()
+        pressure = yield self.niops.get_pressure_ip()
         self.gui.press_display.setText(str(pressure))
         if self.recording == True:
             yield self.dv.add(elapsedtime, pressure, context=self.c_press)
