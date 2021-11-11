@@ -8,7 +8,6 @@ from EGGS_labrad.lib.clients.cryo_clients.niops03_gui import niops03_gui
 from EGGS_labrad.lib.clients.connection import connection
 
 class niops03_client(niops03_gui):
-    #todo: make connections inheritable
     name = 'NIOPS03 Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
@@ -26,8 +25,7 @@ class niops03_client(niops03_gui):
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to NIOPS03 servers
-        and relevant labrad servers
+        Creates an asynchronous connection to labrad
         """
         #from labrad.wrappers import connectAsync
         #self.cxn = yield connectAsync('localhost', name = 'NIOPS03 Client', password = self.LABRADPASSWORD)
@@ -48,16 +46,9 @@ class niops03_client(niops03_gui):
 
     #@inlineCallbacks
     def initializeGUI(self):
-        #initialize main GUI
-        # layout = QGridLayout()
-        # self.gui = niops03_gui(parent = self)
-        # layout.addWidget(self.gui)
-        # self.setLayout(layout)
-        # self.setWindowTitle(self.name)
-
         #connect signals to slots
         self.niops_lockswitch.toggled.connect(lambda: self.lock_niops())
-        self.niops_power.toggled.connect(lambda: self.toggle_niop())
+        self.niops_power.toggled.connect(lambda: self.toggle_niops())
         self.niops_record.toggled.connect(lambda: self.record_pressure())
 
         #start up data
@@ -69,9 +60,9 @@ class niops03_client(niops03_gui):
         Creates a new dataset to record pressure and tells polling loop
         to add data to data vault
         """
-        self.recording = self.gui.press_record.isChecked()
+        self.recording = self.press_record.isChecked()
         if self.recording == True:
-            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_press)
+            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_press)
             yield self.dv.new('NIOPS 03 Pump', [('Elapsed time', 't')], [('IP Pressure', 'Pressure', 'mbar')], context=self.c_press)
 
     @inlineCallbacks
@@ -79,16 +70,16 @@ class niops03_client(niops03_gui):
         """
         Sets ion pump power on or off
         """
-        power_status = self.gui.niops_power.isChecked()
+        power_status = self.niops_power.isChecked()
         yield self.niops.toggle_ip(power_status)
 
     def lock_niops(self):
         """
         Locks power status of ion pump
         """
-        lock_status = self.gui.niops_lockswitch.isChecked()
-        self.gui.niops_voltage.setEnabled(lock_status)
-        self.gui.niops_power.setEnabled(lock_status)
+        lock_status = self.niops_lockswitch.isChecked()
+        self.niops_voltage.setEnabled(lock_status)
+        self.niops_power.setEnabled(lock_status)
 
     #Polling functions
     def start_polling(self):
@@ -99,11 +90,11 @@ class niops03_client(niops03_gui):
 
     def poll(self):
         pressure = yield self.niops.get_pressure_ip()
-        if self.gui.niops_power.isChecked():
+        if self.niops_power.isChecked():
             workingtime = yield self.niops.working_time()
             time = str(workingtime[0]) + ':' + str(workingtime[1])
-            self.gui.niops_workingtime_display.setText(time)
-        self.gui.press_display.setText(str(pressure))
+            self.niops_workingtime_display.setText(time)
+        self.press_display.setText(str(pressure))
         if self.recording == True:
             yield self.dv.add(elapsedtime, pressure, context=self.c_press)
 
