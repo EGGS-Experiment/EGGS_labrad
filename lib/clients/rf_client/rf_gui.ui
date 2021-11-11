@@ -6,13 +6,175 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>872</width>
-    <height>662</height>
+    <width>674</width>
+    <height>325</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <widget class="QLabel" name="sls_label">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>10</y>
+     <width>271</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:26pt;&quot;&gt;Trap RF Client&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>80</y>
+     <width>171</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <widget class="QDoubleSpinBox" name="wav_ampl"/>
+    </item>
+    <item row="0" column="0">
+     <widget class="QDoubleSpinBox" name="wav_freq"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>180</y>
+     <width>171</width>
+     <height>121</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="wav_button_layout">
+    <item row="2" column="0">
+     <widget class="QPushButton" name="wav_lockswitch">
+      <property name="text">
+       <string>Lock</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QPushButton" name="wav_reset">
+      <property name="text">
+       <string>Reset</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QPushButton" name="wav_toggle">
+      <property name="text">
+       <string>On</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>80</y>
+     <width>301</width>
+     <height>221</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="mod_layout">
+    <item row="0" column="0">
+     <widget class="QLabel" name="mod_toggle_label">
+      <property name="text">
+       <string>Modulate</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QPushButton" name="mod_toggle">
+      <property name="text">
+       <string>On</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="mod_param_label">
+      <property name="text">
+       <string>Modulation Parameter</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QComboBox" name="mod_param">
+      <item>
+       <property name="text">
+        <string>Amplitude (AM)</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Frequency (FM)</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Phase (PM)</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="mod_freq_label">
+      <property name="text">
+       <string>Modulation Frequency (Hz)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QDoubleSpinBox" name="mod_freq"/>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="mod_param_depth_label">
+      <property name="text">
+       <string>Parameter Depth</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QDoubleSpinBox" name="mod_param_depth"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>80</y>
+     <width>84</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="wav_label_layout">
+    <item>
+     <widget class="QLabel" name="wav_freq_label">
+      <property name="text">
+       <string>Frequency (MHz)</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="wav_ampl_label">
+      <property name="text">
+       <string>Amplitude (V)</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
  </widget>
  <resources/>
  <connections/>
