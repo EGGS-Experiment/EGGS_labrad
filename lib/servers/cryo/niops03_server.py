@@ -114,8 +114,8 @@ class NIOPS03Server(SerialDeviceServer):
         resp = int(resp, 16)
         returnValue(resp)
 
-    @setting(231, 'Get Working Time', returns='*2i')
-    def get_time_working(self, c):
+    @setting(231, 'Working Time', returns='*2i')
+    def working_time(self, c):
         """
         Gets working time of IP & NP
         Returns:

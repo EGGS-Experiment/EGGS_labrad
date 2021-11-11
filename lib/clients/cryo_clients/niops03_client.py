@@ -99,6 +99,10 @@ class niops03_client(QWidget):
 
     def poll(self):
         pressure = yield self.niops.get_pressure_ip()
+        if self.gui.niops_power.isChecked():
+            workingtime = yield self.niops.working_time()
+            time = str(workingtime[0]) + ':' + str(workingtime[1])
+            self.gui.niops_workingtime_display.setText(time)
         self.gui.press_display.setText(str(pressure))
         if self.recording == True:
             yield self.dv.add(elapsedtime, pressure, context=self.c_press)

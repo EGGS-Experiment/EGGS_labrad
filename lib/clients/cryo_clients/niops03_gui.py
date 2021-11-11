@@ -38,6 +38,12 @@ class niops03_gui(QtWidgets.QFrame):
         self.niops_voltage.setSingleStep(1)
         self.niops_voltage.setRange(0, 3000)
         self.niops_voltage.setKeyboardTracking(False)
+            #working time
+        self.niops_workingtime_display_label = QtWidgets.QLabel('Working Time (mbar)')
+        self.niops_workingtime_display = QtWidgets.QLabel('Hours:Minutes')
+        self.niops_workingtime_display.setFont(QFont(shell_font, pointSize=25))
+        self.niops_workingtime_display.setAlignment(QtCore.Qt.AlignCenter)
+        self.niops_workingtime_display.setStyleSheet('color: blue')
             #record button
         self.niops_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             #power
@@ -55,9 +61,11 @@ class niops03_gui(QtWidgets.QFrame):
         layout.addWidget(self.niops_pressure_display, 3, pump1_col, 3, 5)
         layout.addWidget(self.niops_voltage_label, 9, pump1_col)
         layout.addWidget(self.niops_voltage, 10, pump1_col, 3, 5)
-        layout.addWidget(self.niops_power, 16, pump1_col, 1, 5)
-        layout.addWidget(self.niops_lockswitch, 17, pump1_col, 1, 5)
-        layout.addWidget(self.niops_record, 18, pump1_col, 1, 5)
+        layout.addWidget(self.niops_workingtime_display_label, 14, pump1_col)
+        layout.addWidget(self.niops_workingtime_display, 15, pump1_col, 3, 5)
+        layout.addWidget(self.niops_power, 19, pump1_col, 1, 5)
+        layout.addWidget(self.niops_lockswitch, 20, pump1_col, 1, 5)
+        layout.addWidget(self.niops_record, 21, pump1_col, 1, 5)
 
 
         layout.minimumSize()
