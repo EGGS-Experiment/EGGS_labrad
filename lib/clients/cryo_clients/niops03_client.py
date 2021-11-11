@@ -1,4 +1,4 @@
-import os, socket
+import os
 
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
 from twisted.internet.defer import inlineCallbacks, returnValue

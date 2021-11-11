@@ -27,30 +27,23 @@ from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import returnValue, inlineCallbacks
 
-import time
-
-FILSIGNAL = 593201
-MLSIGNAL = 953202
-HVSIGNAL = 953203
-BUFSIGNAL = 953204
-QUESIGNAL = 953205
-
 class RGA_Server(SerialDeviceServer):
     name = 'RGA Server'
-    regKey = 'SRSRGA'
+    regKey = 'RGAServer'
     port = None
     serNode = getNodeName()
 
     TIMEOUT = 1.0
     BAUDRATE = 28800
 
-    filsignal = Signal(FILSIGNAL, 'signal: filament changed', 'w')
-    mlsignal = Signal(MLSIGNAL, 'signal: mass lock changed', 'v')
-    hvsignal = Signal(HVSIGNAL, 'signal: high voltage changed', 'w')
-    bufsignal = Signal(BUFSIGNAL, 'signal: buffer read', 's')
-    quesignal = Signal(QUESIGNAL, 'signal: query sent', 's')
+    filsignal = Signal(593201, 'signal: filament changed', 'w')
+    mlsignal = Signal(953202, 'signal: mass lock changed', 'v')
+    hvsignal = Signal(953203, 'signal: high voltage changed', 'w')
+    bufsignal = Signal(953204, 'signal: buffer read', 's')
+    quesignal = Signal(953205, 'signal: query sent', 's')
 
-    listeners = set()
+    def initServer(self):
+        self.listeners = set()
 
     @setting(1, returns='s')
     def identify(self, c):
@@ -144,8 +137,6 @@ class RGA_Server(SerialDeviceServer):
             notified.remove(c.ID)
         return notified
 
-__server__ = RGA_Server()
-
 if __name__ == "__main__":
     from labrad import util
-    util.runServer(__server__)
+    util.runServer(RGA_Server())

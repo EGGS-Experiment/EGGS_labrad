@@ -33,6 +33,7 @@ class EGGS_GUI(QMainWindow):
         #create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryo, '&Cryo')
+        #self.tabWidget.addTab(cryo, '&Trap')
 
         #put it all together
         layout.addWidget(self.tabWidget)
@@ -68,6 +69,11 @@ class EGGS_GUI(QMainWindow):
         holder_layout.setRowStretch(2, 1)
         #todo: try size policy
         return holder_widget
+
+    def makeTrapWidget(self, reactor):
+        from EGGS_labrad.lib.clients.rf_client.lakeshore_client import rf_client
+        rf_widget = rf_client(reactor)
+        return rf_widget
 
     def closeEvent(self, x):
         self.reactor.stop()

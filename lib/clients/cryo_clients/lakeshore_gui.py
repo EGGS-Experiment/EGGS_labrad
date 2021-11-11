@@ -225,7 +225,7 @@ class lakeshore_gui(QtWidgets.QFrame):
         heat_box_start = 6
         heat_box_step = 1
 
-        layout.addWidget(self.lakeshore_label, 0, 8)
+        layout.addWidget(self.lakeshore_label, 0, 6, 1, 3)
         layout.addWidget(self.tempAll_label, 1, 2)
         layout.addWidget(self.tempAll_record, 2, 2)
 
