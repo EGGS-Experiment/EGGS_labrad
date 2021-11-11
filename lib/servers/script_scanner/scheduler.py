@@ -6,7 +6,6 @@ from EGGS_labrad.lib.config.scriptscanner_config import config
 
 from script_status import script_semaphore
 
-
 class priority_queue(object):
     '''
     priority queue with a few levels of priority

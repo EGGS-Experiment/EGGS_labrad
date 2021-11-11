@@ -28,7 +28,6 @@ class ARTIQ_api(object):
     """
 
     def __init__(self):
-        #setup
         self.devices = DeviceDB('C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db.py')
         self.device_manager = DeviceManager(self.devices)
         self._getDevices()
@@ -71,17 +70,6 @@ class ARTIQ_api(object):
                 self.dds_list.append(device)
             elif devicetype == 'CPLD':
                 self.urukul_list.append(device)
-
-    def _setVariables(self):
-        """
-        Set up internal variables.
-        """
-        #sequencer variables
-        #pmt variables
-        self.pmt_interval_mu = 0
-        self.pmt_mode = 0 #0 is normal/automatic, 1 is differential
-        self.pmt_arraylength = 10000
-        self.set_dataset('pmt_counts', np.full(self.pmt_arraylength, np.nan))
 
     def initializeDevices(self):
         """
@@ -126,13 +114,6 @@ class ARTIQ_api(object):
         #send to kernel
         self._record(ttl_times, ttl_commands, dds_times, dds_commands, sequencename)
 
-    def runsCompleted(self):
-        """
-        Return the number of pulse sequence runs completed.
-        """
-        runs = self.get_dataset('numRuns')
-        return runs[0]
-
     @kernel
     def eraseSequence(self, sequencename):
         """
@@ -140,13 +121,6 @@ class ARTIQ_api(object):
         """
         self.core.reset()
         self.core_dma.erase(sequencename)
-
-    def disconnect(self):
-        """
-        Disconnect the API from the master.
-        """
-        self.core.close()
-        self.scheduler.pause()
 
     #TTL functions
     @kernel
@@ -201,3 +175,6 @@ class ARTIQ_api(object):
         _pow = params[2]
         self.dds_list[ddsnum].set_mu(ftw = _freq, asf = _ampl, pow = _pow, profile = _profile)
         #todo: do we need to change profile to desired one?
+
+    @kernel
+    def setDAC(self):

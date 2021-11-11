@@ -23,10 +23,7 @@ import EGGS_labrad.lib.config.scriptscanner_config as sc_config
 from script_signals_server import ScriptSignalsServer
 from experiment import experiment_info
 from scheduler import scheduler
-from single import single
-from repeat_reload import repeat_reload
-from scan_experiment_1D import scan_experiment_1D
-from scan_experiment_1D_measure import scan_experiment_1D_measure
+from experiment_classes import *
 
 import sys
 from importlib import reload
@@ -352,7 +349,7 @@ class ScriptScanner(ScriptSignalsServer):
     @inlineCallbacks
     def stopServer(self):
         '''
-        stop all the running experiments and exit
+        stop all running experiments and exit
         '''
         yield None
         try:
