@@ -1,37 +1,24 @@
 from distutils.core import setup
+import sys
+import versioneer
 
 if sys.version_info[:2] < (3, 7):
     raise Exception("You need Python 3.7+")
 
-
-# Depends on PyQt5, but setuptools cannot check for it.
 requirements = [
-    "numpy", "scipy",
-    "python-dateutil", "prettytable", "h5py",
-    "qasync", "pyqtgraph", "pygit2",
-    "llvmlite", "pythonparser", "python-Levenshtein",
+    "numpy", "scipy", "cython",
+    "pyqt", "qt5reactor", "pyqtgraph",
+    "sipyco", "twisted", "zope", "artiq-comtools",
+    "pyvisa", "pyserial"
+    "h5py", "hdf5"
 ]
 
 console_scripts = [
-    "artiq_client = artiq.frontend.artiq_client:main",
-    "artiq_compile = artiq.frontend.artiq_compile:main",
-    "artiq_coreanalyzer = artiq.frontend.artiq_coreanalyzer:main",
-    "artiq_coremgmt = artiq.frontend.artiq_coremgmt:main",
-    "artiq_ddb_template = artiq.frontend.artiq_ddb_template:main",
-    "artiq_master = artiq.frontend.artiq_master:main",
-    "artiq_mkfs = artiq.frontend.artiq_mkfs:main",
-    "artiq_rtiomon = artiq.frontend.artiq_rtiomon:main",
-    "artiq_sinara_tester = artiq.frontend.artiq_sinara_tester:main",
-    "artiq_session = artiq.frontend.artiq_session:main",
-    "artiq_route = artiq.frontend.artiq_route:main",
-    "artiq_run = artiq.frontend.artiq_run:main",
-    "artiq_flash = artiq.frontend.artiq_flash:main",
-    "aqctl_corelog = artiq.frontend.aqctl_corelog:main",
+    # "artiq_client = artiq.frontend.artiq_client:main",
 ]
 
 gui_scripts = [
-    "artiq_browser = artiq.frontend.artiq_browser:main",
-    "artiq_dashboard = artiq.frontend.artiq_dashboard:main",
+    # "artiq_browser = artiq.frontend.artiq_browser:main",
 ]
 
 setup(
