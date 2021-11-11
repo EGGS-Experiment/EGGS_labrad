@@ -1,7 +1,9 @@
 from labrad.server import LabradServer, Signal
 
-
 class ScriptSignalsServer(LabradServer):
+    """
+    Holds all the signals needed for script scanning.
+    """
 
     on_running_new_script = Signal(200000, "signal_on_running_new_script", '(ws)')
     on_running_new_status = Signal(200001, "signal_on_running_new_status", '(wsv)')
