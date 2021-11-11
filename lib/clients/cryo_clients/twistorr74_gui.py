@@ -9,13 +9,13 @@ class TextChangingButton(_TextChangingButton):
         super(TextChangingButton, self).__init__(button_text, parent)
         self.setMaximumHeight(30)
 
-class pump_gui(QtWidgets.QFrame):
+class twistorr74_gui(QtWidgets.QFrame):
     def __init__(self, parent=None):
         window = QtWidgets.QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeWidgets()
         self.makeLayout()
-        self.setWindowTitle("Pump Clients")
+        self.setWindowTitle("Twistorr74 Client")
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
@@ -36,14 +36,6 @@ class pump_gui(QtWidgets.QFrame):
         self.twistorr_lockswitch = TextChangingButton(('Lock', 'Unlock'))
         self.twistorr_power = TextChangingButton(('On', 'Off'))
 
-        #niops03
-        self.niops_label = QtWidgets.QLabel('NIOPS 03 Pump')
-        self.niops_label.setFont(QFont(shell_font, pointSize= 20))
-        self.niops_label.setAlignment(QtCore.Qt.AlignCenter)
-            #power
-        self.niops_lockswitch = TextChangingButton(('Lock', 'Unlock'))
-        self.niops_power = TextChangingButton(('On', 'Off'))
-
     def makeLayout(self):
         layout = QtWidgets.QGridLayout()
         shell_font = 'MS Shell Dlg 2'
@@ -63,7 +55,7 @@ class pump_gui(QtWidgets.QFrame):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    icon = pump_gui()
+    icon = twistorr74_gui()
     icon.show()
     app.exec_()
 

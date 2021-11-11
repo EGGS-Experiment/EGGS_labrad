@@ -3,11 +3,11 @@ import os, socket
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
-from EGGS_labrad.lib.clients.pump_client.pump_gui import pump_gui
+from EGGS_labrad.lib.clients.cryo_clients.niops03_gui import niops03_gui
 
 from EGGS_labrad.lib.clients.connection import connection
 
-class pump_client(QWidget):
+class niops03_client(QWidget):
     #todo: make connections inheritable
     name = 'Pump Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
@@ -30,13 +30,12 @@ class pump_client(QWidget):
         and relevant labrad servers
         """
         #from labrad.wrappers import connectAsync
-        #self.cxn = yield connectAsync('localhost', name = 'Pump Client', password = self.LABRADPASSWORD)
+        #self.cxn = yield connectAsync('localhost', name = 'NIOPS03 Client', password = self.LABRADPASSWORD)
         self.cxn = connection(name = self.name)
         yield self.cxn.connect()
         self.context = yield self.cxn.context()
         self.reg = yield self.cxn.get_server('Registry')
         self.dv = yield self.cxn.get_server('Data Vault')
-        #self.turbo = yield self.cxn.get_server('twistorr_74_server')
         #self.ionpump = yield self.cxn.get_server('niops03_server')
 
         # get polling time
@@ -51,18 +50,15 @@ class pump_client(QWidget):
     def initializeGUI(self):
         #initialize main GUI
         layout = QGridLayout()
-        self.gui = pump_gui(parent = self)
+        self.gui = niops03_gui(parent = self)
         layout.addWidget(self.gui)
         self.setLayout(layout)
         self.setWindowTitle(self.name)
 
         #connect signals to slots
-        self.gui.twistorr_lockswitch.toggled.connect(lambda: self.lock_twistorr())
-        self.gui.twistorr_power.toggled.connect(lambda: self.toggle_twistorr())
-        self.gui.twistorr_record.toggled.connect(lambda: self.record_pressure())
-
         self.gui.niops_lockswitch.toggled.connect(lambda: self.lock_niops())
-        self.gui.niops_power.toggled.connect(lambda: self.toggle_niops())
+        self.gui.niops_power.toggled.connect(lambda: self.toggle_niop())
+        self.gui.niops_record.toggled.connect(lambda: self.record_pressure())
 
         #start up data
 
@@ -76,7 +72,7 @@ class pump_client(QWidget):
         self.recording = self.gui.press_record.isChecked()
         if self.recording == True:
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_press)
-            yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')], [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_press)
+            yield self.dv.new('NIOPS 03 Pump', [('Elapsed time', 't')], [('IP Pressure', 'Pressure', 'mbar')], context=self.c_press)
 
     @inlineCallbacks
     def toggle_niops(self):
@@ -86,14 +82,6 @@ class pump_client(QWidget):
         power_status = self.gui.niops_power.isChecked()
         yield self.niops.toggle_ip(power_status)
 
-    @inlineCallbacks
-    def toggle_twistorr(self):
-        """
-        Sets pump power on or off
-        """
-        power_status = self.gui.niops_power.isChecked()
-        yield self.pump.toggle(power_status)
-
     def lock_niops(self):
         """
         Locks power status of pump
@@ -101,7 +89,7 @@ class pump_client(QWidget):
         lock_status = self.gui.niops_lockswitch.isChecked()
         self.gui.niops_power.setEnabled(lock_status)
 
-    def lock_twistorr(self):
+    def lock_niops(self):
         """
         Locks power status of pump
         """
@@ -116,7 +104,7 @@ class pump_client(QWidget):
         self.press_loop.stop()
 
     def poll(self):
-        pressure = yield self.pump.read_pressure()
+        pressure = yield self.ionpump.read_pressure()
         self.gui.press_display.setText(str(pressure))
         if self.recording == True:
             yield self.dv.add(elapsedtime, pressure, context=self.c_press)
@@ -129,6 +117,6 @@ if __name__ == "__main__":
     import qt5reactor
     qt5reactor.install()
     from twisted.internet import reactor
-    pump_interface = pump_client(reactor)
-    pump_interface.show()
+    niops_interface = niops03_client(reactor)
+    niops_interface.show()
     reactor.run()

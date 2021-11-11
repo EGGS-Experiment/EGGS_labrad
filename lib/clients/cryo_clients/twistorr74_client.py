@@ -3,7 +3,7 @@ import os, socket
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
-from EGGS_labrad.lib.clients.pump_client.pump_gui import pump_gui
+from EGGS_labrad.lib.clients.cryo_clients.twistorr74_gui import twistorr74_gui
 
 from EGGS_labrad.lib.clients.connection import connection
 
@@ -13,7 +13,7 @@ class twistorr74_client(QWidget):
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
-        super(pump_client, self).__init__()
+        super(twistorr74_client, self).__init__()
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -31,7 +31,7 @@ class twistorr74_client(QWidget):
         """
         #from labrad.wrappers import connectAsync
         #self.cxn = yield connectAsync('localhost', name = 'Pump Client', password = self.LABRADPASSWORD)
-        self.cxn = connection(name = self.name)
+        self.cxn = connection(name=self.name)
         yield self.cxn.connect()
         self.context = yield self.cxn.context()
         self.reg = yield self.cxn.get_server('Registry')
@@ -50,7 +50,7 @@ class twistorr74_client(QWidget):
     def initializeGUI(self):
         #initialize main GUI
         layout = QGridLayout()
-        self.gui = pump_gui(parent = self)
+        self.gui = twistorr74_gui(parent = self)
         layout.addWidget(self.gui)
         self.setLayout(layout)
         self.setWindowTitle(self.name)
@@ -110,6 +110,6 @@ if __name__ == "__main__":
     import qt5reactor
     qt5reactor.install()
     from twisted.internet import reactor
-    pump_interface = pump_client(reactor)
-    pump_interface.show()
+    twistorr_interface = twistorr74_client(reactor)
+    twistorr_interface.show()
     reactor.run()
