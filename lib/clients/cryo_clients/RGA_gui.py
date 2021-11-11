@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QApplication, QFrame, QCheckBox, QLabel, QSpinBox, QDoubleSpinBox, QPushButton, QPlainTextEdit
+from PyQt5.QtWidgets import QWidget, QApplication, QFrame, QCheckBox, QLabel,\
+    QSpinBox, QDoubleSpinBox, QPushButton, QPlainTextEdit
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -107,3 +108,11 @@ class RGA_UI(QWidget):
         self.rga_fl_button.setText(_translate("Form", "fl?", None))
         self.rga_read_buffer_button.setText(_translate("Form", "Read Buffer", None))
         self.rga_clear_button.setText(_translate("Form", "Clear", None))
+
+if __name__=="__main__":
+    import sys
+    app = QApplication(sys.argv)
+    client = RGA_UI()
+    client.setupUi()
+    client.show()
+    app.exec_()
