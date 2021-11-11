@@ -1,5 +1,6 @@
+import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QApplication
 
 class SLS_gui(QWidget):
     def setupUi(self):
@@ -251,8 +252,6 @@ class SLS_gui(QWidget):
         self.autolock_time_label.setText(_translate("SLS_gui", "Lock Time"))
 
 if __name__=="__main__":
-    import sys
-    from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
     client = SLS_gui()
     client.setupUi()

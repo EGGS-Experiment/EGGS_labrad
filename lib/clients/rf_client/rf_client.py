@@ -6,7 +6,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 from EGGS_labrad.lib.clients.rf_client.rf_gui import rf_gui
 
-class rf_client(QWidget):
+class rf_client(rf_gui):
     name = 'RF Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
@@ -44,17 +44,10 @@ class rf_client(QWidget):
 
     #@inlineCallbacks
     def initializeGUI(self):
-        #initialize main GUI
-        layout = QGridLayout()
-        self.gui = twistorr74_gui(parent=self)
-        layout.addWidget(self.gui)
-        self.setLayout(layout)
-        self.setWindowTitle(self.name)
-
         #connect signals to slots
-        self.gui.twistorr_lockswitch.toggled.connect(lambda: self.lock_twistorr())
-        self.gui.twistorr_power.toggled.connect(lambda: self.toggle_twistorr())
-        self.gui.twistorr_record.toggled.connect(lambda: self.record_pressure())
+        self.twistorr_lockswitch.toggled.connect(lambda: self.lock_twistorr())
+        self.twistorr_power.toggled.connect(lambda: self.toggle_twistorr())
+        self.twistorr_record.toggled.connect(lambda: self.record_pressure())
 
         #start up data
 
@@ -65,7 +58,7 @@ class rf_client(QWidget):
         Creates a new dataset to record pressure and tells polling loop
         to add data to data vault
         """
-        self.recording = self.gui.press_record.isChecked()
+        self.recording = self.press_record.isChecked()
         if self.recording == True:
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_press)
             yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')], [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_press)
@@ -75,15 +68,15 @@ class rf_client(QWidget):
         """
         Sets pump power on or off
         """
-        power_status = self.gui.twistorr_power.isChecked()
+        power_status = self.twistorr_power.isChecked()
         yield self.pump.toggle(power_status)
 
     def lock_twistorr(self):
         """
         Locks power status of pump
         """
-        lock_status = self.gui.twistorr_lockswitch.isChecked()
-        self.gui.twistorr_power.setEnabled(lock_status)
+        lock_status = self.twistorr_lockswitch.isChecked()
+        self.twistorr_power.setEnabled(lock_status)
 
     #Polling functions
     def start_polling(self):
@@ -94,7 +87,7 @@ class rf_client(QWidget):
 
     def poll(self):
         pressure = yield self.pump.read_pressure()
-        self.gui.press_display.setText(str(pressure))
+        self.press_display.setText(str(pressure))
         if self.recording == True:
             yield self.dv.add(elapsedtime, pressure, context=self.c_press)
 
