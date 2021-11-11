@@ -37,17 +37,15 @@ class SLSServer(SerialDeviceServer):
     timeout = T.Value(1.0, 's')
 
     #Autolock
-    @setting(111,'autolock toggle', enable = 's', returns = 's')
-    def autolock_toggle(self, c, enable = None):
+    @setting(111,'autolock toggle', enable='s', returns='s')
+    def autolock_toggle(self, c, enable=None):
         '''
         Toggle autolock
         '''
         chString = 'AutoLockEnable'
-        #setters
-        if enable is not None:
+        if enable:
             yield self.ser.write('set ' + chString + ' ' + enable + TERMINATOR)
 
-        #getters
         resp = yield self._getValue(chString)
         returnValue(resp)
 
@@ -61,6 +59,19 @@ class SLSServer(SerialDeviceServer):
         for string in chString:
             resp_tmp = yield self._getValue(string)
             resp.append(resp_tmp)
+        returnValue(resp)
+
+    @setting(111,'autolock parameter', param='s', returns = 's')
+    def autolock_param(self, c, param=None):
+        '''
+        Choose parameter for autolock to sweep
+        '''
+        chString = 'SweepType'
+        if param.lower() == 'current':
+            yield self.ser.write('set ' + chString + ' ' + '2' + TERMINATOR)
+        if param.upper() == 'PZT':
+            yield self.ser.write('set ' + chString + ' ' + '1' + TERMINATOR)
+        resp = yield self._getValue(chString)
         returnValue(resp)
 
     #PDH
@@ -84,7 +95,6 @@ class SLSServer(SerialDeviceServer):
 
 
     #Servo
-
     @setting(411, 'servo', servo_target='s', param_name='s', param_val='?', returns='s')
     def servo(self, c, servo_target, param_name, param_val=None):
         '''
