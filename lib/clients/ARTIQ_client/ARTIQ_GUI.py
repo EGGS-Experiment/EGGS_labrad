@@ -30,8 +30,9 @@ class ARTIQ_GUI(QMainWindow):
         self.tabWidget = QTabWidget()
 
         #create subwidgets
-        dds_widget = self.makeDDSWidget(reactor, cxn)
         ttl_widget = self.makeTTLWidget(reactor)
+
+        dds_widget = self.makeDDSWidget(reactor, cxn)
         #dac_widget = self.makeDACWidget(reactor)
 
         #create tabs for each subwidget
@@ -45,17 +46,17 @@ class ARTIQ_GUI(QMainWindow):
         self.setCentralWidget(centralWidget)
         self.setWindowTitle(self.name)
 
-    def makeDDSWidget(self, reactor, cxn):
+    def makeTTLWidget(self, reactor, cxn):
         from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
-        dds_list = []
+        ttl_list = []
         for device_name, device_params in device_db.items():
             try:
-                if device_params['class'] == 'AD9910':
-                    dds_list.append(device_name)
+                if device_params['class'] == 'TTLOut':
+                    ttl_list.append(device_name)
             except KeyError:
                 continue
-        from EGGS_labrad.lib.clients.ARTIQ_client.DDS_client import AD9910_channels
-        dds_widget = AD9910_channels(reactor, channels=dds_list)
+        from EGGS_labrad.lib.clients.ARTIQ_client.DDS_client import TTL_client
+        ttl_widget = TTL_client(reactor, channels=ttl_list)
         return dds_widget
 
     def makeDDSWidget(self, reactor, cxn):
@@ -80,17 +81,18 @@ class ARTIQ_GUI(QMainWindow):
                     dds_list.append(device_name)
             except KeyError:
                 continue
-        from EGGS_labrad.lib.clients.ARTIQ_client.DDS_client import AD9910_channels
-        dds_widget = DAC_client(reactor, channels=dds_list)
-        return dds_widget
+        from EGGS_labrad.lib.clients.ARTIQ_client.DAC_client import DAC_client
+        dac_widget = DAC_client(reactor, channels=dds_list)
+        return dac_widget
 
     def closeEvent(self, x):
         self.reactor.stop()
 
 if __name__=="__main__":
-    import sys, qt5reactor
+    import sys
     app = QApplication(sys.argv)
     clipboard = app.clipboard()
+    import qt5reactor
     qt5reactor.install()
     from twisted.internet import reactor
     gui = ARTIQ_GUI(reactor, clipboard)
