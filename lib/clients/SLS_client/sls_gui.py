@@ -252,8 +252,5 @@ class SLS_gui(QWidget):
         self.autolock_time_label.setText(_translate("SLS_gui", "Lock Time"))
 
 if __name__=="__main__":
-    app = QApplication(sys.argv)
-    client = SLS_gui()
-    client.setupUi()
-    client.show()
-    app.exec_()
+    from EGGS_labrad.lib.clients import runGUI
+    runGUI(SLS_gui)

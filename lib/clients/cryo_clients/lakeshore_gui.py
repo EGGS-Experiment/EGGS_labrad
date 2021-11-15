@@ -290,11 +290,8 @@ class lakeshore_gui(QtWidgets.QFrame):
         self.setLayout(layout)
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    gui = lakeshore_gui()
-    gui.show()
-    app.exec_()
-
+    from EGGS_labrad.lib.clients import runGUI
+    runGUI(lakeshore_gui)
 
 
 
