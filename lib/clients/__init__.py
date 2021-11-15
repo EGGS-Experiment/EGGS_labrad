@@ -8,14 +8,14 @@ import sys
 
 __all__ = ["runGUI", "runClient"]
 
-def runGUI(client):
+def runGUI(client, **kwargs):
     """
     Runs a LabRAD GUI file written using PyQt5
     """
     #widgets require a QApplication to run
     app = QApplication(sys.argv)
     #instantiate gui
-    gui = client()
+    gui = client(**kwargs)
     #set up UI if needed
     try:
         gui.setupUi()
@@ -25,8 +25,7 @@ def runGUI(client):
     gui.show()
     app.exec_()
 
-#
-def runClient(client):
+def runClient(client, **kwargs):
     """
     Runs a LabRAD client written using PyQt5
     """
@@ -36,7 +35,7 @@ def runClient(client):
     qt5reactor.install()
     from twisted.internet import reactor
     #instantiate a client with a reactor
-    client = client(reactor)
+    client = client(reactor, **kwargs)
     #show client
     client.show()
     #start reactor

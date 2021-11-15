@@ -35,7 +35,7 @@ class lakeshore_client(QWidget):
         and relevant labrad servers
         """
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name = 'Lakeshore 336 Client', password = self.LABRADPASSWORD)
+        self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
         self.dv = self.cxn.data_vault
         self.ls = self.cxn.lakeshore_336_server
         self.reg = self.cxn.registry

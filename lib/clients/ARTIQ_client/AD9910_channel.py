@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QApplication, QDoubleSpinBox, QLabel, QGridLayout, QFrame
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
 
 class AD9910_channel_GUI(QFrame):
@@ -43,39 +43,23 @@ class AD9910_channel_GUI(QFrame):
         self.att.setSingleStep(0.1)
         self.att.setRange(-145.0, 30.0)
         self.att.setKeyboardTracking(False)
+        self.rfswitch = TextChangingButton(("On", "Off"))
         layout.addWidget(self.freq, 2, 0)
         layout.addWidget(self.ampl, 2, 1)
-        layout.addWidget(self.att, 4, 1)
-        self.buttonSwitch = TextChangingButton(("I", "O"))
-        layout.addWidget(self.buttonSwitch, 2, 2)
+        layout.addWidget(self.att, 4, 0)
+        layout.addWidget(self.rfswitch, 2, 2)
         self.setLayout(layout)
 
-    def setPowerRange(self, powerrange):
-        self.spinPower.setRange(*powerrange)
 
-    def setFreqRange(self, freqrange):
-        self.spinFreq.setRange(*freqrange)
-
-    def setPowerNoSignal(self, power):
-        self.spinPower.blockSignals(True)
-        self.spinPower.setValue(power)
-        self.spinPower.blockSignals(False)
-
-    def setFreqNoSignal(self, freq):
-        self.spinFreq.blockSignals(True)
-        self.spinFreq.setValue(freq)
-        self.spinFreq.blockSignals(False)
-
-    def setStateNoSignal(self, state):
-        self.buttonSwitch.blockSignals(True)
-        self.buttonSwitch.setChecked(state)
-        self.buttonSwitch.setAppearance(state)
-        self.buttonSwitch.blockSignals(False)
-
-class AD9910_9910_channel(AD9910_channel_GUI):
-
+class AD9910_channel(QWidget):
+    def __init__(self, reactor, parent=None):
+        super(AD9910_channel, self).__init__()
+        self.reactor = reactor
+        self.ad9910_dict = {}
+        self.ad9910_clients
+        self.connect()
 
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runGUI
-    runGUI(AD9910_channel)
+    runGUI(AD9910_channel_GUI, 'AD9910 Channel')

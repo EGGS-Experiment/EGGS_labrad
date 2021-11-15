@@ -3,9 +3,9 @@ from PyQt5.QtGui import QIcon
 from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.lib.clients.Widgets import DetachableTabWidget
 
-class EGGS_GUI(QMainWindow):
+class ARTIQ_gui(QMainWindow):
 
-    name = 'EGGS GUI'
+    name = 'ARTIQ GUI'
 
     def __init__(self, reactor, clipboard, parent=None):
         super(EGGS_GUI, self).__init__(parent)
@@ -16,11 +16,9 @@ class EGGS_GUI(QMainWindow):
 
     @inlineCallbacks
     def connect(self):
-        from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
-        self.dv = self.cxn.data_vault
-        self.ls = self.cxn.lakeshore_336_server
-        self.reg = self.cxn.registry
+        from EGGS_labrad.lib.clients.connection import connection
+        self.cxn = connection(name=self.name)
+        yield self.cxn.connect()
 
     def makeLayout(self, cxn):
         #central layout
