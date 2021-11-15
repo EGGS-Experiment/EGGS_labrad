@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout
 from PyQt5.QtGui import QIcon
 from twisted.internet.defer import inlineCallbacks, returnValue
-from EGGS_labrad.lib.clients.Widgets.detachable_tab import DetachableTabWidget
+from EGGS_labrad.lib.clients.Widgets import DetachableTabWidget
 
 class EGGS_GUI(QMainWindow):
 

@@ -1,12 +1,10 @@
 import sys
-from PyQt5 import QtCore, QtGui
+from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QApplication, QDoubleSpinBox, QLabel, QGridLayout, QFrame
+from EGGS_labrad.lib.clients.Widgets import TextChangingButton
 
-from EGGS_labrad.lib.clients.Widgets.q_custom_text_changing_button import TextChangingButton
-
-
-class QCustomFreqPower(QFrame):
+class AD9910_channel(QFrame):
     def __init__(self, title, switchable=True, parent=None):
         QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
@@ -16,7 +14,7 @@ class QCustomFreqPower(QFrame):
         layout = QGridLayout()
         # labels
         title = QLabel(title)
-        title.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
         freqlabel = QLabel('Frequency (MHz)')
         powerlabel = QLabel('Power (dBm)')
@@ -29,13 +27,13 @@ class QCustomFreqPower(QFrame):
 
         # editable fields
         self.spinFreq = QDoubleSpinBox()
-        self.spinFreq.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
+        self.spinFreq.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.spinFreq.setDecimals(3)
         self.spinFreq.setSingleStep(0.1)
         self.spinFreq.setRange(10.0, 250.0)
         self.spinFreq.setKeyboardTracking(False)
         self.spinPower = QDoubleSpinBox()
-        self.spinPower.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
+        self.spinPower.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.spinPower.setDecimals(3)
         self.spinPower.setSingleStep(0.1)
         self.spinPower.setRange(-145.0, 30.0)
