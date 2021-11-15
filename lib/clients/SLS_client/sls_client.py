@@ -5,14 +5,14 @@ from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.clients.connection import connection
-from EGGS_labrad.lib.clients.sls_client.sls_gui import SLS_gui
+from EGGS_labrad.lib.clients.SLS_client.sls_gui import SLS_gui
 
 class SLS_client(SLS_gui):
     name = 'SLS Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
-        super(sls_client, self).__init__()
+        super(SLS_client, self).__init__()
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -53,6 +53,7 @@ class SLS_client(SLS_gui):
         # self.twistorr_record.toggled.connect(lambda: self.record_pressure())
 
         #start up data
+        self.setupUi()
 
     #Slot functions
     @inlineCallbacks
