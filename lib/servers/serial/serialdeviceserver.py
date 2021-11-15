@@ -143,8 +143,8 @@ class SerialDeviceServer(LabradServer):
             self.read_until = lambda x = '\r': ser.read_until(x)
             self.read_as_words = lambda x = 0: ser.read_as_words(x) # changed here
             self.close = lambda: ser.close()
-            self.flush_input = print('yzde')
-            self.flush_output = print('scde')
+            self.flush_input = ser.flush_input()
+            self.flush_output = ser.flush_output()
             self.ID = ser.ID
 
     def initSerial(self, serStr, port, **kwargs):
