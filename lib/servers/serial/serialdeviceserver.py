@@ -163,6 +163,9 @@ class SerialDeviceServer(LabradServer):
             # instantiate SerialConnection convenience class
             self.ser = self.SerialConnection(ser=ser, port=port, **kwargs)
             print('Serial connection opened.')
+            #clear input and output buffers
+            self.ser.flushinput()
+            self.ser.flushoutput()
         except Error:
             self.ser = None
             raise SerialConnectionError(1)
