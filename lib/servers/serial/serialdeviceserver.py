@@ -128,7 +128,6 @@ class SerialDeviceServer(LabradServer):
         @raise labrad.types.Error: Error in opening serial connection   
         """
         def __init__(self, ser, port, **kwargs):
-            print(ser)
             timeout = kwargs.get('timeout')
             baudrate = kwargs.get('baudrate')
             bytesize = kwargs.get('bytesize')
@@ -146,6 +145,12 @@ class SerialDeviceServer(LabradServer):
             self.flush_input = ser.flush_input()
             self.flush_output = ser.flush_output()
             self.ID = ser.ID
+
+    def __init__(self):
+        super(SerialDeviceServer, self).__init__()
+        #connect to device on startup if node and ports are specified
+        if self.serNode and self.port:
+            self.selectDevice(node, port)
 
     def initSerial(self, serStr, port, **kwargs):
         """
@@ -173,8 +178,8 @@ class SerialDeviceServer(LabradServer):
             self.ser = self.SerialConnection(ser=ser, port=port, **kwargs)
             print('Serial connection opened.')
             #clear input and output buffers
-            # self.ser.flush_input()
-            # self.ser.flush_output()
+            self.ser.flush_input()
+            self.ser.flush_output()
         except Error:
             self.ser = None
             raise SerialConnectionError(1)
@@ -204,18 +209,18 @@ class SerialDeviceServer(LabradServer):
                 if self.name:
                     regKey = self.name[:4].lower()
                 else:
-                    raise SerialDeviceError( 'name attribute is None' )
+                    raise SerialDeviceError('name attribute is None')
             portStrKey = filter( lambda x: regKey in x , y[1] )
             if portStrKey:
                 portStrKey = portStrKey[0]
             else:
-                raise PortRegError( 1 )
-            portStrVal = yield reg.get( portStrKey )
+                raise PortRegError(1)
+            portStrVal = yield reg.get(portStrKey)
             reg.cd(tmp)
             returnValue( portStrVal )
         except Error as e:
             reg.cd(tmp)
-            if e.code == 17: raise PortRegError( 0 )
+            if e.code == 17: raise PortRegError(0)
 
     @inlineCallbacks
     def selectPortFromReg(self):
@@ -314,7 +319,6 @@ class SerialDeviceServer(LabradServer):
         #try to open serial connection
         try:
             serStr = yield self.findSerial(self.serNode)
-            print(serStr)
             self.initSerial(serStr, self.port, baudrate=self.baudrate, timeout=self.timeout,
                             bytesize=self.bytesize, parity=self.parity)
         except SerialConnectionError as e:
