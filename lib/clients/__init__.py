@@ -6,6 +6,8 @@ Contains stuff useful for LabRAD clients
 from PyQt5.QtWidgets import QApplication
 import sys
 
+__all__ = ["runGUI", "runClient"]
+
 def runGUI(client):
     """
     Runs a LabRAD GUI file written using PyQt5
