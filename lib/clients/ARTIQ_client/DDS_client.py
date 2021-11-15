@@ -112,7 +112,7 @@ class DDS_client(QWidget):
 
     @inlineCallbacks
     def toggleSwitch(self, channel_name, status):
-        yield self.artiq.toggleDDS(channel_name, status)
+        yield self.artiq.toggle_DDS(channel_name, status)
 
     @inlineCallbacks
     def setFrequency(self, channel_name, freq):
@@ -125,6 +125,10 @@ class DDS_client(QWidget):
     @inlineCallbacks
     def setAttenuation(self, channel_name, att):
         yield self.artiq.set_DDS_attenuation(channel_name, att)
+
+    def closeEvent(self, x):
+        self.reactor.stop()
+
 
 if __name__ == "__main__":
     #run channel GUI

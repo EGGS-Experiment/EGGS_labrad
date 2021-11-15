@@ -98,6 +98,7 @@ class twistorr74_client(twistorr74_gui):
     def closeEvent(self, event):
         self.reactor.stop()
 
+
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runClient
     runClient(twistorr74_client)
