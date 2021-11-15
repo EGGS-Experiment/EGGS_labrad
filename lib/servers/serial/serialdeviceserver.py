@@ -134,8 +134,6 @@ class SerialDeviceServer(LabradServer):
             self.read_until = lambda x = '\r': ser.read_until(x)
             self.read_as_words = lambda x = 0: ser.read_as_words(x) # changed here
             self.close = lambda: ser.close()
-            self.flushinput = lambda: ser.flushinput()
-            self.flushoutput = lambda: ser.flushoutput()
             self.ID = ser.ID
 
     def initSerial(self, serStr, port, **kwargs):
@@ -163,9 +161,7 @@ class SerialDeviceServer(LabradServer):
             # instantiate SerialConnection convenience class
             self.ser = self.SerialConnection(ser=ser, port=port, **kwargs)
             print('Serial connection opened.')
-            #clear input and output buffers
-            self.ser.flushinput()
-            self.ser.flushoutput()
+            #todo: clear input and output buffers
         except Error:
             self.ser = None
             raise SerialConnectionError(1)
