@@ -87,6 +87,7 @@ class EGGS_gui(QMainWindow):
     def closeEvent(self, x):
         self.reactor.stop()
 
+
 if __name__=="__main__":
     import sys, qt5reactor
     app = QApplication(sys.argv)
