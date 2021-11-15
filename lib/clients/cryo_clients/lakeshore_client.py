@@ -289,10 +289,12 @@ class lakeshore_client(QWidget):
         self.reactor.stop()
 
 if __name__ == "__main__":
-    a = QApplication([])
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
-    lakeshore_interface = lakeshore_client(reactor)
-    lakeshore_interface.show()
-    reactor.run()
+    from EGGS_labrad.lib.clients import runClient
+    runClient(lakeshore_client)
+    # a = QApplication([])
+    # import qt5reactor
+    # qt5reactor.install()
+    # from twisted.internet import reactor
+    # lakeshore_interface = lakeshore_client(reactor)
+    # lakeshore_interface.show()
+    # reactor.run()
