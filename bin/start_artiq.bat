@@ -1,6 +1,6 @@
 @ECHO OFF
 
-::Starts all necessary components to run ARTIQ
+::Starts all components necessary for running ARTIQ
 
 start "ARTIQ Master" /min cmd "/k activate labart2 && artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ARTIQ_ROOT%/device_db.py"
 start "ARTIQ Dashboard" /min cmd "/k activate labart2 && artiq_dashboard"

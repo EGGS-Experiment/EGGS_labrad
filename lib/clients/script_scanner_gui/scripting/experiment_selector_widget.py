@@ -1,3 +1,7 @@
+"""
+Experiment selector widget and the dialog boxes used to select and run an experiment.
+"""
+
 from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from numpy import linspace
 import os

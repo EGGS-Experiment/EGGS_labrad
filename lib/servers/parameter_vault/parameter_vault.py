@@ -20,9 +20,7 @@ from twisted.internet.defer import inlineCallbacks
 
 
 class ParameterVault(LabradServer):
-    """
-    Data Server for storing ongoing experimental parameters
-    """
+    """Data Server for storing ongoing experimental parameters"""
     name = "Parameter Vault"
     registryDirectory = ['', 'Servers', 'Parameter Vault']
     onParameterChange = Signal(612512, 'signal: parameter change', '(ss)')

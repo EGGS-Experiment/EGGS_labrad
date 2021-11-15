@@ -33,6 +33,7 @@ TERMINATOR = '\r\n'
 TEMPSIGNAL = 122485
 
 class Lakeshore336Server(SerialDeviceServer):
+    """Talks to the Lakeshore 336 Temperature Controller"""
     name = 'Lakeshore 336 Server'
     regKey = 'Lakeshore336Server'
     serNode = 'causewaybay'

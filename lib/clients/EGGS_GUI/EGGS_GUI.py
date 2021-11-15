@@ -17,7 +17,7 @@ class EGGS_GUI(QMainWindow):
     @inlineCallbacks
     def connect(self):
         from EGGS_labrad.lib.clients.connection import connection
-        self.cxn = connection(name = self.name)
+        self.cxn = connection(name=self.name)
         yield self.cxn.connect()
 
     def makeLayout(self, cxn):
@@ -33,6 +33,7 @@ class EGGS_GUI(QMainWindow):
         #create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryo, '&Cryo')
+        #self.tabWidget.addTab(cryo, '&Trap')
 
         #put it all together
         layout.addWidget(self.tabWidget)
@@ -46,19 +47,20 @@ class EGGS_GUI(QMainWindow):
         return scriptscanner
 
     def makeCryoWidget(self, reactor):
-        from EGGS_labrad.lib.clients.lakeshore_client.lakeshore_client import lakeshore_client
-        from EGGS_labrad.lib.clients.pump_client.pump_client import pump_client
+        from EGGS_labrad.lib.clients.cryo_clients.lakeshore_client import lakeshore_client
+        from EGGS_labrad.lib.clients.cryo_clients.niops03_client import niops03_client
+        from EGGS_labrad.lib.clients.cryo_clients.twistorr74_client import twistorr74_client
         lakeshore = lakeshore_client(reactor)
-        pumps = pump_client(reactor)
-        pumps2 = pump_client(reactor)
+        niops = niops03_client(reactor)
+        twistorr = twistorr74_client(reactor)
 
         #main layout
         holder_widget = QWidget()
         holder_layout = QGridLayout()
         holder_widget.setLayout(holder_layout)
         holder_layout.addWidget(lakeshore, 0, 0, 2, 2)
-        holder_layout.addWidget(pumps, 0, 2, 1, 1)
-        holder_layout.addWidget(pumps2, 1, 2, 1, 1)
+        holder_layout.addWidget(niops, 0, 2, 1, 1)
+        holder_layout.addWidget(twistorr, 1, 2, 1, 1)
         holder_layout.setColumnStretch(0, 1)
         holder_layout.setColumnStretch(1, 1)
         holder_layout.setColumnStretch(2, 1)
@@ -67,6 +69,11 @@ class EGGS_GUI(QMainWindow):
         holder_layout.setRowStretch(2, 1)
         #todo: try size policy
         return holder_widget
+
+    def makeTrapWidget(self, reactor):
+        from EGGS_labrad.lib.clients.rf_client.lakeshore_client import rf_client
+        rf_widget = rf_client(reactor)
+        return rf_widget
 
     def closeEvent(self, x):
         self.reactor.stop()

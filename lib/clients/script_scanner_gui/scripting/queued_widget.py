@@ -1,5 +1,7 @@
+"""
+Shows all queued experiments.
+"""
 from PyQt5 import QtGui, QtCore, QtWidgets
-
 
 class fixed_width_button(QtWidgets.QPushButton):
     def __init__(self, text, size):

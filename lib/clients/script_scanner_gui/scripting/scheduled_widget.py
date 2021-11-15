@@ -1,3 +1,6 @@
+"""
+Shows all scheduled experiments.
+"""
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 

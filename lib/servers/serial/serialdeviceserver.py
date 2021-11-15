@@ -43,9 +43,15 @@ Created on Dec 22, 2010
 #===============================================================================
 # 2021 - 10 - 17
 #
-# Added COM port connection to SerialDeviceServer class
+# Added COM port connection to SerialDeviceServer class instead of having all subclasses write their own
+#===============================================================================
+
+#===============================================================================
+# 2021 - 10 - 17
 #
+# Added selectDevice and closeDevice to change which port device connects to on the fly
 #
+# Removed initServer stuff such that servers don't connect to ports on startup
 #===============================================================================
 
 
@@ -128,43 +134,11 @@ class SerialDeviceServer(LabradServer):
             self.read_until = lambda x = '\r': ser.read_until(x)
             self.read_as_words = lambda x = 0: ser.read_as_words(x) # changed here
             self.close = lambda: ser.close()
-            self.flushinput = lambda: ser.flushinput()
-            self.flushoutput = lambda: ser.flushoutput()
+            self.flush_input = lambda: ser.flush_input()
+            self.flush_output = lambda: ser.flush_output()
             self.ID = ser.ID
 
-    @inlineCallbacks
-    def initServer(self):
-        """
-        Start server.
-
-        Attempts to connect to serial device on the given node and port.
-        """
-        #node always needs to be specified
-        if not self.serNode:
-            raise SerialDeviceError('Must define serNode attributes')
-
-        #if port is not specified, get port details from registry
-        if (not self.port) and (not self.regKey):
-            self.port = yield self.getPortFromReg(self.regKey)
-
-        #try to open serial connection
-        try:
-            serStr = yield self.findSerial(self.serNode)
-            print(serStr)
-            self.initSerial(serStr, self.port, baudrate = self.baudrate, timeout = self.timeout,
-                            bytesize = self.bytesize, parity = self.parity)
-        except SerialConnectionError as e:
-            self.ser = None
-            if e.code == 0:
-                print('Could not find serial server for node: %s' % self.serNode)
-                print('Please start correct serial server')
-            elif e.code == 1:
-                print('Error opening serial connection')
-                print('Check set up and restart serial server')
-            else:
-                raise Exception('Unknown connection error')
-
-    def initSerial( self, serStr, port, **kwargs):
+    def initSerial(self, serStr, port, **kwargs):
         """
         Initialize serial connection.
         
@@ -187,14 +161,17 @@ class SerialDeviceServer(LabradServer):
             # get server wrapper for serial server
             ser = cli.servers[serStr]
             # instantiate SerialConnection convenience class
-            self.ser = self.SerialConnection( ser = ser, port = port, **kwargs)
+            self.ser = self.SerialConnection(ser=ser, port=port, **kwargs)
             print('Serial connection opened.')
+            #clear input and output buffers
+            # self.ser.flush_input()
+            # self.ser.flush_output()
         except Error:
             self.ser = None
             raise SerialConnectionError(1)
 
     @inlineCallbacks
-    def getPortFromReg( self, regKey = None ):
+    def getPortFromReg(self, regKey=None):
         """
         Find port string in registry given key.
         
@@ -232,7 +209,7 @@ class SerialDeviceServer(LabradServer):
             if e.code == 17: raise PortRegError( 0 )
 
     @inlineCallbacks
-    def selectPortFromReg( self ):
+    def selectPortFromReg(self):
         """
         Select port string from list of keys in registry
         
@@ -265,7 +242,7 @@ class SerialDeviceServer(LabradServer):
             if e.code == 13: raise PortRegError( 0 )
 
     @inlineCallbacks
-    def findSerial(self, serNode = None):
+    def findSerial(self, serNode=None):
         """
         Find appropriate serial server
         
@@ -280,8 +257,8 @@ class SerialDeviceServer(LabradServer):
         # look for servers with 'serial' and serNode in the name, take first result
         servers = yield cli.manager.servers()
         try:
-            returnValue( [ i[1] for i in servers if self._matchSerial( serNode, i[1] ) ][0] )
-        except IndexError: raise SerialConnectionError( 0 )
+            returnValue( [ i[1] for i in servers if self._matchSerial(serNode, i[1]) ][0] )
+        except IndexError: raise SerialConnectionError(0)
 
     @staticmethod
     def _matchSerial( serNode, potMatch ):
@@ -297,29 +274,68 @@ class SerialDeviceServer(LabradServer):
         nodeMatch = serNode.lower() in potMatch.lower()
         return serMatch and nodeMatch
 
-    def checkConnection( self ):
-        if not self.ser: raise SerialConnectionError( 2 )
+    def checkConnection(self):
+        if not self.ser: raise SerialConnectionError(2)
 
-    def serverConnected( self, ID, name ):
+    def serverConnected(self, ID, name):
         """Check to see if we can connect to serial server now"""
         if self.ser is None and None not in ( self.port, self.serNode ) and self._matchSerial( self.serNode, name ):
             self.initSerial( name, self.port)
             print('Serial server connected after we connected')
 
-    def serverDisconnected( self, ID, name ):
+    def serverDisconnected(self, ID, name):
         """Close connection (if we are connected)"""
         if self.ser and self.ser.ID == ID:
             print('Serial server disconnected.  Relaunch the serial server')
             self.ser = None
 
-    @setting(111112, data = 's')
+    @setting(111111, 'Select Device', node='s', port='s', returns='')
+    def selectDevice(self, c, node, port):
+        """
+        Attempt to connect to serial device on the given node and port.
+        """
+        #check that node is specified
+        if not node: raise SerialDeviceError('Must define serNode attributes')
+        self.serNode = node
+        #set port if assigned, otherwise get from registry
+        if port:
+            self.port = port
+        elif self.regKey:
+            self.port = yield self.getPortFromReg(self.regKey)
+        #try to open serial connection
+        try:
+            serStr = yield self.findSerial(self.serNode)
+            print(serStr)
+            self.initSerial(serStr, self.port, baudrate=self.baudrate, timeout=self.timeout,
+                            bytesize=self.bytesize, parity=self.parity)
+        except SerialConnectionError as e:
+            self.ser = None
+            if e.code == 0:
+                print('Could not find serial server for node: %s' % self.serNode)
+                print('Please start correct serial server')
+            elif e.code == 1:
+                print('Error opening serial connection')
+                print('Check set up and restart serial server')
+            else:
+                raise Exception('Unknown connection error')
+
+    @setting(111112, 'Close Device', returns='')
+    def closeDevice(self, c):
+        if self.ser:
+            self.ser.close()
+            self.ser = None
+            print('Serial Connection closed')
+        else:
+            raise Exception('No device selected')
+
+    @setting(111113, 'Query', data='s')
     def query(self, c, data):
         """Write any string and read the response"""
         yield self.ser.write(data + '\r\n')
         resp = yield self.ser.read()
         return resp
 
-    def stopServer( self ):
+    def stopServer(self):
         """
         Close serial connection before exiting.
         """

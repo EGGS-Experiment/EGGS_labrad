@@ -406,6 +406,7 @@ class script_scanner_gui(QtWidgets.QWidget):
         message.raise_()
 
     def closeEvent(self, event):
+        self.cxn.cxn.disconnect()
         self.reactor.stop()
 
 if __name__ == "__main__":

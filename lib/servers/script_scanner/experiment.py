@@ -1,10 +1,13 @@
+"""
+Superclass of experiments and related classes.
+"""
 import traceback
 import labrad
 from treedict import TreeDict
 
 class experiment_info(object):
     '''
-    holds informaton about the experiment
+    Holds informaton about the experiment
 
     Attributes
     ----------
@@ -24,7 +27,9 @@ class experiment_info(object):
 
 
 class experiment(experiment_info):
-
+    """
+    Main experiment class
+    """
     def __init__(self, name=None, required_parameters=None, cxn=None,
                  min_progress=0.0, max_progress=100.0,):
         required_parameters = self.all_required_parameters()
@@ -177,3 +182,7 @@ class experiment(experiment_info):
         '''
         implemented by the subclass
         '''
+
+
+
+

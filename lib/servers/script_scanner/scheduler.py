@@ -1,16 +1,19 @@
-from twisted.internet.threads import deferToThread
-from twisted.internet.defer import Deferred, DeferredList
+"""
+Superclass of all scheduler and related objects.
+Needed to manage the queueing and submission of experiments.
+"""
+
 from twisted.internet.task import LoopingCall
+from twisted.internet.threads import deferToThread
+from twisted.internet.defer import inlineCallbacks, DeferredLock, Deferred, DeferredList
+
 
 from EGGS_labrad.lib.config.scriptscanner_config import config
 
-from script_status import script_semaphore
-
-
 class priority_queue(object):
     '''
-    priority queue with a few levels of priority
-    focus on ease of use, not speed
+    A normal queue data structure, but with levels of priority.
+    Designed for ease of use, not speed
     '''
     priorities = [0, 1]
 
@@ -59,9 +62,8 @@ class priority_queue(object):
                 pass
         raise ValueError("Object not found")
 
-
 class running_script(object):
-    '''holds information about a script that is currently running'''
+    '''Holds information about a script that is currently running'''
     def __init__(self, scan, defer_on_done, status, priority=-1,
                  externally_launched=False):
         self.scan = scan
@@ -70,6 +72,110 @@ class running_script(object):
         self.defer_on_done = defer_on_done
         self.priority = priority
         self.externally_launched = externally_launched
+
+class script_semaphore(object):
+    '''Class for storing information about runtime behavior script'''
+    def __init__(self, ident, signals):
+        self.pause_lock = DeferredLock()
+        self.pause_requests = []
+        self.continue_requests = []
+        self.already_called_continue = False
+        self.status = 'Ready'
+        self.percentage_complete = 0.0
+        self.should_stop = False
+        self.ident = ident
+        self.signals = signals
+
+    def get_progress(self):
+        return (self.status, self.percentage_complete)
+
+    def set_percentage(self, perc):
+        if not 0.0 <= perc <= 100.0:
+            raise Exception("Incorrect Percentage of Completion")
+        self.percentage_complete = perc
+        self.signals.on_running_new_status((self.ident, self.status, self.percentage_complete))
+
+    def launch_confirmed(self):
+        self.status = 'Running'
+        self.signals.on_running_new_status((self.ident, self.status, self.percentage_complete))
+
+    @inlineCallbacks
+    def pause(self):
+        '''
+        Used by scripts to pause execution
+        '''
+        if self.pause_lock.locked:
+            self.status = 'Paused'
+            self.signals.on_running_new_status((self.ident, self.status, self.percentage_complete))
+            self.signals.on_running_script_paused((self.ident, True))
+            # call back all pause requests
+            while self.pause_requests:
+                request = self.pause_requests.pop()
+                request.callback(True)
+        yield self.pause_lock.acquire()
+        self.pause_lock.release()
+        if self.status == 'Paused':
+            self.status = 'Running'
+            self.signals.on_running_new_status((self.ident, self.status, self.percentage_complete))
+            self.signals.on_running_script_paused((self.ident, False))
+            # call back all continue requests
+            while self.continue_requests:
+                request = self.continue_requests.pop()
+                request.callback(True)
+
+    def set_stopping(self):
+        self.should_stop = True
+        self.status = 'Stopping'
+        self.signals.on_running_new_status((self.ident, self.status, self.percentage_complete))
+        # if was paused, unpause:
+        if self.pause_lock.locked:
+            self.pause_lock.release()
+
+    def set_pausing(self, should_pause):
+        '''if asking to pause, returns a deferred which is fired when sciprt
+        actually paused'''
+        if should_pause:
+            request = Deferred()
+            print('made request', request)
+            self.pause_requests.append(request)
+            if not self.pause_lock.locked:
+                # if not already paused
+                # immediately returns a deferred that we don't use
+                self.pause_lock.acquire()
+                self.status = 'Pausing'
+                self.signals.on_running_new_status((self.ident, self.status, self.percentage_complete))
+            else:
+                print('not acquiring because locked')
+        else:
+            if not self.pause_lock.locked:
+                raise Exception("Trying to unpause script that was not paused")
+            request = Deferred()
+            self.continue_requests.append(request)
+            self.pause_lock.release()
+        return request
+
+    def stop_confirmed(self):
+        self.should_stop = False
+        self.status = 'Stopped'
+        self.signals.on_running_new_status((self.ident, self.status, self.percentage_complete))
+        self.signals.on_running_script_stopped(self.ident)
+
+    def finish_confirmed(self):
+        # call back all pause requests
+        for request_list in [self.pause_requests, self.continue_requests]:
+            while(request_list):
+                request = request_list.pop()
+                request.callback(True)
+        if not self.status == 'Stopped':
+            self.percentage_complete = 100.0
+            self.status = 'Finished'
+            self.signals.on_running_new_status((self.ident, self.status, self.percentage_complete))
+        self.signals.on_running_script_finished(self.ident)
+
+    def error_finish_confirmed(self, error):
+        self.status = 'Error'
+        self.signals.on_running_new_status((self.ident, self.status, self.percentage_complete))
+        self.signals.on_running_script_finished_error((self.ident, error))
 
 
 class scheduler(object):
@@ -126,23 +232,20 @@ class scheduler(object):
                 self.queue.remove_object((script_ID, scan, priority))
                 self.signals.on_queued_removed(script_ID)
         if not removed:
-            raise Exception("Trying to remove scirpt ID {0} from queue but it's not in the queue".format(script_ID))
+            raise Exception("Trying to remove script ID {0} from queue but it's not in the queue".format(script_ID))
 
     def add_scan_to_queue(self, scan, priority='Normal'):
         """
+        This is called by scriptscanner.new_experiment.
+        self.scan_ID_counter advances by 1 each time this is called, giving each new experiment
+        that will be run a unique number.
 
-        This is called by scriptscanner.new_experiment.  self.scan_ID_counter
-        advances by 1 each time this is called, giving each new experiment
-        that will be run a distinct number.
-
-        Parameters
-        ----------
+        Arguments:
         scan:
-        priority: str, where to put a scan in the queue default('Normal')
+        priority    (str)   : where to put a scan in the queue default('Normal')
 
-        Returns
-        -------
-        scan_id: int
+        Returns:
+        scan_id:    (int)   :
         """
         # increment counter
         scan_id = self.scan_ID_counter
@@ -190,9 +293,7 @@ class scheduler(object):
         scan_id = self.scan_ID_counter
         self.scan_ID_counter += 1
         status = script_semaphore(scan_id, self.signals)
-        self.running[scan_id] = running_script(scan, Deferred(), status,
-                                               externally_launched=True)
-
+        self.running[scan_id] = running_script(scan, Deferred(), status, externally_launched=True)
         self.signals.on_running_new_script((scan_id, scan.name))
         return scan_id
 

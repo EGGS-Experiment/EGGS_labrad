@@ -27,6 +27,7 @@ TERMINATOR = '\r\n'
 QUERY_msg = b'\x05'
 
 class NIOPS03Server(SerialDeviceServer):
+    """Controls NIOPS-03 Power Supply which controls ion pumps"""
     name = 'NIOPS03 Server'
     regKey = 'NIOPS03Server'
     serNode = 'causewaybay'
@@ -36,7 +37,7 @@ class NIOPS03Server(SerialDeviceServer):
     baudrate = 115200
 
     #STATUS
-    @setting(11,'Status', returns = 's')
+    @setting(11,'Status', returns='s')
     def get_status(self, c):
         """
         Get controller status
@@ -48,7 +49,7 @@ class NIOPS03Server(SerialDeviceServer):
         return resp
 
     # ON/OFF
-    @setting(111,'Toggle IP', power = 'b', returns = 's')
+    @setting(111,'Toggle IP', power='b', returns='s')
     def toggle_ip(self, c, power = None):
         """
         Set or query whether ion pump is off or on
@@ -65,7 +66,7 @@ class NIOPS03Server(SerialDeviceServer):
         resp = resp.strip()
         return resp
 
-    @setting(112,'Toggle NP', power = 'b')
+    @setting(112, 'Toggle NP', power='b')
     def toggle_np(self, c, power = None):
         """
         Set or query whether getter is off or on
@@ -82,10 +83,10 @@ class NIOPS03Server(SerialDeviceServer):
         return resp
 
     #PARAMETERS
-    @setting(211,'Get IP Pressure', returns = 'v')
-    def get_pressure_ip(self, c):
+    @setting(211,'IP Pressure', returns='v')
+    def pressure_ip(self, c):
         """
-        Get ion pump pressure
+        Get ion pump pressure in mbar
         Returns:
             (float): ion pump pressure
         """
@@ -93,29 +94,41 @@ class NIOPS03Server(SerialDeviceServer):
         resp = yield self.ser.read()
         return float(resp)
 
-    @setting(221,'Get IP Voltage', returns = 'v')
-    def get_voltage_ip(self, c):
+    @setting(221, 'IP Voltage', voltage='v', returns='v')
+    def voltage_ip(self, c, voltage=None):
         """
-        Get ion pump voltage
+        Get/set ion pump voltage
+        Arguments:
+            voltage (float) : pump voltage in V
         Returns:
-            (float): ion pump voltage
+                    (float): ion pump voltage in V
         """
+        if voltage:
+            #convert voltage to hex
+            voltage = hex(voltage)[2:]
+            padleft = '0'*(4-len(voltage))
+            yield self.ser.write('u' + padleft + voltage + TERMINATOR)
         yield self.ser.write('u' + TERMINATOR)
         resp = yield self.ser.read()
-        return float(resp)
+        #convert from hex to int
+        resp = int(resp, 16)
+        returnValue(resp)
 
-    @setting(231,'Get Working Time', returns = 's')
-    def get_time_working(self, c):
+    @setting(231, 'Working Time', returns='*2i')
+    def working_time(self, c):
         """
         Gets working time of IP & NP
         Returns:
-            (float): getter voltage
+            [[int, int], [int, int]]: getter voltage
         """
         yield self.ser.write('TM' + TERMINATOR)
-        resp = yield self.ser.read()
-        return resp
-        #todo: get multiple lines
-
+        ip_time = yield self.ser.read()
+        np_time = yield self.ser.read()
+        ip_time = ip_time[16:-8].split(' Hours ')
+        np_time = np_time[16:-8].split(' Hours ')
+        ip_time = [int(val) for val in ip_time]
+        np_time = [int(val) for val in np_time]
+        returnValue([ip_time, np_time])
 
 if __name__ == '__main__':
     from labrad import util
