@@ -9,7 +9,7 @@ from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
 
-class AD9910_channel_GUI(QFrame):
+class AD9910_channel(QFrame):
     """
     GUI for a single AD9910 DDS channel
     """
@@ -60,16 +60,16 @@ class AD9910_channel_GUI(QFrame):
         self.setLayout(layout)
 
 
-class AD9910_channels(QWidget):
+class DDS_client(QWidget):
     """
     Client for all DDS channels
     """
-    name = "AD9910 Client"
+    name = "ARTIQ DDS Client"
     password = os.environ['LABRADPASSWORD']
     row_length = 4
 
     def __init__(self, reactor, channels, parent=None):
-        super(AD9910_channels, self).__init__()
+        super(DDS_client, self).__init__()
         self.reactor = reactor
         self.ad9910_list = channels
         self.ad9910_clients = {}
@@ -79,17 +79,22 @@ class AD9910_channels(QWidget):
     def connect(self):
         from labrad.wrappers import connectAsync
         self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
-        self.artiq = self.cxn.ARTIQ_server
+        self.artiq = self.cxn.registry
 
     def initializeGUI(self):
-        layout = QGridLayout
+        layout = QGridLayout()
+        #set title
+        title = QLabel(self.name)
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        title.setAlignment(QtCore.Qt.AlignCenter)
+        layout.addWidget(title, 0, 0, 1, 4)
         #layout widgets
         for i in range(len(self.ad9910_list)):
             # initialize GUIs for each channel
             channel_name = self.ad9910_list[i]
-            channel_gui = AD9910_channel_GUI(channel_name)
+            channel_gui = AD9910_channel(channel_name)
             # layout channel GUI
-            row = i % (self.row_length - 1)
+            row = i % (self.row_length - 1) + 2
             column = int(i / (self.row_length - 1))
             # connect signals to slots
             channel_gui.freq.valueChanged.connect(lambda chan=channel_name, freq=channel_gui.freq.value():
@@ -102,7 +107,7 @@ class AD9910_channels(QWidget):
                                                  self.toggleSwitch())
             # add widget to client list and layout
             self.ad9910_clients[channel_name] = channel_gui
-            layout.addWidget(channel_gui, row, column)
+            layout.addWidget(channel_gui, row, column, 1, 1)
         self.setLayout(layout)
 
     @inlineCallbacks
@@ -121,9 +126,18 @@ class AD9910_channels(QWidget):
     def setAttenuation(self, channel_name, att):
         yield self.artiq.set_DDS_attenuation(channel_name, att)
 
-
-
-
 if __name__ == "__main__":
-    from EGGS_labrad.lib.clients import runGUI
-    runGUI(AD9910_channel_GUI, 'AD9910 Channel')
+    #run channel GUI
+    # from EGGS_labrad.lib.clients import runGUI
+    # runGUI(AD9910_channel, name='AD9910 Channel')
+    #run DDS GUI
+    from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
+    dds_list = []
+    for device_name, device_params in device_db.items():
+        try:
+            if device_params['class'] == 'AD9910':
+                dds_list.append(device_name)
+        except KeyError:
+            continue
+    from EGGS_labrad.lib.clients import runClient
+    runClient(DDS_client, channels=dds_list)

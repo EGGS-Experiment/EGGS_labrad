@@ -1,26 +1,33 @@
+import os
+
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout
 from PyQt5.QtGui import QIcon
 from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.lib.clients.Widgets import DetachableTabWidget
 
-class EGGS_GUI(QMainWindow):
+class EGGS_gui(QMainWindow):
 
     name = 'EGGS GUI'
+    LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, clipboard, parent=None):
-        super(EGGS_GUI, self).__init__(parent)
+        super(EGGS_gui, self).__init__(parent)
         self.clipboard = clipboard
         self.reactor = reactor
         self.connect()
         self.makeLayout(self.cxn)
+        self.setWindowIcon(QIcon('/eggs.png'))
+        self.setWindowTitle('EGGS GUI')
 
     @inlineCallbacks
     def connect(self):
-        from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
-        self.dv = self.cxn.data_vault
-        self.ls = self.cxn.lakeshore_336_server
-        self.reg = self.cxn.registry
+        # from labrad.wrappers import connectAsync
+        # self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
+        # self.dv = self.cxn.data_vault
+        # self.reg = self.cxn.registry
+        from EGGS_labrad.lib.clients.connection import connection
+        self.cxn = connection(name=self.name)
+        yield self.cxn.connect()
 
     def makeLayout(self, cxn):
         #central layout
@@ -82,12 +89,10 @@ class EGGS_GUI(QMainWindow):
 
 if __name__=="__main__":
     import sys, qt5reactor
-    a = QApplication(sys.argv)
-    clipboard = a.clipboard()
+    app = QApplication(sys.argv)
+    clipboard = app.clipboard()
     qt5reactor.install()
     from twisted.internet import reactor
-    EGGSGUI = EGGS_GUI(reactor, clipboard)
-    EGGSGUI.setWindowIcon(QIcon('/eggs.png'))
-    EGGSGUI.setWindowTitle('EGGS GUI')
+    EGGSGUI = EGGS_gui(reactor, clipboard)
     EGGSGUI.show()
     reactor.run()
