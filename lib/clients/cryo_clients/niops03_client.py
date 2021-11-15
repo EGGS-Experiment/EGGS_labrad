@@ -102,10 +102,5 @@ class niops03_client(niops03_gui):
         self.reactor.stop()
 
 if __name__ == "__main__":
-    a = QApplication([])
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
-    niops_interface = niops03_client(reactor)
-    niops_interface.show()
-    reactor.run()
+    from EGGS_labrad.lib.clients import runClient
+    runClient(niops03_client)

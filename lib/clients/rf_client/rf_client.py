@@ -95,10 +95,5 @@ class rf_client(rf_gui):
         self.reactor.stop()
 
 if __name__ == "__main__":
-    app = QApplication([])
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
-    client = rf_client(reactor)
-    client.show()
-    reactor.run()
+    from EGGS_labrad.lib.clients import runClient
+    runClient(rf_client)

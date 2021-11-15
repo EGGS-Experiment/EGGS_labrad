@@ -1,3 +1,7 @@
+"""
+Contains stuff useful for LabRAD clients
+"""
+
 #imports
 from PyQt5.QtWidgets import QApplication
 import sys

@@ -5,9 +5,9 @@ from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.clients.connection import connection
-from EGGS_labrad.lib.clients.sls_client.sls_gui import sls_gui
+from EGGS_labrad.lib.clients.sls_client.sls_gui import SLS_gui
 
-class sls_client(sls_gui):
+class SLS_client(SLS_gui):
     name = 'SLS Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
@@ -98,10 +98,5 @@ class sls_client(sls_gui):
         self.reactor.stop()
 
 if __name__ == "__main__":
-    a = QApplication([])
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
-    client = sls_client(reactor)
-    client.show()
-    reactor.run()
+    from EGGS_labrad.lib.clients import runClient
+    runClient(SLS_client)

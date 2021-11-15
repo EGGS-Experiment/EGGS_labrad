@@ -71,10 +71,8 @@ class niops03_gui(QtWidgets.QFrame):
         self.setLayout(layout)
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    icon = niops03_gui()
-    icon.show()
-    app.exec_()
+    from EGGS_labrad.lib.clients import runGUI
+    runGUI(niops03_gui)
 
 
 

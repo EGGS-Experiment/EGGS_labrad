@@ -110,9 +110,5 @@ class RGA_UI(QWidget):
         self.rga_clear_button.setText(_translate("Form", "Clear", None))
 
 if __name__=="__main__":
-    import sys
-    app = QApplication(sys.argv)
-    client = RGA_UI()
-    client.setupUi()
-    client.show()
-    app.exec_()
+    from EGGS_labrad.lib.clients import runGUI
+    runGUI(RGA_UI)

@@ -107,9 +107,5 @@ class rf_gui(QWidget):
 
 
 if __name__=="__main__":
-    import sys
-    app = QApplication(sys.argv)
-    client = rf_gui()
-    client.setupUi()
-    client.show()
-    app.exec_()
+    from EGGS_labrad.lib.clients import runGUI
+    runGUI(rf_gui)

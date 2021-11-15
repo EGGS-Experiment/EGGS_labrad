@@ -99,10 +99,5 @@ class twistorr74_client(twistorr74_gui):
         self.reactor.stop()
 
 if __name__ == "__main__":
-    a = QApplication([])
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
-    client = twistorr74_client(reactor)
-    client.show()
-    reactor.run()
+    from EGGS_labrad.lib.clients import runClient
+    runClient(twistorr74_client)

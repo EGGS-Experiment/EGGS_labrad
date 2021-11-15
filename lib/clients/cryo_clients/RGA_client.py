@@ -130,10 +130,5 @@ class RGA_Client(RGA_UI):
 
 
 if __name__ == "__main__":
-    app = QApplication([])
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
-    client = RGA_Client(reactor)
-    client.show()
-    reactor.run()
+    from EGGS_labrad.lib.clients import runClient
+    runClient(RGA_Client)
