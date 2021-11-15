@@ -30,7 +30,7 @@ TIMEOUT = Value(5, 's')  # serial read timeout
 BAUDRATE = 115200
 
 
-class dummyDevice(DeviceWrapper):
+class SerialDeviceWrapper(DeviceWrapper):
 
     """
     This class is called by the server class (below) for each device that is connected
@@ -76,10 +76,10 @@ class dummyDevice(DeviceWrapper):
         returnValue(ans.read_line)
 
 
-class ExampleSerialServer(DeviceServer):
+class SerialManagedServer(DeviceServer):
 
-    deviceName = 'dummy'
-    name = 'dummy'
+    deviceName = None
+    name = None
     deviceWrapper = dummyDevice
 
     @inlineCallbacks
@@ -132,7 +132,3 @@ class ExampleSerialServer(DeviceServer):
         dev = self.selectDevice(c)  # selects the device assigned to the client
         value = yield dev.query('*IDN?')  # querys command to the device
         returnValue(value)
-
-if __name__ == "__main__":
-    from labrad import util
-    util.runServer(ExampleSerialServer())

@@ -291,8 +291,8 @@ class lakeshore_gui(QtWidgets.QFrame):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    icon = lakeshore_gui()
-    icon.show()
+    gui = lakeshore_gui()
+    gui.show()
     app.exec_()
 
 
