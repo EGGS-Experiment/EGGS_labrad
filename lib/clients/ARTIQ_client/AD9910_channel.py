@@ -1,14 +1,23 @@
+import os
 import sys
+
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame
+
+from twisted.internet.defer import inlineCallbacks
+
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
 
 class AD9910_channel_GUI(QFrame):
-    def __init__(self, title=None, parent=None):
+    """
+    GUI for a single AD9910 DDS channel
+    """
+    def __init__(self, name=None, parent=None):
         QWidget.__init__(self, parent)
+        self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
-        self.makeLayout(title)
+        self.makeLayout(name)
 
     def makeLayout(self, title):
         layout = QGridLayout()
@@ -51,13 +60,68 @@ class AD9910_channel_GUI(QFrame):
         self.setLayout(layout)
 
 
-class AD9910_channel(QWidget):
-    def __init__(self, reactor, parent=None):
-        super(AD9910_channel, self).__init__()
+class AD9910_channels(QWidget):
+    """
+    Client for all DDS channels
+    """
+    name = "AD9910 Client"
+    password = os.environ['LABRADPASSWORD']
+    row_length = 4
+
+    def __init__(self, reactor, channels, parent=None):
+        super(AD9910_channels, self).__init__()
         self.reactor = reactor
-        self.ad9910_dict = {}
-        self.ad9910_clients
+        self.ad9910_list = channels
+        self.ad9910_clients = {}
         self.connect()
+        self.initializeGUI()
+
+    def connect(self):
+        from labrad.wrappers import connectAsync
+        self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
+        self.artiq = self.cxn.ARTIQ_server
+
+    def initializeGUI(self):
+        layout = QGridLayout
+        #layout widgets
+        for i in range(len(self.ad9910_list)):
+            # initialize GUIs for each channel
+            channel_name = self.ad9910_list[i]
+            channel_gui = AD9910_channel_GUI(channel_name)
+            # layout channel GUI
+            row = i % (self.row_length - 1)
+            column = int(i / (self.row_length - 1))
+            # connect signals to slots
+            channel_gui.freq.valueChanged.connect(lambda chan=channel_name, freq=channel_gui.freq.value():
+                                                  self.setFrequency(chan, freq))
+            channel_gui.ampl.valueChanged.connect(lambda chan=channel_name, ampl=channel_gui.ampl.value():
+                                                  self.setAmplitude(chan, ampl))
+            channel_gui.att.valueChanged.connect(lambda chan=channel_name, att=channel_gui.att.value():
+                                                 self.setAttenuation(chan, att))
+            channel_gui.rfswitch.toggled.connect(lambda chan=channel_name, status=channel_gui.rfswitch.isChecked():
+                                                 self.toggleSwitch())
+            # add widget to client list and layout
+            self.ad9910_clients[channel_name] = channel_gui
+            layout.addWidget(channel_gui, row, column)
+        self.setLayout(layout)
+
+    @inlineCallbacks
+    def toggleSwitch(self, channel_name, status):
+        yield self.artiq.toggleDDS(channel_name, status)
+
+    @inlineCallbacks
+    def setFrequency(self, channel_name, freq):
+        yield self.artiq.set_DDS_frequency(channel_name, freq)
+
+    @inlineCallbacks
+    def setAmplitude(self, channel_name, ampl):
+        yield self.artiq.set_DDS_amplitude(channel_name, ampl)
+
+    @inlineCallbacks
+    def setAttenuation(self, channel_name, att):
+        yield self.artiq.set_DDS_attenuation(channel_name, att)
+
+
 
 
 if __name__ == "__main__":
