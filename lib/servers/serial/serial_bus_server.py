@@ -396,18 +396,17 @@ class SerialServer(LabradServer):
                 recd += r
         returnValue(recd)
 
-    @setting(61, 'Flush Input')
+    @setting(61, 'Flush Input', returns='')
     def flush_input(self, c):
         """Flush the input buffer"""
         ser = self.getPort(c)
         yield ser.reset_input_buffer()
 
-    @setting(61, 'Flush Output')
+    @setting(61, 'Flush Output', returns='')
     def flush_input(self, c):
         """Flush the output buffer"""
         ser = self.getPort(c)
         yield ser.reset_output_buffer()
-
 
 
 __server__ = SerialServer()

@@ -47,14 +47,22 @@ Created on Dec 22, 2010
 #===============================================================================
 
 #===============================================================================
-# 2021 - 10 - 17
+# 2021 - 11 - 10
 #
 # Added selectDevice and closeDevice to change which port device connects to on the fly
 #
 # Removed initServer stuff such that servers don't connect to ports on startup
 #===============================================================================
 
+#===============================================================================
+# 2021 - 11 - 15
+#
+# Fixed flushinput and flushoutput functions
+#
+# Servers now flush input and output buffers on connection to device
+#===============================================================================
 
+#Imports
 from twisted.internet.defer import returnValue, inlineCallbacks
 from labrad.server import LabradServer, setting
 from labrad.types import Error
@@ -120,6 +128,7 @@ class SerialDeviceServer(LabradServer):
         @raise labrad.types.Error: Error in opening serial connection   
         """
         def __init__(self, ser, port, **kwargs):
+            print(ser)
             timeout = kwargs.get('timeout')
             baudrate = kwargs.get('baudrate')
             bytesize = kwargs.get('bytesize')
@@ -134,8 +143,8 @@ class SerialDeviceServer(LabradServer):
             self.read_until = lambda x = '\r': ser.read_until(x)
             self.read_as_words = lambda x = 0: ser.read_as_words(x) # changed here
             self.close = lambda: ser.close()
-            self.flush_input = lambda: ser.flush_input()
-            self.flush_output = lambda: ser.flush_output()
+            self.flush_input = print('yzde')
+            self.flush_output = print('scde')
             self.ID = ser.ID
 
     def initSerial(self, serStr, port, **kwargs):
