@@ -85,7 +85,7 @@ if __name__=="__main__":
     qt5reactor.install()
     from twisted.internet import reactor
     EGGSGUI = EGGS_GUI(reactor, clipboard)
-    EGGSGUI.setWindowIcon(QIcon('C:/Users/EGGS1/Documents/Code/EGGS_labrad/lib/eggs.png'))
+    EGGSGUI.setWindowIcon(QIcon('/eggs.png'))
     EGGSGUI.setWindowTitle('EGGS GUI')
     EGGSGUI.show()
     reactor.run()

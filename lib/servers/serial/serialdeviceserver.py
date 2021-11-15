@@ -146,12 +146,7 @@ class SerialDeviceServer(LabradServer):
             self.flush_output = ser.flush_output()
             self.ID = ser.ID
 
-    def __init__(self):
-        super(SerialDeviceServer, self).__init__()
-        #connect to device on startup if node and ports are specified
-        if self.serNode and self.port:
-            self.selectDevice(node, port)
-
+    @inlineCallbacks
     def initSerial(self, serStr, port, **kwargs):
         """
         Initialize serial connection.
@@ -178,8 +173,8 @@ class SerialDeviceServer(LabradServer):
             self.ser = self.SerialConnection(ser=ser, port=port, **kwargs)
             print('Serial connection opened.')
             #clear input and output buffers
-            self.ser.flush_input()
-            self.ser.flush_output()
+            yield self.ser.flush_input()
+            yield self.ser.flush_output()
         except Error:
             self.ser = None
             raise SerialConnectionError(1)
