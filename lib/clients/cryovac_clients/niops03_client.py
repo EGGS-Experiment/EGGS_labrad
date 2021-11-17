@@ -1,11 +1,9 @@
 import os
 
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
-from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
-from EGGS_labrad.lib.clients.cryo_clients.niops03_gui import niops03_gui
+from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.lib.clients.connection import connection
+from EGGS_labrad.lib.clients.cryovac_clients.niops03_gui import niops03_gui
 
 class niops03_client(niops03_gui):
     name = 'NIOPS03 Client'
@@ -17,32 +15,31 @@ class niops03_client(niops03_gui):
         self.connect()
         self.initializeGUI()
 
-        #create and start loop to poll server for temperature
-        # self.temp_loop = LoopingCall(self.poll)
-        # self.start_polling()
-
     #Setup functions
     @inlineCallbacks
     def connect(self):
         """
         Creates an asynchronous connection to labrad
         """
-        #from labrad.wrappers import connectAsync
-        #self.cxn = yield connectAsync('localhost', name = 'NIOPS03 Client', password = self.LABRADPASSWORD)
-        self.cxn = connection(name = self.name)
-        yield self.cxn.connect()
-        self.context = yield self.cxn.context()
-        self.reg = yield self.cxn.get_server('Registry')
-        self.dv = yield self.cxn.get_server('Data Vault')
-        #self.niops = yield self.cxn.get_server('niops03_server')
+        from labrad.wrappers import connectAsync
+        self.cxn = yield connectAsync('localhost', name = 'NIOPS03 Client', password = self.LABRADPASSWORD)
+        self.reg = self.cxn.registry
+        self.dv = self.cxn.data_vault
+        self.niops = self.cxn.niops03_server
 
         # get polling time
-        yield self.reg.cd(['Clients', self.name])
-        self.poll_time = yield float(self.reg.get('poll_time'))
+        # yield self.reg.cd(['Clients', self.name])
+        # self.poll_time = yield float(self.reg.get('poll_time'))
+        self.poll_time = 1.0
 
         # set recording stuff
         self.c_press = self.cxn.context()
         self.recording = False
+
+        #create and start loop to poll server for temperature
+        self.press_loop = LoopingCall(self.poll)
+        from twisted.internet.reactor import callLater
+        callLater(1.0, self.start_polling)
 
     #@inlineCallbacks
     def initializeGUI(self):
@@ -88,13 +85,14 @@ class niops03_client(niops03_gui):
     def stop_polling(self):
         self.press_loop.stop()
 
+    @inlineCallbacks
     def poll(self):
-        pressure = yield self.niops.get_pressure_ip()
+        pressure = yield self.niops.ip_pressure()
+        self.niops_pressure_display.setText(str(pressure))
         if self.niops_power.isChecked():
             workingtime = yield self.niops.working_time()
             time = str(workingtime[0]) + ':' + str(workingtime[1])
             self.niops_workingtime_display.setText(time)
-        self.press_display.setText(str(pressure))
         if self.recording == True:
             yield self.dv.add(elapsedtime, pressure, context=self.c_press)
 
