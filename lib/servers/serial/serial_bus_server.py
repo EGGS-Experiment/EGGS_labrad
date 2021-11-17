@@ -290,7 +290,7 @@ class SerialServer(LabradServer):
 
         def doRead(count):
             while True:
-                d = ser.read(count)
+                d = ser.read(count).decode()
                 if d:
                     return d
                 sleep(0.01)
@@ -307,7 +307,7 @@ class SerialServer(LabradServer):
         def doRead(count):
             d = ''
             while not killit:
-                d = ser.read(count)
+                d = ser.read(count).decode()
                 if d:
                     break
                 sleep(0.010)
@@ -324,24 +324,23 @@ class SerialServer(LabradServer):
             print("deferredRead timed out after {} seconds".format(elapsed))
             r = ''
         if r == '':
-            r = ser.read(count)
+            r = ser.read(count).decode()
 
         returnValue(r)
 
     @inlineCallbacks
     def readSome(self, c, count=0):
         ser = self.getPort(c)
-
         if count == 0:
-            returnValue(ser.read(10000))
+            returnValue(ser.read(10000).decode())
 
         timeout = c['Timeout']
         if timeout == 0:
-            returnValue(ser.read(count))
+            returnValue(ser.read(count).decode())
 
         recd = ''
         while len(recd) < count:
-            r = ser.read(count - len(recd))
+            r = ser.read(count - len(recd)).decode()
             if r == '':
                 r = yield self.deferredRead(ser, timeout, count - len(recd))
                 if r == '':
@@ -386,9 +385,7 @@ class SerialServer(LabradServer):
 
         recd = ''
         while True:
-            r = ser.read(1)
-            print('type: ' + type(r))
-            print('r: ' + r)
+            r = ser.read(1).decode()
             if r == '' and timeout > 0:
                 # only try a deferred read if there is a timeout
                 r = yield self.deferredRead(ser, timeout)
