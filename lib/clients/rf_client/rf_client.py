@@ -94,6 +94,7 @@ class rf_client(rf_gui):
     def closeEvent(self, event):
         self.reactor.stop()
 
+
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runClient
     runClient(rf_client)

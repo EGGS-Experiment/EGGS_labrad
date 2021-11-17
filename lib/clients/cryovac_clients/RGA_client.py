@@ -1,4 +1,4 @@
-from EGGS_labrad.lib.clients.cryo_clients.RGA_gui import RGA_UI
+from EGGS_labrad.lib.clients.cryovac_clients.RGA_gui import RGA_UI
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 class RGA_Client(RGA_UI):

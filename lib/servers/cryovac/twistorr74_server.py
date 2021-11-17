@@ -105,7 +105,7 @@ class TwisTorr74Server(SerialDeviceServer):
             CRC_msg ^= byte
 
         CRC_msg = hex(CRC_msg)[2:]
-        msg.extend(CRC_msg)
+        msg.extend(bytearray(CRC_msg, encoding='utf-8'))
         msg = bytes(msg)
         return msg
 
@@ -124,7 +124,7 @@ class TwisTorr74Server(SerialDeviceServer):
         #otherwise process return message for errors
         elif len(ans) == 1:
             ans = bytes(ans)
-            if ans == b'\x6':
+            if ans == b'\x06':
                 ans = 'Acknowledged'
             #print(ans)
             if ans in self.ERRORS_msg:

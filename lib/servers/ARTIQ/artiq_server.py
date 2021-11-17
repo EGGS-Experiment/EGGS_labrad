@@ -192,9 +192,9 @@ class ARTIQ_Server(LabradServer):
         self.inCommunication.release()
 
     @setting(322, "Toggle DDS", dds_name = 's', state = 'b', returns='')
-    def toggleDDS(self, c, dds_name, state, profile = 0):
+    def toggleDDS(self, c, dds_name, state):
         """
-        Manually toggle a DDS
+        Manually toggle a DDS via the RF switch
         Arguments:
             ddsname (str)   : the name of the dds
             state   (bool)  : power state
@@ -204,15 +204,68 @@ class ARTIQ_Server(LabradServer):
         yield deferToThread(self.api.toggleDDS, dds_channel, state, profile)
         self.inCommunication.release()
 
-    @setting(323, "Set DDS", dds_name = 's', freq = 'v', ampl = 'v', phase = 'v', profile = 'i', returns='')
-    def setDDS(self, c, dds_name, freq = None, ampl = None, phase = None, profile = None):
+    @setting(323, "Set DDS Frequency", dds_name='s', freq='v', profile='i', returns='')
+    def setDDSFreq(self, c, dds_name, freq, profile=None):
         """
         Manually set a DDS to the given parameters.
         Arguments:
             ddsname (str)   : the name of the dds
             freq    (float) : frequency (in Hz)
-            ampl    (float) : amplitude (in dBm)
-            phase   (float) : phase     (in radians)
+            profile (int)   : the DDS profile to set & change to
+        """
+        dds_channel = self.ddsDict[dds_name].address
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
+        self.inCommunication.release()
+
+    @setting(324, "Set DDS Amplitude", dds_name='s', ampl='v', profile='i', returns='')
+    def setDDSAmpl(self, c, dds_name, ampl, profile=None):
+        """
+        Manually set a DDS to the given parameters.
+        Arguments:
+            ddsname (str)   : the name of the dds
+            ampl    (float) : amplitude (in V)
+            profile (int)   : the DDS profile to set & change to
+        """
+        dds_channel = self.ddsDict[dds_name].address
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
+        self.inCommunication.release()
+
+    @setting(325, "Set DDS Phase", dds_name='s', freq='v', profile='i', returns='')
+    def setDDSPhase(self, c, dds_name, phase, profile = None):
+        """
+        Manually set a DDS to the given parameters.
+        Arguments:
+            ddsname (str)   : the name of the dds
+            phase   (float) : phase (in radians/2pi)
+            profile (int)   : the DDS profile to set & change to
+        """
+        dds_channel = self.ddsDict[dds_name].address
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
+        self.inCommunication.release()
+
+    @setting(326, "Set DDS Attenuation", dds_name='s', att='v', profile='i', returns='')
+    def setDDSAtt(self, c, dds_name, att, profile=None):
+        """
+        Manually set a DDS to the given parameters.
+        Arguments:
+            ddsname (str)   : the name of the dds
+            att     (float) : attenuation (in dBm)
+            profile (int)   : the DDS profile to set & change to
+        """
+        dds_channel = self.ddsDict[dds_name].address
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
+        self.inCommunication.release()
+
+    @setting(327, "Set DDS Profile", dds_name='s', profile='i', returns='')
+    def setDDSProf(self, c, dds_name, profile = None):
+        """
+        Manually set a DDS to the given parameters.
+        Arguments:
+            ddsname (str)   : the name of the dds
             profile (int)   : the DDS profile to set & change to
         """
         dds_channel = self.ddsDict[dds_name].address

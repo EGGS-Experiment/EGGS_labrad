@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>rf_gui</class>
+ <widget class="QWidget" name="rf_gui">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>674</width>
-    <height>325</height>
+    <width>372</width>
+    <height>304</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QLabel" name="sls_label">
+  <widget class="QLabel" name="rf_label">
    <property name="geometry">
     <rect>
-     <x>180</x>
+     <x>40</x>
      <y>10</y>
      <width>271</width>
      <height>41</height>
@@ -29,86 +29,87 @@
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>120</x>
+     <x>10</x>
      <y>80</y>
      <width>171</width>
-     <height>91</height>
+     <height>202</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="0">
+    <item row="3" column="0">
      <widget class="QDoubleSpinBox" name="wav_ampl"/>
     </item>
-    <item row="0" column="0">
+    <item row="1" column="0">
      <widget class="QDoubleSpinBox" name="wav_freq"/>
     </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="">
-   <property name="geometry">
-    <rect>
-     <x>120</x>
-     <y>180</y>
-     <width>171</width>
-     <height>121</height>
-    </rect>
-   </property>
-   <layout class="QGridLayout" name="wav_button_layout">
-    <item row="2" column="0">
-     <widget class="QPushButton" name="wav_lockswitch">
-      <property name="text">
-       <string>Lock</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QPushButton" name="wav_reset">
-      <property name="text">
-       <string>Reset</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
+    <item row="4" column="0">
      <widget class="QPushButton" name="wav_toggle">
       <property name="text">
        <string>On</string>
       </property>
      </widget>
     </item>
+    <item row="5" column="0">
+     <widget class="QPushButton" name="wav_lockswitch">
+      <property name="text">
+       <string>Lock</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0">
+     <widget class="QPushButton" name="wav_reset">
+      <property name="text">
+       <string>Reset</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="wav_ampl_label">
+      <property name="text">
+       <string>Amplitude (V)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="wav_freq_label">
+      <property name="text">
+       <string>Frequency (MHz)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="0">
+     <widget class="QPushButton" name="wav_toggle_2">
+      <property name="text">
+       <string>Update</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>350</x>
+     <x>200</x>
      <y>80</y>
-     <width>301</width>
-     <height>221</height>
+     <width>151</width>
+     <height>201</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="mod_layout">
-    <item row="0" column="0">
-     <widget class="QLabel" name="mod_toggle_label">
-      <property name="text">
-       <string>Modulate</string>
-      </property>
-     </widget>
+    <item row="7" column="1">
+     <widget class="QDoubleSpinBox" name="mod_param_depth"/>
     </item>
-    <item row="0" column="1">
+    <item row="5" column="1">
+     <widget class="QDoubleSpinBox" name="mod_freq"/>
+    </item>
+    <item row="1" column="1">
      <widget class="QPushButton" name="mod_toggle">
       <property name="text">
        <string>On</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QLabel" name="mod_param_label">
-      <property name="text">
-       <string>Modulation Parameter</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1">
+    <item row="3" column="1">
      <widget class="QComboBox" name="mod_param">
       <item>
        <property name="text">
@@ -127,49 +128,31 @@
       </item>
      </widget>
     </item>
-    <item row="2" column="0">
+    <item row="0" column="1">
+     <widget class="QLabel" name="mod_toggle_label">
+      <property name="text">
+       <string>Modulate</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLabel" name="mod_param_label">
+      <property name="text">
+       <string>Modulation Parameter</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
      <widget class="QLabel" name="mod_freq_label">
       <property name="text">
        <string>Modulation Frequency (Hz)</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="1">
-     <widget class="QDoubleSpinBox" name="mod_freq"/>
-    </item>
-    <item row="3" column="0">
+    <item row="6" column="1">
      <widget class="QLabel" name="mod_param_depth_label">
       <property name="text">
        <string>Parameter Depth</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="1">
-     <widget class="QDoubleSpinBox" name="mod_param_depth"/>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>80</y>
-     <width>84</width>
-     <height>91</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="wav_label_layout">
-    <item>
-     <widget class="QLabel" name="wav_freq_label">
-      <property name="text">
-       <string>Frequency (MHz)</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="wav_ampl_label">
-      <property name="text">
-       <string>Amplitude (V)</string>
       </property>
      </widget>
     </item>

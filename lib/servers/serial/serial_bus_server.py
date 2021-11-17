@@ -402,8 +402,8 @@ class SerialServer(LabradServer):
         ser = self.getPort(c)
         yield ser.reset_input_buffer()
 
-    @setting(61, 'Flush Output', returns='')
-    def flush_input(self, c):
+    @setting(62, 'Flush Output', returns='')
+    def flush_output(self, c):
         """Flush the output buffer"""
         ser = self.getPort(c)
         yield ser.reset_output_buffer()

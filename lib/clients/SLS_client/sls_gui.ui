@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1056</width>
-    <height>502</height>
+    <width>595</width>
+    <height>515</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QLabel" name="PDH_label">
    <property name="geometry">
     <rect>
-     <x>480</x>
-     <y>170</y>
+     <x>270</x>
+     <y>140</y>
      <width>41</width>
      <height>31</height>
     </rect>
@@ -29,8 +29,8 @@
   <widget class="QLabel" name="servo_label">
    <property name="geometry">
     <rect>
-     <x>830</x>
-     <y>170</y>
+     <x>440</x>
+     <y>140</y>
      <width>101</width>
      <height>31</height>
     </rect>
@@ -42,8 +42,8 @@
   <widget class="QLabel" name="autolock_label">
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>170</y>
+     <x>60</x>
+     <y>140</y>
      <width>81</width>
      <height>31</height>
     </rect>
@@ -55,7 +55,7 @@
   <widget class="QLabel" name="sls_label">
    <property name="geometry">
     <rect>
-     <x>360</x>
+     <x>170</x>
      <y>10</y>
      <width>271</width>
      <height>41</height>
@@ -68,7 +68,7 @@
   <widget class="QLabel" name="frequency">
    <property name="geometry">
     <rect>
-     <x>330</x>
+     <x>130</x>
      <y>60</y>
      <width>321</width>
      <height>71</height>
@@ -81,10 +81,10 @@
   <widget class="QPushButton" name="lockswitch">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>60</y>
-     <width>161</width>
-     <height>81</height>
+     <x>220</x>
+     <y>430</y>
+     <width>151</width>
+     <height>23</height>
     </rect>
    </property>
    <property name="text">
@@ -94,35 +94,14 @@
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>350</x>
-     <y>210</y>
-     <width>311</width>
-     <height>201</height>
+     <x>220</x>
+     <y>180</y>
+     <width>151</width>
+     <height>234</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="PDH_layout">
-    <item row="1" column="0">
-     <widget class="QLabel" name="PDH_phasemodulation_label">
-      <property name="text">
-       <string>Phase modulation (rad)</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QLabel" name="PDH_filter_label">
-      <property name="text">
-       <string>Filter Index</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QLabel" name="PDH_phaseoffset_label">
-      <property name="text">
-       <string>Reference phase (deg)</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1">
+    <item row="5" column="1">
      <widget class="QDoubleSpinBox" name="PDH_phaseoffset">
       <property name="maximum">
        <double>360.000000000000000</double>
@@ -132,7 +111,7 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="1">
+    <item row="7" column="1">
      <widget class="QComboBox" name="PDH_filter">
       <item>
        <property name="text">
@@ -221,7 +200,7 @@
       </item>
      </widget>
     </item>
-    <item row="1" column="1">
+    <item row="3" column="1">
      <widget class="QDoubleSpinBox" name="PDH_phasemodulation">
       <property name="maximum">
        <double>3.000000000000000</double>
@@ -231,14 +210,42 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="0">
+    <item row="8" column="1">
+     <widget class="QPushButton" name="autolock_toggle_2">
+      <property name="text">
+       <string>Update</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLabel" name="PDH_phasemodulation_label">
+      <property name="text">
+       <string>Phase modulation (rad)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
      <widget class="QLabel" name="PDH_freq_label">
       <property name="text">
        <string>Frequency (MHz)</string>
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
+    <item row="4" column="1">
+     <widget class="QLabel" name="PDH_phaseoffset_label">
+      <property name="text">
+       <string>Reference phase (deg)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QLabel" name="PDH_filter_label">
+      <property name="text">
+       <string>Filter Index</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
      <widget class="QDoubleSpinBox" name="PDH_freq">
       <property name="minimum">
        <double>10.000000000000000</double>
@@ -256,42 +263,28 @@
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>730</x>
-     <y>210</y>
-     <width>301</width>
-     <height>261</height>
+     <x>420</x>
+     <y>180</y>
+     <width>150</width>
+     <height>311</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="servo_layout">
-    <item row="1" column="1">
+    <item row="3" column="1">
      <widget class="QDoubleSpinBox" name="servo_p">
       <property name="maximum">
        <double>10000.000000000000000</double>
       </property>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QLabel" name="servo_p_label">
-      <property name="text">
-       <string>Proportional</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QLabel" name="servo_i_label">
-      <property name="text">
-       <string>Integral</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="1">
+    <item row="7" column="1">
      <widget class="QDoubleSpinBox" name="servo_d">
       <property name="maximum">
        <double>1000.000000000000000</double>
       </property>
      </widget>
     </item>
-    <item row="5" column="1">
+    <item row="11" column="1">
      <widget class="QComboBox" name="servo_filter">
       <item>
        <property name="text">
@@ -380,21 +373,7 @@
       </item>
      </widget>
     </item>
-    <item row="0" column="0">
-     <widget class="QLabel" name="servo_param_label">
-      <property name="text">
-       <string>Parameter</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QLabel" name="servo_d_label">
-      <property name="text">
-       <string>Differential</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1">
+    <item row="5" column="1">
      <widget class="QDoubleSpinBox" name="servo_i">
       <property name="maximum">
        <double>1.000000000000000</double>
@@ -404,14 +383,7 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="0">
-     <widget class="QLabel" name="servo_set_label">
-      <property name="text">
-       <string>Setpoint</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="1">
+    <item row="9" column="1">
      <widget class="QDoubleSpinBox" name="servo_set">
       <property name="minimum">
        <double>-1000000.000000000000000</double>
@@ -421,7 +393,7 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
+    <item row="1" column="1">
      <widget class="QComboBox" name="servo_param">
       <item>
        <property name="text">
@@ -440,7 +412,49 @@
       </item>
      </widget>
     </item>
-    <item row="5" column="0">
+    <item row="13" column="1">
+     <widget class="QPushButton" name="autolock_toggle_3">
+      <property name="text">
+       <string>Update</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLabel" name="servo_param_label">
+      <property name="text">
+       <string>Parameter</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLabel" name="servo_p_label">
+      <property name="text">
+       <string>Proportional</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLabel" name="servo_i_label">
+      <property name="text">
+       <string>Integral</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QLabel" name="servo_d_label">
+      <property name="text">
+       <string>Differential</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="1">
+     <widget class="QLabel" name="servo_set_label">
+      <property name="text">
+       <string>Setpoint</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="1">
      <widget class="QLabel" name="servo_filter_label">
       <property name="text">
        <string>Filter Index</string>
@@ -453,41 +467,20 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>210</y>
-     <width>271</width>
-     <height>151</height>
+     <y>180</y>
+     <width>151</width>
+     <height>251</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="autolock_layout">
-    <item row="2" column="0">
-     <widget class="QLabel" name="autolock_attempts_label">
-      <property name="text">
-       <string>Lock Attempts</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QLabel" name="autolock_toggle_label">
-      <property name="text">
-       <string>Autolock</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="1">
+    <item row="6" column="1">
      <widget class="QPushButton" name="autolock_toggle">
       <property name="text">
        <string>On</string>
       </property>
      </widget>
     </item>
-    <item row="4" column="0">
-     <widget class="QLabel" name="PDH_phasemodulation_label_4">
-      <property name="text">
-       <string>Sweep Parameter</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="1">
+    <item row="8" column="1">
      <widget class="QComboBox" name="autolock_param">
       <item>
        <property name="text">
@@ -506,24 +499,45 @@
       </item>
      </widget>
     </item>
-    <item row="2" column="1">
+    <item row="4" column="1">
      <widget class="QLabel" name="autolock_attempts">
       <property name="text">
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:24pt; color:#0055ff;&quot;&gt;Attempts&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
     </item>
-    <item row="0" column="1" rowspan="2">
+    <item row="3" column="1">
+     <widget class="QLabel" name="autolock_attempts_label">
+      <property name="text">
+       <string>Lock Attempts</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QLabel" name="autolock_toggle_label">
+      <property name="text">
+       <string>Autolock</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLabel" name="autolock_time_label">
+      <property name="text">
+       <string>Lock Time</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1" rowspan="2">
      <widget class="QLabel" name="autolock_time">
       <property name="text">
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:24pt; color:#0055ff;&quot;&gt;Time&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
     </item>
-    <item row="0" column="0" rowspan="2">
-     <widget class="QLabel" name="autolock_time_label">
+    <item row="7" column="1">
+     <widget class="QLabel" name="PDH_phasemodulation_label_4">
       <property name="text">
-       <string>Lock Time</string>
+       <string>Sweep Parameter</string>
       </property>
      </widget>
     </item>
