@@ -42,7 +42,7 @@ class EGGS_gui(QMainWindow):
         #create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryo, '&Cryo')
-        #self.tabWidget.addTab(cryo, '&Trap')
+        #self.tabWidget.addTab(cryovac, '&Trap')
 
         #put it all together
         layout.addWidget(self.tabWidget)

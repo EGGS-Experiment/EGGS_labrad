@@ -8,7 +8,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
 
 from EGGS_labrad.lib.clients.connection import connection
-from EGGS_labrad.lib.clients.cryo_clients.lakeshore_gui import lakeshore_gui
+from EGGS_labrad.lib.clients.cryovac_clients.lakeshore_gui import lakeshore_gui
 
 
 class lakeshore_client(QWidget):
