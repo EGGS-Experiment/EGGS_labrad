@@ -139,11 +139,11 @@ class SerialDeviceServer(LabradServer):
             if parity is not None: ser.parity(parity)
             self.write = lambda s: ser.write(s)
             self.read = lambda x = 0: ser.read(x)
-            self.read_until = lambda x = '\r': ser.read_until(x)
+            self.read_until = lambda x = '\r': ser.read_line(x)
             self.read_as_words = lambda x = 0: ser.read_as_words(x) # changed here
             self.close = lambda: ser.close()
-            self.flush_input = ser.flush_input()
-            self.flush_output = ser.flush_output()
+            self.flush_input = lambda: ser.flush_input()
+            self.flush_output = lambda: ser.flush_output()
             self.ID = ser.ID
 
     @inlineCallbacks

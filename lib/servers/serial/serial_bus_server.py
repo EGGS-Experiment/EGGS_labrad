@@ -387,6 +387,8 @@ class SerialServer(LabradServer):
         recd = ''
         while True:
             r = ser.read(1)
+            print('type: ' + type(r))
+            print('r: ' + r)
             if r == '' and timeout > 0:
                 # only try a deferred read if there is a timeout
                 r = yield self.deferredRead(ser, timeout)
