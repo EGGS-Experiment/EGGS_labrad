@@ -30,8 +30,8 @@ class NIOPS03Server(SerialDeviceServer):
     """Controls NIOPS-03 Power Supply which controls ion pumps"""
     name = 'NIOPS03 Server'
     regKey = 'NIOPS03Server'
-    serNode = 'causewaybay'
-    port = 'COM4'
+    serNode = 'CausewayBay'
+    port = 'COM8'
 
     timeout = WithUnit(3.0, 's')
     baudrate = 115200
