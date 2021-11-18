@@ -72,9 +72,10 @@ class DDS_client(QWidget):
     name = "ARTIQ DDS Client"
     row_length = 4
 
-    def __init__(self, reactor, parent=None):
+    def __init__(self, reactor, cxn=None, parent=None):
         super(DDS_client, self).__init__()
         self.reactor = reactor
+        self.cxn = cxn
         self.device_db = device_db
         self._parseDevices()
         self.ad9910_clients = {}
@@ -83,9 +84,16 @@ class DDS_client(QWidget):
 
     @inlineCallbacks
     def connect(self):
-        from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name)
-        self.artiq = self.cxn.registry
+        if not self.cxn:
+            from labrad.wrappers import connectAsync
+            self.cxn = yield connectAsync('localhost', name=self.name)
+        try:
+            self.reg = self.cxn.registry
+            self.dv = self.cxn.data_vault
+            self.artiq = self.cxn.artiq_server
+        except Exception as e:
+            print(e)
+            raise
 
     def initializeGUI(self):
         layout = QGridLayout()

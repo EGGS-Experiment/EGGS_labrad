@@ -1,9 +1,8 @@
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTabWidget
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from EGGS_labrad.lib.clients.Widgets import DetachableTabWidget
 
 class ARTIQ_gui(QMainWindow):
 
@@ -19,9 +18,15 @@ class ARTIQ_gui(QMainWindow):
 
     @inlineCallbacks
     def connect(self):
-        from EGGS_labrad.lib.clients.connection import connection
-        self.cxn = connection(name=self.name)
-        yield self.cxn.connect()
+        from labrad.wrappers import connectAsync
+        self.cxn = yield connectAsync('localhost', name=self.name)
+        #check that required servers are online
+        try:
+            self.dv = self.cxn.data_vault
+            self.reg = self.cxn.registry
+        except Exception as e:
+            print(e)
+            raise
 
     def makeLayout(self, cxn):
         #central layout
@@ -32,12 +37,12 @@ class ARTIQ_gui(QMainWindow):
         #create subwidgets
         ttl_widget = self.makeTTLWidget(reactor, cxn)
         dds_widget = self.makeDDSWidget(reactor, cxn)
-        #dac_widget = self.makeDACWidget(reactor, cxn)
+        dac_widget = self.makeDACWidget(reactor, cxn)
 
         #create tabs for each subwidget
         self.tabWidget.addTab(ttl_widget, '&TTL')
         self.tabWidget.addTab(dds_widget, '&DDS')
-        #self.tabWidget.addTab(dds_widget, '&DAC')
+        self.tabWidget.addTab(dac_widget, '&DAC')
 
         #put it all together
         layout.addWidget(self.tabWidget)
@@ -47,26 +52,15 @@ class ARTIQ_gui(QMainWindow):
 
     def makeTTLWidget(self, reactor, cxn):
         from EGGS_labrad.lib.clients.ARTIQ_client.TTL_client import TTL_client
-        ttl_widget = TTL_client(reactor)
-        return ttl_widget
+        return TTL_client(reactor, cxn)
 
     def makeDDSWidget(self, reactor, cxn):
         from EGGS_labrad.lib.clients.ARTIQ_client.DDS_client import DDS_client
-        dds_widget = DDS_client(reactor)
-        return dds_widget
+        return DDS_client(reactor, cxn)
 
     def makeDACWidget(self, reactor, cxn):
-        from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
-        dds_list = []
-        for device_name, device_params in device_db.items():
-            try:
-                if device_params['class'] == 'AD9910':
-                    dds_list.append(device_name)
-            except KeyError:
-                continue
-        from EGGS_labrad.lib.clients.ARTIQ_client.DAC_client import DAC_client
-        dac_widget = DAC_client(reactor, channels=dds_list)
-        return dac_widget
+        from EGGS_labrad.lib.clients.ARTIQ_client.DDS_client import DAC_client
+        return DAC_client(reactor, cxn)
 
     def closeEvent(self, x):
         self.reactor.stop()

@@ -12,7 +12,6 @@ from EGGS_labrad.lib.clients.cryovac_clients.lakeshore_gui import lakeshore_gui
 class lakeshore_client(object):
 
     name = 'Lakeshore336 Client'
-    LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
         self.gui = lakeshore_gui()
@@ -28,7 +27,7 @@ class lakeshore_client(object):
         and relevant labrad servers
         """
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
+        self.cxn = yield connectAsync('localhost', name=self.name)
         #check that required servers are online
         try:
             self.dv = self.cxn.data_vault

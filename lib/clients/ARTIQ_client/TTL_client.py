@@ -48,9 +48,10 @@ class TTL_client(QWidget):
     name = "ARTIQ TTL Client"
     row_length = 10
 
-    def __init__(self, reactor, parent=None):
+    def __init__(self, reactor, cxn=None, parent=None):
         super(TTL_client, self).__init__()
         self.reactor = reactor
+        self.cxn = cxn
         self.device_db = device_db
         self.ttl_clients = {}
         self._parseDevices()
@@ -58,8 +59,9 @@ class TTL_client(QWidget):
         self.initializeGUI()
 
     def connect(self):
-        from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name)
+        if not self.cxn:
+            from labrad.wrappers import connectAsync
+            self.cxn = yield connectAsync('localhost', name=self.name)
         try:
             self.reg = self.cxn.registry
             self.dv = self.cxn.data_vault

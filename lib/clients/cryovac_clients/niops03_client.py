@@ -9,7 +9,6 @@ from EGGS_labrad.lib.clients.cryovac_clients.niops03_gui import niops03_gui
 
 class niops03_client(object):
     name = 'NIOPS03 Client'
-    LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
         self.gui = niops03_gui()
@@ -24,7 +23,7 @@ class niops03_client(object):
         Creates an asynchronous connection to labrad
         """
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name = 'NIOPS03 Client')
+        self.cxn = yield connectAsync('localhost', name='NIOPS03 Client')
         self.reg = self.cxn.registry
         self.dv = self.cxn.data_vault
         self.niops = self.cxn.niops03_server
