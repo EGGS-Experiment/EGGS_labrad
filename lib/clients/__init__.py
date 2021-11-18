@@ -37,6 +37,9 @@ def runClient(client, **kwargs):
     #instantiate a client with a reactor
     client = client(reactor, **kwargs)
     #show client
-    client.show()
+    try:
+        client.gui.show()
+    except:
+        client.show()
     #start reactor
     reactor.run()
