@@ -27,8 +27,8 @@ class TTL_channel(QFrame):
         title.setAlignment(QtCore.Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 3)
 
-        self.switch = TextChangingButton(("On", "Off"))
-        layout.addWidget(self.switch, 1, 1)
+        self.toggle = TextChangingButton(("On", "Off"))
+        layout.addWidget(self.toggle, 1, 1)
         self.setLayout(layout)
 
 
@@ -66,14 +66,15 @@ class TTL_client(QWidget):
             channel_name = self.ttl_list[i]
             channel_gui = TTL_channel(channel_name)
             # layout channel GUI
-            row = i % (self.row_length - 1) + 2
-            column = int(i / (self.row_length - 1))
+            row = int(i / (self.row_length)) + 2
+            column = i % (self.row_length)
             # connect signals to slots
-            channel_gui.switch.toggled.connect(lambda chan=channel_name, status=channel_gui.switch.isChecked():
+            channel_gui.toggle.toggled.connect(lambda chan=channel_name, status=channel_gui.toggle.isChecked():
                                                  self.toggleSwitch())
             # add widget to client list and layout
             self.ttl_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column, 1, 1)
+            print('row:' + str(row) + ', column: ' + str(column))
         self.setLayout(layout)
 
     @inlineCallbacks
