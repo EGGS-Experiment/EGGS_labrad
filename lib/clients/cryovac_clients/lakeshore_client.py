@@ -11,7 +11,7 @@ from EGGS_labrad.lib.clients.cryovac_clients.lakeshore_gui import lakeshore_gui
 
 class lakeshore_client(object):
 
-    name = 'Lakeshore 336 Client'
+    name = 'Lakeshore336 Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
@@ -32,7 +32,7 @@ class lakeshore_client(object):
         #check that required servers are online
         try:
             self.dv = self.cxn.data_vault
-            self.ls = self.cxn.lakeshore_336_server
+            self.ls = self.cxn.lakeshore336_server
             self.reg = self.cxn.registry
         except Exception as e:
             print(e)

@@ -1,9 +1,11 @@
 import os
+import time
+import datetime as datetime
 
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.lib.clients.cryo_clients.twistorr74_gui import twistorr74_gui
+from EGGS_labrad.lib.clients.cryovac_clients.twistorr74_gui import twistorr74_gui
 
 class twistorr74_client(object):
     name = 'Twistorr74 Client'
@@ -23,23 +25,26 @@ class twistorr74_client(object):
         """
         from labrad.wrappers import connectAsync
         self.cxn = yield connectAsync('localhost', name='Twistorr74 Client')
-        self.reg = self.cxn.registry
-        self.dv = self.cxn.data_vault
-        self.tt = self.cxn.twistorr
+        try:
+            self.reg = self.cxn.registry
+            self.dv = self.cxn.data_vault
+            self.tt = self.cxn.twistorr74_server
+        except Exception as e:
+            print(e)
+            raise
 
         # get polling time
         # yield self.reg.cd(['Clients', self.name])
         # self.poll_time = yield float(self.reg.get('poll_time'))
-        self.poll_time = 1.0
+        self.poll_time = 2.0
 
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
-
         #create and start loop to poll server for temperature
         self.poll_loop = LoopingCall(self.poll)
         from twisted.internet.reactor import callLater
-        callLater(1.0, self.start_polling)
+        callLater(2.0, self.start_polling)
 
     #@inlineCallbacks
     def initializeGUI(self):
@@ -57,7 +62,7 @@ class twistorr74_client(object):
         Creates a new dataset to record pressure and tells polling loop
         to add data to data vault
         """
-        self.recording = self.twistorr_record.isChecked()
+        self.recording = self.gui.twistorr_record.isChecked()
         if self.recording:
             self.starttime = time.time()
             date = datetime.datetime.now()

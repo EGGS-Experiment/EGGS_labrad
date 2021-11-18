@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Lakeshore 336 Server
+name = Lakeshore336 Server
 version = 1.0
-description = Talks to the Lakeshore 336 Temperature Controller
-instancename = Lakeshore 336 Server
+description = Talks to the Lakeshore336 Temperature Controller
+instancename = Lakeshore336 Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -34,7 +34,7 @@ TEMPSIGNAL = 122485
 
 class Lakeshore336Server(SerialDeviceServer):
     """Talks to the Lakeshore 336 Temperature Controller"""
-    name = 'Lakeshore 336 Server'
+    name = 'Lakeshore336 Server'
     regKey = 'Lakeshore336Server'
     serNode = 'CausewayBay'
     port = 'COM7'
