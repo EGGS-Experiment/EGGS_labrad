@@ -37,7 +37,6 @@ class TTL_client(QWidget):
     Client for all TTL channels
     """
     name = "ARTIQ TTL Client"
-    password = os.environ['LABRADPASSWORD']
     row_length = 4
 
     def __init__(self, reactor, channels, parent=None):
@@ -50,10 +49,14 @@ class TTL_client(QWidget):
 
     def connect(self):
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
-        self.reg = self.cxn.registry
-        self.dv = self.cxn.data_vault
-        self.artiq = self.cxn.artiq_server
+        self.cxn = yield connectAsync('localhost', name=self.name)
+        try:
+            self.reg = self.cxn.registry
+            self.dv = self.cxn.data_vault
+            self.artiq = self.cxn.artiq_server
+        except Exception as e:
+            print(e)
+            raise
 
     def initializeGUI(self):
         layout = QGridLayout()

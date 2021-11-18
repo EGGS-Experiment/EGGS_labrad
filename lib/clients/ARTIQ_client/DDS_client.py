@@ -69,7 +69,6 @@ class DDS_client(QWidget):
     Client for all DDS channels
     """
     name = "ARTIQ DDS Client"
-    password = os.environ['LABRADPASSWORD']
     row_length = 4
 
     def __init__(self, reactor, channels, parent=None):
@@ -80,9 +79,10 @@ class DDS_client(QWidget):
         self.connect()
         self.initializeGUI()
 
+    @inlineCallbacks
     def connect(self):
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
+        self.cxn = yield connectAsync('localhost', name=self.name)
         self.artiq = self.cxn.registry
 
     def initializeGUI(self):

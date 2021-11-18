@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = Serial Server
-version = 1.3
+version = 1.4.2
 description = Gives access to serial devices via pyserial.
 instancename = %LABRADNODE% Serial Server
 
