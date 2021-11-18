@@ -3,20 +3,18 @@ import time
 import datetime as datetime
 
 from twisted.internet.task import LoopingCall
-from twisted.internet.defer import inlineCallbacks, returnValue
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
+from twisted.internet.defer import inlineCallbacks
+from PyQt5.QtWidgets import QWidget, QGridLayout
 
-from EGGS_labrad.lib.clients.connection import connection
 from EGGS_labrad.lib.clients.cryovac_clients.lakeshore_gui import lakeshore_gui
 
 
-class lakeshore_client(QWidget):
+class lakeshore_client(object):
 
     name = 'Lakeshore 336 Client'
-    LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
-        super(lakeshore_client, self).__init__()
+        self.gui = lakeshore_gui(parent=self)
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -30,11 +28,11 @@ class lakeshore_client(QWidget):
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to lakeshore server
-        and relevant labrad servers
+        Creates an asynchronous connection to relevant servers
+        and initializes relevant labrad objects
         """
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
+        self.cxn = yield connectAsync('localhost', name=self.name)
         self.dv = self.cxn.data_vault
         self.ls = self.cxn.lakeshore_336_server
         self.reg = self.cxn.registry
@@ -51,24 +49,14 @@ class lakeshore_client(QWidget):
 
     #@inlineCallbacks
     def initializeGUI(self):
-        #initialize main GUI
-        layout = QGridLayout()
-        self.gui = lakeshore_gui(parent = self)
-        layout.addWidget(self.gui)
-        self.setLayout(layout)
-        self.setWindowTitle(self.name)
-
         #connect signals to slots
             #record temperature
         self.gui.tempAll_record.toggled.connect(lambda: self.record_temp())
-
             #update heater setting
         self.gui.heat1_update.toggled.connect(lambda: self.update_heater(chan = 1))
         self.gui.heat2_update.toggled.connect(lambda: self.update_heater(chan = 2))
-
             #lock heater settings
         self.gui.heatAll_lockswitch.toggled.connect(lambda: self.lock_heaters())
-
             #mode changed
         self.gui.heat1_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan = 1))
         self.gui.heat2_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan = 2))

@@ -5,17 +5,17 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.clients.Widgets import DetachableTabWidget
 
-class ARTIQ_GUI(QMainWindow):
+class ARTIQ_gui(QMainWindow):
 
     name = 'ARTIQ GUI'
 
     def __init__(self, reactor, clipboard, parent=None):
-        super(ARTIQ_GUI, self).__init__(parent)
+        super(ARTIQ_gui, self).__init__(parent)
         self.clipboard = clipboard
         self.reactor = reactor
         self.connect()
         self.makeLayout(self.cxn)
-        self.setWindowTitle(name)
+        self.setWindowTitle(self.name)
 
     @inlineCallbacks
     def connect(self):
@@ -95,6 +95,6 @@ if __name__=="__main__":
     import qt5reactor
     qt5reactor.install()
     from twisted.internet import reactor
-    gui = ARTIQ_GUI(reactor, clipboard)
+    gui = ARTIQ_gui(reactor, clipboard)
     gui.show()
     reactor.run()
