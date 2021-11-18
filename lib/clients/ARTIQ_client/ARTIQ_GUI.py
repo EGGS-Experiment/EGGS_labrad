@@ -30,10 +30,9 @@ class ARTIQ_gui(QMainWindow):
         self.tabWidget = QTabWidget()
 
         #create subwidgets
-        ttl_widget = self.makeTTLWidget(reactor)
-
+        ttl_widget = self.makeTTLWidget(reactor, cxn)
         dds_widget = self.makeDDSWidget(reactor, cxn)
-        #dac_widget = self.makeDACWidget(reactor)
+        #dac_widget = self.makeDACWidget(reactor, cxn)
 
         #create tabs for each subwidget
         self.tabWidget.addTab(ttl_widget, '&TTL')
@@ -47,29 +46,13 @@ class ARTIQ_gui(QMainWindow):
         self.setWindowTitle(self.name)
 
     def makeTTLWidget(self, reactor, cxn):
-        from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
-        ttl_list = []
-        for device_name, device_params in device_db.items():
-            try:
-                if device_params['class'] == 'TTLOut':
-                    ttl_list.append(device_name)
-            except KeyError:
-                continue
-        from EGGS_labrad.lib.clients.ARTIQ_client.DDS_client import TTL_client
-        ttl_widget = TTL_client(reactor, channels=ttl_list)
-        return dds_widget
+        from EGGS_labrad.lib.clients.ARTIQ_client.TTL_client import TTL_client
+        ttl_widget = TTL_client(reactor)
+        return ttl_widget
 
     def makeDDSWidget(self, reactor, cxn):
-        from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
-        dds_list = []
-        for device_name, device_params in device_db.items():
-            try:
-                if device_params['class'] == 'AD9910':
-                    dds_list.append(device_name)
-            except KeyError:
-                continue
         from EGGS_labrad.lib.clients.ARTIQ_client.DDS_client import DDS_client
-        dds_widget = DDS_client(reactor, channels=dds_list)
+        dds_widget = DDS_client(reactor)
         return dds_widget
 
     def makeDACWidget(self, reactor, cxn):
@@ -98,3 +81,4 @@ if __name__=="__main__":
     gui = ARTIQ_gui(reactor, clipboard)
     gui.show()
     reactor.run()
+    app.exec_()

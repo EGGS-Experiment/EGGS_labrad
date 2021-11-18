@@ -8,10 +8,11 @@ from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
+from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
 
 class AD9910_channel(QFrame):
     """
-    GUI for a single AD9910 DDS channel
+    GUI for a single AD9910 DDS channel.
     """
     def __init__(self, name=None, parent=None):
         QWidget.__init__(self, parent)
@@ -66,15 +67,16 @@ class AD9910_channel(QFrame):
 
 class DDS_client(QWidget):
     """
-    Client for all DDS channels
+    Client for all DDS channels.
     """
     name = "ARTIQ DDS Client"
     row_length = 4
 
-    def __init__(self, reactor, channels, parent=None):
+    def __init__(self, reactor, parent=None):
         super(DDS_client, self).__init__()
         self.reactor = reactor
-        self.ad9910_list = channels
+        self.device_db = device_db
+        self._parseDevices()
         self.ad9910_clients = {}
         self.connect()
         self.initializeGUI()
@@ -112,8 +114,22 @@ class DDS_client(QWidget):
             # add widget to client list and layout
             self.ad9910_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column, 1, 1)
-            print('row:' + str(row) + ', column: ' + str(column))
+            #print('row:' + str(row) + ', column: ' + str(column))
         self.setLayout(layout)
+
+    #todo: run asynchronously
+    def _parseDevices(self):
+        """
+        Parses device_db for relevant devices.
+        """
+        #create holding lists
+        self.ad9910_list = []
+        for name, params in self.device_db.items():
+            #only get devices with named class
+            if 'class' not in params:
+                continue
+            if params['class'] == 'AD9910':
+                self.ad9910_list.append(name)
 
     @inlineCallbacks
     def toggleSwitch(self, channel_name, status):
@@ -139,14 +155,7 @@ if __name__ == "__main__":
     #run channel GUI
     # from EGGS_labrad.lib.clients import runGUI
     # runGUI(AD9910_channel, name='AD9910 Channel')
+
     #run DDS GUI
-    from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
-    dds_list = []
-    for device_name, device_params in device_db.items():
-        try:
-            if device_params['class'] == 'AD9910':
-                dds_list.append(device_name)
-        except KeyError:
-            continue
     from EGGS_labrad.lib.clients import runClient
-    runClient(DDS_client, channels=dds_list)
+    runClient(DDS_client)

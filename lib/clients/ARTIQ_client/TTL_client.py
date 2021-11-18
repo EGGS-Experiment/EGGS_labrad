@@ -43,7 +43,7 @@ class TTL_channel(QFrame):
 
 class TTL_client(QWidget):
     """
-    Client for all TTL channels
+    Client for all TTL channels.
     """
     name = "ARTIQ TTL Client"
     row_length = 10
@@ -141,7 +141,7 @@ class TTL_client(QWidget):
             # add widget to client list and layout
             self.ttl_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
-            print(name + ' - row:' + str(row) + ', column: ' + str(column))
+            #print(name + ' - row:' + str(row) + ', column: ' + str(column))
         ttl_group.setLayout(layout)
         return ttl_group
 
