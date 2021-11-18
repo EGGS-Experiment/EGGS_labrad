@@ -9,13 +9,13 @@ from PyQt5.QtWidgets import QWidget, QGridLayout
 from EGGS_labrad.lib.clients.cryovac_clients.lakeshore_gui import lakeshore_gui
 
 
-class lakeshore_client(QWidget):
+class lakeshore_client(object):
 
     name = 'Lakeshore 336 Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
-        super(lakeshore_client, self).__init__()
+        self.gui = lakeshore_gui()
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -55,13 +55,6 @@ class lakeshore_client(QWidget):
 
     #@inlineCallbacks
     def initializeGUI(self):
-        #initialize main GUI
-        layout = QGridLayout()
-        self.gui = lakeshore_gui(parent = self)
-        layout.addWidget(self.gui)
-        self.setLayout(layout)
-        self.setWindowTitle(self.name)
-
         #connect signals to slots
             #record temperature
         self.gui.tempAll_record.toggled.connect(lambda: self.record_temp())
