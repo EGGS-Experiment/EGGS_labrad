@@ -1,18 +1,18 @@
 import os
-from PyQt5.QtWidgets import QApplication
+import time
 
 from twisted.internet.task import LoopingCall
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.lib.clients.connection import connection
 from EGGS_labrad.lib.clients.SLS_client.sls_gui import SLS_gui
 
 class SLS_client(SLS_gui):
+
     name = 'SLS Client'
-    LABRADPASSWORD = os.environ['LABRADPASSWORD']
+    poll_time = 2.0
 
     def __init__(self, reactor, parent=None):
-        super(SLS_client, self).__init__()
+        self.gui = SLS_gui()
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -28,22 +28,31 @@ class SLS_client(SLS_gui):
         Creates an asynchronous connection to pump servers
         and relevant labrad servers
         """
-        #from labrad.wrappers import connectAsync
-        #self.cxn = yield connectAsync('localhost', name = 'Pump Client', password = self.LABRADPASSWORD)
-        self.cxn = connection(name=self.name)
-        yield self.cxn.connect()
-        self.context = yield self.cxn.context()
-        self.reg = yield self.cxn.get_server('Registry')
-        self.dv = yield self.cxn.get_server('Data Vault')
-        #self.turbo = yield self.cxn.get_server('sls_server')
+        from labrad.wrappers import connectAsync
+        self.cxn = yield connectAsync('localhost', name='SLS Client')
+
+        #ensure all necessary servers are online
+        try:
+            self.reg = self.cxn.registry
+            self.dv = self.cxn.data_vault
+            self.tt = self.cxn.twistorr74_server
+        except Exception as e:
+            print(e)
+            raise
 
         # get polling time
-        yield self.reg.cd(['Clients', self.name])
-        self.poll_time = yield float(self.reg.get('poll_time'))
+        if not self.poll_time:
+            yield self.reg.cd(['Clients', self.name])
+            self.poll_time = yield float(self.reg.get('poll_time'))
 
         # set recording stuff
-        self.c_press = self.cxn.context()
+        self.c_record = self.cxn.context()
         self.recording = False
+
+        #create and start loop to poll server for temperature
+        self.poll_loop = LoopingCall(self.poll)
+        from twisted.internet.reactor import callLater
+        callLater(2.0, self.start_polling)
 
     #@inlineCallbacks
     def initializeGUI(self):
@@ -84,16 +93,18 @@ class SLS_client(SLS_gui):
 
     #Polling functions
     def start_polling(self):
-        self.press_loop.start(self.poll_time)
+        self.poll_loop.start(self.poll_time)
 
     def stop_polling(self):
-        self.press_loop.stop()
+        self.poll_loop.stop()
 
+    @inlineCallbacks
     def poll(self):
-        pressure = yield self.pump.read_pressure()
-        self.press_display.setText(str(pressure))
+        pressure = yield self.tt.read_pressure()
+        self.gui.twistorr_display.setText(str(pressure))
         if self.recording == True:
-            yield self.dv.add(elapsedtime, pressure, context=self.c_press)
+            elapsedtime = time.time() - self.starttime
+            yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
     def closeEvent(self, event):
         self.reactor.stop()
