@@ -262,9 +262,7 @@ class SerialServer(LabradServer):
     def write(self, c, data):
         """Sends data over the port."""
         ser = self.getPort(c)
-        if not isinstance(data, str):
-            data = ''.join(chr(x & 255) for x in data)
-        elif type(data) == str:
+        if type(data) == str:
             data = data.encode()
         ser.write(data)
         return int(len(data))
@@ -285,29 +283,13 @@ class SerialServer(LabradServer):
         return
 
     @inlineCallbacks
-    def _deferredRead(self, ser, timeout, count=1):
-        stop_time = time.time() + timeout
-
-        def doRead(count):
-            while True:
-                d = ser.read(count).decode()
-                if d:
-                    return d
-                sleep(0.01)
-                if time.time() > stop_time:
-                    return ''
-
-        data = yield threads.deferToThread(doRead, count)
-        returnValue(data)
-
-    @inlineCallbacks
     def deferredRead(self, ser, timeout, count=1):
         killit = False
 
         def doRead(count):
-            d = ''
+            d = b''
             while not killit:
-                d = ser.read(count).decode()
+                d = ser.read(count)
                 if d:
                     break
                 sleep(0.010)
@@ -322,9 +304,9 @@ class SerialServer(LabradServer):
         if r == timeout_object:
             elapsed = time.time() - start_time
             print("deferredRead timed out after {} seconds".format(elapsed))
-            r = ''
-        if r == '':
-            r = ser.read(count).decode()
+            r = b''
+        if r == b'':
+            r = ser.read(count)
 
         returnValue(r)
 
@@ -332,22 +314,23 @@ class SerialServer(LabradServer):
     def readSome(self, c, count=0):
         ser = self.getPort(c)
         if count == 0:
-            returnValue(ser.read(10000).decode())
+            returnValue(ser.read(10000))
 
         timeout = c['Timeout']
         if timeout == 0:
-            returnValue(ser.read(count).decode())
+            returnValue(ser.read(count))
 
-        recd = ''
+        recd = b''
         while len(recd) < count:
-            r = ser.read(count - len(recd)).decode()
-            if r == '':
+            r = ser.read(count - len(recd))
+            if r == b'':
                 r = yield self.deferredRead(ser, timeout, count - len(recd))
-                if r == '':
+                if r == b'':
                     ser.close()
                     ser.open()
                     break
             recd += r
+        print(recd)
         returnValue(recd)
 
     @setting(50, 'Read', count=[': Read all bytes in buffer', 'w: Read this many bytes'],
@@ -373,25 +356,27 @@ class SerialServer(LabradServer):
     @setting(52, 'Read Line', data=[': Read until LF, ignoring CRs', 's: Other delimiter to use'],
              returns=['s: Received data'])
     def read_line(self, c, data=''):
-        """Read data from the port, up to but not including the specified
-        delimiter."""
+        """Read data from the port, up to but not including the specified delimiter."""
         ser = self.getPort(c)
         timeout = c['Timeout']
-
+        #set default end character if not specified
         if data:
-            delim, skip = data, ''
+            #ensure end chararcter is of type byte
+            if type(data) != bytes:
+                data = bytes(data, encoding='utf-8')
+            delim, skip = data, b''
         else:
-            delim, skip = '\n', '\r'
+            delim, skip = b'\n', b'\r'
 
-        recd = ''
+        recd = b''
         while True:
-            r = ser.read(1).decode()
-            if r == '' and timeout > 0:
-                # only try a deferred read if there is a timeout
+            r = ser.read(1)
+            # only try a deferred read if there is a timeout
+            if r == b'' and timeout > 0:
                 r = yield self.deferredRead(ser, timeout)
-            if r in ('', delim):
+            if r in (b'', delim):
                 break
-            if r != skip:
+            elif r != skip:
                 recd += r
         returnValue(recd)
 
