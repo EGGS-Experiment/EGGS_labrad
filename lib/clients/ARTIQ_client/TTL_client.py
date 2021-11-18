@@ -51,15 +51,19 @@ class TTL_client(QWidget):
     def connect(self):
         from labrad.wrappers import connectAsync
         self.cxn = yield connectAsync('localhost', name=self.name, password=self.LABRADPASSWORD)
-        self.artiq = self.cxn.registry
+        self.reg = self.cxn.registry
+        self.dv = self.cxn.data_vault
+        self.artiq = self.cxn.artiq_server
 
     def initializeGUI(self):
         layout = QGridLayout()
+        sublayout = QGridLayout()
         #set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 4)
+        #parse devices
         #layout widgets
         for i in range(len(self.ttl_list)):
             # initialize GUIs for each channel
