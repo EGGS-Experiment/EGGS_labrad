@@ -1,4 +1,6 @@
 import os
+import time
+import datetime as datetime
 
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
@@ -57,10 +59,21 @@ class niops03_client(niops03_gui):
         Creates a new dataset to record pressure and tells polling loop
         to add data to data vault
         """
-        self.recording = self.press_record.isChecked()
+        self.recording = self.niops_record.isChecked()
         if self.recording == True:
-            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_press)
-            yield self.dv.new('NIOPS 03 Pump', [('Elapsed time', 't')], [('IP Pressure', 'Pressure', 'mbar')], context=self.c_press)
+            self.starttime = time.time()
+            date = datetime.datetime.now()
+            year = str(date.year)
+            month = '%02d' % date.month  # Padded with a zero if one digit
+            day = '%02d' % date.day  # Padded with a zero if one digit
+            hour = '%02d' % date.hour  # Padded with a zero if one digit
+            minute = '%02d' % date.minute  # Padded with a zero if one digit
+
+            trunk1 = year + '_' + month + '_' + day
+            trunk2 = self.name + '_' + hour + ':' + minute
+            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_press)
+            yield self.dv.new('NIOPS03 Pump', [('Elapsed time', 't')], \
+                                       [('Ion Pump', 'Pressure', 'mbar')], context=self.c_press)
 
     @inlineCallbacks
     def toggle_niops(self):
@@ -91,9 +104,11 @@ class niops03_client(niops03_gui):
         self.niops_pressure_display.setText(str(pressure))
         if self.niops_power.isChecked():
             workingtime = yield self.niops.working_time()
-            time = str(workingtime[0]) + ':' + str(workingtime[1])
-            self.niops_workingtime_display.setText(time)
+            workingtime = workingtime[0]
+            workingtime_text = str(workingtime[0]) + ':' + str(workingtime[1])
+            self.niops_workingtime_display.setText(workingtime_text)
         if self.recording == True:
+            elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_press)
 
     def closeEvent(self, event):

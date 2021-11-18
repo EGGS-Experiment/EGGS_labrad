@@ -29,14 +29,11 @@ class twistorr74_client(twistorr74_gui):
         Creates an asynchronous connection to pump servers
         and relevant labrad servers
         """
-        #from labrad.wrappers import connectAsync
-        #self.cxn = yield connectAsync('localhost', name = 'Pump Client', password = self.LABRADPASSWORD)
-        self.cxn = connection(name=self.name)
-        yield self.cxn.connect()
-        self.context = yield self.cxn.context()
-        self.reg = yield self.cxn.get_server('Registry')
-        self.dv = yield self.cxn.get_server('Data Vault')
-        #self.turbo = yield self.cxn.get_server('twistorr_74_server')
+        from labrad.wrappers import connectAsync
+        self.cxn = yield connectAsync('localhost', name = 'Pump Client', password = self.LABRADPASSWORD)
+        self.reg = self.cxn.registry
+        self.dv = self.cxn.data_vault
+        self.turbo = self.cxn.twistorr
 
         # get polling time
         yield self.reg.cd(['Clients', self.name])
