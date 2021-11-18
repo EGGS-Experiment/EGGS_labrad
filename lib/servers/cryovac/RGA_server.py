@@ -36,27 +36,17 @@ class RGA_Server(SerialDeviceServer):
     timeout = WithUnit(3.0, 's')
     baudrate = 28800
 
-    filsignal = Signal(593201, 'signal: filament changed', 'w')
-    mlsignal = Signal(953202, 'signal: mass lock changed', 'v')
-    hvsignal = Signal(953203, 'signal: high voltage changed', 'w')
-    bufsignal = Signal(953204, 'signal: buffer read', 's')
-    quesignal = Signal(953205, 'signal: query sent', 's')
-
     def initServer(self):
         self.listeners = set()
 
     @setting(1, returns='s')
     def identify(self, c):
         '''
-        Returns the RGA's IDN. RGACOM command: 'id?'
+        Returns the RGA's IDN.
         '''
         yield self.ser.write('ID?\r\n')
         resp = yield self.ser.read()
         returnValue(resp)
-        # yield self.ser.write_line('ID?')
-        # message = "ID? command sent."
-        # self.quesignal(message, self.listeners.copy())
-        # returnValue(message)
 
     @setting(2, value='w',returns='s')
     def filament(self, c, value=None):
