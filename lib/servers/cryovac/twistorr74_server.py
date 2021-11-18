@@ -70,7 +70,6 @@ class TwisTorr74Server(SerialDeviceServer):
             resp = yield self._parse_answer(resp)
         except Exception as e:
             print(e)
-            raise
 
     #READ PRESSURE
     @setting(211, 'Read Pressure', returns='v')
@@ -91,7 +90,6 @@ class TwisTorr74Server(SerialDeviceServer):
             resp = yield self._parse_answer(resp)
         except Exception as e:
             print(e)
-            raise
         resp = float(resp)
         returnValue(resp)
 
@@ -112,15 +110,12 @@ class TwisTorr74Server(SerialDeviceServer):
         msg.extend(bytearray(CRC_msg, encoding='utf-8'))
         return bytes(msg)
 
-    def _parse_answer(self, answer):
-        if answer == (b''):
+    def _parse_answer(self, ans):
+        if ans == (b''):
             raise Exception ('No response from device')
 
         # remove STX, ADDR, and CRC
-        print(answer)
-        ans = bytearray(answer)
         ans = ans[2:-3]
-
         #check if we have CMD and DIR and remove them if so
         if len(ans) > 1:
             ans = ans[4:]

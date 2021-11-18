@@ -330,7 +330,6 @@ class SerialServer(LabradServer):
                     ser.open()
                     break
             recd += r
-        print(recd)
         returnValue(recd)
 
     @setting(50, 'Read', count=[': Read all bytes in buffer', 'w: Read this many bytes'],
