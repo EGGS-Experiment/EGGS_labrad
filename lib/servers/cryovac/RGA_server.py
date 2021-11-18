@@ -20,8 +20,8 @@ Created May 22, 2016
 @author: Calvin He
 '''
 
+from labrad.units import WithUnit
 from labrad.server import Signal, setting
-from labrad.support import getNodeName
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, SerialDeviceError, SerialConnectionError, PortRegError
 
 from twisted.internet.task import LoopingCall
@@ -33,8 +33,8 @@ class RGA_Server(SerialDeviceServer):
     port = None
     serNode = None
 
-    TIMEOUT = 1.0
-    BAUDRATE = 28800
+    timeout = WithUnit(3.0, 's')
+    baudrate = 28800
 
     filsignal = Signal(593201, 'signal: filament changed', 'w')
     mlsignal = Signal(953202, 'signal: mass lock changed', 'v')
@@ -50,10 +50,13 @@ class RGA_Server(SerialDeviceServer):
         '''
         Returns the RGA's IDN. RGACOM command: 'id?'
         '''
-        yield self.ser.write_line('ID?')
-        message = "ID? command sent."
-        self.quesignal(message, self.listeners.copy())
-        returnValue(message)
+        yield self.ser.write('ID?\r\n')
+        resp = yield self.ser.read()
+        returnValue(resp)
+        # yield self.ser.write_line('ID?')
+        # message = "ID? command sent."
+        # self.quesignal(message, self.listeners.copy())
+        # returnValue(message)
 
     @setting(2, value='w',returns='s')
     def filament(self, c, value=None):

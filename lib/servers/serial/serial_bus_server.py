@@ -190,7 +190,9 @@ class SerialServer(LabradServer):
     def baudrate(self, c, data=None):
         """Sets the baudrate."""
         ser = self.getPort(c)
-        baudrates = ser.BAUDRATES
+        baudrates = list(ser.BAUDRATES)
+        #allow non-standard baud rates
+        baudrates.extend([28800])
         if data is None:
             return baudrates
         else:
