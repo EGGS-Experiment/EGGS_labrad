@@ -53,10 +53,14 @@ class AD9910_channel(QFrame):
         self.att.setRange(-145.0, 30.0)
         self.att.setKeyboardTracking(False)
         self.rfswitch = TextChangingButton(("On", "Off"))
+        self.lockswitch = TextChangingButton(("Lock", "Unlock"))
+
+        #add widgets to layout
         layout.addWidget(self.freq, 2, 0)
         layout.addWidget(self.ampl, 2, 1)
         layout.addWidget(self.att, 4, 0)
         layout.addWidget(self.rfswitch, 2, 2)
+        #layout.addWidget(self.rfswitch, 2, 2)
         self.setLayout(layout)
 
 
@@ -94,8 +98,8 @@ class DDS_client(QWidget):
             channel_name = self.ad9910_list[i]
             channel_gui = AD9910_channel(channel_name)
             # layout channel GUI
-            row = i % (self.row_length - 1) + 2
-            column = int(i / (self.row_length - 1))
+            row = int(i / (self.row_length)) + 2
+            column = i % (self.row_length)
             # connect signals to slots
             channel_gui.freq.valueChanged.connect(lambda chan=channel_name, freq=channel_gui.freq.value():
                                                   self.setFrequency(chan, freq))
@@ -108,6 +112,7 @@ class DDS_client(QWidget):
             # add widget to client list and layout
             self.ad9910_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column, 1, 1)
+            print('row:' + str(row) + ', column: ' + str(column))
         self.setLayout(layout)
 
     @inlineCallbacks
