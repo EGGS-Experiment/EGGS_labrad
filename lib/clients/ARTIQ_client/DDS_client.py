@@ -3,7 +3,7 @@ import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
 
@@ -19,50 +19,63 @@ class AD9910_channel(QFrame):
         self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(name)
+        self.initializeGUI()
 
     def makeLayout(self, title):
         layout = QGridLayout()
         # labels
         title = QLabel(title)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         title.setAlignment(QtCore.Qt.AlignCenter)
         freqlabel = QLabel('Frequency (MHz)')
         powerlabel = QLabel('Amplitude (V)')
         attlabel = QLabel('Attenuation (dBm)')
-        layout.addWidget(title, 0, 0, 1, 3)
-        layout.addWidget(freqlabel, 1, 0, 1, 1)
-        layout.addWidget(powerlabel, 1, 1, 1, 1)
-        layout.addWidget(attlabel, 3, 0, 1, 1)
 
         # editable fields
         self.freq = QDoubleSpinBox()
-        self.freq.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.freq.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.freq.setDecimals(3)
         self.freq.setSingleStep(0.1)
         self.freq.setRange(10.0, 250.0)
         self.freq.setKeyboardTracking(False)
         self.ampl = QDoubleSpinBox()
-        self.ampl.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.ampl.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.ampl.setDecimals(3)
         self.ampl.setSingleStep(0.1)
         self.ampl.setRange(-145.0, 30.0)
         self.ampl.setKeyboardTracking(False)
         self.att = QDoubleSpinBox()
-        self.att.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.att.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.att.setDecimals(3)
         self.att.setSingleStep(0.1)
         self.att.setRange(-145.0, 30.0)
         self.att.setKeyboardTracking(False)
+        self.initswitch = QPushButton('Initialize')
         self.rfswitch = TextChangingButton(("On", "Off"))
         self.lockswitch = TextChangingButton(("Lock", "Unlock"))
 
         #add widgets to layout
+        layout.addWidget(title, 0, 0, 1, 3)
+        layout.addWidget(freqlabel, 1, 0, 1, 1)
+        layout.addWidget(powerlabel, 1, 1, 1, 1)
+        layout.addWidget(attlabel, 1, 2, 1, 1)
         layout.addWidget(self.freq, 2, 0)
         layout.addWidget(self.ampl, 2, 1)
-        layout.addWidget(self.att, 4, 0)
-        layout.addWidget(self.rfswitch, 2, 2)
-        #layout.addWidget(self.rfswitch, 2, 2)
+        layout.addWidget(self.att, 2, 2)
+        layout.addWidget(self.initswitch, 3, 0)
+        layout.addWidget(self.rfswitch, 3, 1)
+        layout.addWidget(self.lockswitch, 3, 2)
         self.setLayout(layout)
+
+    def initializeGUI(self):
+        # connect signal to slot
+        self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
+        #set startup value
+        # self.lockswitch.toggle()
+
+    @inlineCallbacks
+    def lock(self, status):
+        yield self.rfswitch.setEnabled(status)
 
 
 class DDS_client(QWidget):
@@ -70,7 +83,7 @@ class DDS_client(QWidget):
     Client for all DDS channels.
     """
     name = "ARTIQ DDS Client"
-    row_length = 6
+    row_length = 4
 
     def __init__(self, reactor, cxn=None, parent=None):
         super(DDS_client, self).__init__()

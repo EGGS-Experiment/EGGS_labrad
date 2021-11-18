@@ -3,7 +3,7 @@ import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QSizePolicy
 
 from twisted.internet.defer import inlineCallbacks
 
@@ -17,7 +17,8 @@ class TTL_channel(QFrame):
     def __init__(self, name=None, parent=None):
         QWidget.__init__(self, parent)
         self.name = name
-        self.setFrameStyle(0x0001 | 0x0030)
+        self.setFrameStyle(0x0001 | 0x0010)
+        # self.setLineWidth(2)
         self.makeLayout(name)
 
     def makeLayout(self, title):
@@ -26,12 +27,15 @@ class TTL_channel(QFrame):
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(title, 0, 0)
+        title.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         # buttons
-        self.toggle = TextChangingButton(("On", "Off"))
+        self.toggle = TextChangingButton(("ON", "OFF"))
         self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
-        layout.addWidget(self.toggle, 1, 0)
-        layout.addWidget(self.lockswitch, 1, 1)
+        self.lockswitch.setFont(QFont('MS Shell Dlg 2', pointSize=8))
+        # set layout
+        layout.addWidget(title, 0, 0, 1, 2)
+        layout.addWidget(self.toggle, 1, 0, 1, 1)
+        layout.addWidget(self.lockswitch, 1, 1, 1, 1)
         self.setLayout(layout)
         #connect signal to slot
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
@@ -76,7 +80,8 @@ class TTL_client(QWidget):
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(title, 0, 0)
+        title.setMargin(4)
+        layout.addWidget(title, 0, 0, 1, 10)
         #create and layout widgets
         in_ttls = self._makeTTLGroup(self.ttlin_list, "Input")
         layout.addWidget(in_ttls, 2, 0, 2, 4)
@@ -121,7 +126,8 @@ class TTL_client(QWidget):
         """
         #create widget
         ttl_group = QFrame()
-        ttl_group.setFrameStyle(0x0001 | 0x0030)
+        ttl_group.setFrameStyle(0x0001 | 0x0010)
+        ttl_group.setLineWidth(2)
         layout = QGridLayout()
         #set title
         title = QLabel(name)
