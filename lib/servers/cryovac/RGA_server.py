@@ -31,7 +31,7 @@ class RGA_Server(SerialDeviceServer):
     name = 'RGA Server'
     regKey = 'RGAServer'
     port = None
-    serNode = getNodeName()
+    serNode = None
 
     TIMEOUT = 1.0
     BAUDRATE = 28800
@@ -50,8 +50,8 @@ class RGA_Server(SerialDeviceServer):
         '''
         Returns the RGA's IDN. RGACOM command: 'id?'
         '''
-        yield self.ser.write_line('id?')
-        message = "id? command sent."
+        yield self.ser.write_line('ID?')
+        message = "ID? command sent."
         self.quesignal(message, self.listeners.copy())
         returnValue(message)
 
@@ -121,7 +121,7 @@ class RGA_Server(SerialDeviceServer):
         Reads the RGA buffer.  Equivalent to reading the serial line buffer.
         '''
         notified = self.getOtherListeners(c)
-        message = yield self.ser.read_line()
+        message = yield self.ser.read()
         self.bufsignal(message, notified)
         returnValue(message)
 

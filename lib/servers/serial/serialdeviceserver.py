@@ -140,6 +140,7 @@ class SerialDeviceServer(LabradServer):
             if bytesize is not None: ser.bytesize(bytesize)
             if parity is not None: ser.parity(parity)
             self.write = lambda s: ser.write(s)
+            self.write_line = lambda s: ser.write_line(s)
             self.read = lambda x = 0: ser.read(x)
             self.read_line = lambda x = '': ser.read_line(x)
             self.read_as_words = lambda x = 0: ser.read_as_words(x) # changed here
@@ -338,12 +339,12 @@ class SerialDeviceServer(LabradServer):
         else:
             raise Exception('No device selected')
 
-    @setting(111113, 'Query', data='s', returns='')
+    @setting(111113, 'Query', data='s', returns='s')
     def query(self, c, data):
         """Write any string and read the response"""
         yield self.ser.write(data)
         resp = yield self.ser.read()
-        return resp
+        returnValue(resp)
 
     def stopServer(self):
         """

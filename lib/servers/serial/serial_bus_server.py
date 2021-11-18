@@ -274,7 +274,7 @@ class SerialServer(LabradServer):
         ser = self.getPort(c)
         if type(data) == str:
             data = data.encode()
-        ser.write(data + '\r\n')
+        ser.write(data + b'\r\n')
         return int(len(data) + 2)
 
     @setting(42, 'Pause', duration='v[s]: Time to pause', returns=[])
