@@ -12,13 +12,14 @@ from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
 
 class TTL_channel(QFrame):
     """
-    GUI for a single TTL channel
+    GUI for a single TTL channel.
     """
     def __init__(self, name=None, parent=None):
         QWidget.__init__(self, parent)
         self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(name)
+        self.connect()
 
     def makeLayout(self, title):
         layout = QGridLayout()
@@ -27,10 +28,17 @@ class TTL_channel(QFrame):
         title.setFont(QFont('MS Shell Dlg 2', pointSize=12))
         title.setAlignment(QtCore.Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 3)
-
+        # buttons
         self.toggle = TextChangingButton(("On", "Off"))
+        self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
         layout.addWidget(self.toggle, 1, 1)
         self.setLayout(layout)
+        #connect signal to slot
+        self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock())
+
+    @inlineCallbacks
+    def lock(self, status):
+        self.toggle.setEnabled(status)
 
 
 class TTL_client(QWidget):
@@ -40,11 +48,12 @@ class TTL_client(QWidget):
     name = "ARTIQ TTL Client"
     row_length = 4
 
-    def __init__(self, reactor, channels, parent=None):
+    def __init__(self, reactor, parent=None):
         super(TTL_client, self).__init__()
         self.reactor = reactor
-        self.ttl_list = channels
+        self.device_db = device_db
         self.ttl_clients = {}
+        self._parseDevices()
         self.connect()
         self.initializeGUI()
 
@@ -61,50 +70,78 @@ class TTL_client(QWidget):
 
     def initializeGUI(self):
         layout = QGridLayout()
-        sublayout = QGridLayout()
         #set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 4)
-        #parse devices
+        #create and layout widgets
+        in_ttls = self._makeTTLGroup(self.ttlin_list)
+        layout.addWidget(in_ttls, 2, 0)
+        out_ttls = self._makeTTLGroup(self.ttlout_list)
+        layout.addWidget(out_ttls, 2, 4)
+        urukul_ttls = self._makeTTLGroup(self.ttlurukul_list)
+        layout.addWidget(urukul_ttls, 2, 4)
+        other_ttls = self._makeTTLGroup(self.ttlother_list)
+        layout.addWidget(other_ttls, 2, 12)
+        self.setLayout(layout)
+
+    #todo: run asynchronously
+    def _parseDevices(self):
+        """
+        Parses device_db for relevant devices
+        """
+        #create holding lists
+        self.ttlin_list = []
+        self.ttlout_list = []
+        self.ttlurukul_list = []
+        self.ttlother_list = []
         for name, params in self.device_db.items():
             #only get devices with named class
             if 'class' not in params:
                 continue
             #set device as attribute
             devicetype = params['class']
-            device = self.get_device(name)
-            self.setattr_device(name)
             if devicetype == 'TTLInOut':
-                self.ttlin_list.append(device)
+                self.ttlin_list.append(name)
             elif devicetype == 'TTLOut':
-                if 'pmt' in name:
-                    self.pmt_list.append(device)
-                elif 'linetrigger' in name:
-                    self.linetrigger_list.append(device)
-                elif 'urukul' not in name:
-                    self.ttlout_list.append(device)
-            elif devicetype == 'AD9910':
-                self.dds_list.append(device)
-            elif devicetype == 'CPLD':
-                self.urukul_list.append(device)
-        #layout widgets
-        for i in range(len(self.ttl_list)):
+                if 'urukul' in name:
+                    self.ttlurukul_list.append(name)
+                elif 'zotino' in name:
+                    self.ttlurukul_list.append(name)
+                else:
+                    self.ttlout_list.append(name)
+
+    def _makeTTLGroup(self, ttl_list):
+        """
+        Creates a group of TTLs as a widget
+        """
+        #create widget
+        ttl_group = QWidget()
+        layout = QGridLayout
+        #set title
+        title = QLabel('th1')
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        title.setAlignment(QtCore.Qt.AlignCenter)
+        layout.addWidget(title, 0, 0, 1, 4)
+
+        #layout individual ttls on group
+        for i in range(len(ttl_list)):
             # initialize GUIs for each channel
-            channel_name = self.ttl_list[i]
+            channel_name = ttl_list[i]
             channel_gui = TTL_channel(channel_name)
             # layout channel GUI
             row = int(i / (self.row_length)) + 2
             column = i % (self.row_length)
             # connect signals to slots
             channel_gui.toggle.toggled.connect(lambda chan=channel_name, status=channel_gui.toggle.isChecked():
-                                                 self.toggleSwitch())
+                                               self.toggleSwitch())
             # add widget to client list and layout
             self.ttl_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column, 1, 1)
             print('row:' + str(row) + ', column: ' + str(column))
-        self.setLayout(layout)
+        ttl_group.setLayout(layout)
+        return ttl_group
 
     @inlineCallbacks
     def toggleSwitch(self, channel_name, status):
@@ -117,14 +154,7 @@ if __name__ == "__main__":
     #run channel GUI
     # from EGGS_labrad.lib.clients import runGUI
     # runGUI(TTL_channel, name='TTL Channel')
+
     #run TTL GUI
-    from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
-    ttl_list = []
-    for device_name, device_params in device_db.items():
-        try:
-            if device_params['class'] == 'TTLOut':
-                ttl_list.append(device_name)
-        except KeyError:
-            continue
     from EGGS_labrad.lib.clients import runClient
-    runClient(TTL_client, channels=ttl_list)
+    runClient(TTL_client)
