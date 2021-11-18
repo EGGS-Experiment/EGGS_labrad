@@ -39,6 +39,7 @@ class scan_experiment_1D(experiment):
     '''
     Used to repeat an experiment multiple times
     '''
+
     def __init__(self, script_cls, parameter, minim, maxim, steps, units):
         self.script_cls = script_cls
         self.parameter = parameter
@@ -90,6 +91,7 @@ class scan_experiment_1D_measure(experiment):
     Used to repeat an experiment multiple times.
     Same as scan_experiment_1D but with a measure script as well
     '''
+
     def __init__(self, scan_script_cls, measure_script_cls, parameter, minim, maxim, steps, units):
         self.scan_script_cls = scan_script_cls
         self.measure_script_cls = measure_script_cls

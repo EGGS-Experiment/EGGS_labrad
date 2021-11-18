@@ -15,15 +15,16 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 '''
+
 from labrad.server import setting
 from labrad.units import WithUnit
 from twisted.internet.defer import inlineCallbacks, DeferredList, returnValue
 import EGGS_labrad.lib.config.scriptscanner_config as sc_config
 
-from script_signals_server import ScriptSignalsServer
-from experiment import experiment_info
 from scheduler import scheduler
-from experiment_classes import *
+from experiment_classes import *Z
+from experiment import experiment_info
+from script_signals_server import ScriptSignalsServer
 
 import sys
 from importlib import reload

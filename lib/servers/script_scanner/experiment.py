@@ -1,8 +1,8 @@
 """
 Superclass of experiments and related classes.
 """
-import traceback
 import labrad
+import traceback
 from treedict import TreeDict
 
 class experiment_info(object):

@@ -1,8 +1,12 @@
-from EGGS_labrad.lib.environment.pulser_config import channelConfiguration as ChConfig
-from EGGS_labrad.lib.environment.pulser_config import ddsConfiguration as ddsConfig
+#imports
+from EGGS_labrad.lib.servers.pulser.sequence.pulser_config import channelConfiguration as ChConfig
+from EGGS_labrad.lib.servers.pulser.sequence.pulser_config import ddsConfiguration as ddsConfig
 
 
 class hardwareConfiguration(object):
+    """
+    Specifies the hardware configuration for the Pruttivarasin Pulser.
+    """
     channelTotal = 32
     timeResolution = '40.0e-9'  # seconds
     timeResolvedResolution = 10.0e-9

@@ -1,11 +1,14 @@
-from pulse_sequences_config import dds_name_dictionary as dds_config
-from labrad.units import WithUnit
+#imports
 from treedict import TreeDict
+from labrad.units import WithUnit
+from EGGS_labrad.lib.servers.pulser.sequence.pulse_config import dds_name_dictionary as dds_config
+
 
 class pulse_sequence(object):
 	'''
-	Base class for all Pulse Sequences
-	Version 1.1
+	Base class for all Pulse Sequences.
+	Users use this class to write pulse sequences that will be programmed onto the FPGA.
+	version = 1.1
 	'''
 	required_parameters = []
 	required_subsequences = []

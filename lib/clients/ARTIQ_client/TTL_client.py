@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
+from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
 
 class TTL_channel(QFrame):
     """
@@ -67,6 +68,27 @@ class TTL_client(QWidget):
         title.setAlignment(QtCore.Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 4)
         #parse devices
+        for name, params in self.device_db.items():
+            #only get devices with named class
+            if 'class' not in params:
+                continue
+            #set device as attribute
+            devicetype = params['class']
+            device = self.get_device(name)
+            self.setattr_device(name)
+            if devicetype == 'TTLInOut':
+                self.ttlin_list.append(device)
+            elif devicetype == 'TTLOut':
+                if 'pmt' in name:
+                    self.pmt_list.append(device)
+                elif 'linetrigger' in name:
+                    self.linetrigger_list.append(device)
+                elif 'urukul' not in name:
+                    self.ttlout_list.append(device)
+            elif devicetype == 'AD9910':
+                self.dds_list.append(device)
+            elif devicetype == 'CPLD':
+                self.urukul_list.append(device)
         #layout widgets
         for i in range(len(self.ttl_list)):
             # initialize GUIs for each channel

@@ -62,10 +62,12 @@ Created on Dec 22, 2010
 # Servers now flush input and output buffers on connection to device
 #===============================================================================
 
-#Imports
+#imports
 from twisted.internet.defer import returnValue, inlineCallbacks
 from labrad.server import LabradServer, setting
 from labrad.types import Error
+
+__all__ = ["SerialDeviceError", "SerialConnectionError", "SerialDeviceServer"]
 
 #Error Classes
 class SerialDeviceError( Exception ):

@@ -6,9 +6,9 @@ if sys.version_info[:2] < (3, 7):
     raise Exception("You need Python 3.7+")
 
 requirements = [
-    "numpy", "scipy", "cython",
+    "numpy", "scipy", "cython", "sipyco",
     "pyqt", "qt5reactor", "pyqtgraph",
-    "sipyco", "twisted", "zope", "artiq-comtools",
+    "twisted", "zope", "artiq-comtools",
     "pyvisa", "pyserial",
     "h5py", "hdf5"
 ]

@@ -7,7 +7,6 @@ from twisted.internet.task import LoopingCall
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import inlineCallbacks, DeferredLock, Deferred, DeferredList
 
-
 from EGGS_labrad.lib.config.scriptscanner_config import config
 
 class priority_queue(object):
