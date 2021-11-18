@@ -70,7 +70,7 @@ class DAC_client(QWidget):
     Client for all DAC channels.
     """
     name = "ARTIQ DAC Client"
-    row_length = 4
+    row_length = 8
 
     def __init__(self, reactor, cxn=None, parent=None):
         super(DAC_client, self).__init__()

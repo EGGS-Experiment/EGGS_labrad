@@ -70,7 +70,7 @@ class DDS_client(QWidget):
     Client for all DDS channels.
     """
     name = "ARTIQ DDS Client"
-    row_length = 4
+    row_length = 6
 
     def __init__(self, reactor, cxn=None, parent=None):
         super(DDS_client, self).__init__()
