@@ -24,7 +24,7 @@ class niops03_client(object):
         Creates an asynchronous connection to labrad
         """
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name = 'NIOPS03 Client', password = self.LABRADPASSWORD)
+        self.cxn = yield connectAsync('localhost', name = 'NIOPS03 Client')
         self.reg = self.cxn.registry
         self.dv = self.cxn.data_vault
         self.niops = self.cxn.niops03_server
@@ -35,11 +35,11 @@ class niops03_client(object):
         self.poll_time = 1.0
 
         # set recording stuff
-        self.c_press = self.cxn.context()
+        self.c_record = self.cxn.context()
         self.recording = False
 
         #create and start loop to poll server for temperature
-        self.press_loop = LoopingCall(self.poll)
+        self.poll_loop = LoopingCall(self.poll)
         from twisted.internet.reactor import callLater
         callLater(1.0, self.start_polling)
 
@@ -71,9 +71,9 @@ class niops03_client(object):
 
             trunk1 = year + '_' + month + '_' + day
             trunk2 = self.name + '_' + hour + ':' + minute
-            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_press)
+            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
             yield self.dv.new('NIOPS03 Pump', [('Elapsed time', 't')], \
-                                       [('Ion Pump', 'Pressure', 'mbar')], context=self.c_press)
+                                       [('Ion Pump', 'Pressure', 'mbar')], context=self.c_record)
 
     @inlineCallbacks
     def toggle_niops(self):
@@ -93,10 +93,10 @@ class niops03_client(object):
 
     #Polling functions
     def start_polling(self):
-        self.press_loop.start(self.poll_time)
+        self.poll_loop.start(self.poll_time)
 
     def stop_polling(self):
-        self.press_loop.stop()
+        self.poll_loop.stop()
 
     @inlineCallbacks
     def poll(self):
@@ -109,7 +109,7 @@ class niops03_client(object):
             self.gui.niops_workingtime_display.setText(workingtime_text)
         if self.recording == True:
             elapsedtime = time.time() - self.starttime
-            yield self.dv.add(elapsedtime, pressure, context=self.c_press)
+            yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
     def closeEvent(self, event):
         self.reactor.stop()

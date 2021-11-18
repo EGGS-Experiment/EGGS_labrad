@@ -1,17 +1,17 @@
 import os
 
 from labrad.wrappers import connectAsync
-from PyQt5.QtWidgets import QWidget, QApplication, QGridLayout
-from twisted.internet.defer import inlineCallbacks, returnValue
+
 from twisted.internet.task import LoopingCall
+from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.lib.clients.rf_client.rf_gui import rf_gui
 
-class rf_client(rf_gui):
+class rf_client(object):
     name = 'RF Client'
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
-        super(rf_client, self).__init__()
+        self.gui = rf_gui()
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -28,26 +28,26 @@ class rf_client(rf_gui):
         and relevant labrad servers
         """
         self.cxn = yield connectAsync('localhost', name='RF Client', password=self.LABRADPASSWORD)
-        yield self.cxn.connect()
-        self.context = yield self.cxn.context()
-        self.reg = yield self.cxn.registry
-        self.dv = yield self.cxn.data_vault
+        self.context = self.cxn.context()
+        self.reg = self.cxn.registry
+        self.dv = self.cxn.data_vault
         #self.rf = yield self.cxn.rf_server
 
         # get polling time
-        yield self.reg.cd(['Clients', self.name])
-        self.poll_time = yield float(self.reg.get('poll_time'))
+        # yield self.reg.cd(['Clients', self.name])
+        # self.poll_time = yield float(self.reg.get('poll_time'))
+        self.poll_time = 1.0
 
         # set recording stuff
-        self.c_press = self.cxn.context()
+        self.c_record = self.cxn.context()
         self.recording = False
 
     #@inlineCallbacks
     def initializeGUI(self):
         #connect signals to slots
-        self.twistorr_lockswitch.toggled.connect(lambda: self.lock_twistorr())
-        self.twistorr_power.toggled.connect(lambda: self.toggle_twistorr())
-        self.twistorr_record.toggled.connect(lambda: self.record_pressure())
+        self.gui.twistorr_lockswitch.toggled.connect(lambda: self.lock_twistorr())
+        self.gui.twistorr_power.toggled.connect(lambda: self.toggle_twistorr())
+        self.gui.twistorr_record.toggled.connect(lambda: self.record_pressure())
 
         #start up data
 

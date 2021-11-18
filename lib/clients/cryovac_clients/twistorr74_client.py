@@ -1,26 +1,18 @@
 import os
 
-from PyQt5.QtWidgets import QApplication
-
 from twisted.internet.task import LoopingCall
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.lib.clients.connection import connection
 from EGGS_labrad.lib.clients.cryo_clients.twistorr74_gui import twistorr74_gui
 
-class twistorr74_client(twistorr74_gui):
+class twistorr74_client(object):
     name = 'Twistorr74 Client'
-    LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, parent=None):
-        super(twistorr74_client, self).__init__()
+        self.gui = twistorr74_gui()
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
-
-        #create and start loop to poll server for temperature
-        # self.temp_loop = LoopingCall(self.poll)
-        # self.start_polling()
 
     #Setup functions
     @inlineCallbacks
@@ -30,10 +22,10 @@ class twistorr74_client(twistorr74_gui):
         and relevant labrad servers
         """
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name = 'Pump Client', password = self.LABRADPASSWORD)
+        self.cxn = yield connectAsync('localhost', name='Twistorr74 Client')
         self.reg = self.cxn.registry
         self.dv = self.cxn.data_vault
-        self.turbo = self.cxn.twistorr
+        self.tt = self.cxn.twistorr
 
         # get polling time
         # yield self.reg.cd(['Clients', self.name])
@@ -41,15 +33,20 @@ class twistorr74_client(twistorr74_gui):
         self.poll_time = 1.0
 
         # set recording stuff
-        self.c_press = self.cxn.context()
+        self.c_record = self.cxn.context()
         self.recording = False
+
+        #create and start loop to poll server for temperature
+        self.poll_loop = LoopingCall(self.poll)
+        from twisted.internet.reactor import callLater
+        callLater(1.0, self.start_polling)
 
     #@inlineCallbacks
     def initializeGUI(self):
         #connect signals to slots
-        self.twistorr_lockswitch.toggled.connect(lambda: self.lock_twistorr())
-        self.twistorr_power.toggled.connect(lambda: self.toggle_twistorr())
-        self.twistorr_record.toggled.connect(lambda: self.record_pressure())
+        self.gui.twistorr_lockswitch.toggled.connect(lambda: self.lock_twistorr())
+        self.gui.twistorr_power.toggled.connect(lambda: self.toggle_twistorr())
+        self.gui.twistorr_record.toggled.connect(lambda: self.record_pressure())
 
         #start up data
 
@@ -60,39 +57,50 @@ class twistorr74_client(twistorr74_gui):
         Creates a new dataset to record pressure and tells polling loop
         to add data to data vault
         """
-        self.recording = self.press_record.isChecked()
-        if self.recording == True:
-            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_press)
-            yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')], [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_press)
+        self.recording = self.twistorr_record.isChecked()
+        if self.recording:
+            self.starttime = time.time()
+            date = datetime.datetime.now()
+            year = str(date.year)
+            month = '%02d' % date.month  # Padded with a zero if one digit
+            day = '%02d' % date.day  # Padded with a zero if one digit
+            hour = '%02d' % date.hour  # Padded with a zero if one digit
+            minute = '%02d' % date.minute  # Padded with a zero if one digit
+
+            trunk1 = year + '_' + month + '_' + day
+            trunk2 = self.name + '_' + hour + ':' + minute
+            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
+            yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')], [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_record)
 
     @inlineCallbacks
     def toggle_twistorr(self):
         """
         Sets pump power on or off
         """
-        power_status = self.twistorr_power.isChecked()
-        yield self.pump.toggle(power_status)
+        power_status = self.gui.twistorr_power.isChecked()
+        yield self.tt.toggle(power_status)
 
     def lock_twistorr(self):
         """
         Locks power status of pump
         """
-        lock_status = self.twistorr_lockswitch.isChecked()
-        self.twistorr_power.setEnabled(lock_status)
+        lock_status = self.gui.twistorr_lockswitch.isChecked()
+        self.gui.twistorr_power.setEnabled(lock_status)
 
     #Polling functions
     def start_polling(self):
-        self.press_loop.start(self.poll_time)
+        self.poll_loop.start(self.poll_time)
 
     def stop_polling(self):
-        self.press_loop.stop()
+        self.poll_loop.stop()
 
     @inlineCallbacks
     def poll(self):
-        pressure = yield self.pump.read_pressure()
-        self.press_display.setText(str(pressure))
+        pressure = yield self.tt.read_pressure()
+        self.gui.twistorr_display.setText(str(pressure))
         if self.recording == True:
-            yield self.dv.add(elapsedtime, pressure, context=self.c_press)
+            elapsedtime = time.time() - self.starttime
+            yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
     def closeEvent(self, event):
         self.reactor.stop()

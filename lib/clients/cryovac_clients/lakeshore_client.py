@@ -20,11 +20,6 @@ class lakeshore_client(object):
         self.connect()
         self.initializeGUI()
 
-        #create and start loop to poll server for temperature
-        self.temp_loop = LoopingCall(self.poll)
-        from twisted.internet.reactor import callLater
-        callLater(1.0, self.start_polling)
-
     #Setup functions
     @inlineCallbacks
     def connect(self):
@@ -50,22 +45,24 @@ class lakeshore_client(object):
         self.poll_time = 1.0
 
         # set recording stuff
-        self.c_temp = self.cxn.context()
+        self.c_record = self.cxn.context()
         self.recording = False
+
+        #create and start loop to poll server for temperature
+        self.poll_loop = LoopingCall(self.poll)
+        from twisted.internet.reactor import callLater
+        callLater(1.0, self.start_polling)
 
     #@inlineCallbacks
     def initializeGUI(self):
         #connect signals to slots
             #record temperature
         self.gui.tempAll_record.toggled.connect(lambda: self.record_temp())
-
             #update heater setting
         self.gui.heat1_update.toggled.connect(lambda: self.update_heater(chan = 1))
         self.gui.heat2_update.toggled.connect(lambda: self.update_heater(chan = 2))
-
             #lock heater settings
         self.gui.heatAll_lockswitch.toggled.connect(lambda: self.lock_heaters())
-
             #mode changed
         self.gui.heat1_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan = 1))
         self.gui.heat2_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan = 2))
@@ -89,10 +86,10 @@ class lakeshore_client(object):
 
             trunk1 = year + '_' + month + '_' + day
             trunk2 = self.name + '_' + hour + ':' + minute
-            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_temp)
+            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_record)
             yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')], \
                                        [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'), \
-                                        ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_temp)
+                                        ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_record)
 
     @inlineCallbacks
     def update_heater(self, chan):
@@ -261,10 +258,10 @@ class lakeshore_client(object):
 
     #Polling functions
     def start_polling(self):
-        self.temp_loop.start(self.poll_time)
+        self.poll_loop.start(self.poll_time)
 
     def stop_polling(self):
-        self.temp_loop.stop()
+        self.poll_loop.stop()
 
     @inlineCallbacks
     def poll(self):
@@ -276,7 +273,7 @@ class lakeshore_client(object):
         self.gui.temp4.setText(str(temp[3]))
         if self.recording == True:
             elapsedtime = time.time() - self.starttime
-            yield self.dv.add(elapsedtime, temp[0], temp[1], temp[2], temp[3], context=self.c_temp)
+            yield self.dv.add(elapsedtime, temp[0], temp[1], temp[2], temp[3], context=self.c_record)
         if self.gui.heat1_mode.currentText() != 'Off':
             curr1 = yield self.ls.get_heater_output(1)
             self.gui.heat1.setText(str(curr1))
