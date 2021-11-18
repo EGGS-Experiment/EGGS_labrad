@@ -36,8 +36,9 @@ class twistorr74_client(twistorr74_gui):
         self.turbo = self.cxn.twistorr
 
         # get polling time
-        yield self.reg.cd(['Clients', self.name])
-        self.poll_time = yield float(self.reg.get('poll_time'))
+        # yield self.reg.cd(['Clients', self.name])
+        # self.poll_time = yield float(self.reg.get('poll_time'))
+        self.poll_time = 1.0
 
         # set recording stuff
         self.c_press = self.cxn.context()
@@ -86,6 +87,7 @@ class twistorr74_client(twistorr74_gui):
     def stop_polling(self):
         self.press_loop.stop()
 
+    @inlineCallbacks
     def poll(self):
         pressure = yield self.pump.read_pressure()
         self.press_display.setText(str(pressure))

@@ -71,7 +71,6 @@ class TwisTorr74Server(SerialDeviceServer):
         except Exception as e:
             print(e)
             raise
-        print(resp)
 
     #READ PRESSURE
     @setting(211, 'Read Pressure', returns='v')
@@ -96,24 +95,29 @@ class TwisTorr74Server(SerialDeviceServer):
         resp = float(resp)
         returnValue(resp)
 
+    #Helper functions
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg = b''):
+        """
+        Creates a message according to the Twistorr74 serial protocol
+        """
+        #create message as bytearray
         msg = self.STX_msg + self.ADDR_msg + CMD_msg + DIR_msg + DATA_msg + self.ETX_msg
         msg = bytearray(msg)
-
+        #calculate checksum
         CRC_msg = 0x00
         for byte in msg[1:]:
             CRC_msg ^= byte
-
+        #convert checksum to hex value and add to end
         CRC_msg = hex(CRC_msg)[2:]
         msg.extend(bytearray(CRC_msg, encoding='utf-8'))
-        msg = bytes(msg)
-        return msg
+        return bytes(msg)
 
     def _parse_answer(self, answer):
-        if answer == (''):
+        if answer == (b''):
             raise Exception ('No response from device')
 
         # remove STX, ADDR, and CRC
+        print(answer)
         ans = bytearray(answer)
         ans = ans[2:-3]
 
@@ -121,16 +125,12 @@ class TwisTorr74Server(SerialDeviceServer):
         if len(ans) > 1:
             ans = ans[4:]
             ans = ans.decode()
-        #otherwise process return message for errors
-        elif len(ans) == 1:
-            ans = bytes(ans)
-            if ans == b'\x06':
-                ans = 'Acknowledged'
-            #print(ans)
-            if ans in self.ERRORS_msg:
-                raise Exception(self.ERRORS_msg[ans])
+        elif ans == b'\x06':
+            ans = 'Acknowledged'
+        elif ans in self.ERRORS_msg:
+            raise Exception(self.ERRORS_msg[ans])
 
-        return bytes(ans)
+        return ans
 
 if __name__ == '__main__':
     from labrad import util

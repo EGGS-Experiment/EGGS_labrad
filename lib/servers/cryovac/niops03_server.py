@@ -122,8 +122,8 @@ class NIOPS03Server(SerialDeviceServer):
             [[int, int], [int, int]]: working time of ion pump and getter
         """
         yield self.ser.write('TM' + TERMINATOR)
-        ip_time = yield self.ser.read_until('\r')
-        np_time = yield self.ser.read_until('\r')
+        ip_time = yield self.ser.read_line('\r')
+        np_time = yield self.ser.read_line('\r')
         ip_time = ip_time[16:-8].split(' Hours ')
         np_time = np_time[16:-8].split(' Hours ')
         ip_time = [int(val) for val in ip_time]

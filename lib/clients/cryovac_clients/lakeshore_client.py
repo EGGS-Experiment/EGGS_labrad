@@ -80,7 +80,6 @@ class lakeshore_client(QWidget):
         Creates a new dataset to record temperature and tells polling loop
         to add data to data vault
         """
-        print('secy')
         self.recording = self.gui.tempAll_record.isChecked()
         if self.recording == True:
             self.starttime = time.time()
