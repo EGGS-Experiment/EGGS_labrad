@@ -19,26 +19,26 @@ class TTL_channel(QFrame):
         self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(name)
-        self.connect()
 
     def makeLayout(self, title):
         layout = QGridLayout()
         # labels
         title = QLabel(title)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(title, 0, 0, 1, 3)
+        layout.addWidget(title, 0, 0)
         # buttons
         self.toggle = TextChangingButton(("On", "Off"))
         self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
-        layout.addWidget(self.toggle, 1, 1)
+        layout.addWidget(self.toggle, 1, 0)
+        layout.addWidget(self.lockswitch, 1, 1)
         self.setLayout(layout)
         #connect signal to slot
-        self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock())
+        self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
     @inlineCallbacks
     def lock(self, status):
-        self.toggle.setEnabled(status)
+        yield self.toggle.setEnabled(status)
 
 
 class TTL_client(QWidget):
@@ -46,7 +46,7 @@ class TTL_client(QWidget):
     Client for all TTL channels
     """
     name = "ARTIQ TTL Client"
-    row_length = 4
+    row_length = 10
 
     def __init__(self, reactor, parent=None):
         super(TTL_client, self).__init__()
@@ -74,16 +74,16 @@ class TTL_client(QWidget):
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(title, 0, 0, 1, 4)
+        layout.addWidget(title, 0, 0)
         #create and layout widgets
-        in_ttls = self._makeTTLGroup(self.ttlin_list)
-        layout.addWidget(in_ttls, 2, 0)
-        out_ttls = self._makeTTLGroup(self.ttlout_list)
-        layout.addWidget(out_ttls, 2, 4)
-        urukul_ttls = self._makeTTLGroup(self.ttlurukul_list)
-        layout.addWidget(urukul_ttls, 2, 4)
-        other_ttls = self._makeTTLGroup(self.ttlother_list)
-        layout.addWidget(other_ttls, 2, 12)
+        in_ttls = self._makeTTLGroup(self.ttlin_list, "Input")
+        layout.addWidget(in_ttls, 2, 0, 2, 4)
+        out_ttls = self._makeTTLGroup(self.ttlout_list, "Output")
+        layout.addWidget(out_ttls, 5, 0, 3, 10)
+        urukul_ttls = self._makeTTLGroup(self.ttlurukul_list, "Urukul")
+        layout.addWidget(urukul_ttls, 9, 0, 3, 10)
+        other_ttls = self._makeTTLGroup(self.ttlother_list, "Other")
+        layout.addWidget(other_ttls, 13, 0, 2, 4)
         self.setLayout(layout)
 
     #todo: run asynchronously
@@ -105,25 +105,27 @@ class TTL_client(QWidget):
             if devicetype == 'TTLInOut':
                 self.ttlin_list.append(name)
             elif devicetype == 'TTLOut':
+                other_names = ['zotino', 'led', 'sampler']
                 if 'urukul' in name:
                     self.ttlurukul_list.append(name)
-                elif 'zotino' in name:
-                    self.ttlurukul_list.append(name)
+                elif any (string in name for string in other_names):
+                    self.ttlother_list.append(name)
                 else:
                     self.ttlout_list.append(name)
 
-    def _makeTTLGroup(self, ttl_list):
+    def _makeTTLGroup(self, ttl_list, name):
         """
         Creates a group of TTLs as a widget
         """
         #create widget
-        ttl_group = QWidget()
-        layout = QGridLayout
+        ttl_group = QFrame()
+        ttl_group.setFrameStyle(0x0001 | 0x0030)
+        layout = QGridLayout()
         #set title
-        title = QLabel('th1')
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        title = QLabel(name)
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(title, 0, 0, 1, 4)
+        layout.addWidget(title, 0, 0)
 
         #layout individual ttls on group
         for i in range(len(ttl_list)):
@@ -135,11 +137,11 @@ class TTL_client(QWidget):
             column = i % (self.row_length)
             # connect signals to slots
             channel_gui.toggle.toggled.connect(lambda chan=channel_name, status=channel_gui.toggle.isChecked():
-                                               self.toggleSwitch())
+                                               self.toggleSwitch(chan, status))
             # add widget to client list and layout
             self.ttl_clients[channel_name] = channel_gui
-            layout.addWidget(channel_gui, row, column, 1, 1)
-            print('row:' + str(row) + ', column: ' + str(column))
+            layout.addWidget(channel_gui, row, column)
+            print(name + ' - row:' + str(row) + ', column: ' + str(column))
         ttl_group.setLayout(layout)
         return ttl_group
 
