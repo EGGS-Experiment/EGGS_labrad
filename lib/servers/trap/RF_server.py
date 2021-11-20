@@ -45,7 +45,7 @@ class RFServer(GPIBManagedServer):
     @setting(121, 'Toggle', onoff='b', returns='')
     def toggle(self, c, onoff=None):
         """Turn the signal generator on/off."""
-        self.selectedDevice(c).toggle(onoff)
+        yield self.selectedDevice(c).toggle(onoff)
 
 
     # WAVEFORM
@@ -54,7 +54,7 @@ class RFServer(GPIBManagedServer):
         """Set the signal generator frequency (in Hz)."""
         return self.selectedDevice(c).freq(freq)
 
-    @setting(121, 'Amplitude', ampl='v', returns='v')
+    @setting(212, 'Amplitude', ampl='v', returns='v')
     def amplitude(self, c, ampl=None):
         """Set the signal generator amplitude (in V)."""
         return self.selectedDevice(c).ampl(ampl)
@@ -86,12 +86,12 @@ class RFServer(GPIBManagedServer):
         """Set frequency modulation deviation (in Hz)."""
         return self.selectedDevice(c).fm_dev(dev)
 
-    @setting(321, 'PM Toggle', onoff='b', returns='')
+    @setting(323, 'PM Toggle', onoff='b', returns='')
     def pm_toggle(self, c, onoff=None):
         """Toggle phase modulation."""
         self.selectedDevice(c).pm_toggle(onoff)
 
-    @setting(322, 'PM Deviation', dev='v', returns='v')
+    @setting(324, 'PM Deviation', dev='v', returns='v')
     def pm_dev(self, c, dev=None):
         """Set phase modulation deviation (in Hz)."""
         return self.selectedDevice(c).pm_dev(dev)

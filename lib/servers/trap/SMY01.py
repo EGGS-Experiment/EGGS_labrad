@@ -12,7 +12,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
     #todo: check that we can change modulation settings without accidentally activating modulation
 
     @inlineCallbacks
-    def toggle(self, c, onoff):
+    def toggle(self, onoff):
         if onoff is True:
             yield self.write('LEV:ON')
         elif onoff is False:
@@ -20,66 +20,74 @@ class SMY01Wrapper(GPIBDeviceWrapper):
 
     # WAVEFORM
     @inlineCallbacks
-    def frequency(self, c, freq):
+    def freq(self, freq):
         if freq:
             yield self.write('RF ' + str(freq))
-        resp = yield float(self.query('RF?'))
-        returnValue(resp)
+        resp = yield self.query('RF?')
+        resp = self._parse(resp, 'RF')
+        returnValue(float(resp))
 
     @inlineCallbacks
-    def amplitude(self, c, ampl):
+    def ampl(self, ampl):
         if ampl:
             yield self.write('LEV '+ str(ampl) + 'V')
-        resp = yield float(self.query('LEV?'))
-        returnValue(resp)
+        resp = yield self.query('LEV?')
+        #strip text preamble
+        resp = self._parse(resp, 'LEVEL')
+        returnValue(float(resp))
 
 
     # MODULATION
     @inlineCallbacks
-    def mod_freq(self, c, freq):
+    def mod_freq(self, freq):
         if freq:
             yield self.write('AF ' + str(freq))
-        resp = yield float(self.query('AF?'))
+        resp = yield self.query('AF?')
+        resp = self._parse(resp, 'AF')
         returnValue(resp)
 
     @inlineCallbacks
-    def am_toggle(self, c, onoff):
+    def am_toggle(self, onoff):
         if onoff is True:
             yield self.write('AM:I')
         elif onoff is False:
             yield self.write('AM:OFF')
 
     @inlineCallbacks
-    def am_depth(self, c, depth):
+    def am_depth(self, depth):
         if depth:
             yield self.write('AM ' + str(depth))
         resp = yield float(self.query('AM?'))
         returnValue(resp)
 
     @inlineCallbacks
-    def fm_toggle(self, c, onoff):
+    def fm_toggle(self, onoff):
         if onoff is True:
             yield self.write('FM:I')
         elif onoff is False:
             yield self.write('FM:OFF')
 
     @inlineCallbacks
-    def fm_dev(self, c, dev):
+    def fm_dev(self, dev):
         if dev:
             yield self.write('FM ' + str(dev))
         resp = yield float(self.query('FM?'))
         returnValue(resp)
 
     @inlineCallbacks
-    def pm_toggle(self, c, onoff):
+    def pm_toggle(self, onoff):
         if onoff is True:
             yield self.write(chstring + 'PHM:I')
         elif onoff is False:
             yield self.write(chstring + 'PHM:OFF')
 
     @inlineCallbacks
-    def pm_dev(self, c, dev):
+    def pm_dev(self, dev):
         if dev:
             yield self.write('PHM ' + str(dev))
         resp = yield float(self.query('PHM?'))
         returnValue(resp)
+
+    #Helper functions
+    _parse = lambda resp, text: resp.split(text)[-1]
+

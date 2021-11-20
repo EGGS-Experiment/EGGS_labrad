@@ -12,4 +12,4 @@ START "GPIB Bus Server" /min CMD "/k activate labart && python %HOME%/Code/EGGS_
 START "Serial Bus Server" /min CMD "/k activate labart && python %HOME%/Code/EGGS_labrad/lib/servers/serial/serial_bus_server.py"
 
 ::Clients
-START /min CMD /c %HOME%/Code/EGGS_labrad/bin/start_labrad_clients.bat
+::START /min CMD /c %HOME%/Code/EGGS_labrad/bin/start_labrad_clients.bat
