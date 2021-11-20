@@ -8,8 +8,7 @@ START "Labrad Node" /min CMD "/k activate labart && python %HOME%/Code/pylabrad/
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 
 ::Device Buses
-START "GPIB Bus Server" /min CMD "/k activate labart && python %HOME%/Code/EGGS_labrad/lib/servers/gpib/gpib_bus_server.py"
-START "Serial Bus Server" /min CMD "/k activate labart && python %HOME%/Code/EGGS_labrad/lib/servers/serial/serial_bus_server.py"
+START /min CMD /c %HOME%/Code/EGGS_labrad/bin/labrad/start_labrad_devices.bat
 
 ::Clients
-::START /min CMD /c %HOME%/Code/EGGS_labrad/bin/start_labrad_clients.bat
+START /min CMD /c %HOME%/Code/EGGS_labrad/bin/start_labrad_clients.bat
