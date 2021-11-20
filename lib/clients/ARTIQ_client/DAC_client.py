@@ -26,9 +26,9 @@ class AD5372_channel(QFrame):
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        dac_label = QLabel('Frequency (MHz)')
-        gain_label = QLabel('Amplitude (V)')
-        off_label = QLabel('Attenuation (dBm)')
+        dac_label = QLabel('DAC (MHz)')
+        gain_label = QLabel('Gain (V)')
+        off_label = QLabel('Offset (dBm)')
 
         # editable fields
         self.dac = QDoubleSpinBox()
@@ -50,20 +50,22 @@ class AD5372_channel(QFrame):
         self.off.setRange(-145.0, 30.0)
         self.off.setKeyboardTracking(False)
 
-        # uttons
-        self.calibrate = QPushButton('Initialize')
+        # buttons
+        self.resetswitch = QPushButton('Reset')
+        self.calibrateswitch = QPushButton('Calibrate')
         self.lockswitch = TextChangingButton(("Lock", "Unlock"))
 
         #add widgets to layout
         layout.addWidget(title, 0, 0, 1, 3)
         layout.addWidget(dac_label, 1, 0, 1, 1)
         layout.addWidget(gain_label, 1, 1, 1, 1)
-        layout.addWidget(off_label, 3, 0, 1, 1)
+        layout.addWidget(off_label, 1, 2, 1, 1)
         layout.addWidget(self.dac, 2, 0)
         layout.addWidget(self.gain, 2, 1)
-        layout.addWidget(self.off, 4, 0)
-        layout.addWidget(self.lockswitch, 2, 2)
-        #layout.addWidget(self.calibrate, 2, 2)
+        layout.addWidget(self.off, 2, 2)
+        layout.addWidget(self.lockswitch, 3, 0)
+        layout.addWidget(self.calibrateswitch, 3, 1)
+        layout.addWidget(self.calibrateswitch, 3, 2)
         self.setLayout(layout)
 
 
