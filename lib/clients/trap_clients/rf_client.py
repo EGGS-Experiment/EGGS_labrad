@@ -1,11 +1,9 @@
 import os
 
-from labrad.wrappers import connectAsync
-
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.lib.clients.trap_clients.rf_gui import rf_gui
 
+from PyQt5.QtWidgets import QWidget
 
 class rf_client(object):
     name = 'RF Client'
@@ -25,7 +23,7 @@ class rf_client(object):
         import os
         LABRADHOST = os.environ['LABRADHOST']
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync(LABRADHOST, name=self.name)
+        self.cxn = yield connectAsync('localhost', name=self.name)
 
         self.reg = self.cxn.registry
         self.dv = self.cxn.data_vault
@@ -34,7 +32,7 @@ class rf_client(object):
 
     #@inlineCallbacks
     def initializeGUI(self):
-        #connect signals to slots
+        self.gui.setupUi()
         self.gui.wav_freq.valueChanged.connect(print)
         # self.gui.niops_lockswitch.toggled.connect(lambda: self.lock_niops())
         # self.gui.niops_power.toggled.connect(lambda: self.toggle_niops())
@@ -42,25 +40,26 @@ class rf_client(object):
 
         #start up data
 
-    @inlineCallbacks
-    def toggle_niops(self):
-        """
-        Sets ion pump power on or off
-        """
-        power_status = self.gui.niops_power.isChecked()
-        yield self.niops.toggle_ip(power_status)
-
-    def lock(self):
-        """
-        Locks power status of ion pump
-        """
-        lock_status = self.gui.niops_lockswitch.isChecked()
-        self.gui.niops_voltage.setEnabled(lock_status)
-        self.gui.niops_power.setEnabled(lock_status)
+    # @inlineCallbacks
+    # def toggle_niops(self):
+    #     """
+    #     Sets ion pump power on or off
+    #     """
+    #     power_status = self.gui.niops_power.isChecked()
+    #     yield self.niops.toggle_ip(power_status)
+    #
+    # def lock(self):
+    #     """
+    #     Locks power status of ion pump
+    #     """
+    #     lock_status = self.gui.niops_lockswitch.isChecked()
+    #     self.gui.niops_voltage.setEnabled(lock_status)
+    #     self.gui.niops_power.setEnabled(lock_status)
 
     def closeEvent(self, event):
         self.reactor.stop()
 
-if __name__ == "__main__":
+if __name__=="__main__":
     from EGGS_labrad.lib.clients import runClient
     runClient(rf_client)
+

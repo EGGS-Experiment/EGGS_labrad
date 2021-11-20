@@ -6,15 +6,15 @@ from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 from PyQt5.QtWidgets import QWidget, QGridLayout
 
-from EGGS_labrad.lib.clients.cryovac_clients.lakeshore_gui import lakeshore_gui
+from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui import lakeshore336_gui
 
 
-class lakeshore_client(object):
+class lakeshore336_client(object):
 
     name = 'Lakeshore336 Client'
 
     def __init__(self, reactor, parent=None):
-        self.gui = lakeshore_gui()
+        self.gui = lakeshore336_gui()
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -287,4 +287,4 @@ class lakeshore_client(object):
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runClient
-    runClient(lakeshore_client)
+    runClient(lakeshore336_client)

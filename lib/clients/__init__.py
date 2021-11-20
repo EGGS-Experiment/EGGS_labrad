@@ -32,10 +32,14 @@ def runClient(client, **kwargs):
     """
     #widgets require a QApplication to run
     app = QApplication([])
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
+    #reactor may already be installed
+    try:
+        import qt5reactor
+        qt5reactor.install()
+    except Exception as e:
+        print(e)
     #instantiate a client with a reactor
+    from twisted.internet import reactor
     client = client(reactor, **kwargs)
     #show client
     try:
@@ -44,3 +48,4 @@ def runClient(client, **kwargs):
         client.show()
     #start reactor
     reactor.run()
+    app.exec_()

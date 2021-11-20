@@ -9,7 +9,7 @@ class TextChangingButton(_TextChangingButton):
         super(TextChangingButton, self).__init__(button_text, parent)
         self.setMaximumHeight(30)
 
-class lakeshore_gui(QtWidgets.QFrame):
+class lakeshore336_gui(QtWidgets.QFrame):
     def __init__(self, parent=None):
         window = QtWidgets.QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
