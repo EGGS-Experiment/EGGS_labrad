@@ -17,3 +17,4 @@ START /min CMD /c %HOME%/Code/EGGS_labrad/bin/labrad/start_labrad_experiments.ba
 START /min CMD /c %HOME%/Code/EGGS_labrad/bin/start_artiq.bat
 
 activate labart
+::CD "%HOME%\Code\EGGS_labrad"

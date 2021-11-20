@@ -20,7 +20,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
 
     # WAVEFORM
     @inlineCallbacks
-    def freq(self, freq):
+    def frequency(self, freq):
         if freq:
             yield self.write('RF ' + str(freq))
         resp = yield self.query('RF?')
@@ -28,9 +28,17 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         returnValue(float(resp))
 
     @inlineCallbacks
-    def ampl(self, ampl):
+    def amplitude(self, ampl, units):
+        #setter
         if ampl:
-            yield self.write('LEV '+ str(ampl) + 'V')
+            units = units.upper()
+            #check if units are valid, set default to dBm
+            if not units:
+                units = 'DBM'
+            elif units not in ['DBM','V']:
+                raise Exception('Error: invalid units')
+            yield self.write('LEV '+ str(ampl) + units)
+        #getter
         resp = yield self.query('LEV?')
         #strip text preamble
         resp = self._parse(resp, 'LEVEL')
@@ -89,5 +97,6 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         returnValue(resp)
 
     #Helper functions
-    _parse = lambda resp, text: resp.split(text)[-1]
+    _parse = lambda self, resp, text: resp.split(text)[-1]
+    _dbmToV = lambda self, dbm: dbm
 

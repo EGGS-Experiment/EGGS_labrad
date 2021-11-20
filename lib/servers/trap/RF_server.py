@@ -37,11 +37,6 @@ class RFServer(GPIBManagedServer):
         """Reset the signal generator."""
         yield self.selectedDevice(c).reset()
 
-    @setting(112, 'Status', returns='s')
-    def status(self, c):
-        """Get status of the signal generator."""
-        yield self.selectedDevice(c).status()
-
     @setting(121, 'Toggle', onoff='b', returns='')
     def toggle(self, c, onoff=None):
         """Turn the signal generator on/off."""
@@ -52,12 +47,15 @@ class RFServer(GPIBManagedServer):
     @setting(211, 'Frequency', freq='v', returns='v')
     def frequency(self, c, freq=None):
         """Set the signal generator frequency (in Hz)."""
-        return self.selectedDevice(c).freq(freq)
+        return self.selectedDevice(c).frequency(freq)
 
-    @setting(212, 'Amplitude', ampl='v', returns='v')
-    def amplitude(self, c, ampl=None):
-        """Set the signal generator amplitude (in V)."""
-        return self.selectedDevice(c).ampl(ampl)
+    @setting(212, 'Amplitude', ampl='v', units='s', returns='v')
+    def amplitude(self, c, ampl=None, units=None):
+        """
+        Set/get the signal generator amplitude.
+        Returns the amplitude in dBm.
+        """
+        return self.selectedDevice(c).amplitude(ampl, units)
 
 
     # MODULATION
@@ -69,7 +67,7 @@ class RFServer(GPIBManagedServer):
     @setting(312, 'AM Toggle', onoff='b', returns='')
     def am_toggle(self, c, onoff=None):
         """Toggle amplitude modulation."""
-        self.selectedDevice(c).fm_toggle(onoff)
+        self.selectedDevice(c).am_toggle(onoff)
 
     @setting(313, 'AM Depth', depth='v', returns='v')
     def am_depth(self, c, depth=None):

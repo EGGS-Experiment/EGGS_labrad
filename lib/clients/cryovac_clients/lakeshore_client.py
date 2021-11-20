@@ -26,8 +26,10 @@ class lakeshore_client(object):
         Creates an asynchronous connection to lakeshore server
         and relevant labrad servers
         """
+        import os
+        LABRADHOST = os.environ['LABRADHOST']
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name)
+        self.cxn = yield connectAsync(host=LABRADHOST, name=self.name)
         #check that required servers are online
         try:
             self.dv = self.cxn.data_vault

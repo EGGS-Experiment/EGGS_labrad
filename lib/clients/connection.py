@@ -26,8 +26,10 @@ class connection(object):
         """
         Connect asynchronously to the labrad manager.
         """
+        import os
+        LABRADHOST = os.environ['LABRADHOST']
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync(name=self.name)
+        self.cxn = yield connectAsync(host=LABRADHOST, name=self.name)
         yield self.setupListeners()
         returnValue(self)
     
