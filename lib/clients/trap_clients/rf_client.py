@@ -4,7 +4,7 @@ from labrad.wrappers import connectAsync
 
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.lib.clients.rf_client.rf_gui import rf_gui
+from EGGS_labrad.lib.clients.trap_clients.rf_gui import rf_gui
 
 class rf_client(object):
     name = 'RF Client'

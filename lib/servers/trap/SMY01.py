@@ -75,7 +75,6 @@ class SMY01Wrapper(GPIBDeviceWrapper):
     def am_toggle(self, onoff):
         #setter
         if onoff is not None:
-            print('thkim')
             self.mod_active = True
             if onoff is True:
                 #activate with updated parameter
@@ -83,10 +82,8 @@ class SMY01Wrapper(GPIBDeviceWrapper):
                 param = self.mod_params['AM']
                 yield self.write('AF ' + str(mod_freq))
                 yield self.write('AM:I ' + str(param))
-                print('sc1')
             elif onoff is False:
                 yield self.write('AM:OFF')
-                print('th1')
         #getter
         resp = yield self.query('AM?')
         if resp == 'AM:OFF':

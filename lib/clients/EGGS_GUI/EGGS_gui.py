@@ -79,7 +79,7 @@ class EGGS_gui(QMainWindow):
         return holder_widget
 
     def makeTrapWidget(self, reactor):
-        from EGGS_labrad.lib.clients.rf_client.lakeshore_client import rf_client
+        from EGGS_labrad.lib.clients.trap_clients.lakeshore_client import rf_client
         rf_widget = rf_client(reactor)
         return rf_widget
 
