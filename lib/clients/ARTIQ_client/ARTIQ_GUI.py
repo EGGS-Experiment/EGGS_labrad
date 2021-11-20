@@ -8,9 +8,9 @@ class ARTIQ_gui(QMainWindow):
 
     name = 'ARTIQ GUI'
 
-    def __init__(self, reactor, clipboard, parent=None):
+    def __init__(self, reactor, clipboard=None, parent=None):
         super(ARTIQ_gui, self).__init__(parent)
-        self.clipboard = clipboard
+        #self.clipboard = clipboard
         self.reactor = reactor
         self.connect()
         self.makeLayout(self.cxn)
@@ -66,13 +66,15 @@ class ARTIQ_gui(QMainWindow):
         self.reactor.stop()
 
 if __name__=="__main__":
-    import sys
-    app = QApplication(sys.argv)
-    clipboard = app.clipboard()
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
-    gui = ARTIQ_gui(reactor, clipboard)
-    gui.show()
-    reactor.run()
-    app.exec_()
+    from EGGS_labrad.lib.clients import runClient
+    runClient(ARTIQ_gui)
+    # import sys
+    # app = QApplication(sys.argv)
+    # clipboard = app.clipboard()
+    # import qt5reactor
+    # qt5reactor.install()
+    # from twisted.internet import reactor
+    # gui = ARTIQ_gui(reactor, clipboard)
+    # gui.show()
+    # reactor.run()
+    # app.exec_()

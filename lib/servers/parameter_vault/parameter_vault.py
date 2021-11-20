@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = Parameter Vault
-version = 2.0
+version = 2.0.1
 description = Loads experiment parameters from data vault
 instancename = Parameter Vault
 
@@ -76,7 +76,7 @@ class ParameterVault(LabradServer):
 
     @inlineCallbacks
     def save_parameters(self):
-        '''save the latest parameters into registry'''
+        '''Save the latest parameters into registry.'''
         regDir = self.registryDirectory
         for key, value in self.parameters.items():
             key = list(key)
@@ -110,7 +110,7 @@ class ParameterVault(LabradServer):
 
         # Error strings
         parameter_bound = "Parameter {} Out of Bound"
-        bad_selection = "Inorrect selection made in {}"
+        bad_selection = "Incorrect selection made in {}"
 
         if param_type == 'parameter' or param_type == 'duration_bandwidth':
             assert item[0] <= item[2] <= item[1], parameter_bound.format(key)
@@ -181,7 +181,7 @@ class ParameterVault(LabradServer):
 
     @setting(3, "Save Parameters To Registry", returns='')
     def saveParametersToRegistry(self, c):
-        """Get Experiment Parameter Names"""
+        """Get experiment parameter names."""
         yield self.save_parameters()
 
     @setting(4, "Get Collections", returns='*s')
@@ -191,7 +191,7 @@ class ParameterVault(LabradServer):
 
     @setting(5, "Refresh Parameters", returns='')
     def refresh_parameters(self, c):
-        """Saves Parameters To Registry, then realods them"""
+        """Saves Parameters To Registry, then reloads them"""
         yield self.save_parameters()
         yield self.load_parameters()
 
@@ -205,8 +205,7 @@ class ParameterVault(LabradServer):
         try:
             yield self.save_parameters()
         except AttributeError:
-            # if values don't exist yet, i.e stopServer was called due to an
-            # Identification Error
+            # if values don't exist yet, i.e stopServer called due to an Identification Error
             pass
 
 if __name__ == "__main__":

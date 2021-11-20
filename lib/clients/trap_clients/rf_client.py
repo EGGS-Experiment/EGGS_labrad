@@ -35,9 +35,10 @@ class rf_client(object):
     #@inlineCallbacks
     def initializeGUI(self):
         #connect signals to slots
-        self.gui.niops_lockswitch.toggled.connect(lambda: self.lock_niops())
-        self.gui.niops_power.toggled.connect(lambda: self.toggle_niops())
-        self.gui.niops_record.toggled.connect(lambda: self.record_pressure())
+        self.gui.wav_freq.valueChanged.connect(print)
+        # self.gui.niops_lockswitch.toggled.connect(lambda: self.lock_niops())
+        # self.gui.niops_power.toggled.connect(lambda: self.toggle_niops())
+        # self.gui.niops_record.toggled.connect(lambda: self.record_pressure())
 
         #start up data
 
