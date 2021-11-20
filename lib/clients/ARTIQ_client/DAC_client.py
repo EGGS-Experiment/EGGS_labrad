@@ -65,7 +65,7 @@ class AD5372_channel(QFrame):
         layout.addWidget(self.off, 2, 2)
         layout.addWidget(self.lockswitch, 3, 0)
         layout.addWidget(self.calibrateswitch, 3, 1)
-        layout.addWidget(self.calibrateswitch, 3, 2)
+        layout.addWidget(self.resetswitch, 3, 2)
         self.setLayout(layout)
 
 
@@ -165,9 +165,9 @@ class DAC_client(QWidget):
 
 if __name__ == "__main__":
     #run channel GUI
-    from EGGS_labrad.lib.clients import runGUI
-    runGUI(AD5372_channel, name='AD5372 Channel')
+    # from EGGS_labrad.lib.clients import runGUI
+    # runGUI(AD5372_channel, name='AD5372 Channel')
 
     #run DAC GUI
-    # from EGGS_labrad.lib.clients import runClient
-    # runClient(DAC_client)
+    from EGGS_labrad.lib.clients import runClient
+    runClient(DAC_client)
