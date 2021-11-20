@@ -48,8 +48,8 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad import constants, protocol, util
 import labrad.wrappers
 
-from datavault import SessionStore
-from datavault.server import DataVaultMultiHead
+from data_vault import SessionStore
+from data_vault.server import DataVaultMultiHead
 
 def lock_path(d):
     '''

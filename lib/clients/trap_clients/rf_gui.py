@@ -11,8 +11,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_rf_gui(object):
-    def setupUi(self, rf_gui):
+class rf_gui(object):
+
+    def setupUi(self):
+        rf_gui = self
         rf_gui.setObjectName("rf_gui")
         rf_gui.resize(593, 292)
         self.rf_label = QtWidgets.QLabel(rf_gui)
@@ -148,3 +150,7 @@ class Ui_rf_gui(object):
         self.mod_phase_toggle_label.setText(_translate("rf_gui", "Phase Mod."))
         self.mod_phase_dev_label.setText(_translate("rf_gui", "Phase Dev. (rad)"))
         self.mod_phase_toggle.setText(_translate("rf_gui", "On"))
+
+if __name__=="__main__":
+    from EGGS_labrad.lib.clients import runGUI
+    runGUI(rf_gui)

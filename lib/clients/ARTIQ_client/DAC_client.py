@@ -3,7 +3,7 @@ import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
 
@@ -26,42 +26,44 @@ class AD5372_channel(QFrame):
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        freqlabel = QLabel('Frequency (MHz)')
-        powerlabel = QLabel('Amplitude (V)')
-        attlabel = QLabel('Attenuation (dBm)')
-        layout.addWidget(title, 0, 0, 1, 3)
-        layout.addWidget(freqlabel, 1, 0, 1, 1)
-        layout.addWidget(powerlabel, 1, 1, 1, 1)
-        layout.addWidget(attlabel, 3, 0, 1, 1)
+        dac_label = QLabel('Frequency (MHz)')
+        gain_label = QLabel('Amplitude (V)')
+        off_label = QLabel('Attenuation (dBm)')
 
         # editable fields
-        self.freq = QDoubleSpinBox()
-        self.freq.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        self.freq.setDecimals(3)
-        self.freq.setSingleStep(0.1)
-        self.freq.setRange(10.0, 250.0)
-        self.freq.setKeyboardTracking(False)
-        self.ampl = QDoubleSpinBox()
-        self.ampl.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        self.ampl.setDecimals(3)
-        self.ampl.setSingleStep(0.1)
-        self.ampl.setRange(-145.0, 30.0)
-        self.ampl.setKeyboardTracking(False)
-        self.att = QDoubleSpinBox()
-        self.att.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        self.att.setDecimals(3)
-        self.att.setSingleStep(0.1)
-        self.att.setRange(-145.0, 30.0)
-        self.att.setKeyboardTracking(False)
-        self.rfswitch = TextChangingButton(("On", "Off"))
+        self.dac = QDoubleSpinBox()
+        self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.dac.setDecimals(3)
+        self.dac.setSingleStep(0.1)
+        self.dac.setRange(10.0, 250.0)
+        self.dac.setKeyboardTracking(False)
+        self.gain = QDoubleSpinBox()
+        self.gain.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.gain.setDecimals(3)
+        self.gain.setSingleStep(0.1)
+        self.gain.setRange(-145.0, 30.0)
+        self.gain.setKeyboardTracking(False)
+        self.off = QDoubleSpinBox()
+        self.off.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.off.setDecimals(3)
+        self.off.setSingleStep(0.1)
+        self.off.setRange(-145.0, 30.0)
+        self.off.setKeyboardTracking(False)
+
+        # uttons
+        self.calibrate = QPushButton('Initialize')
         self.lockswitch = TextChangingButton(("Lock", "Unlock"))
 
         #add widgets to layout
-        layout.addWidget(self.freq, 2, 0)
-        layout.addWidget(self.ampl, 2, 1)
-        layout.addWidget(self.att, 4, 0)
-        layout.addWidget(self.rfswitch, 2, 2)
-        #layout.addWidget(self.rfswitch, 2, 2)
+        layout.addWidget(title, 0, 0, 1, 3)
+        layout.addWidget(dac_label, 1, 0, 1, 1)
+        layout.addWidget(gain_label, 1, 1, 1, 1)
+        layout.addWidget(off_label, 3, 0, 1, 1)
+        layout.addWidget(self.dac, 2, 0)
+        layout.addWidget(self.gain, 2, 1)
+        layout.addWidget(self.off, 4, 0)
+        layout.addWidget(self.lockswitch, 2, 2)
+        #layout.addWidget(self.calibrate, 2, 2)
         self.setLayout(layout)
 
 
@@ -70,7 +72,7 @@ class DAC_client(QWidget):
     Client for all DAC channels.
     """
     name = "ARTIQ DAC Client"
-    row_length = 8
+    row_length = 6
 
     def __init__(self, reactor, cxn=None, parent=None):
         super(DAC_client, self).__init__()
@@ -78,7 +80,6 @@ class DAC_client(QWidget):
         self.cxn = cxn
         self.device_db = device_db
         self._parseDevices()
-        self.ad5372_clients = {}
         self.connect()
         self.initializeGUI()
 
@@ -131,6 +132,7 @@ class DAC_client(QWidget):
         Parses device_db for relevant devices.
         """
         #create holding lists
+        self.ad5372_clients = {}
         self.ad5372_list = []
         for name, params in self.device_db.items():
             #only get devices with named class
@@ -161,9 +163,9 @@ class DAC_client(QWidget):
 
 if __name__ == "__main__":
     #run channel GUI
-    # from EGGS_labrad.lib.clients import runGUI
-    # runGUI(AD5372_channel, name='AD5372 Channel')
+    from EGGS_labrad.lib.clients import runGUI
+    runGUI(AD5372_channel, name='AD5372 Channel')
 
     #run DAC GUI
-    from EGGS_labrad.lib.clients import runClient
-    runClient(DAC_client)
+    # from EGGS_labrad.lib.clients import runClient
+    # runClient(DAC_client)

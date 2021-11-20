@@ -23,8 +23,10 @@ class twistorr74_client(object):
         Creates an asynchronous connection to pump servers
         and relevant labrad servers
         """
+        import os
+        LABRADHOST = os.environ['LABRADHOST']
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name='Twistorr74 Client')
+        self.cxn = yield connectAsync(LABRADHOST, name=self.name)
         try:
             self.reg = self.cxn.registry
             self.dv = self.cxn.data_vault

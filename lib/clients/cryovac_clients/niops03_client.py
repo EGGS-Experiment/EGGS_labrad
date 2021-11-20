@@ -22,8 +22,11 @@ class niops03_client(object):
         """
         Creates an asynchronous connection to labrad
         """
+        import os
+        LABRADHOST = os.environ['LABRADHOST']
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name='NIOPS03 Client')
+        self.cxn = yield connectAsync(LABRADHOST, name=self.name)
+
         self.reg = self.cxn.registry
         self.dv = self.cxn.data_vault
         self.niops = self.cxn.niops03_server

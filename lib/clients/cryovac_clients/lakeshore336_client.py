@@ -29,7 +29,7 @@ class lakeshore_client(object):
         import os
         LABRADHOST = os.environ['LABRADHOST']
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync(host=LABRADHOST, name=self.name)
+        self.cxn = yield connectAsync(LABRADHOST, name=self.name)
         #check that required servers are online
         try:
             self.dv = self.cxn.data_vault
@@ -87,9 +87,9 @@ class lakeshore_client(object):
 
             trunk1 = year + '_' + month + '_' + day
             trunk2 = self.name + '_' + hour + ':' + minute
-            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context = self.c_record)
-            yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')], \
-                                       [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'), \
+            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
+            yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')],
+                                       [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'),
                                         ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_record)
 
     @inlineCallbacks
