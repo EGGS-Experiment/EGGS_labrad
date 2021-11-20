@@ -11,4 +11,4 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 START /min CMD /c %HOME%/Code/EGGS_labrad/bin/labrad/start_labrad_devices.bat
 
 ::Clients
-START /min CMD /c %HOME%/Code/EGGS_labrad/bin/start_labrad_clients.bat
+START /min CMD /c %HOME%/Code/EGGS_labrad/bin/labrad/start_labrad_clients.bat
