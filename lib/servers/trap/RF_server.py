@@ -37,7 +37,7 @@ class RFServer(GPIBManagedServer):
         """Reset the signal generator."""
         yield self.selectedDevice(c).reset()
 
-    @setting(121, 'Toggle', onoff='b', returns='')
+    @setting(121, 'Toggle', onoff='b', returns='s')
     def toggle(self, c, onoff=None):
         """Turn the signal generator on/off."""
         yield self.selectedDevice(c).toggle(onoff)
@@ -64,7 +64,7 @@ class RFServer(GPIBManagedServer):
         """Set modulation frequency (in Hz)."""
         return self.selectedDevice(c).mod_freq(freq)
 
-    @setting(312, 'AM Toggle', onoff='b', returns='')
+    @setting(312, 'AM Toggle', onoff='b', returns='s')
     def am_toggle(self, c, onoff=None):
         """Toggle amplitude modulation."""
         self.selectedDevice(c).am_toggle(onoff)
@@ -74,7 +74,7 @@ class RFServer(GPIBManagedServer):
         """Set amplitude modulation depth (in %)."""
         return self.selectedDevice(c).am_depth(depth)
 
-    @setting(321, 'FM Toggle', onoff='b', returns='')
+    @setting(321, 'FM Toggle', onoff='b', returns='s')
     def fm_toggle(self, c, onoff=None):
         """Toggle frequency modulation."""
         self.selectedDevice(c).fm_toggle(onoff)
@@ -84,7 +84,7 @@ class RFServer(GPIBManagedServer):
         """Set frequency modulation deviation (in Hz)."""
         return self.selectedDevice(c).fm_dev(dev)
 
-    @setting(323, 'PM Toggle', onoff='b', returns='')
+    @setting(323, 'PM Toggle', onoff='b', returns='s')
     def pm_toggle(self, c, onoff=None):
         """Toggle phase modulation."""
         self.selectedDevice(c).pm_toggle(onoff)
