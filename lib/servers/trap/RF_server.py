@@ -67,7 +67,7 @@ class RFServer(GPIBManagedServer):
     @setting(312, 'AM Toggle', onoff='b', returns='s')
     def am_toggle(self, c, onoff=None):
         """Toggle amplitude modulation."""
-        self.selectedDevice(c).am_toggle(onoff)
+        return self.selectedDevice(c).am_toggle(onoff)
 
     @setting(313, 'AM Depth', depth='v', returns='v')
     def am_depth(self, c, depth=None):
@@ -77,7 +77,7 @@ class RFServer(GPIBManagedServer):
     @setting(321, 'FM Toggle', onoff='b', returns='s')
     def fm_toggle(self, c, onoff=None):
         """Toggle frequency modulation."""
-        self.selectedDevice(c).fm_toggle(onoff)
+        return self.selectedDevice(c).fm_toggle(onoff)
 
     @setting(322, 'FM Deviation', dev='v', returns='v')
     def fm_dev(self, c, dev=None):
@@ -87,7 +87,7 @@ class RFServer(GPIBManagedServer):
     @setting(323, 'PM Toggle', onoff='b', returns='s')
     def pm_toggle(self, c, onoff=None):
         """Toggle phase modulation."""
-        self.selectedDevice(c).pm_toggle(onoff)
+        return self.selectedDevice(c).pm_toggle(onoff)
 
     @setting(324, 'PM Deviation', dev='v', returns='v')
     def pm_dev(self, c, dev=None):
