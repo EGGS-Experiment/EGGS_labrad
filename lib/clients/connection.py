@@ -44,7 +44,7 @@ class connection(object):
         if connected:
             returnValue(self._servers[server_name])
         else:
-            raise Exception("Not connected.")
+            raise Exception('{} not available.'.format(server_name))
         
     @inlineCallbacks
     def add_on_connect(self, server_name, action):
@@ -57,7 +57,7 @@ class connection(object):
         #check if server is connected; do nothing if not
         connected = yield self._confirm_connected(server_name)
         if not connected:
-            print('{} not available'.format(server_name))
+            print('{} not available.'.format(server_name))
             return
         #add action to list of server disconnect actions
         try:
@@ -114,6 +114,7 @@ class connection(object):
         """
         # message is a tuple of (messageID, servername)
         server_name = message[1]
+        print('server connect: {}'.format(server_name))
         # check to see if we need server
         if server_name in self._servers.keys():
             yield self.cxn.refresh()
@@ -133,6 +134,7 @@ class connection(object):
         """
         # message is a tuple of (messageID, servername)
         server_name = message[1]
+        print('server disconnect: {}'.format(server_name))
         # check to see if we are using server
         if server_name in self._servers.keys():
             print('{} disconnected'.format(server_name))

@@ -1,6 +1,6 @@
 import os
 
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, Deferred
 from EGGS_labrad.lib.clients.trap_clients.rf_gui import rf_gui
 
 from PyQt5.QtWidgets import QWidget
@@ -12,83 +12,105 @@ class rf_client(object):
         self.gui = rf_gui()
         self.reactor = reactor
         self.connect()
-        self.initializeGUI()
+        self.gui.setupUi()
 
-    #Setup functions
+    # Setup functions
     @inlineCallbacks
     def connect(self):
         """
         Creates an asynchronous connection to labrad
         """
-        import os
-        LABRADHOST = os.environ['LABRADHOST']
-        from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync(LABRADHOST, name=self.name)
+        # use connection object since we need
+        # to wait until servers are all connected
+        from EGGS_labrad.lib.clients.connection import connection
+        self.cxn = connection()
+        yield self.cxn.connect()
 
-        self.reg = self.cxn.registry
-        self.dv = self.cxn.data_vault
-        self.rf = self.cxn.rf_server
-        #todo: ensure device is selected
+        #add following servers to connection for future use
+        try:
+            yield self.cxn.get_server('Registry')
+            yield self.cxn.get_server('Data Vault')
+            yield self.cxn.get_server('RF Server')
+        except Exception as e:
+            print(e)
+            raise
 
-        yield self.rf.select_device()
+        try:
+            yield self.selectDevice()
+            yield self.initializeGUI()
+            yield self.getDeviceParams()
+        except Exception as e:
+            print(e)
+            raise
 
-    #@inlineCallbacks
+        #initialize client when rf server is connected
+        yield self.cxn.add_on_connect('RF Server', self.selectDevice)
+        yield self.cxn.add_on_connect('RF Server', self.initializeGUI)
+        yield self.cxn.add_on_connect('RF Server', self.getDeviceParams)
+        #prevent changes when rf server disconnects
+        #yield self.cxn.add_on_disconnect('RF Server', self.lock())
+
+    @inlineCallbacks
     def initializeGUI(self):
-        self.gui.setupUi()
+        print('init s')
+        rf = yield self.cxn.get_server('RF Server')
         # waveform
             #parameters
-        self.gui.wav_freq.valueChanged.connect(lambda freq: (self.rf.frequency(freq * 1000)))
-        self.gui.wav_ampl.valueChanged.connect(lambda ampl, units='DBM': self.rf.amplitude(ampl, units))
+        self.gui.wav_freq.valueChanged.connect(lambda freq: (rf.frequency(freq * 1000)))
+        self.gui.wav_ampl.valueChanged.connect(lambda ampl, units='DBM': rf.amplitude(ampl, units))
             #buttons
-        self.gui.wav_toggle.clicked.connect(lambda status: self.rf.toggle(status))
+        self.gui.wav_toggle.clicked.connect(lambda status: rf.toggle(status))
         self.gui.wav_lockswitch.clicked.connect(lambda status: self.lock(status))
         self.gui.wav_reset.clicked.connect(lambda: self.reset())
         # modulation
             #parameters
-        self.gui.mod_freq.valueChanged.connect(lambda freq: self.rf.mod_freq(freq * 1000))
-        self.gui.mod_ampl_depth.valueChanged.connect(lambda ampl_depth: self.rf.am_depth(ampl_depth))
-        self.gui.mod_freq_dev.valueChanged.connect(lambda freq_dev: self.rf.fm_dev(freq_dev))
-        self.gui.mod_phase_dev.valueChanged.connect(lambda pm_dev: self.rf.pm_dev(pm_dev))
+        self.gui.mod_freq.valueChanged.connect(lambda freq: rf.mod_freq(freq * 1000))
+        self.gui.mod_ampl_depth.valueChanged.connect(lambda ampl_depth: rf.am_depth(ampl_depth))
+        self.gui.mod_freq_dev.valueChanged.connect(lambda freq_dev: rf.fm_dev(freq_dev))
+        self.gui.mod_phase_dev.valueChanged.connect(lambda pm_dev: rf.pm_dev(pm_dev))
             #on/off buttons
-        self.gui.mod_freq_toggle.clicked.connect(lambda status: self.rf.fm_toggle(status))
-        self.gui.mod_ampl_toggle.clicked.connect(lambda status: self.rf.am_toggle(status))
-        self.gui.mod_phase_toggle.clicked.connect(lambda status: self.rf.pm_toggle(status))
+        self.gui.mod_freq_toggle.clicked.connect(lambda status: rf.fm_toggle(status))
+        self.gui.mod_ampl_toggle.clicked.connect(lambda status: rf.am_toggle(status))
+        self.gui.mod_phase_toggle.clicked.connect(lambda status: rf.pm_toggle(status))
+        print('init e')
 
-        #yield self.getDeviceParams()
+    @inlineCallbacks
+    def selectDevice(self):
+        print('sel s')
+        rf = yield self.cxn.get_server('RF Server')
+        yield rf.select_device()
+        print('sel e')
 
     @inlineCallbacks
     def getDeviceParams(self):
-        """
-        Gets default/startup values from device.
-        """
-        freq = yield self.rf.frequency()
-        self.gui.wav_freq.setValue(freq / 1000)
-        ampl = self.rf.amplitude()
-        self.gui.wav_ampl.setValue(ampl)
-        mod_freq = self.rf.mod_freq()
-        self.gui.mod_freq.setValue(mod_freq / 1000)
-        fm_dev = self.rf.fm_dev()
-        self.gui.mod_freq_dev.setValue(fm_dev / 1000)
-        am_depth = self.rf.am_depth()
-        self.gui.mod_ampl_depth.setValue(am_depth)
-        pm_dev = self.rf.pm_dev()
-        self.gui.mod_phase_dev.setValue(pm_dev)
-        onoff_status = self.rf.toggle()
-        self.gui.wav_toggle.setChecked(onoff_status)
-        am_status = self.rf.am_toggle()
-        self.gui.wav_toggle.setChecked(am_status)
-        fm_status = self.rf.fm_toggle()
-        self.gui.wav_toggle.setChecked(fm_status)
-        pm_status = self.rf.pm_toggle()
-        self.gui.wav_toggle.setChecked(pm_status)
+        print('gdp s')
+        rf = yield self.cxn.get_server('RF Server')
+        try:
+            freq = yield rf.frequency()
+            self.gui.wav_freq.setValue(freq / 1000)
+            ampl = yield rf.amplitude()
+            self.gui.wav_ampl.setValue(ampl)
+            mod_freq = yield rf.modulation_frequency()
+            self.gui.mod_freq.setValue(mod_freq / 1000)
+            fm_dev = yield rf.fm_deviation()
+            self.gui.mod_freq_dev.setValue(fm_dev / 1000)
+            am_depth = yield rf.am_depth()
+            self.gui.mod_ampl_depth.setValue(am_depth)
+            pm_dev = yield rf.pm_deviation()
+            self.gui.mod_phase_dev.setValue(pm_dev)
+        except Exception as e:
+            print(e)
+        print('gdp e')
+
 
     @inlineCallbacks
     def reset(self):
         """
         Resets RF client buttons and sends reset signal to server.
         """
+        rf = yield self.cxn.get_server('RF Server')
         #call reset
-        yield self.rf.reset()
+        yield rf.reset()
         #set parameters to device defaults
         yield self.getDeviceParams()
 

@@ -9,8 +9,21 @@ class SMY01Wrapper(GPIBDeviceWrapper):
     mod_params = {'AM': 0, 'AF': 0, 'FM': 0, 'PHM': 0}
 
     #Helper functions
-    _parse = lambda self, resp, text: resp.split(text)[-1]
     _dbmToV = lambda self, dbm: dbm
+
+    #_parse = lambda self, resp, text: resp.split(text)[-1]
+    def _parse(self, resp, text):
+        """
+        Removes the command from the device response.
+        """
+        result = resp.split(text)[-1]
+        result = result.strip()
+        #in case device is off
+        try:
+            result = float(result)
+        except Exception as e:
+            result = 0
+        return result
 
     # GENERAL
     @inlineCallbacks
