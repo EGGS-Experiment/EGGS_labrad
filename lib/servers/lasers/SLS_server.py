@@ -85,7 +85,7 @@ class SLSServer(SerialDeviceServer):
             set_resp = self._parse(set_resp, True)
             print(set_resp)
         resp = yield self.ser.read()
-        resp = yield self._parse(set_resp, False)
+        resp = yield self._parse(resp, False)
         returnValue(resp)
 
     #PDH
@@ -111,7 +111,7 @@ class SLSServer(SerialDeviceServer):
             print(set_resp)
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
         resp = yield self.ser.read()
-        resp = yield self._parse(set_resp, False)
+        resp = yield self._parse(resp, False)
         returnValue(resp)
 
     #Offset lock
@@ -132,7 +132,7 @@ class SLSServer(SerialDeviceServer):
             print(set_resp)
         yield self.ser.write('get ' + chString + TERMINATOR)
         resp = yield self.ser.read()
-        resp = yield self._parse(set_resp, False)
+        resp = yield self._parse(resp, False)
         returnValue(resp)
 
     @setting(312, 'Offset Lockpoint', lockpoint='i', returns='s')
@@ -152,7 +152,7 @@ class SLSServer(SerialDeviceServer):
             print(set_resp)
         yield self.ser.write('get ' + chstring + TERMINATOR)
         resp = yield self.ser.read()
-        resp = yield self._parse(set_resp, False)
+        resp = yield self._parse(resp, False)
         returnValue(resp)
 
     #Servo
@@ -180,7 +180,7 @@ class SLSServer(SerialDeviceServer):
             print(set_resp)
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
         resp = yield self.ser.read()
-        resp = yield self._parse(set_resp, False)
+        resp = yield self._parse(resp, False)
         returnValue(resp)
 
     #Misc. settings
