@@ -226,6 +226,7 @@ class SLSServer(SerialDeviceServer):
         resp = yield self.ser.read()
         sleep(1)
         resp2 = yield self._parse(resp, False)
+        resp2 = yield self._parse(resp, False)
         returnValue(resp2)
 
 

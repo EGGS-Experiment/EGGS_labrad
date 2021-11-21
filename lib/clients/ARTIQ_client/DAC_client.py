@@ -53,9 +53,9 @@ class AD5372_channel(QFrame):
         # buttons
         self.resetswitch = QPushButton('Reset')
         self.calibrateswitch = QPushButton('Calibrate')
-        self.lockswitch = TextChangingButton(("Lock", "Unlock"))
+        self.lockswitch = TextChangingButton(('Locked', 'Unlocked'))
 
-        #add widgets to layout
+        # add widgets to layout
         layout.addWidget(title, 0, 0, 1, 3)
         layout.addWidget(dac_label, 1, 0, 1, 1)
         layout.addWidget(gain_label, 1, 1, 1, 1)
@@ -106,46 +106,64 @@ class DAC_client(QWidget):
         title.setAlignment(QtCore.Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 4)
         #layout widgets
-        for i in range(len(self.ad5372_list)):
-            # initialize GUIs for each channel
-            channel_name = self.ad5372_list[i]
-            channel_gui = AD5372_channel(channel_name)
-            # layout channel GUI
-            row = int(i / (self.row_length)) + 2
-            column = i % (self.row_length)
-            # connect signals to slots
-            channel_gui.freq.valueChanged.connect(lambda chan=channel_name, freq=channel_gui.freq.value():
-                                                  self.setFrequency(chan, freq))
-            channel_gui.ampl.valueChanged.connect(lambda chan=channel_name, ampl=channel_gui.ampl.value():
-                                                  self.setAmplitude(chan, ampl))
-            channel_gui.att.valueChanged.connect(lambda chan=channel_name, att=channel_gui.att.value():
-                                                 self.setAttenuation(chan, att))
-            channel_gui.rfswitch.toggled.connect(lambda chan=channel_name, status=channel_gui.rfswitch.isChecked():
-                                                 self.toggleSwitch())
-            # add widget to client list and layout
-            self.ad5372_clients[channel_name] = channel_gui
-            layout.addWidget(channel_gui, row, column, 1, 1)
-            #print('row:' + str(row) + ', column: ' + str(column))
+        for i in range(len(self.zotino_list)):
+            name = self.zotino_list[i]
+            zotino_group = self._makeZotinoGroup(name)
+            layout.addWidget(zotino_group, 2 + i, 0)
         self.setLayout(layout)
 
-    #todo: run asynchronously
+    def _makeZotinoGroup(self, ttl_list, name):
+        """
+        Creates a group of zotino channels as a widget.
+        """
+        # create widget
+        zotino_group = QFrame()
+        zotino_group.setFrameStyle(0x0001 | 0x0010)
+        zotino_group.setLineWidth(2)
+        layout = QGridLayout()
+        # set title
+        title = QLabel(name)
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        title.setAlignment(QtCore.Qt.AlignCenter)
+        layout.addWidget(title, 0, 0)
+        # layout individual channels (32 per zotino)
+        for i in range(31):
+            # initialize GUIs for each channel
+            channel_name = name + '_' + str(i)
+            channel_gui = AD5372_channel(channel_name)
+            # layout channel GUI
+            row = int(i / self.row_length) + 2
+            column = i % self.row_length
+            # connect signals to slots
+            channel_gui.dac.valueChanged.connect(lambda value, chan=channel_name:
+                                                 self.setDAC(chan, value))
+            channel_gui.gain.valueChanged.connect(lambda value, chan=channel_name:
+                                                  self.setGain(chan, value))
+            channel_gui.off.valueChanged.connect(lambda value, chan=channel_name:
+                                                 self.setOffset(chan, value))
+            channel_gui.calibrateswitch.clicked.connect(lambda: self.calibrate)
+            channel_gui.resetswitch.clicked.connect(lambda: self.reset)
+            channel_gui.lockswitch.clicked.connect(lambda status: self.lock(status))
+            # add widget to client list and layout
+            self.ad5372_clients[channel_name] = channel_gui
+            layout.addWidget(channel_gui, row, column)
+            # print(name + ' - row:' + str(row) + ', column: ' + str(column))
+        zotino_group.setLayout(layout)
+        return zotino_group
+
     def _parseDevices(self):
         """
         Parses device_db for relevant devices.
         """
         #create holding lists
+        self.zotino_list = []
         self.ad5372_clients = {}
-        self.ad5372_list = []
         for name, params in self.device_db.items():
             #only get devices with named class
             if 'class' not in params:
                 continue
-            if params['class'] == 'AD5372':
-                self.ad5372_list.append(name)
-
-    @inlineCallbacks
-    def toggleSwitch(self, channel_name, status):
-        yield self.artiq.toggle_DAC(channel_name, status)
+            if params['class'] == 'Zotino':
+                self.zotino_list.append(name)
 
     @inlineCallbacks
     def setFrequency(self, channel_name, freq):
@@ -158,6 +176,15 @@ class DAC_client(QWidget):
     @inlineCallbacks
     def setAttenuation(self, channel_name, att):
         yield self.artiq.set_DAC_attenuation(channel_name, att)
+
+    def lock(self, status):
+        """
+        Locks DAC channel interface.
+        """
+        # invert since textchangingbutton is weird
+        status = not status
+        for channel in self.ad5372_clients.values():
+            channel.setEnabled(status)
 
     def closeEvent(self, x):
         self.reactor.stop()
