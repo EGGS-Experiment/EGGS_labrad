@@ -24,7 +24,7 @@ class lakeshore336_gui(QtWidgets.QFrame):
         self.lakeshore_label.setAlignment(QtCore.Qt.AlignCenter)
         #temperature readout
         self.tempAll_label = QtWidgets.QLabel('Temperature Readout')
-        self.tempAll_label.setFont(QFont(shell_font, pointSize= 20))
+        self.tempAll_label.setFont(QFont(shell_font, pointSize= 15))
         self.tempAll_label.setAlignment(QtCore.Qt.AlignCenter)
             #record button
         self.tempAll_record = TextChangingButton(('Stop Recording', 'Start Recording'))
@@ -55,7 +55,7 @@ class lakeshore336_gui(QtWidgets.QFrame):
 
         #heaters
         self.heatAll_label = QtWidgets.QLabel('Heater Configuration')
-        self.heatAll_label.setFont(QFont(shell_font, pointSize= 20))
+        self.heatAll_label.setFont(QFont(shell_font, pointSize= 15))
         self.heatAll_label.setAlignment(QtCore.Qt.AlignCenter)
         self.heatAll_lockswitch = TextChangingButton(('Lock', 'Unlock'))
             #heater output
@@ -225,7 +225,7 @@ class lakeshore336_gui(QtWidgets.QFrame):
         heat_box_start = 6
         heat_box_step = 1
 
-        layout.addWidget(self.lakeshore_label, 0, 6, 1, 3)
+        layout.addWidget(self.lakeshore_label, 0, 0, 1, 16)
         layout.addWidget(self.tempAll_label, 1, 2)
         layout.addWidget(self.tempAll_record, 2, 2)
 
@@ -291,7 +291,7 @@ class lakeshore336_gui(QtWidgets.QFrame):
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runGUI
-    runGUI(lakeshore_gui)
+    runGUI(lakeshore336_gui)
 
 
 
