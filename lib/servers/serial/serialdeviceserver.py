@@ -359,8 +359,8 @@ class SerialDeviceServer(LabradServer):
         resp = yield self.ser.read()
         returnValue(resp)
 
-    @setting(111115, 'Serial Read', data='s', returns='s')
-    def serial_read(self, c, data):
+    @setting(111115, 'Serial Read', returns='s')
+    def serial_read(self, c):
         """Directly read the serial buffer."""
         resp = yield self.ser.read()
         returnValue(resp)
