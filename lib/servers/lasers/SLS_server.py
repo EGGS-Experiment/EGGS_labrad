@@ -46,11 +46,11 @@ class SLSServer(SerialDeviceServer):
         if enable:
             yield self.ser.write('set ' + chString + ' ' + str(enable) + TERMINATOR)
             set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp)
+            set_resp = self._parse(set_resp, True)
             print(set_resp)
         yield self.ser.write('get ' + chString + TERMINATOR)
         resp = yield self.ser.read()
-        resp = yield self._parse(resp)
+        resp = yield self._parse(set_resp, False)
         returnValue(resp)
 
     @setting(112, 'Autolock Status', returns='*s')
@@ -77,15 +77,15 @@ class SLSServer(SerialDeviceServer):
         if param.lower() == 'current':
             yield self.ser.write('set ' + chString + ' ' + '2' + TERMINATOR)
             set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp)
+            set_resp = self._parse(set_resp, True)
             print(set_resp)
         elif param.upper() == 'PZT':
             yield self.ser.write('set ' + chString + ' ' + '1' + TERMINATOR)
             set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp)
+            set_resp = self._parse(set_resp, True)
             print(set_resp)
         resp = yield self.ser.read()
-        resp = yield self._parse(resp)
+        resp = yield self._parse(set_resp, False)
         returnValue(resp)
 
     #PDH
@@ -107,11 +107,11 @@ class SLSServer(SerialDeviceServer):
         if param_val:
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
             set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp)
+            set_resp = self._parse(set_resp, True)
             print(set_resp)
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
         resp = yield self.ser.read()
-        resp = yield self._parse(resp)
+        resp = yield self._parse(set_resp, False)
         returnValue(resp)
 
     #Offset lock
@@ -128,11 +128,11 @@ class SLSServer(SerialDeviceServer):
         if freq:
             yield self.ser.write('set ' + chString + ' ' + freq + TERMINATOR)
             set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp)
+            set_resp = self._parse(set_resp, True)
             print(set_resp)
         yield self.ser.write('get ' + chString + TERMINATOR)
         resp = yield self.ser.read()
-        resp = yield self._parse(resp)
+        resp = yield self._parse(set_resp, False)
         returnValue(resp)
 
     @setting(312, 'Offset Lockpoint', lockpoint='i', returns='s')
@@ -148,11 +148,11 @@ class SLSServer(SerialDeviceServer):
         if lockpoint:
             yield self.ser.write('set ' + chstring + ' ' + lockpoint + TERMINATOR)
             set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp)
+            set_resp = self._parse(set_resp, True)
             print(set_resp)
         yield self.ser.write('get ' + chstring + TERMINATOR)
         resp = yield self.ser.read()
-        resp = yield self._parse(resp)
+        resp = yield self._parse(set_resp, False)
         returnValue(resp)
 
     #Servo
@@ -176,11 +176,11 @@ class SLSServer(SerialDeviceServer):
         if param_val:
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
             set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp)
+            set_resp = self._parse(set_resp, True)
             print(set_resp)
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
         resp = yield self.ser.read()
-        resp = yield self._parse(resp)
+        resp = yield self._parse(set_resp, False)
         returnValue(resp)
 
     #Misc. settings
@@ -216,11 +216,11 @@ class SLSServer(SerialDeviceServer):
         if param:
             yield self.ser.write('set ' + chstring + ' ' + str(param) + TERMINATOR)
             set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp)
+            set_resp = self._parse(set_resp, True)
             print(set_resp)
         yield self.ser.write('get ' + chstring + TERMINATOR)
         resp = yield self.ser.read()
-        resp = self._parse(resp)
+        resp = self._parse(set_resp, False)
         returnValue(resp)
 
 if __name__ == "__main__":
