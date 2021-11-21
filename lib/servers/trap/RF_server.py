@@ -40,7 +40,7 @@ class RFServer(GPIBManagedServer):
     @setting(121, 'Toggle', onoff='b', returns='s')
     def toggle(self, c, onoff=None):
         """Turn the signal generator on/off."""
-        yield self.selectedDevice(c).toggle(onoff)
+        return self.selectedDevice(c).toggle(onoff)
 
 
     # WAVEFORM

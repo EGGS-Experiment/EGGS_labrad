@@ -28,7 +28,6 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         resp = yield self.query('LEV?')
         if resp == 'LEVEL:OFF':
             returnValue('OFF')
-        #todo: ensure that resp doesnt default to else since it's a deferred
         else:
             returnValue('ON')
 
@@ -56,6 +55,9 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         resp = yield self.query('LEV?')
         #strip text preamble
         resp = self._parse(resp, 'LEVEL')
+        #special case if rf is off
+        if resp == ':OFF':
+            returnValue(0)
         returnValue(float(resp))
 
 
