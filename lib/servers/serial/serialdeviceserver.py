@@ -62,6 +62,12 @@ Created on Dec 22, 2010
 # Servers now flush input and output buffers on connection to device
 #===============================================================================
 
+#===============================================================================
+# 2021 - 11 - 15
+#
+# Added read_all to ser for use with SLS
+#===============================================================================
+
 #imports
 from twisted.internet.defer import returnValue, inlineCallbacks
 from labrad.server import LabradServer, setting
@@ -339,10 +345,23 @@ class SerialDeviceServer(LabradServer):
         else:
             raise Exception('No device selected')
 
-    @setting(111113, 'Query', data='s', returns='s')
-    def query(self, c, data):
+    @setting(111113, 'Serial Query', data='s', returns='s')
+    def serial_query(self, c, data):
         """Write any string and read the response"""
         yield self.ser.write(data)
+        resp = yield self.ser.read()
+        returnValue(resp)
+
+    @setting(111114, 'Serial Write', data='s', returns='s')
+    def serial_write(self, c, data):
+        """Directly write to the serial device."""
+        yield self.ser.write(data)
+        resp = yield self.ser.read()
+        returnValue(resp)
+
+    @setting(111115, 'Serial Read', data='s', returns='s')
+    def serial_read(self, c, data):
+        """Directly read the serial buffer."""
         resp = yield self.ser.read()
         returnValue(resp)
 

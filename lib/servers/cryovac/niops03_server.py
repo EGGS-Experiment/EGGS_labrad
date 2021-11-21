@@ -83,7 +83,7 @@ class NIOPS03Server(SerialDeviceServer):
         return resp
 
     #PARAMETERS
-    @setting(211,'IP Pressure', returns='v')
+    @setting(211, 'IP Pressure', returns='v')
     def pressure_ip(self, c):
         """
         Get ion pump pressure in mbar
@@ -121,6 +121,7 @@ class NIOPS03Server(SerialDeviceServer):
         Returns:
             [[int, int], [int, int]]: working time of ion pump and getter
         """
+        #todo: ensure no problem here
         yield self.ser.write('TM' + TERMINATOR)
         ip_time = yield self.ser.read_line('\r')
         np_time = yield self.ser.read_line('\r')

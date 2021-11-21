@@ -37,31 +37,38 @@ class SLSServer(SerialDeviceServer):
     timeout = T.Value(1.0, 's')
 
     #Autolock
-    @setting(111,'autolock toggle', enable='s', returns='s')
+    @setting(111, 'Autolock Toggle', enable='s', returns='s')
     def autolock_toggle(self, c, enable=None):
         '''
         Toggle autolock
         '''
         chString = 'AutoLockEnable'
         if enable:
-            yield self.ser.write('set ' + chString + ' ' + enable + TERMINATOR)
-
-        resp = yield self._getValue(chString)
+            yield self.ser.write('set ' + chString + ' ' + str(enable) + TERMINATOR)
+            set_resp = yield self.ser.read()
+            set_resp = self._parse(set_resp)
+            print(set_resp)
+        yield self.ser.write('get ' + chString + TERMINATOR)
+        resp = yield self.ser.read()
+        resp = yield self._parse(resp)
         returnValue(resp)
 
-    @setting(112, 'autolock status', returns='*s')
+    @setting(112, 'Autolock Status', returns='*s')
     def autolock_status(self, c):
         '''
-        Get autolock status
+        Get autolock status.
+        Returns:
+            [v, v, v]: the lock time, lock count, and lock state
         '''
         chString = ['LockTime', 'LockCount', 'AutoLockState']
         resp = []
         for string in chString:
-            resp_tmp = yield self._getValue(string)
+            resp_tmp = yield self.ser.write('get ' + chString + TERMINATOR)
+            resp_tmp = yield self._parse(resp_tmp)
             resp.append(resp_tmp)
         returnValue(resp)
 
-    @setting(111,'autolock parameter', param='s', returns = 's')
+    @setting(111, 'Autolock Parameter', param='s', returns='s')
     def autolock_param(self, c, param=None):
         '''
         Choose parameter for autolock to sweep
@@ -69,30 +76,84 @@ class SLSServer(SerialDeviceServer):
         chString = 'SweepType'
         if param.lower() == 'current':
             yield self.ser.write('set ' + chString + ' ' + '2' + TERMINATOR)
-        if param.upper() == 'PZT':
+            set_resp = yield self.ser.read()
+            set_resp = self._parse(set_resp)
+            print(set_resp)
+        elif param.upper() == 'PZT':
             yield self.ser.write('set ' + chString + ' ' + '1' + TERMINATOR)
-        resp = yield self._getValue(chString)
+            set_resp = yield self.ser.read()
+            set_resp = self._parse(set_resp)
+            print(set_resp)
+        resp = yield self.ser.read()
+        resp = yield self._parse(resp)
         returnValue(resp)
 
     #PDH
-    @setting(211, 'PDH', param_name = 's', param_val = '?', returns = 's')
-    def PDH(self, c, param_name, param_val = None):
+    @setting(211, 'PDH', param_name='s', param_val='?', returns='s')
+    def PDH(self, c, param_name, param_val=None):
         '''
         Adjust PDH settings
         Arguments:
-            param_name      (string): the parameter to adjust, can be 'frequency', 'index', 'phase', or 'filter'
-            param_val       (): the value to set the parameter to
-
+            param_name      (string): the parameter to adjust, can be any of ['frequency', 'index', 'phase', 'filter']
+            param_val       ()      : the value to set the parameter to
+        Returns:
+                                    : the value of param_name
         '''
         chstring = {'frequency': 'PDHFrequency', 'index': 'PDHPMIndex', 'phase': 'PDHPhaseOffset', 'filter': 'PDHDemodFilter'}
-        string_tmp = chstring[param_name.lower()]
+        try:
+            string_tmp = chstring[param_name.lower()]
+        except KeyError:
+            print('Invalid parameter. Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
         if param_val:
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
-        resp = yield self._getValue(string_tmp)
+            set_resp = yield self.ser.read()
+            set_resp = self._parse(set_resp)
+            print(set_resp)
+        yield self.ser.write('get ' + string_tmp + TERMINATOR)
+        resp = yield self.ser.read()
+        resp = yield self._parse(resp)
         returnValue(resp)
 
     #Offset lock
+    @setting(311, 'Offset Frequency', freq='v', returns='s')
+    def offset_frequency(self, c, freq=None):
+        '''
+        Set offset frquency.
+        Arguments:
+            freq    (float) : a frequency between [1e7, 8e8]
+        Returns:
+                            : the value of offset frequency
+        '''
+        chString = 'OffsetFrequency'
+        if freq:
+            yield self.ser.write('set ' + chString + ' ' + freq + TERMINATOR)
+            set_resp = yield self.ser.read()
+            set_resp = self._parse(set_resp)
+            print(set_resp)
+        yield self.ser.write('get ' + chString + TERMINATOR)
+        resp = yield self.ser.read()
+        resp = yield self._parse(resp)
+        returnValue(resp)
 
+    @setting(312, 'Offset Lockpoint', lockpoint='i', returns='s')
+    def offset_lockpoint(self, c, lockpoint=None):
+        '''
+        Set offset lockpoint.
+        Arguments:
+            lockpoint   (float) : offset lockpoint between [0, 4]. 0
+        Returns:
+                                : the offset lockpoint
+        '''
+        chstring = 'LockPoint'
+        if lockpoint:
+            yield self.ser.write('set ' + chstring + ' ' + lockpoint + TERMINATOR)
+            set_resp = yield self.ser.read()
+            set_resp = self._parse(set_resp)
+            print(set_resp)
+        yield self.ser.write('get ' + chstring + TERMINATOR)
+        resp = yield self.ser.read()
+        resp = yield self._parse(resp)
+        returnValue(resp)
 
     #Servo
     @setting(411, 'servo', servo_target='s', param_name='s', param_val='?', returns='s')
@@ -102,32 +163,65 @@ class SLSServer(SerialDeviceServer):
         Arguments:
             servo_target    (string): target of the PID lock
             param_name      (string): the parameter to change
-            param_val       (): value to change
+            param_val       ()      : value to change
         '''
         tgstring = {'current': 'Current', 'pzt': 'PZT', 'tx': 'TX'}
         chstring = {'p': 'ServoPropGain', 'i': 'ServoIntGain', 'd': 'ServoDiffGain', 'set': 'ServoSetpoint', 'loop': 'ServoInvertLoop', 'filter': 'ServoOutputFilter'}
 
-        string_tmp = tgstring[servo_target.lower()] + chstring[param_name.lower()]
-        if param_val is not None:
+        try:
+            string_tmp = tgstring[servo_target.lower()] + chstring[param_name.lower()]
+        except KeyError:
+            print('Invalid target or parameter. Target must be one of [\'current\',\'pzt\',\'tx\'].'
+                  'Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
+        if param_val:
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
-        resp = yield self._getValue(string_tmp)
+            set_resp = yield self.ser.read()
+            set_resp = self._parse(set_resp)
+            print(set_resp)
+        yield self.ser.write('get ' + string_tmp + TERMINATOR)
+        resp = yield self.ser.read()
+        resp = yield self._parse(resp)
         returnValue(resp)
 
     #Misc. settings
 
     #Helper functions
-    @inlineCallbacks
-    def _getValue(self, string):
+    def _parse(self, string, setter):
         """
-        Strips the echo from the SLS
+        Strips echo from SLS and returns a dictionary with
+        keys as parameter names and values as parameter value.
         """
-        echo_length = yield self.ser.write('get ' + string + TERMINATOR)
-        #echo_length += len(string)
-        sleep(0.5)
-        resp = yield self.ser.read()
-        resp = resp[echo_length:STRIP_END]
-        returnValue(resp)
+        result = {}
+        if type(string) == bytes:
+            string = string.decode('utf-8')
+        #split by lines
+        string = string.split('\r\n')
+        #remove echo and end message
+        string = string[1:-1]
+        #setter responses only give ok or not ok
+        if setter:
+            return string
+        #split parameters and values by '=' sign
+        for paramstring in string:
+            params = paramstring.split('=')
+            result[params[0]] = params[1]
+        return result
 
+    @inlineCallbacks
+    def _query(self, chstring, param):
+        """
+        Writes parameter to SLS and verifies setting,
+        then reads back same parameter
+        """
+        if param:
+            yield self.ser.write('set ' + chstring + ' ' + str(param) + TERMINATOR)
+            set_resp = yield self.ser.read()
+            set_resp = self._parse(set_resp)
+            print(set_resp)
+        yield self.ser.write('get ' + chstring + TERMINATOR)
+        resp = yield self.ser.read()
+        resp = self._parse(resp)
+        returnValue(resp)
 
 if __name__ == "__main__":
     from labrad import util

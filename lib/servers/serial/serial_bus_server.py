@@ -269,8 +269,7 @@ class SerialServer(LabradServer):
         ser.write(data)
         return int(len(data))
 
-    @setting(41, 'Write Line', data=['s: Data to send'],
-             returns=['w: Bytes sent'])
+    @setting(41, 'Write Line', data=['s: Data to send'], returns=['w: Bytes sent'])
     def write_line(self, c, data):
         """Sends data over the port appending CR LF."""
         ser = self.getPort(c)

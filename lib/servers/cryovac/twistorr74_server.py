@@ -50,7 +50,7 @@ class TwisTorr74Server(SerialDeviceServer):
     }
 
     #TOGGLE
-    @setting(111,'toggle', onoff = 'b', returns='')
+    @setting(111, 'toggle', onoff='b', returns='')
     def toggle(self, c, onoff):
         """
         Start or stop the pump
@@ -59,10 +59,12 @@ class TwisTorr74Server(SerialDeviceServer):
         Returns:
                     (bool): pump state
         """
+        _data_msg = b''
+        if onoff:
+            o
         #create and send message to device
-        message = yield self._create_message(CMD_msg = b'000', DIR_msg = self.WRITE_msg, DATA_msg = b'1')
+        message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'1')
         yield self.ser.write(message)
-
         #read and parse answer
         time.sleep(1.0)
         resp = yield self.ser.read()
@@ -80,7 +82,7 @@ class TwisTorr74Server(SerialDeviceServer):
             (float): pump pressure in ***
         """
         #create and send message to device
-        message = yield self._create_message(CMD_msg = b'224', DIR_msg = self.READ_msg)
+        message = yield self._create_message(CMD_msg=b'224', DIR_msg=self.READ_msg)
         yield self.ser.write(message)
 
         #read and parse answer
@@ -94,7 +96,7 @@ class TwisTorr74Server(SerialDeviceServer):
         returnValue(resp)
 
     #Helper functions
-    def _create_message(self, CMD_msg, DIR_msg, DATA_msg = b''):
+    def _create_message(self, CMD_msg, DIR_msg, DATA_msg=b''):
         """
         Creates a message according to the Twistorr74 serial protocol
         """
@@ -108,12 +110,12 @@ class TwisTorr74Server(SerialDeviceServer):
         #convert checksum to hex value and add to end
         CRC_msg = hex(CRC_msg)[2:]
         msg.extend(bytearray(CRC_msg, encoding='utf-8'))
+        #todo: streamline this last bit
         return bytes(msg)
 
     def _parse_answer(self, ans):
-        if ans == (b''):
-            raise Exception ('No response from device')
-
+        if ans == b'':
+            raise Exception('No response from device')
         # remove STX, ADDR, and CRC
         ans = ans[2:-3]
         #check if we have CMD and DIR and remove them if so
@@ -124,7 +126,7 @@ class TwisTorr74Server(SerialDeviceServer):
             ans = 'Acknowledged'
         elif ans in self.ERRORS_msg:
             raise Exception(self.ERRORS_msg[ans])
-
+        #todo: check that this doesn't give problems
         return ans
 
 if __name__ == '__main__':

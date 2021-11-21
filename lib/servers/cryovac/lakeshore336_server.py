@@ -57,7 +57,7 @@ class Lakeshore336Server(SerialDeviceServer):
             raise Exception("Value must be one of: " + str(valid_inputs))
 
     # TEMPERATURE DIODES
-    @setting(111,'Read Temperature', output_channel='s', returns='*1v')
+    @setting(111, 'Read Temperature', output_channel='s', returns='*1v')
     def temperature_read(self, c, output_channel):
         """
         Get sensor temperature
