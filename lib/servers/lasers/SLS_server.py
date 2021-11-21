@@ -63,7 +63,7 @@ class SLSServer(SerialDeviceServer):
         chString = ['LockTime', 'LockCount', 'AutoLockState']
         resp = []
         for string in chString:
-            resp_tmp = yield self.ser.write('get ' + chString + TERMINATOR)
+            resp_tmp = yield self.ser.write('get ' + string + TERMINATOR)
             resp_tmp = yield self._parse(resp_tmp)
             resp.append(resp_tmp)
         returnValue(resp)
@@ -220,7 +220,7 @@ class SLSServer(SerialDeviceServer):
             print(set_resp)
         yield self.ser.write('get ' + chstring + TERMINATOR)
         resp = yield self.ser.read()
-        resp = self._parse(set_resp, False)
+        resp = self._parse(resp, False)
         returnValue(resp)
 
 if __name__ == "__main__":
