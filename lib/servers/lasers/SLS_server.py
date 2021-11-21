@@ -68,7 +68,7 @@ class SLSServer(SerialDeviceServer):
             resp.append(resp_tmp)
         returnValue(resp)
 
-    @setting(111, 'Autolock Parameter', param='s', returns='s')
+    @setting(113, 'Autolock Parameter', param='s', returns='s')
     def autolock_param(self, c, param=None):
         '''
         Choose parameter for autolock to sweep
