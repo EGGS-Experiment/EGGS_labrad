@@ -24,7 +24,8 @@ class rf_gui(QWidget):
     def setupUi(self):
         rf_gui = self
         rf_gui.setObjectName("rf_gui")
-        rf_gui.resize(545, 251)
+        rf_gui.setFixedSize(545, 251)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.rf_label = QtWidgets.QLabel(rf_gui)
         self.rf_label.setGeometry(QtCore.QRect(120, 10, 271, 41))
         self.rf_label.setObjectName("rf_label")
