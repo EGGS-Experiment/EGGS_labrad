@@ -62,13 +62,8 @@ class SLSServer(SerialDeviceServer):
         chString = ['LockTime', 'LockCount', 'AutoLockState']
         resp = []
         for string in chString:
-<<<<<<< HEAD
-            resp_tmp = yield self.ser.write('get ' + string + TERMINATOR)
-            resp_tmp = yield self._parse(resp_tmp)
-=======
             resp_tmp = self.ser.write('get ' + string + TERMINATOR)
             resp_tmp = yield self._parse(resp_tmp, True)
->>>>>>> 372a3aa1e1ab59dfb3719e865c410cbb453db325
             resp.append(resp_tmp)
         returnValue(resp)
 
@@ -229,15 +224,10 @@ class SLSServer(SerialDeviceServer):
             # print(set_resp)
         yield self.ser.write('get ' + chstring + TERMINATOR)
         resp = yield self.ser.read()
-<<<<<<< HEAD
-        resp = self._parse(resp, False)
-        returnValue(resp)
-=======
         sleep(1)
         resp2 = yield self._parse(resp, False)
         returnValue(resp2)
 
->>>>>>> 372a3aa1e1ab59dfb3719e865c410cbb453db325
 
 if __name__ == "__main__":
     from labrad import util
