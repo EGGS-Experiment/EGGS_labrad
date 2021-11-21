@@ -24,7 +24,6 @@ from labrad.support import getNodeName
 from time import sleep
 
 TERMINATOR = '\r\n'
-STRIP_END = -8
 
 class SLSServer(SerialDeviceServer):
     """Connects to the 729nm SLS Laser"""
@@ -34,7 +33,7 @@ class SLSServer(SerialDeviceServer):
     port = 'COM5'
 
     baudrate = 115200
-    timeout = T.Value(1.0, 's')
+    timeout = T.Value(5.0, 's')
 
     #Autolock
     @setting(111, 'Autolock Toggle', enable='s', returns='s')
@@ -45,12 +44,12 @@ class SLSServer(SerialDeviceServer):
         chString = 'AutoLockEnable'
         if enable:
             yield self.ser.write('set ' + chString + ' ' + str(enable) + TERMINATOR)
-            set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp, True)
+            set_resp = self.ser.read()
+            set_resp = yield self._parse(set_resp, True)
             print(set_resp)
         yield self.ser.write('get ' + chString + TERMINATOR)
-        resp = yield self.ser.read()
-        resp = yield self._parse(set_resp, False)
+        resp = self.ser.read()
+        resp = yield self._parse(resp, False)
         returnValue(resp)
 
     @setting(112, 'Autolock Status', returns='*s')
@@ -63,8 +62,8 @@ class SLSServer(SerialDeviceServer):
         chString = ['LockTime', 'LockCount', 'AutoLockState']
         resp = []
         for string in chString:
-            resp_tmp = yield self.ser.write('get ' + chString + TERMINATOR)
-            resp_tmp = yield self._parse(resp_tmp)
+            resp_tmp = self.ser.write('get ' + string + TERMINATOR)
+            resp_tmp = yield self._parse(resp_tmp, True)
             resp.append(resp_tmp)
         returnValue(resp)
 
@@ -76,15 +75,15 @@ class SLSServer(SerialDeviceServer):
         chString = 'SweepType'
         if param.lower() == 'current':
             yield self.ser.write('set ' + chString + ' ' + '2' + TERMINATOR)
-            set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp, True)
+            set_resp = self.ser.read()
+            set_resp = yield self._parse(set_resp, True)
             print(set_resp)
         elif param.upper() == 'PZT':
             yield self.ser.write('set ' + chString + ' ' + '1' + TERMINATOR)
-            set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp, True)
+            set_resp = self.ser.read()
+            set_resp = yield self._parse(set_resp, True)
             print(set_resp)
-        resp = yield self.ser.read()
+        resp = self.ser.read()
         resp = yield self._parse(resp, False)
         returnValue(resp)
 
@@ -107,7 +106,7 @@ class SLSServer(SerialDeviceServer):
         if param_val:
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
             set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp, True)
+            set_resp = yield self._parse(set_resp, True)
             print(set_resp)
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
         resp = yield self.ser.read()
@@ -115,27 +114,28 @@ class SLSServer(SerialDeviceServer):
         returnValue(resp)
 
     #Offset lock
-    @setting(311, 'Offset Frequency', freq='v', returns='s')
+    @setting(311, 'Offset Frequency', freq='v', returns='v')
     def offset_frequency(self, c, freq=None):
         '''
-        Set offset frquency.
+        Set/get offset frequency.
         Arguments:
             freq    (float) : a frequency between [1e7, 8e8]
         Returns:
                             : the value of offset frequency
         '''
         chString = 'OffsetFrequency'
-        if freq:
-            yield self.ser.write('set ' + chString + ' ' + freq + TERMINATOR)
-            set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp, True)
-            print(set_resp)
-        yield self.ser.write('get ' + chString + TERMINATOR)
-        resp = yield self.ser.read()
-        resp = yield self._parse(resp, False)
-        returnValue(resp)
+        # if freq:
+        #     yield self.ser.write('set ' + chString + ' ' + freq + TERMINATOR)
+        #     set_resp = yield self.ser.read()
+        #     set_resp2 = yield self._parse(set_resp, True)
+        #     print(set_resp2)
+        # yield self.ser.write('get ' + chString + TERMINATOR)
+        # resp = yield self.ser.read()
+        # resp = yield self._parse(resp, False)
+        resp = yield self._query(chString, freq)
+        returnValue(float(resp))
 
-    @setting(312, 'Offset Lockpoint', lockpoint='i', returns='s')
+    @setting(312, 'Offset Lockpoint', lockpoint='i', returns='i')
     def offset_lockpoint(self, c, lockpoint=None):
         '''
         Set offset lockpoint.
@@ -148,12 +148,12 @@ class SLSServer(SerialDeviceServer):
         if lockpoint:
             yield self.ser.write('set ' + chstring + ' ' + lockpoint + TERMINATOR)
             set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp, True)
-            print(set_resp)
+            set_resp2 = yield self._parse(set_resp, True)
+            print(set_resp2)
         yield self.ser.write('get ' + chstring + TERMINATOR)
         resp = yield self.ser.read()
-        resp = yield self._parse(resp, False)
-        returnValue(resp)
+        resp2 = yield self._parse(resp, False)
+        returnValue(int(resp2))
 
     #Servo
     @setting(411, 'servo', servo_target='s', param_name='s', param_val='?', returns='s')
@@ -175,11 +175,11 @@ class SLSServer(SerialDeviceServer):
                   'Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
         if param_val:
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
-            set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp, True)
+            set_resp = self.ser.read()
+            set_resp = yield self._parse(set_resp, True)
             print(set_resp)
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
-        resp = yield self.ser.read()
+        resp = self.ser.read()
         resp = yield self._parse(resp, False)
         returnValue(resp)
 
@@ -191,7 +191,7 @@ class SLSServer(SerialDeviceServer):
         Strips echo from SLS and returns a dictionary with
         keys as parameter names and values as parameter value.
         """
-        result = {}
+        #result = {}
         if type(string) == bytes:
             string = string.decode('utf-8')
         #split by lines
@@ -202,10 +202,12 @@ class SLSServer(SerialDeviceServer):
         if setter:
             return string
         #split parameters and values by '=' sign
-        for paramstring in string:
-            params = paramstring.split('=')
-            result[params[0]] = params[1]
-        return result
+        # for paramstring in string:
+        #     params = paramstring.split('=')
+        #     result[params[0]] = params[1]
+        # print(string)
+        params = string[0].split('=')
+        return params[1]
 
     @inlineCallbacks
     def _query(self, chstring, param):
@@ -215,13 +217,17 @@ class SLSServer(SerialDeviceServer):
         """
         if param:
             yield self.ser.write('set ' + chstring + ' ' + str(param) + TERMINATOR)
-            set_resp = yield self.ser.read()
-            set_resp = self._parse(set_resp, True)
+            set_resp = self.ser.read(100)
             print(set_resp)
+            sleep(1)
+            # set_resp = self._parse(set_resp, True)
+            # print(set_resp)
         yield self.ser.write('get ' + chstring + TERMINATOR)
         resp = yield self.ser.read()
-        resp = self._parse(set_resp, False)
-        returnValue(resp)
+        sleep(1)
+        resp2 = yield self._parse(resp, False)
+        returnValue(resp2)
+
 
 if __name__ == "__main__":
     from labrad import util
