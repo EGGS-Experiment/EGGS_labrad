@@ -335,6 +335,9 @@ class SerialDeviceServer(LabradServer):
                 print('Check set up and restart serial server')
             else:
                 raise Exception('Unknown connection error')
+        except Exception as e:
+            #maybe check for serialutil.SerialException?
+            print(e)
 
     @setting(111112, 'Close Device', returns='')
     def closeDevice(self, c):
