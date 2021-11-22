@@ -57,8 +57,8 @@ class Lakeshore336Server(SerialDeviceServer):
             raise Exception("Value must be one of: " + str(valid_inputs))
 
     # TEMPERATURE DIODES
-    @setting(111, 'Read Temperature', output_channel='s', returns='*1v')
-    def temperature_read(self, c, output_channel):
+    @setting(111, 'Read Temperature', channel='s', returns='*1v')
+    def temperature_read(self, c, channel=None):
         """
         Get sensor temperature
         Args:
@@ -66,17 +66,19 @@ class Lakeshore336Server(SerialDeviceServer):
         Returns:
             (*float): sensor temperature in Kelvin
         """
-        if output_channel not in INPUT_CHANNELS:
-            raise Exception('Channel must be one of: ' + str(INPUT_CHANNELS))
-        yield self.ser.write('KRDG? ' + str(output_channel) + TERMINATOR)
+        if not channel:
+            channel = '0'
+        elif channel not in INPUT_CHANNELS:
+            raise Exception('Invalid input: channel must be one of: ' + str(INPUT_CHANNELS))
+        yield self.ser.write('KRDG? ' + str(channel) + TERMINATOR)
         time.sleep(0.1)
         resp = yield self.ser.read()
         resp = np.array(resp.split(','), dtype=float)
         returnValue(resp)
 
     # HEATER
-    @setting(211, 'Configure Heater', output_channel = 'i', mode = 'i', input_channel = 'i', returns = '*1v')
-    def heater_mode(self, c, output_channel, mode = None, input_channel = None):
+    @setting(211, 'Configure Heater', output_channel='i', mode='i', input_channel='i', returns='*1v')
+    def heater_mode(self, c, output_channel, mode=None, input_channel=None):
         """
         Configure or query the desired heater
         Args:
@@ -103,8 +105,8 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = resp[:2]
         returnValue(resp)
 
-    @setting(212, 'Setup Heater', output_channel = 'i', resistance = 'i', max_current = 'v', returns = '*1v')
-    def heater_setup(self, c, output_channel, resistance = None, max_current = None):
+    @setting(212, 'Setup Heater', output_channel='i', resistance='i', max_current='v', returns='*1v')
+    def heater_setup(self, c, output_channel, resistance=None, max_current=None):
         """
         Set up or query the desired heater
         Args:
@@ -130,8 +132,8 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = [int(resp[1]), float(resp[2])]
         returnValue(resp)
 
-    @setting(213, 'Set Heater Range', output_channel = 'i', range = 'i', returns = 'i')
-    def heater_range(self, c, output_channel, range = None):
+    @setting(213, 'Set Heater Range', output_channel='i', range='i', returns='i')
+    def heater_range(self, c, output_channel, range=None):
         """
         Set or query heater range.
         Args:
@@ -153,8 +155,8 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = yield int(self.ser.read())
         returnValue(resp)
 
-    @setting(214, 'Set Heater Setpoint', output_channel = 'i', setpoint = 'v', returns = 'v')
-    def heater_setpoint(self, c, output_channel, setpoint = None):
+    @setting(214, 'Set Heater Setpoint', output_channel='i', setpoint='v', returns='v')
+    def heater_setpoint(self, c, output_channel, setpoint=None):
         """
         Set or query heater setpoint.
         Args:
@@ -165,15 +167,15 @@ class Lakeshore336Server(SerialDeviceServer):
         """
         chString = 'SETP'
         if power is not None:
-            output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint)+ TERMINATOR
+            output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint) + TERMINATOR
             yield self.write(output_msg)
 
         #issue query
         resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
         returnValue(float(resp))
 
-    @setting(221, 'Autotune Heater', output_channel = 'i', input_channel = 'i', mode = 'i', returns = '*1v')
-    def heater_setup(self, c, output_channel, input_channel = None, mode = None):
+    @setting(221, 'Autotune Heater', output_channel='i', input_channel='i', mode='i', returns='*1v')
+    def heater_setup(self, c, output_channel, input_channel=None, mode=None):
         """
         Set up or query the desired heater
         Args:
@@ -199,8 +201,8 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = [int(resp[1]), float(resp[2])]
         returnValue(resp)
 
-    @setting(222, 'Set Heater Power', output_channel = 'i', power = 'v', returns = 'v')
-    def heater_power(self, c, output_channel, power = None):
+    @setting(222, 'Set Heater Power', output_channel='i', power='v', returns='v')
+    def heater_power(self, c, output_channel, power=None):
         """
         Set or query heater power.
         If heater is in manual mode, then heater directly controls power/current.
@@ -224,8 +226,8 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = yield float(self.ser.read())
         returnValue(resp)
 
-    @setting(223, 'Set Heater PID', output_channel = 'i', prop = 'v', int = 'v', diff = 'v', returns = 'v')
-    def heater_PID(self, c, output_channel, prop = None, int = None, diff = None):
+    @setting(223, 'Set Heater PID', output_channel='i', prop='v', int='v', diff='v', returns='v')
+    def heater_PID(self, c, output_channel, prop=None, int=None, diff=None):
         """
         Set or query heater PID parameters. Only available if heater is in PID mode.
         Args:
@@ -237,19 +239,16 @@ class Lakeshore336Server(SerialDeviceServer):
                             [float, float, float]: the PID parameters
         """
         chString = 'PID'
-
         #check for errors ***
-
         if all(vals != None for vals in [prop, int, diff]):
             output_msg = chString + ' ' + str(output_channel) + ',' + str(prop) + ',' + str(int) + ',' + str(diff) + TERMINATOR
             yield self.write(output_msg)
-
         #issue query
         resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = np.array(resp.split(','), dtype=float)
         returnValue(resp)
 
-    @setting(230, 'Get Heater Output', output_channel = 'i', returns = 'v')
+    @setting(230, 'Get Heater Output', output_channel='i', returns='v')
     def heater_output(self, c, output_channel):
         """
         Get the heater output in % of max. current
