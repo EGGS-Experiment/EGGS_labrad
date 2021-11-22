@@ -1,25 +1,25 @@
 import numpy as np
 
 from sipyco.pc_rpc import Client
-from asyncio import get_event_loop()
+from asyncio import get_event_loop
 
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager, DatasetManager
 from artiq.master.worker_impl import CCB, Scheduler
 
-class api(object):
-    def __init__(self):
-        self.core=core
-
-    @kernel
-    def on(self):
-        core.reset()
-        ttl4.on()
-        print('thkim')
-
-api_obj=api()
-api_obj.on()
+# class api(object):
+#     def __init__(self):
+#         self.core=core
+#
+#     @kernel
+#     def on(self):
+#         core.reset()
+#         ttl4.on()
+#         print('thkim')
+#
+# api_obj=api()
+# api_obj.on()
 
 class ARTIQ_api(object):
     """
@@ -31,23 +31,21 @@ class ARTIQ_api(object):
         self.devices = DeviceDB('C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db.py')
         self.device_manager = DeviceManager(self.devices)
         self._getDevices()
-        self._setVariables()
+        #self._initializeDevices()
 
     #Setup functions
     def _getDevices(self):
         #get core
-        self.setattr_device("core")
-        self.setattr_device("core_dma")
-        self.setattr_device("scheduler")
+        self.core = self.device_manager.get("core")
+        self.core_dma = self.device_manager.get("core_dma")
 
         #get device names
-        self.device_db = self.get_device_db()
+        self.device_db = self.devices.get_device_db()
             #create holding lists (dict not supported in kernel methods)
-        self.ttlout_list = list()
-        self.ttlin_list = list()
-        self.dds_list = list()
-        self.urukul_list = list()
-        self.adc = None
+        self.ttlout_list = {}
+        self.ttlin_list = {}
+        self.dds_list = {}
+        self.urukul_list = {}
         self.dac = None
 
         #assign names and devices
@@ -57,29 +55,19 @@ class ARTIQ_api(object):
                 continue
             #set device as attribute
             devicetype = params['class']
-            device = self.get_device(name)
-            self.setattr_device(name)
+            device = self.device_manager.get(name)
             if devicetype == 'TTLInOut':
-                self.ttlin_list.append(device)
+                self.ttlin_list[name] = device
             elif devicetype == 'TTLOut':
-                if 'pmt' in name:
-                    self.pmt_list.append(device)
-                elif 'linetrigger' in name:
-                    self.linetrigger_list.append(device)
-                elif 'urukul' not in name:
-                    self.ttlout_list.append(device)
+                self.ttlout_list[name] = device
             elif devicetype == 'AD9910':
-                self.dds_list.append(device)
+                self.dds_list[name] = device
             elif devicetype == 'CPLD':
-                self.urukul_list.append(device)
+                self.urukul_list[name] = device
             elif devicetype == 'Zotino':
                 self.dac = device
-            elif devicetype == 'Sampler':
-                self.adc = device
-            elif devicetype == 'Grabber':
-                self.camera = device
 
-    def initializeDevices(self):
+    def _initializeDevices(self):
         """
         Initialize devices that need to be initialized.
         """
@@ -100,7 +88,6 @@ class ARTIQ_api(object):
             component_list['device'].init()
         #one-off device init
         self.dac.init()
-        self.adc.init()
         self.core.reset()
 
     @kernel
@@ -136,16 +123,23 @@ class ARTIQ_api(object):
         self.core_dma.erase(sequencename)
 
     #TTL functions
-    @kernel
-    def setTTL(self, ttlnum, state):
+    def setTTL(self, ttlname, state):
         """
         Manually set the state of a TTL.
         """
+        try:
+            dev = self.ttlout_list[ttlname]
+        except KeyError:
+            raise Exception('Invalid device name.')
+        self._setTTL(dev, state)
+
+    @kernel
+    def _setTTL(self, dev, state):
         self.core.reset()
         if state:
-            self.ttlout_list[ttlnum].on()
+            dev.on()
         else:
-            self.ttlout_list[ttlnum].off()
+            dev.off()
 
     #DDS functions
     @kernel
@@ -178,8 +172,7 @@ class ARTIQ_api(object):
         """
         self.dds_list[ddsnum].cfg_sw(state)
 
-    @kernel
-    def setDDS(self, ddsnum, params, _profile):
+    def setDDS(self, ddsname, param, val):
         """
          Manually set the state of a DDS.
          """
@@ -188,6 +181,9 @@ class ARTIQ_api(object):
         _pow = params[2]
         self.dds_list[ddsnum].set_mu(ftw = _freq, asf = _ampl, pow = _pow, profile = _profile)
         #todo: do we need to change profile to desired one?
+
+    # @kernel
+    # def _setDDS(self, dev, ):
 
     @kernel
     def setDAC(self, channel, voltage):

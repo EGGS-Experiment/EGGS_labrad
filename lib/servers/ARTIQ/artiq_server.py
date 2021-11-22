@@ -23,7 +23,7 @@ from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, D
 from twisted.internet.threads import deferToThread
 
 #artiq imports
-from .artiq_api import ARTIQ_api
+from artiq_api import ARTIQ_api
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
@@ -47,40 +47,10 @@ class ARTIQ_Server(LabradServer):
 
     @inlineCallbacks
     def initServer(self):
-        yield self._setDevices()
         yield self._setClients()
         yield self._setVariables()
+        yield self._setDevices()
         self.listeners = set()
-
-    def _setDevices(self):
-        """Sets hardware names"""
-        #set hardware
-        device_db = self.devices.get_device_db()
-        self.ttlin_list = list()
-        self.ttlout_list = list()
-        self.dds_list = list()
-        self.dac_list = list()
-        self.adc_list = list()
-        #assign names and devices
-        for name, params in device_db.items():
-            #only get devices with named class
-            if 'class' not in params:
-                continue
-            #set device as attribute
-            devicetype = params['class']
-            if devicetype == 'TTLInOut':
-                self.ttlin_list.append(name)
-            elif devicetype == 'TTLOut':
-                if 'pmt' in name:
-                    self.pmt_list.append(name)
-                elif 'linetrigger' in name:
-                    self.linetrigger_list.append(name)
-                elif 'urukul' not in name:
-                    self.ttlout_list.append(name)
-            elif devicetype == ('AD9910' or 'AD9912'):
-                self.dds_list.append(name)
-            elif devicetype == 'CPLD':
-                self.urukul_list.append(name)
 
     def _setClients(self):
         """Sets clients to ARTIQ master"""
@@ -96,13 +66,18 @@ class ARTIQ_Server(LabradServer):
         self.ps_rid = None
 
         #conversions
-        from artiq.coredevice.ad9910 impo
+        dds_tmp = list(self.api.dds_list.values())[0]
         self.seconds_to_mu = self.api.core.seconds_to_mu
-        self.amplitude_to_asf = amplitude_to_asf
-        self.frequency_to_ftw = self.api.dds_list[0].frequency_to_ftw
-        self.turns_to_pow = self.api.dds_list[0].turns_to_pow
+        self.amplitude_to_asf = dds_tmp.amplitude_to_asf
+        self.frequency_to_ftw = dds_tmp.frequency_to_ftw
+        self.turns_to_pow = dds_tmp.turns_to_pow
         self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
-        self.voltage_to_mu = self.#todo: finish for zotino
+        #self.voltage_to_mu = self.
+        # #todo: finish for zotino
+
+    def _setDevices(self):
+        pass
+        #t1 = self.api.ttl_out_list
 
     # Core
     @setting(21, "Get Devices", returns='')
@@ -156,14 +131,15 @@ class ARTIQ_Server(LabradServer):
         returnValue(completed_runs)
 
     #TTLs
-    @setting(211, 'Get TTL', returns = '*s')
+    @setting(211, 'TTL Get', returns = '*s')
     def getTTL(self, c):
         """
         Returns all available TTL channels
         """
-        return self.ttlout_list
+        ttl_list = yield self.api.ttlout_list.keys()
+        returnValue(list(ttl_list))
 
-    @setting(221, "Set TTL", ttl_name = 'i', state = 'b', returns='')
+    @setting(221, "TTL Set", ttl_name = 's', state = 'b', returns='')
     def setTTL(self, c, ttl_name, state):
         """
         Manually set a TTL to the given state.
@@ -171,27 +147,24 @@ class ARTIQ_Server(LabradServer):
             ttlname (str)   : name of the ttl
             state   (bool)  : ttl power state
         """
-        ttl_channel = self.ttlout_list[ttl_name]
-        self.inCommunication.acquire()
-        yield deferToThread(self.api.setTTL, ttl_channel, state)
-        self.inCommunication.release()
+        yield self.api.setTTL(ttl_name, state)
 
     #DDS functions
-    @setting(311, "Get DDS", returns = '*s')
+    @setting(311, "DDS Get", returns = '*s')
     def getDDS(self, c):
         """get the list of available channels"""
         return self.dds_list
 
-    @setting(321, "Initialize DDS", returns = '')
+    @setting(321, "DDS Initialize", returns = '')
     def initializeDDS(self, c):
         """
-        Resets/initializes the DDSs
+        Resets/initializes the DDSs.
         """
         yield self.inCommunication.acquire()
         yield deferToThread(self.api.initializeDDS)
         self.inCommunication.release()
 
-    @setting(322, "Toggle DDS", dds_name = 's', state = 'b', returns='')
+    @setting(322, "DDS Toggle", dds_name = 's', state = 'b', returns='')
     def toggleDDS(self, c, dds_name, state):
         """
         Manually toggle a DDS via the RF switch
@@ -204,49 +177,29 @@ class ARTIQ_Server(LabradServer):
         yield deferToThread(self.api.toggleDDS, dds_channel, state, profile)
         self.inCommunication.release()
 
-    @setting(323, "Set DDS Frequency", dds_name='s', freq='v', profile='i', returns='')
-    def setDDSFreq(self, c, dds_name, freq, profile=None):
+    @setting(323, "DDS Waveform", dds_name='s', param='s', param_val='v', returns='')
+    def setDDSWav(self, c, dds_name, param, param_val):
         """
         Manually set a DDS to the given parameters.
         Arguments:
-            ddsname (str)   : the name of the dds
-            freq    (float) : frequency (in Hz)
-            profile (int)   : the DDS profile to set & change to
+            ddsname     (str)   : the name of the dds
+            param       (str)   : the parameter to set
+            param_val   (float) : the value of the parameter
         """
-        dds_channel = self.ddsDict[dds_name].address
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
-        self.inCommunication.release()
+        if param.lower() == ('frequency' or 'f'):
+            ftw = self.frequency_to_ftw(param_val)
+            print('ftw: ' + str(ftw))
+            self.api.setDDS(ddsname, 0, ftw)
+        elif param.lower() == ('amplitude' or 'a'):
+            asf = self.amplitude_to_asf(param_val)
+            print('ftw: ' + str(asf))
+            self.api.setDDS(ddsname, 1, asf)
+        elif param.lower() == ('phase' or 'p'):
+            pow = self.turns_to_pow(param_val)
+            print('pow: ' + str(pow))
+            self.api.setDDS(ddsname, 2, pow)
 
-    @setting(324, "Set DDS Amplitude", dds_name='s', ampl='v', profile='i', returns='')
-    def setDDSAmpl(self, c, dds_name, ampl, profile=None):
-        """
-        Manually set a DDS to the given parameters.
-        Arguments:
-            ddsname (str)   : the name of the dds
-            ampl    (float) : amplitude (in V)
-            profile (int)   : the DDS profile to set & change to
-        """
-        dds_channel = self.ddsDict[dds_name].address
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
-        self.inCommunication.release()
-
-    @setting(325, "Set DDS Phase", dds_name='s', freq='v', profile='i', returns='')
-    def setDDSPhase(self, c, dds_name, phase, profile = None):
-        """
-        Manually set a DDS to the given parameters.
-        Arguments:
-            ddsname (str)   : the name of the dds
-            phase   (float) : phase (in radians/2pi)
-            profile (int)   : the DDS profile to set & change to
-        """
-        dds_channel = self.ddsDict[dds_name].address
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
-        self.inCommunication.release()
-
-    @setting(326, "Set DDS Attenuation", dds_name='s', att='v', profile='i', returns='')
+    @setting(326, "DDS Attenuation", dds_name='s', att='v', profile='i', returns='')
     def setDDSAtt(self, c, dds_name, att, profile=None):
         """
         Manually set a DDS to the given parameters.
@@ -260,7 +213,7 @@ class ARTIQ_Server(LabradServer):
         yield deferToThread(self.api.setDDS, dds_channel, params, profile)
         self.inCommunication.release()
 
-    @setting(327, "Set DDS Profile", dds_name='s', profile='i', returns='')
+    @setting(327, "DDS Profile", dds_name='s', profile='i', returns='')
     def setDDSProf(self, c, dds_name, profile = None):
         """
         Manually set a DDS to the given parameters.
@@ -274,8 +227,8 @@ class ARTIQ_Server(LabradServer):
         self.inCommunication.release()
 
     #DAC
-    @setting(411, "Set DAC", channel='i', voltage='v', returns='')
-    def setDAC(self, c, freq = None, ampl = None, phase = None, profile = None):
+    @setting(411, "DAC Set", channel='i', voltage='v', returns='')
+    def setDAC(self, c, channel, voltage):
         """
         Manually set a DDS to the given parameters.
         Arguments:
@@ -287,9 +240,31 @@ class ARTIQ_Server(LabradServer):
         yield deferToThread(self.api.setDAC, channel, voltage)
         self.inCommunication.release()
 
-    #Sampler
-    @setting(511, "")
-    def
+    @setting(412, "DAC Gain", channel='i', voltage='v', returns='')
+    def setDACGain(self, c, channel, voltage):
+        """
+        Manually set a DDS to the given parameters.
+        Arguments:
+            channel (int)   : the channel to set
+            ddsname (str)   : the desired voltage (in V)
+        """
+        #todo: get mu
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.setDACGain, channel, voltage)
+        self.inCommunication.release()
+
+    @setting(413, "DAC Offset", channel='i', voltage='v', returns='')
+    def setDACOffset(self, c, channel, voltage):
+        """
+        Manually set a DDS to the given parameters.
+        Arguments:
+            channel (int)   : the channel to set
+            ddsname (str)   : the desired voltage (in V)
+        """
+        #todo: get mu
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.api.setDACOffset, channel, voltage)
+        self.inCommunication.release()
 
     #Signal/Context functions
     def notifyOtherListeners(self, context, message, f):
