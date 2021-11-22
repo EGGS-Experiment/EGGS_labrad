@@ -206,9 +206,7 @@ class ARTIQ_api(object):
         self.core.reset()
         dev.set_pow(val)
 
-    # @kernel
-    # def _setDDS(self, dev, ):
-
+    #DAC functions
     def setDAC(self, channel, voltage):
         self.dac.set_dac_mu([voltage], channels=[channel])
 

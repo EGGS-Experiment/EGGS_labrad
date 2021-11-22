@@ -66,14 +66,16 @@ class ARTIQ_Server(LabradServer):
         self.ps_rid = None
 
         #conversions
+            #dds
         dds_tmp = list(self.api.dds_list.values())[0]
         self.seconds_to_mu = self.api.core.seconds_to_mu
         self.amplitude_to_asf = dds_tmp.amplitude_to_asf
         self.frequency_to_ftw = dds_tmp.frequency_to_ftw
         self.turns_to_pow = dds_tmp.turns_to_pow
         self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
-        #self.voltage_to_mu = self.
-        # #todo: finish for zotino
+            #dac
+        from artiq.coredevice.ad53xx import voltage_to_mu
+        self.voltage_to_mu = voltage_to_mu
 
     def _setDevices(self):
         pass
