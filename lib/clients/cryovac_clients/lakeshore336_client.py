@@ -7,6 +7,8 @@ from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui2 import lakeshore336_gui
 
+from PyQt5.QtGui import QFont
+
 
 class lakeshore336_client(object):
 
