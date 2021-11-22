@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = ARTIQ Pulser
+name = ARTIQ Server
 version = 1.0
 description = Pulser using the ARTIQ box. Backwards compatible with old pulse sequences and experiments.
-instancename = ARTIQ_Pulser
+instancename = ARTIQ Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -83,12 +83,12 @@ class ARTIQ_Server(LabradServer):
                 self.urukul_list.append(name)
 
     def _setClients(self):
-        """Sets clients to ARTIQ master"""
+        """Sets clients to ARTIQ master."""
         self.scheduler = Client('::1', 3251, 'master_schedule')
         self.datasets = Client('::1', 3251, 'master_dataset_db')
 
     def _setVariables(self):
-        """Sets variables"""
+        """Sets variables."""
         self.inCommunication = DeferredLock()
 
         #pulse sequencer variables
