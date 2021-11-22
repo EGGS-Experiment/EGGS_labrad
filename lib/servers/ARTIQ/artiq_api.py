@@ -142,21 +142,14 @@ class ARTIQ_api(object):
         else:
             dev.off()
 
+
     #DDS functions
     @kernel
-    def initializeDDS(self):
+    def initializeDDSAll(self, dds_name):
         '''
-        Initialize all DDSs
+        Initialize all DDSs.
         '''
         self.core.reset()
-        for device in self.dds_list:
-            try:
-                device.init()
-            except RTIOUnderflow:
-                self.core.break_realtime()
-                device.init()
-        self.core.reset()
-
         #reset urukul cpld
         for device in self.urukul_list:
             try:
@@ -164,7 +157,23 @@ class ARTIQ_api(object):
             except RTIOUnderflow:
                 self.core.break_realtime()
                 device.init()
+        #reset each DDS channel
         self.core.reset()
+        for device in self.dds_list:
+            try:
+                device.init()
+            except RTIOUnderflow:
+                self.core.break_realtime()
+                device.init()
+
+    def initializeDDS(self, dds_name):
+        dev = self.dds_list[dds_name]
+        self._initializeDDS(dev)
+
+    @kernel
+    def _initializeDDS(self, dev):
+        self.core.reset()
+        self.dev.init()
 
     def toggleDDS(self, dds_name, state):
         """
@@ -182,7 +191,6 @@ class ARTIQ_api(object):
         """
         Manually set the state of a DDS.
         """
-        print(str(param) + ': ' + str(val))
         dev = self.dds_list[dds_name]
         if param == 0:
             self._setDDSFreq(dev, val)
@@ -192,22 +200,74 @@ class ARTIQ_api(object):
             self._setDDSPhase(dev, val)
 
     @kernel
-    def _setDDSFreq(self, dev, val):
+    def _setDDSFreq(self, dev, ftw):
         self.core.reset()
-        dev.set_ftw(val)
+        dev.set_ftw(ftw)
 
     @kernel
-    def _setDDSAmpl(self, dev, val):
+    def _setDDSAmpl(self, dev, asf):
         self.core.reset()
-        dev.set_asf(val)
+        dev.set_asf(asf)
 
     @kernel
-    def _setDDSPhase(self, dev, val):
+    def _setDDSPhase(self, dev, pow):
         self.core.reset()
-        dev.set_pow(val)
+        dev.set_pow(pow)
+
+    def setDDSAtt(self, dds_name, att_mu):
+        """
+        Set the DDS attenuation.
+        """
+        dev = self.dds_list[dds_name]
+        self._setDDSAtt(dev, att_mu)
+
+    @kernel
+    def _setDDSAtt(self, dev, att_mu):
+        self.core.reset()
+        #dev.set_att_mu(att)
+        dev.set_att(att)
+
 
     #DAC functions
-    def setDAC(self, channel, voltage):
-        self.dac.set_dac_mu([voltage], channels=[channel])
+    @kernel
+    def initializeDAC(self):
+        """
+        Initialize the DAC.
+        """
+        self.core.reset()
+        self.dac.init()
 
-    def _setDAC
+    @kernel
+    def setDAC(self, channel_num, volt_mu):
+        """
+        Set the voltage of a DAC register.
+        """
+        self.core.reset()
+        self.dac.write_dac_mu(channel_num, volt_mu)
+        self.dac.load()
+
+    @kernel
+    def setDACGain(self, channel_num, gain_mu):
+        """
+        Set the gain of a DAC channel.
+        """
+        self.core.reset()
+        self.dac.write_gain_mu(channel_num, gain_mu)
+        self.dac.load()
+
+    @kernel
+    def setDACOffset(self, channel_num, volt_mu):
+        """
+        Set the voltage of a DAC offset register.
+        """
+        self.core.reset()
+        self.dac.write_offset_mu(channel_num, volt_mu)
+        self.dac.load()
+
+    @kernel
+    def setDACGlobalOffset(self, word):
+        """
+        Set the OFSx registers on the AD5372.
+        """
+        self.core.reset()
+        self.dac.write_offset_dacs_mu(word)

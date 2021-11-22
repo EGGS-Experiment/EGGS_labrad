@@ -132,6 +132,7 @@ class ARTIQ_Server(LabradServer):
         completed_runs = yield self.datasets.get('numRuns')
         returnValue(completed_runs)
 
+
     #TTLs
     @setting(211, 'TTL Get', returns = '*s')
     def getTTL(self, c):
@@ -151,28 +152,29 @@ class ARTIQ_Server(LabradServer):
         """
         yield self.api.setTTL(ttl_name, state)
 
+
     #DDS functions
     @setting(311, "DDS Get", returns = '*s')
     def getDDS(self, c):
         """get the list of available channels"""
-        return self.dds_list
+        dds_list = yield self.api.dds_list.keys()
+        returnValue(list(dds_list))
 
-    @setting(321, "DDS Initialize", returns = '')
+    @setting(321, "DDS Initialize", dds_name, returns = '')
     def initializeDDS(self, c):
         """
         Resets/initializes the DDSs.
         """
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.initializeDDS)
-        self.inCommunication.release()
+        #todo: check error
+        yield self.api.initializeDDS(dds_name)
 
     @setting(322, "DDS Toggle", dds_name = 's', state = 'b', returns='')
     def toggleDDS(self, c, dds_name, state):
         """
         Manually toggle a DDS via the RF switch
         Arguments:
-            dds_name (str)   : the name of the dds
-            state   (bool)  : power state
+            dds_name    (str)   : the name of the dds
+            state       (bool)  : power state
         """
         yield self.api.toggleDDS(dds_name, state)
 
@@ -185,6 +187,7 @@ class ARTIQ_Server(LabradServer):
             param       (str)   : the parameter to set
             param_val   (float) : the value of the parameter
         """
+        #todo: check input
         if param.lower() in ('frequency', 'f'):
             ftw = yield self.frequency_to_ftw(param_val)
             yield self.api.setDDS(dds_name, 0, ftw)
@@ -204,63 +207,59 @@ class ARTIQ_Server(LabradServer):
             att     (float) : attenuation (in dBm)
             profile (int)   : the DDS profile to set & change to
         """
-        dds_channel = self.ddsDict[dds_name].address
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
-        self.inCommunication.release()
+        #todo: check input
+        att_mu = att
+        yield self.api.setDDSAtt(dds_name, att_mu)
 
-    @setting(327, "DDS Profile", dds_name='s', profile='i', returns='')
-    def setDDSProf(self, c, dds_name, profile = None):
-        """
-        Manually set a DDS to the given parameters.
-        Arguments:
-            dds_name (str)  : the name of the dds
-            profile (int)   : the DDS profile to set & change to
-        """
-        dds_channel = self.ddsDict[dds_name].address
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
-        self.inCommunication.release()
 
     #DAC
-    @setting(411, "DAC Set", channel='i', voltage='v', returns='')
-    def setDAC(self, c, channel, voltage):
+    @setting(421, "DAC Initialize", returns='')
+    def initializeDAC(self, c):
         """
-        Manually set a DDS to the given parameters.
-        Arguments:
-            channel (int)   : the channel to set
-            ddsname (str)   : the desired voltage (in V)
+        Manually initialize the DAC.
         """
-        #todo: get mu
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDAC, channel, voltage)
-        self.inCommunication.release()
+        yield self.api.initializeDAC()
 
-    @setting(412, "DAC Gain", channel='i', voltage='v', returns='')
-    def setDACGain(self, c, channel, voltage):
+    @setting(411, "DAC Set", dac_num='i', voltage='v', returns='')
+    def setDAC(self, c, dac_num, voltage):
         """
-        Manually set a DDS to the given parameters.
+        Manually set the voltage of a DAC channel.
         Arguments:
-            channel (int)   : the channel to set
-            ddsname (str)   : the desired voltage (in V)
+            dac_num (int)   : the DAC channel number
+            voltage (float) : the DAC register voltage (not the same as
+                                output voltage due to offset registers)
         """
-        #todo: get mu
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDACGain, channel, voltage)
-        self.inCommunication.release()
+        #todo: check input
+        voltage_mu = yield self.voltage_to_mu(voltage)
+        yield self.api.setDAC(dac_num, voltage_mu)
 
-    @setting(413, "DAC Offset", channel='i', voltage='v', returns='')
-    def setDACOffset(self, c, channel, voltage):
+    @setting(412, "DAC Gain", dac_num='i', gain='v', returns='')
+    def setDACGain(self, c, dac_num, gain):
         """
-        Manually set a DDS to the given parameters.
+        Manually set the gain of a DAC channel.
         Arguments:
-            channel (int)   : the channel to set
-            ddsname (str)   : the desired voltage (in V)
+            dac_num (int)   : the DAC channel number
+            gain (float)    : the DAC channel gain
         """
-        #todo: get mu
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDACOffset, channel, voltage)
-        self.inCommunication.release()
+        #todo: check input
+        #gain is a 16 bit register, 0xffff is full
+        gain_mu = int(gain * 0xffff) - 1
+        yield self.api.setDACGain(dac_num, gain_mu)
+
+    @setting(413, "DAC Offset", dac_num='i', voltage='v', returns='')
+    def setDACOffset(self, c, dac_num, voltage):
+        """
+        Manually set the offset voltage of a DAC channel.
+        Arguments:
+            dac_num (int)   : the DAC channel number
+            voltage (float) : the DAC offset register voltage
+        """
+        #todo: check input
+        voltage_mu = yield self.voltage_to_mu(voltage)
+        yield self.api.setDACOffset(dac_num, voltage)
+
+    #Sampler
+
 
     #Signal/Context functions
     def notifyOtherListeners(self, context, message, f):
