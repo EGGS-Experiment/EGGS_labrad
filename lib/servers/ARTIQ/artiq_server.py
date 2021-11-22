@@ -144,7 +144,7 @@ class ARTIQ_Server(LabradServer):
         """
         Manually set a TTL to the given state.
         Arguments:
-            ttlname (str)   : name of the ttl
+            ttl_name (str)   : name of the ttl
             state   (bool)  : ttl power state
         """
         yield self.api.setTTL(ttl_name, state)
@@ -169,42 +169,36 @@ class ARTIQ_Server(LabradServer):
         """
         Manually toggle a DDS via the RF switch
         Arguments:
-            ddsname (str)   : the name of the dds
+            dds_name (str)   : the name of the dds
             state   (bool)  : power state
         """
-        dds_channel = self.ddsDict[dds_name].address
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.toggleDDS, dds_channel, state, profile)
-        self.inCommunication.release()
+        yield self.api.toggleDDS(dds_name, state)
 
     @setting(323, "DDS Waveform", dds_name='s', param='s', param_val='v', returns='')
     def setDDSWav(self, c, dds_name, param, param_val):
         """
         Manually set a DDS to the given parameters.
         Arguments:
-            ddsname     (str)   : the name of the dds
+            dds_name     (str)  : the name of the dds
             param       (str)   : the parameter to set
             param_val   (float) : the value of the parameter
         """
-        if param.lower() == ('frequency' or 'f'):
-            ftw = self.frequency_to_ftw(param_val)
-            print('ftw: ' + str(ftw))
-            self.api.setDDS(ddsname, 0, ftw)
-        elif param.lower() == ('amplitude' or 'a'):
-            asf = self.amplitude_to_asf(param_val)
-            print('ftw: ' + str(asf))
-            self.api.setDDS(ddsname, 1, asf)
-        elif param.lower() == ('phase' or 'p'):
-            pow = self.turns_to_pow(param_val)
-            print('pow: ' + str(pow))
-            self.api.setDDS(ddsname, 2, pow)
+        if param.lower() in ('frequency', 'f'):
+            ftw = yield self.frequency_to_ftw(param_val)
+            yield self.api.setDDS(dds_name, 0, ftw)
+        elif param.lower() in ('amplitude', 'a'):
+            asf = yield self.amplitude_to_asf(param_val)
+            yield self.api.setDDS(dds_name, 1, asf)
+        elif param.lower() in ('phase', 'p'):
+            pow = yield self.turns_to_pow(param_val)
+            yield self.api.setDDS(dds_name, 2, pow)
 
     @setting(326, "DDS Attenuation", dds_name='s', att='v', profile='i', returns='')
     def setDDSAtt(self, c, dds_name, att, profile=None):
         """
         Manually set a DDS to the given parameters.
         Arguments:
-            ddsname (str)   : the name of the dds
+            dds_name (str)  : the name of the dds
             att     (float) : attenuation (in dBm)
             profile (int)   : the DDS profile to set & change to
         """
@@ -218,7 +212,7 @@ class ARTIQ_Server(LabradServer):
         """
         Manually set a DDS to the given parameters.
         Arguments:
-            ddsname (str)   : the name of the dds
+            dds_name (str)  : the name of the dds
             profile (int)   : the DDS profile to set & change to
         """
         dds_channel = self.ddsDict[dds_name].address

@@ -90,6 +90,7 @@ class ARTIQ_api(object):
         self.dac.init()
         self.core.reset()
 
+    #Pulse sequencing
     @kernel
     def record(self, sequencename):
         self.core.reset()
@@ -165,26 +166,50 @@ class ARTIQ_api(object):
                 device.init()
         self.core.reset()
 
-    @kernel
-    def toggleDDS(self, ddsnum, state):
+    def toggleDDS(self, dds_name, state):
         """
         Toggle a DDS using the RF switch.
         """
-        self.dds_list[ddsnum].cfg_sw(state)
+        dev = self.dds_list[dds_name]
+        self._toggleDDS(dev, state)
 
-    def setDDS(self, ddsname, param, val):
+    @kernel
+    def _toggleDDS(self, dev, state):
+        self.core.reset()
+        dev.cfg_sw(state)
+
+    def setDDS(self, dds_name, param, val):
         """
-         Manually set the state of a DDS.
-         """
-        _ftw = params[0]
-        _asf = params[1]
-        _pow = params[2]
-        self.dds_list[ddsnum].set_mu(ftw = _freq, asf = _ampl, pow = _pow, profile = _profile)
-        #todo: do we need to change profile to desired one?
+        Manually set the state of a DDS.
+        """
+        print(str(param) + ': ' + str(val))
+        dev = self.dds_list[dds_name]
+        if param == 0:
+            self._setDDSFreq(dev, val)
+        elif param == 1:
+            self._setDDSAmpl(dev, val)
+        elif param == 2:
+            self._setDDSPhase(dev, val)
+
+    @kernel
+    def _setDDSFreq(self, dev, val):
+        self.core.reset()
+        dev.set_ftw(val)
+
+    @kernel
+    def _setDDSAmpl(self, dev, val):
+        self.core.reset()
+        dev.set_asf(val)
+
+    @kernel
+    def _setDDSPhase(self, dev, val):
+        self.core.reset()
+        dev.set_pow(val)
 
     # @kernel
     # def _setDDS(self, dev, ):
 
-    @kernel
     def setDAC(self, channel, voltage):
         self.dac.set_dac_mu([voltage], channels=[channel])
+
+    def _setDAC
