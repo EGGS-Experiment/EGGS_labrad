@@ -111,6 +111,7 @@ class twistorr74_client(object):
 
     def closeEvent(self, event):
         self.reactor.stop()
+        self.cxn.disconnect()
 
 
 if __name__ == "__main__":

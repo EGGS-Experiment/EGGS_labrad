@@ -24,8 +24,9 @@ class GUIClient(object):
     poll_time = None
     gui = None
 
-    def __init__(self, reactor, parent=None):
+    def __init__(self, reactor, cxn=None, parent=None):
         self.reactor = reactor
+        self.cxn = cxn
         self._connectLabrad()
         self.initializeGUI()
 
@@ -36,8 +37,9 @@ class GUIClient(object):
         Creates an asynchronous connection to pump servers
         and relevant labrad servers
         """
-        from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name)
+        if not self.cxn:
+            from labrad.wrappers import connectAsync
+            self.cxn = yield connectAsync('localhost', name=self.name)
 
         # ensure base servers are online
         try:
@@ -68,6 +70,7 @@ class GUIClient(object):
 
     def closeEvent(self, event):
         self.reactor.stop()
+        self.cxn.disconnect()
 
     def connectLabrad(self):
         """

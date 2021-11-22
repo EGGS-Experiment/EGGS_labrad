@@ -115,6 +115,7 @@ class niops03_client(object):
 
     def closeEvent(self, event):
         self.reactor.stop()
+        self.cxn.disconnect()
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runClient

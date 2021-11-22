@@ -59,9 +59,12 @@ class TwisTorr74Server(SerialDeviceServer):
         Returns:
                     (bool): pump state
         """
+        if onoff is not None:
         _data_msg = b''
         if onoff:
-            o
+            _data_msg = b'1'
+        elif onoff is False:
+            _data_msg = b'0'
         #create and send message to device
         message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'1')
         yield self.ser.write(message)
