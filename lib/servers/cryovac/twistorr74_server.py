@@ -51,13 +51,13 @@ class TwisTorr74Server(SerialDeviceServer):
 
     #TOGGLE
     @setting(111, 'toggle', onoff='b', returns='s')
-    def toggle(self, c, onoff):
+    def toggle(self, c, onoff=None):
         """
         Start or stop the pump
         Args:
-            onoff   (bool): whether to start or stop pump
+            onoff   (bool)  : desired pump state
         Returns:
-                    (bool): pump state
+                    (str)   : pump state
         """
         #setter
         if onoff is not None:
@@ -67,10 +67,11 @@ class TwisTorr74Server(SerialDeviceServer):
             elif onoff is False:
                 message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'0')
             #create and send message to device
-            yield self.ser.write(message)
+            #yield self.ser.write(message)
+            print(message)
             #read and parse answer
             time.sleep(1.0)
-            resp = yield self.ser.read()
+            #resp = yield self.ser.read()
         #getter
         # create and send message to device
         message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.READ_msg)
@@ -82,7 +83,7 @@ class TwisTorr74Server(SerialDeviceServer):
             resp = yield self._parse_answer(resp)
         except Exception as e:
             print(e)
-        returnValue(resp)
+        returnValue('th')
 
     #READ PRESSURE
     @setting(211, 'Read Pressure', returns='v')

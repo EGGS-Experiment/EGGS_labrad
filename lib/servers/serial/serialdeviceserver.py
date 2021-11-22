@@ -344,7 +344,7 @@ class SerialDeviceServer(LabradServer):
         if self.ser:
             self.ser.close()
             self.ser = None
-            print('Serial Connection closed')
+            print('Serial connection closed')
         else:
             raise Exception('No device selected')
 
