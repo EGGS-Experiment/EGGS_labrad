@@ -61,7 +61,6 @@ class lakeshore336_gui(QWidget):
         self.temp1 = QtWidgets.QLabel(self.widget)
         self.temp1.setAlignment(QtCore.Qt.AlignCenter)
         self.temp1.setObjectName("temp1")
-        #self.temp1.setFont(QFont(shell_font, pointsize=20))
         self.temp_layout.addWidget(self.temp1)
         self.temp2_label = QtWidgets.QLabel(self.widget)
         self.temp2_label.setObjectName("temp2_label")
@@ -252,7 +251,7 @@ class lakeshore336_gui(QWidget):
 
     def retranslateUi(self, lakeshore336_gui):
         _translate = QtCore.QCoreApplication.translate
-        lakeshore336_gui.setWindowTitle(_translate("lakeshore336_gui", "Form"))
+        lakeshore336_gui.setWindowTitle(_translate("lakeshore336_gui", "Lakeshore 336 Temperature Controller"))
         self.lakeshore_label.setText(_translate("lakeshore336_gui", "<html><head/><body><p><span style=\" font-size:20pt;\">Lakeshore 336 Temperature Controller</span></p></body></html>"))
         self.heatAll_label.setText(_translate("lakeshore336_gui", "Heater Configuration"))
         self.tempAll_label.setText(_translate("lakeshore336_gui", "Temperature Readout "))
@@ -314,6 +313,7 @@ class lakeshore336_gui(QWidget):
         self.heat2_p1_label.setText(_translate("lakeshore336_gui", "Parameter 1"))
         self.heat2_p2_label.setText(_translate("lakeshore336_gui", "Parameter 2"))
         self.heat2_p3_label.setText(_translate("lakeshore336_gui", "Parameter 3"))
+
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runGUI
