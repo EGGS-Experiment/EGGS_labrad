@@ -4,9 +4,8 @@ import datetime as datetime
 
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
-from PyQt5.QtWidgets import QWidget, QGridLayout
 
-from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui import lakeshore336_gui
+from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui2 import lakeshore336_gui
 
 
 class lakeshore336_client(object):
@@ -15,6 +14,7 @@ class lakeshore336_client(object):
 
     def __init__(self, reactor, parent=None):
         self.gui = lakeshore336_gui()
+        self.gui.setupUi()
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -60,8 +60,8 @@ class lakeshore336_client(object):
             #record temperature
         self.gui.tempAll_record.toggled.connect(lambda: self.record_temp())
             #update heater setting
-        self.gui.heat1_update.toggled.connect(lambda: self.update_heater(chan = 1))
-        self.gui.heat2_update.toggled.connect(lambda: self.update_heater(chan = 2))
+        #self.gui.heat1_update.toggled.connect(lambda: self.update_heater(chan = 1))
+        #self.gui.heat2_update.toggled.connect(lambda: self.update_heater(chan = 2))
             #lock heater settings
         self.gui.heatAll_lockswitch.toggled.connect(lambda: self.lock_heaters())
             #mode changed
@@ -137,8 +137,8 @@ class lakeshore336_client(object):
         Locks heater updating
         """
         lock_status = self.gui.heatAll_lockswitch.isChecked()
-        self.gui.heat1_update.setEnabled(lock_status)
-        self.gui.heat2_update.setEnabled(lock_status)
+        #self.gui.heat1_update.setEnabled(lock_status)
+        #self.gui.heat2_update.setEnabled(lock_status)
 
     def heater_mode_changed(self, chan):
         """
@@ -285,6 +285,8 @@ class lakeshore336_client(object):
     def closeEvent(self, event):
         self.reactor.stop()
         self.cxn.disconnect()
+        import sys
+        sys.exit()
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runClient

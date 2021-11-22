@@ -10,6 +10,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget
+from PyQt5.QtGui import QFont
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
 
@@ -21,6 +22,7 @@ class TextChangingButton(_TextChangingButton):
 class lakeshore336_gui(QWidget):
 
     def setupUi(self):
+        shell_font = 'MS Shell Dlg 2'
         lakeshore336_gui = self
         lakeshore336_gui.setObjectName("lakeshore336_gui")
         lakeshore336_gui.resize(583, 596)
@@ -42,10 +44,10 @@ class lakeshore336_gui(QWidget):
         font.setPointSize(15)
         self.tempAll_label.setFont(font)
         self.tempAll_label.setObjectName("tempAll_label")
-        self.heatAll_lockswitch = TextChangingButton(('Locked', 'Unlocked'))
+        self.heatAll_lockswitch = TextChangingButton(('Locked', 'Unlocked'), self)
         self.heatAll_lockswitch.setGeometry(QtCore.QRect(320, 110, 139, 23))
         self.heatAll_lockswitch.setObjectName("heatAll_lockswitch")
-        self.tempAll_record = TextChangingButton(('Stop Recording', 'Start Recording'))
+        self.tempAll_record = TextChangingButton(('Stop Recording', 'Start Recording'), self)
         self.tempAll_record.setGeometry(QtCore.QRect(30, 110, 159, 23))
         self.widget = QtWidgets.QWidget(lakeshore336_gui)
         self.widget.setGeometry(QtCore.QRect(30, 150, 161, 331))
@@ -59,6 +61,7 @@ class lakeshore336_gui(QWidget):
         self.temp1 = QtWidgets.QLabel(self.widget)
         self.temp1.setAlignment(QtCore.Qt.AlignCenter)
         self.temp1.setObjectName("temp1")
+        #self.temp1.setFont(QFont(shell_font, pointsize=20))
         self.temp_layout.addWidget(self.temp1)
         self.temp2_label = QtWidgets.QLabel(self.widget)
         self.temp2_label.setObjectName("temp2_label")
