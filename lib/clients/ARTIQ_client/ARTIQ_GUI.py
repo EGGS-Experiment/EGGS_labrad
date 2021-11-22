@@ -13,7 +13,7 @@ class ARTIQ_gui(QMainWindow):
         #self.clipboard = clipboard
         self.reactor = reactor
         self.connect()
-        self.makeLayout(self.cxn)
+        self.makeLayout()
         self.setWindowTitle(self.name)
 
     @inlineCallbacks
@@ -22,22 +22,23 @@ class ARTIQ_gui(QMainWindow):
         self.cxn = yield connectAsync('localhost', name=self.name)
         #check that required servers are online
         try:
-            self.dv = self.cxn.data_vault
-            self.reg = self.cxn.registry
+            self.dv = yield self.cxn.data_vault
+            self.reg = yield self.cxn.registry
         except Exception as e:
             print(e)
             raise
 
-    def makeLayout(self, cxn):
+    @inlineCallbacks
+    def makeLayout(self):
         #central layout
         centralWidget = QWidget()
         layout = QHBoxLayout()
         self.tabWidget = QTabWidget()
 
         #create subwidgets
-        ttl_widget = self.makeTTLWidget(reactor, cxn)
-        dds_widget = self.makeDDSWidget(reactor, cxn)
-        dac_widget = self.makeDACWidget(reactor, cxn)
+        ttl_widget = yield self.makeTTLWidget()
+        dds_widget = yield self.makeDDSWidget()
+        dac_widget = yield self.makeDACWidget()
 
         #create tabs for each subwidget
         self.tabWidget.addTab(ttl_widget, '&TTL')
@@ -50,31 +51,31 @@ class ARTIQ_gui(QMainWindow):
         self.setCentralWidget(centralWidget)
         self.setWindowTitle(self.name)
 
-    def makeTTLWidget(self, reactor, cxn):
+    def makeTTLWidget(self):
         from EGGS_labrad.lib.clients.ARTIQ_client.TTL_client import TTL_client
-        return TTL_client(reactor, cxn)
+        return TTL_client(self.reactor)
 
-    def makeDDSWidget(self, reactor, cxn):
+    def makeDDSWidget(self):
         from EGGS_labrad.lib.clients.ARTIQ_client.DDS_client import DDS_client
-        return DDS_client(reactor, cxn)
+        return DDS_client(self.reactor)
 
-    def makeDACWidget(self, reactor, cxn):
-        from EGGS_labrad.lib.clients.ARTIQ_client.DDS_client import DAC_client
-        return DAC_client(reactor, cxn)
+    def makeDACWidget(self):
+        from EGGS_labrad.lib.clients.ARTIQ_client.DAC_client import DAC_client
+        return DAC_client(self.reactor)
 
     def closeEvent(self, x):
         self.reactor.stop()
 
 if __name__=="__main__":
-    from EGGS_labrad.lib.clients import runClient
-    runClient(ARTIQ_gui)
-    # import sys
-    # app = QApplication(sys.argv)
-    # clipboard = app.clipboard()
-    # import qt5reactor
-    # qt5reactor.install()
-    # from twisted.internet import reactor
-    # gui = ARTIQ_gui(reactor, clipboard)
-    # gui.show()
-    # reactor.run()
-    # app.exec_()
+    # from EGGS_labrad.lib.clients import runClient
+    # runClient(ARTIQ_gui)
+    import sys
+    app = QApplication(sys.argv)
+    clipboard = app.clipboard()
+    import qt5reactor
+    qt5reactor.install()
+    from twisted.internet import reactor
+    gui = ARTIQ_gui(reactor)
+    gui.show()
+    reactor.run()
+    app.exec_()

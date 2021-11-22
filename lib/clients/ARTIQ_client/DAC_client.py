@@ -52,7 +52,9 @@ class AD5372_channel(QFrame):
 
         # buttons
         self.resetswitch = QPushButton('Reset')
+        self.resetswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.calibrateswitch = QPushButton('Calibrate')
+        self.calibrateswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.lockswitch = TextChangingButton(('Locked', 'Unlocked'))
 
         # add widgets to layout
@@ -112,7 +114,7 @@ class DAC_client(QWidget):
             layout.addWidget(zotino_group, 2 + i, 0)
         self.setLayout(layout)
 
-    def _makeZotinoGroup(self, ttl_list, name):
+    def _makeZotinoGroup(self, name):
         """
         Creates a group of zotino channels as a widget.
         """
@@ -123,11 +125,11 @@ class DAC_client(QWidget):
         layout = QGridLayout()
         # set title
         title = QLabel(name)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(title, 0, 0)
+        layout.addWidget(title, 0, 0, 1, self.row_length)
         # layout individual channels (32 per zotino)
-        for i in range(31):
+        for i in range(32):
             # initialize GUIs for each channel
             channel_name = name + '_' + str(i)
             channel_gui = AD5372_channel(channel_name)

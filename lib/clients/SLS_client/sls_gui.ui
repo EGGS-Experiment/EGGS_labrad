@@ -252,7 +252,7 @@
     <item row="13" column="1">
      <widget class="QDoubleSpinBox" name="servo_d">
       <property name="maximum">
-       <double>1000.000000000000000</double>
+       <double>10000.000000000000000</double>
       </property>
      </widget>
     </item>
@@ -266,7 +266,7 @@
     <item row="9" column="1">
      <widget class="QDoubleSpinBox" name="servo_p">
       <property name="maximum">
-       <double>10000.000000000000000</double>
+       <double>1000.000000000000000</double>
       </property>
      </widget>
     </item>
@@ -438,7 +438,7 @@
     <item row="2" column="1" rowspan="2">
      <widget class="QLabel" name="autolock_time">
       <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:24pt; color:#0055ff;&quot;&gt;Time&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:18pt; color:#0055ff;&quot;&gt;Time&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
     </item>
@@ -478,7 +478,7 @@
     <item row="5" column="1">
      <widget class="QLabel" name="autolock_attempts">
       <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:24pt; color:#0055ff;&quot;&gt;Attempts&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:18pt; color:#0055ff;&quot;&gt;Attempts&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
     </item>

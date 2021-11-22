@@ -22,7 +22,7 @@ from twisted.internet.defer import inlineCallbacks, DeferredList, returnValue
 import EGGS_labrad.lib.config.scriptscanner_config as sc_config
 
 from scheduler import scheduler
-from experiment_classes import *Z
+from experiment_classes import *
 from experiment import experiment_info
 from script_signals_server import ScriptSignalsServer
 
