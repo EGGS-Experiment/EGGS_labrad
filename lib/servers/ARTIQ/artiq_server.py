@@ -47,24 +47,28 @@ class ARTIQ_Server(LabradServer):
 
     @inlineCallbacks
     def initServer(self):
+        self.listeners = set()
         yield self._setClients()
         yield self._setVariables()
         yield self._setDevices()
-        self.listeners = set()
 
     def _setClients(self):
-        """Sets clients to ARTIQ master."""
+        """
+        Create clients to ARTIQ master.
+        Used to get datasets and submit experiments.
+        """
         self.scheduler = Client('::1', 3251, 'master_schedule')
         self.datasets = Client('::1', 3251, 'master_dataset_db')
 
     def _setVariables(self):
-        """Sets variables."""
+        """
+        Sets ARTIQ-related variables.
+        """
+        #used to ensure atomicity
         self.inCommunication = DeferredLock()
-
         #pulse sequencer variables
         self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser\\run_ps.py'
         self.ps_rid = None
-
         #conversions
             #dds
         dds_tmp = list(self.api.dds_list.values())[0]
@@ -78,12 +82,18 @@ class ARTIQ_Server(LabradServer):
         self.voltage_to_mu = voltage_to_mu
 
     def _setDevices(self):
-        pass
-        #t1 = self.api.ttl_out_list
+        """
+        Get the list of devices in the ARTIQ box.
+        """
+        self.ttlout_list = list(self.api.ttlout_list.keys())
+        self.dds_list = list(self.api.dds_list.keys())
 
     # Core
     @setting(21, "Get Devices", returns='')
     def getDevices(self):
+        """
+        Returns the ARTIQ device database.
+        """
         return self.devices.get_device_db()
 
     #Pulse sequencing
@@ -134,41 +144,43 @@ class ARTIQ_Server(LabradServer):
 
 
     #TTLs
-    @setting(211, 'TTL Get', returns = '*s')
+    @setting(211, 'TTL Get', returns='*s')
     def getTTL(self, c):
         """
         Returns all available TTL channels
         """
-        ttl_list = yield self.api.ttlout_list.keys()
-        returnValue(list(ttl_list))
+        return self.ttlout_list
 
-    @setting(221, "TTL Set", ttl_name = 's', state = 'b', returns='')
+    @setting(221, "TTL Set", ttl_name='s', state='b', returns='')
     def setTTL(self, c, ttl_name, state):
         """
         Manually set a TTL to the given state.
         Arguments:
-            ttl_name (str)   : name of the ttl
+            ttl_name (str)  : name of the ttl
             state   (bool)  : ttl power state
         """
+        if ttl_name not in self.ttlout_list:
+            raise Exception('Error: device does not exist.')
         yield self.api.setTTL(ttl_name, state)
 
 
     #DDS functions
-    @setting(311, "DDS Get", returns = '*s')
+    @setting(311, "DDS Get", returns='*s')
     def getDDS(self, c):
         """get the list of available channels"""
         dds_list = yield self.api.dds_list.keys()
         returnValue(list(dds_list))
 
-    @setting(321, "DDS Initialize", dds_name, returns = '')
-    def initializeDDS(self, c):
+    @setting(321, "DDS Initialize", dds_name='s', returns='')
+    def initializeDDS(self, c, dds_name):
         """
         Resets/initializes the DDSs.
         """
-        #todo: check error
+        if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
         yield self.api.initializeDDS(dds_name)
 
-    @setting(322, "DDS Toggle", dds_name = 's', state = 'b', returns='')
+    @setting(322, "DDS Toggle", dds_name='s', state='b', returns='')
     def toggleDDS(self, c, dds_name, state):
         """
         Manually toggle a DDS via the RF switch
@@ -176,6 +188,8 @@ class ARTIQ_Server(LabradServer):
             dds_name    (str)   : the name of the dds
             state       (bool)  : power state
         """
+        if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
         yield self.api.toggleDDS(dds_name, state)
 
     @setting(323, "DDS Waveform", dds_name='s', param='s', param_val='v', returns='')
@@ -188,6 +202,8 @@ class ARTIQ_Server(LabradServer):
             param_val   (float) : the value of the parameter
         """
         #todo: check input
+        if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
         if param.lower() in ('frequency', 'f'):
             ftw = yield self.frequency_to_ftw(param_val)
             yield self.api.setDDS(dds_name, 0, ftw)
@@ -195,6 +211,8 @@ class ARTIQ_Server(LabradServer):
             asf = yield self.amplitude_to_asf(param_val)
             yield self.api.setDDS(dds_name, 1, asf)
         elif param.lower() in ('phase', 'p'):
+            if param_val >= 1 or pow < 0:
+                raise Exception('Error: phase outside bounds of [0,1]')
             pow = yield self.turns_to_pow(param_val)
             yield self.api.setDDS(dds_name, 2, pow)
 
@@ -229,7 +247,10 @@ class ARTIQ_Server(LabradServer):
             voltage (float) : the DAC register voltage (not the same as
                                 output voltage due to offset registers)
         """
-        #todo: check input
+        #only 32 channels per DAC
+        if (dac_num > 31) or (dac_num < 0):
+            raise Exception('Error: device does not exist.')
+        #todo: check voltage
         voltage_mu = yield self.voltage_to_mu(voltage)
         yield self.api.setDAC(dac_num, voltage_mu)
 
@@ -241,7 +262,12 @@ class ARTIQ_Server(LabradServer):
             dac_num (int)   : the DAC channel number
             gain (float)    : the DAC channel gain
         """
-        #todo: check input
+        # only 32 channels per DAC
+        if (dac_num > 31) or (dac_num < 0):
+            raise Exception('Error: device does not exist.')
+        #check that gain is valid
+        if gain > 1 or gain < 0:
+            raise Exception('Error: gain outside bounds of [0,1]')
         #gain is a 16 bit register, 0xffff is full
         gain_mu = int(gain * 0xffff) - 1
         yield self.api.setDACGain(dac_num, gain_mu)
@@ -254,9 +280,13 @@ class ARTIQ_Server(LabradServer):
             dac_num (int)   : the DAC channel number
             voltage (float) : the DAC offset register voltage
         """
-        #todo: check input
+        #only 32 channels per DAC
+        if (dac_num > 31) or (dac_num < 0):
+            raise Exception('Error: device does not exist.')
+        #todo: check voltage
         voltage_mu = yield self.voltage_to_mu(voltage)
-        yield self.api.setDACOffset(dac_num, voltage)
+        yield self.api.setDACOffset(dac_num, voltage_mu)
+
 
     #Sampler
 
