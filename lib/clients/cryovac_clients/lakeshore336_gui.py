@@ -209,7 +209,9 @@ class lakeshore336_gui(QtWidgets.QFrame):
 
     def makeLayout(self):
         layout = QtWidgets.QGridLayout()
-        shell_font = 'MS Shell Dlg 2'
+        temp_layout = QtWidgets.QVBoxLayout()
+        heat1_layout = QtWidgets.QVBoxLayout()
+        heat2_layout = QtWidgets.QVBoxLayout()
 
         temp_label_col = 2
         temp_box_col = 2

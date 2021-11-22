@@ -15,7 +15,6 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-#todo: check and sanitize input for each setting
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad import types as T
 from twisted.internet.defer import returnValue
@@ -39,17 +38,10 @@ class SLSServer(SerialDeviceServer):
     @setting(111, 'Autolock Toggle', enable='s', returns='s')
     def autolock_toggle(self, c, enable=None):
         '''
-        Toggle autolock
+        Toggle autolock.
         '''
         chString = 'AutoLockEnable'
-        if enable:
-            yield self.ser.write('set ' + chString + ' ' + str(enable) + TERMINATOR)
-            set_resp = self.ser.read()
-            set_resp = yield self._parse(set_resp, True)
-            print(set_resp)
-        yield self.ser.write('get ' + chString + TERMINATOR)
-        resp = self.ser.read()
-        resp = yield self._parse(resp, False)
+        resp = yield self._query(chString, enable)
         returnValue(resp)
 
     @setting(112, 'Autolock Status', returns='*s')
@@ -62,8 +54,10 @@ class SLSServer(SerialDeviceServer):
         chString = ['LockTime', 'LockCount', 'AutoLockState']
         resp = []
         for string in chString:
-            resp_tmp = self.ser.write('get ' + string + TERMINATOR)
-            resp_tmp = yield self._parse(resp_tmp, True)
+            resp_tmp = yield self.ser.write('get ' + string + TERMINATOR)
+            sleep(0.5)
+            resp_tmp = yield self.ser.read()
+            resp_tmp = yield self._parse(resp_tmp, False)
             resp.append(resp_tmp)
         returnValue(resp)
 
@@ -73,18 +67,14 @@ class SLSServer(SerialDeviceServer):
         Choose parameter for autolock to sweep
         '''
         chString = 'SweepType'
-        if param.lower() == 'current':
-            yield self.ser.write('set ' + chString + ' ' + '2' + TERMINATOR)
-            set_resp = self.ser.read()
-            set_resp = yield self._parse(set_resp, True)
-            print(set_resp)
-        elif param.upper() == 'PZT':
-            yield self.ser.write('set ' + chString + ' ' + '1' + TERMINATOR)
-            set_resp = self.ser.read()
-            set_resp = yield self._parse(set_resp, True)
-            print(set_resp)
-        resp = self.ser.read()
-        resp = yield self._parse(resp, False)
+        tgstring = {'OFF': '0', 'PZT': '1', 'CURRENT': '2'}
+        param_tg = None
+        if not param:
+            try:
+                param_tg = tgstring[param.upper()]
+            except KeyError:
+                print('Invalid parameter: parameter must be one of [\'OFF\', \'PZT\', \'CURRENT\']')
+        resp = yield self._query(chString, param_tg)
         returnValue(resp)
 
     #PDH
@@ -105,10 +95,11 @@ class SLSServer(SerialDeviceServer):
             print('Invalid parameter. Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
         if param_val:
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
+            sleep(0.5)
             set_resp = yield self.ser.read()
             set_resp = yield self._parse(set_resp, True)
-            print(set_resp)
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
+        sleep(0.5)
         resp = yield self.ser.read()
         resp = yield self._parse(resp, False)
         returnValue(resp)
@@ -124,14 +115,6 @@ class SLSServer(SerialDeviceServer):
                             : the value of offset frequency
         '''
         chString = 'OffsetFrequency'
-        # if freq:
-        #     yield self.ser.write('set ' + chString + ' ' + freq + TERMINATOR)
-        #     set_resp = yield self.ser.read()
-        #     set_resp2 = yield self._parse(set_resp, True)
-        #     print(set_resp2)
-        # yield self.ser.write('get ' + chString + TERMINATOR)
-        # resp = yield self.ser.read()
-        # resp = yield self._parse(resp, False)
         resp = yield self._query(chString, freq)
         returnValue(float(resp))
 
@@ -144,16 +127,9 @@ class SLSServer(SerialDeviceServer):
         Returns:
                                 : the offset lockpoint
         '''
-        chstring = 'LockPoint'
-        if lockpoint:
-            yield self.ser.write('set ' + chstring + ' ' + lockpoint + TERMINATOR)
-            set_resp = yield self.ser.read()
-            set_resp2 = yield self._parse(set_resp, True)
-            print(set_resp2)
-        yield self.ser.write('get ' + chstring + TERMINATOR)
-        resp = yield self.ser.read()
-        resp2 = yield self._parse(resp, False)
-        returnValue(int(resp2))
+        chString = 'LockPoint'
+        resp = yield self._query(chString, lockpoint)
+        returnValue(int(resp))
 
     #Servo
     @setting(411, 'servo', servo_target='s', param_name='s', param_val='?', returns='s')
@@ -167,20 +143,12 @@ class SLSServer(SerialDeviceServer):
         '''
         tgstring = {'current': 'Current', 'pzt': 'PZT', 'tx': 'TX'}
         chstring = {'p': 'ServoPropGain', 'i': 'ServoIntGain', 'd': 'ServoDiffGain', 'set': 'ServoSetpoint', 'loop': 'ServoInvertLoop', 'filter': 'ServoOutputFilter'}
-
         try:
             string_tmp = tgstring[servo_target.lower()] + chstring[param_name.lower()]
         except KeyError:
             print('Invalid target or parameter. Target must be one of [\'current\',\'pzt\',\'tx\'].'
                   'Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
-        if param_val:
-            yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
-            set_resp = self.ser.read()
-            set_resp = yield self._parse(set_resp, True)
-            print(set_resp)
-        yield self.ser.write('get ' + string_tmp + TERMINATOR)
-        resp = self.ser.read()
-        resp = yield self._parse(resp, False)
+        resp = yield self._query(string_tmp, param_val)
         returnValue(resp)
 
     #Misc. settings
@@ -216,18 +184,19 @@ class SLSServer(SerialDeviceServer):
         then reads back same parameter
         """
         if param:
+            #write data and read echo
             yield self.ser.write('set ' + chstring + ' ' + str(param) + TERMINATOR)
-            set_resp = self.ser.read(100)
-            print(set_resp)
-            sleep(1)
-            # set_resp = self._parse(set_resp, True)
-            # print(set_resp)
+            sleep(0.5)
+            set_resp = yield self.ser.read()
+            #parse
+            set_resp = yield self._parse(set_resp, True)
+        # write data and read echo
         yield self.ser.write('get ' + chstring + TERMINATOR)
+        sleep(0.5)
         resp = yield self.ser.read()
-        sleep(1)
-        resp2 = yield self._parse(resp, False)
-        resp2 = yield self._parse(resp, False)
-        returnValue(resp2)
+        # parse
+        resp = yield self._parse(resp, False)
+        returnValue(resp)
 
 
 if __name__ == "__main__":
