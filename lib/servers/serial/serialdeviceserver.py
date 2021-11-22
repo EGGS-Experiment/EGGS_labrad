@@ -180,12 +180,13 @@ class SerialDeviceServer(LabradServer):
             ser = cli.servers[serStr]
             # instantiate SerialConnection convenience class
             self.ser = self.SerialConnection(ser=ser, port=port, **kwargs)
-            print('Serial connection opened.')
             #clear input and output buffers
             yield self.ser.flush_input()
             yield self.ser.flush_output()
+            print('Serial connection opened.')
         except Error:
             self.ser = None
+            #print(str(Error))
             raise SerialConnectionError(1)
 
     @inlineCallbacks
@@ -323,7 +324,7 @@ class SerialDeviceServer(LabradServer):
         #try to open serial connection
         try:
             serStr = yield self.findSerial(self.serNode)
-            self.initSerial(serStr, self.port, baudrate=self.baudrate, timeout=self.timeout,
+            yield self.initSerial(serStr, self.port, baudrate=self.baudrate, timeout=self.timeout,
                             bytesize=self.bytesize, parity=self.parity)
         except SerialConnectionError as e:
             self.ser = None
@@ -332,7 +333,6 @@ class SerialDeviceServer(LabradServer):
                 print('Please start correct serial server')
             elif e.code == 1:
                 print('Error opening serial connection')
-                print('Check set up and restart serial server')
             else:
                 raise Exception('Unknown connection error')
         except Exception as e:
