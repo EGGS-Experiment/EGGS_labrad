@@ -50,7 +50,7 @@ class TwisTorr74Server(SerialDeviceServer):
     }
 
     #TOGGLE
-    @setting(111, 'toggle', onoff='b', returns='')
+    @setting(111, 'toggle', onoff='b', returns='s')
     def toggle(self, c, onoff):
         """
         Start or stop the pump
@@ -59,22 +59,30 @@ class TwisTorr74Server(SerialDeviceServer):
         Returns:
                     (bool): pump state
         """
+        #setter
         if onoff is not None:
-        _data_msg = b''
-        if onoff:
-            _data_msg = b'1'
-        elif onoff is False:
-            _data_msg = b'0'
-        #create and send message to device
-        message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'1')
+            message = None
+            if onoff:
+                message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'1')
+            elif onoff is False:
+                message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'0')
+            #create and send message to device
+            yield self.ser.write(message)
+            #read and parse answer
+            time.sleep(1.0)
+            resp = yield self.ser.read()
+        #getter
+        # create and send message to device
+        message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.READ_msg)
         yield self.ser.write(message)
-        #read and parse answer
+        # read and parse answer
         time.sleep(1.0)
         resp = yield self.ser.read()
         try:
             resp = yield self._parse_answer(resp)
         except Exception as e:
             print(e)
+        returnValue(resp)
 
     #READ PRESSURE
     @setting(211, 'Read Pressure', returns='v')
@@ -87,7 +95,6 @@ class TwisTorr74Server(SerialDeviceServer):
         #create and send message to device
         message = yield self._create_message(CMD_msg=b'224', DIR_msg=self.READ_msg)
         yield self.ser.write(message)
-
         #read and parse answer
         time.sleep(1.0)
         resp = yield self.ser.read()
@@ -129,7 +136,6 @@ class TwisTorr74Server(SerialDeviceServer):
             ans = 'Acknowledged'
         elif ans in self.ERRORS_msg:
             raise Exception(self.ERRORS_msg[ans])
-        #todo: check that this doesn't give problems
         return ans
 
 if __name__ == '__main__':
