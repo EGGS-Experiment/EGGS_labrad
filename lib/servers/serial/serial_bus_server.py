@@ -48,12 +48,12 @@ SerialDevice = collections.namedtuple('SerialDevice', ['name', 'devicepath'])
 class SerialServer(LabradServer):
     """Provides access to a computer's serial (COM) ports."""
     name = '%LABRADNODE% Serial Server'
-    refreshInterval = 10
 
     def initServer(self):
         self.enumerate_serial_pyserial()
-        #start looping call to periodically update
-        #serial devices
+        self.refreshInterval = 10
+        # start looping call to
+        # periodically update serial devices
         reactor.callLater(1, self.startRefreshing)
 
     def startRefreshing(self):
@@ -127,15 +127,31 @@ class SerialServer(LabradServer):
 
     @setting(1, 'List Serial Ports', returns=['*s: List of serial ports'])
     def list_serial_ports(self, c):
-        """Retrieves a list of all serial ports.
-
+        """
+        Retrieves a list of all serial ports.
         NOTES:
         This list contains all ports installed on the computer,
-        including ones that are already in use by other programs."""
+        including ones that are already in use by other programs.
+        """
         print(self.SerialPorts)
         port_list = [x.name for x in self.SerialPorts]
-
         return port_list
+
+    @setting(2, 'Set Polling', status='b', interval='v', returns='(bv)')
+    def set_polling(self, c, status, interval):
+        """
+        Configure polling of serial ports.
+        """
+        #ensure interval is valid
+        if (interval < 0) or (interval > 60):
+            raise Exception('Invalid polling interval.')
+        self.refreshInterval = interval
+        #only start/stop polling if we are not already started/stopped
+        if status and (not self.refresher.running):
+            self.startRefreshing()
+        elif (not status) and (self.refresher.running):
+            self.refresher.stop()
+        return (self.refresher.running, self.refreshInterval)
 
     @setting(10, 'Open', port=[': Open the first available port', 's: Port to open, e.g. COM4'],
              returns=['s: Opened port'])

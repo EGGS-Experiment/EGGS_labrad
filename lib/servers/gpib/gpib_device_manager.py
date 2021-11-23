@@ -4,7 +4,7 @@
 #     device registration would fail if the server had a custom IDN handling
 #     function because this setting could not be properly accessed through the
 #     LabRAD manager at the time of execution.
-# 1.4: Updated for Python 3
+# 1.4.0: Updated for Python 3
 
 from twisted.internet.defer import DeferredList, DeferredLock
 from twisted.internet.reactor import callLater
@@ -16,7 +16,7 @@ from labrad.units import Unit,Value
 ### BEGIN NODE INFO
 [info]
 name = GPIB Device Manager
-version = 1.4
+version = 1.4.0
 description = Manages discovery and lookup of GPIB devices
 
 [startup]

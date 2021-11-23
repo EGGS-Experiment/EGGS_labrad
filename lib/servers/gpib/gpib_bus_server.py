@@ -88,8 +88,8 @@ class GPIBBusServer(LabradServer):
             #yield self.refresherDone
 
     def refreshDevices(self):
-        """Refresh the list of known devices on this bus.
-
+        """
+        Refresh the list of known devices on this bus.
         Currently supported are GPIB devices and GPIB over USB.
         """
         try:
@@ -215,6 +215,22 @@ class GPIBBusServer(LabradServer):
     def refresh_devices(self, c):
         """ manually refresh devices """
         self.refreshDevices()
+
+    @setting(31, status='b', interval='v', returns='(bv)')
+    def set_polling(self, c, status, interval):
+        """
+        Configure polling of serial ports.
+        """
+        #ensure interval is valid
+        if (interval < 0) or (interval > 60):
+            raise Exception('Invalid polling interval.')
+        self.refreshInterval = interval
+        #only start/stop polling if we are not already started/stopped
+        if status and (not self.refresher.running):
+            self.startRefreshing()
+        elif (not status) and (self.refresher.running):
+            self.refresher.stop()
+        return (self.refresher.running, self.refreshInterval)
 
 
 __server__ = GPIBBusServer()
