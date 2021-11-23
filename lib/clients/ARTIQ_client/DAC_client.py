@@ -26,9 +26,9 @@ class AD5372_channel(QFrame):
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        dac_label = QLabel('DAC (MHz)')
-        gain_label = QLabel('Gain (V)')
-        off_label = QLabel('Offset (dBm)')
+        dac_label = QLabel('DAC (V)')
+        off_label = QLabel('Offset (V)')
+        gain_label = QLabel('Gain (%)')
 
         # editable fields
         self.dac = QDoubleSpinBox()
@@ -41,7 +41,7 @@ class AD5372_channel(QFrame):
         self.gain.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.gain.setDecimals(3)
         self.gain.setSingleStep(0.1)
-        self.gain.setRange(-145.0, 30.0)
+        self.gain.setRange(0, 1.0)
         self.gain.setKeyboardTracking(False)
         self.off = QDoubleSpinBox()
         self.off.setFont(QFont('MS Shell Dlg 2', pointSize=16))
@@ -55,7 +55,7 @@ class AD5372_channel(QFrame):
         self.resetswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.calibrateswitch = QPushButton('Calibrate')
         self.calibrateswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
-        self.lockswitch = TextChangingButton(('Locked', 'Unlocked'))
+        self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
 
         # add widgets to layout
         layout.addWidget(title, 0, 0, 1, 3)
@@ -69,6 +69,16 @@ class AD5372_channel(QFrame):
         layout.addWidget(self.calibrateswitch, 3, 1)
         layout.addWidget(self.resetswitch, 3, 2)
         self.setLayout(layout)
+        # connect signal to slot
+        self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
+
+    @inlineCallbacks
+    def lock(self, status):
+        yield self.resetswitch.setEnabled(status)
+        yield self.calibrateswitch.setEnabled(status)
+        yield self.dac.setEnabled(status)
+        yield self.off.setEnabled(status)
+        yield self.gain.setEnabled(status)
 
 
 class DAC_client(QWidget):
@@ -93,9 +103,9 @@ class DAC_client(QWidget):
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync('localhost', name=self.name)
         try:
-            self.reg = self.cxn.registry
-            self.dv = self.cxn.data_vault
-            self.artiq = self.cxn.artiq_server
+            self.reg = yield self.cxn.registry
+            self.dv = yield self.cxn.data_vault
+            self.artiq = yield self.cxn.artiq_server
         except Exception as e:
             print(e)
             raise
@@ -137,15 +147,11 @@ class DAC_client(QWidget):
             row = int(i / self.row_length) + 2
             column = i % self.row_length
             # connect signals to slots
-            channel_gui.dac.valueChanged.connect(lambda value, chan=channel_name:
-                                                 self.setDAC(chan, value))
-            channel_gui.gain.valueChanged.connect(lambda value, chan=channel_name:
-                                                  self.setGain(chan, value))
-            channel_gui.off.valueChanged.connect(lambda value, chan=channel_name:
-                                                 self.setOffset(chan, value))
+            channel_gui.dac.valueChanged.connect(lambda value, chan=channel_name: self.setDAC(chan, value))
+            channel_gui.off.valueChanged.connect(lambda value, chan=channel_name: self.setOffset(chan, value))
+            channel_gui.gain.valueChanged.connect(lambda value, chan=channel_name: self.setGain(chan, value))
             channel_gui.calibrateswitch.clicked.connect(lambda: self.calibrate)
             channel_gui.resetswitch.clicked.connect(lambda: self.reset)
-            channel_gui.lockswitch.clicked.connect(lambda status: self.lock(status))
             # add widget to client list and layout
             self.ad5372_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
@@ -168,25 +174,16 @@ class DAC_client(QWidget):
                 self.zotino_list.append(name)
 
     @inlineCallbacks
-    def setFrequency(self, channel_name, freq):
-        yield self.artiq.set_DAC_frequency(channel_name, freq)
+    def setDAC(self, channel_name, voltage):
+        yield self.artiq.dac_set(channel_name, voltage)
 
     @inlineCallbacks
-    def setAmplitude(self, channel_name, ampl):
-        yield self.artiq.set_DAC_amplitude(channel_name, ampl)
+    def setOffset(self, channel_name, voltage):
+        yield self.artiq.dac_offset(channel_name, voltage)
 
     @inlineCallbacks
-    def setAttenuation(self, channel_name, att):
-        yield self.artiq.set_DAC_attenuation(channel_name, att)
-
-    def lock(self, status):
-        """
-        Locks DAC channel interface.
-        """
-        # invert since textchangingbutton is weird
-        status = not status
-        for channel in self.ad5372_clients.values():
-            channel.setEnabled(status)
+    def setGain(self, channel_name, gain):
+        yield self.artiq.dac_gain(channel_name, gain)
 
     def closeEvent(self, x):
         self.cxn.disconnect()
