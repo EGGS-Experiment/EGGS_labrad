@@ -72,7 +72,6 @@ class ARTIQ_Server(LabradServer):
         self.frequency_to_ftw = dds_tmp.frequency_to_ftw
         self.turns_to_pow = dds_tmp.turns_to_pow
         self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
-        #self.voltage_to_mu = self.
         # #todo: finish for zotino
 
     def _setDevices(self):
