@@ -156,6 +156,12 @@ class SerialDeviceServer(LabradServer):
             self.ID = ser.ID
 
     @inlineCallbacks
+    def initServer(self):
+        #automatically connect to default port if specified
+        if self.serNode is not None and self.port is not None:
+            yield self.selectDevice(self.serNode, self.port)
+
+    @inlineCallbacks
     def initSerial(self, serStr, port, **kwargs):
         """
         Initialize serial connection.
