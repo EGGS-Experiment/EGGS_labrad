@@ -110,8 +110,8 @@ class twistorr74_client(object):
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
     def closeEvent(self, event):
-        self.reactor.stop()
         self.cxn.disconnect()
+        self.reactor.stop()
 
 
 if __name__ == "__main__":

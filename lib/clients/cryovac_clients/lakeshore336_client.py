@@ -285,10 +285,9 @@ class lakeshore336_client(object):
             self.gui.heat2.setText(str(curr2))
 
     def closeEvent(self, event):
-        self.reactor.stop()
         self.cxn.disconnect()
-        import sys
-        sys.exit()
+        self.reactor.stop()
+
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runClient

@@ -137,6 +137,7 @@ class rf_client(object):
         self.gui.mod_phase_toggle.setEnabled(status)
 
     def closeEvent(self, event):
+        self.cxn.disconnect()
         self.reactor.stop()
 
 if __name__=="__main__":

@@ -64,6 +64,7 @@ class ARTIQ_gui(QMainWindow):
         return DAC_client(self.reactor)
 
     def closeEvent(self, x):
+        self.cxn.disconnect()
         self.reactor.stop()
 
 if __name__=="__main__":
@@ -78,4 +79,4 @@ if __name__=="__main__":
     gui = ARTIQ_gui(reactor)
     gui.show()
     reactor.run()
-    app.exec_()
+    sys.exit(app.exec_())

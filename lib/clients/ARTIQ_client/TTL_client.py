@@ -155,9 +155,10 @@ class TTL_client(QWidget):
 
     @inlineCallbacks
     def toggleSwitch(self, channel_name, status):
-        yield self.artiq.set_TTL(channel_name, status)
+        yield self.artiq.TTL_set(channel_name, status)
 
     def closeEvent(self, x):
+        self.cxn.disconnect()
         self.reactor.stop()
 
 if __name__ == "__main__":

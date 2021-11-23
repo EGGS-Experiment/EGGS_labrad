@@ -157,6 +157,12 @@ class connection(object):
             except Exception as e:
                 returnValue(False)
         returnValue(True)
+
+    def disconnect(self):
+        """
+        Disconnect from the LabRAD manager
+        """
+        self.cxn.disconnect()
             
 if __name__ == '__main__':
     from twisted.internet import reactor

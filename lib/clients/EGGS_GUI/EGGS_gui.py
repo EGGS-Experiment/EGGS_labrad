@@ -84,6 +84,7 @@ class EGGS_gui(QMainWindow):
         return rf_widget
 
     def closeEvent(self, x):
+        self.cxn.disconnect()
         self.reactor.stop()
 
 

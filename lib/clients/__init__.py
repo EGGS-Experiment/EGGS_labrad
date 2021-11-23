@@ -24,7 +24,7 @@ def runGUI(client, **kwargs):
         print('No need to setup UI')
     #run GUI file
     gui.show()
-    app.exec_()
+    sys.exit(app.exec())
 
 def runClient(client, **kwargs):
     """
@@ -48,4 +48,4 @@ def runClient(client, **kwargs):
         client.show()
     #start reactor
     reactor.run()
-    app.exec_()
+    sys.exit(app.exec())
