@@ -92,8 +92,13 @@ class DDS_client(QWidget):
         self.device_db = device_db
         self.ad9910_clients = {}
         self.connect()
-        self._getDevices()
-        self.initializeGUI()
+        self.initClient()
+
+    @inlineCallbacks
+    def initClient(self):
+        yield self._getDevices()
+        yield self.initializeGUI()
+
 
     @inlineCallbacks
     def connect(self):
@@ -101,22 +106,17 @@ class DDS_client(QWidget):
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync('localhost', name=self.name)
         try:
-            self.reg = self.cxn.registry
-            self.dv = self.cxn.data_vault
-            self.artiq = self.cxn.artiq_server
+            self.reg = yield self.cxn.registry
+            self.dv = yield self.cxn.data_vault
+            self.artiq = yield self.cxn.artiq_server
         except Exception as e:
             print(e)
             raise
-
 
     #@inlineCallbacks
     def _getDevices(self):
         """
         Get devices from ARTIQ server.
-        """
-        #create holding lists
-        """
-        Parses device_db for relevant devices.
         """
         #create holding lists
         self.ad9910_list = []
@@ -126,7 +126,6 @@ class DDS_client(QWidget):
                 continue
             if params['class'] == 'AD9910':
                 self.ad9910_list.append(name)
-        # self.ad9910_list = yield self.artiq.dds_get()
         #todo: break into urukul groups
 
     def initializeGUI(self):
