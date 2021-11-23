@@ -68,6 +68,13 @@ Created on Dec 22, 2010
 # Added read_all to ser for use with SLS
 #===============================================================================
 
+#===============================================================================
+# 2021 - 11 - 22
+#
+# Servers now connect on startup if either node and port or node and regkey are
+# specified. If neither, server still starts up, just without a connection
+#===============================================================================
+
 #imports
 from twisted.internet.defer import returnValue, inlineCallbacks
 from labrad.server import LabradServer, setting
@@ -127,7 +134,7 @@ class SerialDeviceServer(LabradServer):
     bytesize = None
     parity = None
 
-    #can skip all of this and just initialize with a connection
+    #needed otherwise the whole thing breaks
     ser = None
 
     class SerialConnection():
@@ -157,9 +164,26 @@ class SerialDeviceServer(LabradServer):
 
     @inlineCallbacks
     def initServer(self):
-        #automatically connect to default port if specified
-        if self.serNode is not None and self.port is not None:
-            yield self.selectDevice(self.serNode, self.port)
+        #open connection on startup if default node and port are specified
+        if self.serNode and self.port:
+            print('Default node and port specified. Connecting to device on startup.')
+            try:
+                serStr = yield self.findSerial(self.serNode)
+                yield self.initSerial(serStr, self.port, baudrate=self.baudrate, timeout=self.timeout,
+                                      bytesize=self.bytesize, parity=self.parity)
+            except SerialConnectionError as e:
+                self.ser = None
+                if e.code == 0:
+                    print('Could not find serial server for node: %s' % self.serNode)
+                    print('Please start correct serial server')
+                elif e.code == 1:
+                    print('Error opening serial connection')
+                else:
+                    raise Exception('Unknown connection error')
+            except Error:
+                # maybe check for serialutil.SerialException?
+                print('Unknown connection error')
+                raise
 
     @inlineCallbacks
     def initSerial(self, serStr, port, **kwargs):
@@ -319,15 +343,8 @@ class SerialDeviceServer(LabradServer):
         """
         Attempt to connect to serial device on the given node and port.
         """
-        #check that node is specified
-        if not node: raise SerialDeviceError('Must define serNode attributes')
         self.serNode = node
-        #set port if assigned, otherwise get from registry
-        if port:
-            self.port = port
-        elif self.regKey:
-            self.port = yield self.getPortFromReg(self.regKey)
-        #try to open serial connection
+        self.port = port
         try:
             serStr = yield self.findSerial(self.serNode)
             yield self.initSerial(serStr, self.port, baudrate=self.baudrate, timeout=self.timeout,
