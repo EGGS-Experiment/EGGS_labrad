@@ -115,7 +115,18 @@ class DDS_client(QWidget):
         Get devices from ARTIQ server.
         """
         #create holding lists
-        self.ad9910_list = yield self.artiq.dds_get()
+        """
+        Parses device_db for relevant devices.
+        """
+        #create holding lists
+        self.ad9910_list = []
+        for name, params in self.device_db.items():
+            #only get devices with named class
+            if 'class' not in params:
+                continue
+            if params['class'] == 'AD9910':
+                self.ad9910_list.append(name)
+        # self.ad9910_list = yield self.artiq.dds_get()
         #todo: break into urukul groups
 
     def initializeGUI(self):
