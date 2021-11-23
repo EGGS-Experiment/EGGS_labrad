@@ -173,7 +173,6 @@ class NIOPS03Server(SerialDeviceServer):
             yield self.ser.read()
 
 
-
 if __name__ == '__main__':
     from labrad import util
     util.runServer(NIOPS03Server())

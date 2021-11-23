@@ -90,9 +90,9 @@ class DDS_client(QWidget):
         self.reactor = reactor
         self.cxn = cxn
         self.device_db = device_db
-        self._parseDevices()
         self.ad9910_clients = {}
         self.connect()
+        self._getDevices()
         self.initializeGUI()
 
     @inlineCallbacks
@@ -108,6 +108,16 @@ class DDS_client(QWidget):
             print(e)
             raise
 
+
+    @inlineCallbacks
+    def _getDevices(self):
+        """
+        Get devices from ARTIQ server.
+        """
+        #create holding lists
+        self.ad9910_list = yield self.artiq.dds_get()
+        #todo: break into urukul groups
+
     def initializeGUI(self):
         layout = QGridLayout()
         #set title
@@ -121,36 +131,18 @@ class DDS_client(QWidget):
             channel_name = self.ad9910_list[i]
             channel_gui = AD9910_channel(channel_name)
             # layout channel GUI
-            row = int(i / (self.row_length)) + 2
-            column = i % (self.row_length)
+            row = int(i / self.row_length) + 2
+            column = i % self.row_length
             # connect signals to slots
-            channel_gui.freq.valueChanged.connect(lambda chan=channel_name, freq=channel_gui.freq.value():
-                                                  self.setFrequency(chan, freq))
-            channel_gui.ampl.valueChanged.connect(lambda chan=channel_name, ampl=channel_gui.ampl.value():
-                                                  self.setAmplitude(chan, ampl))
-            channel_gui.att.valueChanged.connect(lambda chan=channel_name, att=channel_gui.att.value():
-                                                 self.setAttenuation(chan, att))
-            channel_gui.rfswitch.toggled.connect(lambda chan=channel_name, status=channel_gui.rfswitch.isChecked():
-                                                 self.toggleSwitch())
+            channel_gui.freq.valueChanged.connect(lambda freq, chan=channel_name: self.setFrequency(chan, freq))
+            channel_gui.ampl.valueChanged.connect(lambda ampl, chan=channel_name: self.setAmplitude(chan, ampl))
+            channel_gui.att.valueChanged.connect(lambda att, chan=channel_name: self.setAttenuation(chan, att))
+            channel_gui.rfswitch.toggled.connect(lambda status, chan=channel_name: self.toggleSwitch())
             # add widget to client list and layout
             self.ad9910_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column, 1, 1)
             #print('row:' + str(row) + ', column: ' + str(column))
         self.setLayout(layout)
-
-    #todo: run asynchronously
-    def _parseDevices(self):
-        """
-        Parses device_db for relevant devices.
-        """
-        #create holding lists
-        self.ad9910_list = []
-        for name, params in self.device_db.items():
-            #only get devices with named class
-            if 'class' not in params:
-                continue
-            if params['class'] == 'AD9910':
-                self.ad9910_list.append(name)
 
     @inlineCallbacks
     def toggleSwitch(self, channel_name, status):
