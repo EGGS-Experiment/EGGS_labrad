@@ -72,7 +72,7 @@ if __name__=="__main__":
     # runClient(ARTIQ_gui)
     import sys
     app = QApplication(sys.argv)
-    clipboard = app.clipboard()
+    #clipboard = app.clipboard()
     import qt5reactor
     qt5reactor.install()
     from twisted.internet import reactor

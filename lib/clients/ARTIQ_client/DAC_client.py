@@ -147,9 +147,9 @@ class DAC_client(QWidget):
             row = int(i / self.row_length) + 2
             column = i % self.row_length
             # connect signals to slots
-            channel_gui.dac.valueChanged.connect(lambda value, chan=channel_name: self.setDAC(chan, value))
-            channel_gui.off.valueChanged.connect(lambda value, chan=channel_name: self.setOffset(chan, value))
-            channel_gui.gain.valueChanged.connect(lambda value, chan=channel_name: self.setGain(chan, value))
+            channel_gui.dac.valueChanged.connect(lambda value, chan=i: self.setDAC(chan, value))
+            channel_gui.off.valueChanged.connect(lambda value, chan=i: self.setOffset(chan, value))
+            channel_gui.gain.valueChanged.connect(lambda value, chan=i: self.setGain(chan, value))
             channel_gui.calibrateswitch.clicked.connect(lambda: self.calibrate)
             channel_gui.resetswitch.clicked.connect(lambda: self.reset)
             # add widget to client list and layout
@@ -174,16 +174,16 @@ class DAC_client(QWidget):
                 self.zotino_list.append(name)
 
     @inlineCallbacks
-    def setDAC(self, channel_name, voltage):
-        yield self.artiq.dac_set(channel_name, voltage)
+    def setDAC(self, channel_num, voltage):
+        yield self.artiq.dac_set(channel_num, voltage)
 
     @inlineCallbacks
-    def setOffset(self, channel_name, voltage):
-        yield self.artiq.dac_offset(channel_name, voltage)
+    def setOffset(self, channel_num, voltage):
+        yield self.artiq.dac_offset(channel_num, voltage)
 
     @inlineCallbacks
-    def setGain(self, channel_name, gain):
-        yield self.artiq.dac_gain(channel_name, gain)
+    def setGain(self, channel_num, gain):
+        yield self.artiq.dac_gain(channel_num, gain)
 
     @inlineCallbacks
     def calibrate(self):
