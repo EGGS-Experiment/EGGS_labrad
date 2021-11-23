@@ -60,11 +60,11 @@ class GPIBBusServer(LabradServer):
     """Provides direct access to GPIB-enabled devices."""
     name = '%LABRADNODE% GPIB Bus'
 
-    refreshInterval = 10
     defaultTimeout = 1.0 * units.s
 
     def initServer(self):
         self.devices = {}
+        self.refreshInterval = 10
         # start refreshing only after we have started serving
         # this ensures that we are added to the list of available
         # servers before we start sending messages
@@ -80,7 +80,7 @@ class GPIBBusServer(LabradServer):
         self.refresher = LoopingCall(self.refreshDevices)
         self.refresherDone = self.refresher.start(self.refreshInterval)
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def stopServer(self):
         """Kill the device refresh loop and wait for it to terminate."""
         if hasattr(self, 'refresher'):
@@ -224,13 +224,14 @@ class GPIBBusServer(LabradServer):
         #ensure interval is valid
         if (interval < 0) or (interval > 60):
             raise Exception('Invalid polling interval.')
-        self.refreshInterval = interval
         #only start/stop polling if we are not already started/stopped
         if status and (not self.refresher.running):
-            self.startRefreshing()
+            self.refresher.start(interval)
+        elif status and self.refresher.running:
+            self.refresher.interval = interval
         elif (not status) and (self.refresher.running):
             self.refresher.stop()
-        return (self.refresher.running, self.refreshInterval)
+        return (self.refresher.running, self.refresher.interval)
 
 
 __server__ = GPIBBusServer()

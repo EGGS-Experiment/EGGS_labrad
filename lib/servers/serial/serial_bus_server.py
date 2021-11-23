@@ -145,13 +145,14 @@ class SerialServer(LabradServer):
         #ensure interval is valid
         if (interval < 0) or (interval > 60):
             raise Exception('Invalid polling interval.')
-        self.refreshInterval = interval
         #only start/stop polling if we are not already started/stopped
         if status and (not self.refresher.running):
-            self.startRefreshing()
+            self.refresher.start(interval)
+        elif status and self.refresher.running:
+            self.refresher.interval = interval
         elif (not status) and (self.refresher.running):
             self.refresher.stop()
-        return (self.refresher.running, self.refreshInterval)
+        return (self.refresher.running, self.refresher.interval)
 
     @setting(10, 'Open', port=[': Open the first available port', 's: Port to open, e.g. COM4'],
              returns=['s: Opened port'])
