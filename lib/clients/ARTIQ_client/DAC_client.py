@@ -185,6 +185,14 @@ class DAC_client(QWidget):
     def setGain(self, channel_name, gain):
         yield self.artiq.dac_gain(channel_name, gain)
 
+    @inlineCallbacks
+    def calibrate(self):
+        pass
+
+    @inlineCallbacks
+    def reset(self):
+        pass
+
     def closeEvent(self, x):
         self.reactor.stop()
 
