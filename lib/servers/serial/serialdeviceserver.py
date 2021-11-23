@@ -72,7 +72,7 @@ Created on Dec 22, 2010
 # 2021 - 11 - 22
 #
 # Servers now connect on startup if either node and port or node and regkey are
-# specified. If neither, server still starts up, just without a connection
+# specified. If neither, server still starts up, just without a connection.
 #===============================================================================
 
 #imports
