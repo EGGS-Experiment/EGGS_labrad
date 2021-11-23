@@ -53,7 +53,6 @@ class lakeshore336_client(object):
 
         #create and start loop to poll server for temperature
         self.poll_loop = LoopingCall(self.poll)
-        #from twisted.internet.reactor import callLater
         self.reactor.callLater(1.0, self.start_polling)
 
     #@inlineCallbacks

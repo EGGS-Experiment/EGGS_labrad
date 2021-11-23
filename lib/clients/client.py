@@ -72,6 +72,7 @@ class GUIClient(object):
         self.reactor.stop()
         self.cxn.disconnect()
 
+    @inlineCallbacks
     def connectLabrad(self):
         """
         To be subclassed.

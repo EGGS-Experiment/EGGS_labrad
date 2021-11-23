@@ -8,19 +8,6 @@ from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager, DatasetManager
 from artiq.master.worker_impl import CCB, Scheduler
 
-# class api(object):
-#     def __init__(self):
-#         self.core=core
-#
-#     @kernel
-#     def on(self):
-#         core.reset()
-#         ttl4.on()
-#         print('thkim')
-#
-# api_obj=api()
-# api_obj.on()
-
 class ARTIQ_api(object):
     """
     An API for the ARTIQ box.
