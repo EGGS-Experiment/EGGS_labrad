@@ -109,7 +109,7 @@ class DDS_client(QWidget):
             raise
 
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def _getDevices(self):
         """
         Get devices from ARTIQ server.
