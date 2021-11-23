@@ -35,7 +35,7 @@ class AD5372_channel(QFrame):
         self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.dac.setDecimals(3)
         self.dac.setSingleStep(0.1)
-        self.dac.setRange(10.0, 250.0)
+        self.dac.setRange(0.0, 12.0)
         self.dac.setKeyboardTracking(False)
         self.gain = QDoubleSpinBox()
         self.gain.setFont(QFont('MS Shell Dlg 2', pointSize=16))

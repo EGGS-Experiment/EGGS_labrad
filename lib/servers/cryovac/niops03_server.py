@@ -16,12 +16,15 @@ timeout = 20
 ### END NODE INFO
 """
 
-from twisted.internet.defer import inlineCallbacks, returnValue
-from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
 from labrad.server import setting
-from labrad.support import getNodeName
 from labrad.units import WithUnit
-import numpy as np
+
+from twisted.internet.task import LoopingCall
+from twisted.internet.defer import inlineCallbacks, returnValue
+
+from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
+
+
 
 TERMINATOR = '\r\n'
 QUERY_msg = b'\x05'
@@ -37,7 +40,7 @@ class NIOPS03Server(SerialDeviceServer):
     baudrate = 115200
 
     #STATUS
-    @setting(11,'Status', returns='s')
+    @setting(11, 'Status', returns='s')
     def get_status(self, c):
         """
         Get controller status
@@ -46,11 +49,11 @@ class NIOPS03Server(SerialDeviceServer):
         """
         yield self.ser.write('TS' + TERMINATOR)
         resp = yield self.ser.read()
-        return resp
+        returnValue(resp)
 
     # ON/OFF
-    @setting(111,'Toggle IP', power='b', returns='s')
-    def toggle_ip(self, c, power = None):
+    @setting(111, 'Toggle IP', power='b', returns='s')
+    def toggle_ip(self, c, power):
         """
         Set or query whether ion pump is off or on
         Args:
@@ -64,10 +67,10 @@ class NIOPS03Server(SerialDeviceServer):
             yield self.ser.write('B' + TERMINATOR)
         resp = yield self.ser.read()
         resp = resp.strip()
-        return resp
+        returnValue(resp)
 
-    @setting(112, 'Toggle NP', power='b')
-    def toggle_np(self, c, power = None):
+    @setting(112, 'Toggle NP', power='b', returns='s')
+    def toggle_np(self, c, power):
         """
         Set or query whether getter is off or on
         Args:
@@ -80,7 +83,7 @@ class NIOPS03Server(SerialDeviceServer):
         elif power == False:
             yield self.ser.write('BN' + TERMINATOR)
         resp = yield self.ser.read()
-        return resp
+        returnValue(resp)
 
     #PARAMETERS
     @setting(211, 'IP Pressure', returns='v')
@@ -92,7 +95,7 @@ class NIOPS03Server(SerialDeviceServer):
         """
         yield self.ser.write('Tb' + TERMINATOR)
         resp = yield self.ser.read()
-        return float(resp)
+        returnValue(float(resp))
 
     @setting(221, 'IP Voltage', voltage='v', returns='v')
     def voltage_ip(self, c, voltage=None):
@@ -130,6 +133,46 @@ class NIOPS03Server(SerialDeviceServer):
         ip_time = [int(val) for val in ip_time]
         np_time = [int(val) for val in np_time]
         returnValue([ip_time, np_time])
+
+    @setting(311, 'Interlock IP', status='b', press='v', returns='')
+    def interlock_ip(self, status, press):
+        """
+        Activates an interlock, switching off the ion pump
+        if pressure exceeds a given value.
+        Pressure is taken from the Twistorr74 turbo pump server.
+        Arguments:
+            press   (float) : the maximum pressure in mbar
+        Returns:
+                    (bool)  : activation state of the interlock
+        """
+        #todo: set signal about interlock
+        #create connection to turbopump as needed
+        if not self.tt:
+            try:
+                self.tt = yield self.client.twistorr74_server
+            except KeyError:
+                self.tt = None
+                raise Exception('Twistorr74 server not available for interlock.')
+        #set threshold pressure
+        self.interlock_pressure = press
+        #create a loop if needed
+        if not self.interlock_loop:
+            self.interlock_loop = LoopingCall(self._interlock_poll)
+        #only start if stopped, and vice versa
+        if status and not self.interlock_loop.running:
+            self.interlock_loop.start(5)
+        elif not status and self.interlock_loop.running:
+            self.interlock_loop.stop()
+        return self.interlock_loop.running
+
+    @inlineCallbacks
+    def _interlock_poll(self):
+        press_tmp = self.tt.read_pressure()
+        if press_tmp >= self.interlock_pressure:
+            yield self.ser.write('B' + TERMINATOR)
+            yield self.ser.read()
+
+
 
 if __name__ == '__main__':
     from labrad import util
