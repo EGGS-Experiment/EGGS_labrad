@@ -189,6 +189,7 @@ class DAC_client(QWidget):
             channel.setEnabled(status)
 
     def closeEvent(self, x):
+        self.cxn.disconnect()
         self.reactor.stop()
 
 
