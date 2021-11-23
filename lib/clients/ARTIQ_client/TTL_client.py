@@ -5,6 +5,7 @@ from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QSizePolicy
 
+from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
@@ -56,20 +57,23 @@ class TTL_client(QWidget):
         super(TTL_client, self).__init__()
         self.reactor = reactor
         self.cxn = cxn
-        self.device_db = device_db
         self.ttl_clients = {}
-        self._parseDevices()
+        self.device_db = device_db
         self.connect()
+        self._parseDevices()
         self.initializeGUI()
 
+    @inlineCallbacks
     def connect(self):
         if not self.cxn:
+            import os
+            LABRADHOST = os.environ['LABRADHOST']
             from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync('localhost', name=self.name)
+            self.cxn = yield connectAsync(LABRADHOST, name=self.name)
         try:
-            self.reg = self.cxn.registry
-            self.dv = self.cxn.data_vault
-            self.artiq = self.cxn.artiq_server
+            self.reg = yield self.cxn.registry
+            self.dv = yield self.cxn.data_vault
+            self.artiq = yield self.cxn.artiq_server
         except Exception as e:
             print(e)
             raise
@@ -93,10 +97,9 @@ class TTL_client(QWidget):
         layout.addWidget(other_ttls, 13, 0, 2, 4)
         self.setLayout(layout)
 
-    #todo: run asynchronously
     def _parseDevices(self):
         """
-        Parses device_db for relevant devices
+        Parses device_db for relevant devices.
         """
         #create holding lists
         self.ttlin_list = []
@@ -144,8 +147,7 @@ class TTL_client(QWidget):
             row = int(i / (self.row_length)) + 2
             column = i % (self.row_length)
             # connect signals to slots
-            channel_gui.toggle.toggled.connect(lambda chan=channel_name, status=channel_gui.toggle.isChecked():
-                                               self.toggleSwitch(chan, status))
+            channel_gui.toggle.toggled.connect(lambda status, chan=channel_name: self.toggleSwitch(chan, status))
             # add widget to client list and layout
             self.ttl_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
@@ -155,9 +157,10 @@ class TTL_client(QWidget):
 
     @inlineCallbacks
     def toggleSwitch(self, channel_name, status):
-        yield self.artiq.set_TTL(channel_name, status)
+        yield self.artiq.ttl_set(channel_name, status)
 
     def closeEvent(self, x):
+        self.cxn.disconnect()
         self.reactor.stop()
 
 if __name__ == "__main__":

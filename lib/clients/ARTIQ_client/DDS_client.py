@@ -169,6 +169,7 @@ class DDS_client(QWidget):
         yield self.artiq.set_DDS_attenuation(channel_name, att)
 
     def closeEvent(self, x):
+        self.cxn.disconnect()
         self.reactor.stop()
 
 

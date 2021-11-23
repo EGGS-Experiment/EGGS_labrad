@@ -5,7 +5,9 @@ import datetime as datetime
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui2 import lakeshore336_gui
+from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui import lakeshore336_gui
+
+from PyQt5.QtGui import QFont
 
 
 class lakeshore336_client(object):
@@ -32,9 +34,9 @@ class lakeshore336_client(object):
         self.cxn = yield connectAsync(LABRADHOST, name=self.name)
         #check that required servers are online
         try:
-            self.dv = self.cxn.data_vault
-            self.ls = self.cxn.lakeshore336_server
-            self.reg = self.cxn.registry
+            self.dv = yield self.cxn.data_vault
+            self.ls = yield self.cxn.lakeshore336_server
+            self.reg = yield self.cxn.registry
         except Exception as e:
             print(e)
             raise
@@ -51,8 +53,7 @@ class lakeshore336_client(object):
 
         #create and start loop to poll server for temperature
         self.poll_loop = LoopingCall(self.poll)
-        from twisted.internet.reactor import callLater
-        callLater(1.0, self.start_polling)
+        self.reactor.callLater(1.0, self.start_polling)
 
     #@inlineCallbacks
     def initializeGUI(self):
@@ -282,11 +283,10 @@ class lakeshore336_client(object):
             curr2 = yield self.ls.get_heater_output(2)
             self.gui.heat2.setText(str(curr2))
 
-    def closeEvent(self, event):
-        self.reactor.stop()
+    def close(self):
         self.cxn.disconnect()
-        import sys
-        sys.exit()
+        self.reactor.stop()
+
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runClient

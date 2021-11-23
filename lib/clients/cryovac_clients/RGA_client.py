@@ -125,8 +125,8 @@ class RGA_Client(RGA_UI):
     #Close event:
     @inlineCallbacks
     def closeEvent(self, x):
-        self.reactor.stop()
         self.cxn.disconnect()
+        self.reactor.stop()
         yield None
 
 

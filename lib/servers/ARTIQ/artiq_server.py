@@ -47,40 +47,53 @@ class ARTIQ_Server(LabradServer):
 
     @inlineCallbacks
     def initServer(self):
+        self.listeners = set()
         yield self._setClients()
         yield self._setVariables()
         yield self._setDevices()
-        self.listeners = set()
 
     def _setClients(self):
-        """Sets clients to ARTIQ master."""
+        """
+        Create clients to ARTIQ master.
+        Used to get datasets and submit experiments.
+        """
         self.scheduler = Client('::1', 3251, 'master_schedule')
         self.datasets = Client('::1', 3251, 'master_dataset_db')
 
     def _setVariables(self):
-        """Sets variables."""
+        """
+        Sets ARTIQ-related variables.
+        """
+        #used to ensure atomicity
         self.inCommunication = DeferredLock()
-
         #pulse sequencer variables
         self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser\\run_ps.py'
         self.ps_rid = None
-
         #conversions
+            #dds
         dds_tmp = list(self.api.dds_list.values())[0]
         self.seconds_to_mu = self.api.core.seconds_to_mu
         self.amplitude_to_asf = dds_tmp.amplitude_to_asf
         self.frequency_to_ftw = dds_tmp.frequency_to_ftw
         self.turns_to_pow = dds_tmp.turns_to_pow
         self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
-        # #todo: finish for zotino
+            #dac
+        from artiq.coredevice.ad53xx import voltage_to_mu
+        self.voltage_to_mu = voltage_to_mu
 
     def _setDevices(self):
-        pass
-        #t1 = self.api.ttl_out_list
+        """
+        Get the list of devices in the ARTIQ box.
+        """
+        self.ttlout_list = list(self.api.ttlout_list.keys())
+        self.dds_list = list(self.api.dds_list.keys())
 
     # Core
     @setting(21, "Get Devices", returns='')
     def getDevices(self):
+        """
+        Returns the ARTIQ device database.
+        """
         return self.devices.get_device_db()
 
     #Pulse sequencing
@@ -129,48 +142,54 @@ class ARTIQ_Server(LabradServer):
         completed_runs = yield self.datasets.get('numRuns')
         returnValue(completed_runs)
 
+
     #TTLs
-    @setting(211, 'TTL Get', returns = '*s')
+    @setting(211, 'TTL Get', returns='*s')
     def getTTL(self, c):
         """
         Returns all available TTL channels
         """
-        ttl_list = yield self.api.ttlout_list.keys()
-        returnValue(list(ttl_list))
+        return self.ttlout_list
 
-    @setting(221, "TTL Set", ttl_name = 's', state = 'b', returns='')
+    @setting(221, "TTL Set", ttl_name='s', state='b', returns='')
     def setTTL(self, c, ttl_name, state):
         """
         Manually set a TTL to the given state.
         Arguments:
-            ttl_name (str)   : name of the ttl
+            ttl_name (str)  : name of the ttl
             state   (bool)  : ttl power state
         """
+        if ttl_name not in self.ttlout_list:
+            raise Exception('Error: device does not exist.')
         yield self.api.setTTL(ttl_name, state)
 
+
     #DDS functions
-    @setting(311, "DDS Get", returns = '*s')
+    @setting(311, "DDS Get", returns='*s')
     def getDDS(self, c):
         """get the list of available channels"""
-        return self.dds_list
+        dds_list = yield self.api.dds_list.keys()
+        returnValue(list(dds_list))
 
-    @setting(321, "DDS Initialize", returns = '')
-    def initializeDDS(self, c):
+    @setting(321, "DDS Initialize", dds_name='s', returns='')
+    def initializeDDS(self, c, dds_name):
         """
         Resets/initializes the DDSs.
         """
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.initializeDDS)
-        self.inCommunication.release()
+        if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
+        yield self.api.initializeDDS(dds_name)
 
-    @setting(322, "DDS Toggle", dds_name = 's', state = 'b', returns='')
+    @setting(322, "DDS Toggle", dds_name='s', state='b', returns='')
     def toggleDDS(self, c, dds_name, state):
         """
         Manually toggle a DDS via the RF switch
         Arguments:
-            dds_name (str)   : the name of the dds
-            state   (bool)  : power state
+            dds_name    (str)   : the name of the dds
+            state       (bool)  : power state
         """
+        if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
         yield self.api.toggleDDS(dds_name, state)
 
     @setting(323, "DDS Waveform", dds_name='s', param='s', param_val='v', returns='')
@@ -182,6 +201,9 @@ class ARTIQ_Server(LabradServer):
             param       (str)   : the parameter to set
             param_val   (float) : the value of the parameter
         """
+        #todo: check input
+        if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
         if param.lower() in ('frequency', 'f'):
             ftw = yield self.frequency_to_ftw(param_val)
             yield self.api.setDDS(dds_name, 0, ftw)
@@ -189,6 +211,8 @@ class ARTIQ_Server(LabradServer):
             asf = yield self.amplitude_to_asf(param_val)
             yield self.api.setDDS(dds_name, 1, asf)
         elif param.lower() in ('phase', 'p'):
+            if param_val >= 1 or pow < 0:
+                raise Exception('Error: phase outside bounds of [0,1]')
             pow = yield self.turns_to_pow(param_val)
             yield self.api.setDDS(dds_name, 2, pow)
 
@@ -201,63 +225,71 @@ class ARTIQ_Server(LabradServer):
             att     (float) : attenuation (in dBm)
             profile (int)   : the DDS profile to set & change to
         """
-        dds_channel = self.ddsDict[dds_name].address
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
-        self.inCommunication.release()
+        #todo: check input
+        att_mu = att
+        yield self.api.setDDSAtt(dds_name, att_mu)
 
-    @setting(327, "DDS Profile", dds_name='s', profile='i', returns='')
-    def setDDSProf(self, c, dds_name, profile = None):
-        """
-        Manually set a DDS to the given parameters.
-        Arguments:
-            dds_name (str)  : the name of the dds
-            profile (int)   : the DDS profile to set & change to
-        """
-        dds_channel = self.ddsDict[dds_name].address
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDDS, dds_channel, params, profile)
-        self.inCommunication.release()
 
     #DAC
-    @setting(411, "DAC Set", channel='i', voltage='v', returns='')
-    def setDAC(self, c, channel, voltage):
+    @setting(421, "DAC Initialize", returns='')
+    def initializeDAC(self, c):
         """
-        Manually set a DDS to the given parameters.
-        Arguments:
-            channel (int)   : the channel to set
-            ddsname (str)   : the desired voltage (in V)
+        Manually initialize the DAC.
         """
-        #todo: get mu
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDAC, channel, voltage)
-        self.inCommunication.release()
+        yield self.api.initializeDAC()
 
-    @setting(412, "DAC Gain", channel='i', voltage='v', returns='')
-    def setDACGain(self, c, channel, voltage):
+    @setting(411, "DAC Set", dac_num='i', voltage='v', returns='')
+    def setDAC(self, c, dac_num, voltage):
         """
-        Manually set a DDS to the given parameters.
+        Manually set the voltage of a DAC channel.
         Arguments:
-            channel (int)   : the channel to set
-            ddsname (str)   : the desired voltage (in V)
+            dac_num (int)   : the DAC channel number
+            voltage (float) : the DAC register voltage (not the same as
+                                output voltage due to offset registers)
         """
-        #todo: get mu
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDACGain, channel, voltage)
-        self.inCommunication.release()
+        #only 32 channels per DAC
+        if (dac_num > 31) or (dac_num < 0):
+            raise Exception('Error: device does not exist.')
+        #todo: check voltage
+        voltage_mu = yield self.voltage_to_mu(voltage)
+        yield self.api.setDAC(dac_num, voltage_mu)
 
-    @setting(413, "DAC Offset", channel='i', voltage='v', returns='')
-    def setDACOffset(self, c, channel, voltage):
+    @setting(412, "DAC Gain", dac_num='i', gain='v', returns='')
+    def setDACGain(self, c, dac_num, gain):
         """
-        Manually set a DDS to the given parameters.
+        Manually set the gain of a DAC channel.
         Arguments:
-            channel (int)   : the channel to set
-            ddsname (str)   : the desired voltage (in V)
+            dac_num (int)   : the DAC channel number
+            gain (float)    : the DAC channel gain
         """
-        #todo: get mu
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.api.setDACOffset, channel, voltage)
-        self.inCommunication.release()
+        # only 32 channels per DAC
+        if (dac_num > 31) or (dac_num < 0):
+            raise Exception('Error: device does not exist.')
+        #check that gain is valid
+        if gain > 1 or gain < 0:
+            raise Exception('Error: gain outside bounds of [0,1]')
+        #gain is a 16 bit register, 0xffff is full
+        gain_mu = int(gain * 0xffff) - 1
+        yield self.api.setDACGain(dac_num, gain_mu)
+
+    @setting(413, "DAC Offset", dac_num='i', voltage='v', returns='')
+    def setDACOffset(self, c, dac_num, voltage):
+        """
+        Manually set the offset voltage of a DAC channel.
+        Arguments:
+            dac_num (int)   : the DAC channel number
+            voltage (float) : the DAC offset register voltage
+        """
+        #only 32 channels per DAC
+        if (dac_num > 31) or (dac_num < 0):
+            raise Exception('Error: device does not exist.')
+        #todo: check voltage
+        voltage_mu = yield self.voltage_to_mu(voltage)
+        yield self.api.setDACOffset(dac_num, voltage_mu)
+
+
+    #Sampler
+
 
     #Signal/Context functions
     def notifyOtherListeners(self, context, message, f):
