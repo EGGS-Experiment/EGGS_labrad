@@ -113,7 +113,7 @@ class niops03_client(object):
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
-    def closeEvent(self, event):
+    def close(self):
         self.cxn.disconnect()
         self.reactor.stop()
 

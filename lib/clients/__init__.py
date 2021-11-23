@@ -4,6 +4,7 @@ Contains stuff useful for LabRAD clients
 
 #imports
 import sys
+
 from PyQt5.QtWidgets import QApplication
 
 __all__ = ["runGUI", "runClient"]
@@ -48,4 +49,8 @@ def runClient(client, **kwargs):
         client.show()
     #start reactor
     reactor.run()
-    sys.exit(app.exec())
+    try:
+        client.close()
+    except:
+        sys.exit(app.exec())
+
