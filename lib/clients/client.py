@@ -11,20 +11,22 @@ import datetime as datetime
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
+from PyQt5.QtWidgets import QWidget
+
 from PyQt5.QtWidgets import QMainWindow
 
 
 __all__ = ["GUIClient", "GUITabClient"]
 
-class GUIClient(object):
+class GUIClient(QWidget):
     """
-    Creates a client from a single GUI.
+    Creates a client from a single GUI file.
     """
     name = None
     poll_time = None
-    gui = None
 
     def __init__(self, reactor, cxn=None, parent=None):
+        self.gui = self
         self.reactor = reactor
         self.cxn = cxn
         self._connectLabrad()

@@ -19,7 +19,6 @@ class EGGS_gui(QMainWindow):
         self.setWindowTitle('EGGS GUI')
         #connect devices synchronously
         d = self.connect()
-        print(d)
         d.addCallback(self.makeLayout)
 
     @inlineCallbacks
