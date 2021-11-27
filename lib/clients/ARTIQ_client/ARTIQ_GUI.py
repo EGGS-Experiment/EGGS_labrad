@@ -12,14 +12,16 @@ class ARTIQ_gui(QMainWindow):
         super(ARTIQ_gui, self).__init__(parent)
         #self.clipboard = clipboard
         self.reactor = reactor
-        self.connect()
-        self.makeLayout()
+        d = self.connect()
+        d.addCallback(self.makeLayout)
         self.setWindowTitle(self.name)
 
     @inlineCallbacks
     def connect(self):
+        import os
+        LABRADHOST = os.environ['LABRADHOST']
         from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name=self.name)
+        self.cxn = yield connectAsync(LABRADHOST, name=self.name)
         #check that required servers are online
         try:
             self.dv = yield self.cxn.data_vault
@@ -27,9 +29,10 @@ class ARTIQ_gui(QMainWindow):
         except Exception as e:
             print(e)
             raise
+        return self.cxn
 
     @inlineCallbacks
-    def makeLayout(self):
+    def makeLayout(self, cxn):
         #central layout
         centralWidget = QWidget()
         layout = QHBoxLayout()
@@ -53,30 +56,21 @@ class ARTIQ_gui(QMainWindow):
 
     def makeTTLWidget(self):
         from EGGS_labrad.lib.clients.ARTIQ_client.TTL_client import TTL_client
-        return TTL_client(self.reactor)
+        return TTL_client(self.reactor, self.cxn)
 
     def makeDDSWidget(self):
         from EGGS_labrad.lib.clients.ARTIQ_client.DDS_client import DDS_client
-        return DDS_client(self.reactor)
+        return DDS_client(self.reactor, self.cxn)
 
     def makeDACWidget(self):
         from EGGS_labrad.lib.clients.ARTIQ_client.DAC_client import DAC_client
-        return DAC_client(self.reactor)
+        return DAC_client(self.reactor, self.cxn)
 
     def closeEvent(self, x):
         self.cxn.disconnect()
         self.reactor.stop()
 
 if __name__=="__main__":
-    # from EGGS_labrad.lib.clients import runClient
-    # runClient(ARTIQ_gui)
-    import sys
-    app = QApplication(sys.argv)
-    #clipboard = app.clipboard()
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
-    gui = ARTIQ_gui(reactor)
-    gui.show()
-    reactor.run()
-    sys.exit(app.exec_())
+    from EGGS_labrad.lib.clients import runClient
+    runClient(ARTIQ_gui)
+
