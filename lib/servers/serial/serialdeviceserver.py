@@ -343,6 +343,8 @@ class SerialDeviceServer(LabradServer):
         """
         Attempt to connect to serial device on the given node and port.
         """
+        if self.ser:
+            raise Exception('A serial device is already opened.')
         self.serNode = node
         self.port = port
         try:

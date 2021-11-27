@@ -55,10 +55,10 @@ class EGGS_gui(QMainWindow):
         return scriptscanner
 
     def makeCryoWidget(self, reactor):
-        from EGGS_labrad.lib.clients.cryovac_clients.lakeshore_client import lakeshore_client
+        from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_client import lakeshore336_client
         from EGGS_labrad.lib.clients.cryovac_clients.niops03_client import niops03_client
         from EGGS_labrad.lib.clients.cryovac_clients.twistorr74_client import twistorr74_client
-        lakeshore = lakeshore_client(reactor)
+        lakeshore = lakeshore336_client(reactor)
         niops = niops03_client(reactor)
         twistorr = twistorr74_client(reactor)
 
