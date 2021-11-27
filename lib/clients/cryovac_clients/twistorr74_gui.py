@@ -19,7 +19,6 @@ class twistorr74_gui(QtWidgets.QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        print(self.size())
         self.setFixedSize(265,240)
         #twistorr 74
         self.twistorr_label = QtWidgets.QLabel('Twistorr 74 Pump')

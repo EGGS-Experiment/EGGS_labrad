@@ -148,4 +148,3 @@ class rf_client(rf_gui):
 if __name__=="__main__":
     from EGGS_labrad.lib.clients import runClient
     runClient(rf_client)
-

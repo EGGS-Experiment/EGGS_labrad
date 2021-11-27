@@ -9,7 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QFrame
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
 
@@ -19,12 +19,13 @@ class TextChangingButton(_TextChangingButton):
         self.setMaximumHeight(30)
 
 
-class rf_gui(QWidget):
+class rf_gui(QFrame):
 
     def setupUi(self):
         rf_gui = self
         rf_gui.setObjectName("rf_gui")
         rf_gui.setFixedSize(545, 251)
+        rf_gui.setFrameStyle(0x0001 | 0x0030)
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.rf_label = QtWidgets.QLabel(rf_gui)
         self.rf_label.setGeometry(QtCore.QRect(120, 10, 271, 41))

@@ -9,7 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QFrame
 from PyQt5.QtGui import QFont
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
@@ -19,13 +19,14 @@ class TextChangingButton(_TextChangingButton):
         super(TextChangingButton, self).__init__(button_text, parent)
         self.setMaximumHeight(30)
 
-class lakeshore336_gui(QWidget):
+class lakeshore336_gui(QFrame):
 
     def setupUi(self):
         shell_font = 'MS Shell Dlg 2'
         lakeshore336_gui = self
         lakeshore336_gui.setObjectName("lakeshore336_gui")
         lakeshore336_gui.setFixedSize(583, 596)
+        lakeshore336_gui.setFrameStyle(0x0001 | 0x0030)
         self.lakeshore_label = QtWidgets.QLabel(lakeshore336_gui)
         self.lakeshore_label.setGeometry(QtCore.QRect(50, 20, 471, 31))
         font = QtGui.QFont()
