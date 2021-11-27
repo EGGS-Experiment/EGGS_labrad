@@ -11,8 +11,10 @@ class SLS_client(SLS_gui):
     name = 'SLS Client'
     poll_time = 2.0
 
-    def __init__(self, reactor, parent=None):
-        self.gui = SLS_gui()
+    def __init__(self, reactor, cxn=None, parent=None):
+        super().__init__()
+        self.cxn = cxn
+        self.gui = self
         self.reactor = reactor
         self.connect()
         self.initializeGUI()
@@ -25,11 +27,13 @@ class SLS_client(SLS_gui):
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to pump servers
-        and relevant labrad servers
+        Creates an asynchronous connection to Labrad
         """
-        from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync('localhost', name='SLS Client')
+        if not self.cxn:
+            import os
+            LABRADHOST = os.environ['LABRADHOST']
+            from labrad.wrappers import connectAsync
+            self.cxn = yield connectAsync(LABRADHOST, name=self.name)
 
         #ensure all necessary servers are online
         try:
@@ -106,7 +110,7 @@ class SLS_client(SLS_gui):
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
-    def close(self):
+    def closeEvent(self):
         self.cxn.disconnect()
         self.reactor.stop()
 

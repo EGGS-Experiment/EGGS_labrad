@@ -19,7 +19,8 @@ class twistorr74_gui(QtWidgets.QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-
+        print(self.size())
+        self.setFixedSize(265,240)
         #twistorr 74
         self.twistorr_label = QtWidgets.QLabel('Twistorr 74 Pump')
         self.twistorr_label.setFont(QFont(shell_font, pointSize= 20))
@@ -50,15 +51,12 @@ class twistorr74_gui(QtWidgets.QFrame):
         layout.addWidget(self.twistorr_lockswitch, 8, pump1_col, 1, 5)
         layout.addWidget(self.twistorr_record, 9, pump1_col, 1, 5)
 
-        layout.minimumSize()
+        #layout.minimumSize()
         self.setLayout(layout)
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    icon = twistorr74_gui()
-    icon.show()
-    app.exec_()
-
+    from EGGS_labrad.lib.clients import runGUI
+    runGUI(twistorr74_gui)
 
 
 

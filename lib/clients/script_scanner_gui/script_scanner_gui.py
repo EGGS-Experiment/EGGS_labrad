@@ -32,7 +32,7 @@ class script_scanner_gui(QtWidgets.QWidget):
         self.subscribedScriptScanner = False
         self.subscribedParametersVault = False
         if self.cxn is None:
-            self.cxn = connection(name = self.name)
+            self.cxn = connection(name=self.name)
             yield self.cxn.connect()
         self.context = yield self.cxn.context()
         try:

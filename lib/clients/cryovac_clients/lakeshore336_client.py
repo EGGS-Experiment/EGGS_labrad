@@ -14,8 +14,10 @@ class lakeshore336_client(lakeshore336_gui):
 
     name = 'Lakeshore336 Client'
 
-    def __init__(self, reactor, parent=None):
-        self.gui = super()
+    def __init__(self, reactor, cxn=None, parent=None):
+        super().__init__()
+        self.cxn = cxn
+        self.gui = self
         self.gui.setupUi()
         self.reactor = reactor
         self.connect()
@@ -28,10 +30,12 @@ class lakeshore336_client(lakeshore336_gui):
         Creates an asynchronous connection to lakeshore server
         and relevant labrad servers
         """
-        import os
-        LABRADHOST = os.environ['LABRADHOST']
-        from labrad.wrappers import connectAsync
-        self.cxn = yield connectAsync(LABRADHOST, name=self.name)
+        if not self.cxn:
+            import os
+            LABRADHOST = os.environ['LABRADHOST']
+            from labrad.wrappers import connectAsync
+            self.cxn = yield connectAsync(LABRADHOST, name=self.name)
+
         #check that required servers are online
         try:
             self.dv = yield self.cxn.data_vault
@@ -283,7 +287,7 @@ class lakeshore336_client(lakeshore336_gui):
             curr2 = yield self.ls.get_heater_output(2)
             self.gui.heat2.setText(str(curr2))
 
-    def close(self):
+    def closeEvent(self, event):
         self.cxn.disconnect()
         self.reactor.stop()
 

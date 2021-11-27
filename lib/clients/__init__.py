@@ -39,7 +39,7 @@ def runClient(client, **kwargs):
         qt5reactor.install()
     except Exception as e:
         print(e)
-    #instantiate a client with a reactor
+    #instantiate client with a reactor
     from twisted.internet import reactor
     client = client(reactor, **kwargs)
     #show client
@@ -49,6 +49,7 @@ def runClient(client, **kwargs):
         client.show()
     #start reactor
     reactor.run()
+    #run on exit
     try:
         client.close()
     except:

@@ -25,7 +25,7 @@ class lakeshore336_gui(QWidget):
         shell_font = 'MS Shell Dlg 2'
         lakeshore336_gui = self
         lakeshore336_gui.setObjectName("lakeshore336_gui")
-        lakeshore336_gui.resize(583, 596)
+        lakeshore336_gui.setFixedSize(583, 596)
         self.lakeshore_label = QtWidgets.QLabel(lakeshore336_gui)
         self.lakeshore_label.setGeometry(QtCore.QRect(50, 20, 471, 31))
         font = QtGui.QFont()

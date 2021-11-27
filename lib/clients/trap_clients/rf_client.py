@@ -5,11 +5,14 @@ from EGGS_labrad.lib.clients.trap_clients.rf_gui import rf_gui
 
 from PyQt5.QtWidgets import QWidget
 
-class rf_client(object):
+class rf_client(rf_gui):
+
     name = 'RF Client'
 
-    def __init__(self, reactor, parent=None):
-        self.gui = rf_gui()
+    def __init__(self, reactor, cxn=None, parent=None):
+        super().__init__()
+        self.cxn=cxn
+        self.gui = self
         self.reactor = reactor
         self.connect()
         self.gui.setupUi()
@@ -22,9 +25,10 @@ class rf_client(object):
         """
         # use connection object since we need
         # to wait until servers are all connected
-        from EGGS_labrad.lib.clients.connection import connection
-        self.cxn = connection()
-        yield self.cxn.connect()
+        if not self.cxn:
+            from EGGS_labrad.lib.clients.connection import connection
+            self.cxn = connection()
+            yield self.cxn.connect()
 
         #add following servers to connection for future use
         try:
@@ -52,7 +56,7 @@ class rf_client(object):
 
     @inlineCallbacks
     def initializeGUI(self):
-        print('init s')
+        # print('init s')
         rf = yield self.cxn.get_server('RF Server')
         # waveform
             #parameters
@@ -72,18 +76,18 @@ class rf_client(object):
         self.gui.mod_freq_toggle.clicked.connect(lambda status: rf.fm_toggle(status))
         self.gui.mod_ampl_toggle.clicked.connect(lambda status: rf.am_toggle(status))
         self.gui.mod_phase_toggle.clicked.connect(lambda status: rf.pm_toggle(status))
-        print('init e')
+        # print('init e')
 
     @inlineCallbacks
     def selectDevice(self):
-        print('sel s')
+        # print('sel s')
         rf = yield self.cxn.get_server('RF Server')
         yield rf.select_device()
-        print('sel e')
+        # print('sel e')
 
     @inlineCallbacks
     def getDeviceParams(self):
-        print('gdp s')
+        # print('gdp s')
         rf = yield self.cxn.get_server('RF Server')
         try:
             freq = yield rf.frequency()
@@ -100,7 +104,7 @@ class rf_client(object):
             self.gui.mod_phase_dev.setValue(pm_dev)
         except Exception as e:
             print(e)
-        print('gdp e')
+        # print('gdp e')
 
 
     @inlineCallbacks
@@ -136,9 +140,10 @@ class rf_client(object):
         self.gui.mod_freq_toggle.setEnabled(status)
         self.gui.mod_phase_toggle.setEnabled(status)
 
-    def close(self):
+    def closeEvent(self, event):
         self.cxn.disconnect()
         self.reactor.stop()
+
 
 if __name__=="__main__":
     from EGGS_labrad.lib.clients import runClient

@@ -19,9 +19,9 @@ class niops03_gui(QtWidgets.QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-
+        self.setFixedSize(250, 400)
         #niops03
-        self.niops_label = QtWidgets.QLabel('NIOPS 03 Pump')
+        self.niops_label = QtWidgets.QLabel('NIOPS 03 Ion Pump')
         self.niops_label.setFont(QFont(shell_font, pointSize=20))
         self.niops_label.setAlignment(QtCore.Qt.AlignCenter)
             #pressure readout
@@ -67,7 +67,7 @@ class niops03_gui(QtWidgets.QFrame):
         layout.addWidget(self.niops_lockswitch, 20, pump1_col, 1, 5)
         layout.addWidget(self.niops_record, 21, pump1_col, 1, 5)
 
-        layout.minimumSize()
+        #layout.minimumSize()
         self.setLayout(layout)
 
 if __name__ == "__main__":
