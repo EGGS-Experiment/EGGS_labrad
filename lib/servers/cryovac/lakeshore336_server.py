@@ -37,8 +37,8 @@ class Lakeshore336Server(SerialDeviceServer):
     """Talks to the Lakeshore 336 Temperature Controller"""
     name = 'Lakeshore336 Server'
     regKey = 'Lakeshore336Server'
-    serNode = 'CausewayBay'
-    port = 'COM7'
+    serNode = 'MongKok'
+    port = 'COM24'
 
     timeout = WithUnit(1.0, 's')
     baudrate = 57600

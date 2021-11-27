@@ -33,8 +33,8 @@ class NIOPS03Server(SerialDeviceServer):
     """Controls NIOPS-03 Power Supply which controls ion pumps"""
     name = 'NIOPS03 Server'
     regKey = 'NIOPS03Server'
-    serNode = 'CausewayBay'
-    port = 'COM8'
+    serNode = 'MongKok'
+    port = 'COM55'
 
     timeout = WithUnit(3.0, 's')
     baudrate = 115200
@@ -135,7 +135,7 @@ class NIOPS03Server(SerialDeviceServer):
         returnValue([ip_time, np_time])
 
     @setting(311, 'Interlock IP', status='b', press='v', returns='')
-    def interlock_ip(self, status, press):
+    def interlock_ip(self, c, status, press):
         """
         Activates an interlock, switching off the ion pump
         if pressure exceeds a given value.
