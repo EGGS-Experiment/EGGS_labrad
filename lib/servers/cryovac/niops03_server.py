@@ -61,9 +61,9 @@ class NIOPS03Server(SerialDeviceServer):
         Returns:
             (float): pump power status
         """
-        if power == True:
+        if power:
             yield self.ser.write('G' + TERMINATOR)
-        elif power == False:
+        else:Z
             yield self.ser.write('B' + TERMINATOR)
         resp = yield self.ser.read()
         resp = resp.strip()
@@ -145,7 +145,6 @@ class NIOPS03Server(SerialDeviceServer):
         Returns:
                     (bool)  : activation state of the interlock
         """
-        #todo: set signal about interlock
         #create connection to turbopump as needed
         if not self.tt:
             try:
@@ -163,11 +162,11 @@ class NIOPS03Server(SerialDeviceServer):
             self.interlock_loop.start(5)
         elif not status and self.interlock_loop.running:
             self.interlock_loop.stop()
-        return self.interlock_loop.running
+        returnValue(self.interlock_loop.running)
 
     @inlineCallbacks
     def _interlock_poll(self):
-        press_tmp = self.tt.read_pressure()
+        press_tmp = yield self.tt.read_pressure()
         if press_tmp >= self.interlock_pressure:
             yield self.ser.write('B' + TERMINATOR)
             yield self.ser.read()
