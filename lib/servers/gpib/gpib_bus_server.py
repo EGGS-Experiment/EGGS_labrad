@@ -26,13 +26,14 @@
 
 
 from labrad.server import LabradServer, setting
+from labrad.errors import DeviceNotSelectedError
+import labrad.units as units
+
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.reactor import callLater
 from twisted.internet.task import LoopingCall
-from labrad.errors import DeviceNotSelectedError
-import labrad.units as units
-import pyvisa as visa
 
+import pyvisa as visa
 
 """
 ### BEGIN NODE INFO
@@ -238,5 +239,4 @@ __server__ = GPIBBusServer()
 
 if __name__ == '__main__':
     from labrad import util
-
     util.runServer(__server__)

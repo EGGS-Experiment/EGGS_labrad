@@ -1,8 +1,10 @@
 import os
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout
+from twisted.internet.defer import inlineCallbacks
+
 from PyQt5.QtGui import QIcon
-from twisted.internet.defer import inlineCallbacks, returnValue
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout
+
 
 class EGGS_gui(QMainWindow):
 
@@ -35,13 +37,14 @@ class EGGS_gui(QMainWindow):
         self.tabWidget = QTabWidget()
 
         #create subwidgets
-        script_scanner = self.makeScriptScannerWidget(reactor, cxn)
-        cryo = self.makeCryoWidget(reactor)
+        script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
+        cryovac = self.makeCryoWidget(self.reactor)
+        #trap = self.makeTrapWidget(self.reactor)
 
         #create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
-        self.tabWidget.addTab(cryo, '&Cryo')
-        #self.tabWidget.addTab(cryovac, '&Trap')
+        self.tabWidget.addTab(cryovac, '&Cryovac')
+        #self.tabWidget.addTab(trap, '&Trap')
 
         #put it all together
         layout.addWidget(self.tabWidget)
@@ -51,7 +54,7 @@ class EGGS_gui(QMainWindow):
 
     def makeScriptScannerWidget(self, reactor, cxn):
         from EGGS_labrad.lib.clients.script_scanner_gui import script_scanner_gui
-        scriptscanner = script_scanner_gui(reactor, cxn = cxn)
+        scriptscanner = script_scanner_gui(reactor, cxn=cxn)
         return scriptscanner
 
     def makeCryoWidget(self, reactor):
@@ -66,20 +69,23 @@ class EGGS_gui(QMainWindow):
         holder_widget = QWidget()
         holder_layout = QGridLayout()
         holder_widget.setLayout(holder_layout)
-        holder_layout.addWidget(lakeshore, 0, 0, 2, 2)
-        holder_layout.addWidget(niops, 0, 2, 1, 1)
-        holder_layout.addWidget(twistorr, 1, 2, 1, 1)
-        holder_layout.setColumnStretch(0, 1)
-        holder_layout.setColumnStretch(1, 1)
-        holder_layout.setColumnStretch(2, 1)
-        holder_layout.setRowStretch(0, 1)
-        holder_layout.setRowStretch(1, 1)
-        holder_layout.setRowStretch(2, 1)
+        holder_layout.addWidget(lakeshore, 0, 0)
+        holder_layout.addWidget(niops, 0, 1)
+        holder_layout.addWidget(twistorr, 0, 2)
+        # holder_layout.addWidget(lakeshore, 0, 0, 2, 2)
+        # holder_layout.addWidget(niops, 0, 2, 1, 1)
+        # holder_layout.addWidget(twistorr, 1, 2, 1, 1)
+        # holder_layout.setColumnStretch(0, 1)
+        # holder_layout.setColumnStretch(1, 1)
+        # holder_layout.setColumnStretch(2, 1)
+        # holder_layout.setRowStretch(0, 1)
+        # holder_layout.setRowStretch(1, 1)
+        # holder_layout.setRowStretch(2, 1)
         #todo: try size policy
         return holder_widget
 
     def makeTrapWidget(self, reactor):
-        from EGGS_labrad.lib.clients.trap_clients.lakeshore_client import rf_client
+        from EGGS_labrad.lib.clients.trap_clients.rf_client import rf_client
         rf_widget = rf_client(reactor)
         return rf_widget
 
@@ -89,11 +95,5 @@ class EGGS_gui(QMainWindow):
 
 
 if __name__=="__main__":
-    import sys, qt5reactor
-    app = QApplication(sys.argv)
-    clipboard = app.clipboard()
-    qt5reactor.install()
-    from twisted.internet import reactor
-    EGGSGUI = EGGS_gui(reactor, clipboard)
-    EGGSGUI.show()
-    reactor.run()
+    from EGGS_labrad.lib.clients import runClient
+    runClient(EGGS_gui)

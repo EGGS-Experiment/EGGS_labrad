@@ -10,12 +10,12 @@ from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui import lakeshore33
 from PyQt5.QtGui import QFont
 
 
-class lakeshore336_client(object):
+class lakeshore336_client(lakeshore336_gui):
 
     name = 'Lakeshore336 Client'
 
     def __init__(self, reactor, parent=None):
-        self.gui = lakeshore336_gui()
+        self.gui = super()
         self.gui.setupUi()
         self.reactor = reactor
         self.connect()
@@ -66,8 +66,8 @@ class lakeshore336_client(object):
             #lock heater settings
         self.gui.heatAll_lockswitch.toggled.connect(lambda: self.lock_heaters())
             #mode changed
-        self.gui.heat1_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan = 1))
-        self.gui.heat2_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan = 2))
+        self.gui.heat1_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan=1))
+        self.gui.heat2_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan=2))
 
     #Slot functions
     @inlineCallbacks
