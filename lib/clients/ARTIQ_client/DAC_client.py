@@ -56,6 +56,7 @@ class AD5372_channel(QFrame):
         self.calibrateswitch = QPushButton('Calibrate')
         self.calibrateswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
+        self.lockswitch.setChecked(True)
 
         # add widgets to layout
         layout.addWidget(title, 0, 0, 1, 3)
@@ -178,6 +179,11 @@ class DAC_client(QWidget):
             # print(name + ' - row:' + str(row) + ', column: ' + str(column))
         zotino_group.setLayout(layout)
         return zotino_group
+
+    def startupData(self, cxn):
+        for channel in self.ad5372_clients.values():
+            channel.lock(False)
+            channel.locks
 
     @inlineCallbacks
     def setDAC(self, channel_num, voltage):

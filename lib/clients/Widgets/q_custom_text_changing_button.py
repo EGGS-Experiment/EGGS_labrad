@@ -2,7 +2,8 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 
 class TextChangingButton(QtWidgets.QPushButton):
-    """Button that changes its text to ON or OFF and colors when it's pressed.
+    """
+    Button that changes its text to ON or OFF and colors when it's pressed.
     """
     def __init__(self, button_text, parent=None):
         """

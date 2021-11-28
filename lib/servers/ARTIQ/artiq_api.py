@@ -214,6 +214,23 @@ class ARTIQ_api(object):
         #dev.set_att_mu(att)
         dev.set_att(att)
 
+    def readDDS(self, dds_name, reg, length):
+        """
+        Read the value of a DDS register.
+        """
+        dev = self.dds_list[dds_name]
+        reg_val = self._readDDS(dev, att_mu)
+        return reg_val
+
+    @kernel
+    def _readDDS(self, dev, reg, length):
+        self.core.reset()
+        if length == 16:
+            return dev.read16(reg)
+        elif length == 32:
+            return dev.read32(reg)
+        elif length == 64:
+            return dev.read64(reg)
 
     #DAC functions
     @kernel
@@ -252,9 +269,21 @@ class ARTIQ_api(object):
         self.dac.load()
 
     @kernel
-    def setDACGlobalOffset(self, word):
+    def setDACGlobal(self, word):
         """
         Set the OFSx registers on the AD5372.
         """
         self.core.reset()
         self.dac.write_offset_dacs_mu(word)
+
+    @kernel
+    def readDAC(self, channel, address):
+        """
+        Read the value of one of the DAC registers.
+        :param channel: Channel to read from
+        :param address: Register to read from
+        :return: the value of the register
+        """
+        self.core.reset()
+        reg_val = self.dac.read_reg(channel, op)
+        return reg_val

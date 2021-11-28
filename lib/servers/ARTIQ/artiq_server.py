@@ -78,8 +78,9 @@ class ARTIQ_Server(LabradServer):
         self.turns_to_pow = dds_tmp.turns_to_pow
         self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
             #dac
-        from artiq.coredevice.ad53xx import voltage_to_mu
+        from artiq.coredevice.ad53xx import voltage_to_mu, ad53xx_cmd_read_ch
         self.voltage_to_mu = voltage_to_mu
+        self.dac_read_code = ad53xx_cmd_read_ch
 
     def _setDevices(self):
         """
@@ -218,7 +219,7 @@ class ARTIQ_Server(LabradServer):
             yield self.api.setDDS(dds_name, 2, pow)
 
     @setting(326, "DDS Attenuation", dds_name='s', att='v', profile='i', returns='')
-    def setDDSAtt(self, c, dds_name, att, profile=None):
+    def setDDSAtt(self, c, dds_name, att, profile):
         """
         Manually set a DDS to the given parameters.
         Arguments:
@@ -226,20 +227,38 @@ class ARTIQ_Server(LabradServer):
             att     (float) : attenuation (in dBm)
             profile (int)   : the DDS profile to set & change to
         """
+        if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
         #todo: check input
         att_mu = att
         yield self.api.setDDSAtt(dds_name, att_mu)
 
+    @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns='i')
+    def readDDS(self, c, dds_name, addr, length):
+        """
+        Read the value of a DDS register.
+        Arguments:
+            dds_name (str)  : the name of the dds
+            addr     (float): the address to read from
+            length (int)    : how many bits to read
+        """
+        if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
+        elif length not in (16, 32, 64):
+            raise Exception('Invalid read length. Must be one of [16, 32, 64].')
+        reg_val = yield self.api.readDDS(dds_name, addr, length)
+        returnValue(reg_val)
+
 
     #DAC
-    @setting(421, "DAC Initialize", returns='')
+    @setting(411, "DAC Initialize", returns='')
     def initializeDAC(self, c):
         """
         Manually initialize the DAC.
         """
         yield self.api.initializeDAC()
 
-    @setting(411, "DAC Set", dac_num='i', voltage='v', returns='')
+    @setting(421, "DAC Set", dac_num='i', voltage='v', returns='')
     def setDAC(self, c, dac_num, voltage):
         """
         Manually set the voltage of a DAC channel.
@@ -255,7 +274,7 @@ class ARTIQ_Server(LabradServer):
         voltage_mu = yield self.voltage_to_mu(voltage)
         yield self.api.setDAC(dac_num, voltage_mu)
 
-    @setting(412, "DAC Gain", dac_num='i', gain='v', returns='')
+    @setting(422, "DAC Gain", dac_num='i', gain='v', returns='')
     def setDACGain(self, c, dac_num, gain):
         """
         Manually set the gain of a DAC channel.
@@ -273,7 +292,7 @@ class ARTIQ_Server(LabradServer):
         gain_mu = int(gain * 0xffff) - 1
         yield self.api.setDACGain(dac_num, gain_mu)
 
-    @setting(413, "DAC Offset", dac_num='i', voltage='v', returns='')
+    @setting(423, "DAC Offset", dac_num='i', voltage='v', returns='')
     def setDACOffset(self, c, dac_num, voltage):
         """
         Manually set the offset voltage of a DAC channel.
@@ -287,6 +306,22 @@ class ARTIQ_Server(LabradServer):
         #todo: check voltage
         voltage_mu = yield self.voltage_to_mu(voltage)
         yield self.api.setDACOffset(dac_num, voltage_mu)
+
+    @setting(431, "DAC Read", dac_num='i', param='s', returns='i')
+    def readDAC(self, c, dac_num, param):
+        """
+        Read the value of a DAC register.
+        Arguments:
+            dac_num (str)   : the dac channel number
+            param   (float) : the register to read from
+        """
+        if (dac_num > 31) or (dac_num < 0):
+            raise Exception('Error: device does not exist.')
+        elif param.lower() not in ('dac', 'offset', 'gain'):
+            raise Exception('Invalid register. Must be one of ["dac", "offset", "gain"].')
+        #todo: finish
+        reg_val = yield self.api.readDAC(dac_num, param)
+        returnValue(reg_val)
 
 
     #Sampler

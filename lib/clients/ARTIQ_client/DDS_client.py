@@ -54,6 +54,7 @@ class AD9910_channel(QFrame):
         self.resetswitch = QPushButton('Initialize')
         self.rfswitch = TextChangingButton(("On", "Off"))
         self.lockswitch = TextChangingButton(("Lock", "Unlock"))
+        self.lockswitch.setChecked(True)
 
         #add widgets to layout
         layout.addWidget(title, 0, 0, 1, 3)
