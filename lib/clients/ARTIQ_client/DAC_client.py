@@ -117,6 +117,7 @@ class DAC_client(QWidget):
             #todo: make dac list available from server
         except Exception as e:
             print(e)
+            raise
 
         #create holding lists
         self.zotino_list = []

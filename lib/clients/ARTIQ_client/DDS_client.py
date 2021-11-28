@@ -116,6 +116,7 @@ class DDS_client(QWidget):
             ad9910_list = yield self.artiq.dds_get()
         except Exception as e:
             print(e)
+            raise
 
         #assign ad9910 channels to urukuls
         self.urukul_list = {}
