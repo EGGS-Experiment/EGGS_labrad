@@ -286,9 +286,9 @@ class SerialDeviceServer(LabradServer):
                 selection = raw_input( '' )
                 if selection in keyDict:
                     portStr = yield reg.get( keyDict[selection] )
-                    returnValue( portStr )
+                    returnValue(portStr)
         except Error as e:
-            if e.code == 13: raise PortRegError( 0 )
+            if e.code == 13: raise PortRegError(0)
 
     @inlineCallbacks
     def findSerial(self, serNode=None):
@@ -310,7 +310,7 @@ class SerialDeviceServer(LabradServer):
         except IndexError: raise SerialConnectionError(0)
 
     @staticmethod
-    def _matchSerial( serNode, potMatch ):
+    def _matchSerial(serNode, potMatch):
         """
         Checks if server name is the correct serial server
         
@@ -397,5 +397,4 @@ class SerialDeviceServer(LabradServer):
         """
         Close serial connection before exiting.
         """
-        if self.ser:
-            self.ser.close()
+        if self.ser: self.ser.close()
