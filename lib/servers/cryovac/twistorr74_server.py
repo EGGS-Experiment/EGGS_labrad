@@ -70,14 +70,14 @@ class TwisTorr74Server(SerialDeviceServer):
             #yield self.ser.write(message)
             print(message)
             #read and parse answer
-            time.sleep(1.0)
+            time.sleep(0.5)
             #resp = yield self.ser.read()
         #getter
         # create and send message to device
         message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.READ_msg)
         yield self.ser.write(message)
         # read and parse answer
-        time.sleep(1.0)
+        time.sleep(0.5)
         resp = yield self.ser.read()
         try:
             resp = yield self._parse_answer(resp)
@@ -97,7 +97,7 @@ class TwisTorr74Server(SerialDeviceServer):
         message = yield self._create_message(CMD_msg=b'224', DIR_msg=self.READ_msg)
         yield self.ser.write(message)
         #read and parse answer
-        time.sleep(1.0)
+        time.sleep(0.5)
         resp = yield self.ser.read()
         try:
             resp = yield self._parse_answer(resp)

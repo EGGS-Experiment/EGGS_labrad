@@ -24,13 +24,15 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
-
+import time
 
 TERMINATOR = '\r\n'
 QUERY_msg = b'\x05'
 
 class NIOPS03Server(SerialDeviceServer):
-    """Controls NIOPS-03 Power Supply which controls ion pumps"""
+    """
+    Controls NIOPS-03 Power Supply which controls ion pumps.
+    """
     name = 'NIOPS03 Server'
     regKey = 'NIOPS03Server'
     serNode = 'MongKok'
@@ -48,6 +50,7 @@ class NIOPS03Server(SerialDeviceServer):
             (str): which switches and alarms are on/off
         """
         yield self.ser.write('TS' + TERMINATOR)
+        time.sleep(0.25)
         resp = yield self.ser.read()
         returnValue(resp)
 
@@ -65,6 +68,7 @@ class NIOPS03Server(SerialDeviceServer):
             yield self.ser.write('G' + TERMINATOR)
         else:
             yield self.ser.write('B' + TERMINATOR)
+        time.sleep(0.25)
         resp = yield self.ser.read()
         resp = resp.strip()
         returnValue(resp)
@@ -82,6 +86,7 @@ class NIOPS03Server(SerialDeviceServer):
             yield self.ser.write('GN' + TERMINATOR)
         elif power == False:
             yield self.ser.write('BN' + TERMINATOR)
+        time.sleep(0.25)
         resp = yield self.ser.read()
         returnValue(resp)
 
@@ -94,6 +99,7 @@ class NIOPS03Server(SerialDeviceServer):
             (float): ion pump pressure
         """
         yield self.ser.write('Tb' + TERMINATOR)
+        time.sleep(0.25)
         resp = yield self.ser.read()
         returnValue(float(resp))
 
@@ -112,6 +118,7 @@ class NIOPS03Server(SerialDeviceServer):
             padleft = '0'*(4-len(voltage))
             yield self.ser.write('u' + padleft + voltage + TERMINATOR)
         yield self.ser.write('u' + TERMINATOR)
+        time.sleep(0.25)
         resp = yield self.ser.read()
         #convert from hex to int
         resp = int(resp, 16)
@@ -126,6 +133,7 @@ class NIOPS03Server(SerialDeviceServer):
         """
         #todo: ensure no problem here
         yield self.ser.write('TM' + TERMINATOR)
+        time.sleep(0.25)
         ip_time = yield self.ser.read_line('\r')
         np_time = yield self.ser.read_line('\r')
         ip_time = ip_time[16:-8].split(' Hours ')
@@ -169,6 +177,7 @@ class NIOPS03Server(SerialDeviceServer):
         press_tmp = yield self.tt.read_pressure()
         if press_tmp >= self.interlock_pressure:
             yield self.ser.write('B' + TERMINATOR)
+            time.sleep(0.25)
             yield self.ser.read()
 
 
