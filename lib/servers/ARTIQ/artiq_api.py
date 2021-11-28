@@ -1,12 +1,12 @@
 import numpy as np
 
 from sipyco.pc_rpc import Client
-from asyncio import get_event_loop
 
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager, DatasetManager
 from artiq.master.worker_impl import CCB, Scheduler
+
 
 class ARTIQ_api(object):
     """
@@ -18,7 +18,8 @@ class ARTIQ_api(object):
         self.devices = DeviceDB('C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db.py')
         self.device_manager = DeviceManager(self.devices)
         self._getDevices()
-        #self._initializeDevices()
+        self._initializeDevices()
+
 
     #Setup functions
     def _getDevices(self):
@@ -59,23 +60,18 @@ class ARTIQ_api(object):
         Initialize devices that need to be initialized.
         """
         #set ttlinout devices to be input
-        self.core.reset()
-        for device in self.ttlin_list:
-            try:
-                device.input()
-            except RTIOUnderflow:
-                self.core.break_realtime()
-                device.input()
+        # self.core.reset()
+        # for device in self.ttlin_list.values():
+        #     try:
+        #         device.input()
+        #     except RTIOUnderflow:
+        #         self.core.break_realtime()
+        #         device.input()
         #initialize DDSs
-        for component_list in self.dds_list.values():
-            self.core.break_realtime()
-            component_list['device'].init()
-        for component_list in self.urukul_list.values():
-            self.core.break_realtime()
-            component_list['device'].init()
+        #self.initializeDDSAll()
         #one-off device init
-        self.dac.init()
-        self.core.reset()
+        self.initializeDAC()
+
 
     #Pulse sequencing
     @kernel
@@ -132,21 +128,22 @@ class ARTIQ_api(object):
 
     #DDS functions
     @kernel
-    def initializeDDSAll(self, dds_name):
+    def initializeDDSAll(self):
         '''
-        Initialize all DDSs.
+        Initialize all DDS channels and their CPLDs.
         '''
+        #todo: fix, don't use dicts
         self.core.reset()
-        #reset urukul cpld
-        for device in self.urukul_list:
+        #initialize urukul cpld
+        for device in list(self.urukul_list.values()):
             try:
                 device.init()
             except RTIOUnderflow:
                 self.core.break_realtime()
                 device.init()
-        #reset each DDS channel
+        #initialize each DDS channel
         self.core.reset()
-        for device in self.dds_list:
+        for device in self.dds_list.values():
             try:
                 device.init()
             except RTIOUnderflow:

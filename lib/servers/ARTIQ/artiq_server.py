@@ -18,7 +18,6 @@ timeout = 20
 
 #labrad imports
 from labrad.server import LabradServer, setting, Signal
-from twisted.internet import reactor, task
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
 from twisted.internet.threads import deferToThread
 
@@ -33,14 +32,28 @@ from sipyco.sync_struct import Subscriber
 #device imports
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET, AD53XX_READ_GAIN
 from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_ASF, _AD9910_REG_POW
+from artiq.coredevice.comm_moninj import CommMonInj, TTLOverride
+
+#     th1.inject(8, TTLOverride.level.value, 1)
+#     th1.inject(8, TTLOverride.oe.value, 1)
+#     th1.inject(8, TTLOverride.en.value, 1)
 
 #function imports
 import numpy as np
+from asyncio import get_event_loop
+
+th1SIGNAL_ID = 828176
+th2SIGNAL_ID = 828175
+
 
 class ARTIQ_Server(LabradServer):
     """ARTIQ box server."""
     name = 'ARTIQ Server'
     regKey = 'ARTIQ_Server'
+
+    #Signals
+    t1 = Signal(th1SIGNAL_ID, signal_name, data_type)
+    t2 = Signal(th2SIGNAL_ID, signal_name, data_type)
 
     def __init__(self):
         self.api = ARTIQ_api()
@@ -59,10 +72,51 @@ class ARTIQ_Server(LabradServer):
     def _setClients(self):
         """
         Create clients to ARTIQ master.
-        Used to get datasets and submit experiments.
+        Used to get datasets, submit experiments, and monitor devices.
         """
         self.scheduler = Client('::1', 3251, 'master_schedule')
         self.datasets = Client('::1', 3251, 'master_dataset_db')
+        self.core_moninj = CommMonInj(self.monitor_cb, self.injection_status_cb)
+        #start up moninj
+        loop = get_event_loop()
+        loop.run_until_complete(self.core_moninj.connect('192.168.1.75', 1383))
+
+
+    def monitor_cb(self, channel, probe, value):
+        """
+
+        :param channel:
+        :param probe:
+        :param value:
+        :return:
+        """
+        if channel in self.ttl_widgets:
+            widget = self.ttl_widgets[channel]
+            if probe == TTLProbe.level.value:
+                widget.cur_level = bool(value)
+            elif probe == TTLProbe.oe.value:
+                widget.cur_oe = bool(value)
+            widget.refresh_display()
+        if (channel, probe) in self.dac_widgets:
+            widget = self.dac_widgets[(channel, probe)]
+            widget.cur_value = value
+            widget.refresh_display()
+
+    def injection_status_cb(self, channel, override, value):
+        """
+
+        :param channel:
+        :param override:
+        :param value:
+        :return:
+        """
+        if channel in self.ttl_widgets:
+            widget = self.ttl_widgets[channel]
+            if override == TTLOverride.en.value:
+                widget.cur_override = bool(value)
+            if override == TTLOverride.level.value:
+                widget.cur_override_level = bool(value)
+            widget.refresh_display()
 
     def _setVariables(self):
         """
@@ -92,6 +146,7 @@ class ARTIQ_Server(LabradServer):
         """
         self.ttlout_list = list(self.api.ttlout_list.keys())
         self.dds_list = list(self.api.dds_list.keys())
+
 
     # Core
     @setting(21, "Get Devices", returns='?')
@@ -346,6 +401,7 @@ class ARTIQ_Server(LabradServer):
 
     def expireContext(self, c):
         self.listeners.remove(c.ID)
+
 
 if __name__ == '__main__':
     from labrad import util
