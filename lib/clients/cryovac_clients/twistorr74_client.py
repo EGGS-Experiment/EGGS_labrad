@@ -16,10 +16,9 @@ class twistorr74_client(twistorr74_gui):
         self.cxn = cxn
         self.gui = self
         self.reactor = reactor
-        self.connect()
-        self.initializeGUI()
+        d = self.connect()
+        d.addCallback(self.initializeGUI)
 
-    #Setup functions
     @inlineCallbacks
     def connect(self):
         """
@@ -43,7 +42,7 @@ class twistorr74_client(twistorr74_gui):
         # get polling time
         # yield self.reg.cd(['Clients', self.name])
         # self.poll_time = yield float(self.reg.get('poll_time'))
-        self.poll_time = 2.0
+        self.poll_time = 5.0
 
         # set recording stuff
         self.c_record = self.cxn.context()
@@ -53,13 +52,16 @@ class twistorr74_client(twistorr74_gui):
         from twisted.internet.reactor import callLater
         callLater(2.0, self.start_polling)
 
+        return self.cxn
+
     #@inlineCallbacks
-    def initializeGUI(self):
+    def initializeGUI(self, cxn):
+        #startup data
+        #todo
         #connect signals to slots
         self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.lock_twistorr(status))
         self.gui.twistorr_power.toggled.connect(lambda status: self.toggle_twistorr(status))
         self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
-        #todo: start up data
 
     #Slot functions
     @inlineCallbacks
@@ -81,7 +83,8 @@ class twistorr74_client(twistorr74_gui):
             trunk1 = year + '_' + month + '_' + day
             trunk2 = self.name + '_' + hour + ':' + minute
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
-            yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')], [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_record)
+            yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')],
+                              [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_record)
 
     @inlineCallbacks
     def toggle_twistorr(self, status):

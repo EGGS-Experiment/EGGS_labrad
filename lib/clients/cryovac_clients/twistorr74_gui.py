@@ -19,15 +19,15 @@ class twistorr74_gui(QtWidgets.QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        self.setFixedSize(265,240)
+        self.setFixedSize(225, 225)
         #twistorr 74
         self.twistorr_label = QtWidgets.QLabel('Twistorr 74 Pump')
-        self.twistorr_label.setFont(QFont(shell_font, pointSize= 20))
+        self.twistorr_label.setFont(QFont(shell_font, pointSize= 18))
         self.twistorr_label.setAlignment(QtCore.Qt.AlignCenter)
             #readout
         self.twistorr_display_label = QtWidgets.QLabel('Pressure (mbar)')
         self.twistorr_display = QtWidgets.QLabel('Pressure')
-        self.twistorr_display.setFont(QFont(shell_font, pointSize=25))
+        self.twistorr_display.setFont(QFont(shell_font, pointSize=20))
         self.twistorr_display.setAlignment(QtCore.Qt.AlignCenter)
         self.twistorr_display.setStyleSheet('color: blue')
             #record button
@@ -41,15 +41,15 @@ class twistorr74_gui(QtWidgets.QFrame):
         layout = QtWidgets.QGridLayout()
         shell_font = 'MS Shell Dlg 2'
 
-        pump1_col = 1
-        pump2_col = 9
+        pump1_col = 0
+        #pump2_col = 9
 
-        layout.addWidget(self.twistorr_label, 1, pump1_col)
-        layout.addWidget(self.twistorr_display_label, 2, pump1_col)
-        layout.addWidget(self.twistorr_display, 3, pump1_col, 3, 5)
-        layout.addWidget(self.twistorr_power, 7, pump1_col, 1, 5)
-        layout.addWidget(self.twistorr_lockswitch, 8, pump1_col, 1, 5)
-        layout.addWidget(self.twistorr_record, 9, pump1_col, 1, 5)
+        layout.addWidget(self.twistorr_label, 0, pump1_col)
+        layout.addWidget(self.twistorr_display_label, 1, pump1_col)
+        layout.addWidget(self.twistorr_display, 2, pump1_col)
+        layout.addWidget(self.twistorr_power, 3, pump1_col)
+        layout.addWidget(self.twistorr_lockswitch, 4, pump1_col)
+        layout.addWidget(self.twistorr_record, 5, pump1_col)
 
         #layout.minimumSize()
         self.setLayout(layout)
