@@ -15,8 +15,8 @@ class niops03_client(niops03_gui):
         self.cxn = cxn
         self.gui = self
         self.reactor = reactor
-        self.connect()
-        self.initializeGUI()
+        d = self.connect()
+        d.addCallback(self.initializeGUI)
 
     #Setup functions
     @inlineCallbacks
@@ -37,7 +37,7 @@ class niops03_client(niops03_gui):
         # get polling time
         # yield self.reg.cd(['Clients', self.name])
         # self.poll_time = yield float(self.reg.get('poll_time'))
-        self.poll_time = 1.0
+        self.poll_time = 5.0
 
         # set recording stuff
         self.c_record = self.cxn.context()
@@ -48,13 +48,22 @@ class niops03_client(niops03_gui):
         from twisted.internet.reactor import callLater
         callLater(1.0, self.start_polling)
 
-    #@inlineCallbacks
-    def initializeGUI(self):
+        return self.cxn
+
+    @inlineCallbacks
+    def initializeGUI(self, cxn):
+        #startup data
+        v_ip = yield self.niops.ip_voltage()
+        self.gui.niops_voltage.setValue(v_ip)
         #connect signals to slots
+            #ion pump
         self.gui.niops_lockswitch.toggled.connect(lambda status: self.lock_niops(status))
         self.gui.niops_power.toggled.connect(lambda status: self.toggle_niops(status))
         self.gui.niops_record.toggled.connect(lambda status: self.record_pressure(status))
-        #todo: start up data
+        self.gui.niops_voltage.valueChanged.connect(lambda voltage: self.set_ip_voltage(voltage))
+            #getter
+        self.gui.np_lockswitch.toggled.connect(lambda status: self.lock_np(status))
+        self.gui.np_power.toggled.connect(lambda status: self.toggle_np(status))
 
     #Slot functions
     @inlineCallbacks
@@ -76,7 +85,7 @@ class niops03_client(niops03_gui):
             trunk1 = year + '_' + month + '_' + day
             trunk2 = self.name + '_' + hour + ':' + minute
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
-            yield self.dv.new('NIOPS03 Pump', [('Elapsed time', 't')], \
+            yield self.dv.new('NIOPS03 Pump', [('Elapsed time', 's')], \
                                        [('Ion Pump', 'Pressure', 'mbar')], context=self.c_record)
 
     @inlineCallbacks
@@ -93,6 +102,28 @@ class niops03_client(niops03_gui):
         self.gui.niops_voltage.setEnabled(status)
         self.gui.niops_power.setEnabled(status)
 
+    #@inlineCallbacks
+    def set_ip_voltage(self, voltage):
+        """
+        Sets the ion pump voltage.
+        """
+        print('yzde')
+        #yield self.niops.ip_voltage(voltage)
+
+    @inlineCallbacks
+    def toggle_np(self, status):
+        """
+        Sets getter power on or off.
+        """
+        yield self.niops.toggle_np(status)
+
+    def lock_np(self, status):
+        """
+        Locks power status of getter.
+        """
+        self.gui.np_power.setEnabled(status)
+
+
     #Polling functions
     def start_polling(self):
         self.poll_loop.start(self.poll_time)
@@ -104,11 +135,13 @@ class niops03_client(niops03_gui):
     def poll(self):
         pressure = yield self.niops.ip_pressure()
         self.gui.niops_pressure_display.setText(str(pressure))
-        if self.gui.niops_power.isChecked():
+        if True:
+        # if self.gui.niops_power.isChecked():
             workingtime = yield self.niops.working_time()
-            workingtime = workingtime[0]
-            workingtime_text = str(workingtime[0]) + ':' + str(workingtime[1])
-            self.gui.niops_workingtime_display.setText(workingtime_text)
+            workingtime_ip = str(workingtime[0][0]) + ':' + str(workingtime[0][1])
+            workingtime_np = str(workingtime[1][0]) + ':' + str(workingtime[1][1])
+            self.gui.niops_workingtime_display.setText(workingtime_ip)
+            self.gui.np_workingtime_display.setText(workingtime_np)
         if self.recording == True:
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
