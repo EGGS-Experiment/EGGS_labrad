@@ -30,6 +30,10 @@ from artiq.master.worker_db import DeviceManager
 from sipyco.pc_rpc import Client
 from sipyco.sync_struct import Subscriber
 
+#device imports
+from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET, AD53XX_READ_GAIN
+from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_ASF, _AD9910_REG_POW
+
 #function imports
 import numpy as np
 
@@ -78,9 +82,9 @@ class ARTIQ_Server(LabradServer):
         self.turns_to_pow = dds_tmp.turns_to_pow
         self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
             #dac
-        from artiq.coredevice.ad53xx import voltage_to_mu, ad53xx_cmd_read_ch
+        from artiq.coredevice.ad53xx import voltage_to_mu #, ad53xx_cmd_read_ch
         self.voltage_to_mu = voltage_to_mu
-        self.dac_read_code = ad53xx_cmd_read_ch
+        # self.dac_read_code = ad53xx_cmd_read_ch
 
     def _setDevices(self):
         """

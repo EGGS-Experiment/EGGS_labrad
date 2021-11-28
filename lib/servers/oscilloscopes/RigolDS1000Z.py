@@ -93,7 +93,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         returnValue(resp)
 
     @inlineCallbacks
-    def channel_onoff(self, channel, state = None):
+    def channel_toggle(self, channel, state = None):
         chString = ':CHAN%d:DISP' %channel
         if state in [0, 1]:
             yield self.write(chString + ' ' + str(state))
