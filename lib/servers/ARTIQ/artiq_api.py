@@ -27,9 +27,9 @@ class ARTIQ_api(object):
         self.core = self.device_manager.get("core")
         self.core_dma = self.device_manager.get("core_dma")
 
-        #get device names
+        # store devices in dictionary where device name is key
+        # and device itself is value
         self.device_db = self.devices.get_device_db()
-            #create holding lists (dict not supported in kernel methods)
         self.ttlout_list = {}
         self.ttlin_list = {}
         self.dds_list = {}

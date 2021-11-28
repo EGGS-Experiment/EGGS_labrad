@@ -42,8 +42,8 @@ from artiq.coredevice.comm_moninj import CommMonInj, TTLOverride
 import numpy as np
 from asyncio import get_event_loop
 
-th1SIGNAL_ID = 828176
-th2SIGNAL_ID = 828175
+t1SIGNAL_ID = 828176
+t2SIGNAL_ID = 828175
 
 
 class ARTIQ_Server(LabradServer):
@@ -52,8 +52,8 @@ class ARTIQ_Server(LabradServer):
     regKey = 'ARTIQ_Server'
 
     #Signals
-    t1 = Signal(th1SIGNAL_ID, signal_name, data_type)
-    t2 = Signal(th2SIGNAL_ID, signal_name, data_type)
+    t1 = Signal(t1SIGNAL_ID, 'signal: ttl changed', '(ssb)')
+    t2 = Signal(t2SIGNAL_ID, 'signal: dac changed', '(ssv)')
 
     def __init__(self):
         self.api = ARTIQ_api()
@@ -81,42 +81,37 @@ class ARTIQ_Server(LabradServer):
         loop = get_event_loop()
         loop.run_until_complete(self.core_moninj.connect('192.168.1.75', 1383))
 
-
     def monitor_cb(self, channel, probe, value):
         """
-
-        :param channel:
-        :param probe:
-        :param value:
-        :return:
+        Emits a signal when ARTIQ core confirms that a device has been changed.
+        :param channel: the device hardware channel
+        :param probe: the parameter being changed
+        :param value: the TTL state
         """
-        if channel in self.ttl_widgets:
-            widget = self.ttl_widgets[channel]
+        if channel in self.ttl_channel_to_name:
+            ttl_name = self.ttl_channel_to_name[channel]
             if probe == TTLProbe.level.value:
-                widget.cur_level = bool(value)
+                self.t1((ttl_name, 'lev', bool(value)))
             elif probe == TTLProbe.oe.value:
-                widget.cur_oe = bool(value)
-            widget.refresh_display()
-        if (channel, probe) in self.dac_widgets:
-            widget = self.dac_widgets[(channel, probe)]
-            widget.cur_value = value
-            widget.refresh_display()
+                self.t1((ttl_name, 'oe', bool(value)))
+        elif (channel, probe) in self.dac_widgets:
+            self.t2((channel, value))
+            #todo: make sure this is right
 
     def injection_status_cb(self, channel, override, value):
         """
-
-        :param channel:
-        :param override:
-        :param value:
-        :return:
+        Emits a signal when ARTIQ core ***?
+        :param channel: the device hardware channel
+        :param override: the parameter being injected
+        :param value: value of the injected parameter
         """
-        if channel in self.ttl_widgets:
-            widget = self.ttl_widgets[channel]
+        if channel in self.ttl_channel_to_name:
             if override == TTLOverride.en.value:
                 widget.cur_override = bool(value)
-            if override == TTLOverride.level.value:
+                #todo: emit signal that override changed
+            elif override == TTLOverride.level.value:
                 widget.cur_override_level = bool(value)
-            widget.refresh_display()
+                #todo: emit signal that override level changed
 
     def _setVariables(self):
         """
@@ -144,18 +139,21 @@ class ARTIQ_Server(LabradServer):
         """
         Get the list of devices in the ARTIQ box.
         """
+        self.device_db = self.devices.get_device_db()
         self.ttlout_list = list(self.api.ttlout_list.keys())
+        self.ttlin_list = list(self.api.ttlin_list.keys())
         self.dds_list = list(self.api.dds_list.keys())
 
+        #needed for moninj
+        self.ttl_channel_to_name = {self.device_db[ttl_name]['arguments']['channel']: ttl_name for ttl_name in self.ttlout_list}
 
     # Core
-    @setting(21, "Get Devices", returns='?')
+    @setting(21, "Get Devices", returns='*s')
     def getDevices(self, c):
         """
-        Returns the ARTIQ device database.
+        Returns a list of ARTIQ devices.
         """
-        #todo: fix
-        return self.devices.get_device_db()
+        return list(self.device_db.keys())
 
     #Pulse sequencing
     @setting(111, "Run Experiment", path='s', maxruns = 'i', returns='')
