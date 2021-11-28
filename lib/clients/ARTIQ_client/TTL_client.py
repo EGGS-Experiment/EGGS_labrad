@@ -58,10 +58,10 @@ class TTL_client(QWidget):
         self.reactor = reactor
         self.cxn = cxn
         self.ttl_clients = {}
-        self.device_db = device_db
-        self.connect()
-        self._parseDevices()
-        self.initializeGUI()
+        #start connections
+        d = self.connect()
+        d.addCallback(self.getDevices)
+        d.addCallback(self.initializeGUI)
 
     @inlineCallbacks
     def connect(self):
@@ -70,6 +70,13 @@ class TTL_client(QWidget):
             LABRADHOST = os.environ['LABRADHOST']
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync(LABRADHOST, name=self.name)
+        return self.cxn
+
+    @inlineCallbacks
+    def getDevices(self, cxn):
+        """
+        Get devices from ARTIQ server and organize them.
+        """
         try:
             self.reg = yield self.cxn.registry
             self.dv = yield self.cxn.data_vault
@@ -78,7 +85,30 @@ class TTL_client(QWidget):
             print(e)
             raise
 
-    def initializeGUI(self):
+        # create holding lists
+        self.ttlin_list = []
+        self.ttlout_list = []
+        self.ttlurukul_list = []
+        self.ttlother_list = []
+        for name, params in device_db.items():
+            # only get devices with named class
+            if 'class' not in params:
+                continue
+            # set device as attribute
+            devicetype = params['class']
+            if devicetype == 'TTLInOut':
+                self.ttlin_list.append(name)
+            elif devicetype == 'TTLOut':
+                other_names = ['zotino', 'led', 'sampler']
+                if 'urukul' in name:
+                    self.ttlurukul_list.append(name)
+                elif any(string in name for string in other_names):
+                    self.ttlother_list.append(name)
+                else:
+                    self.ttlout_list.append(name)
+        return self.cxn
+
+    def initializeGUI(self, cxn):
         layout = QGridLayout()
         #set title
         title = QLabel(self.name)
@@ -97,35 +127,9 @@ class TTL_client(QWidget):
         layout.addWidget(other_ttls, 13, 0, 2, 4)
         self.setLayout(layout)
 
-    def _parseDevices(self):
-        """
-        Parses device_db for relevant devices.
-        """
-        #create holding lists
-        self.ttlin_list = []
-        self.ttlout_list = []
-        self.ttlurukul_list = []
-        self.ttlother_list = []
-        for name, params in self.device_db.items():
-            #only get devices with named class
-            if 'class' not in params:
-                continue
-            #set device as attribute
-            devicetype = params['class']
-            if devicetype == 'TTLInOut':
-                self.ttlin_list.append(name)
-            elif devicetype == 'TTLOut':
-                other_names = ['zotino', 'led', 'sampler']
-                if 'urukul' in name:
-                    self.ttlurukul_list.append(name)
-                elif any (string in name for string in other_names):
-                    self.ttlother_list.append(name)
-                else:
-                    self.ttlout_list.append(name)
-
     def _makeTTLGroup(self, ttl_list, name):
         """
-        Creates a group of TTLs as a widget
+        Creates a group of TTLs as a widget.
         """
         #create widget
         ttl_group = QFrame()
@@ -137,7 +141,6 @@ class TTL_client(QWidget):
         title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         title.setAlignment(QtCore.Qt.AlignCenter)
         layout.addWidget(title, 0, 0)
-
         #layout individual ttls on group
         for i in range(len(ttl_list)):
             # initialize GUIs for each channel

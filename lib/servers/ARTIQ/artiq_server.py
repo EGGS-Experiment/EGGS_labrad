@@ -89,11 +89,12 @@ class ARTIQ_Server(LabradServer):
         self.dds_list = list(self.api.dds_list.keys())
 
     # Core
-    @setting(21, "Get Devices", returns='')
-    def getDevices(self):
+    @setting(21, "Get Devices", returns='?')
+    def getDevices(self, c):
         """
         Returns the ARTIQ device database.
         """
+        #todo: fix
         return self.devices.get_device_db()
 
     #Pulse sequencing

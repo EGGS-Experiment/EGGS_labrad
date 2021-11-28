@@ -4,17 +4,17 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTa
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 
-class ARTIQ_gui(QMainWindow):
+class ARTIQ_client(QMainWindow):
 
-    name = 'ARTIQ GUI'
+    name = 'ARTIQ Client'
 
     def __init__(self, reactor, clipboard=None, parent=None):
-        super(ARTIQ_gui, self).__init__(parent)
-        #self.clipboard = clipboard
+        super(ARTIQ_client, self).__init__(parent)
+        self.clipboard = clipboard
         self.reactor = reactor
+        self.setWindowTitle(self.name)
         d = self.connect()
         d.addCallback(self.makeLayout)
-        self.setWindowTitle(self.name)
 
     @inlineCallbacks
     def connect(self):
@@ -72,5 +72,5 @@ class ARTIQ_gui(QMainWindow):
 
 if __name__=="__main__":
     from EGGS_labrad.lib.clients import runClient
-    runClient(ARTIQ_gui)
+    runClient(ARTIQ_client)
 

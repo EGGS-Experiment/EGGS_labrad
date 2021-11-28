@@ -92,25 +92,44 @@ class DAC_client(QWidget):
         super(DAC_client, self).__init__()
         self.reactor = reactor
         self.cxn = cxn
-        self.device_db = device_db
-        self._parseDevices()
-        self.connect()
-        self.initializeGUI()
+        #start connections
+        d = self.connect()
+        d.addCallback(self.getDevices)
+        d.addCallback(self.initializeGUI)
 
     @inlineCallbacks
     def connect(self):
         if not self.cxn:
+            import os
+            LABRADHOST = os.environ['LABRADHOST']
             from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync('localhost', name=self.name)
+            self.cxn = yield connectAsync(LABRADHOST, name=self.name)
+        return self.cxn
+
+    @inlineCallbacks
+    def getDevices(self, cxn):
+        """
+        Get devices from ARTIQ server and organize them.
+        """
+        #get artiq server and dac list
         try:
-            self.reg = yield self.cxn.registry
-            self.dv = yield self.cxn.data_vault
             self.artiq = yield self.cxn.artiq_server
+            #todo: make dac list available from server
         except Exception as e:
             print(e)
-            raise
 
-    def initializeGUI(self):
+        #create holding lists
+        self.zotino_list = []
+        self.ad5372_clients = {}
+        for name, params in device_db.items():
+            #only get devices with named class
+            if 'class' not in params:
+                continue
+            if params['class'] == 'Zotino':
+                self.zotino_list.append(name)
+        return self.cxn
+
+    def initializeGUI(self, cxn):
         layout = QGridLayout()
         #set title
         title = QLabel(self.name)
@@ -158,20 +177,6 @@ class DAC_client(QWidget):
             # print(name + ' - row:' + str(row) + ', column: ' + str(column))
         zotino_group.setLayout(layout)
         return zotino_group
-
-    def _parseDevices(self):
-        """
-        Parses device_db for relevant devices.
-        """
-        #create holding lists
-        self.zotino_list = []
-        self.ad5372_clients = {}
-        for name, params in self.device_db.items():
-            #only get devices with named class
-            if 'class' not in params:
-                continue
-            if params['class'] == 'Zotino':
-                self.zotino_list.append(name)
 
     @inlineCallbacks
     def setDAC(self, channel_num, voltage):

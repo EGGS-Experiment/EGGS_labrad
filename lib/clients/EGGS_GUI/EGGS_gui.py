@@ -36,7 +36,7 @@ class EGGS_gui(QMainWindow):
 
         #create subwidgets
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
-        cryovac = self.makeCryovacWidget(self.reactor, self.cxn)
+        cryovac = self.makeCryovacWidget(self.reactor, cxn)
         trap = self.makeTrapWidget(self.reactor)
 
         #create tabs for each subwidget

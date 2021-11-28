@@ -6,6 +6,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import Deferred
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
 from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
@@ -89,56 +90,76 @@ class DDS_client(QWidget):
         super(DDS_client, self).__init__()
         self.reactor = reactor
         self.cxn = cxn
-        self.device_db = device_db
         self.ad9910_clients = {}
-        self.connect()
-        self.initClient()
-
-    @inlineCallbacks
-    def initClient(self):
-        yield self._getDevices()
-        yield self.initializeGUI()
-
+        #start connections
+        d = self.connect()
+        d.addCallback(self.getDevices)
+        d.addCallback(self.initializeGUI)
 
     @inlineCallbacks
     def connect(self):
         if not self.cxn:
+            import os
+            LABRADHOST = os.environ['LABRADHOST']
             from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync('localhost', name=self.name)
+            self.cxn = yield connectAsync(LABRADHOST, name=self.name)
+        return self.cxn
+
+    @inlineCallbacks
+    def getDevices(self, cxn):
+        """
+        Get devices from ARTIQ server and organize them.
+        """
+        #get artiq server and dds list
         try:
-            self.reg = yield self.cxn.registry
-            self.dv = yield self.cxn.data_vault
             self.artiq = yield self.cxn.artiq_server
+            ad9910_list = yield self.artiq.dds_get()
         except Exception as e:
             print(e)
-            raise
 
-    #@inlineCallbacks
-    def _getDevices(self):
-        """
-        Get devices from ARTIQ server.
-        """
-        #create holding lists
-        self.ad9910_list = []
-        for name, params in self.device_db.items():
-            #only get devices with named class
-            if 'class' not in params:
-                continue
-            if params['class'] == 'AD9910':
-                self.ad9910_list.append(name)
-        #todo: break into urukul groups
+        #assign ad9910 channels to urukuls
+        self.urukul_list = {}
+        for device_name in ad9910_list:
+            urukul_name = device_name.split('_')[0]
+            if urukul_name not in self.urukul_list:
+                self.urukul_list[urukul_name] = []
+            self.urukul_list[urukul_name].append(device_name)
+        return self.cxn
 
-    def initializeGUI(self):
+    def initializeGUI(self, cxn):
         layout = QGridLayout()
         #set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(title, 0, 0, 1, 4)
+        layout.addWidget(title, 0, 0, 1, self.row_length)
         #layout widgets
-        for i in range(len(self.ad9910_list)):
+        keys_tmp = list(self.urukul_list.keys())
+        for i in range(len(keys_tmp)):
+            urukul_name = keys_tmp[i]
+            ad9910_list = self.urukul_list[urukul_name]
+            urukul_group = self._makeUrukulGroup(urukul_name, ad9910_list)
+            layout.addWidget(urukul_group, 2 + i, 0, 1, self.row_length)
+        self.setLayout(layout)
+
+    def _makeUrukulGroup(self, urukul_name, ad9910_list):
+        """
+        Creates a group of Urukul channels as a widget.
+        """
+        # create widget
+        urukul_group = QFrame()
+        urukul_group.setFrameStyle(0x0001 | 0x0010)
+        urukul_group.setLineWidth(2)
+        layout = QGridLayout()
+        # set title
+        title = QLabel(urukul_name)
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        title.setAlignment(QtCore.Qt.AlignCenter)
+        layout.addWidget(title, 0, 0, 1, self.row_length)
+        # layout individual ad9910 channels
+        for i in range(len(ad9910_list)):
             # initialize GUIs for each channel
-            channel_name = self.ad9910_list[i]
+            channel_name = ad9910_list[i]
             channel_gui = AD9910_channel(channel_name)
             # layout channel GUI
             row = int(i / self.row_length) + 2
@@ -150,9 +171,10 @@ class DDS_client(QWidget):
             channel_gui.rfswitch.toggled.connect(lambda status, chan=channel_name: self.toggleSwitch())
             # add widget to client list and layout
             self.ad9910_clients[channel_name] = channel_gui
-            layout.addWidget(channel_gui, row, column, 1, 1)
-            #print('row:' + str(row) + ', column: ' + str(column))
-        self.setLayout(layout)
+            layout.addWidget(channel_gui, row, column)
+            # print(name + ' - row:' + str(row) + ', column: ' + str(column))
+        urukul_group.setLayout(layout)
+        return urukul_group
 
     @inlineCallbacks
     def toggleSwitch(self, channel_name, status):
