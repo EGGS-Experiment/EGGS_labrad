@@ -63,7 +63,7 @@ class NIOPS03Server(SerialDeviceServer):
         """
         if power:
             yield self.ser.write('G' + TERMINATOR)
-        else:Z
+        else:
             yield self.ser.write('B' + TERMINATOR)
         resp = yield self.ser.read()
         resp = resp.strip()
