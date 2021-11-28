@@ -63,24 +63,25 @@ class lakeshore336_client(lakeshore336_gui):
     def initializeGUI(self):
         #connect signals to slots
             #record temperature
-        self.gui.tempAll_record.toggled.connect(lambda: self.record_temp())
+        self.gui.tempAll_record.toggled.connect(lambda status: self.record_temp(status))
             #update heater setting
         #self.gui.heat1_update.toggled.connect(lambda: self.update_heater(chan = 1))
         #self.gui.heat2_update.toggled.connect(lambda: self.update_heater(chan = 2))
             #lock heater settings
-        self.gui.heatAll_lockswitch.toggled.connect(lambda: self.lock_heaters())
+        self.gui.heatAll_lockswitch.toggled.connect(lambda status: self.lock_heaters(status))
             #mode changed
-        self.gui.heat1_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan=1))
-        self.gui.heat2_mode.currentIndexChanged.connect(lambda: self.heater_mode_changed(chan=2))
+        self.gui.heat1_mode.currentIndexChanged.connect(lambda mode: self.heater_mode_changed(mode, chan=1))
+        self.gui.heat2_mode.currentIndexChanged.connect(lambda mode: self.heater_mode_changed(mode, chan=2))
+
 
     #Slot functions
     @inlineCallbacks
-    def record_temp(self):
+    def record_temp(self, status):
         """
         Creates a new dataset to record temperature and tells polling loop
         to add data to data vault
         """
-        self.recording = self.gui.tempAll_record.isChecked()
+        self.recording = status
         if self.recording == True:
             self.starttime = time.time()
             date = datetime.datetime.now()
@@ -139,18 +140,17 @@ class lakeshore336_client(lakeshore336_gui):
 
     def lock_heaters(self):
         """
-        Locks heater updating
+        Locks heater updating.
         """
-        lock_status = self.gui.heatAll_lockswitch.isChecked()
+        pass
         #self.gui.heat1_update.setEnabled(lock_status)
         #self.gui.heat2_update.setEnabled(lock_status)
 
-    def heater_mode_changed(self, chan):
+    def heater_mode_changed(self, mode, chan):
         """
         Disables and enables the relevant settings for each mode
         """
         if chan == 1:
-            mode = self.gui.heat1_mode.currentIndex()
             if mode == 0:
                 self.gui.heat1_in.setEnabled(False)
                 self.gui.heat1_curr.setEnabled(False)

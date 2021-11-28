@@ -56,20 +56,19 @@ class twistorr74_client(twistorr74_gui):
     #@inlineCallbacks
     def initializeGUI(self):
         #connect signals to slots
-        self.gui.twistorr_lockswitch.toggled.connect(lambda: self.lock_twistorr())
-        self.gui.twistorr_power.toggled.connect(lambda: self.toggle_twistorr())
-        self.gui.twistorr_record.toggled.connect(lambda: self.record_pressure())
-
-        #start up data
+        self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.lock_twistorr(status))
+        self.gui.twistorr_power.toggled.connect(lambda status: self.toggle_twistorr(status))
+        self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
+        #todo: start up data
 
     #Slot functions
     @inlineCallbacks
-    def record_pressure(self):
+    def record_pressure(self, status):
         """
         Creates a new dataset to record pressure and tells polling loop
         to add data to data vault
         """
-        self.recording = self.gui.twistorr_record.isChecked()
+        self.recording = status
         if self.recording:
             self.starttime = time.time()
             date = datetime.datetime.now()
@@ -85,19 +84,17 @@ class twistorr74_client(twistorr74_gui):
             yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')], [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_record)
 
     @inlineCallbacks
-    def toggle_twistorr(self):
+    def toggle_twistorr(self, status):
         """
-        Sets pump power on or off
+        Sets pump power on or off.
         """
-        power_status = self.gui.twistorr_power.isChecked()
-        yield self.tt.toggle(power_status)
+        yield self.tt.toggle(status)
 
-    def lock_twistorr(self):
+    def lock_twistorr(self, status):
         """
-        Locks power status of pump
+        Locks power status of pump.
         """
-        lock_status = self.gui.twistorr_lockswitch.isChecked()
-        self.gui.twistorr_power.setEnabled(lock_status)
+        self.gui.twistorr_power.setEnabled(status)
 
     #Polling functions
     def start_polling(self):

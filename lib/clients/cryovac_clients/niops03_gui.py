@@ -47,7 +47,8 @@ class niops03_gui(QtWidgets.QFrame):
             #record button
         self.niops_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             #power
-        self.niops_lockswitch = TextChangingButton(('Lock', 'Unlock'))
+        self.niops_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
+        self.niops_lockswitch.setChecked(True)
         self.niops_power = TextChangingButton(('On', 'Off'))
 
     def makeLayout(self):

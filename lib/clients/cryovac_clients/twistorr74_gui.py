@@ -33,7 +33,8 @@ class twistorr74_gui(QtWidgets.QFrame):
             #record button
         self.twistorr_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             #power
-        self.twistorr_lockswitch = TextChangingButton(('Lock', 'Unlock'))
+        self.twistorr_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
+        self.twistorr_lockswitch.setChecked(True)
         self.twistorr_power = TextChangingButton(('On', 'Off'))
 
     def makeLayout(self):

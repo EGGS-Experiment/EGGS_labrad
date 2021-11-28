@@ -51,20 +51,19 @@ class niops03_client(niops03_gui):
     #@inlineCallbacks
     def initializeGUI(self):
         #connect signals to slots
-        self.gui.niops_lockswitch.toggled.connect(lambda: self.lock_niops())
-        self.gui.niops_power.toggled.connect(lambda: self.toggle_niops())
-        self.gui.niops_record.toggled.connect(lambda: self.record_pressure())
-
-        #start up data
+        self.gui.niops_lockswitch.toggled.connect(lambda status: self.lock_niops(status))
+        self.gui.niops_power.toggled.connect(lambda status: self.toggle_niops(status))
+        self.gui.niops_record.toggled.connect(lambda status: self.record_pressure(status))
+        #todo: start up data
 
     #Slot functions
     @inlineCallbacks
-    def record_pressure(self):
+    def record_pressure(self, status):
         """
         Creates a new dataset to record pressure and tells polling loop
         to add data to data vault
         """
-        self.recording = self.gui.niops_record.isChecked()
+        self.recording = status
         if self.recording == True:
             self.starttime = time.time()
             date = datetime.datetime.now()
@@ -81,20 +80,18 @@ class niops03_client(niops03_gui):
                                        [('Ion Pump', 'Pressure', 'mbar')], context=self.c_record)
 
     @inlineCallbacks
-    def toggle_niops(self):
+    def toggle_niops(self, status):
         """
-        Sets ion pump power on or off
+        Sets ion pump power on or off.
         """
-        power_status = self.gui.niops_power.isChecked()
-        yield self.niops.toggle_ip(power_status)
+        yield self.niops.toggle_ip(status)
 
-    def lock_niops(self):
+    def lock_niops(self, status):
         """
-        Locks power status of ion pump
+        Locks power status of ion pump.
         """
-        lock_status = self.gui.niops_lockswitch.isChecked()
-        self.gui.niops_voltage.setEnabled(lock_status)
-        self.gui.niops_power.setEnabled(lock_status)
+        self.gui.niops_voltage.setEnabled(status)
+        self.gui.niops_power.setEnabled(status)
 
     #Polling functions
     def start_polling(self):
