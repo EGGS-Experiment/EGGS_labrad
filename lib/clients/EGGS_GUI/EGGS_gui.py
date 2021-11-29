@@ -37,12 +37,14 @@ class EGGS_gui(QMainWindow):
         #create subwidgets
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac = self.makeCryovacWidget(self.reactor, cxn)
-        trap = self.makeTrapWidget(self.reactor)
+        trap = self.makeTrapWidget(self.reactor, cxn)
+        sls = self.makeLaserWidget(self.reactor, cxn)
 
         #create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryovac, '&Cryovac')
         self.tabWidget.addTab(trap, '&Trap')
+        self.tabWidget.addTab(lasers, '&Lasers')
 
         #put it all together
         layout.addWidget(self.tabWidget)
@@ -72,10 +74,15 @@ class EGGS_gui(QMainWindow):
         holder_layout.addWidget(twistorr, 1, 1)
         return holder_widget
 
-    def makeTrapWidget(self, reactor):
+    def makeTrapWidget(self, reactor, cxn):
         from EGGS_labrad.lib.clients.trap_clients.rf_client import rf_client
-        rf_widget = rf_client(reactor)
+        rf_widget = rf_client(reactor, cxn=cxn)
         return rf_widget
+
+    def makeLaserWidget(self, reactor, cxn):
+        from EGGS_labrad.lib.clients.SLS_client.SLS_client import SLS_client
+        sls_widget = SLS_client(reactor, cxn=cxn.cxn)
+        return sls_widget
 
     def closeEvent(self, event):
         self.cxn.disconnect()

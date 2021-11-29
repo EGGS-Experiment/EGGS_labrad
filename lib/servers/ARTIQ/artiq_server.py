@@ -40,7 +40,7 @@ from artiq.coredevice.comm_moninj import CommMonInj, TTLProbe, TTLOverride
 
 #function imports
 import numpy as np
-from asyncio import get_event_loop
+import asyncio
 
 TTLSIGNAL_ID = 828176
 DACSIGNAL_ID = 828175
@@ -70,6 +70,7 @@ class ARTIQ_Server(LabradServer):
         yield self._setDevices()
         self.ttlChanged(('ttl99',0,True))
 
+    #@inlineCallbacks
     def _setClients(self):
         """
         Create clients to ARTIQ master.
@@ -77,10 +78,39 @@ class ARTIQ_Server(LabradServer):
         """
         self.scheduler = Client('::1', 3251, 'master_schedule')
         self.datasets = Client('::1', 3251, 'master_dataset_db')
-        #start up moninj
-        self.core_moninj = CommMonInj(self.monitor_cb, self.injection_status_cb)
-        loop = get_event_loop()
-        loop.run_until_complete(self.core_moninj.connect('192.168.1.75', 1383))
+        self.core_moninj = None
+
+    async def core_moninj_loop(self):
+        print('moninj start')
+        while True:
+            print('loop reset')
+            #wait until we have a problem with moninj
+            await self.core_moninj_reconnect.wait()
+            self.core_moninj_reconnect.clear()
+            #remove old moninj connection
+            if self.core_moninj is not None:
+                await self.core.moninj.close()
+                self.core.moninj = None
+            core_moninj_tmp = CommMonInj(self.monitor_cb, self.injection_status_cb, self.moninj_disconnected)
+            try:
+                core_moninj_tmp.connect('192.168.1.75', 1383)
+            except Exception as e:
+                print(e)
+                print('scde')
+                await(asyncio.sleep(5.))
+                self.core_moninj_reconnect.set()
+            else:
+                self.core_moninj = core_moninj_tmp
+                #initialize moninj monitoring
+                for channel in self.ttl_channel_to_name.keys():
+                    self.core_moninj.monitor_probe(True, channel, TTLProbe.level.value)
+                    self.core_moninj.monitor_probe(True, channel, TTLProbe.oe.value)
+                    self.core_moninj.monitor_injection(True, channel, TTLOverride.en.value)
+                    self.core_moninj.monitor_injection(True, channel, TTLOverride.level.value)
+                    self.core_moninj.get_injection_status(channel, TTLOverride.en.value)
+                for dac_channel in range(32):
+                    self.core_moninj.monitor_probe(True, self.dac_channel, dac_channel)
+            print('loop done')
 
     def monitor_cb(self, channel, probe, value):
         """
@@ -103,6 +133,7 @@ class ARTIQ_Server(LabradServer):
         :param override: the parameter being injected
         :param value: value of the injected parameter
         """
+        print('yzde')
         pass
         # if channel in self.ttl_channel_to_name:
         #     if override == TTLOverride.en.value:
@@ -111,6 +142,10 @@ class ARTIQ_Server(LabradServer):
         #     elif override == TTLOverride.level.value:
         #         widget.cur_override_level = bool(value)
         #         #todo: emit signal that override level changed
+
+    def moninj_disconnected(self):
+        print('Lost connection to MonInj. Attempting reconnection.')
+        self.core_moninj_reconnect.set()
 
     def _setVariables(self):
         """
@@ -144,18 +179,14 @@ class ARTIQ_Server(LabradServer):
         self.dds_list = list(self.api.dds_list.keys())
 
         #needed for moninj
-        self.ttl_channel_to_name = {self.device_db[ttl_name]['arguments']['channel']: ttl_name for ttl_name in self.ttlout_list}
+        ttl_all_list = self.ttlout_list + self.ttlin_list
+        self.ttl_channel_to_name = {self.device_db[ttl_name]['arguments']['channel']: ttl_name for ttl_name in ttl_all_list}
         self.dac_channel = self.device_db['spi_zotino0']['arguments']['channel']
-
-        #initialize moninj monitoring
-        for channel in self.ttl_channel_to_name.keys():
-            self.core_moninj.monitor_probe(True, channel, TTLProbe.level.value)
-            self.core_moninj.monitor_probe(True, channel, TTLProbe.oe.value)
-            self.core_moninj.monitor_injection(True, channel, TTLOverride.en.value)
-            self.core_moninj.monitor_injection(True, channel, TTLOverride.level.value)
-            self.core_moninj.get_injection_status(channel, TTLOverride.en.value)
-        for dac_channel in range(32):
-            self.core_moninj.monitor_probe(True, self.dac_channel, dac_channel)
+        #start moninj
+        self.core_moninj_reconnect = asyncio.Event()
+        self.core_moninj_reconnect.set()
+        self.core_moninj_task = asyncio.create_task(self.core_moninj_loop())
+        #asyncio.run(self.core_moninj_task)
 
     # Core
     @setting(21, "Get Devices", returns='*s')
@@ -424,6 +455,9 @@ class ARTIQ_Server(LabradServer):
 
     def expireContext(self, c):
         self.listeners.remove(c.ID)
+
+    def stopServer(self):
+        self.core_moninj_task.cancel()
 
 
 if __name__ == '__main__':
