@@ -81,7 +81,7 @@ class ScriptScanner(ScriptSignalsServer):
         for import_path, class_name in config.scripts:
             try:
                 #imports path
-                __import__(import_path)
+                import_module(import_path)
                 #gets the file
                 module = sys.modules[import_path]
                 #gets the class from the file

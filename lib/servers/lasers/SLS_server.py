@@ -28,8 +28,8 @@ class SLSServer(SerialDeviceServer):
     """Connects to the 729nm SLS Laser"""
     name = 'SLS Server'
     regKey = 'SLSServer'
-    serNode = 'causewaybay'
-    port = 'COM5'
+    serNode = 'mongkok'
+    port = 'COM44'
 
     baudrate = 115200
     timeout = T.Value(5.0, 's')
