@@ -81,76 +81,6 @@ class ARTIQ_Server(LabradServer):
         """
         self.scheduler = Client('::1', 3251, 'master_schedule')
         self.datasets = Client('::1', 3251, 'master_dataset_db')
-        self.core_moninj = None
-
-
-    async def core_moninj_loop(self):
-        print('moninj start')
-        while True:
-            print('loop reset')
-            #wait until we have a problem with moninj
-            await self.core_moninj_reconnect.wait()
-            self.core_moninj_reconnect.clear()
-            #remove old moninj connection
-            if self.core_moninj is not None:
-                await self.core.moninj.close()
-                self.core.moninj = None
-            core_moninj_tmp = CommMonInj(self.monitor_cb, self.injection_status_cb, self.moninj_disconnected)
-            try:
-                core_moninj_tmp.connect('192.168.1.75', 1383)
-            except Exception as e:
-                print(e)
-                print('scde')
-                await(asyncio.sleep(5.))
-                self.core_moninj_reconnect.set()
-            else:
-                self.core_moninj = core_moninj_tmp
-                #initialize moninj monitoring
-                for channel in self.ttl_channel_to_name.keys():
-                    self.core_moninj.monitor_probe(True, channel, TTLProbe.level.value)
-                    self.core_moninj.monitor_probe(True, channel, TTLProbe.oe.value)
-                    self.core_moninj.monitor_injection(True, channel, TTLOverride.en.value)
-                    self.core_moninj.monitor_injection(True, channel, TTLOverride.level.value)
-                    self.core_moninj.get_injection_status(channel, TTLOverride.en.value)
-                for dac_channel in range(32):
-                    self.core_moninj.monitor_probe(True, self.dac_channel, dac_channel)
-            print('loop done')
-
-    def monitor_cb(self, channel, probe, value):
-        """
-        Emits a signal when ARTIQ core confirms that a device has been changed.
-        :param channel: the device hardware channel
-        :param probe: the parameter being changed
-        :param value: the TTL state
-        """
-        print('scde: ' + str(channel) + ', ' + str(probe) + ', ' + str(value))
-        if channel in self.ttl_channel_to_name:
-            ttl_name = self.ttl_channel_to_name[channel]
-            self.ttlChanged((ttl_name, probe, bool(value)))
-        elif channel == self.dac_channel:
-            self.dacChanged((probe, value))
-
-    def injection_status_cb(self, channel, override, value):
-        """
-        Emits a signal when ARTIQ core ***?
-        :param channel: the device hardware channel
-        :param override: the parameter being injected
-        :param value: value of the injected parameter
-        """
-        print('yzde')
-        pass
-        # if channel in self.ttl_channel_to_name:
-        #     if override == TTLOverride.en.value:
-        #         widget.cur_override = bool(value)
-        #         #todo: emit signal that override changed
-        #     elif override == TTLOverride.level.value:
-        #         widget.cur_override_level = bool(value)
-        #         #todo: emit signal that override level changed
-
-    def moninj_disconnected(self):
-        print('Lost connection to MonInj. Attempting reconnection.')
-        self.disconnected = True
-        #self.core_moninj_reconnect.set()
 
     def _setVariables(self):
         """
@@ -188,49 +118,6 @@ class ARTIQ_Server(LabradServer):
         ttl_all_list = self.ttlout_list + self.ttlin_list
         self.ttl_channel_to_name = {self.device_db[ttl_name]['arguments']['channel']: ttl_name for ttl_name in ttl_all_list}
         self.dac_channel = self.device_db['spi_zotino0']['arguments']['channel']
-        #start moninj
-        # self.core_moninj = CommMonInj(self.monitor_cb, self.injection_status_cb)
-        # loop = asyncio.get_event_loop()
-        # loop.run_until_complete(self.core_moninj.connect('192.168.1.75', 1383))
-        # for channel in self.ttl_channel_to_name.keys():
-        #     self.core_moninj.monitor_probe(True, channel, TTLProbe.level.value)
-        #     self.core_moninj.monitor_probe(True, channel, TTLProbe.oe.value)
-        #     self.core_moninj.monitor_injection(True, channel, TTLOverride.en.value)
-        #     self.core_moninj.monitor_injection(True, channel, TTLOverride.level.value)
-        #     self.core_moninj.get_injection_status(channel, TTLOverride.en.value)
-        # for dac_channel in range(32):
-        #     self.core_moninj.monitor_probe(True, self.dac_channel, dac_channel)
-        # self.core_moninj_reconnect = asyncio.Event()
-        # self.core_moninj_reconnect.set()
-        # self.core_moninj_task = asyncio.create_task(self.core_moninj_loop())
-        #asyncio.run(self.core_moninj_task)
-        self.state = False
-        self.th1 = LoopingCall(self.th1_loop)
-        callLater(5, self.th1_loop)
-        #loop.run_until_complete(self.core_moninj.connect('192.168.1.75', 1383))
-
-    def th1_loop(self):
-        if self.core_moninj is None:
-            self.core_moninj = CommMonInj(self.monitor_cb, self.injection_status_cb, self.moninj_disconnected)
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(self.core_moninj.connect('192.168.1.75', 1383))
-        for channel in self.ttl_channel_to_name.keys():
-            self.core_moninj.monitor_probe(True, channel, TTLProbe.level.value)
-            self.core_moninj.monitor_probe(True, channel, TTLProbe.oe.value)
-            self.core_moninj.monitor_injection(True, channel, TTLOverride.en.value)
-            self.core_moninj.monitor_injection(True, channel, TTLOverride.level.value)
-            self.core_moninj.get_injection_status(channel, TTLOverride.en.value)
-        for dac_channel in range(32):
-            self.core_moninj.monitor_probe(True, self.dac_channel, dac_channel)
-        if self.state == False:
-            self.core_moninj.inject(10, TTLOverride.level.value, 0)
-            self.core_moninj.inject(10, TTLOverride.oe.value, 1)
-            self.core_moninj.inject(10, TTLOverride.en.value, 1)
-        elif self.state == True:
-            self.core_moninj.inject(10, TTLOverride.level.value, 1)
-            self.core_moninj.inject(10, TTLOverride.oe.value, 1)
-            self.core_moninj.inject(10, TTLOverride.en.value, 1)
-        self.state = not self.state
 
 
     # Core
