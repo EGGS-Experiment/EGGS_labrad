@@ -72,8 +72,9 @@ class GUIClient(QWidget):
         self.poll_loop.stop()
 
     def closeEvent(self, event):
-        self.reactor.stop()
         self.cxn.disconnect()
+        if self.reactor.running:
+            self.reactor.stop()
 
     @inlineCallbacks
     def initClient(self):

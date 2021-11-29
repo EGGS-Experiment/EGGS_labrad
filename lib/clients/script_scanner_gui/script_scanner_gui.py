@@ -407,7 +407,9 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     def closeEvent(self, event):
         self.cxn.cxn.disconnect()
-        self.reactor.stop()
+        if self.reactor.running:
+            self.reactor.stop()
+
 
 if __name__ == "__main__":
     a = QtWidgets.QApplication(["Script Scanner"])

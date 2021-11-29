@@ -196,7 +196,8 @@ class DDS_client(QWidget):
 
     def closeEvent(self, x):
         self.cxn.disconnect()
-        self.reactor.stop()
+        if self.reactor.running:
+            self.reactor.stop()
 
 
 if __name__ == "__main__":
