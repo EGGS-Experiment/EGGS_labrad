@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = NIOPS03 Server
+name = FMA1700A Server
 version = 1.0.0
-description = Controls NIOPS03 Power Supply which controls the ion pump and getter
-instancename = NIOPS03 Server
+description = Controls the FMA1700A Mass Flow Meter
+instancename = FMA1700A Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -29,14 +29,14 @@ import time
 TERMINATOR = '\r\n'
 QUERY_msg = b'\x05'
 
-class NIOPS03Server(SerialDeviceServer):
+class FMA1700AServer(SerialDeviceServer):
     """
-    Controls NIOPS03 Power Supply which controls ion pumps.
+    Controls FMA1700A Power Supply which controls ion pumps.
     """
-    name = 'NIOPS03 Server'
-    regKey = 'NIOPS03Server'
-    serNode = 'MongKok'
-    port = 'COM55'
+    name = 'FMA1700A Server'
+    regKey = 'FMA1700AServer'
+    serNode = None
+    port = None
 
     timeout = WithUnit(3.0, 's')
     baudrate = 115200
@@ -187,4 +187,4 @@ class NIOPS03Server(SerialDeviceServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(NIOPS03Server())
+    util.runServer(FMA1700AServer())
