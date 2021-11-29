@@ -41,6 +41,10 @@ class NIOPS03Server(SerialDeviceServer):
     timeout = WithUnit(3.0, 's')
     baudrate = 115200
 
+    #todo: put this under initserver
+    tt = None
+    interlock_loop = None
+
     #STATUS
     @setting(11, 'Status', returns='s')
     def get_status(self, c):
@@ -142,7 +146,7 @@ class NIOPS03Server(SerialDeviceServer):
         np_time = [int(val) for val in np_time]
         returnValue([ip_time, np_time])
 
-    @setting(311, 'Interlock IP', status='b', press='v', returns='')
+    @setting(311, 'Interlock IP', status='b', press='v', returns='b')
     def interlock_ip(self, c, status, press):
         """
         Activates an interlock, switching off the ion pump
@@ -154,12 +158,11 @@ class NIOPS03Server(SerialDeviceServer):
                     (bool)  : activation state of the interlock
         """
         #create connection to turbopump as needed
-        if not self.tt:
-            try:
-                self.tt = yield self.client.twistorr74_server
-            except KeyError:
-                self.tt = None
-                raise Exception('Twistorr74 server not available for interlock.')
+        try:
+            self.tt = yield self.client.twistorr74_server
+        except KeyError:
+            self.tt = None
+            raise Exception('Twistorr74 server not available for interlock.')
         #set threshold pressure
         self.interlock_pressure = press
         #create a loop if needed
@@ -176,9 +179,10 @@ class NIOPS03Server(SerialDeviceServer):
     def _interlock_poll(self):
         press_tmp = yield self.tt.read_pressure()
         if press_tmp >= self.interlock_pressure:
-            yield self.ser.write('B' + TERMINATOR)
-            time.sleep(0.25)
-            yield self.ser.read()
+            print('problem')
+            # yield self.ser.write('B' + TERMINATOR)
+            # time.sleep(0.25)
+            # yield self.ser.read()
 
 
 if __name__ == '__main__':

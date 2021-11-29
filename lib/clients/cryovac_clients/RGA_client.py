@@ -112,16 +112,6 @@ class RGA_Client(RGA_UI):
     def get_voltage(self):
         yield self.server.high_voltage()
 
-    @inlineCallbacks
-    def read_buffer(self):
-        message = yield self.server.read_buffer()
-        self.rga_buffer_text.appendPlainText(message)
-
-    @inlineCallbacks
-    def clear_buffer(self):
-        self.rga_buffer_text.clear()
-        yield None
-
     def closeEvent(self, x):
         self.cxn.disconnect()
         if self.reactor.running:
