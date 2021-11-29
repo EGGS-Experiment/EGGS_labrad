@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>524</width>
-    <height>444</height>
+    <height>436</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -29,9 +29,9 @@
   <widget class="QPushButton" name="pdh_lockswitch">
    <property name="geometry">
     <rect>
-     <x>190</x>
+     <x>160</x>
      <y>390</y>
-     <width>151</width>
+     <width>131</width>
      <height>23</height>
     </rect>
    </property>
@@ -42,28 +42,35 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>190</x>
+     <x>160</x>
      <y>70</y>
-     <width>151</width>
+     <width>131</width>
      <height>211</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="PDH_layout">
-    <item row="1" column="1">
-     <widget class="QLabel" name="PDH_freq_label">
+    <item row="8" column="1">
+     <widget class="QLabel" name="PDH_filter_label">
       <property name="text">
-       <string>Frequency (MHz)</string>
+       <string>Filter Index</string>
       </property>
      </widget>
     </item>
-    <item row="3" column="1">
+    <item row="4" column="1">
      <widget class="QLabel" name="PDH_phasemodulation_label">
       <property name="text">
        <string>Phase modulation (rad)</string>
       </property>
      </widget>
     </item>
-    <item row="8" column="1">
+    <item row="6" column="1">
+     <widget class="QLabel" name="PDH_phaseoffset_label">
+      <property name="text">
+       <string>Reference phase (deg)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="1">
      <widget class="QComboBox" name="PDH_filter">
       <item>
        <property name="text">
@@ -152,21 +159,7 @@
       </item>
      </widget>
     </item>
-    <item row="5" column="1">
-     <widget class="QLabel" name="PDH_phaseoffset_label">
-      <property name="text">
-       <string>Reference phase (deg)</string>
-      </property>
-     </widget>
-    </item>
     <item row="7" column="1">
-     <widget class="QLabel" name="PDH_filter_label">
-      <property name="text">
-       <string>Filter Index</string>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="1">
      <widget class="QDoubleSpinBox" name="PDH_phaseoffset">
       <property name="maximum">
        <double>360.000000000000000</double>
@@ -176,7 +169,7 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="1">
+    <item row="5" column="1">
      <widget class="QDoubleSpinBox" name="PDH_phasemodulation">
       <property name="maximum">
        <double>3.000000000000000</double>
@@ -186,7 +179,7 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="1">
+    <item row="3" column="1">
      <widget class="QDoubleSpinBox" name="PDH_freq">
       <property name="minimum">
        <double>10.000000000000000</double>
@@ -199,7 +192,14 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
+    <item row="2" column="1">
+     <widget class="QLabel" name="PDH_freq_label">
+      <property name="text">
+       <string>Frequency (MHz)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
      <widget class="QLabel" name="PDH_label">
       <property name="text">
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;PDH&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -211,9 +211,9 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>360</x>
+     <x>300</x>
      <y>70</y>
-     <width>150</width>
+     <width>131</width>
      <height>311</height>
     </rect>
    </property>
@@ -416,7 +416,7 @@
     <rect>
      <x>20</x>
      <y>70</y>
-     <width>151</width>
+     <width>131</width>
      <height>251</height>
     </rect>
    </property>
@@ -501,9 +501,9 @@
   <widget class="QPushButton" name="servo_lockswitch">
    <property name="geometry">
     <rect>
-     <x>360</x>
+     <x>300</x>
      <y>390</y>
-     <width>151</width>
+     <width>131</width>
      <height>23</height>
     </rect>
    </property>

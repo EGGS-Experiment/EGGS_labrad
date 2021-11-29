@@ -23,11 +23,10 @@ class SLS_gui(QFrame):
     def setupUi(self):
         SLS_gui = self
         SLS_gui.setObjectName("SLS_gui")
-        SLS_gui.setFixedSize(524, 444)
+        SLS_gui.setFixedSize(525, 430)
         self.sls_label = QtWidgets.QLabel(SLS_gui)
         self.sls_label.setGeometry(QtCore.QRect(140, 10, 271, 41))
         self.sls_label.setObjectName("sls_label")
-        self.pdh_lockswitch = TextChangingButton(('Locked', 'Unlocked'))
         self.layoutWidget = QtWidgets.QWidget(SLS_gui)
         self.layoutWidget.setGeometry(QtCore.QRect(190, 70, 151, 211))
         self.layoutWidget.setObjectName("layoutWidget")
@@ -85,6 +84,8 @@ class SLS_gui(QFrame):
         self.PDH_label = QtWidgets.QLabel(self.layoutWidget)
         self.PDH_label.setObjectName("PDH_label")
         self.PDH_layout.addWidget(self.PDH_label, 0, 1, 1, 1)
+        self.PDH_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
+        #self.PDH_layout.addWidget(self.PDH_lockswitch, 9, 1, 1, 1)
         self.layoutWidget1 = QtWidgets.QWidget(SLS_gui)
         self.layoutWidget1.setGeometry(QtCore.QRect(360, 70, 150, 311))
         self.layoutWidget1.setObjectName("layoutWidget1")
@@ -156,6 +157,8 @@ class SLS_gui(QFrame):
         self.servo_param.addItem("")
         self.servo_param.addItem("")
         self.servo_layout.addWidget(self.servo_param, 2, 1, 1, 1)
+        self.servo_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
+        #self.servo_layout.addWidget(self.servo_lockswitch, 18, 1, 1, 1)
         self.layoutWidget2 = QtWidgets.QWidget(SLS_gui)
         self.layoutWidget2.setGeometry(QtCore.QRect(20, 70, 151, 251))
         self.layoutWidget2.setObjectName("layoutWidget2")
@@ -192,7 +195,6 @@ class SLS_gui(QFrame):
         self.autolock_label = QtWidgets.QLabel(self.layoutWidget2)
         self.autolock_label.setObjectName("autolock_label")
         self.autolock_layout.addWidget(self.autolock_label, 0, 1, 1, 1)
-        self.servo_lockswitch = TextChangingButton(('Locked', 'Unlocked'))
 
         self.retranslateUi(SLS_gui)
         QtCore.QMetaObject.connectSlotsByName(SLS_gui)
@@ -201,7 +203,7 @@ class SLS_gui(QFrame):
         _translate = QtCore.QCoreApplication.translate
         SLS_gui.setWindowTitle(_translate("SLS_gui", "SLS Client"))
         self.sls_label.setText(_translate("SLS_gui", "<html><head/><body><p align=\"center\"><span style=\" font-size:20pt;\">SLS Laser Client</span></p></body></html>"))
-        self.pdh_lockswitch.setText(_translate("SLS_gui", "Lock"))
+        #self.pdh_lockswitch.setText(_translate("SLS_gui", "Lock"))
         self.PDH_freq_label.setText(_translate("SLS_gui", "Frequency (MHz)"))
         self.PDH_phasemodulation_label.setText(_translate("SLS_gui", "Phase modulation (rad)"))
         self.PDH_filter.setItemText(0, _translate("SLS_gui", "None"))
@@ -262,7 +264,7 @@ class SLS_gui(QFrame):
         self.autolock_attempts.setText(_translate("SLS_gui", "<html><head/><body><p align=\"center\"><span style=\" font-size:24pt; color:#0055ff;\">Attempts</span></p></body></html>"))
         self.autolock_attempts_label.setText(_translate("SLS_gui", "Lock Attempts"))
         self.autolock_label.setText(_translate("SLS_gui", "<html><head/><body><p align=\"center\"><span style=\" font-size:16pt;\">Autolock</span></p></body></html>"))
-        self.servo_lockswitch.setText(_translate("SLS_gui", "Lock"))
+        #self.servo_lockswitch.setText(_translate("SLS_gui", "Lock"))
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runGUI
