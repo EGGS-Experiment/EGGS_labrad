@@ -56,7 +56,6 @@ class rf_client(rf_gui):
 
     @inlineCallbacks
     def initializeGUI(self):
-        # print('init s')
         rf = yield self.cxn.get_server('RF Server')
         # waveform
             #parameters
@@ -76,18 +75,14 @@ class rf_client(rf_gui):
         self.gui.mod_freq_toggle.clicked.connect(lambda status: rf.fm_toggle(status))
         self.gui.mod_ampl_toggle.clicked.connect(lambda status: rf.am_toggle(status))
         self.gui.mod_phase_toggle.clicked.connect(lambda status: rf.pm_toggle(status))
-        # print('init e')
 
     @inlineCallbacks
     def selectDevice(self):
-        # print('sel s')
         rf = yield self.cxn.get_server('RF Server')
         yield rf.select_device()
-        # print('sel e')
 
     @inlineCallbacks
     def getDeviceParams(self):
-        # print('gdp s')
         rf = yield self.cxn.get_server('RF Server')
         try:
             freq = yield rf.frequency()
@@ -104,8 +99,6 @@ class rf_client(rf_gui):
             self.gui.mod_phase_dev.setValue(pm_dev)
         except Exception as e:
             print(e)
-        # print('gdp e')
-
 
     @inlineCallbacks
     def reset(self):
