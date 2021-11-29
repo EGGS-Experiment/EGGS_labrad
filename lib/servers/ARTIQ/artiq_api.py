@@ -208,8 +208,7 @@ class ARTIQ_api(object):
     @kernel
     def _setDDSAtt(self, dev, att_mu):
         self.core.reset()
-        #dev.set_att_mu(att)
-        dev.set_att(att)
+        dev.set_att_mu(att)
 
     def readDDS(self, dds_name, reg, length):
         """

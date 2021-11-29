@@ -29,7 +29,8 @@ class GUIClient(QWidget):
         self.gui = self
         self.reactor = reactor
         self.cxn = cxn
-        self._connectLabrad()
+        d = self._connectLabrad()
+        d.addCallback()
         self.initializeGUI()
 
     # Setup functions
@@ -75,11 +76,12 @@ class GUIClient(QWidget):
         self.cxn.disconnect()
 
     @inlineCallbacks
-    def connectLabrad(self):
+    def initClient(self):
         """
         To be subclassed.
         Should be used to get necessary servers and do other labrad stuff.
         """
+        pass
 
     def initializeGUI(self):
         """
@@ -87,6 +89,7 @@ class GUIClient(QWidget):
         Called after we connect to labrad.
         Should be used to connect GUI signals to slots.
         """
+        pass
 
     @inlineCallbacks
     def poll(self):
@@ -95,7 +98,6 @@ class GUIClient(QWidget):
         Polling loop that runs continuously in the background to get data from server.
         """
 
-
-class GUITabClient(QMainWindow):
-
-    name = None
+    def closeEvent(self, x):
+        self.cxn.disconnect()
+        self.reactor.stop()

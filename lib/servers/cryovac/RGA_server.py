@@ -30,8 +30,8 @@ from twisted.internet.defer import returnValue, inlineCallbacks
 class RGA_Server(SerialDeviceServer):
     name = 'RGA Server'
     regKey = 'RGAServer'
-    port = None
-    serNode = None
+    port = 'COM48'
+    serNode = 'mongkok'
 
     timeout = WithUnit(3.0, 's')
     baudrate = 28800
@@ -106,16 +106,6 @@ class RGA_Server(SerialDeviceServer):
             yield self.ser.write_line('hv'+str(value))
             message = 'High voltage (electron multiplier) command sent.'
             self.hvsignal(value, notified)
-        returnValue(message)
-
-    @setting(5, returns='s')
-    def read_buffer(self, c):
-        '''
-        Reads the RGA buffer.  Equivalent to reading the serial line buffer.
-        '''
-        notified = self.getOtherListeners(c)
-        message = yield self.ser.read()
-        self.bufsignal(message, notified)
         returnValue(message)
 
     def initContext(self, c):

@@ -26,28 +26,28 @@ class AD5372_channel(QFrame):
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        dac_label = QLabel('DAC (V)')
-        off_label = QLabel('Offset (V)')
-        gain_label = QLabel('Gain (%)')
+        dac_label = QLabel('DAC Register')
+        off_label = QLabel('Offset Register')
+        gain_label = QLabel('Gain Register')
 
         # editable fields
         self.dac = QDoubleSpinBox()
         self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        self.dac.setDecimals(3)
-        self.dac.setSingleStep(0.1)
-        self.dac.setRange(0.0, 12.0)
+        self.dac.setDecimals(0)
+        self.dac.setSingleStep(1)
+        self.dac.setRange(0, 0xffff)
         self.dac.setKeyboardTracking(False)
         self.gain = QDoubleSpinBox()
         self.gain.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        self.gain.setDecimals(3)
-        self.gain.setSingleStep(0.1)
-        self.gain.setRange(0, 1.0)
+        self.gain.setDecimals(0)
+        self.gain.setSingleStep(1)
+        self.gain.setRange(0, 0xffff)
         self.gain.setKeyboardTracking(False)
         self.off = QDoubleSpinBox()
         self.off.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        self.off.setDecimals(3)
-        self.off.setSingleStep(0.1)
-        self.off.setRange(-145.0, 30.0)
+        self.off.setDecimals(0)
+        self.off.setSingleStep(1)
+        self.off.setRange(0, 0xffff)
         self.off.setKeyboardTracking(False)
 
         # buttons
@@ -186,16 +186,16 @@ class DAC_client(QWidget):
             channel.locks
 
     @inlineCallbacks
-    def setDAC(self, channel_num, voltage):
-        yield self.artiq.dac_set(channel_num, voltage)
+    def setDAC(self, channel_num, voltage_mu):
+        yield self.artiq.dac_set(channel_num, voltage_mu, 'mu')
 
     @inlineCallbacks
-    def setOffset(self, channel_num, voltage):
-        yield self.artiq.dac_offset(channel_num, voltage)
+    def setOffset(self, channel_num, voltage_mu):
+        yield self.artiq.dac_offset(channel_num, voltage_mu, 'mu')
 
     @inlineCallbacks
-    def setGain(self, channel_num, gain):
-        yield self.artiq.dac_gain(channel_num, gain)
+    def setGain(self, channel_num, gain_mu):
+        yield self.artiq.dac_gain(channel_num, gain_mu, 'mu')
 
     @inlineCallbacks
     def calibrate(self):

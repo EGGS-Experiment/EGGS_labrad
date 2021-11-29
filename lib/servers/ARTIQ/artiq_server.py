@@ -286,14 +286,13 @@ class ARTIQ_Server(LabradServer):
             pow = yield self.turns_to_pow(param_val)
             yield self.api.setDDS(dds_name, 2, pow)
 
-    @setting(326, "DDS Attenuation", dds_name='s', att='v', profile='i', returns='')
-    def setDDSAtt(self, c, dds_name, att, profile):
+    @setting(326, "DDS Attenuation", dds_name='s', att='v', units='s', returns='')
+    def setDDSAtt(self, c, dds_name, att, units):
         """
         Manually set a DDS to the given parameters.
         Arguments:
             dds_name (str)  : the name of the dds
             att     (float) : attenuation (in dBm)
-            profile (int)   : the DDS profile to set & change to
         """
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
@@ -326,53 +325,68 @@ class ARTIQ_Server(LabradServer):
         """
         yield self.api.initializeDAC()
 
-    @setting(421, "DAC Set", dac_num='i', voltage='v', returns='')
-    def setDAC(self, c, dac_num, voltage):
+    @setting(421, "DAC Set", dac_num='i', value='v', units='s', returns='')
+    def setDAC(self, c, dac_num, value, units):
         """
         Manually set the voltage of a DAC channel.
         Arguments:
             dac_num (int)   : the DAC channel number
-            voltage (float) : the DAC register voltage (not the same as
-                                output voltage due to offset registers)
+            value   (float) : the value to write to the DAC register
+            units   (str)   : the voltage units, either 'mu' or 'v'
         """
-        #only 32 channels per DAC
+        voltage_mu = None
+        #check that dac channel is valid
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
-        #todo: check voltage
-        voltage_mu = yield self.voltage_to_mu(voltage)
+        if units == 'v':
+            voltage_mu = yield self.voltage_to_mu(value)
+        elif units == 'mu':
+            if (value < 0) or (value > 0xffff):
+                raise Exception('Invalid DAC Voltage!')
+            voltage_mu = int(value)
         yield self.api.setDAC(dac_num, voltage_mu)
 
-    @setting(422, "DAC Gain", dac_num='i', gain='v', returns='')
-    def setDACGain(self, c, dac_num, gain):
+    @setting(422, "DAC Gain", dac_num='i', gain='v', units='s', returns='')
+    def setDACGain(self, c, dac_num, gain, units):
         """
         Manually set the gain of a DAC channel.
         Arguments:
             dac_num (int)   : the DAC channel number
-            gain (float)    : the DAC channel gain
+            gain    (float) : the DAC channel gain
+            units   (str)   : ***todo
         """
+        gain_mu = None
         # only 32 channels per DAC
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
+        if units == 'todo':
+            gain_mu = int(gain * 0xffff) - 1
+        elif units == 'mu':
+            gain_mu = int(gain)
         #check that gain is valid
-        if gain > 1 or gain < 0:
+        if gain < 0 or gain > 0xffff:
             raise Exception('Error: gain outside bounds of [0,1]')
-        #gain is a 16 bit register, 0xffff is full
-        gain_mu = int(gain * 0xffff) - 1
         yield self.api.setDACGain(dac_num, gain_mu)
 
-    @setting(423, "DAC Offset", dac_num='i', voltage='v', returns='')
-    def setDACOffset(self, c, dac_num, voltage):
+    @setting(423, "DAC Offset", dac_num='i', value='v', units='s', returns='')
+    def setDACOffset(self, c, dac_num, value, units):
         """
         Manually set the offset voltage of a DAC channel.
         Arguments:
             dac_num (int)   : the DAC channel number
-            voltage (float) : the DAC offset register voltage
+            value   (float) : the value to write to the DAC offset register
+            units   (str)   : the voltage units, either 'mu' or 'v'
         """
-        #only 32 channels per DAC
+        voltage_mu = None
+        #check that dac channel is valid
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
-        #todo: check voltage
-        voltage_mu = yield self.voltage_to_mu(voltage)
+        if units == 'v':
+            voltage_mu = yield self.voltage_to_mu(value)
+        elif units == 'mu':
+            if (value < 0) or (value > 0xffff):
+                raise Exception('Invalid DAC Voltage!')
+            voltage_mu = int(value)
         yield self.api.setDACOffset(dac_num, voltage_mu)
 
     @setting(431, "DAC Read", dac_num='i', param='s', returns='i')
