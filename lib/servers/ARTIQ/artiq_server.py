@@ -32,7 +32,7 @@ from sipyco.sync_struct import Subscriber
 #device imports
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET, AD53XX_READ_GAIN
 from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_ASF, _AD9910_REG_POW
-from artiq.coredevice.comm_moninj import CommMonInj, TTLOverride
+from artiq.coredevice.comm_moninj import CommMonInj, TTLProbe, TTLOverride
 
 #     th1.inject(8, TTLOverride.level.value, 1)
 #     th1.inject(8, TTLOverride.oe.value, 1)
@@ -68,6 +68,7 @@ class ARTIQ_Server(LabradServer):
         yield self._setClients()
         yield self._setVariables()
         yield self._setDevices()
+        self.ttlChanged(('ttl99',0,True))
 
     def _setClients(self):
         """
@@ -88,6 +89,7 @@ class ARTIQ_Server(LabradServer):
         :param probe: the parameter being changed
         :param value: the TTL state
         """
+        print('scde: ' + str(channel) + ', ' + str(probe) + ', ' + str(value))
         if channel in self.ttl_channel_to_name:
             ttl_name = self.ttl_channel_to_name[channel]
             self.ttlChanged((ttl_name, probe, bool(value)))
@@ -145,12 +147,23 @@ class ARTIQ_Server(LabradServer):
         self.ttl_channel_to_name = {self.device_db[ttl_name]['arguments']['channel']: ttl_name for ttl_name in self.ttlout_list}
         self.dac_channel = self.device_db['spi_zotino0']['arguments']['channel']
 
+        #initialize moninj monitoring
+        for channel in self.ttl_channel_to_name.keys():
+            self.core_moninj.monitor_probe(True, channel, TTLProbe.level.value)
+            self.core_moninj.monitor_probe(True, channel, TTLProbe.oe.value)
+            self.core_moninj.monitor_injection(True, channel, TTLOverride.en.value)
+            self.core_moninj.monitor_injection(True, channel, TTLOverride.level.value)
+            self.core_moninj.get_injection_status(channel, TTLOverride.en.value)
+        for dac_channel in range(32):
+            self.core_moninj.monitor_probe(True, self.dac_channel, dac_channel)
+
     # Core
     @setting(21, "Get Devices", returns='*s')
     def getDevices(self, c):
         """
         Returns a list of ARTIQ devices.
         """
+        self.ttlChanged(('ttl99',0,True))
         return list(self.device_db.keys())
 
     #Pulse sequencing

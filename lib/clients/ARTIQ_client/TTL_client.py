@@ -21,6 +21,7 @@ class TTL_channel(QFrame):
         self.setFrameStyle(0x0001 | 0x0010)
         # self.setLineWidth(2)
         self.makeLayout(name)
+        self.setFixedSize(150, 75)
 
     def makeLayout(self, title):
         layout = QGridLayout()
@@ -55,6 +56,8 @@ class TTL_client(QWidget):
     name = "ARTIQ TTL Client"
     row_length = 10
 
+    TTLID = 888999
+
     def __init__(self, reactor, cxn=None, parent=None):
         super(TTL_client, self).__init__()
         self.reactor = reactor
@@ -62,6 +65,7 @@ class TTL_client(QWidget):
         self.ttl_clients = {}
         #start connections
         d = self.connect()
+        d.addCallback(self.getServers)
         d.addCallback(self.getDevices)
         d.addCallback(self.initializeGUI)
 
@@ -75,18 +79,32 @@ class TTL_client(QWidget):
         return self.cxn
 
     @inlineCallbacks
-    def getDevices(self, cxn):
+    def getServers(self, cxn):
         """
-        Get devices from ARTIQ server and organize them.
+        Get required labrad servers.
         """
         try:
-            self.reg = yield self.cxn.registry
-            self.dv = yield self.cxn.data_vault
-            self.artiq = yield self.cxn.artiq_server
+            self.reg = self.cxn.registry
+            self.dv = self.cxn.data_vault
+            self.artiq = self.cxn.artiq_server
         except Exception as e:
             print(e)
             raise
 
+        #add listener to moninj
+        yield self.artiq.signal__ttl_changed(self.TTLID)
+        yield self.artiq.addListener(listener=self.updateTTLDisplay, source=None, ID=self.TTLID)
+        return self.cxn
+
+    def updateTTLDisplay(self, c, ttl_name, probe, status):
+        print('yzde: ' + ttl_name + ', ' + str(probe))
+        if probe == 0:
+            self.ttl_clients[ttl_name].lockswitch.setText('scde')
+
+    def getDevices(self, cxn):
+        """
+        Get devices from ARTIQ server and organize them.
+        """
         # create holding lists
         self.ttlin_list = []
         self.ttlout_list = []
