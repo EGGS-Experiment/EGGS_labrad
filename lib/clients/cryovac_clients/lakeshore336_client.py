@@ -138,7 +138,7 @@ class lakeshore336_client(lakeshore336_gui):
         elif mode == 3:
             yield self.ls.set_heater_power(chan, p1)
 
-    def lock_heaters(self):
+    def lock_heaters(self, status):
         """
         Locks heater updating.
         """

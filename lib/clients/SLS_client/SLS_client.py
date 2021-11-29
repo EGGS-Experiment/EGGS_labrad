@@ -15,6 +15,7 @@ class SLS_client(SLS_gui):
         super().__init__()
         self.cxn = cxn
         self.gui = self
+        self.gui.setupUi()
         self.reactor = reactor
         self.servo_target = None
         self.connect()
@@ -26,23 +27,23 @@ class SLS_client(SLS_gui):
         """
         Creates an asynchronous connection to labrad.
         """
+        #open connection
         if not self.cxn:
             import os
             LABRADHOST = os.environ['LABRADHOST']
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync(LABRADHOST, name=self.name)
-
+        #get servers
         try:
+            self.dv = yield self.cxn.data_vault
+            self.reg = yield self.cxn.registry
             self.sls = yield self.cxn.sls_server
         except Exception as e:
             print(e)
             raise
 
-        return self.cxn
-
     #@inlineCallbacks
     def initializeGUI(self):
-        self.gui.setupUi()
         #connect signals to slots
             #autolock
         self.gui.autolock_toggle.toggled.connect(lambda status: self.sls.autolock_toggle(status))

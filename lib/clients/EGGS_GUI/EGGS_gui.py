@@ -38,7 +38,7 @@ class EGGS_gui(QMainWindow):
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac = self.makeCryovacWidget(self.reactor, cxn)
         trap = self.makeTrapWidget(self.reactor, cxn)
-        sls = self.makeLaserWidget(self.reactor, cxn)
+        lasers = self.makeLaserWidget(self.reactor, cxn)
 
         #create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
@@ -86,7 +86,8 @@ class EGGS_gui(QMainWindow):
 
     def closeEvent(self, event):
         self.cxn.disconnect()
-        self.reactor.stop()
+        if self.reactor.running:
+            self.reactor.stop()
 
 
 if __name__=="__main__":

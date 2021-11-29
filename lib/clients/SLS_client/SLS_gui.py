@@ -24,6 +24,7 @@ class SLS_gui(QFrame):
         SLS_gui = self
         SLS_gui.setObjectName("SLS_gui")
         SLS_gui.setFixedSize(525, 430)
+        SLS_gui.setFrameStyle(0x0001 | 0x0030)
         self.sls_label = QtWidgets.QLabel(SLS_gui)
         self.sls_label.setGeometry(QtCore.QRect(140, 10, 271, 41))
         self.sls_label.setObjectName("sls_label")
