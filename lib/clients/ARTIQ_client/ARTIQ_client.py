@@ -68,7 +68,8 @@ class ARTIQ_client(QMainWindow):
 
     def closeEvent(self, x):
         self.cxn.disconnect()
-        self.reactor.stop()
+        if self.reactor.running:
+            self.reactor.stop()
 
 if __name__=="__main__":
     from EGGS_labrad.lib.clients import runClient

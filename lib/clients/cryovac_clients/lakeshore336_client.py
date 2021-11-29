@@ -289,7 +289,8 @@ class lakeshore336_client(lakeshore336_gui):
 
     def closeEvent(self, event):
         self.cxn.disconnect()
-        self.reactor.stop()
+        if self.reactor.running:
+            self.reactor.stop()
 
 
 if __name__ == "__main__":
