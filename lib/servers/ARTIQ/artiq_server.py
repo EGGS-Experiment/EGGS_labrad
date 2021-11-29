@@ -20,6 +20,8 @@ timeout = 20
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
 from twisted.internet.threads import deferToThread
+from twisted.internet.task import LoopingCall
+from twisted.internet.reactor import callLater
 
 #artiq imports
 from artiq_api import ARTIQ_api
@@ -41,6 +43,7 @@ from artiq.coredevice.comm_moninj import CommMonInj, TTLProbe, TTLOverride
 #function imports
 import numpy as np
 import asyncio
+import time
 
 TTLSIGNAL_ID = 828176
 DACSIGNAL_ID = 828175
@@ -79,6 +82,7 @@ class ARTIQ_Server(LabradServer):
         self.scheduler = Client('::1', 3251, 'master_schedule')
         self.datasets = Client('::1', 3251, 'master_dataset_db')
         self.core_moninj = None
+
 
     async def core_moninj_loop(self):
         print('moninj start')
@@ -145,7 +149,8 @@ class ARTIQ_Server(LabradServer):
 
     def moninj_disconnected(self):
         print('Lost connection to MonInj. Attempting reconnection.')
-        self.core_moninj_reconnect.set()
+        self.disconnected = True
+        #self.core_moninj_reconnect.set()
 
     def _setVariables(self):
         """
@@ -169,6 +174,7 @@ class ARTIQ_Server(LabradServer):
         self.voltage_to_mu = voltage_to_mu
         # self.dac_read_code = ad53xx_cmd_read_ch
 
+    #@inlineCallbacks
     def _setDevices(self):
         """
         Get the list of devices in the ARTIQ box.
@@ -183,10 +189,49 @@ class ARTIQ_Server(LabradServer):
         self.ttl_channel_to_name = {self.device_db[ttl_name]['arguments']['channel']: ttl_name for ttl_name in ttl_all_list}
         self.dac_channel = self.device_db['spi_zotino0']['arguments']['channel']
         #start moninj
-        self.core_moninj_reconnect = asyncio.Event()
-        self.core_moninj_reconnect.set()
-        self.core_moninj_task = asyncio.create_task(self.core_moninj_loop())
+        # self.core_moninj = CommMonInj(self.monitor_cb, self.injection_status_cb)
+        # loop = asyncio.get_event_loop()
+        # loop.run_until_complete(self.core_moninj.connect('192.168.1.75', 1383))
+        # for channel in self.ttl_channel_to_name.keys():
+        #     self.core_moninj.monitor_probe(True, channel, TTLProbe.level.value)
+        #     self.core_moninj.monitor_probe(True, channel, TTLProbe.oe.value)
+        #     self.core_moninj.monitor_injection(True, channel, TTLOverride.en.value)
+        #     self.core_moninj.monitor_injection(True, channel, TTLOverride.level.value)
+        #     self.core_moninj.get_injection_status(channel, TTLOverride.en.value)
+        # for dac_channel in range(32):
+        #     self.core_moninj.monitor_probe(True, self.dac_channel, dac_channel)
+        # self.core_moninj_reconnect = asyncio.Event()
+        # self.core_moninj_reconnect.set()
+        # self.core_moninj_task = asyncio.create_task(self.core_moninj_loop())
         #asyncio.run(self.core_moninj_task)
+        self.state = False
+        self.th1 = LoopingCall(self.th1_loop)
+        callLater(5, self.th1_loop)
+        #loop.run_until_complete(self.core_moninj.connect('192.168.1.75', 1383))
+
+    def th1_loop(self):
+        if self.core_moninj is None:
+            self.core_moninj = CommMonInj(self.monitor_cb, self.injection_status_cb, self.moninj_disconnected)
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self.core_moninj.connect('192.168.1.75', 1383))
+        for channel in self.ttl_channel_to_name.keys():
+            self.core_moninj.monitor_probe(True, channel, TTLProbe.level.value)
+            self.core_moninj.monitor_probe(True, channel, TTLProbe.oe.value)
+            self.core_moninj.monitor_injection(True, channel, TTLOverride.en.value)
+            self.core_moninj.monitor_injection(True, channel, TTLOverride.level.value)
+            self.core_moninj.get_injection_status(channel, TTLOverride.en.value)
+        for dac_channel in range(32):
+            self.core_moninj.monitor_probe(True, self.dac_channel, dac_channel)
+        if self.state == False:
+            self.core_moninj.inject(10, TTLOverride.level.value, 0)
+            self.core_moninj.inject(10, TTLOverride.oe.value, 1)
+            self.core_moninj.inject(10, TTLOverride.en.value, 1)
+        elif self.state == True:
+            self.core_moninj.inject(10, TTLOverride.level.value, 1)
+            self.core_moninj.inject(10, TTLOverride.oe.value, 1)
+            self.core_moninj.inject(10, TTLOverride.en.value, 1)
+        self.state = not self.state
+
 
     # Core
     @setting(21, "Get Devices", returns='*s')
