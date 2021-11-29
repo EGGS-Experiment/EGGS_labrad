@@ -42,8 +42,8 @@ from artiq.coredevice.comm_moninj import CommMonInj, TTLOverride
 import numpy as np
 from asyncio import get_event_loop
 
-t1SIGNAL_ID = 828176
-t2SIGNAL_ID = 828175
+TTLSIGNAL_ID = 828176
+DACSIGNAL_ID = 828175
 
 
 class ARTIQ_Server(LabradServer):
@@ -52,8 +52,8 @@ class ARTIQ_Server(LabradServer):
     regKey = 'ARTIQ_Server'
 
     #Signals
-    t1 = Signal(t1SIGNAL_ID, 'signal: ttl changed', '(ssb)')
-    t2 = Signal(t2SIGNAL_ID, 'signal: dac changed', '(ssv)')
+    ttlChanged = Signal(TTLSIGNAL_ID, 'signal: ttl changed', '(sib)')
+    dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(ssv)')
 
     def __init__(self):
         self.api = ARTIQ_api()
@@ -76,8 +76,8 @@ class ARTIQ_Server(LabradServer):
         """
         self.scheduler = Client('::1', 3251, 'master_schedule')
         self.datasets = Client('::1', 3251, 'master_dataset_db')
-        self.core_moninj = CommMonInj(self.monitor_cb, self.injection_status_cb)
         #start up moninj
+        self.core_moninj = CommMonInj(self.monitor_cb, self.injection_status_cb)
         loop = get_event_loop()
         loop.run_until_complete(self.core_moninj.connect('192.168.1.75', 1383))
 
@@ -90,13 +90,9 @@ class ARTIQ_Server(LabradServer):
         """
         if channel in self.ttl_channel_to_name:
             ttl_name = self.ttl_channel_to_name[channel]
-            if probe == TTLProbe.level.value:
-                self.t1((ttl_name, 'lev', bool(value)))
-            elif probe == TTLProbe.oe.value:
-                self.t1((ttl_name, 'oe', bool(value)))
-        elif (channel, probe) in self.dac_widgets:
-            self.t2((channel, value))
-            #todo: make sure this is right
+            self.ttlChanged((ttl_name, probe, bool(value)))
+        elif channel == self.dac_channel:
+            self.dacChanged((probe, value))
 
     def injection_status_cb(self, channel, override, value):
         """
@@ -105,13 +101,14 @@ class ARTIQ_Server(LabradServer):
         :param override: the parameter being injected
         :param value: value of the injected parameter
         """
-        if channel in self.ttl_channel_to_name:
-            if override == TTLOverride.en.value:
-                widget.cur_override = bool(value)
-                #todo: emit signal that override changed
-            elif override == TTLOverride.level.value:
-                widget.cur_override_level = bool(value)
-                #todo: emit signal that override level changed
+        pass
+        # if channel in self.ttl_channel_to_name:
+        #     if override == TTLOverride.en.value:
+        #         widget.cur_override = bool(value)
+        #         #todo: emit signal that override changed
+        #     elif override == TTLOverride.level.value:
+        #         widget.cur_override_level = bool(value)
+        #         #todo: emit signal that override level changed
 
     def _setVariables(self):
         """
@@ -146,6 +143,7 @@ class ARTIQ_Server(LabradServer):
 
         #needed for moninj
         self.ttl_channel_to_name = {self.device_db[ttl_name]['arguments']['channel']: ttl_name for ttl_name in self.ttlout_list}
+        self.dac_channel = self.device_db['spi_zotino0']['arguments']['channel']
 
     # Core
     @setting(21, "Get Devices", returns='*s')
