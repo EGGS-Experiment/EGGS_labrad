@@ -52,24 +52,26 @@ class SLS_client(SLS_gui):
         self.gui.PDH_phaseoffset.valueChanged.connect(lambda value: self.sls.PDH('phase', value))
         self.gui.PDH_phaseoffset.currentIndexChanged.connect(lambda value: self.sls.PDH('filter', value))
             #servo
-        self.gui.servo_param.currentTextChanged.connect(lambda param: self.changeServoParam(param))
-        self.gui.servo_set.valueChanged.connect(lambda param: self.changeServoValue(param))
-        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.changeServoValue('', value))
-        self.gui.servo_p.valueChanged.connect(lambda param: self.changeServoValue(param))
-        self.gui.servo_i.valueChanged.connect(lambda param: self.changeServoValue(param))
-        self.gui.servo_d.valueChanged.connect(lambda param: self.changeServoValue(param))
+        self.gui.servo_param.currentTextChanged.connect(lambda target: self.changeServoTarget(target))
+        self.gui.servo_set.valueChanged.connect(lambda value: self.changeServoValue('set', value))
+        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.changeServoValue('filter', value))
+        self.gui.servo_p.valueChanged.connect(lambda value: self.changeServoValue('p', value))
+        self.gui.servo_i.valueChanged.connect(lambda value: self.changeServoValue('i', value))
+        self.gui.servo_d.valueChanged.connect(lambda value: self.changeServoValue('d', value))
         #start up data
+        #todo: use get values and parse
 
-    def changeServoParam(self, param_val):
-        #todo
-        self.servo_param = param_val
+    def changeServoTarget(self, target):
+        self.servo_target = target.lower()
+        #todo: get new values and update them
 
-    def changeServoValue(self):
-        #todo
+    def changeServoValue(self, param_name, param_val):
+        self.sls.servo(self.servo_target, param_name, param_val)
 
     def closeEvent(self, x):
         self.cxn.disconnect()
         self.reactor.stop()
+
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runClient
