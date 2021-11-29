@@ -68,7 +68,7 @@ class rf_client(rf_gui):
         self.gui.wav_reset.clicked.connect(lambda: self.reset())
         # modulation
             #parameters
-        self.gui.mod_freq.valueChanged.connect(lambda freq: rf.mod_freq(freq * 1000))
+        self.gui.mod_freq.valueChanged.connect(lambda freq: rf.modulation_frequency(freq * 1000))
         self.gui.mod_ampl_depth.valueChanged.connect(lambda ampl_depth: rf.am_depth(ampl_depth))
         self.gui.mod_freq_dev.valueChanged.connect(lambda freq_dev: rf.fm_dev(freq_dev))
         self.gui.mod_phase_dev.valueChanged.connect(lambda pm_dev: rf.pm_dev(pm_dev))

@@ -69,9 +69,9 @@ class EGGS_gui(QMainWindow):
         holder_widget = QWidget()
         holder_layout = QGridLayout()
         holder_widget.setLayout(holder_layout)
-        holder_layout.addWidget(lakeshore, 0, 0, 1, 1)
+        holder_layout.addWidget(lakeshore, 0, 0)
         holder_layout.addWidget(niops, 0, 1)
-        holder_layout.addWidget(twistorr, 1, 1)
+        holder_layout.addWidget(twistorr, 0, 2)
         return holder_widget
 
     def makeTrapWidget(self, reactor, cxn):
