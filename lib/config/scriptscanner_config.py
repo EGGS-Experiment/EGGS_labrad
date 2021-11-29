@@ -8,7 +8,7 @@ class config(object):
     scripts = [('EGGS_labrad.lib.scripts.experiments.vibration_measurement', 'vibration_measurement'),
                ('EGGS_labrad.lib.scripts.experiments.vibration_measurement_singleshot', 'vibration_measurement_ss'),
                ('EGGS_labrad.lib.scripts.experiments.test_experiment', 'test_experiment'),
-               ('EGGS_labrad.lib.scripts.experiments.sample_experiments', 'test_experiment')
+               ('EGGS_labrad.lib.scripts.experiments.sample_experiment', 'conflicting_experiment')
         ]
 
     allowed_concurrent = {

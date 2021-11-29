@@ -1,12 +1,12 @@
-from EGGS_labrad.lib.servers.script_scanner import experiment
-
 import labrad
 import numpy as np
 import time
 import datetime as datetime
 
-class test_experiment(experiment):
+from EGGS_labrad.lib.servers.script_scanner.experiment import experiment
 
+
+class test_experiment(experiment):
     '''
     Tests base experiment functionality
     '''

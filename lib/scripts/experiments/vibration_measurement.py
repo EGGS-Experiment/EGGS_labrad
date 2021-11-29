@@ -1,9 +1,9 @@
-from EGGS_labrad.lib.servers.script_scanner import experiment
-
 import labrad
 import numpy as np
 import time
 import datetime as datetime
+
+from EGGS_labrad.lib.servers.script_scanner.experiment import experiment
 
 class vibration_measurement(experiment):
 

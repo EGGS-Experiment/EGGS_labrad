@@ -3,7 +3,7 @@
 [info]
 name = FMA1700A Server
 version = 1.0.0
-description = Controls the FMA1700A Mass Flow Meter
+description = Controls the FMA1700A Mass Flow Meter via an Arduino
 instancename = FMA1700A Server
 
 [startup]

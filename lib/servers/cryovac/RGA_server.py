@@ -39,15 +39,6 @@ class RGA_Server(SerialDeviceServer):
     def initServer(self):
         self.listeners = set()
 
-    @setting(1, returns='s')
-    def identify(self, c):
-        '''
-        Returns the RGA's IDN.
-        '''
-        yield self.ser.write('ID?\r\n')
-        resp = yield self.ser.read()
-        returnValue(resp)
-
     @setting(2, value='w',returns='s')
     def filament(self, c, value=None):
         '''
@@ -119,6 +110,7 @@ class RGA_Server(SerialDeviceServer):
         if c.ID in notified:
             notified.remove(c.ID)
         return notified
+
 
 if __name__ == "__main__":
     from labrad import util

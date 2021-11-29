@@ -53,7 +53,7 @@ class AD9910_channel(QFrame):
         self.att.setKeyboardTracking(False)
         self.resetswitch = QPushButton('Initialize')
         self.rfswitch = TextChangingButton(("On", "Off"))
-        self.lockswitch = TextChangingButton(("Lock", "Unlock"))
+        self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
         self.lockswitch.setChecked(True)
 
         #add widgets to layout

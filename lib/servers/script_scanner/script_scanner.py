@@ -19,7 +19,6 @@ timeout = 20
 from labrad.server import setting
 from labrad.units import WithUnit
 from twisted.internet.defer import inlineCallbacks, DeferredList, returnValue
-import EGGS_labrad.lib.config.scriptscanner_config as sc_config
 
 from scheduler import scheduler
 from experiment_classes import *
@@ -27,7 +26,9 @@ from experiment import experiment_info
 from script_signals_server import ScriptSignalsServer
 
 import sys
-from importlib import reload
+from importlib import reload, import_module, __import__
+
+import EGGS_labrad.lib.config.scriptscanner_config as sc_config
 
 
 class script_class_parameters(object):
@@ -79,7 +80,7 @@ class ScriptScanner(ScriptSignalsServer):
         config = sc_config.config
         for import_path, class_name in config.scripts:
             try:
-                #imports path???
+                #imports path
                 __import__(import_path)
                 #gets the file
                 module = sys.modules[import_path]

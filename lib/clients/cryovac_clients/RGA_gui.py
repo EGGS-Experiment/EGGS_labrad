@@ -18,7 +18,7 @@ except AttributeError:
     def _translate(context, text, disambig):
         return QApplication.translate(context, text, disambig)
 
-class RGA_UI(QWidget):
+class RGA_UI(QFrame):
     def setupUi(self):
         Form = self
         Form.setObjectName(_fromUtf8("Form"))

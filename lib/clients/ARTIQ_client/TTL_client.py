@@ -144,7 +144,7 @@ class TTL_client(QWidget):
         urukul_ttls = self._makeTTLGroup(self.ttlurukul_list, "Urukul")
         layout.addWidget(urukul_ttls, 9, 0, 3, 10)
         other_ttls = self._makeTTLGroup(self.ttlother_list, "Other")
-        layout.addWidget(other_ttls, 13, 0, 2, 4)
+        layout.addWidget(other_ttls, 13, 0, 2, 5)
         self.setLayout(layout)
 
     def _makeTTLGroup(self, ttl_list, name):
