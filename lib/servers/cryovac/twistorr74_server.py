@@ -19,7 +19,7 @@ import time
 import numpy as np
 
 from labrad.types import Value
-from labrad.server import setting
+from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
@@ -50,6 +50,8 @@ class TwisTorr74Server(SerialDeviceServer):
         b'\x34': "Value out of range",
         b'\x35': "Window disabled",
     }
+
+    onEvent = Signal(123456, 'signal: emitted signal', 'v')
 
     #TOGGLE
     @setting(111, 'toggle', onoff='b', returns='s')
@@ -89,6 +91,7 @@ class TwisTorr74Server(SerialDeviceServer):
         #read and parse answer
         resp = yield self.ser.read(19)
         resp = yield self._parse_answer(resp)
+        self.onEvent(float(resp))
         returnValue(float(resp))
 
     #Helper functions
