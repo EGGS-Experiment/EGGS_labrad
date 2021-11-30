@@ -87,7 +87,7 @@ class Lakeshore336Server(SerialDeviceServer):
                                                         4 = monitor out, 5 = warmup)
             input_channel   (int): the temperature diode channel to control the output
         Returns:
-                            ([int, int]): the output mode and linked input
+                            (int, int): the output mode and linked input
         """
         chString = 'OUTMODE'
 
