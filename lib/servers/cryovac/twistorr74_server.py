@@ -59,31 +59,26 @@ class TwisTorr74Server(SerialDeviceServer):
         Returns:
                     (str)   : pump state
         """
-        #setter
-        if onoff is not None:
-            message = None
-            if onoff:
-                message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'1')
-            elif onoff is False:
-                message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'0')
-            #create and send message to device
-            #yield self.ser.write(message)
-            print(message)
-            #read and parse answer
-            time.sleep(0.5)
-            #resp = yield self.ser.read()
-        #getter
-        # create and send message to device
-        message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.READ_msg)
+
+        #create and send message to device
+        message = None
+        if onoff is True:
+            message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'1')
+        elif onoff is False:
+            message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'0')
+        elif onoff is None:
+            message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.READ_msg)
         yield self.ser.write(message)
-        # read and parse answer
-        time.sleep(0.5)
+
+        #read and parse answer
+        time.sleep(0.25)
         resp = yield self.ser.read()
+        resp = self._parse_answer(resp)
         try:
             resp = yield self._parse_answer(resp)
         except Exception as e:
             print(e)
-        returnValue('th')
+        returnValue(resp)
 
     #READ PRESSURE
     @setting(211, 'Read Pressure', returns='v')
