@@ -15,18 +15,20 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-
-from twisted.internet.defer import inlineCallbacks, returnValue
-from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
-from labrad.server import setting
-from labrad.support import getNodeName
-from labrad.types import Value
-
 import time
 import numpy as np
 
+from labrad.types import Value
+from labrad.server import setting
+from twisted.internet.defer import inlineCallbacks, returnValue
+
+from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
+
 class TwisTorr74Server(SerialDeviceServer):
-    """Talks to the TwisTorr 74 Turbopump"""
+    """
+    Talks to the TwisTorr 74 Turbopump.
+    """
+
     name = 'TwisTorr74 Server'
     regKey = 'TwisTorr74Server'
     serNode = 'mongkok'
@@ -59,7 +61,6 @@ class TwisTorr74Server(SerialDeviceServer):
         Returns:
                     (str)   : pump state
         """
-
         #create and send message to device
         message = None
         if onoff is True:
@@ -69,15 +70,9 @@ class TwisTorr74Server(SerialDeviceServer):
         elif onoff is None:
             message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.READ_msg)
         yield self.ser.write(message)
-
         #read and parse answer
-        time.sleep(0.25)
-        resp = yield self.ser.read()
-        resp = self._parse_answer(resp)
-        try:
-            resp = yield self._parse_answer(resp)
-        except Exception as e:
-            print(e)
+        resp = yield self.ser.read(10)
+        resp = yield self._parse_answer(resp)
         returnValue(resp)
 
     #READ PRESSURE
@@ -92,14 +87,9 @@ class TwisTorr74Server(SerialDeviceServer):
         message = yield self._create_message(CMD_msg=b'224', DIR_msg=self.READ_msg)
         yield self.ser.write(message)
         #read and parse answer
-        time.sleep(0.5)
-        resp = yield self.ser.read()
-        try:
-            resp = yield self._parse_answer(resp)
-        except Exception as e:
-            print(e)
-        resp = float(resp)
-        returnValue(resp)
+        resp = yield self.ser.read(19)
+        resp = yield self._parse_answer(resp)
+        returnValue(float(resp))
 
     #Helper functions
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg=b''):
@@ -128,10 +118,11 @@ class TwisTorr74Server(SerialDeviceServer):
         if len(ans) > 1:
             ans = ans[4:]
             ans = ans.decode()
-        elif ans == b'\x06':
-            ans = 'Acknowledged'
         elif ans in self.ERRORS_msg:
             raise Exception(self.ERRORS_msg[ans])
+        elif ans == b'\x06':
+            ans = 'Acknowledged'
+        #if none of these cases, we just return it anyways
         return ans
 
 if __name__ == '__main__':

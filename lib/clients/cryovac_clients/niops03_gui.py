@@ -20,7 +20,7 @@ class niops03_gui(QtWidgets.QFrame):
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
         self.setFixedSize(350, 325)
-        self.all_label = QtWidgets.QLabel('NIOPS 03')
+        self.all_label = QtWidgets.QLabel('NIOPS03 Pump')
         self.all_label.setFont(QFont(shell_font, pointSize=20))
         self.all_label.setAlignment(QtCore.Qt.AlignCenter)
         #niops03

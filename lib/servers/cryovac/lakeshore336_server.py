@@ -17,15 +17,15 @@ timeout = 20
 """
 
 #imports
-from twisted.internet.defer import inlineCallbacks, returnValue
-from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
-from labrad.server import setting, Signal
-from labrad.support import getNodeName
 from labrad.units import WithUnit
-from serial import PARITY_ODD
-import time
+from labrad.server import setting, Signal
+from twisted.internet.defer import inlineCallbacks, returnValue
 
 import numpy as np
+from serial import PARITY_ODD
+
+from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
+
 
 INPUT_CHANNELS = ['A', 'B', 'C', 'D', '0']
 OUTPUT_CHANNELS = [1, 2, 3, 4]
