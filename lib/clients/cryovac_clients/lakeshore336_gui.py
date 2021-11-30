@@ -264,7 +264,7 @@ class lakeshore336_gui(QFrame):
         self.lakeshore_label.setText(_translate("lakeshore336_gui", "<html><head/><body><p><span style=\" font-size:20pt;\">Lakeshore 336 Temperature Controller</span></p></body></html>"))
         self.heatAll_label.setText(_translate("lakeshore336_gui", "Heater Configuration"))
         self.tempAll_label.setText(_translate("lakeshore336_gui", "Temperature Readout "))
-        self.heatAll_lockswitch.setText(_translate("lakeshore336_gui", "Lock"))
+        #self.heatAll_lockswitch.setText(_translate("lakeshore336_gui", "Lock"))
         self.tempAll_record.setText(_translate("lakeshore336_gui", "Record"))
         self.temp1_label.setText(_translate("lakeshore336_gui", "Diode 1 (K)"))
         self.temp1.setText(_translate("lakeshore336_gui", "<html><head/><body><p><span style=\" font-size:24pt; color:#0055ff;\">Temp 1</span></p></body></html>"))
