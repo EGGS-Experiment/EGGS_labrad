@@ -122,7 +122,6 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = tuple(resp[:2])
         returnValue(resp)
 
-
     @setting(221, 'Heater Range', output_channel='i', range='i', returns='i')
     def heater_range(self, c, output_channel, range):
         """
