@@ -152,6 +152,14 @@ class SLSServer(SerialDeviceServer):
         returnValue(resp)
 
     #Misc. settings
+    @setting(511, 'Get Values', returns='2s')
+    def get_values(self, c):
+        '''
+        Returns the values of all parameters.
+        '''
+        yield self.ser.write('get values\r\n')
+        resp = yield self.ser.read('\r\n\r\nP642> ')
+        returnValue(resp)
 
     #Helper functions
     def _parse(self, string, setter):
