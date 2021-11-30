@@ -51,11 +51,10 @@ class NIOPS03Server(SerialDeviceServer):
         """
         Get controller status
         Returns:
-            (str): which switches and alarms are on/off
+            (str): power status of all alarms and devices
         """
         yield self.ser.write('TS' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
+        resp = yield self.ser.read_line(TERMINATOR)
         returnValue(resp)
 
     # ON/OFF
@@ -72,8 +71,7 @@ class NIOPS03Server(SerialDeviceServer):
             yield self.ser.write('G' + TERMINATOR)
         else:
             yield self.ser.write('B' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
+        resp = yield self.ser.read_line()
         resp = resp.strip()
         returnValue(resp)
 
@@ -90,8 +88,7 @@ class NIOPS03Server(SerialDeviceServer):
             yield self.ser.write('GN' + TERMINATOR)
         elif power == False:
             yield self.ser.write('BN' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
+        resp = yield self.ser.read_line()
         returnValue(resp)
 
     #PARAMETERS
@@ -103,8 +100,7 @@ class NIOPS03Server(SerialDeviceServer):
             (float): ion pump pressure
         """
         yield self.ser.write('Tb' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
+        resp = yield self.ser.read_line()
         returnValue(float(resp))
 
     @setting(221, 'IP Voltage', voltage='v', returns='v')
@@ -122,8 +118,7 @@ class NIOPS03Server(SerialDeviceServer):
             padleft = '0'*(4-len(voltage))
             yield self.ser.write('u' + padleft + voltage + TERMINATOR)
         yield self.ser.write('u' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
+        resp = yield self.ser.read_line()
         #convert from hex to int
         resp = int(resp, 16)
         returnValue(resp)
@@ -137,7 +132,6 @@ class NIOPS03Server(SerialDeviceServer):
         """
         #todo: ensure no problem here
         yield self.ser.write('TM' + TERMINATOR)
-        time.sleep(0.25)
         ip_time = yield self.ser.read_line('\r')
         np_time = yield self.ser.read_line('\r')
         ip_time = ip_time[16:-8].split(' Hours ')
@@ -181,8 +175,7 @@ class NIOPS03Server(SerialDeviceServer):
         if press_tmp >= self.interlock_pressure:
             print('problem')
             # yield self.ser.write('B' + TERMINATOR)
-            # time.sleep(0.25)
-            # yield self.ser.read()
+            # yield self.ser.read_line()
 
 
 if __name__ == '__main__':

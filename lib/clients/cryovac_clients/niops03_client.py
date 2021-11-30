@@ -53,6 +53,16 @@ class niops03_client(niops03_gui):
     @inlineCallbacks
     def initializeGUI(self, cxn):
         #startup data
+            #IP/NP power
+        device_status = yield self.niops.status()
+        device_status = device_status.strip().split(', ')
+        device_status = [text.split(' ') for text in device_status]
+        device_status = {val[0]: val[1] for val in device_status}
+        ip_on = True if device_status['IP'] == 'ON' else False
+        np_on = True if device_status['NP'] == 'ON' else False
+        self.gui.niops_power.setChecked(ip_on)
+        self.gui.np_power.setChecked(np_on)
+            #IP voltage
         v_ip = yield self.niops.ip_voltage()
         self.gui.niops_voltage.setValue(v_ip)
         #connect signals to slots
@@ -107,8 +117,7 @@ class niops03_client(niops03_gui):
         """
         Sets the ion pump voltage.
         """
-        print('yzde')
-        #yield self.niops.ip_voltage(voltage)
+        yield self.niops.ip_voltage(voltage)
 
     @inlineCallbacks
     def toggle_np(self, status):

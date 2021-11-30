@@ -71,7 +71,7 @@ class Lakeshore336Server(SerialDeviceServer):
         elif channel not in INPUT_CHANNELS:
             raise Exception('Invalid input: channel must be one of: ' + str(INPUT_CHANNELS))
         yield self.ser.write('KRDG? ' + str(channel) + TERMINATOR)
-        resp = yield self.ser.read_line(TERMINATOR)
+        resp = yield self.ser.read_line()
         resp = np.array(resp.split(','), dtype=float)
         returnValue(tuple(resp))
 
@@ -94,7 +94,7 @@ class Lakeshore336Server(SerialDeviceServer):
         yield self.ser.write(chString + output_msg)
         #getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = yield self.ser.read_line(TERMINATOR)
+        resp = yield self.ser.read_line()
         resp = resp.split(',')
         resp = [int(resp[1]), float(resp[2])]
         returnValue(resp)
@@ -117,7 +117,7 @@ class Lakeshore336Server(SerialDeviceServer):
         yield self.ser.write(output_msg)
         #getter
         yield self.ser.write(chString + '?' + str(output_channel) + ' ' + TERMINATOR)
-        resp = yield self.ser.read_line(TERMINATOR)
+        resp = yield self.ser.read_line()
         resp = np.array(resp.split(','), dtype=int)
         resp = tuple(resp[:2])
         returnValue(resp)
@@ -138,7 +138,7 @@ class Lakeshore336Server(SerialDeviceServer):
         yield self.ser.write(chString + output_msg)
         #getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = yield self.ser.read_line(TERMINATOR)
+        resp = yield self.ser.read_line()
         returnValue(int(resp))
 
     @setting(213, 'Heater Power', output_channel='i', power='v', returns='v')
@@ -159,7 +159,7 @@ class Lakeshore336Server(SerialDeviceServer):
         yield self.ser.write(chString + output_msg)
         #getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = yield self.ser.read_line(TERMINATOR)
+        resp = yield self.ser.read_line()
         returnValue(float(resp))
 
 
@@ -200,7 +200,7 @@ class Lakeshore336Server(SerialDeviceServer):
         yield self.write(output_msg)
         #getter
         yield self.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = self.read_line(TERMINATOR)
+        resp = self.read_line()
         returnValue(float(resp))
 
     @setting(241, 'Heater Autotune', output_channel='i', input_channel='i', mode='i', returns='*1v')
@@ -220,7 +220,7 @@ class Lakeshore336Server(SerialDeviceServer):
         yield self.ser.write(chString + output_msg)
         #getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = yield self.ser.read_line(TERMINATOR)
+        resp = yield self.ser.read_line()
         resp = resp.split(',')
         resp = [int(resp[1]), float(resp[2])]
         returnValue(resp)
