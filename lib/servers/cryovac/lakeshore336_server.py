@@ -76,7 +76,7 @@ class Lakeshore336Server(SerialDeviceServer):
         returnValue(tuple(resp))
 
     # HEATER
-    @setting(211, 'Heater Setup', output_channel='i', resistance='i', max_current='v', returns='(iv)')
+    @setting(211, 'Heater Setup', output_channel='i', resistance='i', max_current='v', returns='*v')
     def heater_setup(self, c, output_channel, resistance, max_current):
         """
         Set up the physical parameters of the heater.
@@ -94,12 +94,12 @@ class Lakeshore336Server(SerialDeviceServer):
         yield self.ser.write(chString + output_msg)
         #getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = yield self.ser.read()
+        resp = yield self.ser.read_line(TERMINATOR)
         resp = resp.split(',')
-        resp = (int(resp[1]), float(resp[2]))
+        resp = [int(resp[1]), float(resp[2])]
         returnValue(resp)
 
-    @setting(212, 'Heater Mode', output_channel='i', mode='i', input_channel='i', returns='()')
+    @setting(212, 'Heater Mode', output_channel='i', mode='i', input_channel='i', returns='(ii)')
     def heater_mode(self, c, output_channel, mode, input_channel):
         """
         Set the output mode of the heater.
@@ -220,7 +220,7 @@ class Lakeshore336Server(SerialDeviceServer):
         yield self.ser.write(chString + output_msg)
         #getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = yield self.ser.read()
+        resp = yield self.ser.read_line(TERMINATOR)
         resp = resp.split(',')
         resp = [int(resp[1]), float(resp[2])]
         returnValue(resp)

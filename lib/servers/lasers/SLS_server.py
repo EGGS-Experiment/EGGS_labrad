@@ -20,9 +20,8 @@ from labrad import types as T
 from twisted.internet.defer import returnValue
 from labrad.support import getNodeName
 
-from time import sleep
-
 TERMINATOR = '\r\n'
+SLS_EOL = '>'
 
 class SLSServer(SerialDeviceServer):
     """Connects to the 729nm SLS Laser"""
@@ -55,8 +54,7 @@ class SLSServer(SerialDeviceServer):
         resp = []
         for string in chString:
             resp_tmp = yield self.ser.write('get ' + string + TERMINATOR)
-            sleep(0.5)
-            resp_tmp = yield self.ser.read()
+            resp_tmp = yield self.ser.read_line(SLS_EOL)
             resp_tmp = yield self._parse(resp_tmp, False)
             resp.append(resp_tmp)
         returnValue(resp)
@@ -64,12 +62,12 @@ class SLSServer(SerialDeviceServer):
     @setting(113, 'Autolock Parameter', param='s', returns='s')
     def autolock_param(self, c, param=None):
         '''
-        Choose parameter for autolock to sweep
+        Choose parameter for autolock to sweep.
         '''
         chString = 'SweepType'
         tgstring = {'OFF': '0', 'PZT': '1', 'CURRENT': '2'}
         param_tg = None
-        if not param:
+        if param:
             try:
                 param_tg = tgstring[param.upper()]
             except KeyError:
@@ -95,12 +93,10 @@ class SLSServer(SerialDeviceServer):
             print('Invalid parameter. Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
         if param_val:
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
-            sleep(0.5)
-            set_resp = yield self.ser.read()
+            set_resp = yield self.ser.read_line(SLS_EOL)
             set_resp = yield self._parse(set_resp, True)
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
-        sleep(0.5)
-        resp = yield self.ser.read()
+        resp = yield self.ser.read_line(SLS_EOL)
         resp = yield self._parse(resp, False)
         returnValue(resp)
 
@@ -112,7 +108,7 @@ class SLSServer(SerialDeviceServer):
         Arguments:
             freq    (float) : a frequency between [1e7, 8e8]
         Returns:
-                            : the value of offset frequency
+                    (float) : the value of offset frequency
         '''
         chString = 'OffsetFrequency'
         resp = yield self._query(chString, freq)
@@ -151,15 +147,24 @@ class SLSServer(SerialDeviceServer):
         resp = yield self._query(string_tmp, param_val)
         returnValue(resp)
 
+
     #Misc. settings
-    @setting(511, 'Get Values', returns='2s')
+    @setting(511, 'Get Values', returns='*2s')
     def get_values(self, c):
         '''
-        Returns the values of all parameters.
+        Returns the values of ALL parameters.
         '''
-        yield self.ser.write('get values\r\n')
-        resp = yield self.ser.read('\r\n\r\nP642> ')
-        returnValue(resp)
+        yield self.ser.write_line('get values')
+        #should be blocking otherwise we might overwrite
+        resp = yield self.ser.read_line(SLS_EOL)
+        #parse response
+        resp = resp.split('\r\n')[2:-2]
+        resp = [val.split('=') for val in resp]
+        #return keys and values
+        keys = [val[0] for val in resp]
+        values = [val[1] for val in resp]
+        returnValue((keys, values))
+
 
     #Helper functions
     def _parse(self, string, setter):
@@ -189,19 +194,17 @@ class SLSServer(SerialDeviceServer):
     def _query(self, chstring, param):
         """
         Writes parameter to SLS and verifies setting,
-        then reads back same parameter
+        then reads back same parameter.
         """
         if param:
             #write data and read echo
             yield self.ser.write('set ' + chstring + ' ' + str(param) + TERMINATOR)
-            sleep(0.5)
-            set_resp = yield self.ser.read()
+            set_resp = yield self.ser.read_line(SLS_EOL)
             #parse
             set_resp = yield self._parse(set_resp, True)
         # write data and read echo
         yield self.ser.write('get ' + chstring + TERMINATOR)
-        sleep(0.5)
-        resp = yield self.ser.read()
+        resp = yield self.ser.read_line(SLS_EOL)
         # parse
         resp = yield self._parse(resp, False)
         returnValue(resp)
