@@ -1,0 +1,10 @@
+out.w 16 1               #set output of channel 16 on (1=on, 0=off)
+out.r 16                  #read output state of channel 16
+out.r                     #read output state of all channels
+vout.w 4 680.91      #set output of channel 4 to 680.91V
+vout.r 4                  #read channel 4 output voltage in V
+vout.r                   #read output voltage of all channels
+clear.w                  #clear all set voltages and states
+allon.w                  #set all channel states ON
+alloff.w                  #set all channel states OFF
+HVin.r                 #read high voltage inputs and current draws
