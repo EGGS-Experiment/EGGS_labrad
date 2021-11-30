@@ -10,7 +10,7 @@ from EGGS_labrad.lib.clients.cryovac_clients.twistorr74_gui import twistorr74_gu
 class twistorr74_client(twistorr74_gui):
 
     name = 'Twistorr74 Client'
-    ID = 654321
+    ID = 694321
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
@@ -53,8 +53,8 @@ class twistorr74_client(twistorr74_gui):
         from twisted.internet.reactor import callLater
         callLater(2.0, self.start_polling)
 
-        yield self.server.signal__emitted_signal(self.ID)
-        yield self.server.addListener(listener=self.thkim, source=None, ID=self.ID)
+        yield self.tt.signal__emitted_signal(self.ID)
+        yield self.tt.addListener(listener=self.thkim, source=None, ID=self.ID)
 
         return self.cxn
 
