@@ -24,8 +24,6 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
-import time
-
 TERMINATOR = '\r\n'
 QUERY_msg = b'\x05'
 
