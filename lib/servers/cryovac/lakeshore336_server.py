@@ -73,7 +73,7 @@ class Lakeshore336Server(SerialDeviceServer):
         yield self.ser.write('KRDG? ' + str(channel) + TERMINATOR)
         resp = yield self.ser.read_line(TERMINATOR)
         resp = np.array(resp.split(','), dtype=float)
-        returnValue(resp)
+        returnValue(tuple(resp))
 
     # HEATER
     @setting(211, 'Heater Setup', output_channel='i', resistance='i', max_current='v', returns='(iv)')
