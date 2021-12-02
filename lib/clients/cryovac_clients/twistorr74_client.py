@@ -59,7 +59,8 @@ class twistorr74_client(twistorr74_gui):
         return self.cxn
 
     def thkim(self, c, val):
-        print(val)
+        #print(val)
+        pass
 
     #@inlineCallbacks
     def initializeGUI(self, cxn):
