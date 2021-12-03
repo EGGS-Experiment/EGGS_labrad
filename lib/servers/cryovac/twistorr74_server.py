@@ -110,13 +110,14 @@ class TwisTorr74Server(SerialDeviceServer):
             print(e)
             raise Exception
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def setUnits(self):
-        msg = self._create_message(CMD_msg=b'163', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
-        yield self.ser.write(msg)
-        resp = yield self.ser.read(15)
-        resp = self._parse(resp)
-        print(resp)
+        pass
+        # msg = self._create_message(CMD_msg=b'163', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
+        # yield self.ser.write(msg)
+        # resp = yield self.ser.read(15)
+        # resp = self._parse(resp)
+        # print(resp)
 
 
     # TOGGLE

@@ -132,8 +132,7 @@ class SLS_client(SLS_gui):
         """
         Updates GUI when values are received from server.
         """
-        print('scde')
-        autolock_time = float(lockstatus[1])
+        autolock_time = lockstatus[1]
         autolock_time_formatted = str(timedelta(seconds=round(autolock_time)))
         self.gui.autolock_attempts.setText(str(lockstatus[0]))
         self.gui.autolock_time.setText(autolock_time_formatted)
