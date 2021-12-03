@@ -46,15 +46,21 @@ class Lakeshore336Server(SerialDeviceServer):
     parity = PARITY_ODD  # 0 is odd parity
     stopbits = 1
 
-    tempupdate = Signal(TEMPSIGNAL, 'signal: temperature update', '*v')
+    # SIGNALS
+    temp_update = Signal(TEMPSIGNAL, 'signal: temperature update', '*v')
 
-    @inlineCallbacks
-    def _check_errors(self, input, valid_inputs):
-        """
-        Checks user input for errors
-        """
-        if input not in valid_inputs:
-            raise Exception("Value must be one of: " + str(valid_inputs))
+    # STARTUP
+    def initServer(self):
+        super().initServer()
+        self.refresher = LoopingCall(self.poll)
+        from twisted.internet.reactor import callLater
+        callLater(1, self.refresher.start, 2)
+
+    def stopServer(self):
+        super().stopServer()
+        if hasattr(self, 'refresher'):
+            self.refresher.stop()
+
 
     # TEMPERATURE DIODES
     @setting(111, 'Read Temperature', channel='s', returns='*1v')

@@ -23,6 +23,8 @@
 #
 # 2021 October 17 - Clayton Ho
 # Added back automatic device polling
+# 2021 November 25 - Clayton Ho
+# Added configurable device polling
 
 
 from labrad.server import LabradServer, setting
@@ -65,28 +67,15 @@ class GPIBBusServer(LabradServer):
 
     def initServer(self):
         self.devices = {}
-        self.refreshInterval = 10
-        # start refreshing only after we have started serving
-        # this ensures that we are added to the list of available
-        # servers before we start sending messages
-        callLater(1, self.startRefreshing)
-
-    def startRefreshing(self):
-        """Start periodically refreshing the list of devices.
-
-        The start call returns a deferred which we save for later.
-        When the refresh loop is shutdown, we will wait for this
-        deferred to fire to indicate that it has terminated.
-        """
         self.refresher = LoopingCall(self.refreshDevices)
-        self.refresherDone = self.refresher.start(self.refreshInterval)
+        # start refreshing only after we have started serving to ensure
+        # we have a cxn before we send messages
+        callLater(2, self.refresher.start, 10)
 
-    #@inlineCallbacks
     def stopServer(self):
         """Kill the device refresh loop and wait for it to terminate."""
         if hasattr(self, 'refresher'):
             self.refresher.stop()
-            #yield self.refresherDone
 
     def refreshDevices(self):
         """
@@ -223,7 +212,7 @@ class GPIBBusServer(LabradServer):
         Configure polling of serial ports.
         """
         #ensure interval is valid
-        if (interval < 0) or (interval > 60):
+        if (interval < 1) or (interval > 60):
             raise Exception('Invalid polling interval.')
         #only start/stop polling if we are not already started/stopped
         if status and (not self.refresher.running):

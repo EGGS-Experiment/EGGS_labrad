@@ -22,7 +22,7 @@ Created May 22, 2016
 
 from labrad.units import WithUnit
 from labrad.server import Signal, setting
-from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, SerialDeviceError, SerialConnectionError, PortRegError
+from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import returnValue, inlineCallbacks

@@ -1,11 +1,9 @@
-import numpy as np
-
-from sipyco.pc_rpc import Client
+#from sipyco.pc_rpc import Client
 
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager, DatasetManager
-from artiq.master.worker_impl import CCB, Scheduler
+#from artiq.master.worker_impl import CCB, Scheduler
 
 
 class ARTIQ_api(object):

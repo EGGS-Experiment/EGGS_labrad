@@ -77,31 +77,32 @@ Created on Dec 22, 2010
 
 #imports
 from twisted.internet.defer import returnValue, inlineCallbacks
-from labrad.server import LabradServer, setting
+
 from labrad.types import Error
+from labrad.server import LabradServer, setting
 
 __all__ = ["SerialDeviceError", "SerialConnectionError", "SerialDeviceServer"]
 
 #Error Classes
-class SerialDeviceError( Exception ):
-    def __init__( self, value ):
+class SerialDeviceError(Exception):
+    def __init__(self, value):
         self.value = value
-    def __str__( self ):
-        return repr( self.value )
+    def __str__(self):
+        return repr(self.value)
 
-class SerialConnectionError( Exception ):
-    errorDict = {
-        0:'Could not find serial server in list',
-        1:'Serial server not connected',
-        2:'Attempting to use serial connection when not connected'
-        }
-    def __init__( self, code ):
+class SerialConnectionError(Exception):
+    errorDict = {0: 'Could not find serial server in list',
+                 1: 'Serial server not connected',
+                 2: 'Attempting to use serial connection when not connected'}
+    def __init__(self, code):
         self.code = code
-    def __str__( self ):
+    def __str__(self):
         return self.errorDict[self.code]
 
 class PortRegError(SerialConnectionError):
-    errorDict = { 0:'Registry not properly configured' , 1:'Key not found in registry' , 2:'No keys in registry' }
+    errorDict = {0: 'Registry not properly configured',
+                 1: 'Key not found in registry',
+                 2: 'No keys in registry'}
 
 #Device Class
 NAME = 'SerialDevice'

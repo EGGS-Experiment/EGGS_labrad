@@ -16,9 +16,9 @@ timeout = 20
 ### END NODE INFO
 """
 
-import collections, time, os
-import os.path
-from time import sleep
+import os
+import time
+import collections
 
 from labrad import types as T
 from labrad.errors import Error
@@ -30,7 +30,6 @@ from twisted.internet.task import deferLater, LoopingCall
 from serial import Serial
 from serial.serialutil import SerialException
 import serial.tools.list_ports
-
 
 #Errors
 class NoPortSelectedError(Error):
@@ -140,7 +139,7 @@ class SerialServer(LabradServer):
         Configure polling of serial ports.
         """
         #ensure interval is valid
-        if (interval < 0) or (interval > 60):
+        if (interval < 1) or (interval > 60):
             raise Exception('Invalid polling interval.')
         #only start/stop polling if we are not already started/stopped
         if status and (not self.refresher.running):
@@ -307,7 +306,7 @@ class SerialServer(LabradServer):
                 d = ser.read(count)
                 if d:
                     break
-                sleep(0.010)
+                time.sleep(0.010)
             return d
 
         data = threads.deferToThread(doRead, count)

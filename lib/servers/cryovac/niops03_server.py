@@ -41,9 +41,20 @@ class NIOPS03Server(SerialDeviceServer):
     timeout = WithUnit(3.0, 's')
     baudrate = 115200
 
-    #todo: put this under initserver
-    tt = None
-    interlock_loop = None
+
+    # STARTUP
+    def initServer(self):
+        super().initServer()
+        self.tt = None
+        self.refresher = LoopingCall(self.poll)
+        from twisted.internet.reactor import callLater
+        callLater(1, self.refresher.start, 2)
+
+    def stopServer(self):
+        super().stopServer()
+        if hasattr(self, 'refresher'):
+            self.refresher.stop()
+
 
     #STATUS
     @setting(11, 'Status', returns='s')
@@ -159,9 +170,6 @@ class NIOPS03Server(SerialDeviceServer):
             raise Exception('Twistorr74 server not available for interlock.')
         #set threshold pressure
         self.interlock_pressure = press
-        #create a loop if needed
-        if not self.interlock_loop:
-            self.interlock_loop = LoopingCall(self._interlock_poll)
         #only start if stopped, and vice versa
         if status and not self.interlock_loop.running:
             self.interlock_loop.start(5)
@@ -171,6 +179,7 @@ class NIOPS03Server(SerialDeviceServer):
 
     @inlineCallbacks
     def _interlock_poll(self):
+        if interlock_active:
         press_tmp = yield self.tt.read_pressure()
         if press_tmp >= self.interlock_pressure:
             print('problem')

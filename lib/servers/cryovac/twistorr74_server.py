@@ -67,6 +67,9 @@ class TwisTorr74Server(SerialDeviceServer):
         if hasattr(self, 'refresher'):
             self.refresher.stop()
 
+    def setUnits(self):
+
+
 
     # TOGGLE
     @setting(111, 'toggle', onoff='b', returns='b')
@@ -102,7 +105,7 @@ class TwisTorr74Server(SerialDeviceServer):
         """
         Get pump pressure
         Returns:
-            (float): pump pressure in *** todo: set units
+            (float): pump pressure in mbar
         """
         #create and send message to device
         message = yield self._create_message(CMD_msg=b'224', DIR_msg=self.READ_msg)
@@ -123,7 +126,7 @@ class TwisTorr74Server(SerialDeviceServer):
         Configure polling of device for values.
         """
         #ensure interval is valid
-        if (interval < 0) or (interval > 60):
+        if (interval < 1) or (interval > 60):
             raise Exception('Invalid polling interval.')
         #only start/stop polling if we are not already started/stopped
         if status and (not self.refresher.running):

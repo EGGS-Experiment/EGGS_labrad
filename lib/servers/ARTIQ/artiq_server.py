@@ -18,10 +18,10 @@ timeout = 20
 
 #labrad imports
 from labrad.server import LabradServer, setting, Signal
-from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
-from twisted.internet.threads import deferToThread
 from twisted.internet.task import LoopingCall
 from twisted.internet.reactor import callLater
+from twisted.internet.threads import deferToThread
+from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
 
 #artiq imports
 from artiq_api import ARTIQ_api

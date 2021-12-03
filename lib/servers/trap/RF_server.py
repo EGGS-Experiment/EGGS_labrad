@@ -14,16 +14,17 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
-from twisted.internet.defer import inlineCallbacks, returnValue
+#imports
 from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
 
-#import wrappers
 from SMY01 import SMY01Wrapper
 
+
 class RFServer(GPIBManagedServer):
-    """Manages communication with RF Signal Generators."""
+    """
+    Manages communication with RF Signal Generators.
+    """
 
     name = 'RF Server'
 
