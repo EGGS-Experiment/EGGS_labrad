@@ -47,13 +47,11 @@ class niops03_client(niops03_gui):
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
-
         # connect to signals
         yield self.niops.signal__pressure_update(self.PRESSUREID)
         yield self.niops.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
         yield self.niops.signal__workingtime_update(self.WORKINGTIMEID)
         yield self.niops.addListener(listener=self.updateWorkingTime, source=None, ID=self.WORKINGTIMEID)
-
         # start device polling
         poll_params = yield self.niops.get_polling()
         #only start polling if not started

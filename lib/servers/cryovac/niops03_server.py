@@ -16,8 +16,8 @@ timeout = 20
 ### END NODE INFO
 """
 
-from labrad.server import setting
 from labrad.units import WithUnit
+from labrad.server import setting, Signal
 
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -43,15 +43,18 @@ class NIOPS03Server(SerialDeviceServer):
 
     # SIGNALS
     pressure_update = Signal(999999, 'signal: pressure update', 'v')
-    workingtime_update = Signal(999998, 'signal: workingtime update', '*2v')
+    workingtime_update = Signal(999998, 'signal: workingtime update', '*2i')
 
     # STARTUP
     def initServer(self):
         super().initServer()
+        # polling stuff
         self.tt = None
+        self.interlock_active = False
+        self.interlock_pressure = None
         self.refresher = LoopingCall(self.poll)
         from twisted.internet.reactor import callLater
-        callLater(1, self.refresher.start, 2)
+        callLater(1, self.refresher.start, 5)
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -68,7 +71,7 @@ class NIOPS03Server(SerialDeviceServer):
             (str): power status of all alarms and devices
         """
         yield self.ser.write('TS' + TERMINATOR)
-        resp = yield self.ser.read_line(TERMINATOR)
+        resp = yield self.ser.read_line('\r')
         returnValue(resp)
 
     # ON/OFF
@@ -85,36 +88,35 @@ class NIOPS03Server(SerialDeviceServer):
             yield self.ser.write('G' + TERMINATOR)
         elif power == False:
             yield self.ser.write('B' + TERMINATOR)
-        resp = yield self.ser.read_line()
-        resp = resp.strip()
+        resp = yield self.ser.read_line('\r')
         returnValue(resp)
 
     @setting(112, 'Toggle NP', power='b', returns='s')
     def toggle_np(self, c, power):
         """
-        Set or query whether getter is off or on
+        Set getter power.
         Args:
             (bool): whether getter is to be on or off
         Returns:
             (bool): getter power status
         """
-        if power == True:
+        if power:
             yield self.ser.write('GN' + TERMINATOR)
         elif power == False:
             yield self.ser.write('BN' + TERMINATOR)
-        resp = yield self.ser.read_line()
+        resp = yield self.ser.read_line('\r')
         returnValue(resp)
 
     #PARAMETERS
     @setting(211, 'IP Pressure', returns='v')
     def pressure_ip(self, c):
         """
-        Get ion pump pressure in mbar
+        Get ion pump pressure in mbar.
         Returns:
             (float): ion pump pressure
         """
         yield self.ser.write('Tb' + TERMINATOR)
-        resp = yield self.ser.read_line()
+        resp = yield self.ser.read_line('\r')
         resp = float(resp)
         self.pressure_update(resp)
         returnValue(resp)
@@ -122,19 +124,19 @@ class NIOPS03Server(SerialDeviceServer):
     @setting(221, 'IP Voltage', voltage='v', returns='v')
     def voltage_ip(self, c, voltage=None):
         """
-        Get/set ion pump voltage
+        Get/set ion pump voltage.
         Arguments:
             voltage (float) : pump voltage in V
         Returns:
                     (float): ion pump voltage in V
         """
-        if voltage:
+        if voltage is not None:
             #convert voltage to hex
             voltage = hex(voltage)[2:]
             padleft = '0'*(4-len(voltage))
             yield self.ser.write('u' + padleft + voltage + TERMINATOR)
         yield self.ser.write('u' + TERMINATOR)
-        resp = yield self.ser.read_line()
+        resp = yield self.ser.read_line('\r')
         #convert from hex to int
         resp = int(resp, 16)
         returnValue(resp)
@@ -142,7 +144,7 @@ class NIOPS03Server(SerialDeviceServer):
     @setting(231, 'Working Time', returns='*2i')
     def working_time(self, c):
         """
-        Gets working time of IP & NP
+        Get working time of IP & NP.
         Returns:
             [[int, int], [int, int]]: working time of ion pump and getter
         """
@@ -159,7 +161,7 @@ class NIOPS03Server(SerialDeviceServer):
 
 
     # INTERLOCK
-    @setting(311, 'Interlock IP', status='b', press='v', returns='b')
+    @setting(311, 'Interlock IP', status='b', press='v', returns='')
     def interlock_ip(self, c, status, press):
         """
         Activates an interlock, switching off the ion pump
@@ -167,32 +169,16 @@ class NIOPS03Server(SerialDeviceServer):
         Pressure is taken from the Twistorr74 turbo pump server.
         Arguments:
             press   (float) : the maximum pressure in mbar
-        Returns:
-                    (bool)  : activation state of the interlock
         """
-        #create connection to turbopump as needed
+        #create connection to twistorr pump as needed
         try:
             self.tt = yield self.client.twistorr74_server
         except KeyError:
             self.tt = None
             raise Exception('Twistorr74 server not available for interlock.')
-        #set threshold pressure
+        #set interlock parameters
+        self.interlock_active = status
         self.interlock_pressure = press
-        #only start if stopped, and vice versa
-        if status and not self.interlock_loop.running:
-            self.interlock_loop.start(5)
-        elif not status and self.interlock_loop.running:
-            self.interlock_loop.stop()
-        returnValue(self.interlock_loop.running)
-
-    @inlineCallbacks
-    def _interlock_poll(self):
-        if interlock_active:
-        press_tmp = yield self.tt.read_pressure()
-        if press_tmp >= self.interlock_pressure:
-            print('problem')
-            # yield self.ser.write('B' + TERMINATOR)
-            # yield self.ser.read_line()
 
 
     # POLLING
@@ -232,15 +218,20 @@ class NIOPS03Server(SerialDeviceServer):
         ip_time = yield self.ser.read_line('\r')
         np_time = yield self.ser.read_line('\r')
         #update pressure
-        print(float(pressure))
         self.pressure_update(float(pressure))
         # update workingtime
         ip_time = ip_time[16:-8].split(' Hours ')
         np_time = np_time[16:-8].split(' Hours ')
         ip_time = [int(val) for val in ip_time]
         np_time = [int(val) for val in np_time]
-        print([ip_time, np_time])
         self.workingtime_update([ip_time, np_time])
+        #interlock
+        if self.interlock_active:
+            press_tmp = yield self.tt.read_pressure()
+            if press_tmp >= self.interlock_pressure:
+                print('problem')
+                # yield self.ser.write('B' + TERMINATOR)
+                # yield self.ser.read_line()
 
 
 if __name__ == '__main__':
