@@ -20,6 +20,7 @@ import numpy as np
 
 from labrad.types import Value
 from labrad.server import setting, Signal
+from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
@@ -51,9 +52,25 @@ class TwisTorr74Server(SerialDeviceServer):
         b'\x35': "Window disabled",
     }
 
-    onEvent = Signal(123456, 'signal: emitted signal', 'v')
+    # SIGNALS
+    pressure_update = Signal(123456, 'signal: pressure update', 'v')
 
-    #TOGGLE
+    def initServer(self):
+        super().initServer()
+        self.refresher = None
+        from twisted.internet.reactor import callLater
+        callLater(1, self.startRefreshing)
+
+    def stopServer(self):
+        super().stopServer()
+        if hasattr(self, 'refresher'):
+            self.refresher.stop()
+
+    def startRefreshing(self):
+        self.refresher = LoopingCall(self.enumerate_serial_pyserial)
+        self.refresherDone = self.refresher.start(2)
+
+    # TOGGLE
     @setting(111, 'toggle', onoff='b', returns='s')
     def toggle(self, c, onoff=None):
         """
@@ -74,27 +91,66 @@ class TwisTorr74Server(SerialDeviceServer):
         yield self.ser.write(message)
         #read and parse answer
         resp = yield self.ser.read(10)
-        resp = yield self._parse_answer(resp)
+        resp = yield self._parse(resp)
         returnValue(resp)
 
-    #READ PRESSURE
+    # READ PRESSURE
     @setting(211, 'Read Pressure', returns='v')
     def pressure_read(self, c):
         """
         Get pump pressure
         Returns:
-            (float): pump pressure in ***
+            (float): pump pressure in *** todo: set units
         """
         #create and send message to device
         message = yield self._create_message(CMD_msg=b'224', DIR_msg=self.READ_msg)
         yield self.ser.write(message)
         #read and parse answer
         resp = yield self.ser.read(19)
-        resp = yield self._parse_answer(resp)
-        self.onEvent(float(resp))
-        returnValue(float(resp))
+        resp = yield self._parse(resp)
+        resp = float(resp)
+        #send signal and return value
+        self.pressure_update(resp)
+        returnValue(resp)
 
-    #Helper functions
+    @inlineCallbacks
+    def yz1(self):
+        self.ser.write('\x02\x802240\x0387')
+        resp = self.ser.read(19)
+        resp = yield self._parse(resp)
+        resp = float(resp)
+        self.pressure_update(resp)
+
+    # POLLING
+    @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
+    def set_polling(self, c, status, interval):
+        """
+        Configure polling of device for values.
+        """
+        #ensure interval is valid
+        if (interval < 0) or (interval > 60):
+            raise Exception('Invalid polling interval.')
+        #only start/stop polling if we are not already started/stopped
+        if status and (not self.refresher.running):
+            self.refresher.start(interval)
+        elif status and self.refresher.running:
+            self.refresher.interval = interval
+        elif (not status) and (self.refresher.running):
+            self.refresher.stop()
+        return (self.refresher.running, self.refresher.interval)
+
+    @setting(912, 'Set Polling', returns='(bv)')
+    def get_polling(self, c):
+        """
+        Get polling parameters.
+        """
+        if self.refresher:
+            return (self.refresher.running, self.refresher.interval)
+        else:
+            return (False, 0)
+
+
+    # Helper functions
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg=b''):
         """
         Creates a message according to the Twistorr74 serial protocol
@@ -112,7 +168,7 @@ class TwisTorr74Server(SerialDeviceServer):
         #todo: streamline this last bit
         return bytes(msg)
 
-    def _parse_answer(self, ans):
+    def _parse(self, ans):
         if ans == b'':
             raise Exception('No response from device')
         # remove STX, ADDR, and CRC
@@ -127,6 +183,7 @@ class TwisTorr74Server(SerialDeviceServer):
             ans = 'Acknowledged'
         #if none of these cases, we just return it anyways
         return ans
+
 
 if __name__ == '__main__':
     from labrad import util

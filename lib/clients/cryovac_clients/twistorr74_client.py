@@ -40,27 +40,21 @@ class twistorr74_client(twistorr74_gui):
             print(e)
             raise
 
-        # get polling time
-        # yield self.reg.cd(['Clients', self.name])
-        # self.poll_time = yield float(self.reg.get('poll_time'))
-        self.poll_time = 3.0
-
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
-        #create and start loop to poll server for temperature
-        self.poll_loop = LoopingCall(self.poll)
-        from twisted.internet.reactor import callLater
-        callLater(2.0, self.start_polling)
 
+        # connect to signal
         yield self.tt.signal__emitted_signal(self.ID)
-        yield self.tt.addListener(listener=self.thkim, source=None, ID=self.ID)
+        yield self.tt.addListener(listener=self.updateValues, source=None, ID=self.ID)
+
+        # start device polling
+        self.poll_interval = 1.0
+        poll_params = yield self.tt.get_polling()
+        if not poll_params[0]:
+            yield self.tt.set_polling(True, self.poll_interval)
 
         return self.cxn
-
-    def thkim(self, c, val):
-        #print(val)
-        pass
 
     #@inlineCallbacks
     def initializeGUI(self, cxn):
@@ -75,8 +69,8 @@ class twistorr74_client(twistorr74_gui):
     @inlineCallbacks
     def record_pressure(self, status):
         """
-        Creates a new dataset to record pressure and tells polling loop
-        to add data to data vault
+        Creates a new dataset to record pressure and
+        tells polling loop to add data to data vault.
         """
         self.recording = status
         if self.recording:
@@ -107,20 +101,15 @@ class twistorr74_client(twistorr74_gui):
         """
         self.gui.twistorr_power.setEnabled(status)
 
-    #Polling functions
-    def start_polling(self):
-        self.poll_loop.start(self.poll_time)
-
-    def stop_polling(self):
-        self.poll_loop.stop()
-
     @inlineCallbacks
-    def poll(self):
-        pressure = yield self.tt.read_pressure()
-        self.gui.twistorr_display.setText(str(pressure))
-        if self.recording == True:
+    def updateValues(self, c, val):
+        """
+        Updates GUI when values are received from server.
+        """
+        self.gui.twistorr_display.setText(str(val))
+        if self.recording:
             elapsedtime = time.time() - self.starttime
-            yield self.dv.add(elapsedtime, pressure, context=self.c_record)
+            yield self.dv.add(elapsedtime, val, context=self.c_record)
 
     def closeEvent(self, event):
         self.cxn.disconnect()

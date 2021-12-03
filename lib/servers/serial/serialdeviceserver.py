@@ -395,4 +395,5 @@ class SerialDeviceServer(LabradServer):
         """
         Close serial connection before exiting.
         """
-        if self.ser: self.ser.close()
+        if self.ser:
+            self.ser.close()
