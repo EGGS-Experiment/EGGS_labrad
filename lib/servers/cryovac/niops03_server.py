@@ -251,17 +251,17 @@ class NIOPS03Server(SerialDeviceServer):
         #get results all together
         yield self.ser.write('Tb' + TERMINATOR)
         pressure = yield self.ser.read_line()
-        # yield self.ser.write('TM' + TERMINATOR)
-        # ip_time = yield self.ser.read_line('\r')
-        # np_time = yield self.ser.read_line('\r')
+        yield self.ser.write('TM' + TERMINATOR)
+        ip_time = yield self.ser.read_line('\r')
+        np_time = yield self.ser.read_line('\r')
         #update pressure
         self.pressure_update(float(pressure))
         # update workingtime
-        # ip_time = ip_time[16:-8].split(' Hours ')
-        # np_time = np_time[16:-8].split(' Hours ')
-        # ip_time = [int(val) for val in ip_time]
-        # np_time = [int(val) for val in np_time]
-        # self.workingtime_update([ip_time, np_time])
+        ip_time = ip_time[16:-8].split(' Hours ')
+        np_time = np_time[16:-8].split(' Hours ')
+        ip_time = [int(val) for val in ip_time]
+        np_time = [int(val) for val in np_time]
+        self.workingtime_update([ip_time, np_time])
         #interlock
         if self.interlock_active:
             press_tmp = yield self.tt.read_pressure()

@@ -64,6 +64,7 @@ class niops03_gui(QtWidgets.QFrame):
         self.np_workingtime_display.setFont(QFont(shell_font, pointSize=20))
         self.np_workingtime_display.setAlignment(QtCore.Qt.AlignCenter)
         self.np_workingtime_display.setStyleSheet('color: blue')
+
             #power
         self.np_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
         self.np_lockswitch.setChecked(True)

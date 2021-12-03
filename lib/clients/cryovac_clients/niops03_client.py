@@ -164,8 +164,8 @@ class niops03_client(niops03_gui):
         """
         Sets ion pump power on or off.
         """
-        print('set: ' + str(status))
-        #yield self.niops.ip_toggle(status)
+        #print('set: ' + str(status))
+        yield self.niops.ip_toggle(status)
 
     def lock_niops(self, status):
         """
@@ -186,9 +186,9 @@ class niops03_client(niops03_gui):
         """
         Sets getter power on or off.
         """
-        print('state: ' + str(status))
-        #yield self.niops.np_mode(1)
-        #yield self.niops.np_toggle(status)
+        #print('state: ' + str(status))
+        yield self.niops.np_mode(1)
+        yield self.niops.np_toggle(status)
 
     def lock_np(self, status):
         """
