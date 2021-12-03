@@ -25,6 +25,8 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
+from undecorated import undecorated
+
 class TwisTorr74Server(SerialDeviceServer):
     """
     Talks to the TwisTorr 74 Turbopump.

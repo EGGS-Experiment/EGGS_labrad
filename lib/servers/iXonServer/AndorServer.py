@@ -35,7 +35,9 @@ import numpy as np
 IMAGE_UPDATED_SIGNAL = 142312
 
 class AndorServer(LabradServer):
-    """ Contains methods that interact with the Andor CCD Cameras"""
+    """
+    Contains methods that interact with the Andor CCD Cameras.
+    """
 
     name = "Andor Server"
     image_updated = Signal(IMAGE_UPDATED_SIGNAL, 'signal: image updated', '*i')
