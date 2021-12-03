@@ -59,7 +59,7 @@ class test_experiment(experiment):
         data2 = np.array([data2[0], data2[1]]).transpose()
         self.dv.add_ex(data2, context=self.c_data2)
 
-        while (True):
+        while True:
             if self.pause_or_stop() == True:
                 break
             elif (time.time() - prevtime) <= 1:
@@ -68,7 +68,7 @@ class test_experiment(experiment):
             elapsedtime = time.time() - starttime
             prevtime = time.time()
             try:
-                self.dv.add(elapsedtime, data1[0], data1[1], data1[2], data1[3], context = self.c_data1)
+                self.dv.add(elapsedtime, data1[0], data1[1], data1[2], data1[3], context=self.c_data1)
             except Exception as e:
                 print(e)
 

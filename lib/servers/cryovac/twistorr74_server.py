@@ -25,7 +25,19 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
-from undecorated import undecorated
+_TT74_STX_msg = b'\x02'
+_TT74_ADDR_msg = b'\x80'
+_TT74_READ_msg = b'\x30'
+_TT74_WRITE_msg = b'\x31'
+_TT74_ETX_msg = b'\x03'
+
+_TT74_ERRORS_msg = {
+    b'\x15': "Execution failed",
+    b'\x32': "Unknown window",
+    b'\x33': "Data type error",
+    b'\x34': "Value out of range",
+    b'\x35': "Window disabled",
+}
 
 class TwisTorr74Server(SerialDeviceServer):
     """
@@ -40,22 +52,9 @@ class TwisTorr74Server(SerialDeviceServer):
     timeout = Value(5.0, 's')
     baudrate = 9600
 
-    STX_msg = b'\x02'
-    ADDR_msg = b'\x80'
-    READ_msg = b'\x30'
-    WRITE_msg = b'\x31'
-    ETX_msg = b'\x03'
-
-    ERRORS_msg = {
-        b'\x15': "Execution failed",
-        b'\x32': "Unknown window",
-        b'\x33': "Data type error",
-        b'\x34': "Value out of range",
-        b'\x35': "Window disabled",
-    }
-
     # SIGNALS
     pressure_update = Signal(999999, 'signal: pressure update', 'v')
+    power_update = Signal(999998, 'signal: power update', 'b')
 
     # STARTUP
     def initServer(self):
@@ -102,19 +101,22 @@ class TwisTorr74Server(SerialDeviceServer):
         #create and send message to device
         message = None
         if onoff is True:
-            message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'1')
+            message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'1')
         elif onoff is False:
-            message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.WRITE_msg, DATA_msg=b'0')
+            message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
         elif onoff is None:
-            message = yield self._create_message(CMD_msg=b'000', DIR_msg=self.READ_msg)
+            message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_READ_msg)
         yield self.ser.write(message)
         #read and parse answer
         resp = yield self.ser.read(10)
         resp = yield self._parse(resp)
         if resp == '1':
             resp = True
-        elif resp == '2':
+        elif resp == '0':
             resp = False
+        # update all other devices with new device state
+        if onoff is not None:
+            self.power_update(resp, self.getOtherListeners(c))
         returnValue(resp)
 
     # READ PRESSURE
@@ -126,7 +128,7 @@ class TwisTorr74Server(SerialDeviceServer):
             (float): pump pressure in mbar
         """
         #create and send message to device
-        message = yield self._create_message(CMD_msg=b'224', DIR_msg=self.READ_msg)
+        message = yield self._create_message(CMD_msg=b'224', DIR_msg=_TT74_READ_msg)
         yield self.ser.write(message)
         #read and parse answer
         resp = yield self.ser.read(19)
@@ -180,7 +182,7 @@ class TwisTorr74Server(SerialDeviceServer):
         Creates a message according to the Twistorr74 serial protocol
         """
         #create message as bytearray
-        msg = self.STX_msg + self.ADDR_msg + CMD_msg + DIR_msg + DATA_msg + self.ETX_msg
+        msg = _TT74_STX_msg + _TT74_ADDR_msg + CMD_msg + DIR_msg + DATA_msg + _TT74_ETX_msg
         msg = bytearray(msg)
         #calculate checksum
         CRC_msg = 0x00
@@ -200,8 +202,8 @@ class TwisTorr74Server(SerialDeviceServer):
         if len(ans) > 1:
             ans = ans[4:]
             ans = ans.decode()
-        elif ans in self.ERRORS_msg:
-            raise Exception(self.ERRORS_msg[ans])
+        elif ans in _TT74_ERRORS_msg:
+            raise Exception(_TT74_ERRORS_msg[ans])
         elif ans == b'\x06':
             ans = 'Acknowledged'
         #if none of these cases, we just return it anyways

@@ -11,6 +11,7 @@ class twistorr74_client(twistorr74_gui):
 
     name = 'Twistorr74 Client'
     PRESSUREID = 694321
+    POWERID = 694322
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
@@ -47,8 +48,12 @@ class twistorr74_client(twistorr74_gui):
         self.recording = False
 
         # connect to signals
+            #device parameters
         yield self.tt.signal__pressure_update(self.PRESSUREID)
         yield self.tt.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
+        yield self.tt.signal__power_update(self.POWERID)
+        yield self.tt.addListener(listener=self.updatePower, source=None, ID=self.POWERID)
+            #server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
@@ -81,7 +86,7 @@ class twistorr74_client(twistorr74_gui):
         self.gui.twistorr_power.setChecked(power_tmp)
         #connect signals to slots
         self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.lock_twistorr(status))
-        self.gui.twistorr_power.toggled.connect(lambda status: self.toggle_twistorr(status))
+        self.gui.twistorr_power.clicked.connect(lambda status: self.toggle_twistorr(status))
         self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
 
 
@@ -113,7 +118,7 @@ class twistorr74_client(twistorr74_gui):
         """
         Sets pump power on or off.
         """
-        print('scde')
+        print('set power: ' + str(status))
         #yield self.tt.toggle(status)
 
     def lock_twistorr(self, status):
@@ -131,6 +136,12 @@ class twistorr74_client(twistorr74_gui):
         if self.recording:
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
+
+    def updatePower(self, c, power):
+        """
+        Updates GUI when other clients have made changes to the device.
+        """
+        self.gui.twistorr_power.setChecked(power)
 
     def closeEvent(self, event):
         self.cxn.disconnect()
