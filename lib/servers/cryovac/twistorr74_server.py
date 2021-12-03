@@ -57,18 +57,15 @@ class TwisTorr74Server(SerialDeviceServer):
 
     def initServer(self):
         super().initServer()
-        self.refresher = None
+        self.refresher = LoopingCall(self.poll)
         from twisted.internet.reactor import callLater
-        callLater(1, self.startRefreshing)
+        callLater(1, self.refresher.start, 2)
 
     def stopServer(self):
         super().stopServer()
         if hasattr(self, 'refresher'):
             self.refresher.stop()
 
-    def startRefreshing(self):
-        self.refresher = LoopingCall(self.enumerate_serial_pyserial)
-        self.refresherDone = self.refresher.start(2)
 
     # TOGGLE
     @setting(111, 'toggle', onoff='b', returns='s')
@@ -114,9 +111,9 @@ class TwisTorr74Server(SerialDeviceServer):
         returnValue(resp)
 
     @inlineCallbacks
-    def yz1(self):
-        self.ser.write('\x02\x802240\x0387')
-        resp = self.ser.read(19)
+    def poll(self):
+        yield self.ser.write(b'\x02\x802240\x0387')
+        resp = yield self.ser.read(19)
         resp = yield self._parse(resp)
         resp = float(resp)
         self.pressure_update(resp)
@@ -139,15 +136,12 @@ class TwisTorr74Server(SerialDeviceServer):
             self.refresher.stop()
         return (self.refresher.running, self.refresher.interval)
 
-    @setting(912, 'Set Polling', returns='(bv)')
+    @setting(912, 'Get Polling', returns='(bv)')
     def get_polling(self, c):
         """
         Get polling parameters.
         """
-        if self.refresher:
-            return (self.refresher.running, self.refresher.interval)
-        else:
-            return (False, 0)
+        return (self.refresher.running, self.refresher.interval)
 
 
     # Helper functions

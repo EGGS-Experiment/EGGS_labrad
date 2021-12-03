@@ -45,7 +45,7 @@ class twistorr74_client(twistorr74_gui):
         self.recording = False
 
         # connect to signal
-        yield self.tt.signal__emitted_signal(self.ID)
+        yield self.tt.signal__pressure_update(self.ID)
         yield self.tt.addListener(listener=self.updateValues, source=None, ID=self.ID)
 
         # start device polling
