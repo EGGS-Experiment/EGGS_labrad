@@ -62,9 +62,10 @@ class priority_queue(object):
         raise ValueError("Object not found")
 
 class running_script(object):
-    '''Holds information about a script that is currently running'''
-    def __init__(self, scan, defer_on_done, status, priority=-1,
-                 externally_launched=False):
+    '''
+    Holds information about a script that is currently running.
+    '''
+    def __init__(self, scan, defer_on_done, status, priority=-1, externally_launched=False):
         self.scan = scan
         self.name = scan.name
         self.status = status
@@ -73,7 +74,10 @@ class running_script(object):
         self.externally_launched = externally_launched
 
 class script_semaphore(object):
-    '''Class for storing information about runtime behavior script'''
+    '''
+    Class for storing information about runtime behavior script.
+    '''
+
     def __init__(self, ident, signals):
         self.pause_lock = DeferredLock()
         self.pause_requests = []
@@ -90,7 +94,7 @@ class script_semaphore(object):
 
     def set_percentage(self, perc):
         if not 0.0 <= perc <= 100.0:
-            raise Exception("Incorrect Percentage of Completion")
+            raise Exception("Error: Invalid completion percentage.")
         self.percentage_complete = perc
         self.signals.on_running_new_status((self.ident, self.status, self.percentage_complete))
 

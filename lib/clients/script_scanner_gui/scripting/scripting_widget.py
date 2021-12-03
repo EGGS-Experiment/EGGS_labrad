@@ -1,5 +1,5 @@
 """
-Final GUI. Puts everthing together.
+Final GUI. Puts everything together.
 """
 
 from PyQt5 import QtCore, QtWidgets

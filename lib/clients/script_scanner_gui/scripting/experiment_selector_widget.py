@@ -268,7 +268,7 @@ class experiment_selector_widget(QtWidgets.QWidget):
         self.repeat_button = QtWidgets.QPushButton("Repeat")
         self.scan_button = QtWidgets.QPushButton("Scan")
         self.schedule_button = QtWidgets.QPushButton("Schedule")
-        self.refresh_button = QtWidgets.QPushButton()
+        self.refresh_button = QtWidgets.QPushButton("Refresh")
         self.refresh_button.setIcon(QtGui.QIcon.fromTheme('view-refresh'))
         layout.addWidget(label, 0, 0, 1, 1)
         layout.addWidget(self.dropdown, 0, 1, 1, 3)

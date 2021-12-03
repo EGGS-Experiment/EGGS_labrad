@@ -221,8 +221,8 @@ class ScriptScanner(ScriptSignalsServer):
     def new_script_schedule(self, c, script_name, duration, priority='Normal',
                             start_now=True):
         '''
-        Schedule the script to run every spcified duration of seconds.
-        Priority indicates the priority with which the scrpt is scheduled.
+        Schedule the script to run every specified duration of seconds.
+        Priority indicates the priority with which the script is scheduled.
         '''
         if script_name not in self.script_parameters.keys():
             raise Exception("Script {} Not Found".format(script_name))

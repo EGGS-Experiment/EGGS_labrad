@@ -138,7 +138,7 @@ class running_scans_list(QtWidgets.QTableWidget):
         self.setRowCount(row_count + 1)
         widget = script_status_widget(self.reactor,
                                       parent=self.parent,
-                                      ident=ident, name=name)
+                                      ident=ident, name=name, font=self.font)
         # set up signal mapping
         self.mapper_continue.setMapping(widget, ident)
         widget.on_continue.connect(self.mapper_continue.map)
@@ -155,7 +155,7 @@ class running_scans_list(QtWidgets.QTableWidget):
         try:
             widget = self.d[ident]
         except KeyError:
-            print("trying set status of experiment that's not there")
+            print("Error: trying to set status of experiment that's not there")
         else:
             widget.set_status(status, percentage)
 
@@ -163,7 +163,7 @@ class running_scans_list(QtWidgets.QTableWidget):
         try:
             widget = self.d[ident]
         except KeyError:
-            print("trying set pause experiment that's not there")
+            print("Error: trying pause experiment that's not there")
         else:
             widget.set_paused(is_paused)
 
@@ -195,8 +195,8 @@ class running_scans_list(QtWidgets.QTableWidget):
 
 class running_combined(QtWidgets.QWidget):
     """
-    What does this class do?
-    Instantiated in the scripting_widget class
+    Brings a title together with the list of running experiments.
+    Basically does nothing new, just a convenience class.
     TODO: more descriptive class name
     TODO: rename class with proper syntax
     """

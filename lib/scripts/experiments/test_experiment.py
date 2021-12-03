@@ -60,7 +60,7 @@ class test_experiment(experiment):
         self.dv.add_ex(data2, context=self.c_data2)
 
         while (True):
-            if (self.pause_or_stop() == True):
+            if self.pause_or_stop() == True:
                 break
             elif (time.time() - prevtime) <= 1:
                 continue
@@ -108,6 +108,6 @@ class test_experiment(experiment):
 if __name__ == '__main__':
     cxn = labrad.connect()
     scanner = cxn.script_scanner
-    exprt = test_experiment(cxn = cxn)
+    exprt = test_experiment(cxn=cxn)
     ident = scanner.register_external_launch(exprt.name)
     exprt.execute(ident)
