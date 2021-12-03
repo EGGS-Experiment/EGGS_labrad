@@ -19,6 +19,7 @@ timeout = 20
 #imports
 from labrad.units import WithUnit
 from labrad.server import setting, Signal
+from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 import numpy as np
@@ -270,7 +271,6 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = yield self.ser.read_line()
         resp = np.array(resp.split(','), dtype=float)
         self.temp_update(tuple(resp))
-        print(tuple(resp))
 
 
 if __name__ == '__main__':

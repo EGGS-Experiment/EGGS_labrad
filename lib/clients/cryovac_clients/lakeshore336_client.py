@@ -52,10 +52,10 @@ class lakeshore336_client(lakeshore336_gui):
         yield self.ls.signal__temperature_update(self.TEMPERATUREID)
         yield self.ls.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATUREID)
         # start device polling
-        poll_params = yield self.niops.get_polling()
+        poll_params = yield self.ls.get_polling()
         #only start polling if not started
         if not poll_params[0]:
-            yield self.niops.set_polling(True, 5.0)
+            yield self.ls.set_polling(True, 5.0)
 
         return self.cxn
 
