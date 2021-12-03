@@ -11,7 +11,7 @@ import numpy as np
 import datetime as datetime
 from datetime import datetime
 
-from config.andor_config import andor_config as config
+from EGGS_labrad.lib.config.andor_config import AndorConfig as config
 
 class AndorVideo(QWidget):
     def __init__(self, server):

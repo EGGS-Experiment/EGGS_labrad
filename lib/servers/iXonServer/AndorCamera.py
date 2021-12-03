@@ -1,8 +1,8 @@
 import ctypes as c
-from config.andor_config import andor_config as config
+from EGGS_labrad.lib.config.andor_config import AndorConfig as config
 import os
 
-'''Adoped from https://code.google.com/p/pyandor/'''
+'''Adopted from https://code.google.com/p/pyandor/'''
 
 class AndorInfo(object):
 

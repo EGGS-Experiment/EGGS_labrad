@@ -1,5 +1,5 @@
 from AndorVideo import AndorVideo
-from PyQt5 import QtWidgets.QApplication
+from PyQt5.QtWidgets import QApplication
 app = QApplication([])
 import qt5reactor
 qt5reactor.install()
@@ -230,15 +230,16 @@ class AndorServer(LabradServer):
     @setting(11, "Set Acquisition Mode", mode = 's', returns = '')
     def setAcquisitionMode(self, c, mode):
         """Sets Current Acquisition Mode"""
-        print 'acquiring: {}'.format(self.setAcquisitionMode.__name__)
+        print('acquiring: {}'.format(self.setAcquisitionMode.__name__))
         yield self.lock.acquire()
         try:
-            print 'acquired : {}'.format(self.setAcquisitionMode.__name__)
+            print('acquired : {}'.format(self.setAcquisitionMode.__name__))
             yield deferToThread(self.camera.set_acquisition_mode, mode)
         finally:
-            print 'releasing: {}'.format(self.setAcquisitionMode.__name__)
+            print('releasing: {}'.format(self.setAcquisitionMode.__name__))
             self.lock.release()
         self.gui.set_acquisition_mode(mode)
+
     '''
     Trigger Mode
     '''
