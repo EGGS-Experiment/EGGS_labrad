@@ -2,7 +2,6 @@ import os
 import time
 import datetime as datetime
 
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.cryovac_clients.niops03_gui import niops03_gui

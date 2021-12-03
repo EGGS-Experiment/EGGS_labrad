@@ -26,12 +26,12 @@ from serial import PARITY_ODD
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
-
 INPUT_CHANNELS = ['A', 'B', 'C', 'D', '0']
 OUTPUT_CHANNELS = [1, 2, 3, 4]
 TERMINATOR = '\r\n'
 
 TEMPSIGNAL = 122485
+
 
 class Lakeshore336Server(SerialDeviceServer):
     """Talks to the Lakeshore 336 Temperature Controller"""
@@ -47,19 +47,20 @@ class Lakeshore336Server(SerialDeviceServer):
     stopbits = 1
 
     # SIGNALS
-    temp_update = Signal(TEMPSIGNAL, 'signal: temperature update', '*v')
+    temp_update = Signal(TEMPSIGNAL, 'signal: temperature update', '(vvvv)')
 
     # STARTUP
     def initServer(self):
         super().initServer()
+        # polling stuff
         self.refresher = LoopingCall(self.poll)
         from twisted.internet.reactor import callLater
         callLater(1, self.refresher.start, 2)
 
     def stopServer(self):
-        super().stopServer()
         if hasattr(self, 'refresher'):
             self.refresher.stop()
+        super().stopServer()
 
 
     # TEMPERATURE DIODES
@@ -72,14 +73,16 @@ class Lakeshore336Server(SerialDeviceServer):
         Returns:
             (*float): sensor temperature in Kelvin
         """
-        if not channel:
+        if channel is None:
             channel = '0'
         elif channel not in INPUT_CHANNELS:
             raise Exception('Invalid input: channel must be one of: ' + str(INPUT_CHANNELS))
         yield self.ser.write('KRDG? ' + str(channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         resp = np.array(resp.split(','), dtype=float)
-        returnValue(tuple(resp))
+        resp = tuple(resp)
+        self.temp_update(resp)
+        returnValue(resp)
 
     # HEATER
     @setting(211, 'Heater Setup', output_channel='i', resistance='i', max_current='v', returns='*v')
@@ -230,6 +233,44 @@ class Lakeshore336Server(SerialDeviceServer):
         resp = resp.split(',')
         resp = [int(resp[1]), float(resp[2])]
         returnValue(resp)
+
+
+    # POLLING
+    @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
+    def set_polling(self, c, status, interval):
+        """
+        Configure polling of device for values.
+        """
+        #ensure interval is valid
+        if (interval < 1) or (interval > 60):
+            raise Exception('Invalid polling interval.')
+        #only start/stop polling if we are not already started/stopped
+        if status and (not self.refresher.running):
+            self.refresher.start(interval)
+        elif status and self.refresher.running:
+            self.refresher.interval = interval
+        elif (not status) and (self.refresher.running):
+            self.refresher.stop()
+        return (self.refresher.running, self.refresher.interval)
+
+    @setting(912, 'Get Polling', returns='(bv)')
+    def get_polling(self, c):
+        """
+        Get polling parameters.
+        """
+        return (self.refresher.running, self.refresher.interval)
+
+    @inlineCallbacks
+    def poll(self):
+        """
+        Polls the device for temperature readout.
+        """
+        #get results all together
+        yield self.ser.write('KRDG? 0\r\n')
+        resp = yield self.ser.read_line()
+        resp = np.array(resp.split(','), dtype=float)
+        self.temp_update(tuple(resp))
+        print(tuple(resp))
 
 
 if __name__ == '__main__':

@@ -2,17 +2,15 @@ import os
 import time
 import datetime as datetime
 
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui import lakeshore336_gui
-
-from PyQt5.QtGui import QFont
 
 
 class lakeshore336_client(lakeshore336_gui):
 
     name = 'Lakeshore336 Client'
+    TEMPERATUREID = 194538
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
@@ -23,13 +21,15 @@ class lakeshore336_client(lakeshore336_gui):
         self.connect()
         self.initializeGUI()
 
-    #Setup functions
+
+    # SETUP
     @inlineCallbacks
     def connect(self):
         """
         Creates an asynchronous connection to lakeshore server
         and relevant labrad servers
         """
+        # create labrad connection
         if not self.cxn:
             import os
             LABRADHOST = os.environ['LABRADHOST']
@@ -45,19 +45,20 @@ class lakeshore336_client(lakeshore336_gui):
             print(e)
             raise
 
-        # get polling time
-        #yield self.reg.cd(['Clients', self.name])
-        #self.poll_time = yield self.reg.get('poll_time')
-        #self.poll_time = float(self.poll_time)
-        self.poll_time = 1.0
-
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
+        # connect to signals
+        yield self.ls.signal__temperature_update(self.TEMPERATUREID)
+        yield self.ls.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATUREID)
+        # start device polling
+        poll_params = yield self.niops.get_polling()
+        #only start polling if not started
+        if not poll_params[0]:
+            yield self.niops.set_polling(True, 5.0)
 
-        #create and start loop to poll server for temperature
-        self.poll_loop = LoopingCall(self.poll)
-        self.reactor.callLater(1.0, self.start_polling)
+        return self.cxn
+
 
     #@inlineCallbacks
     def initializeGUI(self):
@@ -74,7 +75,23 @@ class lakeshore336_client(lakeshore336_gui):
         self.gui.heat2_mode.currentIndexChanged.connect(lambda mode: self.heater_mode_changed(mode, chan=2))
 
 
-    #Slot functions
+    # SLOTS
+    @inlineCallbacks
+    def updateTemperature(self, c, temp):
+        self.gui.temp1.setText(str(temp[0]))
+        self.gui.temp2.setText(str(temp[1]))
+        self.gui.temp3.setText(str(temp[2]))
+        self.gui.temp4.setText(str(temp[3]))
+        if self.gui.heat1_mode.currentText() != 'Off':
+            curr1 = yield self.ls.get_heater_output(1)
+            self.gui.heat1.setText(str(curr1))
+        if self.gui.heat2_mode.currentText() != 'Off':
+            curr2 = yield self.ls.get_heater_output(2)
+            self.gui.heat2.setText(str(curr2))
+        if self.recording == True:
+            elapsedtime = time.time() - self.starttime
+            yield self.dv.add(elapsedtime, temp[0], temp[1], temp[2], temp[3], context=self.c_record)
+
     @inlineCallbacks
     def record_temp(self, status):
         """
@@ -261,31 +278,6 @@ class lakeshore336_client(lakeshore336_gui):
                 self.gui.heat2_p1.setDecimals(2)
                 self.gui.heat2_p1.setSingleStep(1e-2)
                 self.gui.heat2_p1.setRange(0, self.gui.heat1_curr.value())
-
-    #Polling functions
-    def start_polling(self):
-        self.poll_loop.start(self.poll_time)
-
-    def stop_polling(self):
-        self.poll_loop.stop()
-
-    @inlineCallbacks
-    def poll(self):
-        #get temperature and set diode
-        temp = yield self.ls.read_temperature('0')
-        self.gui.temp1.setText(str(temp[0]))
-        self.gui.temp2.setText(str(temp[1]))
-        self.gui.temp3.setText(str(temp[2]))
-        self.gui.temp4.setText(str(temp[3]))
-        if self.recording == True:
-            elapsedtime = time.time() - self.starttime
-            yield self.dv.add(elapsedtime, temp[0], temp[1], temp[2], temp[3], context=self.c_record)
-        if self.gui.heat1_mode.currentText() != 'Off':
-            curr1 = yield self.ls.get_heater_output(1)
-            self.gui.heat1.setText(str(curr1))
-        if self.gui.heat2_mode.currentText() != 'Off':
-            curr2 = yield self.ls.get_heater_output(2)
-            self.gui.heat2.setText(str(curr2))
 
     def closeEvent(self, event):
         self.cxn.disconnect()
