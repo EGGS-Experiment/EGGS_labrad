@@ -75,37 +75,52 @@ class NIOPS03Server(SerialDeviceServer):
         returnValue(resp)
 
     # ON/OFF
-    @setting(111, 'Toggle IP', power='b', returns='s')
+    @setting(111, 'IP Toggle', power='b', returns='s')
     def toggle_ip(self, c, power):
         """
         Set or query whether ion pump is off or on
         Args:
-            (bool): whether pump is to be on or off
+            power   (bool)  : whether pump is to be on or off
         Returns:
-            (float): pump power status
+                    (str)   : response from device
         """
         if power:
             yield self.ser.write('G' + TERMINATOR)
-        elif power == False:
+        else:
             yield self.ser.write('B' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
         returnValue(resp)
 
-    @setting(112, 'Toggle NP', power='b', returns='s')
+    @setting(112, 'NP Toggle', power='b', returns='s')
     def toggle_np(self, c, power):
         """
         Set getter power.
         Args:
-            (bool): whether getter is to be on or off
+            power   (bool)  : whether getter is to be on or off
         Returns:
-            (bool): getter power status
+                    (str)   : response from device
         """
         if power:
             yield self.ser.write('GN' + TERMINATOR)
-        elif power == False:
+        else:
             yield self.ser.write('BN' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
         returnValue(resp)
+
+    @setting(121, 'NP Mode', mode='i', returns='s')
+    def np_mode(self, c, mode):
+        """
+        Set getter mode.
+        Args:
+            mode (int)  : NP mode. [1=activation, 2=timed activation,
+                                    3=conditioning, 4=timed conditioning]
+        Returns:
+                (str)  : response from device
+        """
+        yield self.ser.write('M' + str(mode) + TERMINATOR)
+        resp = yield self.ser.read_line('\r')
+        returnValue(resp)
+
 
     #PARAMETERS
     @setting(211, 'IP Pressure', returns='v')
@@ -161,7 +176,7 @@ class NIOPS03Server(SerialDeviceServer):
 
 
     # INTERLOCK
-    @setting(311, 'Interlock IP', status='b', press='v', returns='')
+    @setting(311, 'IP Interlock', status='b', press='v', returns='')
     def interlock_ip(self, c, status, press):
         """
         Activates an interlock, switching off the ion pump
