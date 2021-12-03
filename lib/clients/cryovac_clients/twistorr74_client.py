@@ -49,6 +49,10 @@ class twistorr74_client(twistorr74_gui):
         # connect to signals
         yield self.tt.signal__pressure_update(self.PRESSUREID)
         yield self.tt.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
+        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
+        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
+        yield self.cxn.manager.addListener(listener=self.th1, source=None, ID=9898989)
+        yield self.cxn.manager.addListener(listener=self.th1, source=None, ID=9898989 + 1)
 
         # start device polling
         poll_params = yield self.tt.get_polling()
@@ -57,6 +61,10 @@ class twistorr74_client(twistorr74_gui):
             yield self.tt.set_polling(True, 5.0)
 
         return self.cxn
+
+    @inlineCallbacks
+    def th1(self, c, message):
+        print(message)
 
     @inlineCallbacks
     def initializeGUI(self, cxn):

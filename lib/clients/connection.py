@@ -32,6 +32,21 @@ class connection(object):
         self.cxn = yield connectAsync(host=LABRADHOST, name=self.name)
         yield self.setupListeners()
         returnValue(self)
+
+    @inlineCallbacks
+    def context(self):
+        """
+        Returns a context object.
+        Follows the same form as one would use on a normal cxn object.
+        """
+        context = yield self.cxn.context()
+        returnValue(context)
+
+    def disconnect(self):
+        """
+        Disconnect from the LabRAD manager.
+        """
+        self.cxn.disconnect()
     
     @inlineCallbacks
     def get_server(self, server_name):
@@ -83,15 +98,7 @@ class connection(object):
             self._on_disconnect[server_name].append(action)
         except KeyError:
             self._on_disconnect[server_name] = [action]
-    
-    @inlineCallbacks
-    def context(self):
-        """
-        Returns a context object.
-        Follows the same form as one would use on a normal cxn object.
-        """
-        context = yield self.cxn.context()
-        returnValue(context)
+
 
     #Signal functions
     @inlineCallbacks
@@ -158,12 +165,7 @@ class connection(object):
                 returnValue(False)
         returnValue(True)
 
-    def disconnect(self):
-        """
-        Disconnect from the LabRAD manager
-        """
-        self.cxn.disconnect()
-            
+
 if __name__ == '__main__':
     from twisted.internet import reactor
     app = connection()
