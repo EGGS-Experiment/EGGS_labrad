@@ -327,10 +327,11 @@ class SerialDeviceServer(LabradServer):
     def checkConnection(self):
         if not self.ser: raise SerialConnectionError(2)
 
+    @inlineCallbacks
     def serverConnected(self, ID, name):
         """Check to see if we can connect to serial server now"""
-        if self.ser is None and None not in ( self.port, self.serNode ) and self._matchSerial( self.serNode, name ):
-            self.initSerial( name, self.port)
+        if self.ser is None and None not in (self.port, self.serNode) and self._matchSerial(self.serNode, name):
+            yield self.initSerial(name, self.port)
             print('Serial server connected after we connected')
 
     def serverDisconnected(self, ID, name):
@@ -362,7 +363,6 @@ class SerialDeviceServer(LabradServer):
             else:
                 raise Exception('Unknown connection error')
         except Exception as e:
-            #maybe check for serialutil.SerialException?
             print(e)
 
     @setting(111112, 'Close Device', returns='')

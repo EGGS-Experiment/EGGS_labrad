@@ -70,9 +70,6 @@ class TwisTorr74Server(SerialDeviceServer):
             self.refresher.stop()
         super().stopServer()
 
-    def setUnits(self):
-        pass
-
     def initContext(self, c):
         """Initialize a new context object."""
         self.listeners.add(c.ID)
@@ -86,6 +83,22 @@ class TwisTorr74Server(SerialDeviceServer):
         notified = self.listeners.copy()
         notified.remove(c.ID)
         return notified
+
+    @inlineCallbacks
+    def initSerial(self, serStr, port, **kwargs):
+        """
+        Subclass initSerial to set pressure units right after connection.
+        """
+        yield super().initSerial(serStr, port **kwargs)
+        msg = self._create_message(CMD_msg=b'163', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
+        print(msg)
+        yield self.ser.write(msg)
+        resp = yield self.ser.read(15)
+        print(resp)
+        resp = self._parse(resp)
+        print(resp)
+
+
 
 
     # TOGGLE

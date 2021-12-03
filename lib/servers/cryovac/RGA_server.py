@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = RGA Server
-version = 1.3
+version = 1.4.1
 description = Connects to the SRS200 RGA
 
 [startup]
@@ -14,11 +14,6 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-
-'''
-Created May 22, 2016
-@author: Calvin He
-'''
 
 from labrad.units import WithUnit
 from labrad.server import Signal, setting
