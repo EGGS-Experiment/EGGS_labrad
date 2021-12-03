@@ -50,9 +50,9 @@ class twistorr74_client(twistorr74_gui):
         yield self.tt.signal__pressure_update(self.PRESSUREID)
         yield self.tt.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
+        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
-        yield self.cxn.manager.addListener(listener=self.th1, source=None, ID=9898989)
-        yield self.cxn.manager.addListener(listener=self.th2, source=None, ID=9898989 + 1)
+        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
 
         # start device polling
         poll_params = yield self.tt.get_polling()
@@ -62,14 +62,16 @@ class twistorr74_client(twistorr74_gui):
 
         return self.cxn
 
-    #@inlineCallbacks
-    def th1(self, c, message):
-        if message[1] == 'Twistorr74 Server':
+    def on_connect(self, c, message):
+        server_name = message[1]
+        if server_name == 'TwisTorr74 Server':
+            print(server_name + ' reconnected, enabling widget.')
             self.setEnabled(True)
 
-    #@inlineCallbacks
-    def th2(self, c, message):
-        if message[1] == 'Twistorr74 Server':
+    def on_disconnect(self, c, message):
+        server_name = message[1]
+        if server_name == 'TwisTorr74 Server':
+            print(server_name + ' disconnected, disabling widget.')
             self.setEnabled(False)
 
     @inlineCallbacks
