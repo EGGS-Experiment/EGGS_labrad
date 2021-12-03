@@ -63,7 +63,7 @@ class TwisTorr74Server(SerialDeviceServer):
         # polling stuff
         self.refresher = LoopingCall(self.poll)
         from twisted.internet.reactor import callLater
-        callLater(1, self.refresher.start, 2)
+        callLater(2, self.refresher.start, 2)
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -89,16 +89,34 @@ class TwisTorr74Server(SerialDeviceServer):
         """
         Subclass initSerial to set pressure units right after connection.
         """
-        yield super().initSerial(serStr, port **kwargs)
+        if kwargs.get('timeout') is None and self.timeout: kwargs['timeout'] = self.timeout
+        print('Attempting to connect at:')
+        print('\tserver:\t%s' % serStr)
+        print('\tport:\t%s' % port)
+        print('\ttimeout:\t%s\n\n' % (str(self.timeout) if kwargs.get('timeout') is not None else 'No timeout'))
+        cli = self.client
+        try:
+            # get server wrapper for serial server
+            ser = cli.servers[serStr]
+            # instantiate SerialConnection convenience class
+            self.ser = self.SerialConnection(ser=ser, port=port, **kwargs)
+            #clear input and output buffers
+            yield self.ser.flush_input()
+            yield self.ser.flush_output()
+            print('Serial connection opened.')
+            yield self.setUnits()
+            print('Setting default units to mBar')
+        except Exception as e:
+            self.ser = None
+            print(e)
+            raise Exception
+
+    @inlineCallbacks
+    def setUnits(self):
         msg = self._create_message(CMD_msg=b'163', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
-        print(msg)
         yield self.ser.write(msg)
         resp = yield self.ser.read(15)
-        print(resp)
         resp = self._parse(resp)
-        print(resp)
-
-
 
 
     # TOGGLE
