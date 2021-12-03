@@ -16,7 +16,6 @@ timeout = 5
 ### END NODE INFO
 """
 import time
-import numpy as np
 
 from labrad.types import Value
 from labrad.server import setting, Signal
@@ -117,6 +116,7 @@ class TwisTorr74Server(SerialDeviceServer):
         yield self.ser.write(msg)
         resp = yield self.ser.read(15)
         resp = self._parse(resp)
+        print(resp)
 
 
     # TOGGLE

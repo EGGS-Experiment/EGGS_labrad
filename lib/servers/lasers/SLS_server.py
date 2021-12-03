@@ -15,13 +15,15 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks, SerialDeviceError, SerialConnectionError, PortRegError
-from labrad import types as T
-from twisted.internet.defer import returnValue
-from labrad.support import getNodeName
+from labrad.types import Value
+from labrad.server import setting, Signal
+from twisted.internet.task import LoopingCall
+from twisted.internet.defer import inlineCallbacks, returnValue
+
+from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 TERMINATOR = '\r\n'
-SLS_EOL = '>'
+_SLS_EOL = '>'
 
 class SLSServer(SerialDeviceServer):
     """Connects to the 729nm SLS Laser"""
@@ -31,7 +33,10 @@ class SLSServer(SerialDeviceServer):
     port = 'COM44'
 
     baudrate = 115200
-    timeout = T.Value(5.0, 's')
+    timeout = Value(5.0, 's')
+
+    # SIGNALS
+    autolock_update = Signal(999999, 'signal: autolock update', '(iv)')
 
     # STARTUP
     def initServer(self):
@@ -61,7 +66,7 @@ class SLSServer(SerialDeviceServer):
         notified.remove(c.ID)
         return notified
 
-    #Autolock
+    # AUTOLOCK
     @setting(111, 'Autolock Toggle', enable='s', returns='s')
     def autolock_toggle(self, c, enable=None):
         '''
@@ -82,7 +87,7 @@ class SLSServer(SerialDeviceServer):
         resp = []
         for string in chString:
             resp_tmp = yield self.ser.write('get ' + string + TERMINATOR)
-            resp_tmp = yield self.ser.read_line(SLS_EOL)
+            resp_tmp = yield self.ser.read_line(_SLS_EOL)
             resp_tmp = yield self._parse(resp_tmp, False)
             resp.append(resp_tmp)
         returnValue(resp)
@@ -103,7 +108,7 @@ class SLSServer(SerialDeviceServer):
         resp = yield self._query(chString, param_tg)
         returnValue(resp)
 
-    #PDH
+    # PDH
     @setting(211, 'PDH', param_name='s', param_val='?', returns='s')
     def PDH(self, c, param_name, param_val=None):
         '''
@@ -121,14 +126,14 @@ class SLSServer(SerialDeviceServer):
             print('Invalid parameter. Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
         if param_val:
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
-            set_resp = yield self.ser.read_line(SLS_EOL)
+            set_resp = yield self.ser.read_line(_SLS_EOL)
             set_resp = yield self._parse(set_resp, True)
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
-        resp = yield self.ser.read_line(SLS_EOL)
+        resp = yield self.ser.read_line(_SLS_EOL)
         resp = yield self._parse(resp, False)
         returnValue(resp)
 
-    #Offset lock
+    # OFFSET
     @setting(311, 'Offset Frequency', freq='v', returns='v')
     def offset_frequency(self, c, freq=None):
         '''
@@ -155,7 +160,7 @@ class SLSServer(SerialDeviceServer):
         resp = yield self._query(chString, lockpoint)
         returnValue(int(resp))
 
-    #Servo
+    # SERVO
     @setting(411, 'servo', servo_target='s', param_name='s', param_val='?', returns='s')
     def servo(self, c, servo_target, param_name, param_val=None):
         '''
@@ -176,7 +181,7 @@ class SLSServer(SerialDeviceServer):
         returnValue(resp)
 
 
-    #Misc. settings
+    # MISC
     @setting(511, 'Get Values', returns='*2s')
     def get_values(self, c):
         '''
@@ -184,7 +189,7 @@ class SLSServer(SerialDeviceServer):
         '''
         yield self.ser.write_line('get values')
         #should be blocking otherwise we might overwrite
-        resp = yield self.ser.read_line(SLS_EOL)
+        resp = yield self.ser.read_line(_SLS_EOL)
         #parse response
         resp = resp.split('\r\n')[2:-2]
         resp = [val.split('=') for val in resp]
@@ -194,7 +199,44 @@ class SLSServer(SerialDeviceServer):
         returnValue((keys, values))
 
 
-    #Helper functions
+    # POLLING
+    @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
+    def set_polling(self, c, status, interval):
+        """
+        Configure polling of device for values.
+        """
+        #ensure interval is valid
+        if (interval < 1) or (interval > 60):
+            raise Exception('Invalid polling interval.')
+        #only start/stop polling if we are not already started/stopped
+        if status and (not self.refresher.running):
+            self.refresher.start(interval)
+        elif status and self.refresher.running:
+            self.refresher.interval = interval
+        elif (not status) and (self.refresher.running):
+            self.refresher.stop()
+        return (self.refresher.running, self.refresher.interval)
+
+    @setting(912, 'Get Polling', returns='(bv)')
+    def get_polling(self, c):
+        """
+        Get polling parameters.
+        """
+        return (self.refresher.running, self.refresher.interval)
+
+    @inlineCallbacks
+    def poll(self):
+        """
+        Polls the device for locking readout.
+        """
+        yield self.ser.write('get LockCount' + TERMINATOR)
+        yield self.ser.write('get LockTime' + TERMINATOR)
+        lockcount = yield self.ser.read_line(_SLS_EOL)
+        locktime = yield self.ser.read_line(_SLS_EOL)
+        self.autolock_update((lockcount, locktime))
+
+
+    # HELPERS
     def _parse(self, string, setter):
         """
         Strips echo from SLS and returns a dictionary with
@@ -227,12 +269,12 @@ class SLSServer(SerialDeviceServer):
         if param:
             #write data and read echo
             yield self.ser.write('set ' + chstring + ' ' + str(param) + TERMINATOR)
-            set_resp = yield self.ser.read_line(SLS_EOL)
+            set_resp = yield self.ser.read_line(_SLS_EOL)
             #parse
             set_resp = yield self._parse(set_resp, True)
         # write data and read echo
         yield self.ser.write('get ' + chstring + TERMINATOR)
-        resp = yield self.ser.read_line(SLS_EOL)
+        resp = yield self.ser.read_line(_SLS_EOL)
         # parse
         resp = yield self._parse(resp, False)
         returnValue(resp)

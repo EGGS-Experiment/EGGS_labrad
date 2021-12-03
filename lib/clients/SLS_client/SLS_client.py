@@ -1,15 +1,13 @@
-import os
-import time
-
-from twisted.internet.task import LoopingCall
+from datetime import timedelta
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.SLS_client.SLS_gui import SLS_gui
 
+
 class SLS_client(SLS_gui):
 
     name = 'SLS Client'
-    poll_time = 2.0
+    AUTOLOCKID = 295372
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
@@ -18,6 +16,8 @@ class SLS_client(SLS_gui):
         self.gui.setupUi()
         self.reactor = reactor
         self.servo_target = None
+        self.servers = ['SLS Server', 'Data Vault']
+        # initialization sequence
         d = self.connect()
         d.addCallback(self.initData)
         d.addCallback(self.initializeGUI)
@@ -44,6 +44,21 @@ class SLS_client(SLS_gui):
             print(e)
             raise
 
+        # connect to signals
+            #device parameters
+        yield self.sls.signal__autolock_update(self.AUTOLOCKID)
+        yield self.sls.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
+            #server connections
+        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
+        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
+        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
+        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
+
+        # start device polling
+        poll_params = yield self.sls.get_polling()
+        #only start polling if not started
+        if not poll_params[0]:
+            yield self.sls.set_polling(True, 5.0)
         return self.cxn
 
     @inlineCallbacks
@@ -60,6 +75,9 @@ class SLS_client(SLS_gui):
         self.gui.autolock_param.setCurrentIndex(int(init_values['SweepType']))
         self.gui.autolock_toggle.setChecked(bool(init_values['AutoLockEnable']))
         self.gui.autolock_attempts.setText(str(init_values['LockCount']))
+        autolock_time = float(init_values['LockTime'])
+        autolock_time_formatted = str(timedelta(seconds=round(autolock_time)))
+        self.gui.autolock_time.setText(autolock_time_formatted)
         # offset
         self.gui.off_freq.setValue(float(init_values['OffsetFrequency']))
         self.gui.off_lockpoint.setCurrentIndex(int(init_values['LockPoint']))
@@ -77,7 +95,6 @@ class SLS_client(SLS_gui):
         self.gui.PDH_filter.setCurrentIndex(int(init_values['CurrentServoOutputFilter']))
         return cxn
 
-    #@inlineCallbacks
     def initializeGUI(self, cxn):
         # connect signals to slots
             # autolock
@@ -97,6 +114,29 @@ class SLS_client(SLS_gui):
         self.gui.servo_d.valueChanged.connect(lambda value: self.changeServoValue('d', value))
         return cxn
 
+
+    # SIGNALS
+    def on_connect(self, c, message):
+        server_name = message[1]
+        if server_name in self.servers:
+            print(server_name + ' reconnected, enabling widget.')
+            self.setEnabled(True)
+
+    def on_disconnect(self, c, message):
+        server_name = message[1]
+        if server_name in self.servers:
+            print(server_name + ' disconnected, disabling widget.')
+            self.setEnabled(False)
+
+    def updateAutolock(self, c, lockstatus):
+        """
+        Updates GUI when values are received from server.
+        """
+        print('scde')
+        autolock_time = float(lockstatus[1])
+        autolock_time_formatted = str(timedelta(seconds=round(autolock_time)))
+        self.gui.autolock_attempts.setText(str(lockstatus[0]))
+        self.gui.autolock_time.setText(autolock_time_formatted)
 
     # SLOTS
     def changePDHValue(self, param_name, param_value):

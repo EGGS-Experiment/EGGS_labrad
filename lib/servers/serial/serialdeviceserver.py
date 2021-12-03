@@ -381,7 +381,7 @@ class SerialDeviceServer(LabradServer):
         resp = yield self.ser.read()
         returnValue(resp)
 
-    @setting(111114, 'Serial Write', data='s', returns='s')
+    @setting(111114, 'Serial Write', data='s', returns='')
     def serial_write(self, c, data):
         """Directly write to the serial device."""
         yield self.ser.write(data)
