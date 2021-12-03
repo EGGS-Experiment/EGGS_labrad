@@ -11,12 +11,16 @@ class niops03_client(niops03_gui):
     name = 'NIOPS03 Client'
     PRESSUREID = 878352
     WORKINGTIMEID = 878353
+    IPPOWERID = 878354
+    NPPOWERID = 878355
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
         self.cxn = cxn
         self.gui = self
         self.reactor = reactor
+        self.servers = ['NIOPS03 Server', 'Data Vault']
+        # initialization sequence
         d = self.connect()
         d.addCallback(self.initializeGUI)
 
@@ -41,16 +45,29 @@ class niops03_client(niops03_gui):
             self.niops = self.cxn.niops03_server
         except Exception as e:
             print(e)
-            raise
+            print('Required servers not connected, disabling widget.')
+            self.setEnabled(True)
 
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
+
         # connect to signals
+            # device signals
         yield self.niops.signal__pressure_update(self.PRESSUREID)
         yield self.niops.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
         yield self.niops.signal__workingtime_update(self.WORKINGTIMEID)
         yield self.niops.addListener(listener=self.updateWorkingTime, source=None, ID=self.WORKINGTIMEID)
+        yield self.niops.signal__ip_power_update(self.IPPOWERID)
+        yield self.niops.addListener(listener=self.updateIPPower, source=None, ID=self.IPPOWERID)
+        yield self.niops.signal__np_power_update(self.NPPOWERID)
+        yield self.niops.addListener(listener=self.updateNPPower, source=None, ID=self.NPPOWERID)
+            # server connections
+        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
+        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
+        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
+        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
+
         # start device polling
         poll_params = yield self.niops.get_polling()
         #only start polling if not started
@@ -77,12 +94,24 @@ class niops03_client(niops03_gui):
         #connect signals to slots
             #ion pump
         self.gui.niops_lockswitch.toggled.connect(lambda status: self.lock_niops(status))
-        self.gui.niops_power.toggled.connect(lambda status: self.toggle_niops(status))
+        self.gui.niops_power.clicked.connect(lambda status: self.toggle_niops(status))
         self.gui.niops_record.toggled.connect(lambda status: self.record_pressure(status))
         self.gui.niops_voltage.valueChanged.connect(lambda voltage: self.set_ip_voltage(voltage))
             #getter
         self.gui.np_lockswitch.toggled.connect(lambda status: self.lock_np(status))
-        self.gui.np_power.toggled.connect(lambda status: self.toggle_np(status))
+        self.gui.np_power.clicked.connect(lambda status: self.toggle_np(status))
+
+    def on_connect(self, c, message):
+        server_name = message[1]
+        if server_name in self.servers:
+            print(server_name + ' reconnected, enabling widget.')
+            self.setEnabled(True)
+
+    def on_disconnect(self, c, message):
+        server_name = message[1]
+        if server_name in self.servers:
+            print(server_name + ' disconnected, disabling widget.')
+            self.setEnabled(False)
 
 
     # SLOTS
@@ -99,6 +128,14 @@ class niops03_client(niops03_gui):
         workingtime_np = str(workingtime[1][0]) + ':' + str(workingtime[1][1])
         self.gui.niops_workingtime_display.setText(workingtime_ip)
         self.gui.np_workingtime_display.setText(workingtime_np)
+
+    def updateIPPower(self, c, power):
+        # set IP power
+        self.gui.niops_power.setChecked(power)
+
+    def updateNPPower(self, c, power):
+        # set NP power
+        self.gui.np_power.setChecked(power)
 
     @inlineCallbacks
     def record_pressure(self, status):
@@ -127,7 +164,8 @@ class niops03_client(niops03_gui):
         """
         Sets ion pump power on or off.
         """
-        yield self.niops.ip_toggle(status)
+        print('set: ' + str(status))
+        #yield self.niops.ip_toggle(status)
 
     def lock_niops(self, status):
         """
@@ -148,8 +186,9 @@ class niops03_client(niops03_gui):
         """
         Sets getter power on or off.
         """
-        yield self.niops.np_mode(1)
-        yield self.niops.np_toggle(status)
+        print('state: ' + str(status))
+        #yield self.niops.np_mode(1)
+        #yield self.niops.np_toggle(status)
 
     def lock_np(self, status):
         """

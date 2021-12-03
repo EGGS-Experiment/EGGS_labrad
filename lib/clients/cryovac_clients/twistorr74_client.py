@@ -18,6 +18,8 @@ class twistorr74_client(twistorr74_gui):
         self.cxn = cxn
         self.gui = self
         self.reactor = reactor
+        self.servers = ['TwisTorr74 Server', 'Data Vault']
+        # initialization sequence
         d = self.connect()
         d.addCallback(self.initializeGUI)
 
@@ -69,13 +71,13 @@ class twistorr74_client(twistorr74_gui):
 
     def on_connect(self, c, message):
         server_name = message[1]
-        if server_name == 'TwisTorr74 Server':
+        if server_name in self.servers:
             print(server_name + ' reconnected, enabling widget.')
             self.setEnabled(True)
 
     def on_disconnect(self, c, message):
         server_name = message[1]
-        if server_name == 'TwisTorr74 Server':
+        if server_name in self.servers:
             print(server_name + ' disconnected, disabling widget.')
             self.setEnabled(False)
 
@@ -90,7 +92,7 @@ class twistorr74_client(twistorr74_gui):
         self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
 
 
-    #Slot functions
+    # SLOTS
     @inlineCallbacks
     def record_pressure(self, status):
         """

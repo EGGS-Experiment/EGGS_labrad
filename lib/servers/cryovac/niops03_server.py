@@ -27,7 +27,8 @@ from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 import time
 
 TERMINATOR = '\r\n'
-QUERY_msg = b'\x05'
+_NI03_QUERY_msg = '\x05'
+_NI03_ACK_msg = '\x06'
 
 class NIOPS03Server(SerialDeviceServer):
     """
@@ -44,6 +45,8 @@ class NIOPS03Server(SerialDeviceServer):
     # SIGNALS
     pressure_update = Signal(999999, 'signal: pressure update', 'v')
     workingtime_update = Signal(999998, 'signal: workingtime update', '*2i')
+    ip_power_update = Signal(999997, 'signal: ip power update', 'b')
+    np_power_update = Signal(999996, 'signal: np power update', 'b')
 
     # STARTUP
     def initServer(self):
@@ -93,7 +96,7 @@ class NIOPS03Server(SerialDeviceServer):
     @setting(111, 'IP Toggle', power='b', returns='s')
     def toggle_ip(self, c, power):
         """
-        Set or query whether ion pump is off or on
+        Set ion pump power.
         Args:
             power   (bool)  : whether pump is to be on or off
         Returns:
@@ -104,6 +107,8 @@ class NIOPS03Server(SerialDeviceServer):
         else:
             yield self.ser.write('B' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
+        if resp == _NI03_ACK_msg:
+            self.ip_power_update(power, self.getOtherListeners(c))
         returnValue(resp)
 
     @setting(112, 'NP Toggle', power='b', returns='s')
@@ -111,7 +116,7 @@ class NIOPS03Server(SerialDeviceServer):
         """
         Set getter power.
         Args:
-            power   (bool)  : whether getter is to be on or off
+            power   (bool)  : getter power status
         Returns:
                     (str)   : response from device
         """
@@ -120,6 +125,8 @@ class NIOPS03Server(SerialDeviceServer):
         else:
             yield self.ser.write('BN' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
+        if resp == _NI03_ACK_msg:
+            self.np_power_update(power, self.getOtherListeners(c))
         returnValue(resp)
 
     @setting(121, 'NP Mode', mode='i', returns='s')
@@ -244,17 +251,17 @@ class NIOPS03Server(SerialDeviceServer):
         #get results all together
         yield self.ser.write('Tb' + TERMINATOR)
         pressure = yield self.ser.read_line()
-        yield self.ser.write('TM' + TERMINATOR)
-        ip_time = yield self.ser.read_line('\r')
-        np_time = yield self.ser.read_line('\r')
+        # yield self.ser.write('TM' + TERMINATOR)
+        # ip_time = yield self.ser.read_line('\r')
+        # np_time = yield self.ser.read_line('\r')
         #update pressure
         self.pressure_update(float(pressure))
         # update workingtime
-        ip_time = ip_time[16:-8].split(' Hours ')
-        np_time = np_time[16:-8].split(' Hours ')
-        ip_time = [int(val) for val in ip_time]
-        np_time = [int(val) for val in np_time]
-        self.workingtime_update([ip_time, np_time])
+        # ip_time = ip_time[16:-8].split(' Hours ')
+        # np_time = np_time[16:-8].split(' Hours ')
+        # ip_time = [int(val) for val in ip_time]
+        # np_time = [int(val) for val in np_time]
+        # self.workingtime_update([ip_time, np_time])
         #interlock
         if self.interlock_active:
             press_tmp = yield self.tt.read_pressure()
