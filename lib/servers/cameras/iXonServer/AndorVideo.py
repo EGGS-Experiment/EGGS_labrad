@@ -1,15 +1,19 @@
-from config.andor_config import andor_config as config
-from PyQt4 import QtGui, QtCore
-from twisted.internet.defer import inlineCallbacks
-from twisted.internet.task import LoopingCall
-import numpy as np
 import pyqtgraph as pg
+from PyQt5 import QtGui, QtCore
+from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel,\
+                            QDoubleSpinBox, QSpinBox, QPushButton, QCheckBox
+
+from twisted.internet.task import LoopingCall
+from twisted.internet.defer import inlineCallbacks
+
+import os
+import numpy as np
 import datetime as datetime
 from datetime import datetime
-import os
 
+from config.andor_config import andor_config as config
 
-class AndorVideo(QtGui.QWidget):
+class AndorVideo(QWidget):
     def __init__(self, server):
         super(AndorVideo, self).__init__()
         from labrad.units import WithUnit
@@ -46,7 +50,7 @@ class AndorVideo(QtGui.QWidget):
     def setup_layout(self):
         self.setWindowTitle("Andor")
         #layout
-        layout = QtGui.QGridLayout()
+        layout = QGridLayout()
         self.plt = plt = pg.PlotItem()
         self.img_view = pg.ImageView(view = self.plt)
         plt.showAxis('top')
@@ -54,9 +58,9 @@ class AndorVideo(QtGui.QWidget):
         plt.setAspectLocked(True)
         layout.addWidget(self.img_view, 0, 0, 1, 6)
         self.img_view.getHistogramWidget().setHistogramRange(0, 1000)
-        exposure_label = QtGui.QLabel("Exposure")
+        exposure_label = QLabel("Exposure")
         exposure_label.setAlignment(QtCore.Qt.AlignRight| QtCore.Qt.AlignVCenter)
-        self.exposureSpinBox = QtGui.QDoubleSpinBox()
+        self.exposureSpinBox = QDoubleSpinBox()
         self.exposureSpinBox.setDecimals(3)
         self.exposureSpinBox.setSingleStep(0.001)
         self.exposureSpinBox.setMinimum(0.0)
@@ -66,35 +70,35 @@ class AndorVideo(QtGui.QWidget):
         layout.addWidget(exposure_label, 1, 4,)
         layout.addWidget(self.exposureSpinBox, 1, 5)
         #EMCCD Gain
-        emccd_label = QtGui.QLabel("EMCCD Gain")
+        emccd_label = QLabel("EMCCD Gain")
         emccd_label.setAlignment(QtCore.Qt.AlignRight| QtCore.Qt.AlignVCenter)
-        self.emccdSpinBox = QtGui.QSpinBox()
+        self.emccdSpinBox = QSpinBox()
         self.emccdSpinBox.setSingleStep(1)
         #emrange= yield self.server.getemrange(None)
         self.emrange= yield self.server.getemrange(None)
         mingain, maxgain = self.emrange
         self.emccdSpinBox.setMinimum(mingain)#mingain)
         self.emccdSpinBox.setMaximum(maxgain)#maxgain)
-        print maxgain
+        print(maxgain)
         self.emccdSpinBox.setKeyboardTracking(False)
         layout.addWidget(emccd_label, 2, 4,)
         layout.addWidget(self.emccdSpinBox, 2, 5)
         #Live Video Button
-        self.live_button = QtGui.QPushButton("Live Video")
+        self.live_button = QPushButton("Live Video")
         self.live_button.setCheckable(True)
         layout.addWidget(self.live_button, 1, 0)
         #set image region button
-        self.set_image_region_button = QtGui.QPushButton("Set Image Region")
+        self.set_image_region_button = QPushButton("Set Image Region")
         layout.addWidget(self.set_image_region_button, 2, 0)
         #save images
-        self.save_images = QtGui.QCheckBox('Save Images')
+        self.save_images = QCheckBox('Save Images')
         layout.addWidget(self.save_images, 3, 0)
 
 
         #controlling the display buttons
-        self.view_all_button = QtGui.QPushButton("View All")
+        self.view_all_button = QPushButton("View All")
         layout.addWidget(self.view_all_button, 1, 1)
-        self.auto_levels_button = QtGui.QPushButton("Auto Levels")
+        self.auto_levels_button = QPushButton("Auto Levels")
         layout.addWidget(self.auto_levels_button, 2, 1)
         #display mode buttons
         self.trigger_mode = QtGui.QLineEdit()
@@ -103,10 +107,10 @@ class AndorVideo(QtGui.QWidget):
         self.acquisition_mode.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         self.trigger_mode.setReadOnly(True)
         self.acquisition_mode.setReadOnly(True)
-        label = QtGui.QLabel("Trigger Mode")
+        label = QLabel("Trigger Mode")
         label.setAlignment(QtCore.Qt.AlignRight| QtCore.Qt.AlignVCenter)
         layout.addWidget(label, 1, 2)
-        label = QtGui.QLabel("Acquisition Mode")
+        label = QLabel("Acquisition Mode")
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         layout.addWidget(label, 2, 2)
         layout.addWidget(self.trigger_mode, 1, 3)

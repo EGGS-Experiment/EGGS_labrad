@@ -40,11 +40,11 @@ class AndorCamera(object):
 
     def __init__(self):
         try:
-            print 'Loading DLL'
+            print('Loading DLL')
             self.dll = c.windll.LoadLibrary(config.path_to_dll)
-            print 'Initializing Camera'
+            print('Initializing Camera')
             error = self.dll.Initialize(os.path.dirname(__file__))
-            print 'Done Initializing, {}'.format(ERROR_CODE[error])
+            print('Done Initializing, {}'.format(ERROR_CODE[error]))
             self.info = AndorInfo()
             self.get_detector_dimensions()
             self.get_temperature_range()
@@ -63,7 +63,7 @@ class AndorCamera(object):
             self.get_cooler_state()
             self.get_temperature()
         except Exception as e:
-            print 'Error Initializing Camera', e
+            print('Error Initializing Camera', e)
 
     def print_get_software_version(self):
         '''
@@ -76,13 +76,13 @@ class AndorCamera(object):
         dllRev = c.c_int()
         dllVer = c.c_int()
         self.dll.GetSoftwareVersion(c.byref(eprom), c.byref(cofFile), c.byref(vxdRev), c.byref(vxdVer),  c.byref(dllRev), c.byref(dllVer))
-        print 'Software Version'
-        print eprom
-        print cofFile
-        print vxdRev
-        print vxdVer
-        print dllRev
-        print dllVer
+        print('Software Version')
+        print(eprom)
+        print(cofFile)
+        print(vxdRev)
+        print(vxdVer)
+        print(dllRev)
+        print(dllVer)
 
     def print_get_capabilities(self):
         '''
@@ -106,21 +106,21 @@ class AndorCamera(object):
         caps = AndorCapabilities()
         caps.ulSize = c.c_ulong(c.sizeof(caps))
         error = self.dll.GetCapabilities(c.byref(caps))
-        print 'ulAcqModes',         '{:07b}'.format(caps.ulAcqModes)
-        print 'ulReadModes',        '{:06b}'.format(caps.ulReadModes)
-        print 'ulTriggerModes',     '{:08b}'.format(caps.ulTriggerModes)
-        print 'ulCameraType',       '{}'.format(caps.ulCameraType)
-        print 'ulPixelMode',        '{:032b}'.format(caps.ulPixelMode)
-        print 'ulSetFunctions',     '{:025b}'.format(caps.ulSetFunctions)
-        print 'ulGetFunctions',     '{:016b}'.format(caps.ulGetFunctions)
-        print 'ulFeatures',         '{:020b}'.format(caps.ulFeatures)
-        print 'ulPCICard',          '{}'.format(caps.ulPCICard)
-        print 'ulEMGainCapability', '{:020b}'.format(caps.ulEMGainCapability)
-        print 'ulFTReadModes',      '{:06b}'.format(caps.ulFTReadModes)
+        print('ulAcqModes',         '{:07b}'.format(caps.ulAcqModes))
+        print('ulReadModes',        '{:06b}'.format(caps.ulReadModes))
+        print('ulTriggerModes',     '{:08b}'.format(caps.ulTriggerModes))
+        print('ulCameraType',       '{}'.format(caps.ulCameraType))
+        print('ulPixelMode',        '{:032b}'.format(caps.ulPixelMode))
+        print('ulSetFunctions',     '{:025b}'.format(caps.ulSetFunctions))
+        print('ulGetFunctions',     '{:016b}'.format(caps.ulGetFunctions))
+        print('ulFeatures',         '{:020b}'.format(caps.ulFeatures))
+        print('ulPCICard',          '{}'.format(caps.ulPCICard))
+        print('ulEMGainCapability', '{:020b}'.format(caps.ulEMGainCapability))
+        print('ulFTReadModes',      '{:06b}'.format(caps.ulFTReadModes))
 
     def get_detector_dimensions(self):
         '''
-        gets the dimensions of the detector
+        Gets the dimensions of the detector.
         '''
         detector_width = c.c_int()
         detector_height = c.c_int()
@@ -131,7 +131,7 @@ class AndorCamera(object):
 
     def get_temperature_range(self):
         '''
-        gets the range of available temperatures
+        Gets the range of available temperatures.
         '''
         min_temp = c.c_int()
         max_temp = c.c_int()
@@ -142,7 +142,7 @@ class AndorCamera(object):
 
     def get_cooler_state(self):
         '''
-        reads the state of the cooler
+        Reads the state of the cooler.
         '''
         cooler_state = c.c_int()
         error = self.dll.IsCoolerOn(c.byref(cooler_state))
@@ -154,7 +154,7 @@ class AndorCamera(object):
 
     def set_cooler_on(self):
         '''
-        turns on cooling
+        Turns on cooling.
         '''
         error = self.dll.CoolerON()
         if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
@@ -162,7 +162,7 @@ class AndorCamera(object):
 
     def set_cooler_off(self):
         '''
-        turns off cooling
+        Turns off cooling.
         '''
         error = self.dll.CoolerOFF()
         if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
@@ -171,7 +171,7 @@ class AndorCamera(object):
     def get_temperature(self):
         temperature = c.c_int()
         error = self.dll.GetTemperature(c.byref(temperature))
-        if (ERROR_CODE[error] == 'DRV_TEMP_STABILIZED' or ERROR_CODE[error] == 'DRV_TEMP_NOT_REACHED' or ERROR_CODE[error] == 'DRV_TEMP_DRIFT' or ERROR_CODE[error] == 'DRV_TEMP_NOT_STABILIZED'):
+        if ERROR_CODE[error] in ('DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
             self.info.temperature = temperature.value
             return temperature.value
         else:
@@ -179,8 +179,8 @@ class AndorCamera(object):
 
     def set_temperature(self, temperature):
         temperature = c.c_int(int(temperature))
-        error = self.dll.SetTemperature( temperature )
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        error = self.dll.SetTemperature(temperature)
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.temperature_setpoint = temperature.value
         else:
             raise Exception(ERROR_CODE[error])
@@ -218,7 +218,7 @@ class AndorCamera(object):
 
     def set_emccd_gain(self, gain):
         error = self.dll.SetEMCCDGain(c.c_int(int(gain)))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.emccd_gain = gain
         else:
             raise Exception(ERROR_CODE[error])
