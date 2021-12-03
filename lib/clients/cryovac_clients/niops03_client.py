@@ -37,7 +37,7 @@ class niops03_client(niops03_gui):
         # get polling time
         # yield self.reg.cd(['Clients', self.name])
         # self.poll_time = yield float(self.reg.get('poll_time'))
-        self.poll_time = 5.0
+        self.poll_time = 3.0
 
         # set recording stuff
         self.c_record = self.cxn.context()
