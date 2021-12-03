@@ -52,7 +52,6 @@ class twistorr74_client(twistorr74_gui):
 
         # start device polling
         poll_params = yield self.tt.get_polling()
-        self.receive_updates = False
         #only start polling if not started
         if not poll_params[0]:
             yield self.tt.set_polling(True, 5.0)

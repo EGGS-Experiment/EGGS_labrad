@@ -41,6 +41,9 @@ class NIOPS03Server(SerialDeviceServer):
     timeout = WithUnit(3.0, 's')
     baudrate = 115200
 
+    # SIGNALS
+    pressure_update = Signal(999999, 'signal: pressure update', 'v')
+    workingtime_update = Signal(999998, 'signal: workingtime update', '*2v')
 
     # STARTUP
     def initServer(self):
@@ -51,9 +54,9 @@ class NIOPS03Server(SerialDeviceServer):
         callLater(1, self.refresher.start, 2)
 
     def stopServer(self):
-        super().stopServer()
         if hasattr(self, 'refresher'):
             self.refresher.stop()
+        super().stopServer()
 
 
     #STATUS
@@ -80,7 +83,7 @@ class NIOPS03Server(SerialDeviceServer):
         """
         if power:
             yield self.ser.write('G' + TERMINATOR)
-        else:
+        elif power == False:
             yield self.ser.write('B' + TERMINATOR)
         resp = yield self.ser.read_line()
         resp = resp.strip()
@@ -112,7 +115,9 @@ class NIOPS03Server(SerialDeviceServer):
         """
         yield self.ser.write('Tb' + TERMINATOR)
         resp = yield self.ser.read_line()
-        returnValue(float(resp))
+        resp = float(resp)
+        self.pressure_update(resp)
+        returnValue(resp)
 
     @setting(221, 'IP Voltage', voltage='v', returns='v')
     def voltage_ip(self, c, voltage=None):
@@ -141,7 +146,6 @@ class NIOPS03Server(SerialDeviceServer):
         Returns:
             [[int, int], [int, int]]: working time of ion pump and getter
         """
-        #todo: ensure no problem here
         yield self.ser.write('TM' + TERMINATOR)
         ip_time = yield self.ser.read_line('\r')
         np_time = yield self.ser.read_line('\r')
@@ -149,8 +153,12 @@ class NIOPS03Server(SerialDeviceServer):
         np_time = np_time[16:-8].split(' Hours ')
         ip_time = [int(val) for val in ip_time]
         np_time = [int(val) for val in np_time]
-        returnValue([ip_time, np_time])
+        resp = [ip_time, np_time]
+        self.workingtime_update(resp)
+        returnValue(resp)
 
+
+    # INTERLOCK
     @setting(311, 'Interlock IP', status='b', press='v', returns='b')
     def interlock_ip(self, c, status, press):
         """
@@ -185,6 +193,54 @@ class NIOPS03Server(SerialDeviceServer):
             print('problem')
             # yield self.ser.write('B' + TERMINATOR)
             # yield self.ser.read_line()
+
+
+    # POLLING
+    @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
+    def set_polling(self, c, status, interval):
+        """
+        Configure polling of device for values.
+        """
+        #ensure interval is valid
+        if (interval < 1) or (interval > 60):
+            raise Exception('Invalid polling interval.')
+        #only start/stop polling if we are not already started/stopped
+        if status and (not self.refresher.running):
+            self.refresher.start(interval)
+        elif status and self.refresher.running:
+            self.refresher.interval = interval
+        elif (not status) and (self.refresher.running):
+            self.refresher.stop()
+        return (self.refresher.running, self.refresher.interval)
+
+    @setting(912, 'Get Polling', returns='(bv)')
+    def get_polling(self, c):
+        """
+        Get polling parameters.
+        """
+        return (self.refresher.running, self.refresher.interval)
+
+    @inlineCallbacks
+    def poll(self):
+        """
+        Polls the device for pressure readout.
+        """
+        #get results all together
+        yield self.ser.write('Tb' + TERMINATOR)
+        pressure = yield self.ser.read_line()
+        yield self.ser.write('TM' + TERMINATOR)
+        ip_time = yield self.ser.read_line('\r')
+        np_time = yield self.ser.read_line('\r')
+        #update pressure
+        print(float(pressure))
+        self.pressure_update(float(pressure))
+        # update workingtime
+        ip_time = ip_time[16:-8].split(' Hours ')
+        np_time = np_time[16:-8].split(' Hours ')
+        ip_time = [int(val) for val in ip_time]
+        np_time = [int(val) for val in np_time]
+        print([ip_time, np_time])
+        self.workingtime_update([ip_time, np_time])
 
 
 if __name__ == '__main__':

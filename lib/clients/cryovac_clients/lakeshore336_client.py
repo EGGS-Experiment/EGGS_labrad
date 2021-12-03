@@ -78,8 +78,8 @@ class lakeshore336_client(lakeshore336_gui):
     @inlineCallbacks
     def record_temp(self, status):
         """
-        Creates a new dataset to record temperature and tells polling loop
-        to add data to data vault
+        Creates a new dataset to record temperature and
+        tells polling loop to add data to data vault.
         """
         self.recording = status
         if self.recording == True:

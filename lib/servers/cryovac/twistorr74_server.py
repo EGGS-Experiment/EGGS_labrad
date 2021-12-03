@@ -63,12 +63,12 @@ class TwisTorr74Server(SerialDeviceServer):
         callLater(1, self.refresher.start, 2)
 
     def stopServer(self):
-        super().stopServer()
         if hasattr(self, 'refresher'):
             self.refresher.stop()
+        super().stopServer()
 
     def setUnits(self):
-
+        pass
 
 
     # TOGGLE

@@ -8,7 +8,10 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.lib.clients.cryovac_clients.niops03_gui import niops03_gui
 
 class niops03_client(niops03_gui):
+
     name = 'NIOPS03 Client'
+    PRESSUREID = 878352
+    WORKINGTIMEID = 878353
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
@@ -18,35 +21,44 @@ class niops03_client(niops03_gui):
         d = self.connect()
         d.addCallback(self.initializeGUI)
 
-    #Setup functions
+
+    # SETUP
     @inlineCallbacks
     def connect(self):
         """
         Creates an asynchronous connection to labrad
         """
+        # create labrad connection
         if not self.cxn:
             import os
             LABRADHOST = os.environ['LABRADHOST']
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync(LABRADHOST, name=self.name)
 
-        self.reg = self.cxn.registry
-        self.dv = self.cxn.data_vault
-        self.niops = self.cxn.niops03_server
-
-        # get polling time
-        # yield self.reg.cd(['Clients', self.name])
-        # self.poll_time = yield float(self.reg.get('poll_time'))
-        self.poll_time = 3.0
+        # try to get servers
+        try:
+            self.reg = self.cxn.registry
+            self.dv = self.cxn.data_vault
+            self.niops = self.cxn.niops03_server
+        except Exception as e:
+            print(e)
+            raise
 
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
 
-        #create and start loop to poll server for temperature
-        self.poll_loop = LoopingCall(self.poll)
-        from twisted.internet.reactor import callLater
-        callLater(1.0, self.start_polling)
+        # connect to signals
+        yield self.niops.signal__pressure_update(self.PRESSUREID)
+        yield self.niops.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
+        yield self.niops.signal__workingtime_update(self.WORKINGTIMEID)
+        yield self.niops.addListener(listener=self.updateWorkingTime, source=None, ID=self.WORKINGTIMEID)
+
+        # start device polling
+        poll_params = yield self.niops.get_polling()
+        #only start polling if not started
+        if not poll_params[0]:
+            yield self.niops.set_polling(True, 5.0)
 
         return self.cxn
 
@@ -75,12 +87,27 @@ class niops03_client(niops03_gui):
         self.gui.np_lockswitch.toggled.connect(lambda status: self.lock_np(status))
         self.gui.np_power.toggled.connect(lambda status: self.toggle_np(status))
 
-    #Slot functions
+
+    # SLOTS
+    @inlineCallbacks
+    def updatePressure(self, c, pressure):
+        self.gui.niops_pressure_display.setText(str(pressure))
+        if self.recording:
+            elapsedtime = time.time() - self.starttime
+            yield self.dv.add(elapsedtime, pressure, context=self.c_record)
+
+    def updateWorkingTime(self, c, workingtime):
+        # set workingtime
+        workingtime_ip = str(workingtime[0][0]) + ':' + str(workingtime[0][1])
+        workingtime_np = str(workingtime[1][0]) + ':' + str(workingtime[1][1])
+        self.gui.niops_workingtime_display.setText(workingtime_ip)
+        self.gui.np_workingtime_display.setText(workingtime_np)
+
     @inlineCallbacks
     def record_pressure(self, status):
         """
-        Creates a new dataset to record pressure and tells polling loop
-        to add data to data vault
+        Creates a new dataset to record pressure and
+        tells polling loop to add data to data vault.
         """
         self.recording = status
         if self.recording == True:
@@ -112,7 +139,7 @@ class niops03_client(niops03_gui):
         self.gui.niops_voltage.setEnabled(status)
         self.gui.niops_power.setEnabled(status)
 
-    #@inlineCallbacks
+    @inlineCallbacks
     def set_ip_voltage(self, voltage):
         """
         Sets the ion pump voltage.
@@ -131,29 +158,6 @@ class niops03_client(niops03_gui):
         Locks power status of getter.
         """
         self.gui.np_power.setEnabled(status)
-
-
-    #Polling functions
-    def start_polling(self):
-        self.poll_loop.start(self.poll_time)
-
-    def stop_polling(self):
-        self.poll_loop.stop()
-
-    @inlineCallbacks
-    def poll(self):
-        pressure = yield self.niops.ip_pressure()
-        self.gui.niops_pressure_display.setText(str(pressure))
-        if True:
-        # if self.gui.niops_power.isChecked():
-            workingtime = yield self.niops.working_time()
-            workingtime_ip = str(workingtime[0][0]) + ':' + str(workingtime[0][1])
-            workingtime_np = str(workingtime[1][0]) + ':' + str(workingtime[1][1])
-            self.gui.niops_workingtime_display.setText(workingtime_ip)
-            self.gui.np_workingtime_display.setText(workingtime_np)
-        if self.recording == True:
-            elapsedtime = time.time() - self.starttime
-            yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
     def closeEvent(self, event):
         self.cxn.disconnect()

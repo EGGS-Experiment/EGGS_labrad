@@ -39,7 +39,7 @@ class RGA_Server(SerialDeviceServer):
     def initServer(self):
         self.listeners = set()
 
-    @setting(2, value='w',returns='s')
+    @setting(2, value='w', returns='s')
     def filament(self, c, value=None):
         '''
         Sets the filament on/off mode, or read its value.
