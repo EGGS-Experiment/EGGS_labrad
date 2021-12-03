@@ -52,7 +52,7 @@ class twistorr74_client(twistorr74_gui):
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
         yield self.cxn.manager.addListener(listener=self.th1, source=None, ID=9898989)
-        yield self.cxn.manager.addListener(listener=self.th1, source=None, ID=9898989 + 1)
+        yield self.cxn.manager.addListener(listener=self.th2, source=None, ID=9898989 + 1)
 
         # start device polling
         poll_params = yield self.tt.get_polling()
@@ -62,9 +62,15 @@ class twistorr74_client(twistorr74_gui):
 
         return self.cxn
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def th1(self, c, message):
-        print(message)
+        if message[1] == 'Twistorr74 Server':
+            self.setEnabled(True)
+
+    #@inlineCallbacks
+    def th2(self, c, message):
+        if message[1] == 'Twistorr74 Server':
+            self.setEnabled(False)
 
     @inlineCallbacks
     def initializeGUI(self, cxn):
