@@ -53,8 +53,9 @@ class TwisTorr74Server(SerialDeviceServer):
     }
 
     # SIGNALS
-    pressure_update = Signal(123456, 'signal: pressure update', 'v')
+    pressure_update = Signal(999999, 'signal: pressure update', 'v')
 
+    # STARTUP
     def initServer(self):
         super().initServer()
         self.refresher = LoopingCall(self.poll)
@@ -68,14 +69,14 @@ class TwisTorr74Server(SerialDeviceServer):
 
 
     # TOGGLE
-    @setting(111, 'toggle', onoff='b', returns='s')
+    @setting(111, 'toggle', onoff='b', returns='b')
     def toggle(self, c, onoff=None):
         """
         Start or stop the pump
         Args:
             onoff   (bool)  : desired pump state
         Returns:
-                    (str)   : pump state
+                    (bool)  : pump state
         """
         #create and send message to device
         message = None
@@ -89,6 +90,10 @@ class TwisTorr74Server(SerialDeviceServer):
         #read and parse answer
         resp = yield self.ser.read(10)
         resp = yield self._parse(resp)
+        if resp == '1':
+            resp = True
+        elif resp == '2':
+            resp = False
         returnValue(resp)
 
     # READ PRESSURE
@@ -110,13 +115,6 @@ class TwisTorr74Server(SerialDeviceServer):
         self.pressure_update(resp)
         returnValue(resp)
 
-    @inlineCallbacks
-    def poll(self):
-        yield self.ser.write(b'\x02\x802240\x0387')
-        resp = yield self.ser.read(19)
-        resp = yield self._parse(resp)
-        resp = float(resp)
-        self.pressure_update(resp)
 
     # POLLING
     @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
@@ -143,6 +141,17 @@ class TwisTorr74Server(SerialDeviceServer):
         """
         return (self.refresher.running, self.refresher.interval)
 
+    @inlineCallbacks
+    def poll(self):
+        """
+        Polls the device for pressure readout.
+        """
+        yield self.ser.write(b'\x02\x802240\x0387')
+        resp = yield self.ser.read(19)
+        resp = yield self._parse(resp)
+        resp = float(resp)
+        self.pressure_update(resp)
+
 
     # Helper functions
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg=b''):
@@ -159,7 +168,6 @@ class TwisTorr74Server(SerialDeviceServer):
         #convert checksum to hex value and add to end
         CRC_msg = hex(CRC_msg)[2:]
         msg.extend(bytearray(CRC_msg, encoding='utf-8'))
-        #todo: streamline this last bit
         return bytes(msg)
 
     def _parse(self, ans):
