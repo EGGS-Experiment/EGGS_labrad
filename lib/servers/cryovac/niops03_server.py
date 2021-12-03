@@ -48,6 +48,7 @@ class NIOPS03Server(SerialDeviceServer):
     # STARTUP
     def initServer(self):
         super().initServer()
+        self.listeners = set()
         # polling stuff
         self.tt = None
         self.interlock_active = False
@@ -60,6 +61,20 @@ class NIOPS03Server(SerialDeviceServer):
         if hasattr(self, 'refresher'):
             self.refresher.stop()
         super().stopServer()
+
+    def initContext(self, c):
+        """Initialize a new context object."""
+        self.listeners.add(c.ID)
+
+    def expireContext(self, c):
+        """Remove a context object."""
+        self.listeners.remove(c.ID)
+
+    def getOtherListeners(self, c):
+        """Get all listeners except for the context owner."""
+        notified = self.listeners.copy()
+        notified.remove(c.ID)
+        return notified
 
 
     #STATUS

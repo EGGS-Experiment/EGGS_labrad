@@ -53,6 +53,7 @@ class Lakeshore336Server(SerialDeviceServer):
     # STARTUP
     def initServer(self):
         super().initServer()
+        self.listeners = set()
         # polling stuff
         self.refresher = LoopingCall(self.poll)
         from twisted.internet.reactor import callLater
@@ -62,6 +63,20 @@ class Lakeshore336Server(SerialDeviceServer):
         if hasattr(self, 'refresher'):
             self.refresher.stop()
         super().stopServer()
+
+    def initContext(self, c):
+        """Initialize a new context object."""
+        self.listeners.add(c.ID)
+
+    def expireContext(self, c):
+        """Remove a context object."""
+        self.listeners.remove(c.ID)
+
+    def getOtherListeners(self, c):
+        """Get all listeners except for the context owner."""
+        notified = self.listeners.copy()
+        notified.remove(c.ID)
+        return notified
 
 
     # TEMPERATURE DIODES
