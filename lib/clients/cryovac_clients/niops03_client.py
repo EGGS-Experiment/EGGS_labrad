@@ -1,10 +1,10 @@
-import os
 import time
 import datetime as datetime
 
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.cryovac_clients.niops03_gui import niops03_gui
+
 
 class niops03_client(niops03_gui):
 

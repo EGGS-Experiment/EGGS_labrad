@@ -1,6 +1,5 @@
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout
+from PyQt5 import QtCore, QtWidgets
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
 
@@ -11,9 +10,9 @@ class TextChangingButton(_TextChangingButton):
         self.setMaximumHeight(30)
 
 
-class twistorr74_gui(QFrame):
+class twistorr74_gui(QtWidgets.QFrame):
     def __init__(self, parent=None):
-        window = QWidget.__init__(self, parent)
+        window = QtWidgets.QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeWidgets()
         self.makeLayout()
@@ -23,14 +22,14 @@ class twistorr74_gui(QFrame):
         shell_font = 'MS Shell Dlg 2'
         self.setFixedSize(225, 225)
         #twistorr 74
-        self.twistorr_label = QLabel('Twistorr 74 Pump')
+        self.twistorr_label = QtWidgets.QLabel('Twistorr 74 Pump')
         self.twistorr_label.setFont(QFont(shell_font, pointSize= 18))
-        self.twistorr_label.setAlignment(Qt.AlignCenter)
+        self.twistorr_label.setAlignment(QtCore.Qt.AlignCenter)
             #readout
-        self.twistorr_display_label = QLabel('Pressure (mbar)')
-        self.twistorr_display = QLabel('Pressure')
+        self.twistorr_display_label = QtWidgets.QLabel('Pressure (mbar)')
+        self.twistorr_display = QtWidgets.QLabel('Pressure')
         self.twistorr_display.setFont(QFont(shell_font, pointSize=20))
-        self.twistorr_display.setAlignment(Qt.AlignCenter)
+        self.twistorr_display.setAlignment(QtCore.Qt.AlignCenter)
         self.twistorr_display.setStyleSheet('color: blue')
             #record button
         self.twistorr_record = TextChangingButton(('Stop Recording', 'Start Recording'))
@@ -40,7 +39,7 @@ class twistorr74_gui(QFrame):
         self.twistorr_power = TextChangingButton(('On', 'Off'))
 
     def makeLayout(self):
-        layout = QGridLayout()
+        layout = QtWidgets.QGridLayout()
         shell_font = 'MS Shell Dlg 2'
 
         pump1_col = 0
