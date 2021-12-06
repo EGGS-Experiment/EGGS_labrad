@@ -42,8 +42,8 @@ class twistorr74_client(twistorr74_gui):
             self.dv = self.cxn.data_vault
             self.tt = self.cxn.twistorr74_server
         except Exception as e:
-            print(e)
-            raise
+            print('Required servers not connected, disabling widget.')
+            self.setEnabled(False)
 
         # set recording stuff
         self.c_record = self.cxn.context()

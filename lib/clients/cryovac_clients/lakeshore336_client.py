@@ -42,8 +42,8 @@ class lakeshore336_client(lakeshore336_gui):
             self.ls = yield self.cxn.lakeshore336_server
             self.reg = yield self.cxn.registry
         except Exception as e:
-            print(e)
-            raise
+            print('Required servers not connected, disabling widget.')
+            self.setEnabled(False)
 
         # set recording stuff
         self.c_record = self.cxn.context()

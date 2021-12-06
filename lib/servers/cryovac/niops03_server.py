@@ -57,8 +57,8 @@ class NIOPS03Server(SerialDeviceServer):
         self.interlock_active = False
         self.interlock_pressure = None
         self.refresher = LoopingCall(self.poll)
-        from twisted.internet.reactor import callLater
-        callLater(1, self.refresher.start, 5)
+        #from twisted.internet.reactor import callLater
+        #callLater(1, self.refresher.start, 5)
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -241,7 +241,13 @@ class NIOPS03Server(SerialDeviceServer):
         """
         Get polling parameters.
         """
-        return (self.refresher.running, self.refresher.interval)
+        # in case refresher is off
+        interval_tmp = 0
+        if self.refresher.interval is None:
+            interval_tmp = 0
+        else:
+            interval_tmp = self.refresher.interval
+        return (self.refresher.running, interval_tmp)
 
     @inlineCallbacks
     def poll(self):

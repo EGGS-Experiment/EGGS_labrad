@@ -44,9 +44,8 @@ class niops03_client(niops03_gui):
             self.dv = self.cxn.data_vault
             self.niops = self.cxn.niops03_server
         except Exception as e:
-            print(e)
             print('Required servers not connected, disabling widget.')
-            self.setEnabled(True)
+            self.setEnabled(False)
 
         # set recording stuff
         self.c_record = self.cxn.context()
@@ -86,19 +85,20 @@ class niops03_client(niops03_gui):
         device_status = {val[0]: val[1] for val in device_status}
         ip_on = True if device_status['IP'] == 'ON' else False
         np_on = True if device_status['NP'] == 'ON' else False
-        self.gui.niops_power.setChecked(ip_on)
+        self.gui.ip_power.setChecked(ip_on)
         self.gui.np_power.setChecked(np_on)
             #IP voltage
         v_ip = yield self.niops.ip_voltage()
-        self.gui.niops_voltage.setValue(v_ip)
+        self.gui.ip_voltage.setValue(v_ip)
         #connect signals to slots
             #ion pump
-        self.gui.niops_lockswitch.toggled.connect(lambda status: self.lock_niops(status))
-        self.gui.niops_power.clicked.connect(lambda status: self.toggle_niops(status))
-        self.gui.niops_record.toggled.connect(lambda status: self.record_pressure(status))
-        self.gui.niops_voltage.valueChanged.connect(lambda voltage: self.set_ip_voltage(voltage))
+        self.gui.ip_lockswitch.toggled.connect(lambda status: self.lock_niops(status))
+        self.gui.ip_power.clicked.connect(lambda status: self.toggle_niops(status))
+        self.gui.ip_record.toggled.connect(lambda status: self.record_pressure(status))
+        self.gui.ip_voltage.valueChanged.connect(lambda voltage: self.set_ip_voltage(voltage))
             #getter
         self.gui.np_lockswitch.toggled.connect(lambda status: self.lock_np(status))
+        self.gui.np_mode.currentIndexChanged.connect(lambda index: self.mode_np(index))
         self.gui.np_power.clicked.connect(lambda status: self.toggle_np(status))
 
     def on_connect(self, c, message):
@@ -117,7 +117,7 @@ class niops03_client(niops03_gui):
     # SLOTS
     @inlineCallbacks
     def updatePressure(self, c, pressure):
-        self.gui.niops_pressure_display.setText(str(pressure))
+        self.gui.ip_pressure_display.setText(str(pressure))
         if self.recording:
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
@@ -126,12 +126,12 @@ class niops03_client(niops03_gui):
         # set workingtime
         workingtime_ip = str(workingtime[0][0]) + ':' + str(workingtime[0][1])
         workingtime_np = str(workingtime[1][0]) + ':' + str(workingtime[1][1])
-        self.gui.niops_workingtime_display.setText(workingtime_ip)
+        self.gui.ip_workingtime_display.setText(workingtime_ip)
         self.gui.np_workingtime_display.setText(workingtime_np)
 
     def updateIPPower(self, c, power):
         # set IP power
-        self.gui.niops_power.setChecked(power)
+        self.gui.ip_power.setChecked(power)
 
     def updateNPPower(self, c, power):
         # set NP power
@@ -171,8 +171,8 @@ class niops03_client(niops03_gui):
         """
         Locks power status of ion pump.
         """
-        self.gui.niops_voltage.setEnabled(status)
-        self.gui.niops_power.setEnabled(status)
+        self.gui.ip_voltage.setEnabled(status)
+        self.gui.ip_power.setEnabled(status)
 
     @inlineCallbacks
     def set_ip_voltage(self, voltage):
@@ -187,7 +187,6 @@ class niops03_client(niops03_gui):
         Sets getter power on or off.
         """
         #print('state: ' + str(status))
-        yield self.niops.np_mode(1)
         yield self.niops.np_toggle(status)
 
     def lock_np(self, status):
@@ -195,6 +194,13 @@ class niops03_client(niops03_gui):
         Locks power status of getter.
         """
         self.gui.np_power.setEnabled(status)
+
+    def mode_np(self, index):
+        """
+        Set activation mode of getter.
+        """
+        #print(index)
+        self.niops.np_mode(index)
 
     def closeEvent(self, event):
         self.cxn.disconnect()

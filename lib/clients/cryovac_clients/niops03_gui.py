@@ -24,35 +24,35 @@ class niops03_gui(QtWidgets.QFrame):
         self.all_label.setFont(QFont(shell_font, pointSize=20))
         self.all_label.setAlignment(QtCore.Qt.AlignCenter)
         #niops03
-        self.niops_label = QtWidgets.QLabel('Ion Pump')
-        self.niops_label.setFont(QFont(shell_font, pointSize=15))
-        self.niops_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.ip_label = QtWidgets.QLabel('Ion Pump')
+        self.ip_label.setFont(QFont(shell_font, pointSize=15))
+        self.ip_label.setAlignment(QtCore.Qt.AlignCenter)
             #pressure readout
-        self.niops_pressure_display_label = QtWidgets.QLabel('Pressure (mbar)')
-        self.niops_pressure_display = QtWidgets.QLabel('Pressure')
-        self.niops_pressure_display.setFont(QFont(shell_font, pointSize=20))
-        self.niops_pressure_display.setAlignment(QtCore.Qt.AlignCenter)
-        self.niops_pressure_display.setStyleSheet('color: blue')
+        self.ip_pressure_display_label = QtWidgets.QLabel('Pressure (mbar)')
+        self.ip_pressure_display = QtWidgets.QLabel('Pressure')
+        self.ip_pressure_display.setFont(QFont(shell_font, pointSize=20))
+        self.ip_pressure_display.setAlignment(QtCore.Qt.AlignCenter)
+        self.ip_pressure_display.setStyleSheet('color: blue')
             #voltage setting
-        self.niops_voltage_label = QtWidgets.QLabel('Voltage (V)')
-        self.niops_voltage = QtWidgets.QDoubleSpinBox()
-        self.niops_voltage.setFont(QFont(shell_font, pointSize=16))
-        self.niops_voltage.setDecimals(0)
-        self.niops_voltage.setSingleStep(1)
-        self.niops_voltage.setRange(0, 6000)
-        self.niops_voltage.setKeyboardTracking(False)
+        self.ip_voltage_label = QtWidgets.QLabel('Voltage (V)')
+        self.ip_voltage = QtWidgets.QDoubleSpinBox()
+        self.ip_voltage.setFont(QFont(shell_font, pointSize=16))
+        self.ip_voltage.setDecimals(0)
+        self.ip_voltage.setSingleStep(1)
+        self.ip_voltage.setRange(0, 6000)
+        self.ip_voltage.setKeyboardTracking(False)
             #working time
-        self.niops_workingtime_display_label = QtWidgets.QLabel('Working Time (Hours:Minutes)')
-        self.niops_workingtime_display = QtWidgets.QLabel('00:00')
-        self.niops_workingtime_display.setFont(QFont(shell_font, pointSize=20))
-        self.niops_workingtime_display.setAlignment(QtCore.Qt.AlignCenter)
-        self.niops_workingtime_display.setStyleSheet('color: blue')
+        self.ip_workingtime_display_label = QtWidgets.QLabel('Working Time (Hours:Minutes)')
+        self.ip_workingtime_display = QtWidgets.QLabel('00:00')
+        self.ip_workingtime_display.setFont(QFont(shell_font, pointSize=20))
+        self.ip_workingtime_display.setAlignment(QtCore.Qt.AlignCenter)
+        self.ip_workingtime_display.setStyleSheet('color: blue')
             #record button
-        self.niops_record = TextChangingButton(('Stop Recording', 'Start Recording'))
+        self.ip_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             #power
-        self.niops_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
-        self.niops_lockswitch.setChecked(True)
-        self.niops_power = TextChangingButton(('On', 'Off'))
+        self.ip_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
+        self.ip_lockswitch.setChecked(True)
+        self.ip_power = TextChangingButton(('On', 'Off'))
 
         #getter
         self.np_label = QtWidgets.QLabel('Getter')
@@ -64,7 +64,11 @@ class niops03_gui(QtWidgets.QFrame):
         self.np_workingtime_display.setFont(QFont(shell_font, pointSize=20))
         self.np_workingtime_display.setAlignment(QtCore.Qt.AlignCenter)
         self.np_workingtime_display.setStyleSheet('color: blue')
-
+            #mode
+        self.np_mode_label = QtWidgets.QLabel('Mode')
+        self.np_mode = QtWidgets.QComboBox()
+        self.np_mode.setFont(QFont(shell_font, pointSize=12))
+        self.np_mode.addItems(['Activation', 'Timed Activation', 'Conditioning', 'Timed Conditioning'])
             #power
         self.np_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
         self.np_lockswitch.setChecked(True)
@@ -79,25 +83,28 @@ class niops03_gui(QtWidgets.QFrame):
         pump1_col = 0
         pump2_col = 1
 
-        layout.addWidget(self.niops_label, 1, pump1_col)
-        layout.addWidget(self.niops_pressure_display_label, 2, pump1_col)
-        layout.addWidget(self.niops_pressure_display, 3, pump1_col)
-        layout.addWidget(self.niops_workingtime_display_label, 4, pump1_col)
-        layout.addWidget(self.niops_workingtime_display, 5, pump1_col)
-        layout.addWidget(self.niops_voltage_label, 6, pump1_col)
-        layout.addWidget(self.niops_voltage, 7, pump1_col)
-        layout.addWidget(self.niops_power, 8, pump1_col)
-        layout.addWidget(self.niops_lockswitch, 9, pump1_col)
-        layout.addWidget(self.niops_record, 10, pump1_col)
+        layout.addWidget(self.ip_label, 1, pump1_col)
+        layout.addWidget(self.ip_pressure_display_label, 2, pump1_col)
+        layout.addWidget(self.ip_pressure_display, 3, pump1_col)
+        layout.addWidget(self.ip_workingtime_display_label, 4, pump1_col)
+        layout.addWidget(self.ip_workingtime_display, 5, pump1_col)
+        layout.addWidget(self.ip_voltage_label, 6, pump1_col)
+        layout.addWidget(self.ip_voltage, 7, pump1_col)
+        layout.addWidget(self.ip_power, 8, pump1_col)
+        layout.addWidget(self.ip_lockswitch, 9, pump1_col)
+        layout.addWidget(self.ip_record, 10, pump1_col)
 
         layout.addWidget(self.np_label, 1, pump2_col)
         layout.addWidget(self.np_workingtime_display_label, 4, pump2_col)
         layout.addWidget(self.np_workingtime_display, 5, pump2_col)
+        layout.addWidget(self.np_mode_label, 6, pump2_col)
+        layout.addWidget(self.np_mode, 7, pump2_col)
         layout.addWidget(self.np_power, 8, pump2_col)
         layout.addWidget(self.np_lockswitch, 9, pump2_col)
 
         #layout.minimumSize()
         self.setLayout(layout)
+
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runGUI

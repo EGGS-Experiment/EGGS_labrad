@@ -41,8 +41,8 @@ class SLS_client(SLS_gui):
             self.reg = self.cxn.registry
             self.sls = self.cxn.sls_server
         except Exception as e:
-            print(e)
-            raise
+            print('Required servers not connected, disabling widget.')
+            self.setEnabled(False)
 
         # connect to signals
             #device parameters
