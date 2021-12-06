@@ -62,7 +62,7 @@ class EGGS_gui(QMainWindow):
         from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_client import lakeshore336_client
         from EGGS_labrad.lib.clients.cryovac_clients.niops03_client import niops03_client
         from EGGS_labrad.lib.clients.cryovac_clients.twistorr74_client import twistorr74_client
-        from EGGS_labrad.lib.clients.cryovac_clients.RGA_gui import RGA_UI
+        #from EGGS_labrad.lib.clients.cryovac_clients.RGA_gui import RGA_UI
         #instantiate constituent widgets
         lakeshore = lakeshore336_client(reactor, cxn=cxn.cxn)
         niops = niops03_client(reactor, cxn=cxn.cxn)

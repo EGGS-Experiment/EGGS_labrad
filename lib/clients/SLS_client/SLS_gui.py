@@ -303,7 +303,7 @@ class SLS_gui(QtWidgets.QFrame):
         self.autolock_param.setItemText(0, _translate("SLS_gui", "Off"))
         self.autolock_param.setItemText(1, _translate("SLS_gui", "PZT"))
         self.autolock_param.setItemText(2, _translate("SLS_gui", "Current"))
-        self.autolock_time_label.setText(_translate("SLS_gui", "Lock Time"))
+        self.autolock_time_label.setText(_translate("SLS_gui", "Lock Time (d:h:m)"))
         self.autolock_label.setText(_translate("SLS_gui", "<html><head/><body><p align=\"center\"><span style=\" font-size:16pt;\">Autolock</span></p></body></html>"))
         self.autolock_toggle_label.setText(_translate("SLS_gui", "Autolock"))
         self.autolock_attempts_label.setText(_translate("SLS_gui", "Lock Attempts"))

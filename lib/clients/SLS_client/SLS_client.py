@@ -1,7 +1,7 @@
-from datetime import timedelta
 from twisted.internet.defer import inlineCallbacks
-
 from EGGS_labrad.lib.clients.SLS_client.SLS_gui import SLS_gui
+
+_TIME_STR = '{0:d}:{1:d}:{2:d}'
 
 
 class SLS_client(SLS_gui):
@@ -76,7 +76,7 @@ class SLS_client(SLS_gui):
         self.gui.autolock_toggle.setChecked(bool(init_values['AutoLockEnable']))
         self.gui.autolock_attempts.setText(str(init_values['LockCount']))
         autolock_time = float(init_values['LockTime'])
-        autolock_time_formatted = str(timedelta(seconds=round(autolock_time)))
+        autolock_time_formatted = self._dateFormat(autolock_time)
         self.gui.autolock_time.setText(autolock_time_formatted)
         # offset
         self.gui.off_freq.setValue(float(init_values['OffsetFrequency']))
@@ -133,7 +133,7 @@ class SLS_client(SLS_gui):
         Updates GUI when values are received from server.
         """
         autolock_time = lockstatus[1]
-        autolock_time_formatted = str(timedelta(seconds=round(autolock_time)))
+        autolock_time_formatted = self._dateFormat(autolock_time)
         self.gui.autolock_attempts.setText(str(lockstatus[0]))
         self.gui.autolock_time.setText(autolock_time_formatted)
 
@@ -155,6 +155,15 @@ class SLS_client(SLS_gui):
         self.cxn.disconnect()
         if self.reactor.running:
             self.reactor.stop()
+
+
+    # HELPER
+    def _dateFormat(self, _seconds):
+        days = _seconds / 86400
+        hours = (days % 1) * 24
+        minutes = int((hours % 1) * 60)
+        time_str = _TIME_STR.format(int(days), int(hours), minutes)
+        return time_str
 
 
 if __name__ == "__main__":

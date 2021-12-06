@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QDoubleSpinBox, QComboBox
+from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QDoubleSpinBox, QComboBox, QGridLayout
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
 
