@@ -1,8 +1,3 @@
-'''
-Created on Dec 22, 2010
-
-@author: christopherreilly
-'''
 # General class representing device server
 # that communicates with serial ports.
 

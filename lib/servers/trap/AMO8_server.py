@@ -16,22 +16,23 @@ timeout = 20
 ### END NODE INFO
 """
 
+import time
+
 from labrad.server import setting
 from labrad.units import WithUnit
 
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
-import time
-
 TERMINATOR = '\r\n'
+
 
 class AMO8Server(SerialDeviceServer):
     """
     Controls AMO8 Power Supply which controls ion pumps.
     """
+
     name = 'AMO8 Server'
     regKey = 'AMO8 Server'
     serNode = 'MongKok'

@@ -17,10 +17,12 @@ timeout = 5
 
 from labrad.units import WithUnit
 from labrad.server import Signal, setting
-from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import returnValue, inlineCallbacks
+
+from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
+
 
 class RGA_Server(SerialDeviceServer):
     name = 'RGA Server'
@@ -31,9 +33,36 @@ class RGA_Server(SerialDeviceServer):
     timeout = WithUnit(3.0, 's')
     baudrate = 28800
 
+    # STARTUP
     def initServer(self):
+        super().initServer()
         self.listeners = set()
+        # polling stuff
+        self.refresher = LoopingCall(self.poll)
+        from twisted.internet.reactor import callLater
+        callLater(1, self.refresher.start, 5)
 
+    def stopServer(self):
+        if hasattr(self, 'refresher'):
+            self.refresher.stop()
+        super().stopServer()
+
+    def initContext(self, c):
+        """Initialize a new context object."""
+        self.listeners.add(c.ID)
+
+    def expireContext(self, c):
+        """Remove a context object."""
+        self.listeners.remove(c.ID)
+
+    def getOtherListeners(self, c):
+        """Get all listeners except for the context owner."""
+        notified = self.listeners.copy()
+        notified.remove(c.ID)
+        return notified
+
+
+    #STATUS
     @setting(2, value='w', returns='s')
     def filament(self, c, value=None):
         '''
@@ -93,18 +122,6 @@ class RGA_Server(SerialDeviceServer):
             message = 'High voltage (electron multiplier) command sent.'
             self.hvsignal(value, notified)
         returnValue(message)
-
-    def initContext(self, c):
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        self.listeners.remove(c.ID)
-
-    def getOtherListeners(self, c):
-        notified = self.listeners.copy()
-        if c.ID in notified:
-            notified.remove(c.ID)
-        return notified
 
 
 if __name__ == "__main__":

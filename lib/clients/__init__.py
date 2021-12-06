@@ -47,7 +47,6 @@ def runClient(client, **kwargs):
         #client.gui.showMaximized()
         client.gui.show()
     except:
-        #client.showMaximized()
         client.show()
     #start reactor
     reactor.run()

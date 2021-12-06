@@ -15,174 +15,219 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+import time
 
-from labrad.server import setting
 from labrad.units import WithUnit
+from labrad.server import setting, Signal
 
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
-import time
-
 TERMINATOR = '\r\n'
-QUERY_msg = b'\x05'
+
 
 class FMA1700AServer(SerialDeviceServer):
     """
-    Controls FMA1700A Power Supply which controls ion pumps.
+    Controls FMA1700A Flow Meter for the ColdEdge system..
     """
+
     name = 'FMA1700A Server'
     regKey = 'FMA1700AServer'
     serNode = None
     port = None
 
     timeout = WithUnit(3.0, 's')
-    baudrate = 115200
+    baudrate = 38400
 
-    #todo: put this under initserver
-    tt = None
-    interlock_loop = None
+    # SIGNALS
+    pressure_update = Signal(999999, 'signal: flow update', 'v')
 
-    #STATUS
-    @setting(11, 'Status', returns='s')
-    def get_status(self, c):
-        """
-        Get controller status
-        Returns:
-            (str): which switches and alarms are on/off
-        """
-        yield self.ser.write('TS' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
-        returnValue(resp)
+    # STARTUP
+    def initServer(self):
+        super().initServer()
+        self.listeners = set()
+        # polling stuff
+        self.refresher = LoopingCall(self.poll)
+        from twisted.internet.reactor import callLater
+        callLater(2, self.refresher.start, 2)
 
-    # ON/OFF
-    @setting(111, 'Toggle IP', power='b', returns='s')
-    def toggle_ip(self, c, power):
-        """
-        Set or query whether ion pump is off or on
-        Args:
-            (bool): whether pump is to be on or off
-        Returns:
-            (float): pump power status
-        """
-        if power:
-            yield self.ser.write('G' + TERMINATOR)
-        else:
-            yield self.ser.write('B' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
-        resp = resp.strip()
-        returnValue(resp)
+    def stopServer(self):
+        if hasattr(self, 'refresher'):
+            self.refresher.stop()
+        super().stopServer()
 
-    @setting(112, 'Toggle NP', power='b', returns='s')
-    def toggle_np(self, c, power):
-        """
-        Set or query whether getter is off or on
-        Args:
-            (bool): whether getter is to be on or off
-        Returns:
-            (bool): getter power status
-        """
-        if power == True:
-            yield self.ser.write('GN' + TERMINATOR)
-        elif power == False:
-            yield self.ser.write('BN' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
-        returnValue(resp)
+    def initContext(self, c):
+        """Initialize a new context object."""
+        self.listeners.add(c.ID)
 
-    #PARAMETERS
-    @setting(211, 'IP Pressure', returns='v')
-    def pressure_ip(self, c):
-        """
-        Get ion pump pressure in mbar
-        Returns:
-            (float): ion pump pressure
-        """
-        yield self.ser.write('Tb' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
-        returnValue(float(resp))
+    def expireContext(self, c):
+        """Remove a context object."""
+        self.listeners.remove(c.ID)
 
-    @setting(221, 'IP Voltage', voltage='v', returns='v')
-    def voltage_ip(self, c, voltage=None):
-        """
-        Get/set ion pump voltage
-        Arguments:
-            voltage (float) : pump voltage in V
-        Returns:
-                    (float): ion pump voltage in V
-        """
-        if voltage:
-            #convert voltage to hex
-            voltage = hex(voltage)[2:]
-            padleft = '0'*(4-len(voltage))
-            yield self.ser.write('u' + padleft + voltage + TERMINATOR)
-        yield self.ser.write('u' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
-        #convert from hex to int
-        resp = int(resp, 16)
-        returnValue(resp)
-
-    @setting(231, 'Working Time', returns='*2i')
-    def working_time(self, c):
-        """
-        Gets working time of IP & NP
-        Returns:
-            [[int, int], [int, int]]: working time of ion pump and getter
-        """
-        #todo: ensure no problem here
-        yield self.ser.write('TM' + TERMINATOR)
-        time.sleep(0.25)
-        ip_time = yield self.ser.read_line('\r')
-        np_time = yield self.ser.read_line('\r')
-        ip_time = ip_time[16:-8].split(' Hours ')
-        np_time = np_time[16:-8].split(' Hours ')
-        ip_time = [int(val) for val in ip_time]
-        np_time = [int(val) for val in np_time]
-        returnValue([ip_time, np_time])
-
-    @setting(311, 'Interlock IP', status='b', press='v', returns='b')
-    def interlock_ip(self, c, status, press):
-        """
-        Activates an interlock, switching off the ion pump
-        if pressure exceeds a given value.
-        Pressure is taken from the Twistorr74 turbo pump server.
-        Arguments:
-            press   (float) : the maximum pressure in mbar
-        Returns:
-                    (bool)  : activation state of the interlock
-        """
-        #create connection to turbopump as needed
-        try:
-            self.tt = yield self.client.twistorr74_server
-        except KeyError:
-            self.tt = None
-            raise Exception('Twistorr74 server not available for interlock.')
-        #set threshold pressure
-        self.interlock_pressure = press
-        #create a loop if needed
-        if not self.interlock_loop:
-            self.interlock_loop = LoopingCall(self._interlock_poll)
-        #only start if stopped, and vice versa
-        if status and not self.interlock_loop.running:
-            self.interlock_loop.start(5)
-        elif not status and self.interlock_loop.running:
-            self.interlock_loop.stop()
-        returnValue(self.interlock_loop.running)
+    def getOtherListeners(self, c):
+        """Get all listeners except for the context owner."""
+        notified = self.listeners.copy()
+        notified.remove(c.ID)
+        return notified
 
     @inlineCallbacks
-    def _interlock_poll(self):
-        press_tmp = yield self.tt.read_pressure()
-        if press_tmp >= self.interlock_pressure:
-            print('problem')
-            # yield self.ser.write('B' + TERMINATOR)
-            # time.sleep(0.25)
-            # yield self.ser.read()
+    def initSerial(self, serStr, port, **kwargs):
+        """
+        Subclass initSerial to set pressure units right after connection.
+        """
+        if kwargs.get('timeout') is None and self.timeout: kwargs['timeout'] = self.timeout
+        print('Attempting to connect at:')
+        print('\tserver:\t%s' % serStr)
+        print('\tport:\t%s' % port)
+        print('\ttimeout:\t%s\n\n' % (str(self.timeout) if kwargs.get('timeout') is not None else 'No timeout'))
+        cli = self.client
+        try:
+            # get server wrapper for serial server
+            ser = cli.servers[serStr]
+            # instantiate SerialConnection convenience class
+            self.ser = self.SerialConnection(ser=ser, port=port, **kwargs)
+            #clear input and output buffers
+            yield self.ser.flush_input()
+            yield self.ser.flush_output()
+            print('Serial connection opened.')
+            yield self.setUnits()
+            print('Setting default units to mBar')
+        except Exception as e:
+            self.ser = None
+            print(e)
+            raise Exception
+
+    @inlineCallbacks
+    def setUnits(self):
+        msg = self._create_message(CMD_msg=b'163', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
+        yield self.ser.write(msg)
+        resp = yield self.ser.read(15)
+        resp = self._parse(resp)
+        print(resp)
+
+
+    # TOGGLE
+    @setting(111, 'toggle', onoff='b', returns='b')
+    def toggle(self, c, onoff=None):
+        """
+        Start or stop the pump
+        Args:
+            onoff   (bool)  : desired pump state
+        Returns:
+                    (bool)  : pump state
+        """
+        #create and send message to device
+        message = None
+        if onoff is True:
+            message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'1')
+        elif onoff is False:
+            message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
+        elif onoff is None:
+            message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_READ_msg)
+        yield self.ser.write(message)
+        #read and parse answer
+        resp = yield self.ser.read(10)
+        resp = yield self._parse(resp)
+        if resp == '1':
+            resp = True
+        elif resp == '0':
+            resp = False
+        # update all other devices with new device state
+        if onoff is not None:
+            self.power_update(resp, self.getOtherListeners(c))
+        returnValue(resp)
+
+    # READ PRESSURE
+    @setting(211, 'Read Pressure', returns='v')
+    def pressure_read(self, c):
+        """
+        Get pump pressure
+        Returns:
+            (float): pump pressure in mbar
+        """
+        #create and send message to device
+        message = yield self._create_message(CMD_msg=b'224', DIR_msg=_TT74_READ_msg)
+        yield self.ser.write(message)
+        #read and parse answer
+        resp = yield self.ser.read(19)
+        resp = yield self._parse(resp)
+        resp = float(resp)
+        #send signal and return value
+        self.pressure_update(resp)
+        returnValue(resp)
+
+
+    # POLLING
+    @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
+    def set_polling(self, c, status, interval):
+        """
+        Configure polling of device for values.
+        """
+        #ensure interval is valid
+        if (interval < 1) or (interval > 60):
+            raise Exception('Invalid polling interval.')
+        #only start/stop polling if we are not already started/stopped
+        if status and (not self.refresher.running):
+            self.refresher.start(interval)
+        elif status and self.refresher.running:
+            self.refresher.interval = interval
+        elif (not status) and (self.refresher.running):
+            self.refresher.stop()
+        return (self.refresher.running, self.refresher.interval)
+
+    @setting(912, 'Get Polling', returns='(bv)')
+    def get_polling(self, c):
+        """
+        Get polling parameters.
+        """
+        return (self.refresher.running, self.refresher.interval)
+
+    @inlineCallbacks
+    def poll(self):
+        """
+        Polls the device for pressure readout.
+        """
+        yield self.ser.write(b'\x02\x802240\x0387')
+        resp = yield self.ser.read(19)
+        resp = yield self._parse(resp)
+        resp = float(resp)
+        self.pressure_update(resp)
+
+
+    # Helper functions
+    def _create_message(self, CMD_msg, DIR_msg, DATA_msg=b''):
+        """
+        Creates a message according to the Twistorr74 serial protocol
+        """
+        #create message as bytearray
+        msg = _TT74_STX_msg + _TT74_ADDR_msg + CMD_msg + DIR_msg + DATA_msg + _TT74_ETX_msg
+        msg = bytearray(msg)
+        #calculate checksum
+        CRC_msg = 0x00
+        for byte in msg[1:]:
+            CRC_msg ^= byte
+        #convert checksum to hex value and add to end
+        CRC_msg = hex(CRC_msg)[2:]
+        msg.extend(bytearray(CRC_msg, encoding='utf-8'))
+        return bytes(msg)
+
+    def _parse(self, ans):
+        if ans == b'':
+            raise Exception('No response from device')
+        # remove STX, ADDR, and CRC
+        ans = ans[2:-3]
+        #check if we have CMD and DIR and remove them if so
+        if len(ans) > 1:
+            ans = ans[4:]
+            ans = ans.decode()
+        elif ans in _TT74_ERRORS_msg:
+            raise Exception(_TT74_ERRORS_msg[ans])
+        elif ans == b'\x06':
+            ans = 'Acknowledged'
+        #if none of these cases, we just return it anyways
+        return ans
 
 
 if __name__ == '__main__':
