@@ -211,7 +211,7 @@ class RGA_Server(SerialDeviceServer):
         returnValue(int(resp))
 
     @setting(414, 'Scan Points', mode='s', returns='i')
-    def massSteps(self, c, mode):
+    def scanPoints(self, c, mode):
         """
         Get the number of points per scan in either analog or histogram mode.
         """
@@ -226,7 +226,7 @@ class RGA_Server(SerialDeviceServer):
 
 
     @setting(421, 'Scan Start', mode='s', num_scans='i', returns='')
-    def massSteps(self, c, mode, num_scans):
+    def scanStart(self, c, mode, num_scans):
         """
         Start a given number of scans in either analog or histogram mode.
         """
@@ -244,7 +244,7 @@ class RGA_Server(SerialDeviceServer):
 
     # SINGLE MASS MEASUREMENT
     @setting(511, 'SMM Start', mass='i', returns='v')
-    def massSteps(self, c, mass):
+    def singleMassMeasurement(self, c, mass):
         """
         Start a single mass measurement.
         """
@@ -263,22 +263,20 @@ class RGA_Server(SerialDeviceServer):
 
 
     # TOTAL PRESSURE MEASUREMENT
-    @setting(511, 'SMM Start', mass='i', returns='v')
-    def massSteps(self, c, mass):
+    @setting(611, 'TPM Start', returns='v')
+    def totalPressureMeasurement(self, c):
         """
-        Start a single mass measurement.
+        Start a total pressure measurement.
         """
-        #todo: check rga settings
-        if (mass < 0) or (mass > 100):
-            raise Exception('Invalid Input.')
+        # set the electron multiplier voltage to zero
+        # which automatically enables total pressure measurement
+        yield self._query('HV', 0, True, False)
 
-        # start a single mass measurement
-        msg = 'MR' + str(mass) + _SRS_EOL
+        # start a total pressure measurement
+        msg = 'TP?' + _SRS_EOL
         yield self.ser.write(msg)
         resp = yield self.ser.read_line(_SRS_EOL)
 
-        # set the rods back to zero
-        yield self._query('MR', 0, True, False)
         returnValue(float(resp))
 
     # HELPER
