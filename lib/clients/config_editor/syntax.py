@@ -1,12 +1,13 @@
 # syntax.py
 # code from https://wiki.python.org/moin/PyQt/Python%20syntax%20highlighting
-import sys
 
-from PyQt4.QtCore import QRegExp
-from PyQt4.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+from PyQt5.QtCore import QRegExp
+from PyQt5.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+
 
 def format(color, style=''):
-    """Return a QTextCharFormat with the given attributes.
+    """
+    Return a QTextCharFormat with the given attributes.
     """
     _color = QColor()
     _color.setNamedColor(color)
@@ -114,16 +115,17 @@ class PythonHighlighter (QSyntaxHighlighter):
 
 
     def highlightBlock(self, text):
-        """Apply syntax highlighting to the given block of text.
+        """
+        Apply syntax highlighting to the given block of text.
         """
         # Do other syntax formatting
         for expression, nth, format in self.rules:
             index = expression.indexIn(text, 0)
 
             while index >= 0:
-                # We actually want the index of the nth match
+                # we actually want the index of the nth match
                 index = expression.pos(nth)
-                length = expression.cap(nth).length()
+                length = len(expression.cap(nth))
                 self.setFormat(index, length, format)
                 index = expression.indexIn(text, index + length)
 
@@ -136,7 +138,8 @@ class PythonHighlighter (QSyntaxHighlighter):
 
 
     def match_multiline(self, text, delimiter, in_state, style):
-        """Do highlighting of multi-line strings. ``delimiter`` should be a
+        """
+        Do highlighting of multi-line strings. ``delimiter`` should be a
         ``QRegExp`` for triple-single-quotes or triple-double-quotes, and
         ``in_state`` should be a unique integer to represent the corresponding
         state changes when inside those strings. Returns True if we're still
@@ -163,7 +166,7 @@ class PythonHighlighter (QSyntaxHighlighter):
             # No; multi-line string
             else:
                 self.setCurrentBlockState(in_state)
-                length = text.length() - start + add
+                length = len(text) - start + add
             # Apply formatting
             self.setFormat(start, length, style)
             # Look for the next match

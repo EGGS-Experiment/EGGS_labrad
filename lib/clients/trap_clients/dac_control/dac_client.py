@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import QWidget, QSizePolicy, QGridLayout, QGroupBox
 
 from twisted.internet.defer import inlineCallbacks
 
-from config.dac_ad660_config import hardwareConfiguration as hc
-from EGGS_labrad.lib.clients.electrodewidget import ElectrodeIndicator
+#from config.dac_ad660_config import hardwareConfiguration as hc
+from EGGS_labrad.lib.clients.trap_clients.dac_control.electrodewidget import ElectrodeIndicator
 from EGGS_labrad.lib.clients.Widgets.QCustomSpinBox import QCustomSpinBox
 
 
@@ -34,7 +34,7 @@ class DAC_client(QWidget):
 
     def __init__(self, reactor, parent=None):
 
-        super(dacclient, self).__init__()
+        super(DAC_client, self).__init__()
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.reactor = reactor
         self.connect()
@@ -44,11 +44,16 @@ class DAC_client(QWidget):
 
         from labrad.wrappers import connectAsync
         from labrad.units import WithUnit as U
-        self.elec_dict = hc.elec_dict
+        #self.elec_dict = hc.elec_dict
+        class yz1:
+            self.dacChannelNumber = 1
+            self.octantNumber = 1
+            self.allowedVoltageRange = [0, 100]
+        self.elec_dict = {1: yz1}
         self.cxn = yield connectAsync(name="dac client")
-        self.server = self.cxn.multipole_server
-        self.dacserver = self.cxn.dac_ad660_server
-        self.init_multipoles = yield self.server.get_multipoles()
+        #self.server = self.cxn.multipole_server
+        #self.dacserver = self.cxn.dac_ad660_server
+        #self.init_multipoles = yield self.server.get_multipoles()
         self.initialize_GUI()
 
     def initialize_GUI(self):

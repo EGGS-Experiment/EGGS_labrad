@@ -33,38 +33,34 @@ class Wedge(object):
 
 		self.color = QColor(R, G, B, 127)
 
+
 class ElectrodeIndicator(QWidget):
-    
-    def __init__(self, limits):
-        super(ElectrodeIndicator, self).__init__()
-        self.init_UI()
-	self.minvalue = limits[0]
-	self.maxvalue = limits[1]
-        
-    def init_UI(self):      
 
-        self.setGeometry(160, 160, 400, 400)
+	def __init__(self, limits):
+		super(ElectrodeIndicator, self).__init__()
+		self.init_UI()
+		self.minvalue = limits[0]
+		self.maxvalue = limits[1]
 
-	quad1 = Wedge(None, None, 0.0)
-	quad2 = Wedge(None, None, 90.0)
-	quad3 = Wedge(None, None, 180.0)
-	quad4 = Wedge(None, None, 270.0) 
+	def init_UI(self):
+		self.setGeometry(160, 160, 400, 400)
 
-	self.quads = [quad1, quad2, quad3, quad4]
+		quad1 = Wedge(None, None, 0.0)
+		quad2 = Wedge(None, None, 90.0)
+		quad3 = Wedge(None, None, 180.0)
+		quad4 = Wedge(None, None, 270.0)
+		self.quads = [quad1, quad2, quad3, quad4]
+		self.setWindowTitle('Electrode Indicator')
+		self.show()
 
-        self.setWindowTitle('Electrode Indicator')
-        self.show()
+	def paintEvent(self, e):
+		qp = QPainter()
+		qp.begin(self)
+		self.draw_wedges(qp)
+		self.draw_values(qp)
+		qp.end()
 
-    def paintEvent(self, e):
-
-        qp = QPainter()
-        qp.begin(self)
-        self.draw_wedges(qp)
-        self.draw_values(qp)
-        qp.end()
-        
-    def draw_wedges(self, qp):
-      
+	def draw_wedges(self, qp):
 		framewidth = self.frameGeometry().width()
 		frameheight = self.frameGeometry().height()
 		trapdim = .75*min(framewidth, frameheight)
@@ -95,12 +91,11 @@ class ElectrodeIndicator(QWidget):
 					   trapdim, trapdim, quad.startingangle, 90.0)
 			path.lineTo(center)
 			qp.drawPath(path)
-        
-    def draw_values(self, qp):
-        pen = QPen(QtCore.Qt.red, 2, QtCore.Qt.SolidLine)
-        qp.setPen(pen)
+	def draw_values(self, qp):
+		pen = QPen(QtCore.Qt.red, 2, QtCore.Qt.SolidLine)
+		qp.setPen(pen)
 
-    def update_octant(self, octant, value):
+	def update_octant(self, octant, value):
 
 		if octant in [1,2,3,4]:
 			self.quads[octant - 1].top_voltage = value
@@ -114,7 +109,7 @@ class ElectrodeIndicator(QWidget):
 		self.repaint()
         
 if __name__=="__main__":
-    app = QApplication(sys.argv)
-    icon = ElectrodeIndicator([-5.0,5.0])
-    icon.show()
-    app.exec_()
+	app = QApplication(sys.argv)
+	icon = ElectrodeIndicator([-5.0,5.0])
+	icon.show()
+	app.exec_()

@@ -7,10 +7,10 @@ class QCustomSpinBox(QWidget):
     onNewValues = QtCore.pyqtSignal()
     def __init__(self, title, levelRange, parent=None):
         QWidget.__init__(self, parent)
-        basepath = os.path.dirname(__file__)
-        path = os.path.join(basepath, 'titlespin.ui')
-        uic.loadUi(path, self)
-        self.title.setText(title)
+        #basepath = os.path.dirname(__file__)
+        #path = os.path.join(basepath, 'titlespin.ui')
+        #uic.loadUi(path, self)
+        self.title.setText('thkim')
         self.levelRange = levelRange
         self.spinLevel.setRange(*levelRange)
         self.spinLevel.setDecimals(3)
