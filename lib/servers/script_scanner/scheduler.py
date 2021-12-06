@@ -184,7 +184,7 @@ class script_semaphore(object):
 class scheduler(object):
     """
 
-    TODO: proper class name
+    TODO: proper class name and document
     """
     def __init__(self, signals):
         self.signals = signals

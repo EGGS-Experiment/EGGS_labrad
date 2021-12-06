@@ -21,16 +21,14 @@ class GUIClient(QWidget):
     name = None
 
     def __init__(self, reactor, cxn=None, parent=None):
-        # todo parent init
         super().__init__()
-        # todo big vars
         self.cxn = cxn
         self.gui = self
         self.reactor = reactor
-        # todo: small vars
         self.servers = []
-        # todo initialization sequence
+        # initialization sequence
         d = self._connectLabrad()
+        d.addCallback(self.initClient)
         d.addCallback(self.initializeGUI)
 
     # SETUP

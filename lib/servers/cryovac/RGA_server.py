@@ -45,6 +45,8 @@ class RGA_Server(SerialDeviceServer):
         callLater(1, self.refresher.start, 5)
         # communications lock
         self.comm_lock = DeferredLock()
+        # RGA type
+        self.m_max = 100
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -181,8 +183,7 @@ class RGA_Server(SerialDeviceServer):
         """
         if not mass:
             mass = ''
-        #todo: check RGA #
-        elif (mass < 0) or (mass > 100):
+        elif (mass < 0) or (mass > self.m_max):
             raise Exception('Invalid Input.')
         resp = yield self._query('MI', mass, True, True)
         returnValue(int(resp))
@@ -194,8 +195,7 @@ class RGA_Server(SerialDeviceServer):
         """
         if not mass:
             mass = ''
-        #todo: check RGA #
-        elif (mass < 0) or (mass > 100):
+        elif (mass < 0) or (mass > self.m_max):
             raise Exception('Invalid Input.')
         resp = yield self._query('MF', mass, True, True)
         returnValue(int(resp))
@@ -258,8 +258,7 @@ class RGA_Server(SerialDeviceServer):
         """
         Start a single mass measurement.
         """
-        #todo: check rga settings
-        if (mass < 0) or (mass > 100):
+        if (mass < 0) or (mass > self.m_max):
             raise Exception('Invalid Input.')
 
         # start a single mass measurement

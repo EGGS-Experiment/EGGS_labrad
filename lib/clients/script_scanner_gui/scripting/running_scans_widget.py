@@ -197,17 +197,9 @@ class running_combined(QtWidgets.QWidget):
     """
     Brings a title together with the list of running experiments.
     Basically does nothing new, just a convenience class.
-    TODO: more descriptive class name
-    TODO: rename class with proper syntax
     """
+
     def __init__(self, reactor, font=None, parent=None):
-        """
-        Parameters
-        ----------
-        reactor: Qt reactor?
-        font: ?
-        parent: ?
-        """
         super(running_combined, self).__init__(parent)
         self.reactor = reactor
         self.parent = parent
@@ -230,12 +222,6 @@ class running_combined(QtWidgets.QWidget):
         self.setLayout(layout)
 
     def add(self, ident, name):
-        """
-        Parameters
-        ----------
-        ident: ?
-        name: ?
-        """
         self.scans_list.add(ident, name)
 
     def set_status(self, ident, status, percentage):
