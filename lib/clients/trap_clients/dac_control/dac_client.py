@@ -1,12 +1,12 @@
 import time
 
 from PyQt5.QtWidgets import QWidget, QSizePolicy, QGridLayout, QGroupBox
-from common.lib.clients.qtui.QCustomSpinBox import QCustomSpinBox
 
 from twisted.internet.defer import inlineCallbacks
 
-from Qsim.clients.qtui.electrodewidget import ElectrodeIndicator
 from config.dac_ad660_config import hardwareConfiguration as hc
+from EGGS_labrad.lib.clients.electrodewidget import ElectrodeIndicator
+from EGGS_labrad.lib.clients.Widgets.QCustomSpinBox import QCustomSpinBox
 
 
 class Electrode(object):
