@@ -104,7 +104,6 @@ class TwisTorr74Server(SerialDeviceServer):
             yield self.ser.flush_output()
             print('Serial connection opened.')
             yield self.setUnits()
-            print('Setting default units to mBar')
         except Exception as e:
             self.ser = None
             print(e)
@@ -112,6 +111,7 @@ class TwisTorr74Server(SerialDeviceServer):
 
     #@inlineCallbacks
     def setUnits(self):
+        print('Setting default units to mBar')
         pass
         # msg = self._create_message(CMD_msg=b'163', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
         # yield self.ser.write(msg)
