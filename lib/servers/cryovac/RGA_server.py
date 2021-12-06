@@ -19,7 +19,7 @@ from labrad.units import WithUnit
 from labrad.server import Signal, setting
 
 from twisted.internet.task import LoopingCall
-from twisted.internet.defer import returnValue, inlineCallbacks
+from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
@@ -43,6 +43,8 @@ class RGA_Server(SerialDeviceServer):
         self.refresher = LoopingCall(self.poll)
         from twisted.internet.reactor import callLater
         callLater(1, self.refresher.start, 5)
+        # communications lock
+        self.comm_lock = DeferredLock()
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -230,16 +232,24 @@ class RGA_Server(SerialDeviceServer):
         """
         Start a given number of scans in either analog or histogram mode.
         """
+        # check input
         if (num_scans < 0) or (num_scans > 255):
             raise Exception('Invalid Input.')
 
+        # create scan message
+        msg = None
         if mode.lower() in ('a', 'analog'):
-            yield self._query('SC', num_scans, True, False)
+            msg = 'SC' + num_scans + _SRS_EOL
         if mode.lower() in ('h', 'histogram'):
-            yield self._query('SC', num_scans, True, False)
+            msg = 'HS' + num_scans + _SRS_EOL
         else:
             raise Exception('Invalid Input.')
+
+        # initiate blocking scan
+        yield self.comm_lock.acquire()
+        yield self.ser.write(msg)
         #todo: get resp
+        yield self.comm_lock.release()
 
 
     # SINGLE MASS MEASUREMENT
@@ -254,11 +264,16 @@ class RGA_Server(SerialDeviceServer):
 
         # start a single mass measurement
         msg = 'MR' + str(mass) + _SRS_EOL
+
+        yield self.comm_lock.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read_line(_SRS_EOL)
+        yield self.comm_lock.release()
 
         # set the rods back to zero
         yield self._query('MR', 0, True, False)
+
+        # return the result
         returnValue(float(resp))
 
 
@@ -274,9 +289,13 @@ class RGA_Server(SerialDeviceServer):
 
         # start a total pressure measurement
         msg = 'TP?' + _SRS_EOL
+
+        yield self.comm_lock.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read_line(_SRS_EOL)
+        yield self.comm_lock.release()
 
+        # return the result
         returnValue(float(resp))
 
     # HELPER
