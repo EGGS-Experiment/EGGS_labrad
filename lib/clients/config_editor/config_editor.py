@@ -113,7 +113,7 @@ class CONFIG_EDITOR(QMainWindow):
             f.close()
 
     def openFile(self, filename=None):
-        print('filename: ' + str(filename))
+        # print('filename: ' + str(filename))
         if filename == "Choose a file":
             self.current_file = None
             self.text.clear()
@@ -134,8 +134,10 @@ class CONFIG_EDITOR(QMainWindow):
             return
          
     def closeEvent(self, event):
+        #self.reactor.stop()
         if self.reactor.running:
             self.reactor.stop()
+        return
     
 
 if __name__ == '__main__':
