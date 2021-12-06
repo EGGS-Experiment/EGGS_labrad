@@ -45,7 +45,7 @@ class SLSServer(SerialDeviceServer):
         # polling stuff
         self.refresher = LoopingCall(self.poll)
         from twisted.internet.reactor import callLater
-        callLater(1, self.refresher.start, 3)
+        callLater(1, self.refresher.start, 10)
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -230,10 +230,12 @@ class SLSServer(SerialDeviceServer):
         Polls the device for locking readout.
         """
         yield self.ser.write('get LockCount' + TERMINATOR)
-        yield self.ser.write('get LockTime' + TERMINATOR)
         lockcount = yield self.ser.read_line(_SLS_EOL)
+        lockcount = yield self._parse(lockcount, False)
+        yield self.ser.write('get LockTime' + TERMINATOR)
         locktime = yield self.ser.read_line(_SLS_EOL)
-        self.autolock_update((lockcount, locktime))
+        locktime = yield self._parse(locktime, False)
+        self.autolock_update((int(lockcount), float(locktime)))
 
 
     # HELPERS
