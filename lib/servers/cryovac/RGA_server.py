@@ -23,8 +23,8 @@ from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
-
 _SRS_EOL = '\r'
+
 
 class RGA_Server(SerialDeviceServer):
     name = 'RGA Server'
@@ -40,9 +40,9 @@ class RGA_Server(SerialDeviceServer):
         super().initServer()
         self.listeners = set()
         # polling stuff
-        self.refresher = LoopingCall(self.poll)
-        from twisted.internet.reactor import callLater
-        callLater(1, self.refresher.start, 5)
+        # self.refresher = LoopingCall(self.poll)
+        # from twisted.internet.reactor import callLater
+        # callLater(1, self.refresher.start, 5)
         # communications lock
         self.comm_lock = DeferredLock()
         # RGA type

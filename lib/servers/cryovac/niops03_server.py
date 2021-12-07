@@ -158,20 +158,21 @@ class NIOPS03Server(SerialDeviceServer):
         self.pressure_update(resp)
         returnValue(resp)
 
-    @setting(221, 'IP Voltage', voltage='v', returns='v')
+    @setting(221, 'IP Voltage', voltage='i', returns='i')
     def voltage_ip(self, c, voltage=None):
         """
         Get/set ion pump voltage.
         Arguments:
-            voltage (float) : pump voltage in V
+            voltage (int) : pump voltage in V
         Returns:
-                    (float): ion pump voltage in V
+                    (int): ion pump voltage in V
         """
         if voltage is not None:
             #convert voltage to hex
             voltage = hex(voltage)[2:]
             padleft = '0'*(4-len(voltage))
-            yield self.ser.write('u' + padleft + voltage + TERMINATOR)
+            yield self.ser.write('U' + padleft + voltage + TERMINATOR)
+            yield self.ser.read_line('\r')
         yield self.ser.write('u' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
         #convert from hex to int
