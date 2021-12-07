@@ -63,7 +63,8 @@ class NIOPS03Server(SerialDeviceServer):
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
-            self.refresher.stop()
+            if self.refresher.running:
+                self.refresher.stop()
         super().stopServer()
 
     def initContext(self, c):
@@ -256,9 +257,11 @@ class NIOPS03Server(SerialDeviceServer):
         Polls the device for pressure readout.
         """
         #get results all together
-        yield self.ser.write('Tb\r\nTC\r\nu\r\n')
+        yield self.ser.write('Tb\r\n')
         ip_pressure = yield self.ser.read_line('\r')
+        yield self.ser.write('TC\r\n')
         temp_resp = yield self.ser.read_line('\r')
+        yield self.ser.write('u\r\n')
         volt_resp = yield self.ser.read_line('\r')
 
         # update pressure

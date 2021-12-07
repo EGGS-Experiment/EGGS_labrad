@@ -92,7 +92,8 @@ class niops03_client(niops03_gui):
         self.gui.np_power.setChecked(np_on)
             #IP voltage
         v_ip = yield self.niops.ip_voltage()
-        self.gui.ip_voltage.setValue(v_ip)
+        self.gui.ip_voltage_display.setText(str(v_ip))
+        self.gui.ip_voltage.setEnabled(ip_on)
         #connect signals to slots
             #ion pump
         self.gui.ip_lockswitch.toggled.connect(lambda status: self.lock_niops(status))
@@ -136,6 +137,7 @@ class niops03_client(niops03_gui):
 
     def updateIPPower(self, c, power):
         # set IP power
+        self.gui.ip_voltage.setEnabled(power)
         self.gui.ip_power.setChecked(power)
 
     def updateNPPower(self, c, power):

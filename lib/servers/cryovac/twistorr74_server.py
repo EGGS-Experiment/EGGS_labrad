@@ -68,7 +68,8 @@ class TwisTorr74Server(SerialDeviceServer):
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
-            self.refresher.stop()
+            if self.refresher.running:
+                self.refresher.stop()
         super().stopServer()
 
     def initContext(self, c):
