@@ -3,7 +3,7 @@
 [info]
 name = RGA Server
 version = 1.4.1
-description = Connects to the SRS200 RGA
+description = Connects to the SRSx00 RGA
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -32,7 +32,7 @@ class RGA_Server(SerialDeviceServer):
     port = 'COM48'
     serNode = 'mongkok'
 
-    timeout = WithUnit(3.0, 's')
+    timeout = WithUnit(5.0, 's')
     baudrate = 28800
 
     # STARTUP
@@ -70,17 +70,16 @@ class RGA_Server(SerialDeviceServer):
 
 
     # STATUS
-    @setting(111, 'Initialize', level='i', returns='i')
+    @setting(111, 'Initialize', level='i', returns='')
     def initialize(self, c, level=0):
         """
         Initialize the RGA.
         """
-        if not level:
+        if level is None:
             level = ''
         elif level not in (0, 1, 2):
             raise Exception('Invalid Input.')
-        resp = yield self._query('IN', level, True, True)
-        returnValue(resp)
+        resp = yield self._query('IN', level, True, False)
 
 
     # IONIZER
@@ -89,7 +88,7 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the electron energy (in eV).
         """
-        if not energy:
+        if energy is None:
             energy = ''
         elif (energy < 25) or (energy > 105):
             raise Exception('Invalid Input.')
@@ -101,7 +100,7 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the ion energy (in eV).
         """
-        if not energy:
+        if energy is None:
             energy = ''
         elif energy not in (0, 1):
             raise Exception('Invalid Input.')
@@ -113,7 +112,7 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the electron emission current (in mA).
         """
-        if not current:
+        if current is None:
             current = ''
         elif (current < 0) or (current > 3.5):
             raise Exception('Invalid Input.')
@@ -125,11 +124,11 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the electron emission current (in mA).
         """
-        if not voltage:
+        if voltage is None:
             voltage = ''
         elif (voltage < 0) or (voltage > 150):
             raise Exception('Invalid Input.')
-        resp = yield self._query('FL', voltage, True, True)
+        resp = yield self._query('VF', voltage, True, True)
         returnValue(int(resp))
 
 
@@ -141,21 +140,20 @@ class RGA_Server(SerialDeviceServer):
         """
         resp = yield self._query('CA', '', True, False)
         #todo: see whether error prevents things
-        returnValue(int(resp))
 
-    @setting(312, 'Ionizer Noise Floor', level='i', returns='i')
+    @setting(312, 'Detector Noise Floor', level='i', returns='i')
     def noiseFloor(self, c, level=None):
         """
         Set the detector noise floor.
         """
-        if not level:
+        if level is None:
             level = ''
         elif (level < 0) or (level > 7):
             raise Exception('Invalid Input.')
         resp = yield self._query('NF', level, True, True)
         returnValue(int(resp))
 
-    @setting(313, 'Ionizer CDEM', returns='i')
+    @setting(313, 'Detector CDEM', returns='i')
     def cdem(self, c):
         """
         Check whether the electron multiplier is available.
@@ -163,12 +161,12 @@ class RGA_Server(SerialDeviceServer):
         resp = yield self._query('MO', '', False, True)
         returnValue(int(resp))
 
-    @setting(321, 'Ionizer CDEM Voltage', voltage='i', returns='i')
+    @setting(321, 'Detector CDEM Voltage', voltage='i', returns='i')
     def cdemVoltage(self, c, voltage=None):
         """
         Set the electron multiplier voltage bias.
         """
-        if not voltage:
+        if voltage is None:
             voltage = ''
         elif (voltage < 0) or (voltage > 2490):
             raise Exception('Invalid Input.')
@@ -182,7 +180,7 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the initial mass for scanning.
         """
-        if not mass:
+        if mass is None:
             mass = ''
         elif (mass < 0) or (mass > self.m_max):
             raise Exception('Invalid Input.')
@@ -194,7 +192,7 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the final mass for scanning.
         """
-        if not mass:
+        if mass is None:
             mass = ''
         elif (mass < 0) or (mass > self.m_max):
             raise Exception('Invalid Input.')
@@ -206,7 +204,7 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the number of steps per amu during scanning.
         """
-        if not mass:
+        if mass is None:
             mass = ''
         elif (mass < 10) or (mass > 25):
             raise Exception('Invalid Input.')
@@ -304,27 +302,31 @@ class RGA_Server(SerialDeviceServer):
         # write to the device
         if setter:
             msg = chString + str(param) + _SRS_EOL
+            print('setter: ' + msg)
             yield self.ser.write(msg)
             status = yield self.ser.read_line(_SRS_EOL)
             # process status byte echo for errors
-            yield self._parseStatus(status)
+            yield self._checkStatus(status)
 
         # get data from the device
         if getter:
             msg = chString + '?' + _SRS_EOL
+            print('getter: ' + msg)
             yield self.ser.write(msg)
             resp = yield self.ser.read_line(_SRS_EOL)
+            print(resp)
             returnValue(resp)
 
-    def _parseStatus(self, status):
+    def _checkStatus(self, status):
         """
         Parse the status byte echo from the RGA.
         """
         #todo: convert to binary array then AND the errors
-        status = byte(status)
-        PS_ERR = status & 0x40
-        DET_ERR = status & 0x30
-        pass
+        # convert string input into binary
+        status = format(int(status), '08b')
+        print('status: ' + str(status))
+        #PS_ERR = status & 0x40
+        #DET_ERR = status & 0x30
 
 
 if __name__ == "__main__":
