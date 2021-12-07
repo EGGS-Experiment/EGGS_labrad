@@ -59,13 +59,14 @@ class TwisTorr74Server(SerialDeviceServer):
 
     # STARTUP
     def initServer(self):
+        print(self._create_message(CMD_msg=b'008', DIR_msg=_TT74_READ_msg))
+        print(self._create_message(CMD_msg=b'008', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0'))
         super().initServer()
         self.listeners = set()
         # polling stuff
         self.refresher = LoopingCall(self.poll)
-        # self.refresher.interval = 5
         from twisted.internet.reactor import callLater
-        callLater(5, self.refresher.start, 8)
+        callLater(2, self.refresher.start, 5)
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -143,7 +144,8 @@ class TwisTorr74Server(SerialDeviceServer):
             message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_READ_msg)
         yield self.ser.write(message)
         #read and parse answer
-        resp = yield self.ser.read(10)
+        resp = yield self.ser.read_line(_TT74_ETX_msg)
+        yield self.ser.read(2)
         resp = yield self._parse(resp)
         if resp == '1':
             resp = True
@@ -167,8 +169,8 @@ class TwisTorr74Server(SerialDeviceServer):
         message = yield self._create_message(CMD_msg=b'224', DIR_msg=_TT74_READ_msg)
         yield self.ser.write(message)
         #read and parse answer
-        resp = yield self.ser.read(19)
-        resp = yield self._parse(resp)
+        resp = yield self.ser.read_line(_TT74_ETX_msg)
+        yield self.ser.read()
         resp = float(resp)
         #send signal and return value
         self.pressure_update(resp)
@@ -185,7 +187,8 @@ class TwisTorr74Server(SerialDeviceServer):
         message = yield self._create_message(CMD_msg=b'202', DIR_msg=_TT74_READ_msg)
         yield self.ser.write(message)
         #read and parse answer
-        resp = yield self.ser.read(15)
+        resp = yield self.ser.read_line(_TT74_ETX_msg)
+        yield self.ser.read()
         resp = yield self._parse(resp)
         resp = float(resp)
         #send signal and return value
@@ -203,7 +206,8 @@ class TwisTorr74Server(SerialDeviceServer):
         message = yield self._create_message(CMD_msg=b'226', DIR_msg=_TT74_READ_msg)
         yield self.ser.write(message)
         #read and parse answer
-        resp = yield self.ser.read(15)
+        resp = yield self.ser.read_line(_TT74_ETX_msg)
+        yield self.ser.read(2)
         resp = yield self._parse(resp)
         resp = float(resp)
         #send signal and return value
@@ -242,12 +246,16 @@ class TwisTorr74Server(SerialDeviceServer):
         Polls the device for pressure readout.
         """
         # get responses from device
-        yield self.ser.write('\x02\x802240\x0387')
-        yield self.ser.write('\x02\x802020\x0383')
-        yield self.ser.write('\x02\x802260\x0385')
-        press = yield self.ser.read(19)
-        power = yield self.ser.read(15)
-        rpm = yield self.ser.read(15)
+        yield self.ser.write('\x02\x802240\x0387\x02\x802020\x0383\x02\x802260\x0385')
+        press = yield self.ser.read_line(_TT74_ETX_msg)
+        yield self.ser.read(2)
+        power = yield self.ser.read_line(_TT74_ETX_msg)
+        yield self.ser.read(2)
+        rpm = yield self.ser.read_line(_TT74_ETX_msg)
+        yield self.ser.read(2)
+        print(press)
+        print(power)
+        print(rpm)
 
         # parse responses
         press = yield self._parse(press)
@@ -281,7 +289,7 @@ class TwisTorr74Server(SerialDeviceServer):
         if ans == b'':
             raise Exception('No response from device')
         # remove STX, ADDR, and CRC
-        ans = ans[2:-3]
+        ans = ans[2:]
         #check if we have CMD and DIR and remove them if so
         if len(ans) > 1:
             ans = ans[4:]
