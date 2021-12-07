@@ -44,9 +44,10 @@ class NIOPS03Server(SerialDeviceServer):
 
     # SIGNALS
     pressure_update = Signal(999999, 'signal: pressure update', 'v')
-    workingtime_update = Signal(999998, 'signal: workingtime update', '*2i')
-    ip_power_update = Signal(999997, 'signal: ip power update', 'b')
-    np_power_update = Signal(999996, 'signal: np power update', 'b')
+    voltage_update = Signal(999998, 'signal: voltage update', 'i')
+    temperature_update = Signal(999997, 'signal: temperature update', '(vv)')
+    ip_power_update = Signal(999996, 'signal: ip power update', 'b')
+    np_power_update = Signal(999995, 'signal: np power update', 'b')
 
     # STARTUP
     def initServer(self):
@@ -57,8 +58,8 @@ class NIOPS03Server(SerialDeviceServer):
         self.interlock_active = False
         self.interlock_pressure = None
         self.refresher = LoopingCall(self.poll)
-        #from twisted.internet.reactor import callLater
-        #callLater(1, self.refresher.start, 5)
+        from twisted.internet.reactor import callLater
+        callLater(5, self.refresher.start, 5)
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -194,7 +195,6 @@ class NIOPS03Server(SerialDeviceServer):
         ip_time = [int(val) for val in ip_time]
         np_time = [int(val) for val in np_time]
         resp = [ip_time, np_time]
-        self.workingtime_update(resp)
         returnValue(resp)
 
 
@@ -256,20 +256,21 @@ class NIOPS03Server(SerialDeviceServer):
         Polls the device for pressure readout.
         """
         #get results all together
-        yield self.ser.write('Tb' + TERMINATOR)
-        pressure = yield self.ser.read_line()
-        yield self.ser.write('TM' + TERMINATOR)
-        ip_time = yield self.ser.read_line('\r')
-        np_time = yield self.ser.read_line('\r')
-        #update pressure
-        self.pressure_update(float(pressure))
-        # update workingtime
-        ip_time = ip_time[16:-8].split(' Hours ')
-        np_time = np_time[16:-8].split(' Hours ')
-        ip_time = [int(val) for val in ip_time]
-        np_time = [int(val) for val in np_time]
-        self.workingtime_update([ip_time, np_time])
-        #interlock
+        yield self.ser.write('Tb\r\nTC\r\nu\r\n')
+        ip_pressure = yield self.ser.read_line('\r')
+        temp_resp = yield self.ser.read_line('\r')
+        volt_resp = yield self.ser.read_line('\r')
+
+        # update pressure
+        self.pressure_update(float(ip_pressure))
+        # process & update temperature
+        temp = temp_resp.split()
+        self.temperature_update((float(temp[1]), float(temp[3])))
+        # process & update voltage
+
+        self.voltage_update(int(volt_resp, 16))
+
+        # interlock
         if self.interlock_active:
             press_tmp = yield self.tt.read_pressure()
             if press_tmp >= self.interlock_pressure:

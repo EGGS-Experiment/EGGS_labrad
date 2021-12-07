@@ -10,9 +10,10 @@ class niops03_client(niops03_gui):
 
     name = 'NIOPS03 Client'
     PRESSUREID = 878352
-    WORKINGTIMEID = 878353
-    IPPOWERID = 878354
-    NPPOWERID = 878355
+    VOLTAGEID = 878353
+    TEMPERATUREID = 878354
+    IPPOWERID = 878355
+    NPPOWERID = 878356
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
@@ -55,8 +56,10 @@ class niops03_client(niops03_gui):
             # device signals
         yield self.niops.signal__pressure_update(self.PRESSUREID)
         yield self.niops.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
-        yield self.niops.signal__workingtime_update(self.WORKINGTIMEID)
-        yield self.niops.addListener(listener=self.updateWorkingTime, source=None, ID=self.WORKINGTIMEID)
+        yield self.niops.signal__voltage_update(self.VOLTAGEID)
+        yield self.niops.addListener(listener=self.updateVoltage, source=None, ID=self.VOLTAGEID)
+        yield self.niops.signal__temperature_update(self.TEMPERATUREID)
+        yield self.niops.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATUREID)
         yield self.niops.signal__ip_power_update(self.IPPOWERID)
         yield self.niops.addListener(listener=self.updateIPPower, source=None, ID=self.IPPOWERID)
         yield self.niops.signal__np_power_update(self.NPPOWERID)
@@ -122,12 +125,14 @@ class niops03_client(niops03_gui):
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
-    def updateWorkingTime(self, c, workingtime):
+    def updateVoltage(self, c, voltage):
         # set workingtime
-        workingtime_ip = str(workingtime[0][0]) + ':' + str(workingtime[0][1])
-        workingtime_np = str(workingtime[1][0]) + ':' + str(workingtime[1][1])
-        self.gui.ip_workingtime_display.setText(workingtime_ip)
-        self.gui.np_workingtime_display.setText(workingtime_np)
+        self.gui.ip_voltage_display.setText(str(voltage))
+
+    def updateTemperature(self, c, temperatures):
+        # set workingtime
+        self.gui.ip_temperature_display.setText(str(temperatures[0]))
+        self.gui.np_temperature_display.setText(str(temperatures[1]))
 
     def updateIPPower(self, c, power):
         # set IP power
@@ -165,6 +170,7 @@ class niops03_client(niops03_gui):
         Sets ion pump power on or off.
         """
         #print('set: ' + str(status))
+        self.gui.ip_voltage.setEnabled(status)
         yield self.niops.ip_toggle(status)
 
     def lock_niops(self, status):
@@ -179,7 +185,7 @@ class niops03_client(niops03_gui):
         """
         Sets the ion pump voltage.
         """
-        yield self.niops.ip_voltage(voltage)
+        yield self.niops.ip_voltage(int(voltage))
 
     @inlineCallbacks
     def toggle_np(self, status):
