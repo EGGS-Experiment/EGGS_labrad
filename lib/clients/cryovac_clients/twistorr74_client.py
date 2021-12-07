@@ -110,25 +110,17 @@ class twistorr74_client(twistorr74_gui):
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
-    @inlineCallbacks
     def updateEnergy(self, c, energy):
         """
         Updates GUI when values are received from server.
         """
         self.gui.power_display.setText(str(energy))
-        # if self.recording:
-        #     elapsedtime = time.time() - self.starttime
-        #     yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
-    @inlineCallbacks
     def updateRPM(self, c, rpm):
         """
         Updates GUI when values are received from server.
         """
         self.gui.rpm_display.setText(str(rpm))
-        # if self.recording:
-        #     elapsedtime = time.time() - self.starttime
-        #     yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
     def updatePower(self, c, power):
         """

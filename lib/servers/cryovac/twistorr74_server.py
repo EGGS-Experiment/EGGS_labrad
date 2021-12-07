@@ -59,8 +59,6 @@ class TwisTorr74Server(SerialDeviceServer):
 
     # STARTUP
     def initServer(self):
-        print(self._create_message(CMD_msg=b'008', DIR_msg=_TT74_READ_msg))
-        print(self._create_message(CMD_msg=b'008', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0'))
         super().initServer()
         self.listeners = set()
         # polling stuff
@@ -245,17 +243,16 @@ class TwisTorr74Server(SerialDeviceServer):
         """
         Polls the device for pressure readout.
         """
-        # get responses from device
-        yield self.ser.write('\x02\x802240\x0387\x02\x802020\x0383\x02\x802260\x0385')
+        # create message
+        yield self.ser.write(b'\x02\x802240\x0387')
         press = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read(2)
+        yield self.ser.write(b'\x02\x802020\x0383')
         power = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read(2)
+        yield self.ser.write(b'\x02\x802260\x0385')
         rpm = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read(2)
-        print(press)
-        print(power)
-        print(rpm)
 
         # parse responses
         press = yield self._parse(press)
