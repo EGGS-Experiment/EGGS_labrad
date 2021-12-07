@@ -21,7 +21,7 @@ class fma1700a_gui(QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        self.setFixedSize(200, 200)
+        self.setFixedSize(190, 210)
         # title
         self.all_label = QLabel('FMA1700A')
         self.all_label.setFont(QFont(shell_font, pointSize=18))
@@ -29,7 +29,7 @@ class fma1700a_gui(QFrame):
             #readout
         self.flow_display_label = QLabel('Flow (L/min)')
         self.flow_display = QLabel('Flow')
-        self.flow_display.setFont(QFont(shell_font, pointSize=20))
+        self.flow_display.setFont(QFont(shell_font, pointSize=25))
         self.flow_display.setAlignment(Qt.AlignCenter)
         self.flow_display.setStyleSheet('color: blue')
             #record button

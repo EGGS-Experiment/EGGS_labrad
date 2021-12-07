@@ -207,8 +207,7 @@ class niops03_client(niops03_gui):
         """
         Set activation mode of getter.
         """
-        #print(index)
-        self.niops.np_mode(index)
+        self.niops.np_mode(index + 1)
 
     def closeEvent(self, event):
         self.cxn.disconnect()
