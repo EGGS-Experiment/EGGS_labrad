@@ -53,7 +53,9 @@ class TwisTorr74Server(SerialDeviceServer):
 
     # SIGNALS
     pressure_update = Signal(999999, 'signal: pressure update', 'v')
-    power_update = Signal(999998, 'signal: power update', 'b')
+    energy_update = Signal(999998, 'signal: energy update', 'v')
+    rpm_update = Signal(999997, 'signal: rpm update', 'v')
+    power_update = Signal(999996, 'signal: power update', 'b')
 
     # STARTUP
     def initServer(self):
@@ -61,8 +63,9 @@ class TwisTorr74Server(SerialDeviceServer):
         self.listeners = set()
         # polling stuff
         self.refresher = LoopingCall(self.poll)
+        # self.refresher.interval = 5
         from twisted.internet.reactor import callLater
-        callLater(2, self.refresher.start, 2)
+        callLater(5, self.refresher.start, 8)
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -111,7 +114,7 @@ class TwisTorr74Server(SerialDeviceServer):
 
     #@inlineCallbacks
     def setUnits(self):
-        print('Setting default units to mBar')
+        print('Setting default units to mBar.')
         pass
         # msg = self._create_message(CMD_msg=b'163', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
         # yield self.ser.write(msg)
@@ -151,7 +154,8 @@ class TwisTorr74Server(SerialDeviceServer):
             self.power_update(resp, self.getOtherListeners(c))
         returnValue(resp)
 
-    # READ PRESSURE
+
+    # PARAMETERS
     @setting(211, 'Read Pressure', returns='v')
     def pressure_read(self, c):
         """
@@ -168,6 +172,42 @@ class TwisTorr74Server(SerialDeviceServer):
         resp = float(resp)
         #send signal and return value
         self.pressure_update(resp)
+        returnValue(resp)
+
+    @setting(212, 'Read Power', returns='v')
+    def power_read(self, c):
+        """
+        Get pump power.
+        Returns:
+            (float): pump power in W
+        """
+        #create and send message to device
+        message = yield self._create_message(CMD_msg=b'202', DIR_msg=_TT74_READ_msg)
+        yield self.ser.write(message)
+        #read and parse answer
+        resp = yield self.ser.read(15)
+        resp = yield self._parse(resp)
+        resp = float(resp)
+        #send signal and return value
+        self.power_update(resp)
+        returnValue(resp)
+
+    @setting(213, 'Read RPM', returns='v')
+    def rpm_read(self, c):
+        """
+        Get pump speed.
+        Returns:
+            (float): pump speed in RPM
+        """
+        #create and send message to device
+        message = yield self._create_message(CMD_msg=b'226', DIR_msg=_TT74_READ_msg)
+        yield self.ser.write(message)
+        #read and parse answer
+        resp = yield self.ser.read(15)
+        resp = yield self._parse(resp)
+        resp = float(resp)
+        #send signal and return value
+        self.rpm_update(resp)
         returnValue(resp)
 
 
@@ -201,14 +241,26 @@ class TwisTorr74Server(SerialDeviceServer):
         """
         Polls the device for pressure readout.
         """
-        yield self.ser.write(b'\x02\x802240\x0387')
-        resp = yield self.ser.read(19)
-        resp = yield self._parse(resp)
-        resp = float(resp)
-        self.pressure_update(resp)
+        # get responses from device
+        yield self.ser.write('\x02\x802240\x0387')
+        yield self.ser.write('\x02\x802020\x0383')
+        yield self.ser.write('\x02\x802260\x0385')
+        press = yield self.ser.read(19)
+        power = yield self.ser.read(15)
+        rpm = yield self.ser.read(15)
+
+        # parse responses
+        press = yield self._parse(press)
+        power = yield self._parse(power)
+        rpm = yield self._parse(rpm)
+
+        # notify clients
+        self.pressure_update(float(press))
+        self.energy_update(float(power))
+        self.rpm_update(float(rpm))
 
 
-    # Helper functions
+    # HELPER
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg=b''):
         """
         Creates a message according to the Twistorr74 serial protocol

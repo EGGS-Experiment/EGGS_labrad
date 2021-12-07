@@ -21,17 +21,29 @@ class twistorr74_gui(QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        self.setFixedSize(225, 225)
+        self.setFixedSize(225, 325)
         #twistorr 74
         self.twistorr_label = QLabel('Twistorr 74 Pump')
         self.twistorr_label.setFont(QFont(shell_font, pointSize= 18))
         self.twistorr_label.setAlignment(Qt.AlignCenter)
-            #readout
-        self.twistorr_display_label = QLabel('Pressure (mbar)')
-        self.twistorr_display = QLabel('Pressure')
-        self.twistorr_display.setFont(QFont(shell_font, pointSize=20))
-        self.twistorr_display.setAlignment(Qt.AlignCenter)
-        self.twistorr_display.setStyleSheet('color: blue')
+            # pressure readout
+        self.pressure_display_label = QLabel('Pressure (mbar)')
+        self.pressure_display = QLabel('Pressure')
+        self.pressure_display.setFont(QFont(shell_font, pointSize=20))
+        self.pressure_display.setAlignment(Qt.AlignCenter)
+        self.pressure_display.setStyleSheet('color: blue')
+            # power readout
+        self.power_display_label = QLabel('Pressure (mbar)')
+        self.power_display = QLabel('Power')
+        self.power_display.setFont(QFont(shell_font, pointSize=20))
+        self.power_display.setAlignment(Qt.AlignCenter)
+        self.power_display.setStyleSheet('color: blue')
+            # speed readout
+        self.rpm_display_label = QLabel('Speed (rpm)')
+        self.rpm_display = QLabel('Speed')
+        self.rpm_display.setFont(QFont(shell_font, pointSize=20))
+        self.rpm_display.setAlignment(Qt.AlignCenter)
+        self.rpm_display.setStyleSheet('color: blue')
             #record button
         self.twistorr_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             #power
@@ -43,15 +55,21 @@ class twistorr74_gui(QFrame):
         layout = QGridLayout()
         shell_font = 'MS Shell Dlg 2'
 
-        pump1_col = 0
-        #pump2_col = 9
+        col1 = 0
+        col2 = 1
 
-        layout.addWidget(self.twistorr_label, 0, pump1_col)
-        layout.addWidget(self.twistorr_display_label, 1, pump1_col)
-        layout.addWidget(self.twistorr_display, 2, pump1_col)
-        layout.addWidget(self.twistorr_power, 3, pump1_col)
-        layout.addWidget(self.twistorr_lockswitch, 4, pump1_col)
-        layout.addWidget(self.twistorr_record, 5, pump1_col)
+        layout.addWidget(self.twistorr_label, 0, col1, 1, 1)
+
+        layout.addWidget(self.pressure_display_label, 1, col1)
+        layout.addWidget(self.pressure_display, 2, col1)
+        layout.addWidget(self.power_display_label, 3, col1)
+        layout.addWidget(self.power_display, 4, col1)
+        layout.addWidget(self.rpm_display_label, 5, col1)
+        layout.addWidget(self.rpm_display, 6, col1)
+
+        layout.addWidget(self.twistorr_power, 7, col1)
+        layout.addWidget(self.twistorr_lockswitch, 8, col1)
+        layout.addWidget(self.twistorr_record, 9, col1)
 
         #layout.minimumSize()
         self.setLayout(layout)
