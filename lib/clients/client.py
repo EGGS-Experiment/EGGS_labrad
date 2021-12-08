@@ -13,7 +13,7 @@ from twisted.internet.defer import inlineCallbacks
 __all__ = ["GUIClient"]
 
 
-class GUIClient(QWidget):
+class GUIClient(object):
     """
     Creates a client from a single GUI file.
     """
@@ -23,7 +23,6 @@ class GUIClient(QWidget):
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
         self.cxn = cxn
-        self.gui = self
         self.reactor = reactor
         self.servers = []
         # initialization sequence
