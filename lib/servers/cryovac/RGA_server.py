@@ -22,12 +22,13 @@ from labrad.server import Signal, setting
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
+from EGGS_labrad.lib.servers.polling_server import PollingServer
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 _SRS_EOL = '\r'
 
 
-class RGA_Server(SerialDeviceServer):
+class RGA_Server(SerialDeviceServer, PollingServer):
     name = 'RGA Server'
     regKey = 'RGAServer'
     port = 'COM48'
@@ -39,35 +40,9 @@ class RGA_Server(SerialDeviceServer):
     # STARTUP
     def initServer(self):
         super().initServer()
-        self.listeners = set()
-        # polling stuff
-        # self.refresher = LoopingCall(self.poll)
-        # from twisted.internet.reactor import callLater
-        # callLater(1, self.refresher.start, 5)
-        # communications lock
         self.comm_lock = DeferredLock()
         # RGA type
         self.m_max = 100
-
-    def stopServer(self):
-        if hasattr(self, 'refresher'):
-            if self.refresher.running:
-                self.refresher.stop()
-        super().stopServer()
-
-    def initContext(self, c):
-        """Initialize a new context object."""
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        """Remove a context object."""
-        self.listeners.remove(c.ID)
-
-    def getOtherListeners(self, c):
-        """Get all listeners except for the context owner."""
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
 
 
     # STATUS

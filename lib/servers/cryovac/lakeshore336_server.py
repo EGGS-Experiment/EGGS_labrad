@@ -25,6 +25,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 import numpy as np
 from serial import PARITY_ODD
 
+from EGGS_labrad.lib.servers.polling_server import PollingServer
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 INPUT_CHANNELS = ['A', 'B', 'C', 'D', '0']
@@ -34,7 +35,7 @@ TERMINATOR = '\r\n'
 TEMPSIGNAL = 122485
 
 
-class Lakeshore336Server(SerialDeviceServer):
+class Lakeshore336Server(SerialDeviceServer, PollingServer):
     """Talks to the Lakeshore 336 Temperature Controller"""
     name = 'Lakeshore336 Server'
     regKey = 'Lakeshore336Server'
@@ -51,32 +52,13 @@ class Lakeshore336Server(SerialDeviceServer):
     temp_update = Signal(TEMPSIGNAL, 'signal: temperature update', '(vvvv)')
 
     # STARTUP
-    def initServer(self):
-        super().initServer()
-        self.listeners = set()
-        # polling stuff
-        self.refresher = LoopingCall(self.poll)
-        from twisted.internet.reactor import callLater
-        callLater(1, self.refresher.start, 2)
-
-    def stopServer(self):
-        if hasattr(self, 'refresher'):
-            self.refresher.stop()
-        super().stopServer()
-
-    def initContext(self, c):
-        """Initialize a new context object."""
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        """Remove a context object."""
-        self.listeners.remove(c.ID)
-
-    def getOtherListeners(self, c):
-        """Get all listeners except for the context owner."""
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
+    # def initServer(self):
+    #     super().initServer()
+    #     self.listeners = set()
+    #     # polling stuff
+    #     self.refresher = LoopingCall(self.poll)
+    #     from twisted.internet.reactor import callLater
+    #     callLater(1, self.refresher.start, 2)
 
 
     # TEMPERATURE DIODES
@@ -252,32 +234,8 @@ class Lakeshore336Server(SerialDeviceServer):
 
 
     # POLLING
-    @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
-    def set_polling(self, c, status, interval):
-        """
-        Configure polling of device for values.
-        """
-        #ensure interval is valid
-        if (interval < 1) or (interval > 60):
-            raise Exception('Invalid polling interval.')
-        #only start/stop polling if we are not already started/stopped
-        if status and (not self.refresher.running):
-            self.refresher.start(interval)
-        elif status and self.refresher.running:
-            self.refresher.interval = interval
-        elif (not status) and (self.refresher.running):
-            self.refresher.stop()
-        return (self.refresher.running, self.refresher.interval)
-
-    @setting(912, 'Get Polling', returns='(bv)')
-    def get_polling(self, c):
-        """
-        Get polling parameters.
-        """
-        return (self.refresher.running, self.refresher.interval)
-
     @inlineCallbacks
-    def poll(self):
+    def _poll(self):
         """
         Polls the device for temperature readout.
         """
