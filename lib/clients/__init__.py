@@ -43,11 +43,11 @@ def runClient(client, **kwargs):
     from twisted.internet import reactor
     client = client(reactor, **kwargs)
     #show client
-    try:
-        #client.gui.showMaximized()
-        client.gui.show()
-    except:
+    if hasattr(client, 'show'):
         client.show()
+    elif hasattr(client, 'gui'):
+        if hasattr(client.gui, 'show'):
+            client.gui.show()
     #start reactor
     reactor.run()
     #run on exit

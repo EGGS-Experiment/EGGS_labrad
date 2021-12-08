@@ -17,19 +17,10 @@ class twistorr74_client(GUIClient):
     RPMID = 694323
     POWERID = 694324
 
-    def __init__(self, reactor, cxn=None, parent=None):
-        super().__init__()
-        self.cxn = cxn
-        self.gui = twistorr74_gui()
-        self.reactor = reactor
-        self.servers = ['TwisTorr74 Server', 'Data Vault']
-        # initialization sequence
-        d = self.connect()
-        d.addCallback(self.initializeGUI)
-
     @inlineCallbacks
-    def initServer(self):
+    def initClient(self, cxn):
         # try to get servers
+        self.servers = ['TwisTorr74 Server', 'Data Vault']
         try:
             self.tt = self.cxn.twistorr74_server
         except Exception as e:
@@ -52,7 +43,7 @@ class twistorr74_client(GUIClient):
         # only start polling if not started
         if not poll_params[0]:
             yield self.tt.set_polling(True, 5.0)
-
+        print(poll_params)
         return self.cxn
 
     @inlineCallbacks
@@ -140,5 +131,22 @@ class twistorr74_client(GUIClient):
 
 
 if __name__ == "__main__":
-    from EGGS_labrad.lib.clients import runClient
-    runClient(twistorr74_client)
+    import sys
+    from PyQt5.QtWidgets import QApplication
+    app = QApplication([])
+    try:
+        import qt5reactor
+        qt5reactor.install()
+    except Exception as e:
+        print(e)
+    from twisted.internet import reactor
+    client = twistorr74_client(reactor, gui=twistorr74_gui)
+    try:
+        client.gui.show()
+    except:
+        client.show()
+    reactor.run()
+    try:
+        client.close()
+    except:
+        sys.exit(app.exec())

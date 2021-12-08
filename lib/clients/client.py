@@ -20,10 +20,11 @@ class GUIClient(object):
 
     name = None
 
-    def __init__(self, reactor, cxn=None, parent=None):
+    def __init__(self, reactor, gui=None, cxn=None, parent=None):
         super().__init__()
-        self.cxn = cxn
         self.reactor = reactor
+        self.cxn = cxn
+        self.gui = gui()
         self.servers = []
         # initialization sequence
         d = self._connectLabrad()
@@ -124,7 +125,15 @@ class GUIClient(object):
                               [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_record)
             # todo: fix
 
-    def closeEvent(self, event):
+    # todo: run close at end
+    def close(self):
+        print('close file')
+        self.cxn.disconnect()
+        if self.reactor.running:
+            self.reactor.stop()
+
+    def __del__(self):
+        print('destructor called')
         self.cxn.disconnect()
         if self.reactor.running:
             self.reactor.stop()
