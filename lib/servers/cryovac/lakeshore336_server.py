@@ -19,7 +19,6 @@ timeout = 20
 #imports
 from labrad.units import WithUnit
 from labrad.server import setting, Signal
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 import numpy as np
@@ -36,7 +35,10 @@ TEMPSIGNAL = 122485
 
 
 class Lakeshore336Server(SerialDeviceServer, PollingServer):
-    """Talks to the Lakeshore 336 Temperature Controller"""
+    """
+    Talks to the Lakeshore 336 Temperature Controller.
+    """
+
     name = 'Lakeshore336 Server'
     regKey = 'Lakeshore336Server'
     serNode = 'MongKok'

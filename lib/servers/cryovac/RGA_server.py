@@ -19,7 +19,6 @@ import numpy as np
 from labrad.units import WithUnit
 from labrad.server import Signal, setting
 
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
 from EGGS_labrad.lib.servers.polling_server import PollingServer
