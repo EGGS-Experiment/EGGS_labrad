@@ -57,7 +57,7 @@ class NIOPS03Server(SerialDeviceServer):
         self.tt = None
         self.interlock_active = False
         self.interlock_pressure = None
-        self.refresher = LoopingCall(self.poll)
+        self.refresher = LoopingCall(self._poll)
         from twisted.internet.reactor import callLater
         callLater(5, self.refresher.start, 5)
 
@@ -146,7 +146,7 @@ class NIOPS03Server(SerialDeviceServer):
         returnValue(resp)
 
 
-    #PARAMETERS
+    # PARAMETERS
     @setting(211, 'IP Pressure', returns='v')
     def pressure_ip(self, c):
         """
@@ -252,7 +252,7 @@ class NIOPS03Server(SerialDeviceServer):
         return (self.refresher.running, interval_tmp)
 
     @inlineCallbacks
-    def poll(self):
+    def _poll(self):
         """
         Polls the device for pressure readout.
         """

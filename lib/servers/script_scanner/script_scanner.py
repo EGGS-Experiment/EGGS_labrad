@@ -371,6 +371,7 @@ class ScriptScanner(ScriptSignalsServer):
             # do nothing
             pass
 
+
 if __name__ == "__main__":
     from labrad import util
     util.runServer(ScriptScanner())
