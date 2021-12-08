@@ -64,7 +64,6 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         from twisted.internet.reactor import callLater
         callLater(5, self.setUnits)
 
-
     #@inlineCallbacks
     def setUnits(self):
         print('Setting default units to mBar.')
