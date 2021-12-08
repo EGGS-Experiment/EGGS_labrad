@@ -160,7 +160,9 @@ class SerialDeviceServer(LabradServer):
 
     @inlineCallbacks
     def initServer(self):
-        #open connection on startup if default node and port are specified
+        # call parent initserver to support further subclassing
+        super().initServer()
+        # open connection on startup if default node and port are specified
         if self.serNode and self.port:
             print('Default node and port specified. Connecting to device on startup.')
             try:

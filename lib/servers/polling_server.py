@@ -9,10 +9,11 @@ class PollingServer(LabradServer):
 
     # STARTUP
     def initServer(self):
+        # call parent initserver to support further subclassing
+        super().initServer()
         # polling stuff
         self.refresher = LoopingCall(self._poll)
-        from twisted.internet.reactor import callLater
-        callLater(5, self.refresher.start, 5)
+        self.startRefresher(5)
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -41,12 +42,12 @@ class PollingServer(LabradServer):
         """
         Configure polling of device for values.
         """
-        #ensure interval is valid
+        # ensure interval is valid
         if (interval < 1) or (interval > 60):
             raise Exception('Invalid polling interval.')
-        #only start/stop polling if we are not already started/stopped
+        # only start/stop polling if we are not already started/stopped
         if status and (not self.refresher.running):
-            self.refresher.start(interval)
+            self.startRefresher(interval)
         elif status and self.refresher.running:
             self.refresher.interval = interval
         elif (not status) and (self.refresher.running):
@@ -66,6 +67,13 @@ class PollingServer(LabradServer):
             interval_tmp = self.refresher.interval
         return (self.refresher.running, interval_tmp)
 
+    def startRefresher(self, interval=None):
+        """
+        Starts the polling loop and calls errbacks.
+        """
+        d = self.refresher.start(interval, now=False)
+        d.addErrback(self.poll_fail)
+
     def _poll(self):
         """
         Polls the device for pressure readout.
@@ -73,10 +81,9 @@ class PollingServer(LabradServer):
         """
         pass
 
-    def poll_fail(self, failure):
-        print(failure)
-        print(self.refresher.running)
-        print(self.refresher.interval)
+    def _poll_fail(self, failure):
+        # print(failure)
+        print('Polling failed. Restarting polling.')
         self.ser.flush_input_buffers()
         self.ser.flush_output_buffers
-        self.refresher.start(5)
+        self.startRefresher(5)

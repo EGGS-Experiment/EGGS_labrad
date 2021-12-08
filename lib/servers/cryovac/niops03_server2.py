@@ -23,6 +23,7 @@ from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
+from EGGS_labrad.lib.servers.polling_server import PollingServer
 
 import time
 
@@ -30,7 +31,7 @@ TERMINATOR = '\r\n'
 _NI03_QUERY_msg = '\x05'
 _NI03_ACK_msg = '\x06'
 
-class NIOPS03Server(SerialDeviceServer):
+class NIOPS03Server(SerialDeviceServer, PollingServer):
     """
     Controls NIOPS03 power supply for the ion pump and getter.
     """
@@ -52,37 +53,16 @@ class NIOPS03Server(SerialDeviceServer):
 
     # STARTUP
     def initServer(self):
+        # call parent initserver to support further subclassing
         super().initServer()
         self.listeners = set()
         # polling stuff
         self.tt = None
         self.interlock_active = False
         self.interlock_pressure = None
-        self.refresher = LoopingCall(self._poll)
-        self.startRefresher(5)
-
-    def stopServer(self):
-        if hasattr(self, 'refresher'):
-            if self.refresher.running:
-                self.refresher.stop()
-        super().stopServer()
-
-    def initContext(self, c):
-        """Initialize a new context object."""
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        """Remove a context object."""
-        self.listeners.remove(c.ID)
-
-    def getOtherListeners(self, c):
-        """Get all listeners except for the context owner."""
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
 
 
-    #STATUS
+    # STATUS
     @setting(11, 'Status', returns='s')
     def get_status(self, c):
         """
@@ -146,7 +126,7 @@ class NIOPS03Server(SerialDeviceServer):
         returnValue(resp)
 
 
-    # PARAMETERS
+    #PARAMETERS
     @setting(211, 'IP Pressure', returns='v')
     def pressure_ip(self, c):
         """
@@ -221,49 +201,12 @@ class NIOPS03Server(SerialDeviceServer):
 
 
     # POLLING
-    @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
-    def set_polling(self, c, status, interval):
-        """
-        Configure polling of device for values.
-        """
-        # ensure interval is valid
-        if (interval < 1) or (interval > 60):
-            raise Exception('Invalid polling interval.')
-        # only start/stop polling if we are not already started/stopped
-        if status and (not self.refresher.running):
-            self.startRefresher(interval)
-        elif status and self.refresher.running:
-            self.refresher.interval = interval
-        elif (not status) and (self.refresher.running):
-            self.refresher.stop()
-        return (self.refresher.running, self.refresher.interval)
-
-    @setting(912, 'Get Polling', returns='(bv)')
-    def get_polling(self, c):
-        """
-        Get polling parameters.
-        """
-        # in case refresher is off
-        interval_tmp = 0
-        if self.refresher.interval is None:
-            interval_tmp = 0
-        else:
-            interval_tmp = self.refresher.interval
-        return (self.refresher.running, interval_tmp)
-
-    def startRefresher(self, interval=None):
-        """
-        Starts the polling loop and calls errbacks.
-        """
-        d = self.refresher.start(interval, now=False)
-        d.addErrback(self.poll_fail)
-
     @inlineCallbacks
     def _poll(self):
         """
         Polls the device for pressure readout.
         """
-        #get results all together
+        # get results all together
         yield self.ser.write('Tb\r\n')
         ip_pressure = yield self.ser.read_line('\r')
         yield self.ser.write('TC\r\n')
@@ -287,12 +230,6 @@ class NIOPS03Server(SerialDeviceServer):
                 print('problem')
                 # yield self.ser.write('B' + TERMINATOR)
                 # yield self.ser.read_line()
-
-    def poll_fail(self, failure):
-        print('Polling failed. Restarting polling.')
-        self.ser.flush_input()
-        self.ser.flush_output()
-        self.startRefresher(5)
 
 
 if __name__ == '__main__':
