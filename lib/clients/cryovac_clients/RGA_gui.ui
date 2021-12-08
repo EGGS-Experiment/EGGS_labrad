@@ -10,6 +10,12 @@
     <height>375</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle">
    <string>SRS RGA Client</string>
   </property>
@@ -87,7 +93,7 @@
      </widget>
     </item>
     <item row="1" column="1">
-     <widget class="QPushButton" name="general_lockswitch">
+     <widget class="Lockswitch" name="general_lockswitch">
       <property name="text">
        <string>Lock</string>
       </property>
@@ -120,7 +126,7 @@
      </widget>
     </item>
     <item row="1" column="1">
-     <widget class="QPushButton" name="scan_lockswitch">
+     <widget class="Lockswitch" name="scan_lockswitch">
       <property name="text">
        <string>Lock</string>
       </property>
@@ -252,7 +258,7 @@
      <x>160</x>
      <y>210</y>
      <width>131</width>
-     <height>151</height>
+     <height>161</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="detector_layout">
@@ -264,7 +270,7 @@
      </widget>
     </item>
     <item row="2" column="1">
-     <widget class="QPushButton" name="detector_lockswitch">
+     <widget class="Lockswitch" name="detector_lockswitch">
       <property name="text">
        <string>Lock</string>
       </property>
@@ -377,7 +383,7 @@
      </widget>
     </item>
     <item row="2" column="0">
-     <widget class="QPushButton" name="ionizer_lockswitch">
+     <widget class="Lockswitch" name="ionizer_lockswitch">
       <property name="text">
        <string>Lock</string>
       </property>
@@ -419,7 +425,7 @@
      <x>450</x>
      <y>60</y>
      <width>181</width>
-     <height>301</height>
+     <height>311</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="buffer_layout">
@@ -443,6 +449,13 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Lockswitch</class>
+   <extends>QPushButton</extends>
+   <header>EGGS_labrad.lib.clients.Widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

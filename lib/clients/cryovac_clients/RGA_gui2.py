@@ -1,24 +1,21 @@
-from PyQt5.QtWidgets import QFrame
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 from EGGS_labrad.lib.clients.Widgets import Lockswitch
 
 
-class RGA_gui(QFrame):
+class RGA_gui(QtWidgets.QFrame):
 
     def setupUi(self):
         RGA_gui = self
         RGA_gui.setObjectName("RGA_gui")
         RGA_gui.setFixedSize(650, 390)
-        RGA_gui.setFrameStyle(0x0001 | 0x0030)
         self.RGA_label = QtWidgets.QLabel(RGA_gui)
-        self.RGA_label.setGeometry(QtCore.QRect(230, 20, 181, 31))
+        self.RGA_label.setGeometry(QtCore.QRect(220, 10, 181, 31))
         font = QtGui.QFont()
         font.setPointSize(20)
         self.RGA_label.setFont(font)
         self.RGA_label.setObjectName("RGA_label")
         self.layoutWidget = QtWidgets.QWidget(RGA_gui)
-        self.layoutWidget.setGeometry(QtCore.QRect(20, 70, 131, 221))
+        self.layoutWidget.setGeometry(QtCore.QRect(20, 60, 131, 221))
         self.layoutWidget.setObjectName("layoutWidget")
         self.general_layout = QtWidgets.QGridLayout(self.layoutWidget)
         self.general_layout.setContentsMargins(0, 0, 0, 0)
@@ -50,7 +47,7 @@ class RGA_gui(QFrame):
         self.degas.setObjectName("degas")
         self.general_layout.addWidget(self.degas, 5, 1, 1, 1)
         self.layoutWidget_4 = QtWidgets.QWidget(RGA_gui)
-        self.layoutWidget_4.setGeometry(QtCore.QRect(300, 70, 141, 310))
+        self.layoutWidget_4.setGeometry(QtCore.QRect(300, 60, 141, 310))
         self.layoutWidget_4.setObjectName("layoutWidget_4")
         self.scan_layout = QtWidgets.QGridLayout(self.layoutWidget_4)
         self.scan_layout.setContentsMargins(0, 0, 0, 0)
@@ -111,7 +108,7 @@ class RGA_gui(QFrame):
         self.scan_start.setObjectName("scan_start")
         self.scan_layout.addWidget(self.scan_start, 17, 1, 1, 1)
         self.layoutWidget_3 = QtWidgets.QWidget(RGA_gui)
-        self.layoutWidget_3.setGeometry(QtCore.QRect(160, 220, 131, 151))
+        self.layoutWidget_3.setGeometry(QtCore.QRect(160, 210, 131, 161))
         self.layoutWidget_3.setObjectName("layoutWidget_3")
         self.detector_layout = QtWidgets.QGridLayout(self.layoutWidget_3)
         self.detector_layout.setContentsMargins(0, 0, 0, 0)
@@ -147,7 +144,7 @@ class RGA_gui(QFrame):
         self.detector_label.setObjectName("detector_label")
         self.detector_layout.addWidget(self.detector_label, 1, 1, 1, 1)
         self.layoutWidget1 = QtWidgets.QWidget(RGA_gui)
-        self.layoutWidget1.setGeometry(QtCore.QRect(160, 70, 131, 146))
+        self.layoutWidget1.setGeometry(QtCore.QRect(160, 60, 131, 146))
         self.layoutWidget1.setObjectName("layoutWidget1")
         self.ionizer_layout = QtWidgets.QGridLayout(self.layoutWidget1)
         self.ionizer_layout.setContentsMargins(0, 0, 0, 0)
@@ -176,7 +173,7 @@ class RGA_gui(QFrame):
         self.ionizer_label.setObjectName("ionizer_label")
         self.ionizer_layout.addWidget(self.ionizer_label, 1, 0, 1, 1)
         self.layoutWidget2 = QtWidgets.QWidget(RGA_gui)
-        self.layoutWidget2.setGeometry(QtCore.QRect(450, 70, 181, 301))
+        self.layoutWidget2.setGeometry(QtCore.QRect(450, 60, 181, 311))
         self.layoutWidget2.setObjectName("layoutWidget2")
         self.buffer_layout = QtWidgets.QGridLayout(self.layoutWidget2)
         self.buffer_layout.setContentsMargins(0, 0, 0, 0)
@@ -203,8 +200,10 @@ class RGA_gui(QFrame):
         self.calibrate_detector.setText(_translate("RGA_gui", "Calibrate Detector"))
         self.initialize.setText(_translate("RGA_gui", "Initialize"))
         self.general_label.setText(_translate("RGA_gui", "<html><head/><body><p align=\"center\"><span style=\" font-size:16pt;\">General</span></p></body></html>"))
+        self.general_lockswitch.setText(_translate("RGA_gui", "Lock"))
         self.degas.setText(_translate("RGA_gui", "Degas"))
         self.scan_mi_label.setText(_translate("RGA_gui", "Start Mass (amu)"))
+        self.scan_lockswitch.setText(_translate("RGA_gui", "Lock"))
         self.scan_mf_label.setText(_translate("RGA_gui", "Stop Mass (amu)"))
         self.scan_type.setItemText(0, _translate("RGA_gui", "Analog"))
         self.scan_type.setItemText(1, _translate("RGA_gui", "Histogram"))
@@ -216,6 +215,7 @@ class RGA_gui(QFrame):
         self.scan_sa_label.setText(_translate("RGA_gui", "Steps per amu"))
         self.scan_start.setText(_translate("RGA_gui", "Start"))
         self.detector_cv_label.setText(_translate("RGA_gui", "CDEM Voltage (V)"))
+        self.detector_lockswitch.setText(_translate("RGA_gui", "Lock"))
         self.detector_nf_label.setText(_translate("RGA_gui", "Noise Floor"))
         self.detector_nf.setItemText(0, _translate("RGA_gui", "0"))
         self.detector_nf.setItemText(1, _translate("RGA_gui", "1"))
@@ -227,6 +227,7 @@ class RGA_gui(QFrame):
         self.detector_nf.setItemText(7, _translate("RGA_gui", "7"))
         self.detector_label.setText(_translate("RGA_gui", "<html><head/><body><p align=\"center\"><span style=\" font-size:16pt;\">Detector</span></p></body></html>"))
         self.ionizer_ee_label.setText(_translate("RGA_gui", "Electron Energy (eV)"))
+        self.ionizer_lockswitch.setText(_translate("RGA_gui", "Lock"))
         self.ionizer_ie.setItemText(0, _translate("RGA_gui", "8"))
         self.ionizer_ie.setItemText(1, _translate("RGA_gui", "12"))
         self.ionizer_ie_label.setText(_translate("RGA_gui", "Ion Energy (eV)"))

@@ -66,8 +66,8 @@ class TextChangingButton(QtWidgets.QPushButton):
 
 class Lockswitch(TextChangingButton):
 
-    def __init__(self):
-        super().__init__(button_text=('Unlocked', 'Locked'))
+    def __init__(self, parent=None):
+        super().__init__(button_text=('Unlocked', 'Locked'), parent=parent)
         # set default parameters
         self.setFixedHeight(23)
         font_tmp = QtGui.QFont()
