@@ -1,5 +1,7 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 
+__all__ = ['TextChangingButton', 'Lockswitch']
+
 
 class TextChangingButton(QtWidgets.QPushButton):
     """
@@ -30,6 +32,7 @@ class TextChangingButton(QtWidgets.QPushButton):
         self.toggled.connect(self.setAppearance)
         self.setAppearance(self.isDown())
 
+
     def setAppearance(self, down):
         on_text, off_text = self._set_button_texts()
         if down:
@@ -59,3 +62,14 @@ class TextChangingButton(QtWidgets.QPushButton):
 
     def sizeHint(self):
         return QtCore.QSize(37, 26)
+
+
+class Lockswitch(TextChangingButton):
+
+    def __init__(self):
+        super().__init__(button_text=('Unlocked', 'Locked'))
+        # set default parameters
+        self.setFixedHeight(23)
+        font_tmp = QtGui.QFont()
+        font_tmp.setPointSize(8)
+        self.setFont(font_tmp)
