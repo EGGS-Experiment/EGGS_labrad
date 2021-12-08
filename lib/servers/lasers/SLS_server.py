@@ -17,16 +17,20 @@ timeout = 5
 """
 from labrad.types import Value
 from labrad.server import setting, Signal
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
+from EGGS_labrad.lib.servers.polling_server import PollingServer
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 TERMINATOR = '\r\n'
 _SLS_EOL = '>'
 
-class SLSServer(SerialDeviceServer):
-    """Connects to the 729nm SLS Laser"""
+
+class SLSServer(SerialDeviceServer, PollingServer):
+    """
+    Connects to the 729nm SLS Laser.
+    """
+
     name = 'SLS Server'
     regKey = 'SLSServer'
     serNode = 'mongkok'
@@ -39,32 +43,14 @@ class SLSServer(SerialDeviceServer):
     autolock_update = Signal(999999, 'signal: autolock update', '(iv)')
 
     # STARTUP
-    def initServer(self):
-        super().initServer()
-        self.listeners = set()
-        # polling stuff
-        self.refresher = LoopingCall(self.poll)
-        from twisted.internet.reactor import callLater
-        callLater(1, self.refresher.start, 10)
+    # def initServer(self):
+    #     super().initServer()
+    #     self.listeners = set()
+    #     # polling stuff
+    #     self.refresher = LoopingCall(self.poll)
+    #     from twisted.internet.reactor import callLater
+    #     callLater(1, self.refresher.start, 10)
 
-    def stopServer(self):
-        if hasattr(self, 'refresher'):
-            self.refresher.stop()
-        super().stopServer()
-
-    def initContext(self, c):
-        """Initialize a new context object."""
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        """Remove a context object."""
-        self.listeners.remove(c.ID)
-
-    def getOtherListeners(self, c):
-        """Get all listeners except for the context owner."""
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
 
     # AUTOLOCK
     @setting(111, 'Autolock Toggle', enable='s', returns='s')
@@ -200,32 +186,8 @@ class SLSServer(SerialDeviceServer):
 
 
     # POLLING
-    @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
-    def set_polling(self, c, status, interval):
-        """
-        Configure polling of device for values.
-        """
-        #ensure interval is valid
-        if (interval < 1) or (interval > 60):
-            raise Exception('Invalid polling interval.')
-        #only start/stop polling if we are not already started/stopped
-        if status and (not self.refresher.running):
-            self.refresher.start(interval)
-        elif status and self.refresher.running:
-            self.refresher.interval = interval
-        elif (not status) and (self.refresher.running):
-            self.refresher.stop()
-        return (self.refresher.running, self.refresher.interval)
-
-    @setting(912, 'Get Polling', returns='(bv)')
-    def get_polling(self, c):
-        """
-        Get polling parameters.
-        """
-        return (self.refresher.running, self.refresher.interval)
-
     @inlineCallbacks
-    def poll(self):
+    def _poll(self):
         """
         Polls the device for locking readout.
         """

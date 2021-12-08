@@ -19,13 +19,10 @@ timeout = 20
 from labrad.units import WithUnit
 from labrad.server import setting, Signal
 
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.polling_server import PollingServer
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
-
-import time
 
 TERMINATOR = '\r\n'
 _NI03_QUERY_msg = '\x05'
