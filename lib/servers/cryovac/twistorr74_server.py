@@ -61,6 +61,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     # STARTUP
     def initServer(self):
         super().initServer()
+        # set default units
         from twisted.internet.reactor import callLater
         callLater(5, self.setUnits)
 

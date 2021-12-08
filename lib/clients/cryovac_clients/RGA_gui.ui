@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>650</width>
-    <height>390</height>
+    <width>651</width>
+    <height>375</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QLabel" name="RGA_label">
    <property name="geometry">
     <rect>
-     <x>230</x>
-     <y>20</y>
+     <x>220</x>
+     <y>10</y>
      <width>181</width>
      <height>31</height>
     </rect>
@@ -35,7 +35,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>70</y>
+     <y>60</y>
      <width>131</width>
      <height>221</height>
     </rect>
@@ -52,7 +52,7 @@
      </widget>
     </item>
     <item row="4" column="1">
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="calibrate_electrometer">
       <property name="text">
        <string>Calibrate Electrometer</string>
       </property>
@@ -66,7 +66,7 @@
      </widget>
     </item>
     <item row="3" column="1">
-     <widget class="QPushButton" name="calibrate">
+     <widget class="QPushButton" name="calibrate_detector">
       <property name="text">
        <string>Calibrate Detector</string>
       </property>
@@ -106,9 +106,9 @@
    <property name="geometry">
     <rect>
      <x>300</x>
-     <y>70</y>
+     <y>60</y>
      <width>141</width>
-     <height>301</height>
+     <height>310</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="scan_layout">
@@ -155,7 +155,7 @@
     <item row="9" column="1">
      <widget class="QLabel" name="scan_mf_label">
       <property name="text">
-       <string>Stop Mass (amu)l</string>
+       <string>Stop Mass (amu)</string>
       </property>
      </widget>
     </item>
@@ -250,7 +250,7 @@
    <property name="geometry">
     <rect>
      <x>160</x>
-     <y>220</y>
+     <y>210</y>
      <width>131</width>
      <height>151</height>
     </rect>
@@ -346,13 +346,13 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>160</x>
-     <y>70</y>
+     <y>60</y>
      <width>131</width>
-     <height>141</height>
+     <height>146</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="ionizer_layout">
@@ -413,11 +413,11 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>450</x>
-     <y>70</y>
+     <y>60</y>
      <width>181</width>
      <height>301</height>
     </rect>

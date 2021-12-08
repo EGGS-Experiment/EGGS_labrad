@@ -42,15 +42,6 @@ class SLSServer(SerialDeviceServer, PollingServer):
     # SIGNALS
     autolock_update = Signal(999999, 'signal: autolock update', '(iv)')
 
-    # STARTUP
-    # def initServer(self):
-    #     super().initServer()
-    #     self.listeners = set()
-    #     # polling stuff
-    #     self.refresher = LoopingCall(self.poll)
-    #     from twisted.internet.reactor import callLater
-    #     callLater(1, self.refresher.start, 10)
-
 
     # AUTOLOCK
     @setting(111, 'Autolock Toggle', enable='s', returns='s')
