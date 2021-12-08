@@ -59,35 +59,11 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     power_update = Signal(999996, 'signal: power update', 'b')
 
     # STARTUP
-    # def initServer(self):
-    #     super().initServer()
-    #     self.listeners = set()
+    def initServer(self):
+        super().initServer()
+        from twisted.internet.reactor import callLater
+        callLater(5, self.setUnits)
 
-    @inlineCallbacks
-    def initSerial(self, serStr, port, **kwargs):
-        """
-        Subclass initSerial to set pressure units right after connection.
-        """
-        if kwargs.get('timeout') is None and self.timeout: kwargs['timeout'] = self.timeout
-        print('Attempting to connect at:')
-        print('\tserver:\t%s' % serStr)
-        print('\tport:\t%s' % port)
-        print('\ttimeout:\t%s\n\n' % (str(self.timeout) if kwargs.get('timeout') is not None else 'No timeout'))
-        cli = self.client
-        try:
-            # get server wrapper for serial server
-            ser = cli.servers[serStr]
-            # instantiate SerialConnection convenience class
-            self.ser = self.SerialConnection(ser=ser, port=port, **kwargs)
-            #clear input and output buffers
-            yield self.ser.flush_input()
-            yield self.ser.flush_output()
-            print('Serial connection opened.')
-            yield self.setUnits()
-        except Exception as e:
-            self.ser = None
-            print(e)
-            raise Exception
 
     #@inlineCallbacks
     def setUnits(self):

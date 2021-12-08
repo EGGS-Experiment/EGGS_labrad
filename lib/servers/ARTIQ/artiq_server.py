@@ -18,8 +18,6 @@ timeout = 20
 
 #labrad imports
 from labrad.server import LabradServer, setting, Signal
-from twisted.internet.task import LoopingCall
-from twisted.internet.reactor import callLater
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
 
@@ -29,7 +27,6 @@ from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
 from sipyco.pc_rpc import Client
-from sipyco.sync_struct import Subscriber
 
 #device imports
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET, AD53XX_READ_GAIN
