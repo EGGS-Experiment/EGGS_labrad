@@ -58,8 +58,7 @@ class NIOPS03Server(SerialDeviceServer):
         self.interlock_active = False
         self.interlock_pressure = None
         self.refresher = LoopingCall(self.poll)
-        from twisted.internet.reactor import callLater
-        callLater(5, self.refresher.start, 5)
+        self.startRefresher(5)
 
     def stopServer(self):
         if hasattr(self, 'refresher'):
@@ -226,12 +225,12 @@ class NIOPS03Server(SerialDeviceServer):
         """
         Configure polling of device for values.
         """
-        #ensure interval is valid
+        # ensure interval is valid
         if (interval < 1) or (interval > 60):
             raise Exception('Invalid polling interval.')
-        #only start/stop polling if we are not already started/stopped
+        # only start/stop polling if we are not already started/stopped
         if status and (not self.refresher.running):
-            self.refresher.start(interval)
+            self.startRefresher(interval)
         elif status and self.refresher.running:
             self.refresher.interval = interval
         elif (not status) and (self.refresher.running):
@@ -250,6 +249,13 @@ class NIOPS03Server(SerialDeviceServer):
         else:
             interval_tmp = self.refresher.interval
         return (self.refresher.running, interval_tmp)
+
+    def startRefresher(self, interval=None):
+        """
+        Starts the polling loop and calls errbacks.
+        """
+        d = self.refresher.start(interval, now=False)
+        d.addErrback(self.poll_fail)
 
     @inlineCallbacks
     def poll(self):
@@ -282,12 +288,10 @@ class NIOPS03Server(SerialDeviceServer):
                 # yield self.ser.read_line()
 
     def poll_fail(self, failure):
-        print(failure)
-        print(self.refresher.running)
-        print(self.refresher.interval)
-        self.ser.flush_input_buffers()
-        self.ser.flush_output_buffers
-        self.refresher.start(5)
+        print('Polling failed. Restarting polling.')
+        self.ser.flush_input()
+        self.ser.flush_output()
+        self.startRefresher(5)
 
 
 if __name__ == '__main__':
