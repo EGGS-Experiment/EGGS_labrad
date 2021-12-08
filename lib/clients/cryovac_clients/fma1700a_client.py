@@ -1,4 +1,3 @@
-import os
 import time
 import datetime as datetime
 
@@ -18,7 +17,7 @@ class fma1700a_client(fma1700a_gui):
         self.cxn = cxn
         self.gui = self
         self.reactor = reactor
-        self.servers = ['TwisTorr74 Server', 'Data Vault']
+        self.servers = ['FMA1700A Server', 'Data Vault']
         # initialization sequence
         d = self.connect()
         d.addCallback(self.initializeGUI)
@@ -40,7 +39,7 @@ class fma1700a_client(fma1700a_gui):
         try:
             self.reg = self.cxn.registry
             self.dv = self.cxn.data_vault
-            self.tt = self.cxn.twistorr74_server
+            self.fma = self.cxn.fma1700a_server
         except Exception as e:
             print(e)
             raise
@@ -53,8 +52,6 @@ class fma1700a_client(fma1700a_gui):
             #device parameters
         yield self.tt.signal__pressure_update(self.PRESSUREID)
         yield self.tt.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
-        yield self.tt.signal__power_update(self.POWERID)
-        yield self.tt.addListener(listener=self.updatePower, source=None, ID=self.POWERID)
             #server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
@@ -65,7 +62,7 @@ class fma1700a_client(fma1700a_gui):
         poll_params = yield self.tt.get_polling()
         #only start polling if not started
         if not poll_params[0]:
-            yield self.tt.set_polling(True, 5.0)
+            yield self.fma.set_polling(True, 5.0)
 
         return self.cxn
 

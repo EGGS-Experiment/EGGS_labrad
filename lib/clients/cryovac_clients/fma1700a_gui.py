@@ -12,6 +12,7 @@ class TextChangingButton(_TextChangingButton):
 
 
 class fma1700a_gui(QFrame):
+
     def __init__(self, parent=None):
         window = QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)

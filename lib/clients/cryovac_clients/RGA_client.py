@@ -1,13 +1,11 @@
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.lib.clients.SLS_client.SLS_gui import SLS_gui
-
-_TIME_STR = '{0:d}:{1:d}:{2:d}'
+from EGGS_labrad.lib.clients.cryovac_clients.RGA_gui import RGA_gui
 
 
 class RGA_client(RGA_gui):
 
-    name = 'SLS Client'
-    AUTOLOCKID = 295372
+    name = 'RGA Client'
+    # AUTOLOCKID = 295372
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
@@ -39,15 +37,15 @@ class RGA_client(RGA_gui):
         try:
             self.dv = self.cxn.data_vault
             self.reg = self.cxn.registry
-            self.sls = self.cxn.sls_server
+            self.rga = self.cxn.rga_server
         except Exception as e:
             print('Required servers not connected, disabling widget.')
             self.setEnabled(False)
 
         # connect to signals
             #device parameters
-        yield self.sls.signal__autolock_update(self.AUTOLOCKID)
-        yield self.sls.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
+        yield self.rga.signal__autolock_update(self.AUTOLOCKID)
+        yield self.rga.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
             #server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
@@ -55,10 +53,10 @@ class RGA_client(RGA_gui):
         yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
 
         # start device polling
-        poll_params = yield self.sls.get_polling()
+        poll_params = yield self.rga.get_polling()
         #only start polling if not started
         if not poll_params[0]:
-            yield self.sls.set_polling(True, 5.0)
+            yield self.rga.set_polling(True, 5.0)
         return self.cxn
 
     @inlineCallbacks
@@ -157,15 +155,6 @@ class RGA_client(RGA_gui):
             self.reactor.stop()
 
 
-    # HELPER
-    def _dateFormat(self, _seconds):
-        days = _seconds / 86400
-        hours = (days % 1) * 24
-        minutes = int((hours % 1) * 60)
-        time_str = _TIME_STR.format(int(days), int(hours), minutes)
-        return time_str
-
-
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runClient
-    runClient(SLS_client)
+    runClient(RGA_client)
