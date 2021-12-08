@@ -14,6 +14,7 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
+import numpy as np
 
 from labrad.units import WithUnit
 from labrad.server import Signal, setting
@@ -223,7 +224,7 @@ class RGA_Server(SerialDeviceServer):
             raise Exception('Invalid Input.')
         returnValue(int(resp))
 
-    @setting(421, 'Scan Start', mode='s', num_scans='i', returns='')
+    @setting(421, 'Scan Start', mode='s', num_scans='i', returns='*1w')
     def scanStart(self, c, mode, num_scans):
         """
         Start a given number of scans in either analog or histogram mode.
@@ -232,17 +233,19 @@ class RGA_Server(SerialDeviceServer):
         if (num_scans < 0) or (num_scans > 255):
             raise Exception('Invalid Input.')
 
+        # get initial and final masses
+
         # create scan message
         msg = None
         bytes_to_read = 0
         if mode.lower() in ('a', 'analog'):
             yield self.ser.write('AP?\r')
-            bytes_to_read = yield self.ser.read()
+            bytes_to_read = yield self.ser.read_line(_SRS_EOL)
             bytes_to_read = num_scans * 4 * (int(bytes_to_read) + 1)
             msg = 'SC' + str(num_scans) + _SRS_EOL
         elif mode.lower() in ('h', 'histogram'):
             yield self.ser.write('HP?\r')
-            bytes_to_read = yield self.ser.read()
+            bytes_to_read = yield self.ser.read(_SRS_EOL)
             bytes_to_read = num_scans * 4 * (int(bytes_to_read) + 1)
             msg = 'HS' + str(num_scans) + _SRS_EOL
         else:
@@ -251,12 +254,17 @@ class RGA_Server(SerialDeviceServer):
         # initiate blocking scan
         yield self.comm_lock.acquire()
         yield self.ser.write(msg)
-        yield self.ser.read(bytes_to_read)
+        resp = yield self.ser.read(bytes_to_read)
         yield self.comm_lock.release()
+
+        # process scan
+        current_arr = [int.from_bytes(resp[i:i+4], 'big') for i in range(0, bytes_to_read, 4)]
+        # create axis
+        returnValue(current_arr)
 
 
     # SINGLE MASS MEASUREMENT
-    @setting(511, 'SMM Start', mass='i', returns='v')
+    @setting(511, 'SMM Start', mass='i', returns='w')
     def singleMassMeasurement(self, c, mass):
         """
         Start a single mass measurement.
@@ -266,39 +274,43 @@ class RGA_Server(SerialDeviceServer):
 
         # start a single mass measurement
         msg = 'MR' + str(mass) + _SRS_EOL
-
         yield self.comm_lock.acquire()
         yield self.ser.write(msg)
-        resp = yield self.ser.read_line(_SRS_EOL)
+        resp = yield self.ser.read(4)
         yield self.comm_lock.release()
 
         # set the rods back to zero
-        yield self._query('MR', 0, True, False)
+        yield self.ser.write('MR0\r')
+
+        # process result
+        current = int.from_bytes(resp, 'big')
 
         # return the result
-        returnValue(float(resp))
+        returnValue(current)
 
 
     # TOTAL PRESSURE MEASUREMENT
-    @setting(611, 'TPM Start', returns='v')
+    @setting(611, 'TPM Start', returns='w')
     def totalPressureMeasurement(self, c):
         """
         Start a total pressure measurement.
         """
         # set the electron multiplier voltage to zero
         # which automatically enables total pressure measurement
-        yield self._query('HV', 0, True, False)
+        yield self._setter('HV', 0)
 
         # start a total pressure measurement
         msg = 'TP?' + _SRS_EOL
-
         yield self.comm_lock.acquire()
         yield self.ser.write(msg)
-        resp = yield self.ser.read_line(_SRS_EOL)
+        resp = yield self.ser.read(4)
         yield self.comm_lock.release()
 
+        # process result
+        pressure = int.from_bytes(resp, 'big')
+
         # return the result
-        returnValue(float(resp))
+        returnValue(pressure)
 
     # HELPER
     @inlineCallbacks

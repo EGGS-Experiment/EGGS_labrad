@@ -6,395 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>654</width>
-    <height>600</height>
+    <width>650</width>
+    <height>390</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>SRS RGA Client</string>
   </property>
-  <widget class="QWidget" name="layoutWidget">
+  <widget class="QLabel" name="RGA_label">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>80</y>
-     <width>321</width>
-     <height>428</height>
-    </rect>
-   </property>
-   <layout class="QHBoxLayout" name="heatAll_layout">
-    <item>
-     <layout class="QVBoxLayout" name="heat1_layout">
-      <item>
-       <widget class="QLabel" name="heat1_label">
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Heater 1</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_mode_label">
-        <property name="text">
-         <string>Mode</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="heat1_mode">
-        <item>
-         <property name="text">
-          <string>Off</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Autotune</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>PID</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Manual</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_in_label">
-        <property name="text">
-         <string>Input</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="heat1_in">
-        <item>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>3</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>4</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_res_label">
-        <property name="text">
-         <string>Resistance (Ohms)</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="heat1_res">
-        <item>
-         <property name="text">
-          <string>25</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>50</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_curr_label">
-        <property name="text">
-         <string>Max. Current (A)</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat1_curr"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_range_label">
-        <property name="text">
-         <string>Range</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="heat1_range">
-        <item>
-         <property name="text">
-          <string>0</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>3</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_set_label">
-        <property name="text">
-         <string>Setpoint (K)</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat1_set"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_p1_label">
-        <property name="text">
-         <string>Parameter 1</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat1_p1"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_p2_label">
-        <property name="text">
-         <string>Parameter 2</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat1_p2"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_p3_label">
-        <property name="text">
-         <string>Parameter 3</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat1_p3"/>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QVBoxLayout" name="heat2_layout">
-      <item>
-       <widget class="QLabel" name="heat2_label">
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Heater 2</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_mode_label">
-        <property name="text">
-         <string>Mode</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="heat2_mode">
-        <item>
-         <property name="text">
-          <string>Off</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Autotune</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>PID</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Manual</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_in_label">
-        <property name="text">
-         <string>Input</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="heat2_in">
-        <item>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>3</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>4</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_res_label">
-        <property name="text">
-         <string>Resistance (Ohms)</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="heat2_res">
-        <item>
-         <property name="text">
-          <string>25</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>50</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_curr_label">
-        <property name="text">
-         <string>Max. Current (A)</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat2_curr"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_range_label">
-        <property name="text">
-         <string>Range</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="heat2_range">
-        <item>
-         <property name="text">
-          <string>0</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>3</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_set_label">
-        <property name="text">
-         <string>Setpoint (K)</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat2_set"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_p1_label">
-        <property name="text">
-         <string>Parameter 1</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat2_p1"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_p2_label">
-        <property name="text">
-         <string>Parameter 2</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat2_p2"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_p3_label">
-        <property name="text">
-         <string>Parameter 3</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat2_p3"/>
-      </item>
-     </layout>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QLabel" name="lakeshore_label">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
+     <x>230</x>
      <y>20</y>
      <width>181</width>
      <height>31</height>
@@ -408,6 +30,417 @@
    <property name="text">
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SRS RGA Client&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
+  </widget>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>70</y>
+     <width>131</width>
+     <height>221</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="general_layout">
+    <item row="7" column="1">
+     <widget class="QDoubleSpinBox" name="mass_lock">
+      <property name="decimals">
+       <number>0</number>
+      </property>
+      <property name="maximum">
+       <double>200.000000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QPushButton" name="pushButton">
+      <property name="text">
+       <string>Calibrate Electrometer</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QLabel" name="mass_lock_label">
+      <property name="text">
+       <string>Mass Lock</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QPushButton" name="calibrate">
+      <property name="text">
+       <string>Calibrate Detector</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QPushButton" name="initialize">
+      <property name="text">
+       <string>Initialize</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLabel" name="general_label">
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;General&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QPushButton" name="general_lockswitch">
+      <property name="text">
+       <string>Lock</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QPushButton" name="degas">
+      <property name="text">
+       <string>Degas</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_4">
+   <property name="geometry">
+    <rect>
+     <x>300</x>
+     <y>70</y>
+     <width>141</width>
+     <height>301</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="scan_layout">
+    <item row="4" column="1">
+     <widget class="QLabel" name="scan_mi_label">
+      <property name="text">
+       <string>Start Mass (amu)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QPushButton" name="scan_lockswitch">
+      <property name="text">
+       <string>Lock</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QDoubleSpinBox" name="scan_mi">
+      <property name="decimals">
+       <number>0</number>
+      </property>
+      <property name="minimum">
+       <double>0.000000000000000</double>
+      </property>
+      <property name="maximum">
+       <double>200.000000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="1">
+     <widget class="QDoubleSpinBox" name="scan_num">
+      <property name="decimals">
+       <number>0</number>
+      </property>
+      <property name="minimum">
+       <double>1.000000000000000</double>
+      </property>
+      <property name="maximum">
+       <double>255.000000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="1">
+     <widget class="QLabel" name="scan_mf_label">
+      <property name="text">
+       <string>Stop Mass (amu)l</string>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="1">
+     <widget class="QDoubleSpinBox" name="scan_sa">
+      <property name="decimals">
+       <number>0</number>
+      </property>
+      <property name="minimum">
+       <double>10.000000000000000</double>
+      </property>
+      <property name="maximum">
+       <double>25.000000000000000</double>
+      </property>
+      <property name="singleStep">
+       <double>1.000000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QComboBox" name="scan_type">
+      <item>
+       <property name="text">
+        <string>Analog</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Histogram</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Single Mass</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Total Pressure</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLabel" name="scan_label">
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Scan&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="13" column="1">
+     <widget class="QLabel" name="scan_num_label">
+      <property name="text">
+       <string>Number of scans</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLabel" name="scan_type_label">
+      <property name="text">
+       <string>Type</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="1">
+     <widget class="QDoubleSpinBox" name="scan_mf">
+      <property name="decimals">
+       <number>0</number>
+      </property>
+      <property name="maximum">
+       <double>200.000000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="11" column="1">
+     <widget class="QLabel" name="scan_sa_label">
+      <property name="text">
+       <string>Steps per amu</string>
+      </property>
+     </widget>
+    </item>
+    <item row="17" column="1">
+     <widget class="QPushButton" name="scan_start">
+      <property name="text">
+       <string>Start</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_3">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>220</y>
+     <width>131</width>
+     <height>151</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="detector_layout">
+    <item row="3" column="1">
+     <widget class="QLabel" name="detector_cv_label">
+      <property name="text">
+       <string>CDEM Voltage (V)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QPushButton" name="detector_lockswitch">
+      <property name="text">
+       <string>Lock</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QDoubleSpinBox" name="detector_hv">
+      <property name="decimals">
+       <number>0</number>
+      </property>
+      <property name="minimum">
+       <double>10.000000000000000</double>
+      </property>
+      <property name="maximum">
+       <double>2490.000000000000000</double>
+      </property>
+      <property name="singleStep">
+       <double>1.000000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QLabel" name="detector_nf_label">
+      <property name="text">
+       <string>Noise Floor</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QComboBox" name="detector_nf">
+      <item>
+       <property name="text">
+        <string>0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>1</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>2</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>3</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>4</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>6</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>7</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLabel" name="detector_label">
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>70</y>
+     <width>131</width>
+     <height>141</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="ionizer_layout">
+    <item row="3" column="0">
+     <widget class="QLabel" name="ionizer_ee_label">
+      <property name="text">
+       <string>Electron Energy (eV)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QDoubleSpinBox" name="ionizer_ee">
+      <property name="minimum">
+       <double>10.000000000000000</double>
+      </property>
+      <property name="maximum">
+       <double>35.000000000000000</double>
+      </property>
+      <property name="singleStep">
+       <double>0.100000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QPushButton" name="ionizer_lockswitch">
+      <property name="text">
+       <string>Lock</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0">
+     <widget class="QComboBox" name="ionizer_ie">
+      <item>
+       <property name="text">
+        <string>8</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>12</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="ionizer_ie_label">
+      <property name="text">
+       <string>Ion Energy (eV)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="ionizer_label">
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Ionizer&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>70</y>
+     <width>181</width>
+     <height>301</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="buffer_layout">
+    <item row="0" column="0">
+     <widget class="QLabel" name="buffer_label">
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Buffer&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QPlainTextEdit" name="buffer_readout"/>
+    </item>
+    <item row="2" column="0">
+     <widget class="QPushButton" name="buffer_clear">
+      <property name="text">
+       <string>Clear</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>
