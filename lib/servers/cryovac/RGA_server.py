@@ -79,7 +79,7 @@ class RGA_Server(SerialDeviceServer):
             level = ''
         elif level not in (0, 1, 2):
             raise Exception('Invalid Input.')
-        resp = yield self._query('IN', level, True, False)
+        yield self._setter('IN', level)
 
 
     # IONIZER
@@ -92,7 +92,8 @@ class RGA_Server(SerialDeviceServer):
             energy = ''
         elif (energy < 25) or (energy > 105):
             raise Exception('Invalid Input.')
-        resp = yield self._query('EE', energy, True, True)
+        yield self._setter('EE', energy)
+        resp = yield self._getter('EE')
         returnValue(int(resp))
 
     @setting(212, 'Ionizer Ion Energy', energy='i', returns='i')
@@ -104,7 +105,8 @@ class RGA_Server(SerialDeviceServer):
             energy = ''
         elif energy not in (0, 1):
             raise Exception('Invalid Input.')
-        resp = yield self._query('IE', energy, True, True)
+        yield self._setter('IE', energy)
+        resp = yield self._getter('IE')
         returnValue(int(resp))
 
     @setting(221, 'Ionizer Emission Current', current='v', returns='v')
@@ -116,7 +118,8 @@ class RGA_Server(SerialDeviceServer):
             current = ''
         elif (current < 0) or (current > 3.5):
             raise Exception('Invalid Input.')
-        resp = yield self._query('FL', current, True, True)
+        yield self._setter('FL', current)
+        resp = yield self._getter('FL')
         returnValue(float(resp))
 
     @setting(222, 'Ionizer Focus Voltage', voltage='i', returns='i')
@@ -128,7 +131,8 @@ class RGA_Server(SerialDeviceServer):
             voltage = ''
         elif (voltage < 0) or (voltage > 150):
             raise Exception('Invalid Input.')
-        resp = yield self._query('VF', voltage, True, True)
+        yield self._setter('VF', voltage)
+        resp = yield self._getter('VF')
         returnValue(int(resp))
 
 
@@ -138,7 +142,7 @@ class RGA_Server(SerialDeviceServer):
         """
         Calibrate the detector.
         """
-        resp = yield self._query('CA', '', True, False)
+        yield self._setter('CA', '')
         #todo: see whether error prevents things
 
     @setting(312, 'Detector Noise Floor', level='i', returns='i')
@@ -150,7 +154,8 @@ class RGA_Server(SerialDeviceServer):
             level = ''
         elif (level < 0) or (level > 7):
             raise Exception('Invalid Input.')
-        resp = yield self._query('NF', level, True, True)
+        yield self._setter('NF', level)
+        resp = yield self._getter('NF')
         returnValue(int(resp))
 
     @setting(313, 'Detector CDEM', returns='i')
@@ -158,7 +163,7 @@ class RGA_Server(SerialDeviceServer):
         """
         Check whether the electron multiplier is available.
         """
-        resp = yield self._query('MO', '', False, True)
+        resp = yield self._getter('MO')
         returnValue(int(resp))
 
     @setting(321, 'Detector CDEM Voltage', voltage='i', returns='i')
@@ -170,7 +175,8 @@ class RGA_Server(SerialDeviceServer):
             voltage = ''
         elif (voltage < 0) or (voltage > 2490):
             raise Exception('Invalid Input.')
-        resp = yield self._query('HV', voltage, True, True)
+        yield self._setter('HV', voltage)
+        resp = yield self._getter('HV')
         returnValue(int(resp))
 
 
@@ -184,7 +190,8 @@ class RGA_Server(SerialDeviceServer):
             mass = ''
         elif (mass < 0) or (mass > self.m_max):
             raise Exception('Invalid Input.')
-        resp = yield self._query('MI', mass, True, True)
+        yield self._setter('MI', mass)
+        resp = yield self._getter('MI')
         returnValue(int(resp))
 
     @setting(412, 'Scan Mass Final', mass='i', returns='i')
@@ -196,19 +203,21 @@ class RGA_Server(SerialDeviceServer):
             mass = ''
         elif (mass < 0) or (mass > self.m_max):
             raise Exception('Invalid Input.')
-        resp = yield self._query('MF', mass, True, True)
+        yield self._setter('MF', mass)
+        resp = yield self._getter('MF')
         returnValue(int(resp))
 
-    @setting(413, 'Scan Mass Steps', mass='i', returns='i')
-    def massSteps(self, c, mass=None):
+    @setting(413, 'Scan Mass Steps', steps='i', returns='i')
+    def massSteps(self, c, steps=None):
         """
         Set the number of steps per amu during scanning.
         """
-        if mass is None:
-            mass = ''
-        elif (mass < 10) or (mass > 25):
+        if steps is None:
+            steps = ''
+        elif (steps < 10) or (steps > 25):
             raise Exception('Invalid Input.')
-        resp = yield self._query('SA', mass, True, True)
+        yield self._setter('SA', steps)
+        resp = yield self._getter('SA')
         returnValue(int(resp))
 
     @setting(414, 'Scan Points', mode='s', returns='i')
@@ -218,9 +227,9 @@ class RGA_Server(SerialDeviceServer):
         """
         resp = None
         if mode.lower() in ('a', 'analog'):
-            resp = yield self._query('AP', '', False, True)
+            resp = yield self._getter('AP')
         if mode.lower() in ('h', 'histogram'):
-            resp = yield self._query('HP', '', False, True)
+            resp = yield self._getter('HP')
         else:
             raise Exception('Invalid Input.')
         returnValue(int(resp))
@@ -298,24 +307,28 @@ class RGA_Server(SerialDeviceServer):
 
     # HELPER
     @inlineCallbacks
-    def _query(self, chString, param, setter, getter):
-        # write to the device
-        if setter:
-            msg = chString + str(param) + _SRS_EOL
-            print('setter: ' + msg)
-            yield self.ser.write(msg)
-            status = yield self.ser.read_line(_SRS_EOL)
-            # process status byte echo for errors
-            yield self._checkStatus(status)
+    def _setter(self, chString, param):
+        """
+        Change device parameters.
+        """
+        msg = chString + str(param) + _SRS_EOL
+        print('setter: ' + msg)
+        yield self.ser.write(msg)
+        status = yield self.ser.read_line(_SRS_EOL)
+        # process status byte echo for errors
+        yield self._checkStatus(status)
 
-        # get data from the device
-        if getter:
-            msg = chString + '?' + _SRS_EOL
-            print('getter: ' + msg)
-            yield self.ser.write(msg)
-            resp = yield self.ser.read_line(_SRS_EOL)
-            print(resp)
-            returnValue(resp)
+    @inlineCallbacks
+    def _getter(self, chString):
+        """
+        Get data from the device.
+        """
+        msg = chString + '?' + _SRS_EOL
+        print('getter: ' + msg)
+        yield self.ser.write(msg)
+        resp = yield self.ser.read_line(_SRS_EOL)
+        print(resp)
+        returnValue(resp)
 
     def _checkStatus(self, status):
         """
