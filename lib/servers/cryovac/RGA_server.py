@@ -71,13 +71,11 @@ class RGA_Server(SerialDeviceServer):
 
     # STATUS
     @setting(111, 'Initialize', level='i', returns='')
-    def initialize(self, c, level=None):
+    def initialize(self, c, level=0):
         """
         Initialize the RGA.
         """
-        if level is None:
-            level = ''
-        elif level not in (0, 1, 2):
+        if level not in (0, 1, 2):
             raise Exception('Invalid Input.')
         yield self._setter('IN', level)
 
@@ -88,9 +86,9 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the electron energy (in eV).
         """
-        if (energy < 25) or (energy > 105):
-            raise Exception('Invalid Input.')
-        elif energy is not None:
+        if energy is not None:
+            if (energy < 25) or (energy > 105):
+                raise Exception('Invalid Input.')
             yield self._setter('EE', energy)
         resp = yield self._getter('EE')
         returnValue(int(resp))
@@ -100,9 +98,9 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the ion energy (in eV).
         """
-        if energy not in (0, 1):
-            raise Exception('Invalid Input.')
-        elif energy is not None:
+        if energy is not None:
+            if energy not in (0, 1):
+                raise Exception('Invalid Input.')
             yield self._setter('IE', energy)
         yield self._setter('IE', energy)
         resp = yield self._getter('IE')
@@ -123,11 +121,11 @@ class RGA_Server(SerialDeviceServer):
     @setting(222, 'Ionizer Focus Voltage', voltage='i', returns='i')
     def focusVoltage(self, c, voltage=None):
         """
-        Set the electron emission current (in mA).
+        Set the focus plate voltage (in V).
         """
-        if (voltage < 0) or (voltage > 150):
-            raise Exception('Invalid Input.')
-        elif voltage is not None:
+        if voltage is not None:
+            if (voltage < 0) or (voltage > 150):
+                raise Exception('Invalid Input.')
             yield self._setter('VF', voltage)
         resp = yield self._getter('VF')
         returnValue(int(resp))
@@ -147,9 +145,9 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the detector noise floor.
         """
-        if (level < 0) or (level > 7):
-            raise Exception('Invalid Input.')
-        elif level is not None:
+        if level is not None:
+            if (level < 0) or (level > 7):
+                raise Exception('Invalid Input.')
             yield self._setter('NF', level)
         resp = yield self._getter('NF')
         returnValue(int(resp))
@@ -167,9 +165,9 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the electron multiplier voltage bias.
         """
-        if (voltage < 0) or (voltage > 2490):
-            raise Exception('Invalid Input.')
-        elif voltage is not None:
+        if voltage is not None:
+            if (voltage < 0) or (voltage > 2490):
+                raise Exception('Invalid Input.')
             yield self._setter('HV', voltage)
         resp = yield self._getter('HV')
         returnValue(int(resp))
@@ -181,9 +179,9 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the initial mass for scanning.
         """
-        if (mass < 0) or (mass > self.m_max):
-            raise Exception('Invalid Input.')
-        elif mass is not None:
+        if mass is not None:
+            if (mass < 0) or (mass > self.m_max):
+                raise Exception('Invalid Input.')
             yield self._setter('MI', mass)
         resp = yield self._getter('MI')
         returnValue(int(resp))
@@ -193,9 +191,9 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the final mass for scanning.
         """
-        if (mass < 0) or (mass > self.m_max):
-            raise Exception('Invalid Input.')
-        elif mass is not None:
+        if mass is not None:
+            if (mass < 0) or (mass > self.m_max):
+                raise Exception('Invalid Input.')
             yield self._setter('MF', mass)
         resp = yield self._getter('MF')
         returnValue(int(resp))
@@ -205,9 +203,9 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the number of steps per amu during scanning.
         """
-        if (steps < 10) or (steps > 25):
-            raise Exception('Invalid Input.')
-        elif steps is not None:
+        if steps is not None:
+            if (steps < 10) or (steps > 25):
+                raise Exception('Invalid Input.')
             yield self._setter('SA', steps)
         resp = yield self._getter('SA')
         returnValue(int(resp))
