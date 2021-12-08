@@ -4,7 +4,7 @@ from EGGS_labrad.lib.clients.SLS_client.SLS_gui import SLS_gui
 _TIME_STR = '{0:d}:{1:d}:{2:d}'
 
 
-class RGA_client(SLS_gui):
+class RGA_client(RGA_gui):
 
     name = 'SLS Client'
     AUTOLOCKID = 295372
