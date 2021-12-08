@@ -14,7 +14,7 @@ class RGA_client(RGA_gui):
         self.gui.setupUi()
         self.reactor = reactor
         self.servo_target = None
-        self.servers = ['SLS Server', 'Data Vault']
+        self.servers = ['RGA Server', 'Data Vault']
         # initialization sequence
         d = self.connect()
         d.addCallback(self.initData)
@@ -118,6 +118,8 @@ class RGA_client(RGA_gui):
         server_name = message[1]
         if server_name in self.servers:
             print(server_name + ' reconnected, enabling widget.')
+            # get latest values
+            yield self.initData(self.cxn)
             self.setEnabled(True)
 
     def on_disconnect(self, c, message):

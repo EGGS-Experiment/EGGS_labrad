@@ -270,16 +270,24 @@ class NIOPS03Server(SerialDeviceServer):
         temp = temp_resp.split()
         self.temperature_update((float(temp[1]), float(temp[3])))
         # process & update voltage
-
         self.voltage_update(int(volt_resp, 16))
 
-        # interlock
+        # interlock: checks
         if self.interlock_active:
+            # switch off ion pump if pressure is above a certain value
             press_tmp = yield self.tt.read_pressure()
             if press_tmp >= self.interlock_pressure:
                 print('problem')
                 # yield self.ser.write('B' + TERMINATOR)
                 # yield self.ser.read_line()
+
+    def poll_fail(self, failure):
+        print(failure)
+        print(self.refresher.running)
+        print(self.refresher.interval)
+        self.ser.flush_input_buffers()
+        self.ser.flush_output_buffers
+        self.refresher.start(5)
 
 
 if __name__ == '__main__':
