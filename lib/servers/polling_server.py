@@ -5,12 +5,15 @@ class PollingServer(LabradServer):
     """
     Holds all the functionality needed to
     run polling loops on the server.
+    Also contains functionality for Signals.
     """
 
     # STARTUP
     def initServer(self):
         # call parent initserver to support further subclassing
         super().initServer()
+        # signal stuff
+        self.listeners = set()
         # polling stuff
         self.refresher = LoopingCall(self._poll)
         self.startRefresher(5)

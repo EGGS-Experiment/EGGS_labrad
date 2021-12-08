@@ -22,8 +22,8 @@ from labrad.server import setting, Signal
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 from EGGS_labrad.lib.servers.polling_server import PollingServer
+from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 import time
 
@@ -55,8 +55,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
     def initServer(self):
         # call parent initserver to support further subclassing
         super().initServer()
-        self.listeners = set()
-        # polling stuff
+        # interlock stuff
         self.tt = None
         self.interlock_active = False
         self.interlock_pressure = None
