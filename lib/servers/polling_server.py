@@ -72,7 +72,7 @@ class PollingServer(LabradServer):
         Starts the polling loop and calls errbacks.
         """
         d = self.refresher.start(interval, now=False)
-        d.addErrback(self.poll_fail)
+        d.addErrback(self._poll_fail)
 
     def _poll(self):
         """
