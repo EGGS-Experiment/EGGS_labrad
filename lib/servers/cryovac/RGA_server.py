@@ -32,7 +32,7 @@ class RGA_Server(SerialDeviceServer):
     port = 'COM48'
     serNode = 'mongkok'
 
-    timeout = WithUnit(5.0, 's')
+    timeout = WithUnit(8.0, 's')
     baudrate = 28800
 
     # STARTUP
@@ -102,7 +102,6 @@ class RGA_Server(SerialDeviceServer):
             if energy not in (0, 1):
                 raise Exception('Invalid Input.')
             yield self._setter('IE', energy)
-        yield self._setter('IE', energy)
         resp = yield self._getter('IE')
         returnValue(int(resp))
 
@@ -111,9 +110,9 @@ class RGA_Server(SerialDeviceServer):
         """
         Set the electron emission current (in mA).
         """
-        if (current < 0) or (current > 3.5):
-            raise Exception('Invalid Input.')
-        elif current is not None:
+        if current is not None:
+            if (current < 0) or (current > 150):
+                raise Exception('Invalid Input.')
             yield self._setter('FL', current)
         resp = yield self._getter('FL')
         returnValue(float(resp))
@@ -218,12 +217,11 @@ class RGA_Server(SerialDeviceServer):
         resp = None
         if mode.lower() in ('a', 'analog'):
             resp = yield self._getter('AP')
-        if mode.lower() in ('h', 'histogram'):
+        elif mode.lower() in ('h', 'histogram'):
             resp = yield self._getter('HP')
         else:
             raise Exception('Invalid Input.')
         returnValue(int(resp))
-
 
     @setting(421, 'Scan Start', mode='s', num_scans='i', returns='')
     def scanStart(self, c, mode, num_scans):
@@ -236,17 +234,24 @@ class RGA_Server(SerialDeviceServer):
 
         # create scan message
         msg = None
+        bytes_to_read = 0
         if mode.lower() in ('a', 'analog'):
-            msg = 'SC' + num_scans + _SRS_EOL
-        if mode.lower() in ('h', 'histogram'):
-            msg = 'HS' + num_scans + _SRS_EOL
+            yield self.ser.write('AP?\r')
+            bytes_to_read = yield self.ser.read()
+            bytes_to_read = num_scans * 4 * (int(bytes_to_read) + 1)
+            msg = 'SC' + str(num_scans) + _SRS_EOL
+        elif mode.lower() in ('h', 'histogram'):
+            yield self.ser.write('HP?\r')
+            bytes_to_read = yield self.ser.read()
+            bytes_to_read = num_scans * 4 * (int(bytes_to_read) + 1)
+            msg = 'HS' + str(num_scans) + _SRS_EOL
         else:
             raise Exception('Invalid Input.')
 
         # initiate blocking scan
         yield self.comm_lock.acquire()
         yield self.ser.write(msg)
-        #todo: get resp
+        yield self.ser.read(bytes_to_read)
         yield self.comm_lock.release()
 
 
@@ -302,11 +307,13 @@ class RGA_Server(SerialDeviceServer):
         Change device parameters.
         """
         msg = chString + str(param) + _SRS_EOL
-        print('setter: ' + msg)
         yield self.ser.write(msg)
         status = yield self.ser.read_line(_SRS_EOL)
         # process status byte echo for errors
-        yield self._checkStatus(status)
+        # todo: convert to binary array then AND the errors
+        # convert string input into binary
+        status = format(int(status), '08b')
+        print('status: ' + str(status))
 
     @inlineCallbacks
     def _getter(self, chString):
@@ -314,22 +321,9 @@ class RGA_Server(SerialDeviceServer):
         Get data from the device.
         """
         msg = chString + '?' + _SRS_EOL
-        print('getter: ' + msg)
         yield self.ser.write(msg)
         resp = yield self.ser.read_line(_SRS_EOL)
-        print(resp)
         returnValue(resp)
-
-    def _checkStatus(self, status):
-        """
-        Parse the status byte echo from the RGA.
-        """
-        #todo: convert to binary array then AND the errors
-        # convert string input into binary
-        status = format(int(status), '08b')
-        print('status: ' + str(status))
-        #PS_ERR = status & 0x40
-        #DET_ERR = status & 0x30
 
 
 if __name__ == "__main__":
