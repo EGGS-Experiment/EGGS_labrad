@@ -41,7 +41,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         super().initServer()
         self.comm_lock = DeferredLock()
         # RGA type
-        self.m_max = 100
+        self.m_max = 200
 
 
     # STATUS
@@ -148,15 +148,19 @@ class RGA_Server(SerialDeviceServer, PollingServer):
 
 
     # SCANNING
-    @setting(411, 'Scan Mass Initial', mass='i', returns='i')
+    @setting(411, 'Scan Mass Initial', mass=[': none idk', 'i: thkim', 's: scde'], returns='i')
     def massInitial(self, c, mass=None):
         """
         Set the initial mass for scanning.
         """
         if mass is not None:
-            if (mass < 0) or (mass > self.m_max):
-                raise Exception('Invalid Input.')
-            yield self._setter('MI', mass)
+            if type(mass) is int:
+                if (mass < 0) or (mass > self.m_max):
+                    raise Exception('Invalid Input.')
+            elif type(mass) is str:
+                if mass != '*':
+                    raise Exception('Invalid Input.')
+            yield self.ser.write('MI' + str(mass) + _SRS_EOL)
         resp = yield self._getter('MI')
         returnValue(int(resp))
 
@@ -168,7 +172,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         if mass is not None:
             if (mass < 0) or (mass > self.m_max):
                 raise Exception('Invalid Input.')
-            yield self._setter('MF', mass)
+            yield self.ser.write('MF' + str(mass) + _SRS_EOL)
         resp = yield self._getter('MF')
         returnValue(int(resp))
 

@@ -53,16 +53,6 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
     # SIGNALS
     temp_update = Signal(TEMPSIGNAL, 'signal: temperature update', '(vvvv)')
 
-    # STARTUP
-    # def initServer(self):
-    #     super().initServer()
-    #     self.listeners = set()
-    #     # polling stuff
-    #     self.refresher = LoopingCall(self.poll)
-    #     from twisted.internet.reactor import callLater
-    #     callLater(1, self.refresher.start, 2)
-
-
     # TEMPERATURE DIODES
     @setting(111, 'Read Temperature', channel='s', returns='*1v')
     def temperature_read(self, c, channel=None):
