@@ -33,7 +33,7 @@ class RGA_client(RGA_gui):
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync(LABRADHOST, name=self.name)
 
-        #get servers
+        # get servers
         try:
             self.dv = self.cxn.data_vault
             self.reg = self.cxn.registry
@@ -43,10 +43,10 @@ class RGA_client(RGA_gui):
             self.setEnabled(False)
 
         # connect to signals
-            #device parameters
+            # device parameters
         yield self.rga.signal__autolock_update(self.AUTOLOCKID)
         yield self.rga.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
-            #server connections
+            # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
@@ -67,7 +67,7 @@ class RGA_client(RGA_gui):
         self.gui.PDH_lockswitch.setChecked(True)
         self.gui.servo_lockswitch.setChecked(True)
         # get all values
-        values_tmp = yield self.sls.get_values()
+        values_tmp = yield self.rga.get_values()
         init_values = dict(zip(values_tmp[0], values_tmp[1]))
         # autolock
         self.gui.autolock_param.setCurrentIndex(int(init_values['SweepType']))
@@ -96,8 +96,8 @@ class RGA_client(RGA_gui):
     def initializeGUI(self, cxn):
         # connect signals to slots
             # autolock
-        self.gui.autolock_toggle.toggled.connect(lambda status: self.sls.autolock_toggle(status))
-        self.gui.autolock_param.currentTextChanged.connect(lambda param: self.sls.autolock_parameter(param.upper()))
+        self.gui.autolock_toggle.toggled.connect(lambda status: self.rga.autolock_toggle(status))
+        self.gui.autolock_param.currentTextChanged.connect(lambda param: self.rga.autolock_parameter(param.upper()))
             # pdh
         self.gui.PDH_freq.valueChanged.connect(lambda value: self.changePDHValue('frequency', value))
         self.gui.PDH_phasemodulation.valueChanged.connect(lambda value: self.changePDHValue('index', value))
@@ -140,7 +140,7 @@ class RGA_client(RGA_gui):
     # SLOTS
     def changePDHValue(self, param_name, param_value):
         print('pdh: ' + str(param_name) + ': ' + str(param_value))
-        #self.sls.PDH(param_name, param_value)
+        #self.rga.PDH(param_name, param_value)
 
     def changeServoTarget(self, target):
         print('target: ' + target)
@@ -149,7 +149,7 @@ class RGA_client(RGA_gui):
 
     def changeServoValue(self, param_name, param_value):
         print('servo: ' + str(param_name) + ': ' + str(param_value))
-        #self.sls.servo(self.servo_target, param_name, param_val)
+        #self.rga.servo(self.servo_target, param_name, param_val)
 
     def closeEvent(self, event):
         self.cxn.disconnect()
