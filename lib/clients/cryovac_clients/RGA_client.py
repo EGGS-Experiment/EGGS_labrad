@@ -1,6 +1,8 @@
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.lib.clients.cryovac_clients.RGA_gui import RGA_gui
 
+from datetime import datetime
+
 
 class RGA_client(RGA_gui):
 
@@ -13,7 +15,6 @@ class RGA_client(RGA_gui):
         self.gui = self
         self.gui.setupUi()
         self.reactor = reactor
-        self.servo_target = None
         self.servers = ['RGA Server', 'Data Vault']
         # initialization sequence
         d = self.connect()
@@ -44,8 +45,8 @@ class RGA_client(RGA_gui):
 
         # connect to signals
             # device parameters
-        yield self.rga.signal__autolock_update(self.AUTOLOCKID)
-        yield self.rga.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
+        yield self.rga.signal__buffer_update(self.BUFFERID)
+        yield self.rga.addListener(listener=self.updateBuffer, source=None, ID=self.BUFFERID)
             # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
@@ -62,13 +63,10 @@ class RGA_client(RGA_gui):
     @inlineCallbacks
     def initData(self, cxn):
         # lockswitches
-        self.gui.autolock_lockswitch.setChecked(True)
-        self.gui.off_lockswitch.setChecked(True)
-        self.gui.PDH_lockswitch.setChecked(True)
-        self.gui.servo_lockswitch.setChecked(True)
-        # get all values
-        values_tmp = yield self.rga.get_values()
-        init_values = dict(zip(values_tmp[0], values_tmp[1]))
+        self.gui.general_lockswitch.setChecked(True)
+        self.gui.ionizer_lockswitch.setChecked(True)
+        self.gui.detector_lockswitch.setChecked(True)
+        self.gui.scan_lockswitch.setChecked(True)
         # autolock
         self.gui.autolock_param.setCurrentIndex(int(init_values['SweepType']))
         self.gui.autolock_toggle.setChecked(bool(init_values['AutoLockEnable']))
@@ -95,21 +93,19 @@ class RGA_client(RGA_gui):
 
     def initializeGUI(self, cxn):
         # connect signals to slots
-            # autolock
-        self.gui.autolock_toggle.toggled.connect(lambda status: self.rga.autolock_toggle(status))
-        self.gui.autolock_param.currentTextChanged.connect(lambda param: self.rga.autolock_parameter(param.upper()))
-            # pdh
-        self.gui.PDH_freq.valueChanged.connect(lambda value: self.changePDHValue('frequency', value))
-        self.gui.PDH_phasemodulation.valueChanged.connect(lambda value: self.changePDHValue('index', value))
-        self.gui.PDH_phaseoffset.valueChanged.connect(lambda value: self.changePDHValue('phase', value))
-        self.gui.PDH_filter.currentIndexChanged.connect(lambda value: self.changePDHValue('filter', value))
-            # servo
-        self.gui.servo_param.currentTextChanged.connect(lambda target: self.changeServoTarget(target))
-        self.gui.servo_set.valueChanged.connect(lambda value: self.changeServoValue('set', value))
-        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.changeServoValue('filter', value))
-        self.gui.servo_p.valueChanged.connect(lambda value: self.changeServoValue('p', value))
-        self.gui.servo_i.valueChanged.connect(lambda value: self.changeServoValue('i', value))
-        self.gui.servo_d.valueChanged.connect(lambda value: self.changeServoValue('d', value))
+            # general
+        self.gui.initialize.clicked.connect(lambda: (yield self.rga.initialize()))
+        self.gui.calibrate_detector.clicked.connect(lambda: (yield self.rga.detector_calibrate()))
+            # ionizer
+        self.gui.ionizer_ee.valueChanged.connect(lambda value: (yield self.rga.ionizer_electron_energy(value)))
+        self.gui.ionizer_ie.currentIndexChanged.connect(lambda index: (yield self.rga.ionizer_ion_energy(index)))
+            # detector
+        self.gui.detector_cv.valueChanged.connect(lambda value: (yield self.rga.detector_cdem_voltage(value)))
+        self.gui.detector_nf.currentIndexChanged.connect(lambda index: (yield self.rga.detector_noise_floor(index)))
+            # scan
+        self.gui.scan_start.clicked.connect(lambda: self.startScan())
+            # buffer
+        self.gui.buffer_clear.clicked.connect(lambda: self.gui.buffer_readout.clear())
         return cxn
 
 
@@ -128,28 +124,51 @@ class RGA_client(RGA_gui):
             print(server_name + ' disconnected, disabling widget.')
             self.setEnabled(False)
 
-    def updateAutolock(self, c, lockstatus):
+    def updateBuffer(self, c, data):
         """
         Updates GUI when values are received from server.
         """
-        autolock_time = lockstatus[1]
-        autolock_time_formatted = self._dateFormat(autolock_time)
-        self.gui.autolock_attempts.setText(str(lockstatus[0]))
-        self.gui.autolock_time.setText(autolock_time_formatted)
+        param, value = data
+        self.gui.buffer_readout.appendPlainText('{}: {}'.format(param, value))
+        #todo send to widget
+
 
     # SLOTS
-    def changePDHValue(self, param_name, param_value):
-        print('pdh: ' + str(param_name) + ': ' + str(param_value))
-        #self.rga.PDH(param_name, param_value)
+    @inlineCallbacks
+    def startScan(self):
+        """
+        Creates a new dataset to record pressure and
+        tells polling loop to add data to data vault.
+        """
+        # set up datavault
+        date = datetime.now()
+        year = str(date.year)
+        month = '{:02d}'.format(date.month)
 
-    def changeServoTarget(self, target):
-        print('target: ' + target)
-        #self.servo_target = target.lower()
-        #todo: get new values and update them
+        trunk1 = '{0:s}_{1:d}_{2:d}'.format(year, month, date.day)
+        trunk2 = '{0:s}_{1:02d}_{2:02d}'.format(self.name, date.hour, date.minute)
+        yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
+        yield self.dv.new('SRS RGA Scan', [('Mass', 'amu')],
+                          [('Scan', 'Current', '1e-16 A')], context=self.c_record)
 
-    def changeServoValue(self, param_name, param_value):
-        print('servo: ' + str(param_name) + ': ' + str(param_value))
-        #self.rga.servo(self.servo_target, param_name, param_val)
+        # get scan parameters from widgets
+        mass_initial = self.gui.scan_mi.value()
+        mass_final = self.gui.scan_mf.value()
+        mass_step = self.gui.scan_sa.value()
+        type = self.gui.scan_type.currentText()
+        num_scans = self.gui.scan_num.value()
+
+        # send scan parameters to RGA
+        self.rga.scan_mass_initial(mass_initial)
+        self.rga.scan_mass_final(mass_final)
+        self.rga.scan_mass_steps(mass_step)
+
+        # do scan
+        self.gui.setEnabled(False)
+        result = yield self.rga.scan_start(type, num_scans)
+        self.gui.setEnabled(True)
+        #todo add data to datavault
+        #self.dv.add()
 
     def closeEvent(self, event):
         self.cxn.disconnect()

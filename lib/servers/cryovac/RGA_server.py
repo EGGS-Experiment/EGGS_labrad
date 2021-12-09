@@ -37,7 +37,8 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     baudrate = 28800
 
     # SIGNALS
-    buffer_update = Signal(999999, 'signal: buffer_update', 's')
+    buffer_update = Signal(999999, 'signal: buffer_update', '(s, s)')
+
 
     # STARTUP
     def initServer(self):
@@ -269,7 +270,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         yield self.ser.write(msg)
         resp = yield self.ser.read(bytes_to_read)
         yield self.comm_lock.release()
-
+        #todo get axes
         # process scan
         current_arr = [int.from_bytes(resp[i:i+4], 'big') for i in range(0, bytes_to_read, 4)]
         # create axis
@@ -351,7 +352,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read_line(_SRS_EOL)
         # send out buffer response to clients
         buffer_tmp = chString + ': ' + resp
-        self.buffer_update(buffer_tmp)
+        self.buffer_update((chString, resp))
         returnValue(resp)
 
 
