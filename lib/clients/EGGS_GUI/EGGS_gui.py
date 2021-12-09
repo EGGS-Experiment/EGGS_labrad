@@ -99,6 +99,6 @@ class EGGS_gui(QMainWindow):
             self.reactor.stop()
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runClient
     runClient(EGGS_gui)
