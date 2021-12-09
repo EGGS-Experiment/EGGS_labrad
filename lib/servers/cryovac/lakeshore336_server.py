@@ -21,6 +21,7 @@ from labrad.units import WithUnit
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
+import time
 import numpy as np
 from serial import PARITY_ODD
 
@@ -44,7 +45,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
     serNode = 'MongKok'
     port = 'COM24'
 
-    timeout = WithUnit(1.0, 's')
+    timeout = WithUnit(5.0, 's')
     baudrate = 57600
     bytesize = 7
     parity = PARITY_ODD  # 0 is odd parity
@@ -74,8 +75,9 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         self.temp_update(resp)
         returnValue(resp)
 
+
     # HEATER
-    @setting(211, 'Heater Setup', output_channel='i', resistance='i', max_current='v', returns='*v')
+    @setting(211, 'Heater Setup', output_channel='i', resistance='i', max_current=['i', 'v'], returns='(iv)')
     def heater_setup(self, c, output_channel, resistance, max_current):
         """
         Set up the physical parameters of the heater.
@@ -88,14 +90,15 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
                             (int, float): (resistance, max_current)
         """
         chString = 'HTRSET'
-        #setter
-        output_msg = ' ' + str(output_channel) + ',' + str(resistance) + ',0,' + str(max_current) + ',1' + TERMINATOR
-        yield self.ser.write(chString + output_msg)
-        #getter
+        # setter
+        output_msg = chString + ' ' + str(output_channel) + ',' + str(resistance) + ',0,' + str(max_current) + ',1' + TERMINATOR
+        yield self.ser.write(output_msg)
+        time.sleep(0.05)
+        # getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         resp = resp.split(',')
-        resp = [int(resp[1]), float(resp[2])]
+        resp = (int(resp[0]), float(resp[2]))
         returnValue(resp)
 
     @setting(212, 'Heater Mode', output_channel='i', mode='i', input_channel='i', returns='(ii)')
@@ -106,15 +109,16 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
             output_channel  (int): the heater channel
             mode            (int): heater operation mode (0=off, 1=PID, 2=zone, 3=open loop,
                                                         4=monitor out, 5=warmup)
-            input_channel   (str): the temperature diode channel to control the output
+            input_channel   (int): the temperature diode channel to control the output
         Returns:
                             (int, int): the output mode and linked input channel
         """
         chString = 'OUTMODE'
-        #setter
+        # setter
         output_msg = chString + ' ' + str(output_channel) + ',' + str(mode) + ',' + str(input_channel) + ',0' + TERMINATOR
         yield self.ser.write(output_msg)
-        #getter
+        time.sleep(0.05)
+        # getter
         yield self.ser.write(chString + '?' + str(output_channel) + ' ' + TERMINATOR)
         resp = yield self.ser.read_line()
         resp = np.array(resp.split(','), dtype=int)
@@ -132,15 +136,16 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
             (int): the heater range
         """
         chString = 'RANGE'
-        #setter
-        output_msg = ' ' + str(output_channel) + ',' + str(range) + TERMINATOR
-        yield self.ser.write(chString + output_msg)
-        #getter
+        # setter
+        output_msg = chString + ' ' + str(output_channel) + ',' + str(range) + TERMINATOR
+        yield self.ser.write(output_msg)
+        time.sleep(0.05)
+        # getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         returnValue(int(resp))
 
-    @setting(213, 'Heater Power', output_channel='i', power='v', returns='v')
+    @setting(213, 'Heater Power', output_channel='i', power=['i', 'v'], returns='v')
     def heater_power(self, c, output_channel, power):
         """
         Set or query heater power.
@@ -148,38 +153,38 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         If heater is in closed loop mode, then heater sets power/current offset for PID.
         Args:
             output_channel (int): the heater channel
-            power (float): the heater power as aa percentage of max amount
+            power (float): the heater power as a percentage of max amount
         Returns:
             (float): the heater power
         """
         chString = 'MOUT'
-        #setter
-        output_msg = ' ' + str(output_channel) + ',' + str(power) + TERMINATOR
-        yield self.ser.write(chString + output_msg)
-        #getter
+        # setter
+        output_msg = chString + ' ' + str(output_channel) + ',' + str(power) + TERMINATOR
+        yield self.ser.write(output_msg)
+        time.sleep(0.05)
+        # getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         returnValue(float(resp))
 
-
-    @setting(231, 'Heater PID', output_channel='i', prop='v', int='v', diff='v', returns='(vvv)')
-    def heater_PID(self, c, output_channel, prop=None, int=None, diff=None):
+    @setting(231, 'Heater PID', output_channel='i', prop='v', integ='v', diff='v', returns='(vvv)')
+    def heater_PID(self, c, output_channel, prop=None, integ=None, diff=None):
         """
         Set or query heater PID parameters. Only available if heater is in PID mode.
         Args:
             output_channel (int): the heater channel
             prop           (float): Proportional
-            int            (float): Integral
+            integ           (float): Integral
             diff           (float): Derivative
         Returns:
                             (float, float, float): the PID parameters
         """
         chString = 'PID'
-        if all(vals != None for vals in [prop, int, diff]):
-            output_msg = chString + ' ' + str(output_channel) + ',' + str(prop) + ',' + str(int) + ',' + str(diff) + TERMINATOR
-            yield self.write(output_msg)
-        #issue query
-        resp = yield self.query(chString + '? ' + str(output_channel) + TERMINATOR)
+        if all(vals != None for vals in [prop, integ, diff]):
+            output_msg = chString + ' ' + str(output_channel) + ',' + str(prop) + ',' + str(integ) + ',' + str(diff) + TERMINATOR
+            yield self.ser.write(output_msg)
+        # issue query
+        resp = yield self.ser.query(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = np.array(resp.split(','), dtype=float)
         returnValue(tuple(resp))
 
@@ -194,48 +199,28 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
                             (float): the setpoint (in Kelvin)
         """
         chString = 'SETP'
-        #setter
+        # setter
         output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint) + TERMINATOR
-        yield self.write(output_msg)
-        #getter
-        yield self.write(chString + '? ' + str(output_channel) + TERMINATOR)
-        resp = self.read_line()
-        returnValue(float(resp))
-
-    @setting(241, 'Heater Autotune', output_channel='i', input_channel='i', mode='i', returns='*1v')
-    def heater_autotune(self, c, output_channel, input_channel, mode):
-        """
-        Set up or query the desired heater
-        Args:
-            output_channel  (int): the heater channel
-            input_channel   (int): the input channel for control
-            mode            (int): autotune mode (0 = P only, 1 = P & I only, 2 = PID)
-        Returns:
-                            (int, float): Tuple of (resistance, max_current)
-        """
-        chString = 'HTRSET'
-        #setter
-        output_msg = ' ' + str(output_channel) + ',' + str(resistance) + ',0,' + str(max_current) + ',2' + TERMINATOR
-        yield self.ser.write(chString + output_msg)
-        #getter
+        yield self.ser.write(output_msg)
+        time.sleep(0.05)
+        # getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
-        resp = resp.split(',')
-        resp = [int(resp[1]), float(resp[2])]
-        returnValue(resp)
+        returnValue(float(resp))
 
 
     # POLLING
-    @inlineCallbacks
+    #@inlineCallbacks
     def _poll(self):
         """
         Polls the device for temperature readout.
         """
         #get results all together
-        yield self.ser.write('KRDG? 0\r\n')
-        resp = yield self.ser.read_line()
-        resp = np.array(resp.split(','), dtype=float)
-        self.temp_update(tuple(resp))
+        # yield self.ser.write('KRDG? 0\r\n')
+        # resp = yield self.ser.read_line()
+        # resp = np.array(resp.split(','), dtype=float)
+        # self.temp_update(tuple(resp))
+        pass
 
 
 if __name__ == '__main__':

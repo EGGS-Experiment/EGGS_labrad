@@ -298,20 +298,27 @@ class SerialServer(LabradServer):
 
     @inlineCallbacks
     def deferredRead(self, ser, timeout, count=1):
+        """
+
+        """
+        # killit is
         killit = False
 
         def doRead(count):
+            """Waits until it reads <count> characters or is told to stop."""
             d = b''
             while not killit:
                 d = ser.read(count)
                 if d:
                     break
-                time.sleep(0.010)
+                time.sleep(0.001)
             return d
 
+        #
         data = threads.deferToThread(doRead, count)
         timeout_object = []
         start_time = time.time()
+        #
         r = yield util.maybeTimeout(data, min(timeout, 300), timeout_object)
         killit = True
 
@@ -372,21 +379,22 @@ class SerialServer(LabradServer):
         """Read data from the port, up to but not including the specified delimiter."""
         ser = self.getPort(c)
         timeout = c['Timeout']
-        #set default end character if not specified
+        # set default end character if not specified
         if data:
-            #ensure end chararcter is of type byte
+            # ensure end character is of type byte
             if type(data) != bytes:
                 data = bytes(data, encoding='utf-8')
             delim, skip = data, b''
         else:
             delim, skip = b'\n', b'\r'
-
         recd = b''
         while True:
             r = ser.read(1)
             # only try a deferred read if there is a timeout
             if r == b'' and timeout > 0:
                 r = yield self.deferredRead(ser, timeout)
+
+            # stop if r is empty or the delimiter
             if r in (b'', delim):
                 break
             elif r != skip:
@@ -395,13 +403,13 @@ class SerialServer(LabradServer):
 
     @setting(61, 'Flush Input', returns='')
     def flush_input(self, c):
-        """Flush the input buffer"""
+        """Flush the input buffer."""
         ser = self.getPort(c)
         yield ser.reset_input_buffer()
 
     @setting(62, 'Flush Output', returns='')
     def flush_output(self, c):
-        """Flush the output buffer"""
+        """Flush the output buffer."""
         ser = self.getPort(c)
         yield ser.reset_output_buffer()
 
