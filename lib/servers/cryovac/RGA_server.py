@@ -239,7 +239,7 @@ class RGA_Server(SerialDeviceServer):
             raise Exception('Invalid Input.')
         returnValue(int(resp))
 
-    @setting(421, 'Scan Start', mode='s', num_scans='i', returns='*1w')
+    @setting(421, 'Scan Start', mode='s', num_scans='i', returns='(*1v, *1w, w)')
     def scanStart(self, c, mode, num_scans):
         """
         Start a given number of scans in either analog or histogram mode.
@@ -249,33 +249,34 @@ class RGA_Server(SerialDeviceServer):
             raise Exception('Invalid Input.')
 
         # get initial and final masses
+        mass_initial = yield self._getter('SA')
+        mass_final = yield self._getter('SA')
 
         # create scan message
         msg = None
+        num_points = 0
         bytes_to_read = 0
         if mode.lower() in ('a', 'analog'):
             yield self.ser.write('AP?\r')
-            bytes_to_read = yield self.ser.read_line(_SRS_EOL)
-            bytes_to_read = num_scans * 4 * (int(bytes_to_read) + 1)
+            num_points = yield self.ser.read_line(_SRS_EOL)
+            bytes_to_read = num_scans * 4 * (int(num_points) + 1)
             msg = 'SC' + str(num_scans) + _SRS_EOL
         elif mode.lower() in ('h', 'histogram'):
             yield self.ser.write('HP?\r')
-            bytes_to_read = yield self.ser.read(_SRS_EOL)
-            bytes_to_read = num_scans * 4 * (int(bytes_to_read) + 1)
+            num_points = yield self.ser.read(_SRS_EOL)
+            bytes_to_read = num_scans * 4 * (int(num_points) + 1)
             msg = 'HS' + str(num_scans) + _SRS_EOL
         else:
             raise Exception('Invalid Input.')
 
         # initiate blocking scan
-        yield self.comm_lock.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(bytes_to_read)
-        yield self.comm_lock.release()
-        #todo get axes
         # process scan
         current_arr = [int.from_bytes(resp[i:i+4], 'big') for i in range(0, bytes_to_read, 4)]
         # create axis
-        returnValue(current_arr)
+        amu_arr = np.linspace(mass_initial, mass_final, num_points)
+        returnValue((amu_arr, current_arr[:-1], current_arr[-1])
 
 
     # SINGLE MASS MEASUREMENT

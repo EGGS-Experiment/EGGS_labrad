@@ -1,7 +1,8 @@
+import numpy as np
+from datetime import datetime
+
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.lib.clients.cryovac_clients.RGA_gui import RGA_gui
-
-from datetime import datetime
 
 
 class RGA_client(RGA_gui):
@@ -165,10 +166,11 @@ class RGA_client(RGA_gui):
         # do scan
         self.gui.buffer_readout.appendPlainText('Starting scan...')
         self.gui.setEnabled(False)
-        result = yield self.rga.scan_start(type, num_scans)
-        #todo add data to datavault
-        #self.dv.add()
+        x, y, pressure = yield self.rga.scan_start(type, num_scans)
+        data_tmp = np.array([x, y]).transpose()
+        yield self.dv.add_ex(data_tmp, context=self.c_record)
         self.gui.buffer_readout.appendPlainText('Scan finished.')
+        self.gui.buffer_readout.appendPlainText('Total pressure: ' + str(pressure))
         self.gui.setEnabled(True)
 
     def closeEvent(self, event):
