@@ -36,6 +36,9 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     timeout = WithUnit(8.0, 's')
     baudrate = 28800
 
+    # SIGNALS
+    buffer_update = Signal(999999, 'signal: buffer_update', 's')
+
     # STARTUP
     def initServer(self):
         super().initServer()
@@ -56,50 +59,66 @@ class RGA_Server(SerialDeviceServer, PollingServer):
 
 
     # IONIZER
-    @setting(211, 'Ionizer Electron Energy', energy='i', returns='i')
+    @setting(211, 'Ionizer Electron Energy', energy=['', 'i', 's'], returns='i')
     def electronEnergy(self, c, energy=None):
         """
         Set the electron energy (in eV).
         """
         if energy is not None:
-            if (energy < 25) or (energy > 105):
-                raise Exception('Invalid Input.')
+            if type(energy) is int:
+                if (energy < 25) or (energy > 105):
+                    raise Exception('Invalid Input.')
+            elif type(energy) is str:
+                if energy != '*':
+                    raise Exception('Invalid Input.')
             yield self._setter('EE', energy)
         resp = yield self._getter('EE')
         returnValue(int(resp))
 
-    @setting(212, 'Ionizer Ion Energy', energy='i', returns='i')
+    @setting(212, 'Ionizer Ion Energy', energy=['', 'i', 's'], returns='i')
     def ionEnergy(self, c, energy=None):
         """
         Set the ion energy (in eV).
         """
         if energy is not None:
-            if energy not in (0, 1):
-                raise Exception('Invalid Input.')
+            if type(energy) is int:
+                if energy not in (0, 1):
+                    raise Exception('Invalid Input.')
+            elif type(energy) is str:
+                if energy != '*':
+                    raise Exception('Invalid Input.')
             yield self._setter('IE', energy)
         resp = yield self._getter('IE')
         returnValue(int(resp))
 
-    @setting(221, 'Ionizer Emission Current', current='v', returns='v')
+    @setting(221, 'Ionizer Emission Current', current=['', 'v', 's'], returns='v')
     def emissionCurrent(self, c, current=None):
         """
         Set the electron emission current (in mA).
         """
         if current is not None:
-            if (current < 0) or (current > 150):
-                raise Exception('Invalid Input.')
+            if type(current) is float:
+                if (current < 0) or (current > 3.5):
+                    raise Exception('Invalid Input.')
+            elif type(current) is str:
+                if current != '*':
+                    raise Exception('Invalid Input.')
             yield self._setter('FL', current)
         resp = yield self._getter('FL')
         returnValue(float(resp))
 
-    @setting(222, 'Ionizer Focus Voltage', voltage='i', returns='i')
+    @setting(222, 'Ionizer Focus Voltage', voltage=['', 'i', 's'], returns='i')
     def focusVoltage(self, c, voltage=None):
         """
         Set the focus plate voltage (in V).
         """
         if voltage is not None:
-            if (voltage < 0) or (voltage > 150):
-                raise Exception('Invalid Input.')
+            if type(voltage) is int:
+                if (voltage < 0) or (voltage > 150):
+                    raise Exception('Invalid Input.')
+            elif type(voltage) is str:
+                if voltage != '*':
+                    raise Exception('Invalid Input.')
             yield self._setter('VF', voltage)
         resp = yield self._getter('VF')
         returnValue(int(resp))
@@ -114,14 +133,18 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         yield self._setter('CA', '')
         #todo: see whether error prevents things
 
-    @setting(312, 'Detector Noise Floor', level='i', returns='i')
+    @setting(312, 'Detector Noise Floor', level=['', 'i', 's'], returns='i')
     def noiseFloor(self, c, level=None):
         """
         Set the detector noise floor.
         """
         if level is not None:
-            if (level < 0) or (level > 7):
-                raise Exception('Invalid Input.')
+            if type(level) is int:
+                if (level < 0) or (level > 7):
+                    raise Exception('Invalid Input.')
+            elif type(level) is str:
+                if level != '*':
+                    raise Exception('Invalid Input.')
             yield self._setter('NF', level)
         resp = yield self._getter('NF')
         returnValue(int(resp))
@@ -134,21 +157,25 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         resp = yield self._getter('MO')
         returnValue(int(resp))
 
-    @setting(321, 'Detector CDEM Voltage', voltage='i', returns='i')
+    @setting(321, 'Detector CDEM Voltage', voltage=['', 'i', 's'], returns='i')
     def cdemVoltage(self, c, voltage=None):
         """
         Set the electron multiplier voltage bias.
         """
         if voltage is not None:
-            if (voltage < 0) or (voltage > 2490):
-                raise Exception('Invalid Input.')
+            if type(voltage) is int:
+                if (voltage < 0) or (voltage > 2490):
+                    raise Exception('Invalid Input.')
+            elif type(voltage) is str:
+                if voltage != '*':
+                    raise Exception('Invalid Input.')
             yield self._setter('HV', voltage)
         resp = yield self._getter('HV')
         returnValue(int(resp))
 
 
     # SCANNING
-    @setting(411, 'Scan Mass Initial', mass=[': none idk', 'i: thkim', 's: scde'], returns='i')
+    @setting(411, 'Scan Mass Initial', mass=['', 'i', 's'], returns='i')
     def massInitial(self, c, mass=None):
         """
         Set the initial mass for scanning.
@@ -164,26 +191,34 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         resp = yield self._getter('MI')
         returnValue(int(resp))
 
-    @setting(412, 'Scan Mass Final', mass='i', returns='i')
+    @setting(412, 'Scan Mass Final', mass=['', 'i', 's'], returns='i')
     def massFinal(self, c, mass=None):
         """
         Set the final mass for scanning.
         """
         if mass is not None:
-            if (mass < 0) or (mass > self.m_max):
-                raise Exception('Invalid Input.')
+            if type(mass) is int:
+                if (mass < 0) or (mass > self.m_max):
+                    raise Exception('Invalid Input.')
+            elif type(mass) is str:
+                if mass != '*':
+                    raise Exception('Invalid Input.')
             yield self.ser.write('MF' + str(mass) + _SRS_EOL)
         resp = yield self._getter('MF')
         returnValue(int(resp))
 
-    @setting(413, 'Scan Mass Steps', steps='i', returns='i')
+    @setting(413, 'Scan Mass Steps', steps=['', 'i', 's'], returns='i')
     def massSteps(self, c, steps=None):
         """
         Set the number of steps per amu during scanning.
         """
         if steps is not None:
-            if (steps < 10) or (steps > 25):
-                raise Exception('Invalid Input.')
+            if type(steps) is int:
+                if (steps < 10) or (steps > 25):
+                    raise Exception('Invalid Input.')
+            elif type(steps) is str:
+                if steps != '*':
+                    raise Exception('Invalid Input.')
             yield self._setter('SA', steps)
         resp = yield self._getter('SA')
         returnValue(int(resp))
@@ -310,9 +345,13 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         Get data from the device.
         """
+        # query device for parameter value
         msg = chString + '?' + _SRS_EOL
         yield self.ser.write(msg)
         resp = yield self.ser.read_line(_SRS_EOL)
+        # send out buffer response to clients
+        buffer_tmp = chString + ': ' + resp
+        self.buffer_update(buffer_tmp)
         returnValue(resp)
 
 
