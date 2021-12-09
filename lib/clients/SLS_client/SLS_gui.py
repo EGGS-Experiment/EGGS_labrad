@@ -26,6 +26,7 @@ class SLS_gui(QtWidgets.QFrame):
         shell_font = 'MS Shell Dlg 2'
         SLS_gui = self
         SLS_gui.setObjectName("SLS_gui")
+        SLS_gui.setFrameStyle(0x0001 | 0x0030)
         SLS_gui.setFixedSize(587, 410)
         SLS_gui.setWindowTitle("SLS Client")
         self.sls_label = QtWidgets.QLabel(SLS_gui)

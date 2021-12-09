@@ -29,24 +29,24 @@ class EGGS_gui(QMainWindow):
         return self.cxn
 
     def makeLayout(self, cxn):
-        #central layout
+        # central layout
         centralWidget = QWidget()
         layout = QHBoxLayout()
         self.tabWidget = QTabWidget()
 
-        #create subwidgets
+        # create subwidgets
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac = self.makeCryovacWidget(self.reactor, cxn)
         trap = self.makeTrapWidget(self.reactor, cxn)
         lasers = self.makeLaserWidget(self.reactor, cxn)
 
-        #create tabs for each subwidget
+        # create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryovac, '&Cryovac')
         self.tabWidget.addTab(trap, '&Trap')
         self.tabWidget.addTab(lasers, '&Lasers')
 
-        #put it all together
+        # put it all together
         layout.addWidget(self.tabWidget)
         centralWidget.setLayout(layout)
         self.setCentralWidget(centralWidget)
@@ -58,27 +58,28 @@ class EGGS_gui(QMainWindow):
         return scriptscanner
 
     def makeCryovacWidget(self, reactor, cxn):
-        #import constituent widgets
+        # import constituent widgets
         from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_client import lakeshore336_client
         from EGGS_labrad.lib.clients.cryovac_clients.niops03_client import niops03_client
         from EGGS_labrad.lib.clients.cryovac_clients.twistorr74_client import twistorr74_client
         from EGGS_labrad.lib.clients.cryovac_clients.RGA_client import RGA_client
         from EGGS_labrad.lib.clients.cryovac_clients.fma1700a_client import fma1700a_client
-        #instantiate constituent widgets
+
+        # instantiate constituent widgets
         lakeshore = lakeshore336_client(reactor, cxn=cxn.cxn)
         niops = niops03_client(reactor, cxn=cxn.cxn)
         twistorr = twistorr74_client(reactor, cxn=cxn.cxn)
-        #rga = RGA_client(reactor, cxn=cxn.cxn)
+        rga = RGA_client(reactor, cxn=cxn.cxn)
         #fma = fma1700a_client(reactor, cxn=cxn.cxn)
 
-        #main layout
+        # main layout
         holder_widget = QWidget()
         holder_layout = QGridLayout()
         holder_widget.setLayout(holder_layout)
         holder_layout.addWidget(lakeshore, 0, 0)
-        holder_layout.addWidget(niops, 0, 1)
+        holder_layout.addWidget(rga, 0, 1)
         holder_layout.addWidget(twistorr, 0, 2)
-        holder_layout.addWidget(rga, 1, 0)
+        holder_layout.addWidget(niops, 1, 1)
         #holder_layout.addWidget(fma, 1, 1)
         return holder_widget
 

@@ -210,17 +210,18 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
 
 
     # POLLING
-    #@inlineCallbacks
+    @inlineCallbacks
     def _poll(self):
         """
         Polls the device for temperature readout.
         """
-        #get results all together
-        # yield self.ser.write('KRDG? 0\r\n')
-        # resp = yield self.ser.read_line()
-        # resp = np.array(resp.split(','), dtype=float)
-        # self.temp_update(tuple(resp))
-        pass
+        # get results all together
+        yield self.ser.write('KRDG? 0\r\n')
+        resp = yield self.ser.read_line()
+        resp = np.array(resp.split(','), dtype=float)
+        self.temp_update(tuple(resp))
+        #todo make atomic
+        #pass
 
 
 if __name__ == '__main__':

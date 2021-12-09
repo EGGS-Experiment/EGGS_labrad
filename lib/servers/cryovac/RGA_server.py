@@ -21,13 +21,13 @@ from labrad.server import Signal, setting
 
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
-from EGGS_labrad.lib.servers.polling_server import PollingServer
+#from EGGS_labrad.lib.servers.polling_server import PollingServer
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 _SRS_EOL = '\r'
 
 
-class RGA_Server(SerialDeviceServer, PollingServer):
+class RGA_Server(SerialDeviceServer):
     name = 'RGA Server'
     regKey = 'RGAServer'
     port = 'COM48'
@@ -54,6 +54,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         Initialize the RGA.
         """
+        print('scde')
         if level not in (0, 1, 2):
             raise Exception('Invalid Input.')
         yield self._setter('IN', level)
@@ -220,7 +221,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
             elif type(steps) is str:
                 if steps != '*':
                     raise Exception('Invalid Input.')
-            yield self._setter('SA', steps)
+            yield self.ser.write('SA' + str(steps) + _SRS_EOL)
         resp = yield self._getter('SA')
         returnValue(int(resp))
 
@@ -339,7 +340,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         # todo: convert to binary array then AND the errors
         # convert string input into binary
         status = format(int(status), '08b')
-        print('status: ' + str(status))
+        self.buffer_update(('status: ', status))
 
     @inlineCallbacks
     def _getter(self, chString):
@@ -351,8 +352,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         yield self.ser.write(msg)
         resp = yield self.ser.read_line(_SRS_EOL)
         # send out buffer response to clients
-        buffer_tmp = chString + ': ' + resp
-        self.buffer_update((chString, resp))
+        self.buffer_update((chString, resp.strip()))
         returnValue(resp)
 
 
