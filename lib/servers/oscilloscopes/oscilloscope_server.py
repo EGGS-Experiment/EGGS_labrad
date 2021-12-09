@@ -15,14 +15,18 @@ timeout = 20
 ### END NODE INFO
 """
 
-from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
 from RigolDS1000Z import RigolDS1000ZWrapper
 from TektronixMSO2000 import TektronixMSO2000Wrapper
 
+from twisted.internet.defer import inlineCallbacks, returnValue
+
+
 class OscilloscopeServer(GPIBManagedServer):
-    """Manages communication with all oscilloscopes."""
+    """
+    Manages communication with all oscilloscopes.
+    """
 
     name = 'Oscilloscope Server'
 
@@ -31,7 +35,8 @@ class OscilloscopeServer(GPIBManagedServer):
         'TEKTRONIX MSO2024B': TektronixMSO2000Wrapper
     }
 
-    #SYSTEM
+
+    # SYSTEM
     @setting(11, "Reset", returns='')
     def reset(self, c):
         """Reset the oscilloscopes to factory settings."""
@@ -44,11 +49,12 @@ class OscilloscopeServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         yield dev.clear_buffers()
 
-    #CHANNEL
+
+    # CHANNEL
     @setting(100, "Channel Info", channel='i', returns='(vvvvsvss)')
     def channel_info(self, c, channel):
         """
-        Get channel information
+        Get channel information.
         Args:
             channel (int): channel to get information on
 
@@ -143,7 +149,7 @@ class OscilloscopeServer(GPIBManagedServer):
     @setting(117, "Channel Termination", channel='i', term='i', returns='i')
     def channel_termination(self, c, channel, term=None):
         """
-        Set channel termination
+        Set channel termination.
         Args:
             channel (int): Which channel to set termination.
             term (int): Termination in Ohms. Either 50 or 1,000,000.
@@ -151,7 +157,7 @@ class OscilloscopeServer(GPIBManagedServer):
         return self.selectedDevice(c).channel_termination(channel, term)
 
 
-    #TRIGGER
+    # TRIGGER
     @setting(131, "Trigger Channel", source='s', returns='s')
     def trigger_channel(self, c, source=None):
         """
@@ -203,7 +209,7 @@ class OscilloscopeServer(GPIBManagedServer):
         return self.selectedDevice(c).trigger_mode(mode)
 
 
-    #HORIZONTAL
+    # HORIZONTAL
     @setting(151, "Horizontal Offset", position='v[]', returns='v[]')
     def horiz_offset(self, c, position=None):
         """
@@ -230,11 +236,11 @@ class OscilloscopeServer(GPIBManagedServer):
         return self.selectedDevice(c).horiz_scale(scale)
 
 
-    #ACQUISITION
+    # ACQUISITION
     @setting(201, "Trace", channel='i', returns='(*v*v)')
     def get_trace(self, c, channel):
-        """Get a trace for a single channel.
-
+        """
+        Get a trace for a single channel.
         Args:
             channel: The channel for which we want to get the trace.
 

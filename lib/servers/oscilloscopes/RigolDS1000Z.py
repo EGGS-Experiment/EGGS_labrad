@@ -1,8 +1,7 @@
-from labrad import types as T, util
+from labrad import types as T
 from labrad.gpib import GPIBDeviceWrapper
+
 from twisted.internet.defer import inlineCallbacks, returnValue
-from labrad.types import Value
-from labrad.units import mV, ns
 
 import numpy as np
 
@@ -14,13 +13,13 @@ SCALES = []
 PROBE_FACTORS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
 TRIGGER_MODES = ['AUTO', 'NONE', 'SING']
 
+
 class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
     #system
     @inlineCallbacks
     def reset(self):
         yield self.write('*RST')
-        # TODO wait for reset to complete
 
     @inlineCallbacks
     def clear_buffers(self):
@@ -165,7 +164,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         if level is not None:
             yield self.write(chString + ' ' + str(level))
         resp = yield self.query(chString + '?')
-        level = Value(float(resp), 'V')
+        level = T.Value(float(resp), 'V')
         returnValue(level)
 
     @inlineCallbacks
