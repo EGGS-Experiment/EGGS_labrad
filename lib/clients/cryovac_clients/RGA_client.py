@@ -166,11 +166,10 @@ class RGA_client(RGA_gui):
         # do scan
         self.gui.buffer_readout.appendPlainText('Starting scan...')
         self.gui.setEnabled(False)
-        x, y, pressure = yield self.rga.scan_start(type, num_scans)
+        x, y = yield self.rga.scan_start(type, num_scans)
         data_tmp = np.array([x, y]).transpose()
         yield self.dv.add_ex(data_tmp, context=self.c_record)
         self.gui.buffer_readout.appendPlainText('Scan finished.')
-        self.gui.buffer_readout.appendPlainText('Total pressure: ' + str(pressure))
         self.gui.setEnabled(True)
 
     def closeEvent(self, event):
