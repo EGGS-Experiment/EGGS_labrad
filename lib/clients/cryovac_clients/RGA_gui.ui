@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>651</width>
-    <height>375</height>
+    <height>381</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -371,14 +371,17 @@
     </item>
     <item row="4" column="0">
      <widget class="QDoubleSpinBox" name="ionizer_ee">
+      <property name="decimals">
+       <number>0</number>
+      </property>
       <property name="minimum">
-       <double>10.000000000000000</double>
+       <double>25.000000000000000</double>
       </property>
       <property name="maximum">
-       <double>35.000000000000000</double>
+       <double>105.000000000000000</double>
       </property>
       <property name="singleStep">
-       <double>0.100000000000000</double>
+       <double>1.000000000000000</double>
       </property>
      </widget>
     </item>
