@@ -78,7 +78,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
 
     # HEATER
     @setting(211, 'Heater Setup', output_channel='i', resistance='i', max_current=['i', 'v'], returns='(iv)')
-    def heater_setup(self, c, output_channel, resistance, max_current):
+    def heater_setup(self, c, output_channel, resistance=None, max_current=None):
         """
         Set up the physical parameters of the heater.
         This shold be done after the heater mode is set.
@@ -91,19 +91,19 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         """
         chString = 'HTRSET'
         # setter
-        output_msg = chString + ' ' + str(output_channel) + ',' + str(resistance) + ',0,' + str(max_current) + ',1' + TERMINATOR
-        yield self.ser.write(output_msg)
-        time.sleep(0.05)
+        if (resistance is not None) and (max_current is not None):
+            output_msg = chString + ' ' + str(output_channel) + ',' + str(resistance) + ',0,' + str(max_current) + ',1' + TERMINATOR
+            yield self.ser.write(output_msg)
+            time.sleep(0.05)
         # getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         resp = resp.split(',')
         resp = (int(resp[0]), float(resp[2]))
-        print(resp)
         returnValue(resp)
 
     @setting(212, 'Heater Mode', output_channel='i', mode='i', input_channel='i', returns='(ii)')
-    def heater_mode(self, c, output_channel, mode, input_channel):
+    def heater_mode(self, c, output_channel, mode=None, input_channel=None):
         """
         Set the output mode of the heater.
         Args:
@@ -116,19 +116,19 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         """
         chString = 'OUTMODE'
         # setter
-        output_msg = chString + ' ' + str(output_channel) + ',' + str(mode) + ',' + str(input_channel) + ',0' + TERMINATOR
-        yield self.ser.write(output_msg)
-        time.sleep(0.05)
+        if (mode is not None) and (input_channel is not None):
+            output_msg = chString + ' ' + str(output_channel) + ',' + str(mode) + ',' + str(input_channel) + ',0' + TERMINATOR
+            yield self.ser.write(output_msg)
+            time.sleep(0.05)
         # getter
         yield self.ser.write(chString + '?' + str(output_channel) + ' ' + TERMINATOR)
         resp = yield self.ser.read_line()
         resp = np.array(resp.split(','), dtype=int)
         resp = tuple(resp[:2])
-        print(resp)
         returnValue(resp)
 
     @setting(221, 'Heater Range', output_channel='i', range='i', returns='i')
-    def heater_range(self, c, output_channel, range):
+    def heater_range(self, c, output_channel, range=None):
         """
         Set or query heater range.
         Args:
@@ -139,13 +139,13 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         """
         chString = 'RANGE'
         # setter
-        output_msg = chString + ' ' + str(output_channel) + ',' + str(range) + TERMINATOR
-        yield self.ser.write(output_msg)
-        time.sleep(0.05)
+        if range is not None:
+            output_msg = chString + ' ' + str(output_channel) + ',' + str(range) + TERMINATOR
+            yield self.ser.write(output_msg)
+            time.sleep(0.05)
         # getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
-        print(resp)
         returnValue(int(resp))
 
     @setting(213, 'Heater Power', output_channel='i', power=['i', 'v'], returns='v')
@@ -169,7 +169,6 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         # getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
-        print(resp)
         returnValue(float(resp))
 
     @setting(231, 'Heater PID', output_channel='i', prop='v', integ='v', diff='v', returns='(vvv)')
@@ -194,7 +193,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         returnValue(tuple(resp))
 
     @setting(232, 'Heater Setpoint', output_channel='i', setpoint='v', returns='v')
-    def heater_setpoint(self, c, output_channel, setpoint):
+    def heater_setpoint(self, c, output_channel, setpoint=None):
         """
         Set the heater setpoint in closed-loop output mode.
         Args:
@@ -205,9 +204,10 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         """
         chString = 'SETP'
         # setter
-        output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint) + TERMINATOR
-        yield self.ser.write(output_msg)
-        time.sleep(0.05)
+        if setpoint is not None:
+            output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint) + TERMINATOR
+            yield self.ser.write(output_msg)
+            time.sleep(0.05)
         # getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()

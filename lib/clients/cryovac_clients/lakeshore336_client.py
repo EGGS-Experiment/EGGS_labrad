@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui3 import lakeshore336_gui
+from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui import lakeshore336_gui
 
 
 class lakeshore336_client(lakeshore336_gui):
@@ -49,10 +49,10 @@ class lakeshore336_client(lakeshore336_gui):
         yield self.ls.signal__temperature_update(self.TEMPERATUREID)
         yield self.ls.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATUREID)
             # server connections
-        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
-        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
-        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
-        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
+        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 111398, True)
+        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=111398)
+        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 111397, True)
+        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=111397)
 
         # set recording stuff
         self.c_record = self.cxn.context()
@@ -67,8 +67,30 @@ class lakeshore336_client(lakeshore336_gui):
 
     @inlineCallbacks
     def initData(self, cxn):
-        # lock while starting up
-        self.setEnabled(False)
+        # setup
+        res1, max_curr1 = yield self.ls.heater_setup(1)
+        self.gui.heat1_res.setCurrentIndex(res1-1)
+        self.gui.heat1_curr.setValue(max_curr1)
+        res2, max_curr2 = yield self.ls.heater_setup(2)
+        self.gui.heat2_res.setCurrentIndex(res2 - 1)
+        self.gui.heat2_curr.setValue(max_curr2)
+        # mode
+        mode1, in1 = yield self.ls.heater_mode(1)
+        self.gui.heat1_mode.setCurrentIndex(mode1)
+        self.gui.heat1_in.setCurrentIndex(in1)
+        mode2, in2 = yield self.ls.heater_mode(2)
+        self.gui.heat2_mode.setCurrentIndex(mode2)
+        self.gui.heat2_in.setCurrentIndex(in2)
+        # range
+        range1 = yield self.ls.heater_range(1)
+        self.gui.heat1_range.setCurrentIndex(range1)
+        range2 = yield self.ls.heater_range(2)
+        self.gui.heat2_range.setCurrentIndex(range2)
+        # power
+        pow1 = yield self.ls.heater_power(1)
+        self.gui.heat1_p1.setValue(pow1)
+        pow2 = yield self.ls.heater_power(2)
+        self.gui.heat2_p1.setValue(pow2)
         return cxn
 
     def initializeGUI(self, cxn):
@@ -76,7 +98,8 @@ class lakeshore336_client(lakeshore336_gui):
         self.gui.tempAll_record.clicked.connect(lambda status: self.record_temp(status))
         # heater
             # lockswitch
-        self.gui.heatAll_lockswitch.clicked.connect(lambda status: self.lock_heaters(status))
+        self.gui.heatAll_lockswitch.toggled.connect(lambda status: self.lock_heaters(status))
+        self.gui.heatAll_lockswitch.setChecked(False)
             # setup
         self.gui.heat1_res.currentIndexChanged.connect(lambda res, max_curr=self.gui.heat1_curr.value(): self.ls.heater_setup(1, res + 1, max_curr))
         self.gui.heat1_curr.valueChanged.connect(lambda max_curr, res=self.gui.heat1_res.currentIndex(): self.ls.heater_setup(1, res + 1, max_curr))
@@ -84,9 +107,9 @@ class lakeshore336_client(lakeshore336_gui):
         self.gui.heat2_curr.valueChanged.connect(lambda max_curr, res=self.gui.heat2_res.currentIndex(): self.ls.heater_setup(2, res + 1, max_curr))
             # mode
         self.gui.heat1_mode.currentIndexChanged.connect(lambda mode, in_diode=self.gui.heat1_in.currentIndex(): self.ls.heater_mode(1, mode + 1, in_diode))
-        self.gui.heat1_in.currentIndexChanged.connect(lambda in_diode, mode=self.gui.heat1_mode.currentIndex(): self.ls.heater_setup(1, mode + 1, in_diode))
-        self.gui.heat2_mode.currentIndexChanged.connect(lambda mode, in_diode=self.gui.heat2_in.currentIndex(): self.ls.heater_setup(2, mode + 1, in_diode))
-        self.gui.heat2_in.currentIndexChanged.connect(lambda in_diode, mode=self.gui.heat2_mode.currentIndex(): self.ls.heater_setup(2, mode + 1, in_diode))
+        self.gui.heat1_in.currentIndexChanged.connect(lambda in_diode, mode=self.gui.heat1_mode.currentIndex(): self.ls.heater_mode(1, mode + 1, in_diode))
+        self.gui.heat2_mode.currentIndexChanged.connect(lambda mode, in_diode=self.gui.heat2_in.currentIndex(): self.ls.heater_mode(2, mode + 1, in_diode))
+        self.gui.heat2_in.currentIndexChanged.connect(lambda in_diode, mode=self.gui.heat2_mode.currentIndex(): self.ls.heater_mode(2, mode + 1, in_diode))
             # range
         self.gui.heat1_range.currentIndexChanged.connect(lambda level: self.ls.heater_range(1, level))
         self.gui.heat2_range.currentIndexChanged.connect(lambda level: self.ls.heater_range(2, level))
@@ -98,6 +121,7 @@ class lakeshore336_client(lakeshore336_gui):
 
 
     # SIGNALS
+    @inlineCallbacks
     def on_connect(self, c, message):
         server_name = message[1]
         if server_name in self.servers:
@@ -149,7 +173,24 @@ class lakeshore336_client(lakeshore336_gui):
         """
         Locks heater updating.
         """
-        self.gui.layoutWidget1.setEnabled(status)
+        status = not status
+        # heater 1
+        self.gui.heat1_mode.setEnabled(status)
+        self.gui.heat1_in.setEnabled(status)
+        self.gui.heat1_res.setEnabled(status)
+        self.gui.heat1_curr.setEnabled(status)
+        self.gui.heat1_range.setEnabled(status)
+        self.gui.heat1_p1.setEnabled(status)
+        self.gui.heat1_set.setEnabled(status)
+        self.gui.heat1_mode.setEnabled(status)
+
+        # heater 2
+        self.gui.heat2_in.setEnabled(status)
+        self.gui.heat2_res.setEnabled(status)
+        self.gui.heat2_curr.setEnabled(status)
+        self.gui.heat2_range.setEnabled(status)
+        self.gui.heat2_p1.setEnabled(status)
+        self.gui.heat2_set.setEnabled(status)
 
     @inlineCallbacks
     def heater_setup(self, chan, mode, res, max_curr):

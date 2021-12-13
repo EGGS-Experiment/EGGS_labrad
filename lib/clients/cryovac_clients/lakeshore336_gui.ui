@@ -243,17 +243,17 @@
         </item>
         <item>
          <property name="text">
-          <string>Autotune</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
           <string>PID</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Manual</string>
+          <string>Zone</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Open Loop</string>
          </property>
         </item>
        </widget>
@@ -432,17 +432,17 @@
         </item>
         <item>
          <property name="text">
-          <string>Autotune</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
           <string>PID</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Manual</string>
+          <string>Zone</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Open Loop</string>
          </property>
         </item>
        </widget>

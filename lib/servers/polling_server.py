@@ -41,12 +41,14 @@ class PollingServer(LabradServer):
 
     # POLLING
     @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
-    def set_polling(self, c, status, interval):
+    def set_polling(self, c, status, interval=None):
         """
         Configure polling of device for values.
         """
         # ensure interval is valid
-        if (interval < 1) or (interval > 60):
+        if interval is None:
+            interval = 5.0
+        elif (interval < 1) or (interval > 60):
             raise Exception('Invalid polling interval.')
         # only start/stop polling if we are not already started/stopped
         if status and (not self.refresher.running):
