@@ -225,7 +225,6 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
             resp = yield self.ser.read_line()
             resp = np.array(resp.split(','), dtype=float)
             self.temp_update(tuple(resp))
-            print('stop: ', resp)
 
         d = self.ser.write('KRDG? 0\r\n')
         d.addCallback(blocking_read)
