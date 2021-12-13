@@ -17,6 +17,9 @@ START /min CMD /c %HOME%/Code/EGGS_labrad/bin/labrad/start_labrad_experiments.ba
 START "Script Scanner Client" /min CMD "/k activate labart && TIMEOUT 3 && python %HOME%\Code\EGGS_labrad\lib\clients\script_scanner_gui\script_scanner_gui.py"
 START "Real Simple Grapher" /min CMD "/k activate labart && TIMEOUT 3 && python %HOME%\Code\RealSimpleGrapher\rsg.py"
 
+::Servers
+START /min CMD /c %HOME%/Code/EGGS_labrad/bin/labrad/start_labrad_servers.bat
+
 ::ARTIQ
 START /min CMD /c %HOME%/Code/EGGS_labrad/bin/start_artiq.bat
 
