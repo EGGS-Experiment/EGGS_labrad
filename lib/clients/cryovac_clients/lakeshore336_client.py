@@ -154,10 +154,7 @@ class lakeshore336_client(lakeshore336_gui):
         """
         Locks heater updating.
         """
-        self.gui.heat1_mode.setEnabled(status)
-        self.gui.heat1_in.setEnabled(status)
-        self.gui.heat1_mode.setEnabled(status)
-        self.gui.heat2_mode.setEnabled(status)
+        self.gui.layoutWidget1.setEnabled(status)
 
     def heater_mode_changed(self, mode, chan):
         """
