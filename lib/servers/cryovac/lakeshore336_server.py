@@ -25,7 +25,7 @@ import time
 import numpy as np
 from serial import PARITY_ODD
 
-from EGGS_labrad.lib.servers.polling_server import PollingServer
+from EGGS_labrad.lib.servers.polling_server import PollingServer, th1
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 INPUT_CHANNELS = ['A', 'B', 'C', 'D', '0']
@@ -215,19 +215,32 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
 
 
     # POLLING
-    @inlineCallbacks
+    #@inlineCallbacks
     def _poll(self):
         """
         Polls the device for temperature readout.
         """
-        # get results all together
-        yield self.ser.write('KRDG? 0\r\n')
-        resp = yield self.ser.read_line()
-        resp = np.array(resp.split(','), dtype=float)
-        self.temp_update(tuple(resp))
-        #todo make atomic
-        #pass
+        # # get results all together
+        # yield self.ser.write('KRDG? 0\r\n')
+        # resp = yield self.ser.read_line()
 
+        def yz1(val):
+            return self.ser.read_line()
+        d = self.ser.write('KRDG? 0\r\n')
+        d.addCallback(yz1)
+        print(yz1)
+        # resp = np.array(resp.split(','), dtype=float)
+        # self.temp_update(tuple(resp))
+
+def th1(func):
+    '''
+    Decorator todo
+    '''
+    def wrap(*args, **kwargs):
+        start = time.time()
+        result = func()
+        return result
+    return wrap
 
 if __name__ == '__main__':
     from labrad import util

@@ -92,3 +92,14 @@ class PollingServer(LabradServer):
         self.ser.flush_input()
         self.ser.flush_output()
         self.startRefresher(5)
+
+
+def th1(func):
+    '''
+    Decorator todo
+    '''
+    def wrap(*args, **kwargs):
+        start = time.time()
+        result = func()
+        return result
+    return wrap
