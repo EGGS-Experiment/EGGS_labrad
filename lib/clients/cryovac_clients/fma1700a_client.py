@@ -20,13 +20,15 @@ class fma1700a_client(fma1700a_gui):
         self.servers = ['FMA1700A Server', 'Data Vault']
         # initialization sequence
         d = self.connect()
+        d.addCallback(self.initData)
         d.addCallback(self.initializeGUI)
 
+
+    # SETUP
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to pump servers
-        and relevant labrad servers
+        Creates an asynchronous connection to labrad.
         """
         # create labrad connection
         if not self.cxn:
@@ -49,10 +51,10 @@ class fma1700a_client(fma1700a_gui):
         self.recording = False
 
         # connect to signals
-            #device parameters
+            # device parameters
         yield self.tt.signal__pressure_update(self.PRESSUREID)
         yield self.tt.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
-            #server connections
+            # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
@@ -60,16 +62,37 @@ class fma1700a_client(fma1700a_gui):
 
         # start device polling
         poll_params = yield self.tt.get_polling()
-        #only start polling if not started
+        # only start polling if not started
         if not poll_params[0]:
             yield self.fma.set_polling(True, 5.0)
-
         return self.cxn
 
+
+    @inlineCallbacks
+    def initData(self, cxn):
+        """
+        Get startup data from servers and show on GUI.
+        """
+        power_tmp = yield self.tt.toggle()
+        self.gui.twistorr_power.setChecked(power_tmp)
+
+    def initializeGUI(self, cxn):
+        """
+        Connect signals to slots and other initializations.
+        """
+        self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.lock_twistorr(status))
+        self.gui.twistorr_power.clicked.connect(lambda status: self.toggle_twistorr(status))
+        self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
+
+
+    # SIGNALS
+    @inlineCallbacks
     def on_connect(self, c, message):
         server_name = message[1]
         if server_name in self.servers:
             print(server_name + ' reconnected, enabling widget.')
+            # get latest values
+            yield self.initData(self.cxn)
             self.setEnabled(True)
 
     def on_disconnect(self, c, message):
@@ -77,16 +100,6 @@ class fma1700a_client(fma1700a_gui):
         if server_name in self.servers:
             print(server_name + ' disconnected, disabling widget.')
             self.setEnabled(False)
-
-    @inlineCallbacks
-    def initializeGUI(self, cxn):
-        #startup data
-        power_tmp = yield self.tt.toggle()
-        self.gui.twistorr_power.setChecked(power_tmp)
-        #connect signals to slots
-        self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.lock_twistorr(status))
-        self.gui.twistorr_power.clicked.connect(lambda status: self.toggle_twistorr(status))
-        self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
 
 
     # SLOTS

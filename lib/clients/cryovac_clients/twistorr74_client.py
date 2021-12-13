@@ -24,6 +24,7 @@ class twistorr74_client(twistorr74_gui):
         self.servers = ['TwisTorr74 Server', 'Data Vault']
         # initialization sequence
         d = self.connect()
+        d.addCallback(self.initData)
         d.addCallback(self.initializeGUI)
 
     @inlineCallbacks
@@ -77,21 +78,30 @@ class twistorr74_client(twistorr74_gui):
         return self.cxn
 
     @inlineCallbacks
-    def initializeGUI(self, cxn):
-        #startup data
+    def initData(self, cxn):
+        """
+        Get startup data from servers and show on GUI.
+        """
         power_tmp = yield self.tt.toggle()
         self.gui.twistorr_power.setChecked(power_tmp)
-        #connect signals to slots
+
+    @inlineCallbacks
+    def initializeGUI(self, cxn):
+        """
+        Connect signals to slots and other initializations.
+        """
         self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.lock_twistorr(status))
         self.gui.twistorr_power.clicked.connect(lambda status: self.toggle_twistorr(status))
         self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
 
 
     # SIGNALS
+    @inlineCallbacks
     def on_connect(self, c, message):
         server_name = message[1]
         if server_name in self.servers:
             print(server_name + ' reconnected, enabling widget.')
+            yield self.initData(self.cxn)
             self.setEnabled(True)
 
     def on_disconnect(self, c, message):

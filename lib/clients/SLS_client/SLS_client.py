@@ -63,6 +63,9 @@ class SLS_client(SLS_gui):
 
     @inlineCallbacks
     def initData(self, cxn):
+        """
+        Get startup data from servers and show on GUI.
+        """
         # lockswitches
         self.gui.autolock_lockswitch.setChecked(True)
         self.gui.off_lockswitch.setChecked(True)
@@ -96,6 +99,9 @@ class SLS_client(SLS_gui):
         return cxn
 
     def initializeGUI(self, cxn):
+        """
+        Connect signals to slots and other initializations.
+        """
         # connect signals to slots
             # autolock
         self.gui.autolock_toggle.toggled.connect(lambda status: self.sls.autolock_toggle(status))
@@ -116,10 +122,12 @@ class SLS_client(SLS_gui):
 
 
     # SIGNALS
+    @inlineCallbacks
     def on_connect(self, c, message):
         server_name = message[1]
         if server_name in self.servers:
             print(server_name + ' reconnected, enabling widget.')
+            yield self.initData(self.cxn)
             self.setEnabled(True)
 
     def on_disconnect(self, c, message):

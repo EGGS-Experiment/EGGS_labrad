@@ -67,6 +67,9 @@ class lakeshore336_client(lakeshore336_gui):
 
     @inlineCallbacks
     def initData(self, cxn):
+        """
+        Get startup data from servers and show on GUI.
+        """
         # setup
         res1, max_curr1 = yield self.ls.heater_setup(1)
         self.gui.heat1_res.setCurrentIndex(res1-1)
@@ -94,6 +97,9 @@ class lakeshore336_client(lakeshore336_gui):
         return cxn
 
     def initializeGUI(self, cxn):
+        """
+        Connect signals to slots and other initializations.
+        """
         # temperature
         self.gui.tempAll_record.clicked.connect(lambda status: self.record_temp(status))
         # heater

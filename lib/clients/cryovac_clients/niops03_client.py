@@ -23,6 +23,7 @@ class niops03_client(niops03_gui):
         self.servers = ['NIOPS03 Server', 'Data Vault']
         # initialization sequence
         d = self.connect()
+        d.addCallback(self.initData)
         d.addCallback(self.initializeGUI)
 
 
@@ -79,9 +80,11 @@ class niops03_client(niops03_gui):
         return self.cxn
 
     @inlineCallbacks
-    def initializeGUI(self, cxn):
-        #startup data
-            #IP/NP power
+    def initData(self, cxn):
+        """
+        Get startup data from servers and show on GUI.
+        """
+        #IP/NP power
         device_status = yield self.niops.status()
         device_status = device_status.strip().split(', ')
         device_status = [text.split(' ') for text in device_status]
@@ -90,25 +93,35 @@ class niops03_client(niops03_gui):
         np_on = True if device_status['NP'] == 'ON' else False
         self.gui.ip_power.setChecked(ip_on)
         self.gui.np_power.setChecked(np_on)
-            #IP voltage
+        #IP voltage
         v_ip = yield self.niops.ip_voltage()
         self.gui.ip_voltage_display.setText(str(v_ip))
         self.gui.ip_voltage.setEnabled(ip_on)
-        #connect signals to slots
-            #ion pump
+        return cxn
+
+    @inlineCallbacks
+    def initializeGUI(self, cxn):
+        """
+        Connect signals to slots and other initializations.
+        """
+        #ion pump
         self.gui.ip_lockswitch.toggled.connect(lambda status: self.lock_niops(status))
         self.gui.ip_power.clicked.connect(lambda status: self.toggle_niops(status))
         self.gui.ip_record.toggled.connect(lambda status: self.record_pressure(status))
         self.gui.ip_voltage.valueChanged.connect(lambda voltage: self.set_ip_voltage(voltage))
-            #getter
+        #getter
         self.gui.np_lockswitch.toggled.connect(lambda status: self.lock_np(status))
         self.gui.np_mode.currentIndexChanged.connect(lambda index: self.mode_np(index))
         self.gui.np_power.clicked.connect(lambda status: self.toggle_np(status))
 
+
+    # SIGNALS
+    @inlineCallbacks
     def on_connect(self, c, message):
         server_name = message[1]
         if server_name in self.servers:
             print(server_name + ' reconnected, enabling widget.')
+            yield self.initData(self.cxn)
             self.setEnabled(True)
 
     def on_disconnect(self, c, message):

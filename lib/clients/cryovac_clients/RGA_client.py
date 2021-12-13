@@ -22,6 +22,7 @@ class RGA_client(RGA_gui):
         d.addCallback(self.initData)
         d.addCallback(self.initializeGUI)
 
+
     # SETUP
     @inlineCallbacks
     def connect(self):
@@ -61,6 +62,9 @@ class RGA_client(RGA_gui):
 
     @inlineCallbacks
     def initData(self, cxn):
+        """
+        Get startup data from servers and show on GUI.
+        """
         # lock while starting up
         self.setEnabled(False)
         self.buffer_readout.appendPlainText('Initializing client...')
@@ -92,24 +96,27 @@ class RGA_client(RGA_gui):
         return cxn
 
     def initializeGUI(self, cxn):
-        # connect signals to slots
-            # general
+        """
+        Connect signals to slots and other initializations.
+        """
+        # general
         self.gui.initialize.clicked.connect(lambda: (self.rga.initialize()))
         self.gui.calibrate_detector.clicked.connect(lambda: (self.rga.detector_calibrate()))
-            # ionizer
+        # ionizer
         self.gui.ionizer_ee.valueChanged.connect(lambda value: (self.rga.ionizer_electron_energy(int(value))))
         self.gui.ionizer_ie.currentIndexChanged.connect(lambda index: (self.rga.ionizer_ion_energy(index)))
-            # detector
+        # detector
         self.gui.detector_hv.valueChanged.connect(lambda value: (self.rga.detector_cdem_voltage(int(value))))
         self.gui.detector_nf.currentIndexChanged.connect(lambda index: (self.rga.detector_noise_floor(index)))
-            # scan
+        # scan
         self.gui.scan_start.clicked.connect(lambda: self.startScan())
-            # buffer
+        # buffer
         self.gui.buffer_clear.clicked.connect(lambda: self.gui.buffer_readout.clear())
         return cxn
 
 
     # SIGNALS
+    @inlineCallbacks
     def on_connect(self, c, message):
         server_name = message[1]
         if server_name in self.servers:
