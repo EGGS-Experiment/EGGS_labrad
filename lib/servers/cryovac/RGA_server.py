@@ -54,7 +54,6 @@ class RGA_Server(SerialDeviceServer):
         """
         Initialize the RGA.
         """
-        print('scde')
         if level not in (0, 1, 2):
             raise Exception('Invalid Input.')
         yield self._setter('IN', level)
