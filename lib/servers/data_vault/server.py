@@ -371,8 +371,8 @@ class DataVault(LabradServer):
 
     @setting(102, returns='s')
     def row_type(self, c):
-        """Returns the labrad typetag for a single row of the current dataset.
-
+        """
+        Returns the labrad typetag for a single row of the current dataset.
         This is mostly only useful with the extended format.
         """
         ds = self.getDataset(c)
@@ -380,11 +380,20 @@ class DataVault(LabradServer):
 
     @setting(103, returns='s')
     def transpose_type(self, c):
-        """Returns the labrad typetag for accessing the dataset with the transpose commands
+        """
+        Returns the labrad typetag for accessing the dataset with the transpose commands
         add_ex_t and get_ex_t.
         """
         ds = self.getDataset(c)
         return ds.getTransposeType()
+
+    @setting(104, returns='s')
+    def shape(self, c):
+        """
+        Returns the shape of the dataset.
+        """
+        ds = self.getDataset(c)
+        return ds.shape()
 
     @setting(120, returns='*s')
     def parameters(self, c):

@@ -628,7 +628,8 @@ class HDF5MetaData(object):
         return len(self.dataset.attrs['Comments'])
 
 class ExtendedHDF5Data(HDF5MetaData):
-    """Dataset backed by HDF5 file
+    """
+    Dataset backed by HDF5 file.
 
     This supports the extended dataset format which allows each column
     to have a different type and to be arrays themselves.
@@ -737,6 +738,9 @@ class ExtendedHDF5Data(HDF5MetaData):
     def hasMore(self, pos):
         return pos < len(self)
 
+    def shape(self):
+        return self.dataset.shape
+
 class SimpleHDF5Data(HDF5MetaData):
     """Basic dataset backed by HDF5 file.
 
@@ -836,6 +840,7 @@ def open_backend(filename):
 
     if os.path.exists(csv_file):
         if use_numpy:
+            print('use numpy true')
             return CsvNumpyData(csv_file)
         else:
             return CsvListData(csv_file)

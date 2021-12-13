@@ -471,3 +471,5 @@ class Dataset(object):
         else:
             self.comment_listeners.add(context)
 
+    def shape(self):
+        return self.data.shape()
