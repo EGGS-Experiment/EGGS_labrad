@@ -1,6 +1,5 @@
-import os
 import time
-import datetime as datetime
+from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui import lakeshore336_gui
 
@@ -96,18 +95,16 @@ class lakeshore336_client(lakeshore336_gui):
         Creates a new dataset to record temperature and
         tells polling loop to add data to data vault.
         """
+        # set up datavault
         self.recording = status
         if self.recording == True:
             self.starttime = time.time()
-            date = datetime.datetime.now()
+            date = datetime.now()
             year = str(date.year)
-            month = '%02d' % date.month  # Padded with a zero if one digit
-            day = '%02d' % date.day  # Padded with a zero if one digit
-            hour = '%02d' % date.hour  # Padded with a zero if one digit
-            minute = '%02d' % date.minute  # Padded with a zero if one digit
+            month = '{:02d}'.format(date.month)
 
-            trunk1 = year + '_' + month + '_' + day
-            trunk2 = self.name + '_' + hour + ':' + minute
+            trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
+            trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
             yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')],
                                        [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'),
@@ -157,9 +154,10 @@ class lakeshore336_client(lakeshore336_gui):
         """
         Locks heater updating.
         """
-        pass
-        #self.gui.heat1_update.setEnabled(lock_status)
-        #self.gui.heat2_update.setEnabled(lock_status)
+        self.gui.heat1_mode.setEnabled(status)
+        self.gui.heat1_in.setEnabled(status)
+        self.gui.heat1_mode.setEnabled(status)
+        self.gui.heat2_mode.setEnabled(status)
 
     def heater_mode_changed(self, mode, chan):
         """
