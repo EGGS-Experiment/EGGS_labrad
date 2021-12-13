@@ -387,7 +387,7 @@ class DataVault(LabradServer):
         ds = self.getDataset(c)
         return ds.getTransposeType()
 
-    @setting(104, returns='s')
+    @setting(104, returns='(i, i)')
     def shape(self, c):
         """
         Returns the shape of the dataset.
@@ -577,6 +577,7 @@ class DataVaultMultiHead(DataVault):
     @setting(406, 'Refresh Managers')
     def refresh_managers(self, c):
         return self.hub.refresh_managers()
+
 
 class ExtendedContext(object):
     '''

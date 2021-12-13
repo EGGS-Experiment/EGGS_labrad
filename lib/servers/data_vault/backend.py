@@ -739,7 +739,9 @@ class ExtendedHDF5Data(HDF5MetaData):
         return pos < len(self)
 
     def shape(self):
-        return self.dataset.shape
+        cols = len(self.getIndependents() + self.getDependents())
+        rows = self.dataset.shape[0]
+        return (rows, cols)
 
 class SimpleHDF5Data(HDF5MetaData):
     """Basic dataset backed by HDF5 file.
@@ -803,6 +805,11 @@ class SimpleHDF5Data(HDF5MetaData):
 
     def hasMore(self, pos):
         return pos < len(self)
+
+    def shape(self):
+        cols = len(self.getIndependents() + self.getDependents())
+        rows = self.dataset.shape[0]
+        return (rows, cols)
 
 def open_hdf5_file(filename):
     """Factory for HDF5 files.  

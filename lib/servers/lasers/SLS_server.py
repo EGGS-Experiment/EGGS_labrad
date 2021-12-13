@@ -222,10 +222,10 @@ class SLSServer(SerialDeviceServer, PollingServer):
         then reads back same parameter.
         """
         if param:
-            #write data and read echo
+            # write data and read echo
             yield self.ser.write('set ' + chstring + ' ' + str(param) + TERMINATOR)
             set_resp = yield self.ser.read_line(_SLS_EOL)
-            #parse
+            # parse
             set_resp = yield self._parse(set_resp, True)
         # write data and read echo
         yield self.ser.write('get ' + chstring + TERMINATOR)
