@@ -85,7 +85,7 @@ class EGGS_gui(QMainWindow):
 
     def makeTrapWidget(self, reactor, cxn):
         from EGGS_labrad.lib.clients.trap_clients.rf_client import rf_client
-        rf_widget = rf_client(reactor, cxn=cxn)
+        rf_widget = rf_client(reactor, cxn=cxn.cxn)
         return rf_widget
 
     def makeLaserWidget(self, reactor, cxn):
