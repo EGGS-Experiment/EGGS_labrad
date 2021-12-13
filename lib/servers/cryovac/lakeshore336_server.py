@@ -99,6 +99,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read_line()
         resp = resp.split(',')
         resp = (int(resp[0]), float(resp[2]))
+        print(resp)
         returnValue(resp)
 
     @setting(212, 'Heater Mode', output_channel='i', mode='i', input_channel='i', returns='(ii)')
@@ -123,6 +124,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read_line()
         resp = np.array(resp.split(','), dtype=int)
         resp = tuple(resp[:2])
+        print(resp)
         returnValue(resp)
 
     @setting(221, 'Heater Range', output_channel='i', range='i', returns='i')
@@ -143,10 +145,11 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         # getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
+        print(resp)
         returnValue(int(resp))
 
     @setting(213, 'Heater Power', output_channel='i', power=['i', 'v'], returns='v')
-    def heater_power(self, c, output_channel, power):
+    def heater_power(self, c, output_channel, power=None):
         """
         Set or query heater power.
         If heater is in manual mode, then heater directly controls power/current.
@@ -159,12 +162,14 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         """
         chString = 'MOUT'
         # setter
-        output_msg = chString + ' ' + str(output_channel) + ',' + str(power) + TERMINATOR
-        yield self.ser.write(output_msg)
-        time.sleep(0.05)
+        if power is not None:
+            output_msg = chString + ' ' + str(output_channel) + ',' + str(power) + TERMINATOR
+            yield self.ser.write(output_msg)
+            time.sleep(0.05)
         # getter
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
+        print(resp)
         returnValue(float(resp))
 
     @setting(231, 'Heater PID', output_channel='i', prop='v', integ='v', diff='v', returns='(vvv)')

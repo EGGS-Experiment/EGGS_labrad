@@ -15,16 +15,18 @@ class lakeshore336_client(lakeshore336_gui):
         self.gui = self
         self.gui.setupUi()
         self.reactor = reactor
-        self.connect()
-        self.initializeGUI()
+        self.servers = ['Lakeshore336 Server', 'Data Vault']
+        # initialization sequence
+        d = self.connect()
+        d.addCallback(self.initData)
+        d.addCallback(self.initializeGUI)
 
 
     # SETUP
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to lakeshore server
-        and relevant labrad servers
+        Creates an asynchronous connection to labrad.
         """
         # create labrad connection
         if not self.cxn:
@@ -42,34 +44,73 @@ class lakeshore336_client(lakeshore336_gui):
             print('Required servers not connected, disabling widget.')
             self.setEnabled(False)
 
+        # connect to signals
+            # device parameters
+        yield self.ls.signal__temperature_update(self.TEMPERATUREID)
+        yield self.ls.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATUREID)
+            # server connections
+        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
+        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
+        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
+        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
+
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
-        # connect to signals
-        yield self.ls.signal__temperature_update(self.TEMPERATUREID)
-        yield self.ls.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATUREID)
         # start device polling
         poll_params = yield self.ls.get_polling()
-        #only start polling if not started
+        # only start polling if not started
         if not poll_params[0]:
             yield self.ls.set_polling(True, 5.0)
 
         return self.cxn
 
+    @inlineCallbacks
+    def initData(self, cxn):
+        # lock while starting up
+        self.setEnabled(False)
+        return cxn
 
-    #@inlineCallbacks
-    def initializeGUI(self):
-        #connect signals to slots
-            #record temperature
-        self.gui.tempAll_record.toggled.connect(lambda status: self.record_temp(status))
-            #update heater setting
-        #self.gui.heat1_update.toggled.connect(lambda: self.update_heater(chan = 1))
-        #self.gui.heat2_update.toggled.connect(lambda: self.update_heater(chan = 2))
-            #lock heater settings
-        self.gui.heatAll_lockswitch.toggled.connect(lambda status: self.lock_heaters(status))
-            #mode changed
-        self.gui.heat1_mode.currentIndexChanged.connect(lambda mode: self.heater_mode_changed(mode, chan=1))
-        self.gui.heat2_mode.currentIndexChanged.connect(lambda mode: self.heater_mode_changed(mode, chan=2))
+    def initializeGUI(self, cxn):
+        # temperature
+        self.gui.tempAll_record.clicked.connect(lambda status: self.record_temp(status))
+        # heater
+            # lockswitch
+        self.gui.heatAll_lockswitch.clicked.connect(lambda status: self.lock_heaters(status))
+            # setup
+        self.gui.heat1_res.currentIndexChanged.connect(lambda res, max_curr=self.gui.heat1_curr.value(): self.ls.heater_setup(1, res + 1, max_curr))
+        self.gui.heat1_curr.valueChanged.connect(lambda max_curr, res=self.gui.heat1_res.currentIndex(): self.ls.heater_setup(1, res + 1, max_curr))
+        self.gui.heat2_res.currentIndexChanged.connect(lambda res, max_curr=self.gui.heat2_curr.value(): self.ls.heater_setup(2, res + 1, max_curr))
+        self.gui.heat2_curr.valueChanged.connect(lambda max_curr, res=self.gui.heat2_res.currentIndex(): self.ls.heater_setup(2, res + 1, max_curr))
+            # mode
+        self.gui.heat1_mode.currentIndexChanged.connect(lambda mode, in_diode=self.gui.heat1_in.currentIndex(): self.ls.heater_mode(1, mode + 1, in_diode))
+        self.gui.heat1_in.currentIndexChanged.connect(lambda in_diode, mode=self.gui.heat1_mode.currentIndex(): self.ls.heater_setup(1, mode + 1, in_diode))
+        self.gui.heat2_mode.currentIndexChanged.connect(lambda mode, in_diode=self.gui.heat2_in.currentIndex(): self.ls.heater_setup(2, mode + 1, in_diode))
+        self.gui.heat2_in.currentIndexChanged.connect(lambda in_diode, mode=self.gui.heat2_mode.currentIndex(): self.ls.heater_setup(2, mode + 1, in_diode))
+            # range
+        self.gui.heat1_range.currentIndexChanged.connect(lambda level: self.ls.heater_range(1, level))
+        self.gui.heat2_range.currentIndexChanged.connect(lambda level: self.ls.heater_range(2, level))
+            # current
+        self.gui.heat1_p1.valueChanged.connect(lambda value: self.ls.heater_power(1, value))
+        self.gui.heat2_p1.valueChanged.connect(lambda value: self.ls.heater_power(2, value))
+            # output
+        return cxn
+
+
+    # SIGNALS
+    def on_connect(self, c, message):
+        server_name = message[1]
+        if server_name in self.servers:
+            print(server_name + ' reconnected, enabling widget.')
+            # get latest values
+            yield self.initData(self.cxn)
+            self.setEnabled(True)
+
+    def on_disconnect(self, c, message):
+        server_name = message[1]
+        if server_name in self.servers:
+            print(server_name + ' disconnected, disabling widget.')
+            self.setEnabled(False)
 
 
     # SLOTS
@@ -79,12 +120,6 @@ class lakeshore336_client(lakeshore336_gui):
         self.gui.temp2.setText(str(temp[1]))
         self.gui.temp3.setText(str(temp[2]))
         self.gui.temp4.setText(str(temp[3]))
-        if self.gui.heat1_mode.currentText() != 'Off':
-            curr1 = yield self.ls.get_heater_output(1)
-            self.gui.heat1.setText(str(curr1))
-        if self.gui.heat2_mode.currentText() != 'Off':
-            curr2 = yield self.ls.get_heater_output(2)
-            self.gui.heat2.setText(str(curr2))
         if self.recording == True:
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, temp[0], temp[1], temp[2], temp[3], context=self.c_record)
@@ -110,167 +145,40 @@ class lakeshore336_client(lakeshore336_gui):
                                        [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'),
                                         ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_record)
 
-    @inlineCallbacks
-    def update_heater(self, chan):
-        """
-        Sends the heater config and parameters to the lakeshore server
-        """
-        if chan == 1:
-            mode = self.gui.heat1_mode.currentIndex()
-            input_channel = self.gui.heat1_in.currentData()
-            resistance = self.gui.heat1_res.currentData()
-            max_curr = self.gui.heat1_curr.currentData()
-            h_range = self.gui.heat1_range.currentData()
-            set = self.gui.heat1_set.currentData()
-            p1 = self.gui.heat1_p1.currentData()
-            if mode == 2:
-                p2 = self.gui.heat1_p2.currentData()
-                p3 = self.gui.heat1_p3.currentData()
-        elif chan == 2:
-            mode = self.gui.heat2_mode.currentIndex()
-            input_channel = self.gui.heat2_in.currentData()
-            resistance = self.gui.heat2_res.currentData()
-            max_curr = self.gui.heat2_curr.currentData()
-            h_range = self.gui.heat2_range.currentData()
-            set = self.gui.heat2_set.currentData()
-            p1 = self.gui.heat2_p1.currentData()
-            if mode == 2:
-                p2 = self.gui.heat2_p2.currentData()
-                p3 = self.gui.heat2_p3.currentData()
-
-        yield self.ls.configure_heater(chan, mode, input_channel)
-        yield self.ls.setup_heater(chan, resistance, max_curr)
-        yield self.ls.set_heater_range(chan, h_range)
-        yield self.ls.set_heater_setpoint(chan, set)
-
-        if mode == 1:
-            yield self.ls.autotune_heater(chan, input_channel, p1)
-        elif mode == 2:
-            yield self.ls.autotune_heater(chan, p1, p2, p3)
-        elif mode == 3:
-            yield self.ls.set_heater_power(chan, p1)
-
     def lock_heaters(self, status):
         """
         Locks heater updating.
         """
         self.gui.layoutWidget1.setEnabled(status)
 
-    def heater_mode_changed(self, mode, chan):
+    @inlineCallbacks
+    def heater_setup(self, chan, mode, res, max_curr):
         """
-        Disables and enables the relevant settings for each mode
+        todo
         """
-        if chan == 1:
-            if mode == 0:
-                self.gui.heat1_in.setEnabled(False)
-                self.gui.heat1_curr.setEnabled(False)
-                self.gui.heat1_res.setEnabled(False)
-                self.gui.heat1_set.setEnabled(False)
-                self.gui.heat1_range.setEnabled(False)
-                self.gui.heat1_p1.setEnabled(False)
-                self.gui.heat1_p2.setEnabled(False)
-                self.gui.heat1_p3.setEnabled(False)
-            elif mode == 1:
-                self.gui.heat1_in.setEnabled(True)
-                self.gui.heat1_curr.setEnabled(True)
-                self.gui.heat1_res.setEnabled(True)
-                self.gui.heat1_set.setEnabled(True)
-                self.gui.heat1_range.setEnabled(True)
-                self.gui.heat1_p1.setEnabled(True)
-                self.gui.heat1_p2.setEnabled(False)
-                self.gui.heat1_p3.setEnabled(False)
-                self.gui.heat1_p1_label.setText('P-I-D')
-                self.gui.heat1_p2_label.setText('')
-                self.gui.heat1_p3_label.setText('')
-                self.gui.heat1_p1.setDecimals(0)
-                self.gui.heat1_p1.setSingleStep(1)
-                self.gui.heat1_p1.setRange(0, 2)
-            elif mode == 2:
-                self.gui.heat1_in.setEnabled(True)
-                self.gui.heat1_curr.setEnabled(True)
-                self.gui.heat1_res.setEnabled(True)
-                self.gui.heat1_set.setEnabled(True)
-                self.gui.heat1_range.setEnabled(True)
-                self.gui.heat1_p1.setEnabled(True)
-                self.gui.heat1_p2.setEnabled(True)
-                self.gui.heat1_p3.setEnabled(True)
-                self.gui.heat1_p1_label.setText('P')
-                self.gui.heat1_p2_label.setText('I')
-                self.gui.heat1_p3_label.setText('D')
-                self.gui.heat1_p1.setDecimals(1)
-                self.gui.heat1_p1.setSingleStep(1e-1)
-                self.gui.heat1_p1.setRange(0, 1000)
-            elif mode == 3:
-                self.gui.heat1_in.setEnabled(True)
-                self.gui.heat1_curr.setEnabled(True)
-                self.gui.heat1_res.setEnabled(True)
-                self.gui.heat1_set.setEnabled(True)
-                self.gui.heat1_range.setEnabled(True)
-                self.gui.heat1_p1.setEnabled(True)
-                self.gui.heat1_p2.setEnabled(False)
-                self.gui.heat1_p3.setEnabled(False)
-                self.gui.heat1_p1_label.setText('Current (A)')
-                self.gui.heat1_p2_label.setText('')
-                self.gui.heat1_p3_label.setText('')
-                self.gui.heat1_p1.setDecimals(2)
-                self.gui.heat1_p1.setSingleStep(1e-2)
-                self.gui.heat1_p1.setRange(0, self.gui.heat1_curr.value())
-        elif chan == 2:
-            mode = self.gui.heat2_mode.currentIndex()
-            if mode == 0:
-                self.gui.heat2_in.setEnabled(False)
-                self.gui.heat2_curr.setEnabled(False)
-                self.gui.heat2_res.setEnabled(False)
-                self.gui.heat2_set.setEnabled(False)
-                self.gui.heat2_range.setEnabled(False)
-                self.gui.heat2_p1.setEnabled(False)
-                self.gui.heat2_p2.setEnabled(False)
-                self.gui.heat2_p3.setEnabled(False)
-            elif mode == 1:
-                self.gui.heat2_in.setEnabled(True)
-                self.gui.heat2_curr.setEnabled(True)
-                self.gui.heat2_res.setEnabled(True)
-                self.gui.heat2_set.setEnabled(True)
-                self.gui.heat2_range.setEnabled(True)
-                self.gui.heat2_p1.setEnabled(True)
-                self.gui.heat2_p2.setEnabled(False)
-                self.gui.heat2_p3.setEnabled(False)
-                self.gui.heat2_p1_label.setText('P-I-D')
-                self.gui.heat2_p2_label.setText('')
-                self.gui.heat2_p3_label.setText('')
-                self.gui.heat2_p1.setDecimals(0)
-                self.gui.heat2_p1.setSingleStep(1)
-                self.gui.heat2_p1.setRange(0, 2)
-            elif mode == 2:
-                self.gui.heat2_in.setEnabled(True)
-                self.gui.heat2_curr.setEnabled(True)
-                self.gui.heat2_res.setEnabled(True)
-                self.gui.heat2_set.setEnabled(True)
-                self.gui.heat2_range.setEnabled(True)
-                self.gui.heat2_p1.setEnabled(True)
-                self.gui.heat2_p2.setEnabled(True)
-                self.gui.heat2_p3.setEnabled(True)
-                self.gui.heat2_p1_label.setText('P')
-                self.gui.heat2_p2_label.setText('I')
-                self.gui.heat2_p3_label.setText('D')
-                self.gui.heat2_p1.setDecimals(1)
-                self.gui.heat2_p1.setSingleStep(1e-1)
-                self.gui.heat2_p1.setRange(0, 1000)
-            elif mode == 3:
-                self.gui.heat2_in.setEnabled(True)
-                self.gui.heat2_curr.setEnabled(True)
-                self.gui.heat2_res.setEnabled(True)
-                self.gui.heat2_set.setEnabled(True)
-                self.gui.heat2_range.setEnabled(True)
-                self.gui.heat2_p1.setEnabled(True)
-                self.gui.heat2_p2.setEnabled(False)
-                self.gui.heat2_p3.setEnabled(False)
-                self.gui.heat2_p1_label.setText('Current (A)')
-                self.gui.heat2_p2_label.setText('')
-                self.gui.heat2_p3_label.setText('')
-                self.gui.heat2_p1.setDecimals(2)
-                self.gui.heat2_p1.setSingleStep(1e-2)
-                self.gui.heat2_p1.setRange(0, self.gui.heat1_curr.value())
+        yield self.ls.heater_setup(chan, res, max_curr)
+
+    @inlineCallbacks
+    def heater_mode(self, chan, mode, input):
+        """
+        todo
+        """
+        yield self.ls.heater_mode(chan, mode, input)
+
+    @inlineCallbacks
+    def heater_range(self, chan, range):
+        """
+        todo
+        """
+        yield self.ls.heater_range(chan, range)
+
+    @inlineCallbacks
+    def heater_power(self, chan, curr):
+        """
+        todo
+        """
+        yield self.ls.heater_power(chan, curr)
+
 
     def closeEvent(self, event):
         self.cxn.disconnect()
