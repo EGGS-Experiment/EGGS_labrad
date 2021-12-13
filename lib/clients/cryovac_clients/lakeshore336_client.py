@@ -2,7 +2,7 @@ import os
 import time
 import datetime as datetime
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui import lakeshore336_gui
+from EGGS_labrad.lib.clients.cryovac_clients.lakeshore336_gui3 import lakeshore336_gui
 
 
 class lakeshore336_client(lakeshore336_gui):

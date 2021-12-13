@@ -6,17 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>583</width>
-    <height>596</height>
+    <width>517</width>
+    <height>555</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Lakeshore 336 Tempreature Controller</string>
   </property>
   <widget class="QLabel" name="lakeshore_label">
    <property name="geometry">
     <rect>
-     <x>50</x>
+     <x>30</x>
      <y>20</y>
      <width>471</width>
      <height>31</height>
@@ -24,7 +24,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>20</pointsize>
+     <pointsize>18</pointsize>
     </font>
    </property>
    <property name="text">
@@ -34,9 +34,9 @@
   <widget class="QLabel" name="heatAll_label">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>270</x>
      <y>70</y>
-     <width>201</width>
+     <width>191</width>
      <height>31</height>
     </rect>
    </property>
@@ -70,7 +70,7 @@
   <widget class="QPushButton" name="heatAll_lockswitch">
    <property name="geometry">
     <rect>
-     <x>320</x>
+     <x>290</x>
      <y>110</y>
      <width>139</width>
      <height>23</height>
@@ -93,13 +93,13 @@
     <string>Record</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>30</x>
      <y>150</y>
      <width>161</width>
-     <height>331</height>
+     <height>301</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="temp_layout">
@@ -178,13 +178,13 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>240</x>
+     <x>220</x>
      <y>150</y>
-     <width>321</width>
-     <height>428</height>
+     <width>280</width>
+     <height>392</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="heatAll_layout">
@@ -199,6 +199,28 @@
         </property>
         <property name="text">
          <string>Heater 1</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="heat1_out_curr_label">
+        <property name="text">
+         <string>Output Current (A)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="heat1_out_curr">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:18pt; color:#ff0000;&quot;&gt;Current 1&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -330,6 +352,20 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="heat1_p1_label">
+        <property name="text">
+         <string>Current (% max allowed)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="heat1_p1">
+        <property name="maximum">
+         <double>100.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="heat1_set_label">
         <property name="text">
          <string>Setpoint (K)</string>
@@ -338,36 +374,6 @@
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="heat1_set"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_p1_label">
-        <property name="text">
-         <string>Parameter 1</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat1_p1"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_p2_label">
-        <property name="text">
-         <string>Parameter 2</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat1_p2"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat1_p3_label">
-        <property name="text">
-         <string>Parameter 3</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat1_p3"/>
       </item>
      </layout>
     </item>
@@ -382,6 +388,28 @@
         </property>
         <property name="text">
          <string>Heater 2</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="heat2_out_curr">
+        <property name="text">
+         <string>Output Current (A)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="heat2_out_curr_label">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:18pt; color:#ff0000;&quot;&gt;Current 2&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -513,6 +541,20 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="heat2_p1_label">
+        <property name="text">
+         <string>Current (% max allowed)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="heat2_p1">
+        <property name="maximum">
+         <double>100.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="heat2_set_label">
         <property name="text">
          <string>Setpoint (K)</string>
@@ -521,36 +563,6 @@
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="heat2_set"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_p1_label">
-        <property name="text">
-         <string>Parameter 1</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat2_p1"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_p2_label">
-        <property name="text">
-         <string>Parameter 2</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat2_p2"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="heat2_p3_label">
-        <property name="text">
-         <string>Parameter 3</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDoubleSpinBox" name="heat2_p3"/>
       </item>
      </layout>
     </item>
