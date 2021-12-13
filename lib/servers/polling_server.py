@@ -1,6 +1,7 @@
 from twisted.internet.task import LoopingCall
 from labrad.server import LabradServer, setting
 
+
 class PollingServer(LabradServer):
     """
     Holds all the functionality needed to
@@ -87,19 +88,7 @@ class PollingServer(LabradServer):
         pass
 
     def _poll_fail(self, failure):
-        # print(failure)
         print('Polling failed. Restarting polling.')
-        self.ser.flush_input()
-        self.ser.flush_output()
+        yield self.ser.flush_input()
+        yield self.ser.flush_output()
         self.startRefresher(5)
-
-
-def th1(func):
-    '''
-    Decorator todo
-    '''
-    def wrap(*args, **kwargs):
-        start = time.time()
-        result = func()
-        return result
-    return wrap
