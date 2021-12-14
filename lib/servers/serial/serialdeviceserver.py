@@ -116,6 +116,7 @@ class SerialDeviceServer(LabradServer):
     serNode: Name of node running desired serial server.  Used to identify correct serial server.
     timeOut: Time to wait for response before giving up.
     """
+
     # node parameters
     name = 'SerialDevice'
     port = None
@@ -161,6 +162,7 @@ class SerialDeviceServer(LabradServer):
             self.release = lambda: self.comm_lock.release()
 
 
+    # SETUP
     @inlineCallbacks
     def initServer(self):
         # call parent initserver to support further subclassing
@@ -340,6 +342,9 @@ class SerialDeviceServer(LabradServer):
             print('Serial server disconnected.  Relaunch the serial server')
             self.ser = None
 
+
+    # SETTINGS
+        # DEVICE SELECTION
     @setting(111111, 'Select Device', node='s', port='s', returns='')
     def selectDevice(self, c, node, port):
         """
@@ -374,6 +379,8 @@ class SerialDeviceServer(LabradServer):
         else:
             raise Exception('No device selected')
 
+
+        # DIRECT SERIAL COMMUNICATION
     @setting(111113, 'Serial Query', data='s', returns='s')
     def serial_query(self, c, data):
         """Write any string and read the response."""
