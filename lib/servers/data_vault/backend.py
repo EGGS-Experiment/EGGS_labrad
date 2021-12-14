@@ -1,12 +1,20 @@
-import base64, collections, datetime, os, re, sys, time, h5py
+import os
+import sys
+import time
+import h5py
 import numpy as np
-from twisted.internet import reactor
-from labrad import types as T
+import base64
+import datetime
+
 from . import errors, util
+from labrad import types as T
+from twisted.internet import reactor
+
 
 ## Data types for variable defintions
 Independent = collections.namedtuple('Independent', ['label', 'shape', 'datatype', 'unit'])
 Dependent = collections.namedtuple('Dependent', ['label', 'legend', 'shape', 'datatype', 'unit'])
+
 
 TIME_FORMAT = '%Y-%m-%d, %H:%M:%S'
 PRECISION = 12 # digits of precision to use when saving data
@@ -15,11 +23,14 @@ FILE_TIMEOUT_SEC = 60 # how long to keep datafiles open if not accessed
 DATA_TIMEOUT = 300 # how long to keep data in memory if not accessed
 DATA_URL_PREFIX = 'data:application/labrad;base64,'
 
+
 def time_to_str(t):
     return t.strftime(TIME_FORMAT)
 
+
 def time_from_str(s):
     return datetime.datetime.strptime(s, TIME_FORMAT)
+
 
 def labrad_urlencode(data):
     if hasattr(T, 'FlatData'):
@@ -33,6 +44,7 @@ def labrad_urlencode(data):
     data_url = DATA_URL_PREFIX + base64.urlsafe_b64encode(all_bytes)
     return data_url
 
+
 def labrad_urldecode(data_url):
     if data_url.startswith(DATA_URL_PREFIX):
         # decode parameter data from dataurl
@@ -44,8 +56,10 @@ def labrad_urldecode(data_url):
         raise ValueError("Trying to labrad_urldecode data that doesn't start "
                          "with prefix: {}".format(DATA_URL_PREFIX))
 
+
 class SelfClosingFile(object):
-    """A container for a file object that manages the underlying file handle.
+    """
+    A container for a file object that manages the underlying file handle.
 
     The file will be opened on demand when this container is called, then
     closed automatically if not accessed within a specified timeout.
@@ -62,13 +76,17 @@ class SelfClosingFile(object):
             self.__call__()
 
     def __call__(self):
+        """
+        Start timeout-polling the file for closing.
+        Runs when an instance is called without arguments
+        (e.g. e = Example, e())
+        """
         print('called')
         # begin the countdown if are called after exceeding the timeout
         if not hasattr(self, '_file'):
             print('start')
             self._file = self.opener(*self.open_args, **self.open_kw)
-            self._fileTimeoutCall = self.reactor.callLater(
-                    self.timeout, self._fileTimeout)
+            self._fileTimeoutCall = self.reactor.callLater(self.timeout, self._fileTimeout)
         # otherwise, reset the timer
         else:
             print('reset')
@@ -76,6 +94,10 @@ class SelfClosingFile(object):
         return self._file
 
     def _fileTimeout(self):
+        """
+        Run all cleanup callbacks, close the file,
+        and delete timeout functions.
+        """
         print('CLOSE CLOSE CLOSE CLOSE')
         for callback in self.callbacks:
             callback(self)
@@ -90,6 +112,8 @@ class SelfClosingFile(object):
         """Calls callback *before* the file is closes."""
         self.callbacks.append(callback)
 
+
+# INI & CSV FILES
 class IniData(object):
     """Handles dataset metadata stored in INI files.
 
@@ -278,10 +302,11 @@ class IniData(object):
     def numComments(self):
         return len(self.comments)
 
-class CsvListData(IniData):
-    """Data backed by a csv-formatted file.
 
-    Stores the entire contents of the file in memory as a list or numpy array
+class CsvListData(IniData):
+    """
+    Data backed by a csv-formatted file.
+    Stores the entire contents of the file in memory as a list or numpy array.
     """
 
     def __init__(self,
@@ -357,6 +382,7 @@ class CsvListData(IniData):
     def hasMore(self, pos):
         return pos < len(self.data)
 
+
 class CsvNumpyData(CsvListData):
     """Data backed by a csv-formatted file.
 
@@ -374,8 +400,8 @@ class CsvNumpyData(CsvListData):
         return self._file()
 
     def _get_data(self):
-        """Read data from file on demand.
-
+        """
+        Read data from file on demand.
         The data is scheduled to be cleared from memory unless accessed."""
         if not hasattr(self, '_data'):
             try:
@@ -456,6 +482,8 @@ class CsvNumpyData(CsvListData):
             nrows = len(self.data) if self.data.size > 0 else 0
             return pos < nrows
 
+
+# HDF DATA FILES
 class HDF5MetaData(object):
     """Class to store metadata inside the file itself.
 
@@ -633,6 +661,7 @@ class HDF5MetaData(object):
     def numComments(self):
         return len(self.dataset.attrs['Comments'])
 
+
 class ExtendedHDF5Data(HDF5MetaData):
     """
     Dataset backed by HDF5 file.
@@ -750,7 +779,8 @@ class ExtendedHDF5Data(HDF5MetaData):
         return (rows, cols)
 
 class SimpleHDF5Data(HDF5MetaData):
-    """Basic dataset backed by HDF5 file.
+    """
+    Basic dataset backed by HDF5 file.
 
     This is a very simple implementation that only supports a single 2-D dataset
     of all floats.  HDF5 files support multiple types, multiple dimensions, and
@@ -817,21 +847,31 @@ class SimpleHDF5Data(HDF5MetaData):
         rows = self.dataset.shape[0]
         return (rows, cols)
 
+
+# FILE BACKEND CREATION
 def open_hdf5_file(filename):
-    """Factory for HDF5 files.  
+    """
+    Factory for HDF5 files.
 
     We check the version of the file to construct the proper class.  Currently, only two
     options exist: version 2.0.0 -> legacy format, 3.0.0 -> extended format.
     Version 1 is reserved for CSV files.
     """
+    # instantiate the file
     fh = SelfClosingFile(h5py.File, open_args=(filename, 'a'))
     version = fh().attrs['Version']
+
+    # check file for versioning then return it
     if version[0] == 2:
         return SimpleHDF5Data(fh)
     else:
         return ExtendedHDF5Data(fh)
 
+
 def create_backend(filename, title, indep, dep, extended):
+    """
+    Create a data object for a new dataset.
+    """
     hdf5_file = filename + '.hdf5'
     fh = SelfClosingFile(h5py.File, open_args=(hdf5_file, 'a'))
     if extended:
@@ -841,8 +881,10 @@ def create_backend(filename, title, indep, dep, extended):
     data.initialize_info(title, indep, dep)
     return data
 
+
 def open_backend(filename):
-    """Make a data object that manages in-memory and on-disk storage for a dataset.
+    """
+    Make a data object that manages in-memory and on-disk storage for a dataset.
 
     filename should be specified without a file extension. If there is an existing
     file in csv format, we create a backend of the appropriate type. If
@@ -851,13 +893,17 @@ def open_backend(filename):
     csv_file = filename + '.csv'
     hdf5_file = filename + '.hdf5'
 
+    # check to see whether the CSV file exists
     if os.path.exists(csv_file):
         if use_numpy:
             print('use numpy true')
             return CsvNumpyData(csv_file)
         else:
             return CsvListData(csv_file)
+    # check to see whether the HDF5 file exists
     elif os.path.exists(hdf5_file):
         return open_hdf5_file(hdf5_file)
-    else: # We should have already checked, this should not happen
+    # return an error if the file doesn't exist
+    # (though this shouldn't happen since we check several times)
+    else:
         raise errors.DatasetNotFoundError(filename)

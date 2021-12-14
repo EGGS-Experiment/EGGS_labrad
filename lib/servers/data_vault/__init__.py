@@ -1,11 +1,7 @@
-import base64
-from datetime import datetime
 import os
 import re
-import collections
 import weakref
-
-from labrad import types as T
+from datetime import datetime
 
 from . import backend, errors, util
 
@@ -114,7 +110,8 @@ class SessionStore(object):
 
 
 class Session(object):
-    """Stores information about a directory on disk.
+    """
+    Stores information about a directory on disk.
 
     One session object is created for each data directory accessed.
     The session object manages reading from and writing to the config
@@ -321,6 +318,7 @@ class Session(object):
         sessTags = [(s, sorted(self.session_tags.get(s, []))) for s in sessions]
         dataTags = [(d, sorted(self.dataset_tags.get(d, []))) for d in datasets]
         return sessTags, dataTags
+
 
 class Dataset(object):
     """

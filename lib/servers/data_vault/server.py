@@ -1,18 +1,18 @@
-from __future__ import absolute_import
-
-import collections
-
+from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
-import twisted.internet.task
-import numpy as np
 from labrad.server import LabradServer, Signal, setting
 
+import numpy as np
 from . import errors
+from __future__ import absolute_import
 
 
 class DataVault(LabradServer):
+
     name = 'Data Vault'
 
+
+    # SETUP
     def __init__(self, session_store):
         LabradServer.__init__(self)
 
@@ -32,6 +32,38 @@ class DataVault(LabradServer):
         # create root session
         _root = self.session_store.get([''])
 
+    def closeAllDatasets(self):
+        """
+        Close all open datasets.
+        Needed on shutdown and disconnect since open HDF5 files may become corrupted.
+        """
+        print('closing: ')
+        # get all datasets across all sessions
+        all_sessions = self.session_store._sessions
+        all_datasets = [session.datasets.values() for session in all_sessions]
+
+        # flatten list of datasets
+        all_files = set([dataset.data for session_datasets in all_datasets for dataset in session_datasets])
+
+        # close all the files
+        for dataset in all_datasets:
+            # cancel the timeout poll loop
+            dataset._fileTimeoutCall.cancel()
+            # close the file
+            dataset._fileTimeout()
+
+    def stopServer(self):
+        """
+        todo
+        """
+        print('stopserver')
+        self.cxn.disconnect()
+        #
+        self.closeAllDatasets()
+
+
+
+    # CONTEXT MANAGEMENT
     def contextKey(self, c):
         """The key used to identify a given context for notifications"""
         return c.ID
@@ -56,6 +88,8 @@ class DataVault(LabradServer):
                 removeFromList(dataset.param_listeners)
                 removeFromList(dataset.comment_listeners)
 
+
+    # GETTING CONTEXT OBJECTS
     def getSession(self, c):
         """Get a session object for the current path."""
         return c['session']
@@ -66,6 +100,8 @@ class DataVault(LabradServer):
             raise errors.NoDatasetError()
         return c['datasetObj']
 
+
+    # SETTINGS
     @setting(5, returns=['*s'])
     def dump_existing_sessions(self, c):
         return ['/'.join(session.path)
@@ -500,7 +536,8 @@ class DataVault(LabradServer):
 
 
 class DataVaultMultiHead(DataVault):
-    """Data Vault server with additional settings for running multi-headed.
+    """
+    Data Vault server with additional settings for running multi-headed.
 
     One instance will be created for each manager we connect to, and new
     instances will be created when we reconnect after losing a connection.
@@ -519,7 +556,7 @@ class DataVaultMultiHead(DataVault):
         # let the DataVaultHost know that we connected
         self.hub.connect(self)
         self.alive = True
-        self.keepalive_timer = twisted.internet.task.LoopingCall(self.keepalive)
+        self.keepalive_timer = LoopingCall(self.keepalive)
         self.onShutdown().addBoth(self.end_keepalive)
         self.keepalive_timer.start(120)
 
