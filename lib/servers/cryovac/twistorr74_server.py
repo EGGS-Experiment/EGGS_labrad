@@ -86,7 +86,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         Returns:
                     (bool)  : pump state
         """
-        #create and send message to device
+        # create and send message to device
         message = None
         if onoff is True:
             message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'1')
@@ -94,10 +94,13 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
             message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
         elif onoff is None:
             message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_READ_msg)
+        # set and read response
+        yield self.ser.acquire()
         yield self.ser.write(message)
-        #read and parse answer
         resp = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read(2)
+        self.ser.release()
+        # read and parse answer
         resp = yield self._parse(resp)
         if resp == '1':
             resp = True
@@ -117,14 +120,17 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         Returns:
             (float): pump pressure in mbar
         """
-        #create and send message to device
+        # create and send message to device
         message = yield self._create_message(CMD_msg=b'224', DIR_msg=_TT74_READ_msg)
+        # query
+        yield self.ser.acquire()
         yield self.ser.write(message)
-        #read and parse answer
         resp = yield self.ser.read_line(_TT74_ETX_msg)
-        yield self.ser.read()
+        yield self.ser.read(2)
+        self.ser.release()
+        # parse
         resp = float(resp)
-        #send signal and return value
+        # send signal and return value
         self.pressure_update(resp)
         returnValue(resp)
 
@@ -135,15 +141,18 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         Returns:
             (float): pump power in W
         """
-        #create and send message to device
+        # create and send message to device
         message = yield self._create_message(CMD_msg=b'202', DIR_msg=_TT74_READ_msg)
+        # query
+        yield self.ser.acquire()
         yield self.ser.write(message)
-        #read and parse answer
         resp = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read()
+        self.ser.release()
+        # parse
         resp = yield self._parse(resp)
         resp = float(resp)
-        #send signal and return value
+        # send signal and return value
         self.power_update(resp)
         returnValue(resp)
 
@@ -154,15 +163,18 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         Returns:
             (float): pump speed in RPM
         """
-        #create and send message to device
+        # create and send message to device
         message = yield self._create_message(CMD_msg=b'226', DIR_msg=_TT74_READ_msg)
+        # query
+        yield self.ser.acquire()
         yield self.ser.write(message)
-        #read and parse answer
         resp = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read(2)
+        self.ser.release()
+        # parse
         resp = yield self._parse(resp)
         resp = float(resp)
-        #send signal and return value
+        # send signal and return value
         self.rpm_update(resp)
         returnValue(resp)
 
@@ -173,7 +185,8 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         """
         Polls the device for pressure readout.
         """
-        # create message
+        # query
+        yield self.ser.acquire()
         yield self.ser.write(b'\x02\x802240\x0387')
         press = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read(2)
@@ -183,12 +196,11 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         yield self.ser.write(b'\x02\x802260\x0385')
         rpm = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read(2)
-
+        self.ser.release()
         # parse responses
         press = yield self._parse(press)
         power = yield self._parse(power)
         rpm = yield self._parse(rpm)
-
         # notify clients
         self.pressure_update(float(press))
         self.energy_update(float(power))
@@ -200,14 +212,14 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         """
         Creates a message according to the Twistorr74 serial protocol
         """
-        #create message as bytearray
+        # create message as bytearray
         msg = _TT74_STX_msg + _TT74_ADDR_msg + CMD_msg + DIR_msg + DATA_msg + _TT74_ETX_msg
         msg = bytearray(msg)
-        #calculate checksum
+        # calculate checksum
         CRC_msg = 0x00
         for byte in msg[1:]:
             CRC_msg ^= byte
-        #convert checksum to hex value and add to end
+        # convert checksum to hex value and add to end
         CRC_msg = hex(CRC_msg)[2:]
         msg.extend(bytearray(CRC_msg, encoding='utf-8'))
         return bytes(msg)
@@ -217,7 +229,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
             raise Exception('No response from device')
         # remove STX, ADDR, and CRC
         ans = ans[2:]
-        #check if we have CMD and DIR and remove them if so
+        # check if we have CMD and DIR and remove them if so
         if len(ans) > 1:
             ans = ans[4:]
             ans = ans.decode()
@@ -225,7 +237,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
             raise Exception(_TT74_ERRORS_msg[ans])
         elif ans == b'\x06':
             ans = 'Acknowledged'
-        #if none of these cases, we just return it anyways
+        # if none of these cases, we just return it anyways
         return ans
 
 

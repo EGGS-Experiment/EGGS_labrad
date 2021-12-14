@@ -21,8 +21,8 @@ from labrad.units import WithUnit
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-import time
 import numpy as np
+from time import sleep
 from serial import PARITY_ODD
 
 from EGGS_labrad.lib.servers.polling_server import PollingServer
@@ -69,8 +69,12 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
             channel = '0'
         elif channel not in INPUT_CHANNELS:
             raise Exception('Invalid input: channel must be one of: ' + str(INPUT_CHANNELS))
+
+        yield self.ser.acquire()
         yield self.ser.write('KRDG? ' + str(channel) + TERMINATOR)
         resp = yield self.ser.read_line()
+        self.ser.release()
+
         resp = np.array(resp.split(','), dtype=float)
         resp = tuple(resp)
         self.temp_update(resp)
@@ -94,11 +98,16 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         # setter
         if (resistance is not None) and (max_current is not None):
             output_msg = chString + ' ' + str(output_channel) + ',' + str(resistance) + ',0,' + str(max_current) + ',1' + TERMINATOR
+            yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            time.sleep(0.05)
+            sleep(0.05)
+            self.ser.release()
         # getter
+        yield self.ser.acquire()
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
+        self.ser.release()
+
         resp = resp.split(',')
         resp = (int(resp[0]), float(resp[2]))
         returnValue(resp)
@@ -119,11 +128,16 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         # setter
         if (mode is not None) and (input_channel is not None):
             output_msg = chString + ' ' + str(output_channel) + ',' + str(mode) + ',' + str(input_channel) + ',0' + TERMINATOR
+            yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            time.sleep(0.05)
+            sleep(0.05)
+            self.ser.release()
         # getter
+        yield self.ser.acquire()
         yield self.ser.write(chString + '?' + str(output_channel) + ' ' + TERMINATOR)
         resp = yield self.ser.read_line()
+        self.ser.release()
+
         resp = np.array(resp.split(','), dtype=int)
         resp = tuple(resp[:2])
         returnValue(resp)
@@ -142,11 +156,16 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         # setter
         if range is not None:
             output_msg = chString + ' ' + str(output_channel) + ',' + str(range) + TERMINATOR
+            yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            time.sleep(0.05)
+            sleep(0.05)
+            self.ser.release()
         # getter
+        yield self.ser.acquire()
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
+        self.ser.release()
+
         returnValue(int(resp))
 
     @setting(213, 'Heater Power', output_channel='i', power=['i', 'v'], returns='v')
@@ -165,11 +184,16 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         # setter
         if power is not None:
             output_msg = chString + ' ' + str(output_channel) + ',' + str(power) + TERMINATOR
+            yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            time.sleep(0.05)
+            sleep(0.05)
+            self.ser.release()
         # getter
+        yield self.ser.acquire()
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
+        self.ser.release()
+
         returnValue(float(resp))
 
     @setting(231, 'Heater PID', output_channel='i', prop='v', integ='v', diff='v', returns='(vvv)')
@@ -187,9 +211,16 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         chString = 'PID'
         if all(vals != None for vals in [prop, integ, diff]):
             output_msg = chString + ' ' + str(output_channel) + ',' + str(prop) + ',' + str(integ) + ',' + str(diff) + TERMINATOR
+            yield self.ser.acquire()
             yield self.ser.write(output_msg)
-        # issue query
-        resp = yield self.ser.query(chString + '? ' + str(output_channel) + TERMINATOR)
+            sleep(0.05)
+            self.ser.release()
+        # query
+        yield self.ser.acquire()
+        yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
+        resp = yield self.ser.read_line()
+        self.ser.release()
+
         resp = np.array(resp.split(','), dtype=float)
         returnValue(tuple(resp))
 
@@ -207,11 +238,16 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         # setter
         if setpoint is not None:
             output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint) + TERMINATOR
+            yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            time.sleep(0.05)
+            sleep(0.05)
+            self.ser.release()
         # getter
+        yield self.ser.acquire()
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
+        self.ser.release()
+
         returnValue(float(resp))
 
 
@@ -224,6 +260,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         yield self.ser.acquire()
         yield self.ser.write('KRDG? 0\r\n')
         resp = yield self.ser.read_line()
+
         self.ser.release()
         resp = np.array(resp.split(','), dtype=float)
         self.temp_update(tuple(resp))
