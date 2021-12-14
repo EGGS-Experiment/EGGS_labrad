@@ -323,7 +323,7 @@
       <item>
        <widget class="QLabel" name="heat1_range_label">
         <property name="text">
-         <string>Range</string>
+         <string>Range (% of max)</string>
         </property>
        </widget>
       </item>
@@ -331,22 +331,22 @@
        <widget class="QComboBox" name="heat1_range">
         <item>
          <property name="text">
-          <string>0</string>
+          <string>Off</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>1</string>
+          <string>0%</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>2</string>
+          <string>10%</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>3</string>
+          <string>100%</string>
          </property>
         </item>
        </widget>
@@ -395,14 +395,14 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="heat2_out_curr">
+       <widget class="QLabel" name="heat2_out_curr_label">
         <property name="text">
          <string>Output Current (A)</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="heat2_out_curr_label">
+       <widget class="QLabel" name="heat2_out_curr">
         <property name="font">
          <font>
           <pointsize>14</pointsize>
@@ -512,7 +512,7 @@
       <item>
        <widget class="QLabel" name="heat2_range_label">
         <property name="text">
-         <string>Range</string>
+         <string>Range (% of max)</string>
         </property>
        </widget>
       </item>
