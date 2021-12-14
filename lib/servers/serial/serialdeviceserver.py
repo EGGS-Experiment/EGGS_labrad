@@ -401,7 +401,7 @@ class SerialDeviceServer(LabradServer):
         """Write any string and read the response."""
         yield self.ser.acquire()
         yield self.ser.write(data)
-        resp = yield self.ser.read()
+        resp = yield self.ser.read_line()
         self.ser.release()
         returnValue(resp)
 
