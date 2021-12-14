@@ -55,7 +55,6 @@ class SelfClosingFile(object):
         self.opener = opener
         self.open_args = open_args
         self.open_kw = open_kw
-        primt(self.timeout)
         self.timeout = timeout
         self.callbacks = []
         self.reactor = reactor
