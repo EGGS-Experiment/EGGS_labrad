@@ -70,15 +70,16 @@
 # specified. If neither, server still starts up, just without a connection.
 #===============================================================================
 
-#imports
-from twisted.internet.defer import returnValue, inlineCallbacks
+# imports
+from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
 from labrad.types import Error
 from labrad.server import LabradServer, setting
 
 __all__ = ["SerialDeviceError", "SerialConnectionError", "SerialDeviceServer"]
 
-#Error Classes
+
+# ERROR CLASSES
 class SerialDeviceError(Exception):
     def __init__(self, value):
         self.value = value
@@ -99,18 +100,15 @@ class PortRegError(SerialConnectionError):
                  1: 'Key not found in registry',
                  2: 'No keys in registry'}
 
-#Device Class
-NAME = 'SerialDevice'
 
+# DEVICE CLASS
 class SerialDeviceServer(LabradServer):
     """
     Base class for serial device servers.
     
     Contains a number of methods useful for using labrad's serial server.
-    
-    Functionality comes from ser attribute, which represents a connection that performs reading and writing to a serial port. 
-    
-    subclasses should assign some or all of the following attributes:
+    Functionality comes from ser attribute, which represents a connection that performs reading and writing to a serial port.
+    Subclasses should assign some or all of the following attributes:
     
     name: Something short but descriptive
     port: Name of serial port (Better to look this up in the registry using regKey and getPortFromReg())
@@ -118,22 +116,22 @@ class SerialDeviceServer(LabradServer):
     serNode: Name of node running desired serial server.  Used to identify correct serial server.
     timeOut: Time to wait for response before giving up.
     """
-    #node parameters
-    name = NAME
+    # node parameters
+    name = 'SerialDevice'
     port = None
     regKey = None
     serNode = None
 
-    #serial connection parameters
+    # serial connection parameters
     timeout = None
     baudrate = None
     bytesize = None
     parity = None
 
-    #needed otherwise the whole thing breaks
+    # needed otherwise the whole thing breaks
     ser = None
 
-    class SerialConnection():
+    class SerialConnection(object):
         """
         Wrapper for our server's client connection to the serial server.
         @raise labrad.types.Error: Error in opening serial connection   
@@ -157,6 +155,11 @@ class SerialDeviceServer(LabradServer):
             self.flush_input = lambda: ser.flush_input()
             self.flush_output = lambda: ser.flush_output()
             self.ID = ser.ID
+            # comm lock
+            self.comm_lock = DeferredLock()
+            self.acquire = lambda: self.comm_lock.acquire()
+            self.release = lambda: self.comm_lock.release()
+
 
     @inlineCallbacks
     def initServer(self):
@@ -232,7 +235,7 @@ class SerialDeviceServer(LabradServer):
         @raise PortRegError: Error code 1.  Did not find match.
         """
         reg = self.client.registry
-        #There must be a 'Ports' directory at the root of the registry folder
+        # there must be a 'Ports' directory at the root of the registry folder
         try:
             tmp = yield reg.cd()
             yield reg.cd(['', 'Ports'])
@@ -267,7 +270,7 @@ class SerialDeviceServer(LabradServer):
         """
         reg = self.client.registry
         try:
-            #change this back to 'Ports'
+            # change this back to 'Ports'
             yield reg.cd( ['', 'Ports'] )
             portDir = yield reg.dir()
             portKeys = portDir[1]
@@ -374,8 +377,10 @@ class SerialDeviceServer(LabradServer):
     @setting(111113, 'Serial Query', data='s', returns='s')
     def serial_query(self, c, data):
         """Write any string and read the response."""
+        yield self.ser.acquire()
         yield self.ser.write(data)
         resp = yield self.ser.read()
+        self.ser.release()
         returnValue(resp)
 
     @setting(111114, 'Serial Write', data='s', returns='')
