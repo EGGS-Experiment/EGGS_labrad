@@ -1,10 +1,12 @@
+from __future__ import absolute_import
+
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 from labrad.server import LabradServer, Signal, setting
 
+import win32api
 import numpy as np
 from . import errors
-from __future__ import absolute_import
 
 
 class DataVault(LabradServer):
@@ -31,36 +33,40 @@ class DataVault(LabradServer):
     def initServer(self):
         # create root session
         _root = self.session_store.get([''])
+        # close all datasets on program shutdown
+        win32api.SetConsoleCtrlHandler(self.closeAllDatasets, True)
 
-    def closeAllDatasets(self):
+    def closeAllDatasets(self, signal):
         """
-        Close all open datasets.
+        Close all open datasets when we shut down.
         Needed on shutdown and disconnect since open HDF5 files may become corrupted.
         """
-        print('closing: ')
-        # get all datasets across all sessions
-        all_sessions = self.session_store._sessions
-        all_datasets = [session.datasets.values() for session in all_sessions]
+        f = open('datavaultshutdown.txt', 'w')
 
+        # get all datasets across all sessions
+        all_sessions = list(self.session_store.get_all())
+        all_datasets = [session.datasets.values() for session in all_sessions]
         # flatten list of datasets
-        all_files = set([dataset.data for session_datasets in all_datasets for dataset in session_datasets])
+        all_containers = set([dataset.data for session_datasets in all_datasets for dataset in session_datasets])
 
         # close all the files
-        for dataset in all_datasets:
-            # cancel the timeout poll loop
-            dataset._fileTimeoutCall.cancel()
+        for container in all_containers:
+            datafile = container._file
+            # cancel the timeout poll loop if it exists
+            if hasattr(datafile, '_fileTimeoutCall'):
+                datafile._fileTimeoutCall.cancel()
             # close the file
-            dataset._fileTimeout()
+            try:
+                datafile._fileTimeout()
+            except Exception as e:
+                print(e)
+                f.write(e)
+                f.write('\n')
+            else:
+                f.write('no problems')
 
-    def stopServer(self):
-        """
-        todo
-        """
-        print('stopserver')
-        self.cxn.disconnect()
-        #
-        self.closeAllDatasets()
-
+        f.close()
+        # todo: log instead
 
 
     # CONTEXT MANAGEMENT

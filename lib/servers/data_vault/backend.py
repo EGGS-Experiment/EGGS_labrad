@@ -2,9 +2,10 @@ import os
 import sys
 import time
 import h5py
-import numpy as np
 import base64
 import datetime
+import numpy as np
+import collections
 
 from . import errors, util
 from labrad import types as T
@@ -81,15 +82,12 @@ class SelfClosingFile(object):
         Runs when an instance is called without arguments
         (e.g. e = Example, e())
         """
-        print('called')
         # begin the countdown if are called after exceeding the timeout
         if not hasattr(self, '_file'):
-            print('start')
             self._file = self.opener(*self.open_args, **self.open_kw)
             self._fileTimeoutCall = self.reactor.callLater(self.timeout, self._fileTimeout)
         # otherwise, reset the timer
         else:
-            print('reset')
             self._fileTimeoutCall.reset(self.timeout)
         return self._file
 
@@ -98,7 +96,6 @@ class SelfClosingFile(object):
         Run all cleanup callbacks, close the file,
         and delete timeout functions.
         """
-        print('CLOSE CLOSE CLOSE CLOSE')
         for callback in self.callbacks:
             callback(self)
         self._file.close()
@@ -896,7 +893,6 @@ def open_backend(filename):
     # check to see whether the CSV file exists
     if os.path.exists(csv_file):
         if use_numpy:
-            print('use numpy true')
             return CsvNumpyData(csv_file)
         else:
             return CsvListData(csv_file)
