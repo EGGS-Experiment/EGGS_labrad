@@ -28,6 +28,10 @@ _SRS_EOL = '\r'
 
 
 class RGA_Server(SerialDeviceServer):
+    """
+    Talks to the SRS RGAx00 residual gas analyzer.
+    """
+
     name = 'RGA Server'
     regKey = 'RGAServer'
     port = 'COM48'
@@ -43,7 +47,6 @@ class RGA_Server(SerialDeviceServer):
     # STARTUP
     def initServer(self):
         super().initServer()
-        self.comm_lock = DeferredLock()
         # RGA type
         self.m_max = 200
 
@@ -188,7 +191,11 @@ class RGA_Server(SerialDeviceServer):
             elif type(mass) is str:
                 if mass != '*':
                     raise Exception('Invalid Input.')
+            # set value
+            yield self.ser.acquire()
             yield self.ser.write('MI' + str(mass) + _SRS_EOL)
+            self.ser.release()
+        # query
         resp = yield self._getter('MI')
         returnValue(int(resp))
 
@@ -204,7 +211,11 @@ class RGA_Server(SerialDeviceServer):
             elif type(mass) is str:
                 if mass != '*':
                     raise Exception('Invalid Input.')
+            # set value
+            yield self.ser.acquire()
             yield self.ser.write('MF' + str(mass) + _SRS_EOL)
+            self.ser.release()
+        # query
         resp = yield self._getter('MF')
         returnValue(int(resp))
 
@@ -220,7 +231,11 @@ class RGA_Server(SerialDeviceServer):
             elif type(steps) is str:
                 if steps != '*':
                     raise Exception('Invalid Input.')
+            # set value
+            yield self.ser.acquire()
             yield self.ser.write('SA' + str(steps) + _SRS_EOL)
+            self.ser.release()
+        # query
         resp = yield self._getter('SA')
         returnValue(int(resp))
 
@@ -258,21 +273,32 @@ class RGA_Server(SerialDeviceServer):
         num_points = 0
         bytes_to_read = 0
         if mode.lower() in ('a', 'analog'):
+            # getter
+            yield self.ser.acquire()
             yield self.ser.write('AP?\r')
             num_points = yield self.ser.read_line(_SRS_EOL)
+            self.ser.release()
+            # process
             num_points = int(num_points)
             bytes_to_read = num_scans * 4 * (num_points + 1)
             msg = 'SC' + str(num_scans) + _SRS_EOL
         elif mode.lower() in ('h', 'histogram'):
+            # getter
+            yield self.ser.acquire()
             yield self.ser.write('HP?\r')
+            num_points = yield self.ser.read_line(_SRS_EOL)
+            self.ser.release()
+            # process
             num_points = int(num_points)
             bytes_to_read = num_scans * 4 * (num_points + 1)
             msg = 'HS' + str(num_scans) + _SRS_EOL
         else:
             raise Exception('Invalid Input.')
-        # initiate blocking scan
+        # initiate scan
+        yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(bytes_to_read)
+        self.ser.release()
         # process scan
         current_arr = [int.from_bytes(resp[i:i+4], 'big') for i in range(0, bytes_to_read, 4)]
         # create axis
@@ -286,23 +312,19 @@ class RGA_Server(SerialDeviceServer):
         """
         Start a single mass measurement.
         """
+        # sanitize input
         if (mass < 0) or (mass > self.m_max):
             raise Exception('Invalid Input.')
-
         # start a single mass measurement
         msg = 'MR' + str(mass) + _SRS_EOL
-        yield self.comm_lock.acquire()
+        yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(4)
-        self.comm_lock.release()
-
         # set the rods back to zero
         yield self.ser.write('MR0\r')
-
-        # process result
+        self.ser.release()
+        # process and return the result
         current = int.from_bytes(resp, 'big')
-
-        # return the result
         returnValue(current)
 
 
@@ -312,22 +334,19 @@ class RGA_Server(SerialDeviceServer):
         """
         Start a total pressure measurement.
         """
-        # set the electron multiplier voltage to zero
-        # which automatically enables total pressure measurement
+        # set the electron multiplier voltage to zero which
+        # automatically enables total pressure measurement
         yield self._setter('HV', 0)
-
         # start a total pressure measurement
         msg = 'TP?' + _SRS_EOL
-        yield self.comm_lock.acquire()
+        yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(4)
-        self.comm_lock.release()
-
-        # process result
+        self.ser.release()
+        # process and return result
         pressure = int.from_bytes(resp, 'big')
-
-        # return the result
         returnValue(pressure)
+
 
     # HELPER
     @inlineCallbacks
@@ -336,8 +355,11 @@ class RGA_Server(SerialDeviceServer):
         Change device parameters.
         """
         msg = chString + str(param) + _SRS_EOL
+        # write and read response
+        yield self.ser.acquire()
         yield self.ser.write(msg)
         status = yield self.ser.read_line(_SRS_EOL)
+        self.ser.release()
         # process status byte echo for errors
         # todo: convert to binary array then AND the errors
         # convert string input into binary
@@ -351,8 +373,10 @@ class RGA_Server(SerialDeviceServer):
         """
         # query device for parameter value
         msg = chString + '?' + _SRS_EOL
+        yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read_line(_SRS_EOL)
+        self.ser.release()
         # send out buffer response to clients
         self.buffer_update((chString, resp.strip()))
         returnValue(resp)
