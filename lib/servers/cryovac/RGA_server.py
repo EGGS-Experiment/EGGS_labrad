@@ -294,7 +294,7 @@ class RGA_Server(SerialDeviceServer):
         yield self.comm_lock.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(4)
-        yield self.comm_lock.release()
+        self.comm_lock.release()
 
         # set the rods back to zero
         yield self.ser.write('MR0\r')
@@ -321,7 +321,7 @@ class RGA_Server(SerialDeviceServer):
         yield self.comm_lock.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(4)
-        yield self.comm_lock.release()
+        self.comm_lock.release()
 
         # process result
         pressure = int.from_bytes(resp, 'big')
