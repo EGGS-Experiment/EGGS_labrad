@@ -188,6 +188,13 @@ class SerialDeviceServer(LabradServer):
                 print('Unknown connection error')
                 raise
 
+    def stopServer(self):
+        """
+        Close serial connection before exiting.
+        """
+        if self.ser:
+            self.ser.close()
+
     @inlineCallbacks
     def initSerial(self, serStr, port, **kwargs):
         """
@@ -345,15 +352,23 @@ class SerialDeviceServer(LabradServer):
 
     # SETTINGS
         # DEVICE SELECTION
-    @setting(111111, 'Select Device', node='s', port='s', returns='')
-    def selectDevice(self, c, node, port):
+    @setting(111111, 'Select Device', node='s', port='s', returns=['', '(ss)'])
+    def selectDevice(self, c, node=None, port=None):
         """
         Attempt to connect to serial device on the given node and port.
         """
+        # ensure we don't already have a device connected
         if self.ser:
-            raise Exception('A serial device is already opened.')
+            # empty call is getter
+            if (node is None) and (port is None):
+                return (self.node, self.port)
+            else:
+                raise Exception('A serial device is already opened.')
+
         self.serNode = node
         self.port = port
+
+        # try to find the serial server and connect to the designated port
         try:
             serStr = yield self.findSerial(self.serNode)
             yield self.initSerial(serStr, self.port, baudrate=self.baudrate, timeout=self.timeout,
@@ -393,17 +408,14 @@ class SerialDeviceServer(LabradServer):
     @setting(111114, 'Serial Write', data='s', returns='')
     def serial_write(self, c, data):
         """Directly write to the serial device."""
+        yield self.ser.acquire()
         yield self.ser.write(data)
+        self.ser.release()
 
     @setting(111115, 'Serial Read', returns='s')
     def serial_read(self, c):
         """Directly read the serial buffer."""
+        yield self.ser.acquire()
         resp = yield self.ser.read()
+        self.ser.release()
         returnValue(resp)
-
-    def stopServer(self):
-        """
-        Close serial connection before exiting.
-        """
-        if self.ser:
-            self.ser.close()
