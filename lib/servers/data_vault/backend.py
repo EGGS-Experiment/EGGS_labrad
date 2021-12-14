@@ -55,6 +55,7 @@ class SelfClosingFile(object):
         self.opener = opener
         self.open_args = open_args
         self.open_kw = open_kw
+        primt(self.timeout)
         self.timeout = timeout
         self.callbacks = []
         self.reactor = reactor
@@ -62,15 +63,21 @@ class SelfClosingFile(object):
             self.__call__()
 
     def __call__(self):
+        print('called')
+        # begin the countdown if are called after exceeding the timeout
         if not hasattr(self, '_file'):
+            print('start')
             self._file = self.opener(*self.open_args, **self.open_kw)
             self._fileTimeoutCall = self.reactor.callLater(
                     self.timeout, self._fileTimeout)
+        # otherwise, reset the timer
         else:
+            print('reset')
             self._fileTimeoutCall.reset(self.timeout)
         return self._file
 
     def _fileTimeout(self):
+        print('CLOSE CLOSE CLOSE CLOSE')
         for callback in self.callbacks:
             callback(self)
         self._file.close()
