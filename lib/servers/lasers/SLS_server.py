@@ -63,8 +63,12 @@ class SLSServer(SerialDeviceServer, PollingServer):
         chString = ['LockTime', 'LockCount', 'AutoLockState']
         resp = []
         for string in chString:
+            # query
+            yield self.ser.acquire()
             resp_tmp = yield self.ser.write('get ' + string + TERMINATOR)
             resp_tmp = yield self.ser.read_line(_SLS_EOL)
+            self.ser.release()
+            # parse
             resp_tmp = yield self._parse(resp_tmp, False)
             resp.append(resp_tmp)
         returnValue(resp)
@@ -102,11 +106,18 @@ class SLSServer(SerialDeviceServer, PollingServer):
         except KeyError:
             print('Invalid parameter. Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
         if param_val:
+            # setter
+            yield self.ser.acquire()
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
             set_resp = yield self.ser.read_line(_SLS_EOL)
+            self.ser.release()
             set_resp = yield self._parse(set_resp, True)
+        # getter
+        yield self.ser.acquire()
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
         resp = yield self.ser.read_line(_SLS_EOL)
+        self.ser.release()
+        # return value
         resp = yield self._parse(resp, False)
         returnValue(resp)
 
@@ -137,6 +148,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         resp = yield self._query(chString, lockpoint)
         returnValue(int(resp))
 
+
     # SERVO
     @setting(411, 'servo', servo_target='s', param_name='s', param_val='?', returns='s')
     def servo(self, c, servo_target, param_name, param_val=None):
@@ -148,7 +160,8 @@ class SLSServer(SerialDeviceServer, PollingServer):
             param_val       ()      : value to change
         '''
         tgstring = {'current': 'Current', 'pzt': 'PZT', 'tx': 'TX'}
-        chstring = {'p': 'ServoPropGain', 'i': 'ServoIntGain', 'd': 'ServoDiffGain', 'set': 'ServoSetpoint', 'loop': 'ServoInvertLoop', 'filter': 'ServoOutputFilter'}
+        chstring = {'p': 'ServoPropGain', 'i': 'ServoIntGain', 'd': 'ServoDiffGain', 'set': 'ServoSetpoint',
+                    'loop': 'ServoInvertLoop', 'filter': 'ServoOutputFilter'}
         try:
             string_tmp = tgstring[servo_target.lower()] + chstring[param_name.lower()]
         except KeyError:
@@ -164,13 +177,14 @@ class SLSServer(SerialDeviceServer, PollingServer):
         '''
         Returns the values of ALL parameters.
         '''
+        yield self.ser.acquire()
         yield self.ser.write_line('get values')
-        #should be blocking otherwise we might overwrite
         resp = yield self.ser.read_line(_SLS_EOL)
-        #parse response
+        self.ser.release()
+        # parse response
         resp = resp.split('\r\n')[2:-2]
         resp = [val.split('=') for val in resp]
-        #return keys and values
+        # return keys and values
         keys = [val[0] for val in resp]
         values = [val[1] for val in resp]
         returnValue((keys, values))
@@ -182,12 +196,14 @@ class SLSServer(SerialDeviceServer, PollingServer):
         """
         Polls the device for locking readout.
         """
+        yield self.ser.acquire()
         yield self.ser.write('get LockCount' + TERMINATOR)
         lockcount = yield self.ser.read_line(_SLS_EOL)
         lockcount = yield self._parse(lockcount, False)
         yield self.ser.write('get LockTime' + TERMINATOR)
         locktime = yield self.ser.read_line(_SLS_EOL)
         locktime = yield self._parse(locktime, False)
+        self.ser.release()
         self.autolock_update((int(lockcount), float(locktime)))
 
 
@@ -223,13 +239,17 @@ class SLSServer(SerialDeviceServer, PollingServer):
         """
         if param:
             # write data and read echo
+            yield self.ser.acquire()
             yield self.ser.write('set ' + chstring + ' ' + str(param) + TERMINATOR)
             set_resp = yield self.ser.read_line(_SLS_EOL)
+            self.ser.release()
             # parse
             set_resp = yield self._parse(set_resp, True)
         # write data and read echo
+        yield self.ser.acquire()
         yield self.ser.write('get ' + chstring + TERMINATOR)
         resp = yield self.ser.read_line(_SLS_EOL)
+        self.ser.release()
         # parse
         resp = yield self._parse(resp, False)
         returnValue(resp)
