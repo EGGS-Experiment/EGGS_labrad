@@ -69,14 +69,15 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
             channel = '0'
         elif channel not in INPUT_CHANNELS:
             raise Exception('Invalid input: channel must be one of: ' + str(INPUT_CHANNELS))
-
+        # query
         yield self.ser.acquire()
         yield self.ser.write('KRDG? ' + str(channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         self.ser.release()
-
+        # parse
         resp = np.array(resp.split(','), dtype=float)
         resp = tuple(resp)
+        # update
         self.temp_update(resp)
         returnValue(resp)
 
@@ -107,7 +108,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         self.ser.release()
-
+        # return value
         resp = resp.split(',')
         resp = (int(resp[0]), float(resp[2]))
         returnValue(resp)
@@ -137,7 +138,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         yield self.ser.write(chString + '?' + str(output_channel) + ' ' + TERMINATOR)
         resp = yield self.ser.read_line()
         self.ser.release()
-
+        # return value
         resp = np.array(resp.split(','), dtype=int)
         resp = tuple(resp[:2])
         returnValue(resp)
@@ -165,7 +166,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         self.ser.release()
-
+        # return value
         returnValue(int(resp))
 
     @setting(213, 'Heater Power', output_channel='i', power=['i', 'v'], returns='v')
@@ -193,7 +194,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         self.ser.release()
-
+        # return value
         returnValue(float(resp))
 
     @setting(231, 'Heater PID', output_channel='i', prop='v', integ='v', diff='v', returns='(vvv)')
@@ -220,7 +221,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         self.ser.release()
-
+        # return value
         resp = np.array(resp.split(','), dtype=float)
         returnValue(tuple(resp))
 

@@ -85,6 +85,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         Returns:
                     (str)   : response from device
         """
+        # setter & getter
         yield self.ser.acquire()
         if power:
             yield self.ser.write('G' + TERMINATOR)
@@ -92,6 +93,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
             yield self.ser.write('B' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
         self.ser.release()
+        # parse
         if resp == _NI03_ACK_msg:
             self.ip_power_update(power, self.getOtherListeners(c))
         returnValue(resp)
@@ -105,6 +107,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         Returns:
                     (str)   : response from device
         """
+        # setter
         yield self.ser.acquire()
         if power:
             yield self.ser.write('GN' + TERMINATOR)
@@ -112,7 +115,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
             yield self.ser.write('BN' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
         self.ser.release()
-
+        # parse
         if resp == _NI03_ACK_msg:
             self.np_power_update(power, self.getOtherListeners(c))
         returnValue(resp)
@@ -142,10 +145,12 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         Returns:
             (float): ion pump pressure
         """
+        # getter
         yield self.ser.acquire()
         yield self.ser.write('Tb' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
         self.ser.release()
+        # update values
         resp = float(resp)
         self.pressure_update(resp)
         returnValue(resp)
@@ -159,6 +164,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         Returns:
                     (int): ion pump voltage in V
         """
+        # setter
         if voltage is not None:
             # convert voltage to hex
             voltage = hex(voltage)[2:]
@@ -167,6 +173,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
             yield self.ser.write('U' + padleft + voltage + TERMINATOR)
             yield self.ser.read_line('\r')
             self.ser.release()
+        # getter
         yield self.ser.acquire()
         yield self.ser.write('u' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
@@ -182,12 +189,13 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         Returns:
             [[int, int], [int, int]]: working time of ion pump and getter
         """
+        # query
         yield self.ser.acquire()
         yield self.ser.write('TM' + TERMINATOR)
         ip_time = yield self.ser.read_line('\r')
         np_time = yield self.ser.read_line('\r')
         self.ser.release()
-
+        # parse
         ip_time = ip_time[16:-8].split(' Hours ')
         np_time = np_time[16:-8].split(' Hours ')
         ip_time = [int(val) for val in ip_time]
@@ -223,7 +231,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         """
         Polls the device for pressure readout.
         """
-        # get results all together
+        # query
         yield self.ser.acquire()
         yield self.ser.write('Tb\r\n')
         ip_pressure = yield self.ser.read_line('\r')
@@ -240,7 +248,6 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         self.temperature_update((float(temp[1]), float(temp[3])))
         # process & update voltage
         self.voltage_update(int(volt_resp, 16))
-
         # interlock: checks
         if self.interlock_active:
             # switch off ion pump if pressure is above a certain value
