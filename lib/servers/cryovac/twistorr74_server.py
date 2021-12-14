@@ -52,11 +52,13 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     timeout = Value(5.0, 's')
     baudrate = 9600
 
+
     # SIGNALS
     pressure_update = Signal(999999, 'signal: pressure update', 'v')
     energy_update = Signal(999998, 'signal: energy update', 'v')
     rpm_update = Signal(999997, 'signal: rpm update', 'v')
     power_update = Signal(999996, 'signal: power update', 'b')
+
 
     # STARTUP
     def initServer(self):
@@ -65,15 +67,16 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         from twisted.internet.reactor import callLater
         callLater(5, self.setUnits)
 
-    #@inlineCallbacks
+    @inlineCallbacks
     def setUnits(self):
-        print('Setting default units to mBar.')
-        pass
-        # msg = self._create_message(CMD_msg=b'163', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
-        # yield self.ser.write(msg)
-        # resp = yield self.ser.read(15)
-        # resp = self._parse(resp)
-        # print(resp)
+        msg = self._create_message(CMD_msg=b'163', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'000000')
+        yield self.ser.acquire()
+        yield self.ser.write(msg)
+        resp = yield self.ser.read(6)
+        self.ser.release()
+        resp = self._parse(resp)
+        print(resp)
+        print('Default units set to mBar.')
 
 
     # TOGGLE
