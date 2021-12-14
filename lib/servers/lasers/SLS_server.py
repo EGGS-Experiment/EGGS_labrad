@@ -15,6 +15,7 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
+
 from labrad.types import Value
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
