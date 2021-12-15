@@ -15,8 +15,6 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-import time
-
 from labrad.types import Value
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -132,6 +130,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         yield self.ser.read(2)
         self.ser.release()
         # parse
+        resp = yield self._parse(resp)
         resp = float(resp)
         # send signal and return value
         self.pressure_update(resp)
