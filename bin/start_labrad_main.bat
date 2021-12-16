@@ -1,5 +1,8 @@
 @ECHO OFF
 
+activate labart
+CD "%LABRAD_ROOT%"
+
 ::Core
 START "Labrad Manager" /min %HOME%/Code/scalabrad-0.8.3/bin/labrad.bat --tls-required false
 START "Labrad Web GUI" /min %HOME%/Code/scalabrad-web-server-2.0.6/bin/labrad-web.bat
@@ -24,5 +27,3 @@ START /min CMD /c %HOME%/Code/EGGS_labrad/bin/labrad/start_labrad_servers.bat
 ::ARTIQ
 START /min CMD /c %HOME%/Code/EGGS_labrad/bin/start_artiq.bat
 
-activate labart
-::CD "%LABRAD_ROOT%"
