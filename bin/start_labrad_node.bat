@@ -3,7 +3,8 @@
 ::Starts all necessary components for a LabRAD node
 
 ::Move into main labrad library so other windows will have it too
-::CD "%HOME%\Code\EGGS_labrad\lib"
+activate labart
+CD "%LABRAD_ROOT%"
 
 ::Core
 START "Labrad Web GUI" /min %HOME%\Code\scalabrad-web-server-2.0.6\bin\labrad-web.bat
@@ -15,6 +16,3 @@ START /min CMD /c %HOME%\Code\EGGS_labrad\bin\labrad\start_labrad_devices.bat
 
 ::Clients
 START /min CMD /c %HOME%\Code\EGGS_labrad\bin\labrad\start_labrad_clients.bat
-
-::Enter labart environment
-activate labart
