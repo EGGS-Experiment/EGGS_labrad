@@ -47,16 +47,16 @@ message = 987654321
 timeout = 100
 ### END NODE INFO
 """
-from labrad.units import WithUnit
-from labrad.server import LabradServer, setting
-from labrad.errors import DeviceNotSelectedError
-
 import pyvisa as visa
+from labrad.units import WithUnit
+from labrad.server import setting
+from labrad.errors import DeviceNotSelectedError
+from EGGS_labrad.lib.servers.polling_server import PollingServer
 
 KNOWN_DEVICE_TYPES = ('GPIB', 'TCPIP', 'USB')
 
 
-class GPIBBusServer(LabradServer):
+class GPIBBusServer(PollingServer):
     """
     Provides direct access to GPIB-enabled devices.
     """
@@ -67,6 +67,7 @@ class GPIBBusServer(LabradServer):
 
     def initServer(self):
         super().initServer()
+        self.devices = {}
         self.refreshDevices()
 
     def _poll(self):
