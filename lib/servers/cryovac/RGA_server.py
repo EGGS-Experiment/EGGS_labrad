@@ -19,9 +19,7 @@ import numpy as np
 from labrad.units import WithUnit
 from labrad.server import Signal, setting
 
-from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
-
-#from EGGS_labrad.lib.servers.polling_server import PollingServer
+from twisted.internet.defer import returnValue, inlineCallbacks
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 _SRS_EOL = '\r'

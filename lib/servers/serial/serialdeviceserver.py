@@ -188,12 +188,16 @@ class SerialDeviceServer(LabradServer):
                 print('Unknown connection error')
                 raise
 
+    @inlineCallbacks
     def stopServer(self):
         """
         Close serial connection before exiting.
         """
+        super().stopServer()
         if self.ser:
+            yield self.ser.acquire()
             self.ser.close()
+            self.ser.release()
 
     @inlineCallbacks
     def initSerial(self, serStr, port, **kwargs):
@@ -209,18 +213,23 @@ class SerialDeviceServer(LabradServer):
         
         @raise SerialConnectionError: Error code 1.  Raised if we could not create serial connection.
         """
-        if kwargs.get('timeout') is None and self.timeout: kwargs['timeout'] = self.timeout
+        # set default timeout if not specified
+        if kwargs.get('timeout') is None and self.timeout:
+            kwargs['timeout'] = self.timeout
+        # print connection status
         print('Attempting to connect at:')
         print('\tserver:\t%s' % serStr)
         print('\tport:\t%s' % port)
         print('\ttimeout:\t%s\n\n' % (str(self.timeout) if kwargs.get('timeout') is not None else 'No timeout'))
+
+        # find relevant serial server
         cli = self.client
         try:
             # get server wrapper for serial server
             ser = cli.servers[serStr]
             # instantiate SerialConnection convenience class
             self.ser = self.SerialConnection(ser=ser, port=port, **kwargs)
-            #clear input and output buffers
+            # clear input and output buffers
             yield self.ser.flush_input()
             yield self.ser.flush_output()
             print('Serial connection opened.')
@@ -357,22 +366,30 @@ class SerialDeviceServer(LabradServer):
         """
         Attempt to connect to serial device on the given node and port.
         """
-        # ensure we don't already have a device connected
+        # handle cases if connection already exists
         if self.ser:
-            # empty call is getter
+            # empty call is getter if connection exists
             if (node is None) and (port is None):
-                return (self.node, self.port)
+                return (self.serNode, self.port)
             else:
                 raise Exception('A serial device is already opened.')
+        # set parameters if specified
+        elif (node is not None) and (port is not None):
+            self.serNode = node
+            self.port = port
+        # connect to default values if no args specified
+        elif (node is None) and (port is None) and (self.serNode) and (self.port):
+            pass
+        # raise error if only node or port is specified
+        else:
+            raise Exception('Only one argument specified.')
 
-        self.serNode = node
-        self.port = port
 
         # try to find the serial server and connect to the designated port
         try:
             serStr = yield self.findSerial(self.serNode)
             yield self.initSerial(serStr, self.port, baudrate=self.baudrate, timeout=self.timeout,
-                            bytesize=self.bytesize, parity=self.parity)
+                                  bytesize=self.bytesize, parity=self.parity)
         except SerialConnectionError as e:
             self.ser = None
             if e.code == 0:

@@ -72,13 +72,14 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         yield self.ser.write(msg)
         resp = yield self.ser.read(6)
         self.ser.release()
-        resp = self._parse(resp)
-        print(resp)
-        print('Default units set to mBar.')
+        # remove CRC since parse assumes no CRC or ETX
+        resp = yield self._parse(resp[:-3])
+        if resp == 'Acknowledged':
+            print('Default units set to mBar.')
 
 
     # TOGGLE
-    @setting(111, 'toggle', onoff='b', returns='b')
+    @setting(111, 'toggle', onoff=['', 'b'], returns='b')
     def toggle(self, c, onoff=None):
         """
         Start or stop the pump
@@ -87,15 +88,20 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         Returns:
                     (bool)  : pump state
         """
-        # create and send message to device
+        # setter
         message = None
-        if onoff is True:
-            message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'1')
-        elif onoff is False:
-            message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
-        elif onoff is None:
-            message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_READ_msg)
-        # set and read response
+        if onoff is not None:
+            if onoff is True:
+                message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'1')
+            elif onoff is False:
+                message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
+            yield self.ser.acquire()
+            yield self.ser.write(message)
+            resp = yield self.ser.read_line(_TT74_ETX_msg)
+            yield self.ser.read(2)
+            self.ser.release()
+        # getter
+        message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_READ_msg)
         yield self.ser.acquire()
         yield self.ser.write(message)
         resp = yield self.ser.read_line(_TT74_ETX_msg)
@@ -229,7 +235,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     def _parse(self, ans):
         if ans == b'':
             raise Exception('No response from device')
-        # remove STX, ADDR, and CRC
+        # remove STX and ADDR
         ans = ans[2:]
         # check if we have CMD and DIR and remove them if so
         if len(ans) > 1:
@@ -239,7 +245,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
             raise Exception(_TT74_ERRORS_msg[ans])
         elif ans == b'\x06':
             ans = 'Acknowledged'
-        # if none of these cases, we just return it anyways
+        # if none of these cases, just return it anyways
         return ans
 
 

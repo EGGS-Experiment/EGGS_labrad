@@ -15,16 +15,20 @@ class PollingServer(LabradServer):
         super().initServer()
         # signal stuff
         self.listeners = set()
-        # polling stuff
+        # create refresher for polling
         self.refresher = LoopingCall(self._poll)
-        self.startRefresher(5)
+        # needed to initiate it first so that it exists
+        self.refresher.start(5, now=False)
+        self.refresher.stop()
 
     def stopServer(self):
+        super().stopServer()
         if hasattr(self, 'refresher'):
             if self.refresher.running:
                 self.refresher.stop()
-        super().stopServer()
 
+
+    # CONTEXT
     def initContext(self, c):
         """Initialize a new context object."""
         self.listeners.add(c.ID)
@@ -42,7 +46,7 @@ class PollingServer(LabradServer):
 
     # POLLING
     @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
-    def set_polling(self, c, status, interval=None):
+    def setPolling(self, c, status, interval=None):
         """
         Configure polling of device for values.
         """
@@ -51,17 +55,20 @@ class PollingServer(LabradServer):
             interval = 5.0
         elif (interval < 1) or (interval > 60):
             raise Exception('Invalid polling interval.')
-        # only start/stop polling if we are not already started/stopped
+
+        # start polling if we are stopped
         if status and (not self.refresher.running):
             self.startRefresher(interval)
+        # change polling interval if already running
         elif status and self.refresher.running:
             self.refresher.interval = interval
-        elif (not status) and (self.refresher.running):
+        # stop polling if we are running
+        elif (not status) and self.refresher.running:
             self.refresher.stop()
         return (self.refresher.running, self.refresher.interval)
 
     @setting(912, 'Get Polling', returns='(bv)')
-    def get_polling(self, c):
+    def getPolling(self, c):
         """
         Get polling parameters.
         """
