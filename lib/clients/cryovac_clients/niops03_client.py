@@ -75,7 +75,7 @@ class niops03_client(niops03_gui):
         poll_params = yield self.niops.polling()
         #only start polling if not started
         if not poll_params[0]:
-            yield self.niops.set_polling(True, 5.0)
+            yield self.niops.polling(True, 5.0)
 
         return self.cxn
 

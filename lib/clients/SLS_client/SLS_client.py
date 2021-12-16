@@ -58,7 +58,7 @@ class SLS_client(SLS_gui):
         poll_params = yield self.sls.polling()
         #only start polling if not started
         if not poll_params[0]:
-            yield self.sls.set_polling(True, 5.0)
+            yield self.sls.polling(True, 5.0)
         return self.cxn
 
     @inlineCallbacks

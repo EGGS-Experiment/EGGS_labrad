@@ -42,7 +42,7 @@ class twistorr74_client(GUIClient):
         poll_params = yield self.tt.polling()
         # only start polling if not started
         if not poll_params[0]:
-            yield self.tt.set_polling(True, 5.0)
+            yield self.tt.polling(True, 5.0)
         print(poll_params)
         return self.cxn
 

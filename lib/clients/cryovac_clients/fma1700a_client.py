@@ -64,7 +64,7 @@ class fma1700a_client(fma1700a_gui):
         poll_params = yield self.tt.polling()
         # only start polling if not started
         if not poll_params[0]:
-            yield self.fma.set_polling(True, 5.0)
+            yield self.fma.polling(True, 5.0)
         return self.cxn
 
 
