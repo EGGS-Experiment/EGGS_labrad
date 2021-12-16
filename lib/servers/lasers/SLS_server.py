@@ -51,7 +51,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         Toggle autolock.
         '''
         chString = 'AutoLockEnable'
-        resp = yield self._query(chString, enable)
+        resp = yield self._write_and_query(chString, enable)
         returnValue(resp)
 
     @setting(112, 'Autolock Status', returns='*s')
@@ -87,7 +87,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
                 param_tg = tgstring[param.upper()]
             except KeyError:
                 print('Invalid parameter: parameter must be one of [\'OFF\', \'PZT\', \'CURRENT\']')
-        resp = yield self._query(chString, param_tg)
+        resp = yield self._write_and_query(chString, param_tg)
         returnValue(resp)
 
     # PDH
@@ -133,7 +133,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
                     (float) : the value of offset frequency
         '''
         chString = 'OffsetFrequency'
-        resp = yield self._query(chString, freq)
+        resp = yield self._write_and_query(chString, freq)
         returnValue(float(resp))
 
     @setting(312, 'Offset Lockpoint', lockpoint='i', returns='i')
@@ -146,7 +146,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
                                 : the offset lockpoint
         '''
         chString = 'LockPoint'
-        resp = yield self._query(chString, lockpoint)
+        resp = yield self._write_and_query(chString, lockpoint)
         returnValue(int(resp))
 
 
@@ -168,7 +168,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         except KeyError:
             print('Invalid target or parameter. Target must be one of [\'current\',\'pzt\',\'tx\'].'
                   'Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
-        resp = yield self._query(string_tmp, param_val)
+        resp = yield self._write_and_query(string_tmp, param_val)
         returnValue(resp)
 
 
@@ -233,7 +233,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         return params[1]
 
     @inlineCallbacks
-    def _query(self, chstring, param):
+    def _write_and_query(self, chstring, param):
         """
         Writes parameter to SLS and verifies setting,
         then reads back same parameter.
