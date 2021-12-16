@@ -45,11 +45,15 @@ class PollingServer(LabradServer):
 
 
     # POLLING
-    @setting(911, 'Set Polling', status='b', interval='v', returns='(bv)')
-    def setPolling(self, c, status, interval=None):
+    @setting(911, 'Polling', status='b', interval='v', returns='(bv)')
+    def Polling(self, c, status=None, interval=None):
         """
         Configure polling of device for values.
         """
+        # empty call returns getter
+        if (status is None) and (interval is None):
+            return (self.refresher.running, self.refresher.interval)
+
         # ensure interval is valid
         if interval is None:
             interval = 5.0
@@ -66,19 +70,6 @@ class PollingServer(LabradServer):
         elif (not status) and self.refresher.running:
             self.refresher.stop()
         return (self.refresher.running, self.refresher.interval)
-
-    @setting(912, 'Get Polling', returns='(bv)')
-    def getPolling(self, c):
-        """
-        Get polling parameters.
-        """
-        # in case refresher is off
-        interval_tmp = 0
-        if self.refresher.interval is None:
-            interval_tmp = 0
-        else:
-            interval_tmp = self.refresher.interval
-        return (self.refresher.running, interval_tmp)
 
     def startRefresher(self, interval=None):
         """
