@@ -41,8 +41,8 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 import labrad.util
 import labrad.wrappers
 
-from data_vault import SessionStore
-from data_vault.server import DataVault
+from EGGS_labrad.lib.servers.data_vault import SessionStore
+from server import DataVault
 
 
 @inlineCallbacks
