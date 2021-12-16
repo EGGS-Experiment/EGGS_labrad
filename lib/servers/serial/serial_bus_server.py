@@ -24,14 +24,17 @@ from labrad import types as T
 from labrad.errors import Error
 from labrad.server import LabradServer, setting
 from twisted.internet import reactor, threads
+from twisted.internet.task import deferLater
 from twisted.internet.defer import inlineCallbacks, returnValue
-from twisted.internet.task import deferLater, LoopingCall
 
 from serial import Serial
 from serial.serialutil import SerialException
 import serial.tools.list_ports
 
-#Errors
+from EGGS_labrad.lib.servers.polling_server import PollingServer
+
+
+# ERRORS
 class NoPortSelectedError(Error):
     """Please open a port first."""
     code = 1
@@ -44,26 +47,21 @@ class NoPortsAvailableError(Error):
 SerialDevice = collections.namedtuple('SerialDevice', ['name', 'devicepath'])
 
 
-class SerialServer(LabradServer):
-    """Provides access to a computer's serial (COM) ports."""
+class SerialServer(LabradServer, PollingServer):
+    """
+    Provides access to a computer's serial (COM) ports.
+    """
+
     name = '%LABRADNODE% Serial Server'
 
     def initServer(self):
+        super().initServer()
         self.enumerate_serial_pyserial()
-        # start looping call to periodically update serial devices
-        self.refresher = None
-        reactor.callLater(1, self.startRefreshing)
-
-    def startRefreshing(self):
-        self.refresher = LoopingCall(self.enumerate_serial_pyserial)
-        self.refresherDone = self.refresher.start(10)
-
-    def stopServer(self):
-        if hasattr(self, 'refresher'):
-            self.refresher.stop()
+        self._poll = self.enumerate_serial_pyserial
 
     def enumerate_serial_windows(self):
-        """Manually Enumerate the first 20 COM ports.
+        """
+        Manually Enumerate the first 40 COM ports.
 
         pyserial includes a function to enumerate device names, but it
         possibly doesn't work right on windows for COM ports above 4.
@@ -88,7 +86,8 @@ class SerialServer(LabradServer):
             print('  none')
 
     def enumerate_serial_pyserial(self):
-        """This uses the pyserial built-in device enumeration.
+        """
+        This uses the pyserial built-in device enumeration.
 
         We ignore the pyserial "human readable" device name
         because that appears to make no sense.  For instance, a
@@ -132,23 +131,6 @@ class SerialServer(LabradServer):
         print(self.SerialPorts)
         port_list = [x.name for x in self.SerialPorts]
         return port_list
-
-    @setting(2, 'Set Polling', status='b', interval='v', returns='(bv)')
-    def set_polling(self, c, status, interval):
-        """
-        Configure polling of serial ports.
-        """
-        #ensure interval is valid
-        if (interval < 1) or (interval > 60):
-            raise Exception('Invalid polling interval.')
-        #only start/stop polling if we are not already started/stopped
-        if status and (not self.refresher.running):
-            self.refresher.start(interval)
-        elif status and self.refresher.running:
-            self.refresher.interval = interval
-        elif (not status) and (self.refresher.running):
-            self.refresher.stop()
-        return (self.refresher.running, self.refresher.interval)
 
     @setting(10, 'Open', port=[': Open the first available port', 's: Port to open, e.g. COM4'],
              returns=['s: Opened port'])
@@ -412,6 +394,7 @@ class SerialServer(LabradServer):
         """Flush the output buffer."""
         ser = self.getPort(c)
         yield ser.reset_output_buffer()
+
 
 
 __server__ = SerialServer()

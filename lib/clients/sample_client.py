@@ -39,7 +39,7 @@ class twistorr74_client(GUIClient):
         yield self.tt.addListener(listener=self.updatePower, source=None, ID=self.POWERID)
 
         # start device polling
-        poll_params = yield self.tt.get_polling()
+        poll_params = yield self.tt.polling()
         # only start polling if not started
         if not poll_params[0]:
             yield self.tt.set_polling(True, 5.0)

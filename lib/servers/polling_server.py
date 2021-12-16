@@ -9,6 +9,8 @@ class PollingServer(LabradServer):
     Also contains functionality for Signals.
     """
 
+    POLL_ON_STARTUP = False
+
     # STARTUP
     def initServer(self):
         # call parent initserver to support further subclassing
@@ -17,9 +19,10 @@ class PollingServer(LabradServer):
         self.listeners = set()
         # create refresher for polling
         self.refresher = LoopingCall(self._poll)
-        # needed to initiate it first so that it exists
+        # set startup polling
         self.refresher.start(5, now=False)
-        self.refresher.stop()
+        if not self.POLL_ON_STARTUP:
+            self.refresher.stop()
 
     def stopServer(self):
         super().stopServer()

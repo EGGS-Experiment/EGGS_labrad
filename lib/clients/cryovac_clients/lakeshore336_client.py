@@ -58,7 +58,7 @@ class lakeshore336_client(lakeshore336_gui):
         self.c_record = self.cxn.context()
         self.recording = False
         # start device polling
-        poll_params = yield self.ls.get_polling()
+        poll_params = yield self.ls.polling()
         # only start polling if not started
         if not poll_params[0]:
             yield self.ls.set_polling(True, 5.0)

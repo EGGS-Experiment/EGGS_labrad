@@ -70,7 +70,7 @@ class twistorr74_client(twistorr74_gui):
         yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
 
         # start device polling
-        poll_params = yield self.tt.get_polling()
+        poll_params = yield self.tt.polling()
         #only start polling if not started
         if not poll_params[0]:
             yield self.tt.set_polling(True, 5.0)

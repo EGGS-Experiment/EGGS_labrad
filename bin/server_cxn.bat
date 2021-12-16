@@ -10,7 +10,7 @@ ls=cxn.lakeshore336_server
 sls=cxn.sls_server
 # aq=cxn.artiq_server
 
-sls.set_polling(False)
-ls.set_polling(False)
-ni.set_polling(False)
-tt.set_polling(False)
+sls.polling(False)
+ls.polling(False)
+ni.polling(False)
+tt.polling(False)

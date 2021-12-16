@@ -72,7 +72,7 @@ class niops03_client(niops03_gui):
         yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
 
         # start device polling
-        poll_params = yield self.niops.get_polling()
+        poll_params = yield self.niops.polling()
         #only start polling if not started
         if not poll_params[0]:
             yield self.niops.set_polling(True, 5.0)
