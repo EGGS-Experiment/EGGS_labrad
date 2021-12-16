@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = Serial Server
-version = 1.4.2
+version = 1.5.1
 description = Gives access to serial devices via pyserial.
 instancename = %LABRADNODE% Serial Server
 
@@ -15,21 +15,20 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 import os
 import time
 import collections
 
 from labrad import types as T
 from labrad.errors import Error
-from labrad.server import LabradServer, setting
+from labrad.server import setting
 from twisted.internet import reactor, threads
 from twisted.internet.task import deferLater
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from serial import Serial
+from serial.tools import list_ports
 from serial.serialutil import SerialException
-import serial.tools.list_ports
 
 from EGGS_labrad.lib.servers.polling_server import PollingServer
 
@@ -47,17 +46,20 @@ class NoPortsAvailableError(Error):
 SerialDevice = collections.namedtuple('SerialDevice', ['name', 'devicepath'])
 
 
-class SerialServer(LabradServer, PollingServer):
+class SerialServer(PollingServer):
     """
     Provides access to a computer's serial (COM) ports.
     """
 
     name = '%LABRADNODE% Serial Server'
+    POLL_ON_STARTUP = True
 
     def initServer(self):
         super().initServer()
         self.enumerate_serial_pyserial()
-        self._poll = self.enumerate_serial_pyserial
+
+    def _poll(self):
+        self.enumerate_serial_pyserial()
 
     def enumerate_serial_windows(self):
         """
@@ -98,7 +100,7 @@ class SerialServer(LabradServer, PollingServer):
         each port and ignore it if we can't.
         """
         self.SerialPorts = []
-        dev_list = serial.tools.list_ports.comports()
+        dev_list = list_ports.comports()
         for d in dev_list:
             dev_path = d[0]
             try:

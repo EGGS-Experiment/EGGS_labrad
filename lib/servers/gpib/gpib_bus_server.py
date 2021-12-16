@@ -25,23 +25,16 @@
 # Added back automatic device polling
 # 2021 November 25 - Clayton Ho
 # Added configurable device polling
+# 2021 December 15 - Clayton Ho
+# Subclassed it from PollingServer to support polling
+# instead of using server methods
 
-
-from labrad.server import LabradServer, setting
-from labrad.errors import DeviceNotSelectedError
-import labrad.units as units
-
-from twisted.internet.defer import inlineCallbacks
-from twisted.internet.reactor import callLater
-from twisted.internet.task import LoopingCall
-
-import pyvisa as visa
 
 """
 ### BEGIN NODE INFO
 [info]
 name = GPIB Bus
-version = 1.5.1
+version = 1.5.2
 description = Gives access to GPIB devices via pyvisa.
 instancename = %LABRADNODE% GPIB Bus
 
@@ -54,28 +47,30 @@ message = 987654321
 timeout = 100
 ### END NODE INFO
 """
+from labrad.units import WithUnit
+from labrad.server import LabradServer, setting
+from labrad.errors import DeviceNotSelectedError
 
+import pyvisa as visa
 
 KNOWN_DEVICE_TYPES = ('GPIB', 'TCPIP', 'USB')
 
 
 class GPIBBusServer(LabradServer):
-    """Provides direct access to GPIB-enabled devices."""
-    name = '%LABRADNODE% GPIB Bus'
+    """
+    Provides direct access to GPIB-enabled devices.
+    """
 
-    defaultTimeout = 1.0 * units.s
+    name = '%LABRADNODE% GPIB Bus'
+    defaultTimeout = WithUnit(1.0, 's')
+    POLL_ON_STARTUP = True
 
     def initServer(self):
-        self.devices = {}
-        self.refresher = LoopingCall(self.refreshDevices)
-        # start refreshing only after we have started serving to ensure
-        # we have a cxn before we send messages
-        callLater(2, self.refresher.start, 10)
+        super().initServer()
+        self.refreshDevices()
 
-    def stopServer(self):
-        """Kill the device refresh loop and wait for it to terminate."""
-        if hasattr(self, 'refresher'):
-            self.refresher.stop()
+    def _poll(self):
+        self.refreshDevices()
 
     def refreshDevices(self):
         """
@@ -205,23 +200,6 @@ class GPIBBusServer(LabradServer):
     def refresh_devices(self, c):
         """ manually refresh devices """
         self.refreshDevices()
-
-    @setting(31, status='b', interval='v', returns='(bv)')
-    def set_polling(self, c, status, interval):
-        """
-        Configure polling of serial ports.
-        """
-        #ensure interval is valid
-        if (interval < 1) or (interval > 60):
-            raise Exception('Invalid polling interval.')
-        #only start/stop polling if we are not already started/stopped
-        if status and (not self.refresher.running):
-            self.refresher.start(interval)
-        elif status and self.refresher.running:
-            self.refresher.interval = interval
-        elif (not status) and (self.refresher.running):
-            self.refresher.stop()
-        return (self.refresher.running, self.refresher.interval)
 
 
 __server__ = GPIBBusServer()
