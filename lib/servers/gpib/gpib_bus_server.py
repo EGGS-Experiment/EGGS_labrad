@@ -119,7 +119,8 @@ class GPIBBusServer(PollingServer):
 
     @setting(0, addr='s', returns='s')
     def address(self, c, addr=None):
-        """Get or set the GPIB address for this context.
+        """
+        Get or set the GPIB address for this context.
 
         To get the addresses of available devices,
         use the list_devices function.
@@ -147,7 +148,8 @@ class GPIBBusServer(PollingServer):
 
     @setting(4, n_bytes='w', returns='s')
     def read(self, c, n_bytes=None):
-        """Read from the GPIB bus.
+        """
+        Read from the GPIB bus.
 
         Termination characters, if any, will be stripped.
         This includes any bytes corresponding to termination in
@@ -159,13 +161,13 @@ class GPIBBusServer(PollingServer):
             ans = instr.read_raw()
         else:
             ans = instr.read_raw(n_bytes)
-        #convert from bytes to string for python 3
         ans = ans.strip().decode()
         return ans
 
     @setting(5, data='s', returns='s')
     def query(self, c, data):
-        """Make a GPIB query, a write followed by a read.
+        """
+        Make a GPIB query, a write followed by a read.
 
         This query is atomic.  No other communication to the
         device will occur while the query is in progress.
@@ -199,7 +201,7 @@ class GPIBBusServer(PollingServer):
 
     @setting(21)
     def refresh_devices(self, c):
-        """ manually refresh devices """
+        """Manually refresh devices."""
         self.refreshDevices()
 
 

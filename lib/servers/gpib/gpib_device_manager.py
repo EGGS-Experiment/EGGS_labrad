@@ -6,12 +6,6 @@
 #     LabRAD manager at the time of execution.
 # 1.4.0: Updated for Python 3
 
-from twisted.internet.defer import DeferredList, DeferredLock
-from twisted.internet.reactor import callLater
-
-from labrad.server import LabradServer, setting, inlineCallbacks, returnValue
-from labrad.units import Unit,Value
-
 """
 ### BEGIN NODE INFO
 [info]
@@ -28,6 +22,12 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
+from twisted.internet.reactor import callLater
+from twisted.internet.defer import DeferredList, DeferredLock
+
+from labrad.units import Value
+from labrad.server import LabradServer, setting, inlineCallbacks, returnValue
+
 
 UNKNOWN = '<unknown>'
 
@@ -37,7 +37,8 @@ def parseIDNResponse(s):
     return mfr.strip() + ' ' + model.strip()
 
 class GPIBDeviceManager(LabradServer):
-    """Manages autodetection and identification of GPIB devices.
+    """
+    Manages autodetection and identification of GPIB devices.
 
     The device manager listens for "GPIB Device Connect" and
     "GPIB Device Disconnect" messages coming from GPIB bus servers.
@@ -116,7 +117,8 @@ class GPIBDeviceManager(LabradServer):
         
     @inlineCallbacks
     def lookupDeviceName(self, server, channel):
-        """Try to send a *IDN? query to lookup info about a device.
+        """
+        Try to send a *IDN? query to lookup info about a device.
 
         Returns the name of the device and the actual response string
         to the identification query.  If the response cannot be parsed
@@ -135,7 +137,8 @@ class GPIBDeviceManager(LabradServer):
         returnValue((name, resp))
 
     def identifyDevice(self, server, channel, idn):
-        """Try to identify a new device with all ident functions.
+        """
+        Try to identify a new device with all ident functions.
 
         Returns the first name returned by a successful identification.
         """
@@ -166,7 +169,8 @@ class GPIBDeviceManager(LabradServer):
 
     @inlineCallbacks
     def tryIdentFunc(self, server, channel, idn, identifier):
-        """Try calling one registered identification function.
+        """
+        Try calling one registered identification function.
 
         If the identification succeeds, returns the new name,
         otherwise returns None.
@@ -193,7 +197,8 @@ class GPIBDeviceManager(LabradServer):
              devices=['s', '*s'], messageID='w',
              returns='*(s{device} s{server} s{address}, b{isConnected})')
     def register_server(self, c, devices, messageID):
-        """Register as a server that handles a particular GPIB device(s).
+        """
+        Register as a server that handles a particular GPIB device(s).
 
         Returns a list with information about all matching devices that
         have been connected up to this point:
@@ -210,7 +215,7 @@ class GPIBDeviceManager(LabradServer):
         query.  To handle devices that don't support *IDN? correctly, use
         the 'Register Ident Function' in addition.
         """
-        #Managed device servers can specify device names as string or a list of strings
+        # Managed device servers can specify device names as string or a list of strings
         if isinstance(devices, str):
             devices = [devices]
         found = []
@@ -247,7 +252,8 @@ class GPIBDeviceManager(LabradServer):
 
     @setting(10)
     def dump_info(self, c):
-        """Returns information about the server status.
+        """
+        Returns information about the server status.
 
         This info includes currently known devices, registered device
         servers, and registered identification functions.
@@ -264,11 +270,13 @@ class GPIBDeviceManager(LabradServer):
             self.client._sendMessage(s['target'], [rec], context=s['context'])
 
     def serverConnected(self, ID, name):
-        """New GPIBManagedServers will register directly with us, before they
+        """
+        New GPIBManagedServers will register directly with us, before they
         have even completed their registration with the LabRAD manager as a server.
         We will get this signal once they are accessible through the LabRAD client
         so that we can probe them for devices. This ordering matters mainly if
-        the new server has a custom IDN parsing function"""
+        the new server has a custom IDN parsing function.
+        """
         recognizeServer = False
         for device, serverInfo in list(self.deviceServers.items()):
             if serverInfo[0]['target'] == ID:
@@ -308,6 +316,7 @@ class GPIBDeviceManager(LabradServer):
                 deletions.append(src)
         for src in deletions:
             del self.identFunctions[src]
+
 
 __server__ = GPIBDeviceManager()
 

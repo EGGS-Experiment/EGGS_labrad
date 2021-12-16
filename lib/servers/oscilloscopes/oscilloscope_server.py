@@ -91,7 +91,7 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).channel_scale(channel, scale)
 
-    @setting(113, "Channel Probe", channel = 'i', factor = 'i', returns = ['s'])
+    @setting(113, "Channel Probe", channel='i', factor='i', returns = ['s'])
     def channel_probe(self, c, channel, factor = None):
         """
         Get/set the probe attenuation factor.
