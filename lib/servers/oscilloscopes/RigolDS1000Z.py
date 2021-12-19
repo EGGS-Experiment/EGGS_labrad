@@ -131,7 +131,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
             channel = int(channel[-1])
             if isinstance(channel, str):
                 channel = channel.upper()
-            if isinstance(channel, int):
+            else if isinstance(channel, int):
                 channel = 'CHAN%d' % channel
             yield self.write(':TRIG:EDG:SOUR ' + str(channel)) # ***
         else:

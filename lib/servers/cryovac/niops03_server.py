@@ -28,6 +28,7 @@ TERMINATOR = '\r\n'
 _NI03_QUERY_msg = '\x05'
 _NI03_ACK_msg = '\x06'
 
+
 class NIOPS03Server(SerialDeviceServer, PollingServer):
     """
     Controls the NIOPS03 power supply for the ion pump and getter.

@@ -218,7 +218,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     # HELPER
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg=b''):
         """
-        Creates a message according to the Twistorr74 serial protocol
+        Creates a message according to the Twistorr74 serial protocol.
         """
         # create message as bytearray
         msg = _TT74_STX_msg + _TT74_ADDR_msg + CMD_msg + DIR_msg + DATA_msg + _TT74_ETX_msg
@@ -233,6 +233,9 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         return bytes(msg)
 
     def _parse(self, ans):
+        """
+        Parses the Twistorr74 response.
+        """
         if ans == b'':
             raise Exception('No response from device')
         # remove STX and ADDR
