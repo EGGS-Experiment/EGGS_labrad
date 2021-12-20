@@ -149,6 +149,7 @@ class SerialServer(PollingServer):
         on Linux.  For compatibility, always use the same case.
         """
         c['Timeout'] = 0
+        c['Debug'] = False
         if 'PortObject' in c:
             c['PortObject'].close()
             del c['PortObject']
@@ -242,6 +243,14 @@ class SerialServer(PollingServer):
         c['Timeout'] = min(data['s'], 300)
         return T.Value(c['Timeout'], 's')
 
+    @setting(26, 'Debug', status='b', returns='b')
+    def debug(self, c, status=None):
+        """Sets/gets the debug setting."""
+        if status is None:
+            return c['Debug']
+        else:
+            c['Debug'] = status
+
     @setting(30, 'RTS', data=['b'], returns=['b'])
     def RTS(self, c, data):
         """Sets the state of the RTS line."""
@@ -261,19 +270,28 @@ class SerialServer(PollingServer):
     def write(self, c, data):
         """Sends data over the port."""
         ser = self.getPort(c)
+        # encode as needed
         if type(data) == str:
             data = data.encode()
         ser.write(data)
+        # debug output
+        if c['Debug']:
+            print('WRITE: ', data)
         return int(len(data))
 
     @setting(41, 'Write Line', data=['s: Data to send'], returns=['w: Bytes sent'])
     def write_line(self, c, data):
         """Sends data over the port appending CR LF."""
         ser = self.getPort(c)
+        # encode as needed
         if type(data) == str:
             data = data.encode()
-        ser.write(data + b'\r\n')
-        return int(len(data) + 2)
+        data += b'\r\n'
+        ser.write(data)
+        # debug output
+        if c['Debug']:
+            print('WRITE: ', data)
+        return int(len(data))
 
     @setting(42, 'Pause', duration='v[s]: Time to pause', returns=[])
     def pause(self, c, duration):
@@ -285,7 +303,7 @@ class SerialServer(PollingServer):
         """
 
         """
-        # killit is
+        # killit is todo
         killit = False
 
         def doRead(count):
@@ -298,14 +316,15 @@ class SerialServer(PollingServer):
                 time.sleep(0.001)
             return d
 
-        #
+        # todo: document
         data = threads.deferToThread(doRead, count)
         timeout_object = []
         start_time = time.time()
-        #
+        # todo: document
         r = yield util.maybeTimeout(data, min(timeout, 300), timeout_object)
         killit = True
 
+        # todo: document
         if r == timeout_object:
             elapsed = time.time() - start_time
             print("deferredRead timed out after {} seconds".format(elapsed))
@@ -325,6 +344,7 @@ class SerialServer(PollingServer):
         if timeout == 0:
             returnValue(ser.read(count))
 
+        # todo: document
         recd = b''
         while len(recd) < count:
             r = ser.read(count - len(recd))
@@ -340,7 +360,8 @@ class SerialServer(PollingServer):
     @setting(50, 'Read', count=[': Read all bytes in buffer', 'w: Read this many bytes'],
              returns=['s: Received data'])
     def read(self, c, count=0):
-        """Read data from the port.
+        """
+        Read data from the port.
 
         Args:
             count:   bytes to read.
@@ -348,14 +369,22 @@ class SerialServer(PollingServer):
         If count=0, reads the contents of the buffer (non-blocking).  Otherwise
         reads for up to <count> characters or the timeout, whichever is first
         """
-        return self.readSome(c, count)
+        ans = self.readSome(c, count)
+        # debug output
+        if c['Debug']:
+            print('READ: ', ans)
+        return ans
 
     @setting(51, 'Read as Words', data=[': Read all bytes in buffer', 'w: Read this many bytes'],
              returns=['*w: Received data'])
     def read_as_words(self, c, data=0):
         """Read data from the port."""
         ans = yield self.readSome(c, data)
-        returnValue([int(ord(x)) for x in ans])
+        ans = [int(ord(x)) for x in ans]
+        # debug output
+        if c['Debug']:
+            print('READ: ', ans)
+        returnValue(ans)
 
     @setting(52, 'Read Line', data=[': Read until LF, ignoring CRs', 's: Other delimiter to use'],
              returns=['s: Received data'])
@@ -383,6 +412,8 @@ class SerialServer(PollingServer):
                 break
             elif r != skip:
                 recd += r
+        if c['Debug']:
+            print('READ: ', recd)
         returnValue(recd)
 
     @setting(61, 'Flush Input', returns='')

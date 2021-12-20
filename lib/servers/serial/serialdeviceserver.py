@@ -38,29 +38,30 @@
 #===============================================================================
 # 2021 - 10 - 17
 #
-# Added COM port connection to SerialDeviceServer class instead of having all subclasses write their own
+# Added COM port connection to SerialDeviceServer class instead of having all
+# subclasses write their own
 #===============================================================================
 
 #===============================================================================
 # 2021 - 11 - 10
 #
-# Added selectDevice and closeDevice to change which port device connects to on the fly
+# Added selectDevice and closeDevice to change which port we connect to on the fly.
 #
-# Removed initServer stuff such that servers don't connect to ports on startup
+# Removed initServer stuff such that servers don't connect to ports on startup.
 #===============================================================================
 
 #===============================================================================
 # 2021 - 11 - 15
 #
-# Fixed flushinput and flushoutput functions
+# Fixed flushinput and flushoutput functions.
 #
-# Servers now flush input and output buffers on connection to device
+# Servers now flush input and output buffers on connection to device.
 #===============================================================================
 
 #===============================================================================
 # 2021 - 11 - 15
 #
-# Added read_all to ser for use with SLS
+# Added read_all to ser for use with SLS.
 #===============================================================================
 
 #===============================================================================
@@ -68,6 +69,26 @@
 #
 # Servers now connect on startup if either node and port or node and regkey are
 # specified. If neither, server still starts up, just without a connection.
+#===============================================================================
+
+#===============================================================================
+# 2021 - 12 - 06
+#
+# Added comm lock setting to SerialConnection class to allow atomic read/write.
+#===============================================================================
+
+#===============================================================================
+# 2021 - 12 - 12
+#
+# selectDevice now accepts empty arguments, which returns the port and node
+# if a connection already exists, and creates a new connection if a
+# connection does not already exist and the port and node are already specified.
+#===============================================================================
+
+#===============================================================================
+# 2021 - 12 - 19
+#
+# Added debug setting, which makes serial bus server print r/w.
 #===============================================================================
 
 # imports
@@ -138,24 +159,31 @@ class SerialDeviceServer(LabradServer):
         @raise labrad.types.Error: Error in opening serial connection   
         """
         def __init__(self, ser, port, **kwargs):
+            # parse kwargs
             timeout = kwargs.get('timeout')
             baudrate = kwargs.get('baudrate')
             bytesize = kwargs.get('bytesize')
             parity = kwargs.get('parity')
+            debug = kwargs.get('debug')
+            # serial parameters
             ser.open(port)
             if timeout is not None: ser.timeout(timeout)
             if baudrate is not None: ser.baudrate(baudrate)
             if bytesize is not None: ser.bytesize(bytesize)
             if parity is not None: ser.parity(parity)
+            if debug is not None: ser.debug(debug)
+            # serial r/w
             self.write = lambda s: ser.write(s)
             self.write_line = lambda s: ser.write_line(s)
             self.read = lambda x = 0: ser.read(x)
             self.read_line = lambda x = '': ser.read_line(x)
             self.read_as_words = lambda x = 0: ser.read_as_words(x)
+            # other
             self.close = lambda: ser.close()
             self.flush_input = lambda: ser.flush_input()
             self.flush_output = lambda: ser.flush_output()
             self.ID = ser.ID
+            self.debug = lambda b=None: ser.debug(b)
             # comm lock
             self.comm_lock = DeferredLock()
             self.acquire = lambda: self.comm_lock.acquire()
@@ -184,7 +212,7 @@ class SerialDeviceServer(LabradServer):
     # SETUP
     @inlineCallbacks
     def initServer(self):
-        # call parent initserver to support further subclassing
+        # call parent initServer to support further subclassing
         super().initServer()
         # open connection on startup if default node and port are specified
         if self.serNode and self.port:
@@ -254,7 +282,6 @@ class SerialDeviceServer(LabradServer):
             print('Serial connection opened.')
         except Error:
             self.ser = None
-            #print(str(Error))
             raise SerialConnectionError(1)
 
     @inlineCallbacks
@@ -262,7 +289,8 @@ class SerialDeviceServer(LabradServer):
         """
         Find port string in registry given key.
         
-        If you do not input a parameter, it will look for the first four letters of your name attribute in the registry port keys.
+        If you do not input a parameter, it will look for the first
+        four letters of your name attribute in the registry port keys.
         
         @param regKey: String used to find key match.
         
@@ -283,14 +311,14 @@ class SerialDeviceServer(LabradServer):
                     regKey = self.name[:4].lower()
                 else:
                     raise SerialDeviceError('name attribute is None')
-            portStrKey = filter( lambda x: regKey in x , y[1] )
+            portStrKey = filter(lambda x: regKey in x, y[1])
             if portStrKey:
                 portStrKey = portStrKey[0]
             else:
                 raise PortRegError(1)
             portStrVal = yield reg.get(portStrKey)
             reg.cd(tmp)
-            returnValue( portStrVal )
+            returnValue(portStrVal)
         except Error as e:
             reg.cd(tmp)
             if e.code == 17: raise PortRegError(0)
@@ -298,7 +326,7 @@ class SerialDeviceServer(LabradServer):
     @inlineCallbacks
     def selectPortFromReg(self):
         """
-        Select port string from list of keys in registry
+        Select port string from list of keys in registry.
         
         @return: Name of port
         
@@ -308,22 +336,21 @@ class SerialDeviceServer(LabradServer):
         reg = self.client.registry
         try:
             # change this back to 'Ports'
-            yield reg.cd( ['', 'Ports'] )
+            yield reg.cd(['', 'Ports'])
             portDir = yield reg.dir()
             portKeys = portDir[1]
-            if not portKeys: raise PortRegError( 2 )
+            if not portKeys: raise PortRegError(2)
             keyDict = {}
-            map( lambda x , y: keyDict.update( { x:y } ) ,
-                 [str( i ) for i in range( len( portKeys ) )] ,
-                 portKeys )
+            map(lambda x, y: keyDict.update({x: y}),
+                 [str(i) for i in range(len(portKeys))], portKeys)
             for key in keyDict:
                 print(key, ':', keyDict[key])
             selection = None
             while True:
                 print('Select the number corresponding to the device you are using:')
-                selection = raw_input( '' )
+                selection = raw_input('')
                 if selection in keyDict:
-                    portStr = yield reg.get( keyDict[selection] )
+                    portStr = yield reg.get(keyDict[selection])
                     returnValue(portStr)
         except Error as e:
             if e.code == 13: raise PortRegError(0)
@@ -331,7 +358,7 @@ class SerialDeviceServer(LabradServer):
     @inlineCallbacks
     def findSerial(self, serNode=None):
         """
-        Find appropriate serial server
+        Find appropriate serial server.
         
         @param serNode: Name of labrad node possessing desired serial port
         
@@ -344,13 +371,13 @@ class SerialDeviceServer(LabradServer):
         # look for servers with 'serial' and serNode in the name, take first result
         servers = yield cli.manager.servers()
         try:
-            returnValue( [ i[1] for i in servers if self._matchSerial(serNode, i[1]) ][0] )
+            returnValue([i[1] for i in servers if self._matchSerial(serNode, i[1])][0])
         except IndexError: raise SerialConnectionError(0)
 
     @staticmethod
     def _matchSerial(serNode, potMatch):
         """
-        Checks if server name is the correct serial server
+        Checks if server name is the correct serial server.
         
         @param serNode: Name of node of desired serial server
         @param potMatch: Server name of potential match
@@ -366,13 +393,13 @@ class SerialDeviceServer(LabradServer):
 
     @inlineCallbacks
     def serverConnected(self, ID, name):
-        """Check to see if we can connect to serial server now"""
+        """Check to see if we can connect to serial server now."""
         if self.ser is None and None not in (self.port, self.serNode) and self._matchSerial(self.serNode, name):
             yield self.initSerial(name, self.port)
             print('Serial server connected after we connected')
 
     def serverDisconnected(self, ID, name):
-        """Close connection (if we are connected)"""
+        """Close connection (if we are connected)."""
         if self.ser and self.ser.ID == ID:
             print('Serial server disconnected.  Relaunch the serial server')
             self.ser = None
@@ -397,12 +424,11 @@ class SerialDeviceServer(LabradServer):
             self.serNode = node
             self.port = port
         # connect to default values if no args specified
-        elif (node is None) and (port is None) and (self.serNode) and (self.port):
+        elif (node is None) and (port is None) and self.serNode and self.port:
             pass
         # raise error if only node or port is specified
         else:
             raise Exception('Only one argument specified.')
-
 
         # try to find the serial server and connect to the designated port
         try:
@@ -432,12 +458,18 @@ class SerialDeviceServer(LabradServer):
 
 
         # DIRECT SERIAL COMMUNICATION
-    @setting(111113, 'Serial Query', data='s', returns='s')
-    def serial_query(self, c, data):
+    @setting(111113, 'Serial Query', data='s', stop=['i: read a given number of characters',
+                                                     's: read until the given character'], returns='s')
+    def serial_query(self, c, data, stop=None):
         """Write any string and read the response."""
         yield self.ser.acquire()
         yield self.ser.write(data)
-        resp = yield self.ser.read_line()
+        if stop is None:
+            resp = yield self.ser.read()
+        elif type(stop) == int:
+            resp = yield self.ser.read(stop)
+        elif type(stop) == str:
+            resp = yield self.ser.read_line(stop)
         self.ser.release()
         returnValue(resp)
 
@@ -448,18 +480,31 @@ class SerialDeviceServer(LabradServer):
         yield self.ser.write(data)
         self.ser.release()
 
-    @setting(111115, 'Serial Read', returns='s')
-    def serial_read(self, c):
+    @setting(111115, 'Serial Read', stop=['i: read a given number of characters',
+                                          's: read until the given character'], returns='s')
+    def serial_read(self, c, stop=None):
         """Directly read the serial buffer."""
         yield self.ser.acquire()
-        resp = yield self.ser.read()
+        if stop is None:
+            resp = yield self.ser.read()
+        elif type(stop) == int:
+            resp = yield self.ser.read(stop)
+        elif type(stop) == str:
+            resp = yield self.ser.read_line(stop)
         self.ser.release()
         returnValue(resp)
 
 
         # DEBUGGING
-    @setting(111116, 'Debug', returns='')
-    def debug(self, c):
+    @setting(111116, 'Debug', status='b', returns='b')
+    def debug(self, c, status=None):
+        """
+        Tells the serial bus server to print input/output.
+        """
+        return self.ser.debug(status)
+
+    @setting(111117, 'Debug1', returns='')
+    def debug1(self, c):
         """
         Enters debugging mode, where write does print
         and read returns 'DEBUG'.
