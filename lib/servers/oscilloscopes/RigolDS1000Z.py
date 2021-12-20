@@ -46,7 +46,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         invert = vals[6]
         unit = vals[8]
         probeAtten = vals[9]
-        # Convert strings to numerical data when appropriate
+        # convert strings to numerical data when appropriate
         probeAtten = Value(float(probeAtten), '')
         termination = Value(float(termination), '')
         scale = Value(float(scale), '')
@@ -131,7 +131,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
             channel = int(channel[-1])
             if isinstance(channel, str):
                 channel = channel.upper()
-            else if isinstance(channel, int):
+            elif isinstance(channel, int):
                 channel = 'CHAN%d' % channel
             yield self.write(':TRIG:EDG:SOUR ' + str(channel)) # ***
         else:
@@ -148,10 +148,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
             if slope not in ['RFAL', 'POS', 'NEG']:
                 raise Exception('Slope must be either: "RFAL", "POS", "NEG" ')
             else:
-                if slope == 'RFAL':
-                    slope = 'POS'
-                else:
-                    slope = 'NEG'
+                slope = 'POS' if slope == 'RFAL' else 'NEG'
                 yield self.write(chString + ' ' + slope)
         resp = yield self.query(chString + '?')
         returnValue(resp)

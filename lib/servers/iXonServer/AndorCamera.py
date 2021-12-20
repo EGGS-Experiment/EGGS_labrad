@@ -4,29 +4,30 @@ import os
 
 '''Adopted from https://code.google.com/p/pyandor/'''
 
+
 class AndorInfo(object):
 
     def __init__(self):
-        self.width                  = None
-        self.height                 = None
-        self.min_temp               = None
-        self.max_temp               = None
-        self.cooler_state           = None
-        self.temperature_setpoint   = None
-        self.temperature            = None
-        self.serial_number          = None
-        self.min_gain               = None
-        self.max_gain               = None
-        self.emccd_gain             = None
-        self.read_mode              = None
-        self.acquisition_mode       = None
-        self.trigger_mode           = None
-        self.exposure_time          = None
-        self.accumulate_cycle_time  = None
-        self.kinetic_cycle_time     = None
-        self.image_region           = None
-        self.number_kinetics        = None
-        self.shutter_mode           = None
+        self.width = None
+        self.height = None
+        self.min_temp = None
+        self.max_temp = None
+        self.cooler_state = None
+        self.temperature_setpoint = None
+        self.temperature = None
+        self.serial_number = None
+        self.min_gain = None
+        self.max_gain = None
+        self.emccd_gain = None
+        self.read_mode = None
+        self.acquisition_mode = None
+        self.trigger_mode = None
+        self.exposure_time = None
+        self.accumulate_cycle_time = None
+        self.kinetic_cycle_time = None
+        self.image_region = None
+        self.number_kinetics = None
+        self.shutter_mode = None
 
 
 class AndorCamera(object):
@@ -55,8 +56,8 @@ class AndorCamera(object):
             self.set_acquisition_mode(config.acquisition_mode)
             self.set_trigger_mode(config.trigger_mode)
             self.set_exposure_time(config.exposure_time)
-            #self.set_shutter_mode(config.shutter_mode)
-            #set image to full size with the default binning
+            # self.set_shutter_mode(config.shutter_mode)
+            # set image to full size with the default binning
             self.set_image(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)
             self.set_cooler_on()
             self.set_temperature(config.set_temperature)
@@ -75,7 +76,8 @@ class AndorCamera(object):
         vxdVer = c.c_int()
         dllRev = c.c_int()
         dllVer = c.c_int()
-        self.dll.GetSoftwareVersion(c.byref(eprom), c.byref(cofFile), c.byref(vxdRev), c.byref(vxdVer),  c.byref(dllRev), c.byref(dllVer))
+        self.dll.GetSoftwareVersion(c.byref(eprom), c.byref(cofFile), c.byref(vxdRev), c.byref(vxdVer), c.byref(dllRev),
+                                    c.byref(dllVer))
         print('Software Version')
         print(eprom)
         print(cofFile)
@@ -103,20 +105,21 @@ class AndorCamera(object):
                         ('ulEMGainCapability', c.c_ulong),
                         ('ulFTReadModes', c.c_ulong),
                         ]
+
         caps = AndorCapabilities()
         caps.ulSize = c.c_ulong(c.sizeof(caps))
         error = self.dll.GetCapabilities(c.byref(caps))
-        print('ulAcqModes',         '{:07b}'.format(caps.ulAcqModes))
-        print('ulReadModes',        '{:06b}'.format(caps.ulReadModes))
-        print('ulTriggerModes',     '{:08b}'.format(caps.ulTriggerModes))
-        print('ulCameraType',       '{}'.format(caps.ulCameraType))
-        print('ulPixelMode',        '{:032b}'.format(caps.ulPixelMode))
-        print('ulSetFunctions',     '{:025b}'.format(caps.ulSetFunctions))
-        print('ulGetFunctions',     '{:016b}'.format(caps.ulGetFunctions))
-        print('ulFeatures',         '{:020b}'.format(caps.ulFeatures))
-        print('ulPCICard',          '{}'.format(caps.ulPCICard))
+        print('ulAcqModes', '{:07b}'.format(caps.ulAcqModes))
+        print('ulReadModes', '{:06b}'.format(caps.ulReadModes))
+        print('ulTriggerModes', '{:08b}'.format(caps.ulTriggerModes))
+        print('ulCameraType', '{}'.format(caps.ulCameraType))
+        print('ulPixelMode', '{:032b}'.format(caps.ulPixelMode))
+        print('ulSetFunctions', '{:025b}'.format(caps.ulSetFunctions))
+        print('ulGetFunctions', '{:016b}'.format(caps.ulGetFunctions))
+        print('ulFeatures', '{:020b}'.format(caps.ulFeatures))
+        print('ulPCICard', '{}'.format(caps.ulPCICard))
         print('ulEMGainCapability', '{:020b}'.format(caps.ulEMGainCapability))
-        print('ulFTReadModes',      '{:06b}'.format(caps.ulFTReadModes))
+        print('ulFTReadModes', '{:06b}'.format(caps.ulFTReadModes))
 
     def get_detector_dimensions(self):
         '''
@@ -171,7 +174,8 @@ class AndorCamera(object):
     def get_temperature(self):
         temperature = c.c_int()
         error = self.dll.GetTemperature(c.byref(temperature))
-        if ERROR_CODE[error] in ('DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
+        if ERROR_CODE[error] in (
+        'DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
             self.info.temperature = temperature.value
             return temperature.value
         else:
@@ -242,7 +246,7 @@ class AndorCamera(object):
             mode_number = ShutterMode[mode]
         except KeyError:
             raise Exception("Incorrect shutter mode {}".format(mode))
-        error = self.dll.SetShutter(c.c_int(1),c.c_int(mode_number),c.c_int(0),c.c_int(0))
+        error = self.dll.SetShutter(c.c_int(1), c.c_int(mode_number), c.c_int(0), c.c_int(0))
         if (ERROR_CODE[error] == 'DRV_SUCCESS'):
             self.info.shutter_mode = mode
         else:
@@ -302,8 +306,14 @@ class AndorCamera(object):
             raise Exception(ERROR_CODE[error])
 
     def set_image(self, hbin, vbin, hstart, hend, vstart, vend):
-        hbin = int(hbin); vbin = int(vbin); hstart = int(hstart); hend = int(hend); vstart = int(vstart); vend = int(vend)
-        error = self.dll.SetImage(c.c_int(hbin), c.c_int(vbin), c.c_int(hstart), c.c_int(hend), c.c_int(vstart), c.c_int(vend))
+        hbin = int(hbin);
+        vbin = int(vbin);
+        hstart = int(hstart);
+        hend = int(hend);
+        vstart = int(vstart);
+        vend = int(vend)
+        error = self.dll.SetImage(c.c_int(hbin), c.c_int(vbin), c.c_int(hstart), c.c_int(hend), c.c_int(vstart),
+                                  c.c_int(vend))
         if (ERROR_CODE[error] == 'DRV_SUCCESS'):
             self.info.image_region = [hbin, vbin, hstart, hend, vstart, vend]
         else:
@@ -335,11 +345,11 @@ class AndorCamera(object):
 
     def get_acquired_data(self, num_images):
         hbin, vbin, hstart, hend, vstart, vend = self.info.image_region
-        dim = ( hend - hstart + 1 ) * (vend - vstart + 1) / float(hbin * vbin)
+        dim = (hend - hstart + 1) * (vend - vstart + 1) / float(hbin * vbin)
         dim = int(num_images * dim)
         image_struct = c.c_int * dim
         image = image_struct()
-        error = self.dll.GetAcquiredData(c.pointer(image),dim)
+        error = self.dll.GetAcquiredData(c.pointer(image), dim)
         if (ERROR_CODE[error] == 'DRV_SUCCESS'):
             image = image[:]
             return image
@@ -348,11 +358,11 @@ class AndorCamera(object):
 
     def get_most_recent_image(self):
         hbin, vbin, hstart, hend, vstart, vend = self.info.image_region
-        dim = ( hend - hstart + 1 ) * (vend - vstart + 1) / float(hbin * vbin)
+        dim = (hend - hstart + 1) * (vend - vstart + 1) / float(hbin * vbin)
         dim = int(dim)
         image_struct = c.c_int * dim
         image = image_struct()
-        error = self.dll.GetMostRecentImage(c.pointer(image),dim)
+        error = self.dll.GetMostRecentImage(c.pointer(image), dim)
         if (ERROR_CODE[error] == 'DRV_SUCCESS'):
             image = image[:]
             return image
@@ -380,7 +390,7 @@ class AndorCamera(object):
     def get_series_progress(self):
         acc = c.c_long()
         series = c.c_long()
-        error = self.dll.GetAcquisitionProgress(c.byref(acc),c.byref(series))
+        error = self.dll.GetAcquisitionProgress(c.byref(acc), c.byref(series))
         if ERROR_CODE[error] == "DRV_SUCCESS":
             return acc.value, series.value
         else:
@@ -396,6 +406,7 @@ class AndorCamera(object):
     def shut_down(self):
         error = self.dll.ShutDown()
         return ERROR_CODE[error]
+
 
 ERROR_CODE = {
     20001: "DRV_ERROR_CODES",
@@ -439,36 +450,36 @@ ERROR_CODE = {
 }
 
 READ_MODE = {
-    'Full Vertical Binning':0,
-    'Multi-Track':1,
-    'Random-Track':2,
-    'Sinle-Track':3,
-    'Image':4
-                }
+    'Full Vertical Binning': 0,
+    'Multi-Track': 1,
+    'Random-Track': 2,
+    'Sinle-Track': 3,
+    'Image': 4
+}
 
 AcquisitionMode = {
-    'Single Scan':1,
-    'Accumulate':2,
-    'Kinetics':3,
-    'Fast Kinetics':4,
-    'Run till abort':5
-                   }
+    'Single Scan': 1,
+    'Accumulate': 2,
+    'Kinetics': 3,
+    'Fast Kinetics': 4,
+    'Run till abort': 5
+}
 
 TriggerMode = {
-    'Internal':0,
-    'External':1,
-    'External Start':6,
-    'External Exposure':7,
-    'External FVB EM':9,
-    'Software Trigger':10,
-    'External Charge Shifting':12
-               }
+    'Internal': 0,
+    'External': 1,
+    'External Start': 6,
+    'External Exposure': 7,
+    'External FVB EM': 9,
+    'Software Trigger': 10,
+    'External Charge Shifting': 12
+}
 
 ShutterMode = {
-    'Auto':0,
-    'Open':1,
-    'Close':2
-            }
+    'Auto': 0,
+    'Open': 1,
+    'Close': 2
+}
 
 if __name__ == '__main__':
     camera = AndorCamera()

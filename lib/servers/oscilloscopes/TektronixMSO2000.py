@@ -44,11 +44,11 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
             termination=1e6
         else:
             termination=50
-        bwLimit=vals[5]
+        bwLimit = vals[5]
         invert=vals[6]
         unit=vals[8]
         probeAtten=vals[9]
-        #Convert strings to numerical data when appropriate
+        # convert strings to numerical data when appropriate
         probeAtten = T.Value(float(probeAtten),'')
         termination = T.Value(float(termination),'')
         scale = T.Value(float(scale),'')

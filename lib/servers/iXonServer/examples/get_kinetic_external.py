@@ -5,13 +5,14 @@ from matplotlib import pyplot
 
 kinetic_number = 3
 identify_exposure = WithUnit(1.0, 's')
-start_x = 300; stop_x = 400
-start_y = 235; stop_y = 250
-image_region = (1,1,start_x,stop_x,start_y,stop_y)
+start_x = 300;
+stop_x = 400
+start_y = 235;
+stop_y = 250
+image_region = (1, 1, start_x, stop_x, start_y, stop_y)
 
-pixels_x = (stop_x - start_x + 1) 
+pixels_x = (stop_x - start_x + 1)
 pixels_y = (stop_y - start_y + 1)
-
 
 cxn = labrad.connect()
 cam = cxn.andor_server
@@ -26,17 +27,19 @@ cam.set_number_kinetics(kinetic_number)
 
 cam.set_trigger_mode('External')
 cam.start_acquisition()
-print 'waiting, needs to get TTLs to proceed with each image'
+print
+'waiting, needs to get TTLs to proceed with each image'
 
 proceed = cam.wait_for_kinetic()
 while not proceed:
     proceed = cam.wait_for_kinetic()
-print 'proceeding to analyze'
+print
+'proceeding to analyze'
 
 image = cam.get_acquired_data(kinetic_number).asarray
 image = np.reshape(image, (kinetic_number, pixels_y, pixels_x))
 
-for num,current in enumerate(image):
+for num, current in enumerate(image):
     pyplot.figure(num)
     pyplot.contour(current)
 

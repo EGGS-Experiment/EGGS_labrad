@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = Oscilloscope Server
-version = 1.0
+version = 1.1.0
 description = Talks to oscilloscopes
 
 [startup]
@@ -14,13 +14,13 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
-from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
+from labrad.gpib import GPIBManagedServer
+from twisted.internet.defer import inlineCallbacks, returnValue
+
+# import device wrapper
 from RigolDS1000Z import RigolDS1000ZWrapper
 from TektronixMSO2000 import TektronixMSO2000Wrapper
-
-from twisted.internet.defer import inlineCallbacks, returnValue
 
 
 class OscilloscopeServer(GPIBManagedServer):
