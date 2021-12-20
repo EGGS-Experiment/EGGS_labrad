@@ -1,8 +1,10 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFrame
+from PyQt5.QtGui import QFont
+from PyQt5.QtCore import QRect, Qt
+from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QComboBox,\
+    QHBoxLayout, QVBoxLayout, QPushButton
 
-from twisted.internet.defer import inlineCallbacks
 from random import randrange
+from twisted.internet.defer import inlineCallbacks
 
 
 class QSerialConnection(QFrame):
@@ -12,34 +14,34 @@ class QSerialConnection(QFrame):
         self.setWindowTitle("Device")
         self.setFrameShape(QFrame.StyledPanel)
         self.setFrameShadow(QFrame.Raised)
-        self.widget = QtWidgets.QWidget(self)
-        self.widget.setGeometry(QtCore.QRect(10, 10, 314, 80))
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.widget)
+        self.widget = QWidget(self)
+        self.widget.setGeometry(QRect(10, 10, 314, 80))
+        self.verticalLayout_3 = QVBoxLayout(self.widget)
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.device_label = QtWidgets.QLabel(self.widget)
+        self.device_label = QLabel(self.widget)
         self.device_label.setText("Device")
-        self.device_label.setFont(QtGui.QFont(shell_font, pointSize=18))
-        self.device_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.device_label.setFont(QFont(shell_font, pointSize=18))
+        self.device_label.setAlignment(Qt.AlignCenter)
         self.verticalLayout_3.addWidget(self.device_label)
-        self.horizontalLayout = QtWidgets.QHBoxLayout()
-        self.node_layout = QtWidgets.QVBoxLayout()
-        self.node_label = QtWidgets.QLabel(self.widget)
+        self.horizontalLayout = QHBoxLayout()
+        self.node_layout = QVBoxLayout()
+        self.node_label = QLabel(self.widget)
         self.node_label.setText("Node")
         self.node_layout.addWidget(self.node_label)
-        self.node = QtWidgets.QComboBox(self.widget)
+        self.node = QComboBox(self.widget)
         self.node_layout.addWidget(self.node)
         self.horizontalLayout.addLayout(self.node_layout)
-        self.port_layout = QtWidgets.QVBoxLayout()
-        self.port_label = QtWidgets.QLabel(self.widget)
+        self.port_layout = QVBoxLayout()
+        self.port_label = QLabel(self.widget)
         self.port_label.setText("Port")
         self.port_layout.addWidget(self.port_label)
-        self.port = QtWidgets.QComboBox(self.widget)
+        self.port = QComboBox(self.widget)
         self.port_layout.addWidget(self.port)
         self.horizontalLayout.addLayout(self.port_layout)
-        self.connect_button = QtWidgets.QPushButton(self.widget)
+        self.connect_button = QPushButton(self.widget)
         self.connect_button.setText("Connect")
         self.horizontalLayout.addWidget(self.connect_button)
-        self.disconnect_button = QtWidgets.QPushButton(self.widget)
+        self.disconnect_button = QPushButton(self.widget)
         self.disconnect_button.setText("Disconnect")
         self.horizontalLayout.addWidget(self.disconnect_button)
         self.verticalLayout_3.addLayout(self.horizontalLayout)
@@ -48,8 +50,6 @@ class QSerialConnection(QFrame):
 class SerialConnection_Client(QSerialConnection):
 
     name = 'SerialConnection Client'
-
-    # todo: show connection status as color
 
     def __init__(self, reactor, server, cxn=None, parent=None):
         super().__init__()
@@ -202,6 +202,7 @@ class SerialConnection_Client(QSerialConnection):
             yield self.server.device_select(node_text, port_text)
         except Exception as e:
             print(e)
+            self.gui.device_label.setStyleSheet('background-color: red')
         else:
             self.gui.device_label.setStyleSheet('background-color: lightgreen')
 
