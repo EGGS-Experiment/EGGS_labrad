@@ -89,6 +89,8 @@
 # 2021 - 12 - 19
 #
 # Added debug setting, which makes serial bus server print r/w.
+#
+# Direct serial communication settings can now choose EOL/length of read.
 #===============================================================================
 
 # imports
