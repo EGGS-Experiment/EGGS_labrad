@@ -2,4 +2,4 @@
 import labrad
 cxn = labrad.connect()
 rga = cxn.rga_server
-rga.select_device('causewaybay','COM4')
+rga.device_select('causewaybay','COM4')

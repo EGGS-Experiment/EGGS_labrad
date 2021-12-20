@@ -2,4 +2,4 @@
 import labrad
 cxn = labrad.connect()
 tt=cxn.twistorr74_server
-tt.select_device('causewaybay','COM10')
+tt.device_select('causewaybay','COM10')

@@ -2,4 +2,4 @@
 import labrad
 cxn = labrad.connect()
 ni=cxn.niops03_server
-ni.select_device('causewaybay','COM8')
+ni.device_select('causewaybay','COM8')

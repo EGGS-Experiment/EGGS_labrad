@@ -390,8 +390,8 @@ class SerialDeviceServer(LabradServer):
 
     # SETTINGS
         # DEVICE SELECTION
-    @setting(111111, 'Select Device', node='s', port='s', returns=['', '(ss)'])
-    def selectDevice(self, c, node=None, port=None):
+    @setting(111111, 'Device Select', node='s', port='s', returns=['', '(ss)'])
+    def deviceSelect(self, c, node=None, port=None):
         """
         Attempt to connect to serial device on the given node and port.
         """
@@ -430,8 +430,8 @@ class SerialDeviceServer(LabradServer):
         except Exception as e:
             print(e)
 
-    @setting(111112, 'Close Device', returns='')
-    def closeDevice(self, c):
+    @setting(111112, 'Device Close', returns='')
+    def deviceClose(self, c):
         if self.ser:
             self.ser.close()
             self.ser = None

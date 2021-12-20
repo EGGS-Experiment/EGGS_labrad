@@ -35,7 +35,7 @@ class lakeshore336_client(lakeshore336_gui):
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync(LABRADHOST, name=self.name)
 
-        #check that required servers are online
+        # check that required servers are online
         try:
             self.dv = yield self.cxn.data_vault
             self.ls = yield self.cxn.lakeshore336_server

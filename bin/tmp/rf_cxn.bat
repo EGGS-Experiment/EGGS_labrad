@@ -2,4 +2,4 @@
 import labrad
 cxn = labrad.connect()
 rf=cxn.rf_server
-rf.select_device()
+rf.device_select()

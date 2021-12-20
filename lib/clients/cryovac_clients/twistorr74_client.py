@@ -54,7 +54,7 @@ class twistorr74_client(twistorr74_gui):
         self.recording = False
 
         # connect to signals
-            #device parameters
+            # device parameters
         yield self.tt.signal__pressure_update(self.PRESSUREID)
         yield self.tt.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
         yield self.tt.signal__energy_update(self.ENERGYID)
@@ -63,7 +63,7 @@ class twistorr74_client(twistorr74_gui):
         yield self.tt.addListener(listener=self.updateRPM, source=None, ID=self.RPMID)
         yield self.tt.signal__power_update(self.POWERID)
         yield self.tt.addListener(listener=self.updatePower, source=None, ID=self.POWERID)
-            #server connections
+            # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
@@ -71,7 +71,7 @@ class twistorr74_client(twistorr74_gui):
 
         # start device polling
         poll_params = yield self.tt.polling()
-        #only start polling if not started
+        # only start polling if not started
         if not poll_params[0]:
             yield self.tt.polling(True, 5.0)
 

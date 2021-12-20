@@ -2,4 +2,4 @@
 import labrad
 cxn = labrad.connect()
 sls=cxn.sls_server
-sls.select_device('hengfachuen','COM6')
+sls.device_select('hengfachuen','COM6')

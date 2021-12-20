@@ -1,23 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SerialConnection</class>
- <widget class="QFrame" name="SerialConnection">
+ <class>Frame</class>
+ <widget class="QFrame" name="Frame">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>316</width>
-    <height>93</height>
+    <width>337</width>
+    <height>102</height>
    </rect>
   </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
-  </property>
   <property name="windowTitle">
-   <string>Device</string>
+   <string>Frame</string>
   </property>
   <property name="frameShape">
    <enum>QFrame::StyledPanel</enum>
@@ -28,7 +22,7 @@
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>0</x>
+     <x>10</x>
      <y>10</y>
      <width>314</width>
      <height>80</height>
@@ -36,7 +30,7 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
-     <widget class="QLabel" name="device_label">
+     <widget class="QLabel" name="label">
       <property name="font">
        <font>
         <pointsize>18</pointsize>
@@ -53,7 +47,7 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <layout class="QVBoxLayout" name="node_layout">
+       <layout class="QVBoxLayout" name="verticalLayout">
         <item>
          <widget class="QLabel" name="node_label">
           <property name="text">
@@ -62,12 +56,12 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="node"/>
+         <widget class="QComboBox" name="comboBox"/>
         </item>
        </layout>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="port_layout">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QLabel" name="port_label">
           <property name="text">
@@ -76,7 +70,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="port"/>
+         <widget class="QComboBox" name="comboBox_2"/>
         </item>
        </layout>
       </item>
