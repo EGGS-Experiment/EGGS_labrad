@@ -21,7 +21,7 @@ import collections
 
 from labrad.types import Value
 from labrad.errors import Error
-from labrad.server import setting
+from labrad.server import setting, Signal
 from twisted.internet import reactor, threads
 from twisted.internet.task import deferLater
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -45,6 +45,7 @@ class NoPortsAvailableError(Error):
 
 SerialDevice = collections.namedtuple('SerialDevice', ['name', 'devicepath'])
 
+PORTSIGNAL = 539410
 
 class SerialServer(PollingServer):
     """
@@ -53,6 +54,7 @@ class SerialServer(PollingServer):
 
     name = '%LABRADNODE% Serial Server'
     POLL_ON_STARTUP = True
+    port_update = Signal(PORTSIGNAL, 'signal: port update', '(s,*s)')
 
     def initServer(self):
         super().initServer()
@@ -111,6 +113,9 @@ class SerialServer(PollingServer):
             else:
                 _, _, dev_name = dev_path.rpartition(os.sep)
                 self.SerialPorts.append(SerialDevice(dev_name, dev_path))
+        # send out signal
+        port_list_tmp = [x.name for x in self.SerialPorts]
+        self.port_update(self.name, port_list_tmp)
 
     def expireContext(self, c):
         if 'PortObject' in c:
@@ -119,7 +124,7 @@ class SerialServer(PollingServer):
     def getPort(self, c):
         try:
             return c['PortObject']
-        except:
+        except Exception as e:
             raise NoPortSelectedError()
 
     @setting(1, 'List Serial Ports', returns=['*s: List of serial ports'])
@@ -130,7 +135,6 @@ class SerialServer(PollingServer):
         This list contains all ports installed on the computer,
         including ones that are already in use by other programs.
         """
-        print(self.SerialPorts)
         port_list = [x.name for x in self.SerialPorts]
         return port_list
 

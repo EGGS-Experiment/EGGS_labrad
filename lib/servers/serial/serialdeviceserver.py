@@ -395,19 +395,21 @@ class SerialDeviceServer(LabradServer):
         """
         Attempt to connect to serial device on the given node and port.
         """
-        # handle cases if connection already exists
-        if self.ser:
-            # empty call is getter if connection exists
-            if (node is None) and (port is None):
+        # empty call is getter
+        if (node is None) and (port is None):
+            if self.ser:
                 return (self.serNode, self.port)
             else:
-                raise Exception('A serial device is already opened.')
+                return ('', '')
+        # raise exception if connection already exists
+        elif self.ser:
+            raise Exception('A serial device is already opened.')
         # set parameters if specified
         elif (node is not None) and (port is not None):
             self.serNode = node
             self.port = port
-        # connect to default values if no args specified
-        elif (node is None) and (port is None) and self.serNode and self.port:
+        # connect to default values if sole argument has value 'default'
+        elif ((node.lower() is 'default') and (port is None)) and (self.serNode and self.port):
             pass
         # raise error if only node or port is specified
         else:
