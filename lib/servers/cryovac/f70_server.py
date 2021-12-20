@@ -46,7 +46,7 @@ class F70Server(SerialDeviceServer):
     @setting(11, 'Status', returns='s')
     def status(self, c):
         """
-        Get system temperatures.
+        Get system status.
         Returns:
             (float): temperature
         """
@@ -54,12 +54,7 @@ class F70Server(SerialDeviceServer):
         cmd_msg = b'STA'
         msg = yield self._create_message(cmd_msg, CRC_msg=b'3504')
         # query
-        yield self.ser.acquire()
-        yield self.ser.write(msg)
-        resp = yield self.ser.read_line(_F70_EOL_CHAR)
-        self.ser.release()
-        # parse response
-        resp = yield self._parse(resp)
+        resp = yield self._query(msg)
         returnValue(resp)
 
     @setting(21, 'Reset', returns='s')
@@ -71,12 +66,7 @@ class F70Server(SerialDeviceServer):
         cmd_msg = b'RS1'
         msg = yield self._create_message(cmd_msg, CRC_msg=b'2156')
         # query
-        yield self.ser.acquire()
-        yield self.ser.write(msg)
-        resp = yield self.ser.read_line(_F70_EOL_CHAR)
-        self.ser.release()
-        # parse response
-        resp = yield self._parse(resp)
+        resp = yield self._query(msg)
         returnValue(resp)
 
 
@@ -91,12 +81,7 @@ class F70Server(SerialDeviceServer):
         crc_msg = b'77CF' if status else b'9188'
         msg = yield self._create_message(cmd_msg, crc_msg)
         # query
-        yield self.ser.acquire()
-        yield self.ser.write(msg)
-        resp = yield self.ser.read_line(_F70_EOL_CHAR)
-        self.ser.release()
-        # parse response
-        resp = yield self._parse(resp)
+        resp = yield self._query(msg)
         returnValue(resp)
 
     @setting(121, 'Cold Head Pause', status='b', returns='s')
@@ -109,12 +94,7 @@ class F70Server(SerialDeviceServer):
         crc_msg = b'3CCD' if status else b'07BF'
         msg = yield self._create_message(cmd_msg, crc_msg)
         # query
-        yield self.ser.acquire()
-        yield self.ser.write(msg)
-        resp = yield self.ser.read_line(_F70_EOL_CHAR)
-        self.ser.release()
-        # parse response
-        resp = yield self._parse(resp)
+        resp = yield self._query(msg)
         returnValue(resp)
 
 
@@ -122,7 +102,7 @@ class F70Server(SerialDeviceServer):
     @setting(211, 'Temperature', dev='i', returns=['i', '*i'])
     def temperature(self, c, dev=None):
         """
-        Get system temperatures.
+        Get system temperatures in Celsius.
         Returns:
             (float): temperature
         """
@@ -137,12 +117,7 @@ class F70Server(SerialDeviceServer):
         else:
             raise Exception('Invalid input.')
         # query
-        yield self.ser.acquire()
-        yield self.ser.write(msg)
-        resp = yield self.ser.read_line(_F70_EOL_CHAR)
-        self.ser.release()
-        # parse response
-        resp = yield self._parse(resp)
+        resp = yield self._query(msg)
         returnValue(resp)
 
     @setting(221, 'Pressure', dev='i', returns=['i', '*i'])
@@ -163,12 +138,7 @@ class F70Server(SerialDeviceServer):
         else:
             raise Exception('Invalid input.')
         # query
-        yield self.ser.acquire()
-        yield self.ser.write(msg)
-        resp = yield self.ser.read_line(_F70_EOL_CHAR)
-        self.ser.release()
-        # parse response
-        resp = yield self._parse(resp)
+        resp = yield self._query(msg)
         returnValue(resp)
 
 
@@ -178,13 +148,7 @@ class F70Server(SerialDeviceServer):
         """
         Polls the device for readout.
         """
-        # query
-        yield self.ser.acquire()
-        yield self.ser.write('Tb\r\n')
-        ip_pressure = yield self.ser.read_line('\r')
-        self.ser.release()
-        # update pressure
-        self.pressure_update(float(ip_pressure))
+        pass
 
 
     # HELPER
@@ -203,6 +167,7 @@ class F70Server(SerialDeviceServer):
             # convert checksum to hex value and add to end
             CRC_msg = hex(CRC_msg)[2:]
             msg.extend(bytearray(CRC_msg, encoding='utf-8'))
+        # add checksum if specified
         elif type(CRC_msg) == bytes:
             msg.extend(CRC_msg)
         elif type(CRC_msg) == str:
@@ -229,6 +194,19 @@ class F70Server(SerialDeviceServer):
             return ans[0]
         else:
             return ans
+
+    @inlineCallbacks
+    def _query(self, msg):
+        # write and read
+        #yield self.ser.acquire()
+        #yield self.ser.write(msg)
+        yield print(msg)
+        #resp = yield self.ser.read_line(_F70_EOL_CHAR)
+        resp = 'th1'
+        #self.ser.release()
+        # parse response
+        #resp = yield self._parse(resp)
+        returnValue(resp)
 
 
 if __name__ == '__main__':
