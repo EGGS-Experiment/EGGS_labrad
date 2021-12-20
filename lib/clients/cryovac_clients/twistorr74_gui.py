@@ -74,9 +74,7 @@ class twistorr74_gui(QFrame):
         #layout.minimumSize()
         self.setLayout(layout)
 
+
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runGUI
     runGUI(twistorr74_gui)
-
-
-
