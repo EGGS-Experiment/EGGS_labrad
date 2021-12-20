@@ -173,7 +173,7 @@ class SerialDeviceServer(LabradServer):
             if baudrate is not None: ser.baudrate(baudrate)
             if bytesize is not None: ser.bytesize(bytesize)
             if parity is not None: ser.parity(parity)
-            if debug is not None: ser.debug(debug)
+            if debug is not None: ser.serial_debug(debug)
             # serial r/w
             self.write = lambda s: ser.write(s)
             self.write_line = lambda s: ser.write_line(s)
@@ -185,7 +185,7 @@ class SerialDeviceServer(LabradServer):
             self.flush_input = lambda: ser.flush_input()
             self.flush_output = lambda: ser.flush_output()
             self.ID = ser.ID
-            self.debug = lambda b=None: ser.debug(b)
+            self.debug = lambda b=None: ser.serial_debug(b)
             # comm lock
             self.comm_lock = DeferredLock()
             self.acquire = lambda: self.comm_lock.acquire()
@@ -498,8 +498,8 @@ class SerialDeviceServer(LabradServer):
 
 
         # DEBUGGING
-    @setting(111116, 'Debug', status='b', returns='b')
-    def debug(self, c, status=None):
+    @setting(111116, 'Serial Debug', status='b', returns='b')
+    def serialDebug(self, c, status=None):
         """
         Tells the serial bus server to print input/output.
         """

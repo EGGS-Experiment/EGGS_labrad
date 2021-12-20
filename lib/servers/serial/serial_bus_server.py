@@ -19,7 +19,7 @@ import os
 import time
 import collections
 
-from labrad import types as T
+from labrad.types import Value
 from labrad.errors import Error
 from labrad.server import setting
 from twisted.internet import reactor, threads
@@ -137,7 +137,8 @@ class SerialServer(PollingServer):
     @setting(10, 'Open', port=[': Open the first available port', 's: Port to open, e.g. COM4'],
              returns=['s: Opened port'])
     def open(self, c, port=''):
-        """Opens a serial port in the current context.
+        """
+        Opens a serial port in the current context.
 
         args:
         port   device name as returned by list_serial_ports.
@@ -238,18 +239,17 @@ class SerialServer(PollingServer):
 
     @setting(25, 'Timeout', data=[': Return immediately', 'v[s]: Timeout to use (max: 5min)'],
              returns=['v[s]: Timeout being used (0 for immediate return)'])
-    def timeout(self, c, data=T.Value(0, 's')):
+    def timeout(self, c, data=Value(0, 's')):
         """Sets a timeout for read operations."""
         c['Timeout'] = min(data['s'], 300)
-        return T.Value(c['Timeout'], 's')
+        return Value(c['Timeout'], 's')
 
-    @setting(26, 'Debug', status='b', returns='b')
-    def debug(self, c, status=None):
+    @setting(26, 'Serial Debug', status='b', returns='b')
+    def serialDebug(self, c, status=None):
         """Sets/gets the debug setting."""
-        if status is None:
-            return c['Debug']
-        else:
+        if status is not None:
             c['Debug'] = status
+        return c['Debug']
 
     @setting(30, 'RTS', data=['b'], returns=['b'])
     def RTS(self, c, data):
@@ -276,7 +276,7 @@ class SerialServer(PollingServer):
         ser.write(data)
         # debug output
         if c['Debug']:
-            print('WRITE: ', data)
+            print(ser.name, ' WRITE:\t', data)
         return int(len(data))
 
     @setting(41, 'Write Line', data=['s: Data to send'], returns=['w: Bytes sent'])
@@ -290,7 +290,7 @@ class SerialServer(PollingServer):
         ser.write(data)
         # debug output
         if c['Debug']:
-            print('WRITE: ', data)
+            print(ser.name, ' WRITE:\t', data)
         return int(len(data))
 
     @setting(42, 'Pause', duration='v[s]: Time to pause', returns=[])
@@ -366,14 +366,15 @@ class SerialServer(PollingServer):
         Args:
             count:   bytes to read.
 
-        If count=0, reads the contents of the buffer (non-blocking).  Otherwise
+        If count=0, reads the contents of the buffer (non-blocking). Otherwise,
         reads for up to <count> characters or the timeout, whichever is first
         """
-        ans = self.readSome(c, count)
+        ans = yield self.readSome(c, count)
         # debug output
+        ser_name = self.getPort(c).name
         if c['Debug']:
-            print('READ: ', ans)
-        return ans
+            print(ser_name, ' READ:\t', ans)
+        returnValue(ans)
 
     @setting(51, 'Read as Words', data=[': Read all bytes in buffer', 'w: Read this many bytes'],
              returns=['*w: Received data'])
@@ -382,8 +383,9 @@ class SerialServer(PollingServer):
         ans = yield self.readSome(c, data)
         ans = [int(ord(x)) for x in ans]
         # debug output
+        ser_name = self.getPort(c).name
         if c['Debug']:
-            print('READ: ', ans)
+            print(ser_name, ' READ:\t', ans)
         returnValue(ans)
 
     @setting(52, 'Read Line', data=[': Read until LF, ignoring CRs', 's: Other delimiter to use'],
@@ -413,7 +415,7 @@ class SerialServer(PollingServer):
             elif r != skip:
                 recd += r
         if c['Debug']:
-            print('READ: ', recd)
+            print(ser.name, ' READ:\t', recd)
         returnValue(recd)
 
     @setting(61, 'Flush Input', returns='')
