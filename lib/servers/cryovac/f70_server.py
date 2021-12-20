@@ -17,11 +17,10 @@ timeout = 20
 """
 
 from labrad.units import WithUnit
-from labrad.server import setting, Signal
+from labrad.server import setting
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from EGGS_labrad.lib.servers.polling_server import PollingServer
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 _F70_EOL_CHAR = b'\r'
@@ -29,7 +28,7 @@ _F70_START_CHAR = b'\x24'
 _F70_DELIM_CHAR = b'\x2C'
 
 
-class F70Server(SerialDeviceServer, PollingServer):
+class F70Server(SerialDeviceServer):
     """
     Controls the F70 Helium Compressor
     """
@@ -45,40 +44,77 @@ class F70Server(SerialDeviceServer, PollingServer):
 
     # STATUS
     @setting(11, 'Status', returns='s')
-    def get_status(self, c):
+    def status(self, c):
         """
-        Get controller status
+        Get system temperatures.
         Returns:
-            (str): power status of all alarms and devices
+            (float): temperature
         """
+        # create message
+        cmd_msg = b'STA'
+        msg = yield self._create_message(cmd_msg, CRC_msg=b'3504')
+        # query
         yield self.ser.acquire()
-        yield self.ser.write('TS' + TERMINATOR)
-        resp = yield self.ser.read_line('\r')
+        yield self.ser.write(msg)
+        resp = yield self.ser.read_line(_F70_EOL_CHAR)
         self.ser.release()
+        # parse response
+        resp = yield self._parse(resp)
+        returnValue(resp)
+
+    @setting(21, 'Reset', returns='s')
+    def reset(self, c):
+        """
+        Reset the F70 compressor.
+        """
+        # create message
+        cmd_msg = b'RS1'
+        msg = yield self._create_message(cmd_msg, CRC_msg=b'2156')
+        # query
+        yield self.ser.acquire()
+        yield self.ser.write(msg)
+        resp = yield self.ser.read_line(_F70_EOL_CHAR)
+        self.ser.release()
+        # parse response
+        resp = yield self._parse(resp)
         returnValue(resp)
 
 
     # ON/OFF
-    @setting(111, 'IP Toggle', power='b', returns='s')
-    def toggle_ip(self, c, power):
+    @setting(111, 'Toggle', status='b', returns='s')
+    def toggle(self, c, status):
         """
-        Set ion pump power.
-        Args:
-            power   (bool)  : whether pump is to be on or off
-        Returns:
-                    (str)   : response from device
+        Toggle compressor.
         """
-        # setter & getter
+        # create msg
+        cmd_msg = b'ON1' if status else b'OFF'
+        crc_msg = b'77CF' if status else b'9188'
+        msg = yield self._create_message(cmd_msg, crc_msg)
+        # query
         yield self.ser.acquire()
-        if power:
-            yield self.ser.write('G' + TERMINATOR)
-        else:
-            yield self.ser.write('B' + TERMINATOR)
-        resp = yield self.ser.read_line('\r')
+        yield self.ser.write(msg)
+        resp = yield self.ser.read_line(_F70_EOL_CHAR)
         self.ser.release()
-        # parse
-        if resp == _NI03_ACK_msg:
-            self.ip_power_update(power, self.getOtherListeners(c))
+        # parse response
+        resp = yield self._parse(resp)
+        returnValue(resp)
+
+    @setting(121, 'Cold Head Pause', status='b', returns='s')
+    def coldHeadPause(self, c, status):
+        """
+        Pause/unpause cold head.
+        """
+        # create msg
+        cmd_msg = b'CHP' if status else b'POF'
+        crc_msg = b'3CCD' if status else b'07BF'
+        msg = yield self._create_message(cmd_msg, crc_msg)
+        # query
+        yield self.ser.acquire()
+        yield self.ser.write(msg)
+        resp = yield self.ser.read_line(_F70_EOL_CHAR)
+        self.ser.release()
+        # parse response
+        resp = yield self._parse(resp)
         returnValue(resp)
 
 
@@ -90,13 +126,42 @@ class F70Server(SerialDeviceServer, PollingServer):
         Returns:
             (float): temperature
         """
-        if dev is None:
-            dev = 'A'
-        elif dev not in (1, 2, 3, 4):
-            raise Exception('Invalid input.')
         # create message
-        cmd_msg = 'TE' + str(dev)
-        msg = yield self._create_message(cmd_msg)
+        msg = None
+        if dev is None:
+            msg = yield self._create_message(b'TEA', CRC_msg=b'A4B9')
+        elif dev in (1, 2, 3, 4):
+            cmd_msg = b'TE' + bytes(str(dev), encoding='utf-8')
+            crc_msg = [b'40B8', b'41F8', b'8139', b'4378'][dev - 1]
+            msg = yield self._create_message(cmd_msg, crc_msg)
+        else:
+            raise Exception('Invalid input.')
+        # query
+        yield self.ser.acquire()
+        yield self.ser.write(msg)
+        resp = yield self.ser.read_line(_F70_EOL_CHAR)
+        self.ser.release()
+        # parse response
+        resp = yield self._parse(resp)
+        returnValue(resp)
+
+    @setting(221, 'Pressure', dev='i', returns=['i', '*i'])
+    def pressure(self, c, dev=None):
+        """
+        Get system pressures in psi.
+        Returns:
+            (float): temperature
+        """
+        # create message
+        msg = None
+        if dev is None:
+            msg = yield self._create_message(b'PRA', CRC_msg=b'95F7')
+        elif dev in (1, 2):
+            cmd_msg = b'PR' + bytes(str(dev), encoding='utf-8')
+            crc_msg = [b'71F6', b'70B6'][dev - 1]
+            msg = yield self._create_message(cmd_msg, crc_msg)
+        else:
+            raise Exception('Invalid input.')
         # query
         yield self.ser.acquire()
         yield self.ser.write(msg)
@@ -123,20 +188,25 @@ class F70Server(SerialDeviceServer, PollingServer):
 
 
     # HELPER
-    def _create_message(self, CMD_msg, DATA_msg=b''):
+    def _create_message(self, CMD_msg, CRC_msg=None):
         """
         Creates a message according to the F70 serial protocol.
         """
         # create message as bytearray
-        msg = _F70_START_CHAR + CMD_msg + DATA_msg
+        msg = _F70_START_CHAR + CMD_msg
         msg = bytearray(msg)
         # calculate checksum
-        CRC_msg = 0x00
-        for byte in msg[1:]:
-            CRC_msg ^= byte
-        # convert checksum to hex value and add to end
-        CRC_msg = hex(CRC_msg)[2:]
-        msg.extend(bytearray(CRC_msg, encoding='utf-8'))
+        if CRC_msg is None:
+            CRC_msg = 0x00
+            for byte in msg[1:]:
+                CRC_msg ^= byte
+            # convert checksum to hex value and add to end
+            CRC_msg = hex(CRC_msg)[2:]
+            msg.extend(bytearray(CRC_msg, encoding='utf-8'))
+        elif type(CRC_msg) == bytes:
+            msg.extend(CRC_msg)
+        elif type(CRC_msg) == str:
+            msg.extend(bytearray(CRC_msg, encoding='utf-8'))
         # add EOL character
         msg.extend(_F70_EOL_CHAR)
         return bytes(msg)
@@ -144,18 +214,21 @@ class F70Server(SerialDeviceServer, PollingServer):
     def _parse(self, ans):
         if ans == b'':
             raise Exception('No response from device')
-        # remove STX and ADDR
-        ans = ans[2:]
-        # check if we have CMD and DIR and remove them if so
-        if len(ans) > 1:
-            ans = ans[4:]
-            ans = ans.decode()
-        elif ans in _TT74_ERRORS_msg:
-            raise Exception(_TT74_ERRORS_msg[ans])
-        elif ans == b'\x06':
-            ans = 'Acknowledged'
-        # if none of these cases, just return it anyways
-        return ans
+        # remove CRC and EOL
+        ans = ans.decode()
+        ans = ans.split(',')[:-1]
+        # check for error message otherwise remove CMD
+        if ans[0] == '???':
+            return 'Input Error'
+        else:
+            ans = ans[1:]
+        # check if we have data
+        if len(ans) == 0:
+            return 'Acknowledged'
+        elif len(ans) == 1:
+            return ans[0]
+        else:
+            return ans
 
 
 if __name__ == '__main__':

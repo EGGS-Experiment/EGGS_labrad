@@ -151,7 +151,7 @@ class SerialDeviceServer(LabradServer):
             self.write_line = lambda s: ser.write_line(s)
             self.read = lambda x = 0: ser.read(x)
             self.read_line = lambda x = '': ser.read_line(x)
-            self.read_as_words = lambda x = 0: ser.read_as_words(x) # changed here
+            self.read_as_words = lambda x = 0: ser.read_as_words(x)
             self.close = lambda: ser.close()
             self.flush_input = lambda: ser.flush_input()
             self.flush_output = lambda: ser.flush_output()
@@ -161,6 +161,25 @@ class SerialDeviceServer(LabradServer):
             self.acquire = lambda: self.comm_lock.acquire()
             self.release = lambda: self.comm_lock.release()
 
+    class DummyConnection(object):
+        """
+        Wrapper for a dummy serial connection.
+        Used for debugging.
+        """
+        def __init__(self, ser, port, **kwargs):
+            self.write = lambda s: print(s)
+            self.write_line = lambda s: print(s + '\r\n')
+            self.read = lambda x = 0: 'DEBUG'
+            self.read_line = lambda x = '': 'DEBUG'
+            self.read_as_words = lambda x = 0: 'DEBUG'
+            self.close = lambda: None
+            self.flush_input = lambda: None
+            self.flush_output = lambda: None
+            self.ID = lambda: None
+            # comm lock
+            self.comm_lock = DeferredLock()
+            self.acquire = lambda: self.comm_lock.acquire()
+            self.release = lambda: self.comm_lock.release()
 
     # SETUP
     @inlineCallbacks
@@ -436,3 +455,17 @@ class SerialDeviceServer(LabradServer):
         resp = yield self.ser.read()
         self.ser.release()
         returnValue(resp)
+
+
+        # DEBUGGING
+    @setting(111116, 'Debug', returns='')
+    def debug(self, c):
+        """
+        Enters debugging mode, where write does print
+        and read returns 'DEBUG'.
+        """
+        # close current device
+        if self.ser:
+            self.ser.close()
+
+        self.ser = self.DummyConnection()
