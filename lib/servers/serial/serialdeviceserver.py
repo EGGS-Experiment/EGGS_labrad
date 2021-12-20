@@ -409,7 +409,7 @@ class SerialDeviceServer(LabradServer):
             self.serNode = node
             self.port = port
         # connect to default values if sole argument has value 'default'
-        elif ((node.lower() is 'default') and (port is None)) and (self.serNode and self.port):
+        elif ((node.lower() == 'default') or (port.lower() == 'default')) and (self.serNode and self.port):
             pass
         # raise error if only node or port is specified
         else:
@@ -431,15 +431,17 @@ class SerialDeviceServer(LabradServer):
                 raise Exception('Unknown connection error')
         except Exception as e:
             print(e)
+        else:
+            return (self.serNode, self.port)
 
     @setting(111112, 'Device Close', returns='')
     def deviceClose(self, c):
         if self.ser:
             self.ser.close()
             self.ser = None
-            print('Serial connection closed')
+            print('Serial connection closed.')
         else:
-            raise Exception('No device selected')
+            raise Exception('No device selected.')
 
 
         # DIRECT SERIAL COMMUNICATION

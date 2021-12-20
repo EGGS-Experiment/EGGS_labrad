@@ -36,12 +36,12 @@ class QSerialConnection(QFrame):
         self.port = QtWidgets.QComboBox(self.widget)
         self.port_layout.addWidget(self.port)
         self.horizontalLayout.addLayout(self.port_layout)
-        self.connect = QtWidgets.QPushButton(self.widget)
-        self.connect.setText("Connect")
-        self.horizontalLayout.addWidget(self.connect)
-        self.disconnect = QtWidgets.QPushButton(self.widget)
-        self.disconnect.setText("Disconnect")
-        self.horizontalLayout.addWidget(self.disconnect)
+        self.connect_button = QtWidgets.QPushButton(self.widget)
+        self.connect_button.setText("Connect")
+        self.horizontalLayout.addWidget(self.connect_button)
+        self.disconnect_button = QtWidgets.QPushButton(self.widget)
+        self.disconnect_button.setText("Disconnect")
+        self.horizontalLayout.addWidget(self.disconnect_button)
         self.verticalLayout_3.addLayout(self.horizontalLayout)
 
 
@@ -58,7 +58,7 @@ class SerialConnection_Client(QSerialConnection):
         self.reactor = reactor
         self.server_name = server
         self.nodes = {}
-        self.BASE_SERVER_ID = randrange(3e5, 1e6)
+        self.BASE_ID = randrange(3e5, 1e6)
         # initialization sequence
         self.gui.setupUi()
         d = self.connect()
@@ -97,36 +97,52 @@ class SerialConnection_Client(QSerialConnection):
         Get all serial servers and ports
         """
         # get all servers
-        server_names = [server_tuple[1] for server_tuple in self.mgr.servers()]
+        server_names = yield self.manager.servers()
+        server_names = [server_tuple[1] for server_tuple in server_names]
         # find serial servers
         for server_name in server_names:
             if 'serial server' in server_name.lower():
-                # get ports from each serial server
+                # connect to signal
                 self.BASE_ID += 1
                 serial_server = self.cxn[server_name]
-                yield serial_server.signal__power_update(self.BASE_ID)
+                yield serial_server.signal__port_update(self.BASE_ID)
                 yield serial_server.addListener(listener=self.updatePorts, source=None, ID=self.BASE_ID)
-                self.nodes[server_name] = {'ID': self.BASE_ID, 'ports': set(serial_server.list_serial_ports())}
+                # get ports
+                ports_tmp = yield serial_server.list_serial_ports()
+                self.nodes[server_name] = {'ID': self.BASE_ID, 'ports': ports_tmp.sort()}
         # add nodes and ports to GUI
         self.gui.node.addItems(list(self.nodes.keys()))
         # get current connection
-        _node, _port = self.server.device_select()
-        if (_node in self.nodes.keys()) and (_port in self.nodes[_node]['ports']):
-            node_index = self.gui.node.findText(_node)
-            port_index = self.gui.port.findText(_port)
-            self.gui.node.setCurrentIndex(node_index)
-            self.gui.port.setCurrentIndex(port_index)
+        self.gui.node.setCurrentIndex(-1)
+        self.gui.port.setCurrentIndex(-1)
+        _node, _port = yield self.server.device_select()
+        _node, _port = yield self.server.device_select()
+        _node = _node.strip().lower() + ' Serial Server'
+        if _node in self.nodes.keys():
+            self.gui.device_label.setStyleSheet('background-color: lightgreen')
         else:
-            self.gui.node.setCurrentIndex(-1)
-            self.gui.port.setCurrentIndex(-1)
+            self.gui.device_label.setStyleSheet('background-color: red')
+        # if (_node in self.nodes.keys()) and (_port in self.nodes[_node]['ports']):
+        #     node_index = self.gui.node.findText(_node)
+        #     port_index = self.gui.port.findText(_port)
+        #     self.gui.node.setCurrentIndex(node_index)
+        #     self.gui.port.setCurrentIndex(port_index)
+        # else:
+        #     print(_node)
+        #     self.gui.node.setCurrentIndex(-1)
+        #     self.gui.port.setCurrentIndex(-1)
 
     def initializeGUI(self, cxn):
         """
         Connect signals to slots and other initializations.
         """
-        self.gui.connect.clicked.connect(lambda: self.pressConnect())
-        self.gui.disconnect.clicked.connect(lambda: self.pressDisconnect())
-        self.gui.node.currentTextChanged(lambda node_name: self.chooseNode(node_name))
+        # setup name
+        self.gui.device_label.setText(self.server_name)
+        self.gui.setWindowTitle(self.server_name)
+        # connect to signals
+        self.gui.connect_button.clicked.connect(lambda: self.pressConnect())
+        self.gui.disconnect_button.clicked.connect(lambda: self.pressDisconnect())
+        self.gui.node.currentTextChanged.connect(lambda node_name: self.chooseNode(node_name))
 
 
     # SIGNALS
@@ -138,10 +154,10 @@ class SerialConnection_Client(QSerialConnection):
             serial_server = self.cxn[server_name]
             self.BASE_ID += 1
             # get ports and connect to signal
-            ports_tmp = serial_server.list_serial_ports()
-            yield serial_server.signal__power_update(self.BASE_ID)
+            ports_tmp = yield serial_server.list_serial_ports()
+            yield serial_server.signal__port_update(self.BASE_ID)
             yield serial_server.addListener(listener=self.updatePorts, source=None, ID=self.BASE_ID)
-            self.nodes[server_name] = {'ID': self.BASE_ID, 'ports': ports_tmp}
+            self.nodes[server_name] = {'ID': self.BASE_ID, 'ports': ports_tmp.sort()}
             # update ports on GUI
             self.gui.node.addItem(server_name)
         elif server_name == self.server_name:
@@ -167,7 +183,7 @@ class SerialConnection_Client(QSerialConnection):
         Updates node ports when values are received from server.
         """
         server_name, port_list = node_data
-        self.nodes[server_name] = set(port_list)
+        self.nodes[server_name] = port_list.sort()
         # update ports as necessary
         if self.gui.port.currentText() == server_name:
             self.gui.node.clear()
@@ -182,29 +198,39 @@ class SerialConnection_Client(QSerialConnection):
         """
         node_text = self.gui.node.currentText()
         port_text = self.gui.port.currentText()
-        yield self.server.device_select(node_text, port_text)
+        try:
+            yield self.server.device_select(node_text, port_text)
+        except Exception as e:
+            print(e)
+        else:
+            self.gui.device_label.setStyleSheet('background-color: lightgreen')
 
     @inlineCallbacks
     def pressDisconnect(self):
         """
         Disconnect from the current device.
         """
-        yield self.server.device_close()
+        try:
+            yield self.server.device_close()
+        except Exception as e:
+            print(e)
+            pass
+        self.gui.device_label.setStyleSheet('background-color: red')
 
     def chooseNode(self, node_name):
         """
         Update the list of ports upon change of node selection.
         """
         self.gui.port.clear()
-        self.gui.port.addItems(list(self.nodes[node_name]))
+        self.gui.port.addItems(list(self.nodes[node_name]['ports']))
 
     def closeEvent(self, event):
-        self.cxn.disconnect()
         if self.reactor.running:
             self.reactor.stop()
+        self.cxn.disconnect()
 
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runGUI, runClient
-    runGUI(QSerialConnection)
-    #runClient(SerialConnection_Client)
+    #runGUI(QSerialConnection)
+    runClient(SerialConnection_Client, server='Lakeshore336 Server')
