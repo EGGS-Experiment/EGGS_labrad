@@ -26,15 +26,15 @@ class fma1700a_gui(QFrame):
         self.all_label = QLabel('FMA1700A')
         self.all_label.setFont(QFont(shell_font, pointSize=18))
         self.all_label.setAlignment(Qt.AlignCenter)
-            #readout
+            # readout
         self.flow_display_label = QLabel('Flow (L/min)')
         self.flow_display = QLabel('Flow')
         self.flow_display.setFont(QFont(shell_font, pointSize=25))
         self.flow_display.setAlignment(Qt.AlignCenter)
         self.flow_display.setStyleSheet('color: blue')
-            #record button
+            # record button
         self.record_button = TextChangingButton(('Stop Recording', 'Start Recording'))
-            #power
+            # power
         self.power_button = TextChangingButton(('On', 'Off'))
         self.lockswitch = TextChangingButton(('Unlocked', 'Locked'))
         self.lockswitch.setChecked(True)
@@ -48,7 +48,6 @@ class fma1700a_gui(QFrame):
         layout.addWidget(self.power_button, 3, col1)
         layout.addWidget(self.lockswitch, 4, col1)
         layout.addWidget(self.record_button, 5, col1)
-
         self.setLayout(layout)
 
 

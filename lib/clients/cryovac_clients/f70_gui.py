@@ -118,14 +118,9 @@ class f70_gui(QFrame):
         layout.addWidget(self.np_power, 10, pump2_col)
         layout.addWidget(self.np_lockswitch, 11, pump2_col)
 
-        #layout.minimumSize()
         self.setLayout(layout)
 
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runGUI
     runGUI(f70_gui)
-
-
-
-
