@@ -2,12 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QDoubleSpinBox, QComboBox, QGridLayout
 
-from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
-
-class TextChangingButton(_TextChangingButton):
-    def __init__(self, button_text=None, parent=None):
-        super(TextChangingButton, self).__init__(button_text, parent)
-        self.setMaximumHeight(30)
+from EGGS_labrad.lib.clients.Widgets import TextChangingButton
 
 
 class f70_gui(QFrame):

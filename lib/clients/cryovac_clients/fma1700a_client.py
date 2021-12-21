@@ -1,9 +1,8 @@
 import time
 from datetime import datetime
-
 from twisted.internet.defer import inlineCallbacks
-
 from EGGS_labrad.lib.clients.cryovac_clients.fma1700a_gui import fma1700a_gui
+
 
 class fma1700a_client(fma1700a_gui):
 
