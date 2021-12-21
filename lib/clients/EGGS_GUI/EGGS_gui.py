@@ -70,7 +70,7 @@ class EGGS_gui(QMainWindow):
         niops = niops03_client(reactor, cxn=cxn.cxn)
         twistorr = twistorr74_client(reactor, cxn=cxn.cxn)
         rga = RGA_client(reactor, cxn=cxn.cxn)
-        #fma = fma1700a_client(reactor, cxn=cxn.cxn)
+        fma = fma1700a_client(reactor, cxn=cxn.cxn)
 
         # main layout
         holder_widget = QWidget()
@@ -80,7 +80,7 @@ class EGGS_gui(QMainWindow):
         holder_layout.addWidget(rga, 0, 1)
         holder_layout.addWidget(twistorr, 0, 2)
         holder_layout.addWidget(niops, 1, 1)
-        #holder_layout.addWidget(fma, 1, 1)
+        holder_layout.addWidget(fma, 1, 2)
         return holder_widget
 
     def makeTrapWidget(self, reactor, cxn):
