@@ -73,3 +73,4 @@ class Lockswitch(TextChangingButton):
         font_tmp = QtGui.QFont()
         font_tmp.setPointSize(8)
         self.setFont(font_tmp)
+        self.setChecked(True)

@@ -33,6 +33,7 @@ class OscilloscopeServer(GPIBManagedServer):
     deviceWrappers = {
         'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper,
         'TEKTRONIX MSO2024B': TektronixMSO2000Wrapper
+        'KEYSIGHT DS1204G': KeysightDS1204GWrapper
     }
 
 
