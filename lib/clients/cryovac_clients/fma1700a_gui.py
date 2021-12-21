@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
 
-
 class TextChangingButton(_TextChangingButton):
     def __init__(self, button_text=None, parent=None):
         super(TextChangingButton, self).__init__(button_text, parent)
@@ -42,10 +41,7 @@ class fma1700a_gui(QFrame):
 
     def makeLayout(self):
         layout = QGridLayout()
-
         col1 = 0
-        # col2 = 1
-
         layout.addWidget(self.all_label, 0, col1)
         layout.addWidget(self.flow_display_label, 1, col1)
         layout.addWidget(self.flow_display, 2, col1)
@@ -53,8 +49,8 @@ class fma1700a_gui(QFrame):
         layout.addWidget(self.lockswitch, 4, col1)
         layout.addWidget(self.record_button, 5, col1)
 
-        #layout.minimumSize()
         self.setLayout(layout)
+
 
 if __name__ == "__main__":
     from EGGS_labrad.lib.clients import runGUI
