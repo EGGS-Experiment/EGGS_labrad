@@ -3,7 +3,7 @@
 [info]
 name = FMA1700A Server
 version = 1.0.0
-description = Controls the FMA1700A Mass Flow Meter via an Arduino
+description = Gets data from an Arduino which breaks out the FMA1700A flow signal.
 instancename = FMA1700A Server
 
 [startup]
@@ -15,52 +15,50 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-import time
 
 from labrad.units import WithUnit
 from labrad.server import setting, Signal
 
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
 
+from EGGS_labrad.lib.servers.polling_server import PollingServer
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 TERMINATOR = '\r\n'
 
 
-class FMA1700AServer(SerialDeviceServer):
+class FMA1700AServer(SerialDeviceServer, PollingServer):
     """
-    Controls FMA1700A Flow Meter for the ColdEdge system..
+    Gets data from an Arduino which breaks out the FMA1700A flow signal.
     """
 
     name = 'FMA1700A Server'
     regKey = 'FMA1700AServer'
-    serNode = None
-    port = None
+    serNode = 'MongKok'
+    port = 'COM58'
 
-    timeout = WithUnit(3.0, 's')
+    timeout = WithUnit(5.0, 's')
     baudrate = 38400
 
-    # SIGNALS
-    pressure_update = Signal(999999, 'signal: flow update', 'v')
 
-    # STARTUP
-    @setting(211, 'Read Pressure', returns='v')
-    def pressure_read(self, c):
+    # SIGNALS
+    flow_update = Signal(999999, 'signal: flow update', 'v')
+
+
+    # FLOW
+    @setting(111, 'Flow', returns='v')
+    def flow(self, c):
         """
-        Get pump pressure
+        Get flow as a percentage of maximum.
         Returns:
-            (float): pump pressure in mbar
+                (v)  : percent of maximum flow
         """
-        #create and send message to device
-        message = yield self._create_message(CMD_msg=b'224', DIR_msg=_TT74_READ_msg)
-        yield self.ser.write(message)
-        #read and parse answer
-        resp = yield self.ser.read(19)
-        resp = yield self._parse(resp)
-        resp = float(resp)
-        #send signal and return value
-        self.pressure_update(resp)
+        yield self.ser.acquire()
+        yield self.ser.write('Flow?' + TERMINATOR)
+        resp = yield self.ser.read_line('\r')
+        self.ser.release()
+        resp = float(resp.strip())
+        self.flow_update(resp)
         returnValue(resp)
 
 
@@ -68,13 +66,17 @@ class FMA1700AServer(SerialDeviceServer):
     @inlineCallbacks
     def _poll(self):
         """
-        Polls the device for pressure readout.
+        Polls the device for flow readout.
         """
-        yield self.ser.write(b'\x02\x802240\x0387')
-        resp = yield self.ser.read(19)
-        resp = yield self._parse(resp)
-        resp = float(resp)
-        self.pressure_update(resp)
+        # query
+        yield self.ser.acquire()
+        yield self.ser.write('Flow?\r\n')
+        resp = yield self.ser.read_line('\n')
+        self.ser.release()
+        # parse input
+        resp = float(resp.strip())
+        # send signal
+        self.flow_update(resp)
 
 
 if __name__ == '__main__':
