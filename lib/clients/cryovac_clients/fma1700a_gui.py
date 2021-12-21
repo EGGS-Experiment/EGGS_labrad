@@ -2,12 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout
 
-from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
-
-class TextChangingButton(_TextChangingButton):
-    def __init__(self, button_text=None, parent=None):
-        super(TextChangingButton, self).__init__(button_text, parent)
-        self.setMaximumHeight(25)
+from EGGS_labrad.lib.clients.Widgets import TextChangingButton
 
 
 class fma1700a_gui(QFrame):
@@ -34,10 +29,7 @@ class fma1700a_gui(QFrame):
         self.flow_display.setStyleSheet('color: blue')
             # record button
         self.record_button = TextChangingButton(('Stop Recording', 'Start Recording'))
-            # power
-        self.power_button = TextChangingButton(('On', 'Off'))
-        self.lockswitch = TextChangingButton(('Unlocked', 'Locked'))
-        self.lockswitch.setChecked(True)
+        self.record_button.setMaximumHeight(25)
 
     def makeLayout(self):
         layout = QGridLayout()

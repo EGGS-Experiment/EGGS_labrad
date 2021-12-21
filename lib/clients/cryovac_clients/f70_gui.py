@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QDoubleSpinBox, QComboBox, 
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
 
-
 class TextChangingButton(_TextChangingButton):
     def __init__(self, button_text=None, parent=None):
         super(TextChangingButton, self).__init__(button_text, parent)

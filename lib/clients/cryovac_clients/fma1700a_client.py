@@ -37,7 +37,6 @@ class fma1700a_client(fma1700a_gui):
 
         # try to get servers
         try:
-            self.reg = self.cxn.registry
             self.dv = self.cxn.data_vault
             self.fma = self.cxn.fma1700a_server
         except Exception as e:
@@ -76,8 +75,6 @@ class fma1700a_client(fma1700a_gui):
         """
         Connect signals to slots and other initializations.
         """
-        #self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.lock_twistorr(status))
-        #self.gui.twistorr_power.clicked.connect(lambda status: self.toggle_twistorr(status))
         self.gui.record_button.toggled.connect(lambda status: self.record_flow(status))
         return self.cxn
 
@@ -108,7 +105,7 @@ class fma1700a_client(fma1700a_gui):
         """
         # set up datavault
         self.recording = status
-        if self.recording == True:
+        if self.recording:
             self.starttime = time.time()
             date = datetime.now()
             year = str(date.year)
@@ -121,20 +118,6 @@ class fma1700a_client(fma1700a_gui):
                                        [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'),
                                         ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_record)
 
-    #@inlineCallbacks
-    # def toggle_twistorr(self, status):
-    #     """
-    #     Sets pump power on or off.
-    #     """
-    #     print('set power: ' + str(status))
-    #     #yield self.tt.toggle(status)
-
-    def lock(self, status):
-        """
-        Locks user interface to device.
-        """
-        self.gui.twistorr_power.setEnabled(status)
-
     @inlineCallbacks
     def updateFlow(self, c, flow):
         """
@@ -144,12 +127,6 @@ class fma1700a_client(fma1700a_gui):
         if self.recording:
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, flow, context=self.c_record)
-
-    # def updatePower(self, c, power):
-    #     """
-    #     Updates GUI when other clients have made changes to the device.
-    #     """
-    #     self.gui.twistorr_power.setChecked(power)
 
     def closeEvent(self, event):
         self.cxn.disconnect()
