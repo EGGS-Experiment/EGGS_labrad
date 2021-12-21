@@ -1,5 +1,5 @@
 import time
-import datetime as datetime
+from datetime import datetime
 
 from twisted.internet.defer import inlineCallbacks
 
@@ -114,9 +114,8 @@ class fma1700a_client(fma1700a_gui):
             trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
             trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
-            yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')],
-                                       [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'),
-                                        ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_record)
+            yield self.dv.new('FMA1700A Flowmeter', [('Elapsed time', 't')],
+                                       [('Flowmeter', 'Flow rate', 'L/min')], context=self.c_record)
 
     @inlineCallbacks
     def updateFlow(self, c, flow):
