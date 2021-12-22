@@ -9,8 +9,8 @@ class f70_client(f70_gui):
 
     name = 'F70 Client'
 
-    TEMPID = 694322
-    PRESSUREID = 694321
+    TEMPID = 109621
+    PRESSUREID = 109622
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
@@ -65,7 +65,6 @@ class f70_client(f70_gui):
         # only start polling if not started
         if not poll_params[0]:
             yield self.f70.polling(True, 5.0)
-
         return self.cxn
 
     @inlineCallbacks
@@ -73,17 +72,16 @@ class f70_client(f70_gui):
         """
         Get startup data from servers and show on GUI.
         """
-        power_tmp = yield self.f70.toggle()
-        self.gui.power.setChecked(power_tmp)
         return self.cxn
 
-    @inlineCallbacks
     def initializeGUI(self, cxn):
         """
         Connect signals to slots and other initializations.
         """
-        self.gui.lockswitch.toggled.connect(lambda status: self.lock(status))
-        self.gui.power_button.clicked.connect(lambda status: self.toggle(status))
+        self.gui.lockswitch.clicked.connect(lambda status: self.lock(status))
+        self.gui.power_button.clicked.connect(lambda status: self.f70.toggle(status))
+        self.gui.coldhead_pause.clicked.connect(lambda status: self.f70.cold_head_pause(status))
+        self.gui.reset_button.clicked.connect(lambda status: self.f70.reset())
         self.gui.record_button.toggled.connect(lambda status: self.record(status))
         return self.cxn
 
@@ -120,7 +118,7 @@ class f70_client(f70_gui):
 
     # SLOTS
     @inlineCallbacks
-    def record_pressure(self, status):
+    def record(self, status):
         """
         Creates a new dataset to record pressure and
         tells polling loop to add data to data vault.
@@ -139,19 +137,14 @@ class f70_client(f70_gui):
             yield self.dv.new('F70 Helium Compressor', [('Elapsed time', 't')],
                               [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_record)
 
-    @inlineCallbacks
-    def toggle(self, status):
-        """
-        Toggle compressor power.
-        """
-        print('set power: ' + str(status))
-        yield self.f70.toggle(status)
-
     def lock(self, status):
         """
         Locks user interface to device.
         """
         self.gui.power_button.setEnabled(status)
+        self.gui.coldhead_pause.setEnabled(status)
+        self.gui.reset_button.setEnabled(status)
+
 
     def closeEvent(self, event):
         self.cxn.disconnect()
