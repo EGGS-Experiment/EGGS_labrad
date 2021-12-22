@@ -72,7 +72,9 @@ class f70_client(f70_gui):
         """
         Get startup data from servers and show on GUI.
         """
-        #todo: get status
+        status_list = yield self.f70.status()
+        power_status = bool(status_list[0][-1])
+        self.gui.power_button.setChecked(power_status)
         return self.cxn
 
     def initializeGUI(self, cxn):
