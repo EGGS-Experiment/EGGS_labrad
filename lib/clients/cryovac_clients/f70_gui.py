@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QVBoxLayout, QPushButton
 
@@ -15,48 +15,73 @@ class f70_gui(QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        self.setFixedSize(350, 500)
+        self.setFixedSize(300, 420)
         self.all_label = QLabel('F70 Compressor')
-        self.all_label.setFont(QFont(shell_font, pointSize=20))
+        self.all_label.setFont(QFont(shell_font, pointSize=18))
         self.all_label.setAlignment(Qt.AlignCenter)
         # readout
             # temperature readout
+        self.temperature_display = QWidget(self)
+        self.temperature_display_layout = QGridLayout(self.temperature_display)
         self.temperature_display_label = QLabel('Temperature (C)')
-        self.temperature_display = QLabel('Temp')
-        self.temperature_display.setFont(QFont(shell_font, pointSize=20))
-        self.temperature_display.setAlignment(Qt.AlignCenter)
-        self.temperature_display.setStyleSheet('color: blue')
+        self.temperature_display_label.setFont(QFont(shell_font, pointSize=14))
+        self.temperature_display_layout.addWidget(self.temperature_display_label, 0, 0, 1, 2)
+        self.temperature_display_channel_labels = [QLabel("Helium discharge"), QLabel("Water outlet"),
+                                                   QLabel("Water inlet"), QLabel("Other")]
+        self.temperature_display_channels = [QLabel("Temp1"), QLabel("Temp2"),
+                                             QLabel("Temp3"), QLabel("Temp4")]
+        for i in range(4):
+            channel = self.temperature_display_channels[i]
+            channel_label = self.temperature_display_channel_labels[i]
+            channel.setFont(QFont(shell_font, pointSize=20))
+            channel.setAlignment(Qt.AlignCenter)
+            channel.setStyleSheet('color: blue')
+            row = int(i / 2) * 2 + 1
+            col = i % 2
+            self.temperature_display_layout.addWidget(channel_label, row, col)
+            self.temperature_display_layout.addWidget(channel, row + 1, col)
+
             # pressure readout
+        self.pressure_display = QWidget(self)
+        self.pressure_display_layout = QGridLayout(self.pressure_display)
         self.pressure_display_label = QLabel('Pressure (psig)')
-        self.pressure_display = QLabel('Pressure')
-        self.pressure_display.setFont(QFont(shell_font, pointSize=20))
-        self.pressure_display.setAlignment(Qt.AlignCenter)
-        self.pressure_display.setStyleSheet('color: green')
+        self.pressure_display_label.setFont(QFont(shell_font, pointSize=14))
+        self.pressure_display_layout.addWidget(self.pressure_display_label, 0, 0, 1, 2)
+        self.pressure_display_channel_1_label = QLabel("Compressor return")
+        self.pressure_display_channel_1 = QLabel("Press1")
+        self.pressure_display_channel_1.setFont(QFont(shell_font, pointSize=20))
+        self.pressure_display_channel_1.setAlignment(Qt.AlignCenter)
+        self.pressure_display_channel_1.setStyleSheet('color: green')
+        self.pressure_display_layout.addWidget(self.pressure_display_channel_1_label, 1, 0)
+        self.pressure_display_layout.addWidget(self.pressure_display_channel_1, 2, 0)
+        self.pressure_display_channel_2_label = QLabel("Other")
+        self.pressure_display_channel_2 = QLabel("Press2")
+        self.pressure_display_channel_2.setFont(QFont(shell_font, pointSize=20))
+        self.pressure_display_channel_2.setAlignment(Qt.AlignCenter)
+        self.pressure_display_channel_2.setStyleSheet('color: green')
+        self.pressure_display_layout.addWidget(self.pressure_display_channel_2_label, 1, 1)
+        self.pressure_display_layout.addWidget(self.pressure_display_channel_2, 2, 1)
         # control
         self.record_button = TextChangingButton(('Stop Recording', 'Start Recording'))
+        self.record_button.setFixedHeight(23)
+        self.record_button.setFont(QFont(shell_font, pointSize=8))
         self.lockswitch = Lockswitch()
         self.lockswitch.setChecked(True)
         self.power_button = TextChangingButton(('On', 'Off'))
-        self.reset_button = QPushButton('Reset')
+        self.power_button.setFixedHeight(23)
+        self.power_button.setFont(QFont(shell_font, pointSize=8))
         self.coldhead_pause = TextChangingButton(('Paused', 'Running'))
-
+        self.coldhead_pause.setFixedHeight(23)
+        self.coldhead_pause.setFont(QFont(shell_font, pointSize=8))
+        self.reset_button = QPushButton('Reset')
 
     def makeLayout(self):
         layout = QGridLayout()
         layout.addWidget(self.all_label, 0, 0, 1, 2)
         # readouts
-        layout.addWidget(self.pressure_display_label, 2, 0)
-        layout.addWidget(self.pressure_display, 3, 0)
-        layout.addWidget(self.temperature_display_label, 4, 0)
-        layout.addWidget(self.temperature_display, 5, 0)
-        layout.addWidget(self.voltage_display_label, 6, 0)
-        layout.addWidget(self.voltage_display, 7, 0)
-        layout.addWidget(self.voltage_label, 8, 0)
-        layout.addWidget(self.voltage, 9, 0)
-        layout.addWidget(self.power, 10, 0)
-        layout.addWidget(self.lockswitch, 11, 0)
-        layout.addWidget(self.record, 12, 0)
-        end_of_readouts = 10
+        layout.addWidget(self.temperature_display, 2, 0, 3, 2)
+        layout.addWidget(self.pressure_display, 6, 0, 3, 2)
+        end_of_readouts = 9
         # controls
         layout.addWidget(self.power_button, end_of_readouts + 1, 0)
         layout.addWidget(self.coldhead_pause, end_of_readouts + 1, 1)
