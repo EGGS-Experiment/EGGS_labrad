@@ -17,18 +17,19 @@ timeout = 20
 """
 
 from labrad.units import WithUnit
-from labrad.server import setting
+from labrad.server import setting, Signal
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
+from EGGS_labrad.lib.servers.polling_server import PollingServer
 
 _F70_EOL_CHAR = b'\r'
 _F70_START_CHAR = b'\x24'
 _F70_DELIM_CHAR = b'\x2C'
 
 
-class F70Server(SerialDeviceServer):
+class F70Server(SerialDeviceServer, PollingServer):
     """
     Controls the F70 Helium Compressor
     """
@@ -40,6 +41,10 @@ class F70Server(SerialDeviceServer):
 
     timeout = WithUnit(3.0, 's')
     baudrate = 9600
+
+    # SIGNALS
+    pressure_update = Signal(999999, 'signal: pressure update', '(ii)')
+    temperature_update = Signal(999998, 'signal: temperature update', '(iiii)')
 
 
     # STATUS
@@ -148,7 +153,18 @@ class F70Server(SerialDeviceServer):
         """
         Polls the device for readout.
         """
-        pass
+        yield self.ser.acquire()
+        self.ser.write('$TEAA4B9\r')
+        respT = self.ser.read_line(_F70_EOL_CHAR)
+        self.ser.write('$PRA95F7\r')
+        respP = self.ser.read_line(_F70_EOL_CHAR)
+        self.ser.release()
+        # parse
+        respT = yield self.ser._parse(respT)
+        respP = yield self.ser._parse(respP)
+        # todo: process
+        self.temperature_update(respT)
+        self.pressure_update(respP)
 
 
     # HELPER

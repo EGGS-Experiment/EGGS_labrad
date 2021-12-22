@@ -9,10 +9,8 @@ class f70_client(f70_gui):
 
     name = 'F70 Client'
 
+    TEMPID = 694322
     PRESSUREID = 694321
-    ENERGYID = 694322
-    RPMID = 694323
-    POWERID = 694324
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
@@ -55,12 +53,8 @@ class f70_client(f70_gui):
             # device parameters
         yield self.f70.signal__pressure_update(self.PRESSUREID)
         yield self.f70.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
-        yield self.f70.signal__energy_update(self.ENERGYID)
-        yield self.f70.addListener(listener=self.updateEnergy, source=None, ID=self.ENERGYID)
-        yield self.f70.signal__rpm_update(self.RPMID)
-        yield self.f70.addListener(listener=self.updateRPM, source=None, ID=self.RPMID)
-        yield self.f70.signal__power_update(self.POWERID)
-        yield self.f70.addListener(listener=self.updatePower, source=None, ID=self.POWERID)
+        yield self.f70.signal__temperature_update(self.TEMPID)
+        yield self.f70.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPID)
             # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
@@ -81,6 +75,7 @@ class f70_client(f70_gui):
         """
         power_tmp = yield self.f70.toggle()
         self.gui.power.setChecked(power_tmp)
+        return self.cxn
 
     @inlineCallbacks
     def initializeGUI(self, cxn):
@@ -90,6 +85,7 @@ class f70_client(f70_gui):
         self.gui.lockswitch.toggled.connect(lambda status: self.lock(status))
         self.gui.power_button.clicked.connect(lambda status: self.toggle(status))
         self.gui.record_button.toggled.connect(lambda status: self.record(status))
+        return self.cxn
 
 
     # SIGNALS
@@ -107,15 +103,19 @@ class f70_client(f70_gui):
             print(server_name + ' disconnected, disabling widget.')
             self.setEnabled(False)
 
-    @inlineCallbacks
     def updatePressure(self, c, pressure):
         """
         Updates GUI when values are received from server.
         """
-        self.gui.pressure_display.setText(str(pressure))
-        if self.recording:
-            elapsedtime = time.time() - self.starttime
-            yield self.dv.add(elapsedtime, pressure, context=self.c_record)
+        self.gui.pressure_display_channel_1.setText(str(pressure[0]))
+        self.gui.pressure_display_channel_2.setText(str(pressure[1]))
+
+    def updateTemperature(self, c, temp):
+        """
+        Updates GUI when values are received from server.
+        """
+        for i in range(4):
+            self.gui.temperature_display_channels[i].setText(str(temp[i]))
 
 
     # SLOTS

@@ -64,6 +64,7 @@ class EGGS_gui(QMainWindow):
         from EGGS_labrad.lib.clients.cryovac_clients.twistorr74_client import twistorr74_client
         from EGGS_labrad.lib.clients.cryovac_clients.RGA_client import RGA_client
         from EGGS_labrad.lib.clients.cryovac_clients.fma1700a_client import fma1700a_client
+        #from EGGS_labrad.lib.clients.cryovac_clients.f70_client import f70_client
 
         # instantiate constituent widgets
         lakeshore = lakeshore336_client(reactor, cxn=cxn.cxn)
@@ -71,6 +72,7 @@ class EGGS_gui(QMainWindow):
         twistorr = twistorr74_client(reactor, cxn=cxn.cxn)
         rga = RGA_client(reactor, cxn=cxn.cxn)
         fma = fma1700a_client(reactor, cxn=cxn.cxn)
+        #f70 = f70_client(reactor, cxn=cxn.cxn)
 
         # main layout
         holder_widget = QWidget()
@@ -81,6 +83,7 @@ class EGGS_gui(QMainWindow):
         holder_layout.addWidget(twistorr, 0, 2)
         holder_layout.addWidget(niops, 1, 1)
         holder_layout.addWidget(fma, 1, 2)
+        #holder_layout.addWidget(f70, 2, 0)
         return holder_widget
 
     def makeTrapWidget(self, reactor, cxn):
