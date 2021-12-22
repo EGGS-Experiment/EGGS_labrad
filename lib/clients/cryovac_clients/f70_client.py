@@ -72,6 +72,7 @@ class f70_client(f70_gui):
         """
         Get startup data from servers and show on GUI.
         """
+        #todo: get status
         return self.cxn
 
     def initializeGUI(self, cxn):

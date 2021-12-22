@@ -28,6 +28,11 @@ _F70_EOL_CHAR = b'\r'
 _F70_START_CHAR = b'\x24'
 _F70_DELIM_CHAR = b'\x2C'
 
+_F70_OPERATION_STATUS_MSG = ('Local Off', 'Local On', 'Remote Off', 'Remote On',
+                             'Cold Head Run', 'Cold Head Pause', 'Fault Off', 'Oil Fault Off')
+_F70_STATUS_BITS_MSG = ('System Power', 'Motor Temperature Alarm', 'Phase Fuse Alarm',
+                   'Helium Temperature Alarm', 'Water Temperature Alarm', 'Water Flow Alarm',
+                   'Oil Level Alarm', 'Pressure Alarm', 'Solenoid Power', 'Serial Write Enable')
 
 class F70Server(SerialDeviceServer, PollingServer):
     """
@@ -48,19 +53,26 @@ class F70Server(SerialDeviceServer, PollingServer):
 
 
     # STATUS
-    @setting(11, 'Status', returns='s')
+    @setting(11, 'Status', returns='*s')
     def status(self, c):
         """
         Get system status.
-        Returns:
-            (float): temperature
         """
         # create message
         cmd_msg = b'STA'
         msg = yield self._create_message(cmd_msg, CRC_msg=b'3504')
         # query
         resp = yield self._query(msg)
-        returnValue(resp)
+        # convert status into binary string
+        status_bits = list("{:016b}".format(int(resp)))
+        # get operation status
+        op_status = 'Status: ' + _F70_OPERATION_STATUS_MSG[int(''.join(resp[9: 12]), base=2)]
+        # remove spare bits
+        del status_bits[9: 15]
+        # join into message
+        status_list = [': '.join(th) for th in zip(_F70_STATUS_BITS_MSG, status_bits)]
+        status_list.append(op_status)
+        returnValue(status_list)
 
     @setting(21, 'Reset', returns='s')
     def reset(self, c):
