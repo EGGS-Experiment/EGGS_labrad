@@ -60,7 +60,7 @@ class OscilloscopeServer(GPIBManagedServer):
             channel (int): channel to get information on
 
         Returns:
-            Tuple of (probeAtten, termination, scale, position, coupling, bwLimit, invert, units)
+            Tuple of (attenuation, termination, scale, position, coupling, bwLimit, invert, units)
         """
         return self.selectedDevice(c).channel_info(channel)
 

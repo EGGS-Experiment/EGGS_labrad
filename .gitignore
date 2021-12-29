@@ -9,3 +9,6 @@
 .idea
 **/.idea
 .idea/**
+
+#artiq stuff
+**/*.pyon
