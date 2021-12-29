@@ -38,7 +38,7 @@ class FMA1700AServer(SerialDeviceServer, PollingServer):
     port = 'COM58'
 
     timeout = WithUnit(5.0, 's')
-    baudrate = 38400
+    baudrate = 115200
 
 
     # SIGNALS
