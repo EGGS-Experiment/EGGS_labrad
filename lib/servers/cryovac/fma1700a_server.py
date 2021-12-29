@@ -54,8 +54,8 @@ class FMA1700AServer(SerialDeviceServer, PollingServer):
                 (v)  : percent of maximum flow
         """
         yield self.ser.acquire()
-        yield self.ser.write('Flow?' + TERMINATOR)
-        resp = yield self.ser.read_line('\r')
+        yield self.ser.write('F?' + TERMINATOR)
+        resp = yield self.ser.read_line('\n')
         self.ser.release()
         resp = float(resp.strip())
         self.flow_update(resp)
