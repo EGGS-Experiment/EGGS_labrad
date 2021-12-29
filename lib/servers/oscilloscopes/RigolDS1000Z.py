@@ -3,13 +3,13 @@ from labrad.types import Value
 from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-COUPLINGS = ['AC', 'DC', 'GND']
-TRIG_CHANNELS = ['EXT','CHAN1','CHAN2','CHAN3','CHAN4','LINE']
+COUPLINGS = ('AC', 'DC', 'GND')
+TRIG_CHANNELS = ('EXT', 'CHAN1', 'CHAN2', 'CHAN3', 'CHAN4', 'LINE')
 VERT_DIVISIONS = 8.0
 HORZ_DIVISIONS = 10.0
 SCALES = []
-PROBE_FACTORS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
-TRIGGER_MODES = ['AUTO', 'NONE', 'SING']
+PROBE_FACTORS = (0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000)
+TRIGGER_MODES = ('AUTO', 'NONE', 'SING')
 
 
 class RigolDS1000ZWrapper(GPIBDeviceWrapper):
@@ -26,7 +26,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     # CHANNEL
     @inlineCallbacks
     def channel_info(self, channel):
-        # returns a tuple of (probeAtten, termination, scale, position, coupling, bwLimit, invert, units)
+        # returns a tuple of (probeAtten, termination, scale, position, bwLimit, invert, units)
         resp = yield self.query(':CHAN%d?' % channel)
         # example of resp:
         # a=':CHAN1:RANG +40.0E+00;OFFS +0.00000E+00;COUP DC;IMP ONEM;DISP 1;BWL 0;INV 0;LAB "1";UNIT VOLT;PROB +10E+00;PROB:SKEW +0.00E+00;STYP SING'
