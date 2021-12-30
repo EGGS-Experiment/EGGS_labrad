@@ -85,7 +85,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         # value is in volts
         chString = ":CHAN{:d}:OFFS".format(channel)
         if offset is not None:
-            if (offset > 1e-4) and (offset < 1e1):
+            if (offset == 0) or ((offset > 1e-4) and (offset < 1e1)):
                 yield self.write(chString + ' ' + str(offset))
             else:
                 raise Exception('Scale must be in range: [1e-3, 1e1]')

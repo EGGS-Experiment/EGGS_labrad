@@ -59,7 +59,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
             else:
                 raise Exception('Probe attenuation must be one of: ' + str((0.1, 1, 10)))
         resp = yield self.query(chString + '?')
-        returnValue(float(resp))
+        returnValue(1/float(resp))
 
     @inlineCallbacks
     def channel_toggle(self, channel, state=None):
@@ -82,7 +82,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         # value is in volts
         chString = 'CH{:d}:OFFS'.format(channel)
         if offset is not None:
-            if (offset > 1e-4) and (offset < 1e1):
+            if (offset == 0) or ((offset > 1e-4) and (offset < 1e1)):
                 yield self.write(chString + ' ' + str(offset))
             else:
                 raise Exception('Scale must be in range: [1e-3, 1e1]')
@@ -105,31 +105,32 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def trigger_slope(self, slope=None):
+        print('yzde')
         chString = 'TRIG:A:EDGE:SLOP'
         if slope is not None:
             slope = slope.upper()
             if slope in ('RIS', 'FALL'):
                 yield self.write(chString + ' ' + slope)
             else:
-                raise Exception('Slope must be one of: ' + str(('POS', 'NEG', 'RFAL')))
+                raise Exception('Slope must be one of: ' + str(('RIS', 'FALL')))
         resp = yield self.query(chString + '?')
         returnValue(resp.strip())
 
-    @inlineCallbacks
-    def trigger_level(self, level=None):
-        chString = 'TRIG:A:LEV:CH'.format(channel)
-        #chString = 'TRIG:A:LEV:CH'.format(channel)
-        if level is not None:
-            chan_tmp = yield self.trigger_channel()
-            vscale_tmp = yield self.channel_scale(int(chan_tmp[-1]))
-            level_max = 5 * vscale_tmp
-            if (level == 0) or (abs(level) <= level_max):
-                yield self.write(chString + ' ' + str(level))
-            else:
-                raise Exception('Trigger level must be in range: ' + str((-level_max, level_max)))
-        resp = yield self.query(chString + '?')
-        returnValue(float(resp))
-        #todo
+    # @inlineCallbacks
+    # def trigger_level(self, level=None):
+    #     chString = 'TRIG:A:LEV:CH'.format(channel)
+    #     #chString = 'TRIG:A:LEV:CH'.format(channel)
+    #     if level is not None:
+    #         chan_tmp = yield self.trigger_channel()
+    #         vscale_tmp = yield self.channel_scale(int(chan_tmp[-1]))
+    #         level_max = 5 * vscale_tmp
+    #         if (level == 0) or (abs(level) <= level_max):
+    #             yield self.write(chString + ' ' + str(level))
+    #         else:
+    #             raise Exception('Trigger level must be in range: ' + str((-level_max, level_max)))
+    #     resp = yield self.query(chString + '?')
+    #     returnValue(float(resp))
+    #     #todo
 
     @inlineCallbacks
     def trigger_mode(self, mode=None):

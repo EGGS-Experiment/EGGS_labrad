@@ -157,11 +157,11 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         Set or query trigger slope.
         Args:
-            slope (str): Trigger slope. #todo: redocument
+            slope (str): the slope to trigger on (e.g. rising edge)
         Returns:
-            (str): The trigger slope. #todo: redocument
+            (str): the slope being triggered off
         """
-        return self.selectDevice(c).trigger_slope(slope)
+        return self.selectedDevice(c).trigger_slope(slope)
 
     @setting(133, "Trigger Level", level='v', returns='v')
     def trigger_level(self, c, level=None):
