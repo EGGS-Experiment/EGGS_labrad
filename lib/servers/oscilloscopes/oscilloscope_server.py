@@ -52,15 +52,14 @@ class OscilloscopeServer(GPIBManagedServer):
 
 
     # CHANNEL
-    @setting(100, "Channel Info", channel='i', returns='(vvvvsvss)')
+    @setting(100, "Channel Info", channel='i', returns='(bvvvsb)')
     def channel_info(self, c, channel):
         """
         Get channel information.
         Args:
-            channel (int): channel to get information on
-
+            channel (int): channel to query
         Returns:
-            Tuple of (attenuation, termination, scale, position, coupling, bwLimit, invert, units)
+            Tuple of (on/off, attenuation, scale, offset, coupling, invert)
         """
         return self.selectedDevice(c).channel_info(channel)
 
@@ -101,7 +100,7 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).channel_probe(channel, factor)
 
-    @setting(114, "Channel Toggle", channel='i', state='b', returns='b')
+    @setting(114, "Channel Toggle", channel='i', state=['i', 'b'], returns='b')
     def channel_toggle(self, c, channel, state=None):
         """
         Set or query channel on/off state.
@@ -113,7 +112,7 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).channel_toggle(channel, state)
 
-    @setting(115, "Channel Invert", channel='i', invert='b', returns='b')
+    @setting(115, "Channel Invert", channel='i', invert=['i', 'b'], returns='b')
     def channel_invert(self, c, channel, invert=None):
         """
         Get or set channel inversion.
@@ -145,11 +144,12 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         Set or query trigger channel.
         Args:
-            source (str): 'EXT', 'LINE', 'CHANX' where X is channel number. If
-                None (the default) then we just query.
+            source (str): channel name
         Returns:
             (str): Trigger source.
         """
+        if source == '':
+            source = None
         return self.selectedDevice(c).trigger_channel(source)
 
     @setting(132, "Trigger Slope", slope='s', returns='s')
@@ -188,7 +188,7 @@ class OscilloscopeServer(GPIBManagedServer):
 
     # HORIZONTAL
     @setting(151, "Horizontal Offset", offset='v', returns='v')
-    def horiz_offset(self, c, offset=None):
+    def horizontal_offset(self, c, offset=None):
         """
         Set or query the horizontal offset.
         Args:
@@ -196,10 +196,10 @@ class OscilloscopeServer(GPIBManagedServer):
         Returns:
             (float): the horizontal offset in (in seconds).
         """
-        return self.selectedDevice(c).horiz_offset(offset)
+        return self.selectedDevice(c).horizontal_offset(offset)
 
-    @setting(152, "Horizontal ", scale='v', returns='v')
-    def horiz_scale(self, c, scale=None):
+    @setting(152, "Horizontal Scale", scale='v', returns='v')
+    def horizontal_scale(self, c, scale=None):
         """
         Set or query the horizontal scale.
         Args:
@@ -207,7 +207,7 @@ class OscilloscopeServer(GPIBManagedServer):
         Returns:
             (float): the horizontal scale (in s/div).
         """
-        return self.selectedDevice(c).horiz_scale(scale)
+        return self.selectedDevice(c).horizontal_scale(scale)
 
 
     # ACQUISITION
@@ -225,7 +225,7 @@ class OscilloscopeServer(GPIBManagedServer):
 
     # MEASURE
     @setting(210, "Measure Start", channel='i', returns='')
-    def measure_start(self, c):
+    def measure_start(self, c, channel):
         '''
         (re-)start measurement statistics
         (see measure)

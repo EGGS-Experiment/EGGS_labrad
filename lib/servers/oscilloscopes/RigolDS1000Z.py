@@ -15,6 +15,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def reset(self):
         yield self.write('*RST')
+        #todo: wait until finish reset
 
     @inlineCallbacks
     def clear_buffers(self):
@@ -24,35 +25,13 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     # CHANNEL
     @inlineCallbacks
     def channel_info(self, channel):
-        # returns a tuple of (probeAtten, termination, scale, position, bwLimit, invert, units)
-        resp = yield self.query(':CHAN%d?' % channel)
-        # example of resp:
-        # a=':CHAN1:RANG +40.0E+00;OFFS +0.00000E+00;COUP DC;IMP ONEM;DISP 1;BWL 0;INV 0;LAB "1";UNIT VOLT;PROB +10E+00;PROB:SKEW +0.00E+00;STYP SING'
-        vals = []
-        # the last part contains the numbers
-        for part in resp.split(';'):
-            vals.append(part.split(' ')[1])
-        scale = vals[0]
-        position = vals[1]
-        coupling = vals[2]
-        termination = vals[3]
-        if termination == 'ONEM':
-            termination = 1e6
-        else:
-            termination = 50
-        bwLimit = vals[5]
-        invert = vals[6]
-        unit = vals[8]
-        probeAtten = vals[9]
-        # convert strings to numerical data when appropriate
-        probeAtten = Value(float(probeAtten), '')
-        termination = Value(float(termination), '')
-        scale = Value(float(scale), '')
-        position = Value(float(position), '')
-        coupling = coupling
-        bwLimit = Value(float(bwLimit), '')
-        invert = invert
-        returnValue((probeAtten, termination, scale, position, coupling, bwLimit, invert, unit))
+        onoff = yield self.channel_toggle(channel)
+        probeAtten = yield self.channel_probe(channel)
+        scale = yield self.channel_scale(channel)
+        offset = yield self.channel_offset(channel)
+        coupling = yield self.channel_coupling(channel)
+        invert = yield self.channel_invert(channel)
+        returnValue((onoff, probeAtten, scale, offset, coupling, invert))
 
     @inlineCallbacks
     def channel_coupling(self, channel, coupling=None):
@@ -70,7 +49,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     def channel_scale(self, channel, scale=None):
         chString = ':CHAN{:d}:SCAL'.format(channel)
         if scale is not None:
-            if (scale > (1e-3)) and (scale < 1e1):
+            if (scale > 1e-3) and (scale < 1e1):
                 yield self.write(chString + ' ' + str(scale))
             else:
                 raise Exception('Scale must be in range: [1e-3, 1e1]')
@@ -94,23 +73,22 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         if state is not None:
             yield self.write(chString + ' ' + str(int(state)))
         resp = yield self.query(chString + '?')
-        returnValue(bool(resp))
+        returnValue(bool(int(resp)))
 
     @inlineCallbacks
     def channel_invert(self, channel, invert=None):
-        chString = ":CHAN:{:d}:INV".format(channel)
+        chString = ":CHAN{:d}:INV".format(channel)
         if invert is not None:
             yield self.write(chString + ' ' + str(int(invert)))
         resp = yield self.query(chString + '?')
-        returnValue(bool(resp))
+        returnValue(bool(int(resp)))
 
     @inlineCallbacks
     def channel_offset(self, channel, offset=None):
         # value is in volts
-        chString = ":CHAN:{:d}:OFFS".format(channel)
+        chString = ":CHAN{:d}:OFFS".format(channel)
         if offset is not None:
-            #todo: get scale and probe
-            if () and (): #todo
+            if (offset > 1e-4) and (offset < 1e1):
                 yield self.write(chString + ' ' + str(offset))
             else:
                 raise Exception('Scale must be in range: [1e-3, 1e1]')
@@ -121,12 +99,13 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     # TRIGGER
     @inlineCallbacks
     def trigger_channel(self, channel=None):
+        #note: target channel must be on
         chString = ':TRIG:EDG:SOUR'
         if channel is not None:
             if channel in (1, 2, 3, 4):
                 yield self.write(chString + ' CHAN' + str(channel))
-        else:
-            raise Exception('Trigger channel must be one of: ' + str((1, 2, 3, 4)))
+            else:
+                raise Exception('Trigger channel must be one of: ' + str((1, 2, 3, 4)))
         resp = yield self.query(chString + '?')
         returnValue(resp.strip())
 
@@ -146,12 +125,13 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     def trigger_level(self, level=None):
         chString = ':TRIG:EDG:LEV'
         if level is not None:
-            #todo: get range
-            if (level > ) and (level < ):
+            chan_tmp = yield self.trigger_channel()
+            vscale_tmp = yield self.channel_scale(int(chan_tmp[-1]))
+            level_max = 5 * vscale_tmp
+            if (level == 0) or (abs(level) <= level_max):
                     yield self.write(chString + ' ' + str(level))
             else:
-                #todo: properly
-                raise Exception('Trigger level must be in range: ' + str(('POS', 'NEG', 'RFAL')))
+                raise Exception('Trigger level must be in range: ' + str((-level_max, level_max)))
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
@@ -159,36 +139,34 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     def trigger_mode(self, mode=None):
         chString = ':TRIG:SWE'
         if mode is not None:
-            if mode in ('AUTO', 'NONE', 'SING'):
+            if mode in ('AUTO', 'NORM', 'SING'):
                 yield self.write(chString + ' ' + mode)
             else:
-                raise Exception('Trigger mode must be one of: ' + str(('AUTO', 'NONE', 'SING')))
+                raise Exception('Trigger mode must be one of: ' + str(('AUTO', 'NORM', 'SING')))
         resp = yield self.query(chString + '?')
         returnValue(resp.strip())
 
 
     # HORIZONTAL
     @inlineCallbacks
-    def horiz_offset(self, offset=None):
+    def horizontal_offset(self, offset=None):
         chString = ':TIM:OFFS'
         if offset is not None:
-            #todo
-            if () and ():
-                yield self.write(chString + ' ' + offset)
+            if (offset == 0) or ((abs(offset) > 1e-6) and (abs(offset) < 1e0)):
+                yield self.write(chString + ' ' + str(offset))
             else:
-                raise Exception('Horizontal offset must be in range: ' + str())
+                raise Exception('Horizontal offset must be in range: ' + str('(1e-6, 1e0)'))
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
     @inlineCallbacks
-    def horiz_scale(self, scale=None):
+    def horizontal_scale(self, scale=None):
         chString = ':TIM:SCAL'
         if scale is not None:
-            #todo
-            if () and ():
-                yield self.write(chString + ' ' + scale)
+            if (scale > 1e-6) and (scale < 50):
+                yield self.write(chString + ' ' + str(scale))
             else:
-                raise Exception('Horizontal scale must be in range: ' + str())
+                raise Exception('Horizontal scale must be in range: ' + str('(1e-6, 50)'))
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
@@ -287,6 +265,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         points = int(fields[2])
         xincrement, xorigin, xreference = float(fields[4: 7])
         yincrement, yorigin, yreference = float(fields[7: 10])
+        print(str((points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)))
         return (points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)
 
     def _parseByteData(data):
