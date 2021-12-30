@@ -307,7 +307,7 @@ class SerialServer(PollingServer):
         """
 
         """
-        # killit is todo
+        # killit stops the read
         killit = False
 
         def doRead(count):
@@ -320,15 +320,14 @@ class SerialServer(PollingServer):
                 time.sleep(0.001)
             return d
 
-        # todo: document
+        # read until the timeout
         data = threads.deferToThread(doRead, count)
         timeout_object = []
         start_time = time.time()
-        # todo: document
         r = yield util.maybeTimeout(data, min(timeout, 300), timeout_object)
         killit = True
 
-        # todo: document
+        # check if we have timed out
         if r == timeout_object:
             elapsed = time.time() - start_time
             print("deferredRead timed out after {} seconds".format(elapsed))
@@ -348,10 +347,12 @@ class SerialServer(PollingServer):
         if timeout == 0:
             returnValue(ser.read(count))
 
-        # todo: document
+        # read until we either hit timeout or meet character count
         recd = b''
         while len(recd) < count:
+            # try to read remaining characters
             r = ser.read(count - len(recd))
+            # if nothing, keep reading until timeout
             if r == b'':
                 r = yield self.deferredRead(ser, timeout, count - len(recd))
                 if r == b'':
@@ -366,10 +367,8 @@ class SerialServer(PollingServer):
     def read(self, c, count=0):
         """
         Read data from the port.
-
         Args:
             count:   bytes to read.
-
         If count=0, reads the contents of the buffer (non-blocking). Otherwise,
         reads for up to <count> characters or the timeout, whichever is first
         """

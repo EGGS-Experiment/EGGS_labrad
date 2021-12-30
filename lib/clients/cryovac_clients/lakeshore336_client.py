@@ -199,30 +199,30 @@ class lakeshore336_client(lakeshore336_gui):
         self.gui.heat2_set.setEnabled(status)
 
     @inlineCallbacks
-    def heater_setup(self, chan, mode, res, max_curr):
+    def heater_setup(self, chan, res, max_curr):
         """
-        todo
+        Set up the heater.
         """
         yield self.ls.heater_setup(chan, res, max_curr)
 
     @inlineCallbacks
     def heater_mode(self, chan, mode, input):
         """
-        todo
+        Set the heater mode.
         """
         yield self.ls.heater_mode(chan, mode, input)
 
     @inlineCallbacks
     def heater_range(self, chan, range):
         """
-        todo
+        Set the heater range.
         """
         yield self.ls.heater_range(chan, range)
 
     @inlineCallbacks
     def heater_power(self, chan, curr):
         """
-        todo
+        Set the heater power.
         """
         yield self.ls.heater_power(chan, curr)
 
