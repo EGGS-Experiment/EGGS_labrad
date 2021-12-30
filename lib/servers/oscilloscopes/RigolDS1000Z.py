@@ -174,8 +174,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     # ACQUISITION
     @inlineCallbacks
     def get_trace(self, channel):
-        # removed start and stop: start = 'i', stop = 'i' (,start=1, stop=10000)
-
         # first need to stop to record
         yield self.write(':STOP')
 
@@ -192,7 +190,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
         # transfer waveform preamble
         preamble = yield self.query(':WAV:PRE?')
-
         # get waveform data
         data = yield self.query(':WAV:DATA?')
 
@@ -201,14 +198,13 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
         # parse waveform preamble
         points, xincrement, xorigin, xreference, yincrement, yorigin, yreference = yield self._parsePreamble(preamble)
-
         # parse data
         trace = yield self._parseByteData(data)
 
         # convert data to volts
-        timeAxis = (np.arange(points) * xincrement + xorigin)
-        traceVolts = (trace - yorigin - yreference) * yincrement
-        returnValue((timeAxis, traceVolts))
+        xAxis = (np.arange(points) * xincrement + xorigin)
+        yAxis = (trace - yorigin - yreference) * yincrement
+        returnValue((xAxis, yAxis))
 
 
     # MEASURE
