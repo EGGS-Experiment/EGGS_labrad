@@ -16,11 +16,11 @@ timeout = 20
 """
 from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
-from twisted.internet.defer import inlineCallbacks, returnValue
 
-# import device wrapper
+# import device wrappers
 from RigolDS1000Z import RigolDS1000ZWrapper
 from TektronixMSO2000 import TektronixMSO2000Wrapper
+from KeysightDS1204G import KeysightDS1204GWrapper
 
 
 class OscilloscopeServer(GPIBManagedServer):
@@ -32,7 +32,7 @@ class OscilloscopeServer(GPIBManagedServer):
 
     deviceWrappers = {
         'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper,
-        'TEKTRONIX MSO2024B': TektronixMSO2000Wrapper
+        'TEKTRONIX MSO2024B': TektronixMSO2000Wrapper,
         'KEYSIGHT DS1204G': KeysightDS1204GWrapper
     }
 
@@ -72,36 +72,32 @@ class OscilloscopeServer(GPIBManagedServer):
             channel (int): Which channel to set coupling.
             coup (str): Coupling, 'AC' or 'DC'. If None (the default) just query
                 the coupling without setting it.
-
         Returns:
             string indicating the channel's coupling.
         """
         return self.selectedDevice(c).channel_coupling(channel, coup)
 
-    @setting(112, "Channel Scale", channel='i', scale='v[V]', returns='v[V]')
+    @setting(112, "Channel Scale", channel='i', scale='v', returns='v')
     def channel_scale(self, c, channel, scale=None):
         """
         Get or set the vertical scale.
         Args:
             channel (int): The channel to get or set.
-            scale (Value[V]): The vertical scale, i.e. voltage per division. If
-                None (the default), we just query.
-
+            scale   (float): The vertical scale (in volts/div).
         Returns:
-            (Value[V]): The vertical scale.
+            (float): The vertical scale (in volts/div).
         """
         return self.selectedDevice(c).channel_scale(channel, scale)
 
-    @setting(113, "Channel Probe", channel='i', factor='i', returns = ['s'])
-    def channel_probe(self, c, channel, factor = None):
+    @setting(113, "Channel Probe", channel='i', factor='v', returns='v')
+    def channel_probe(self, c, channel, factor=None):
         """
         Get/set the probe attenuation factor.
         Args:
             channel (int): the channel to get/set
-            factor (int): the probe attenuation factor
-
+            factor (float): the probe attenuation factor
         Returns:
-            (string): the probe attenuation factor
+            (float): the probe attenuation factor
         """
         return self.selectedDevice(c).channel_probe(channel, factor)
 
@@ -110,10 +106,8 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         Set or query channel on/off state.
         Args:
-            channel (int): Which channel.
-            state (bool): True->On, False->Off. If None (default), then we
-                only query the state without setting it.
-
+            channel (int): the channel to get/set
+            state (bool): True->On, False->Off.
         Returns:
             (bool): The channel state.
         """
@@ -124,49 +118,35 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         Get or set channel inversion.
         Args:
-            channel (int):
-            invert (bool): True->invert channel, False->do not invert channel.
-                If None (the default), then we only query the inversion.
-
+            channel (int): the channel to get/set
+            invert (bool): True->invert, False->do not invert channel.
         Returns:
             (int): 0: not inverted, 1: inverted.
         """
         return self.selectedDevice(c).channel_invert(channel, invert)
 
-    @setting(116, "Channel Offset", channel='i', offset='v[]', returns='v[]')
+    @setting(116, "Channel Offset", channel='i', offset='v', returns='v')
     def channel_offset(self, c, channel, offset=None):
         """
         Get or set the vertical offset.
         Args:
-            channel (int): Which channel to get/set.
+            channel (int): the channel to get/set
             offset (float): Vertical offset in units of divisions. If None,
                 (the default), then we only query.
-
         Returns:
             (float): Vertical offset in units of divisions.
         """
         return self.selectedDevice(c).channel_offset(channel, offset)
 
-    @setting(117, "Channel Termination", channel='i', term='i', returns='i')
-    def channel_termination(self, c, channel, term=None):
-        """
-        Set channel termination.
-        Args:
-            channel (int): Which channel to set termination.
-            term (int): Termination in Ohms. Either 50 or 1,000,000.
-        """
-        return self.selectedDevice(c).channel_termination(channel, term)
-
 
     # TRIGGER
-    @setting(131, "Trigger Channel", source='s', returns='s')
+    @setting(131, "Trigger Channel", source=['s', 'i'], returns='s')
     def trigger_channel(self, c, source=None):
         """
         Set or query trigger channel.
         Args:
             source (str): 'EXT', 'LINE', 'CHANX' where X is channel number. If
                 None (the default) then we just query.
-
         Returns:
             (str): Trigger source.
         """
@@ -177,24 +157,20 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         Set or query trigger slope.
         Args:
-            slope (str): Trigger slope. If None, the default, we just query.
-                Allowed values are 'POS' and 'NEG'.
-
+            slope (str): Trigger slope. #todo: redocument
         Returns:
-            (str): The trigger slope.
+            (str): The trigger slope. #todo: redocument
         """
         return self.selectDevice(c).trigger_slope(slope)
 
-    @setting(133, "Trigger Level", level='v[V]', returns='v[V]')
+    @setting(133, "Trigger Level", level='v', returns='v')
     def trigger_level(self, c, level=None):
         """
         Set or query the trigger level.
         Args:
-            level (Value[V]): Trigger level. If None (the default), we just
-                query.
-
+            level (float): Trigger level
         Returns:
-            (Value[V]): The trigger level.
+            (float): the trigger level (in V).
         """
         return self.selectedDevice(c).trigger_level(level)
 
@@ -203,36 +179,33 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         Set or query the trigger mode.
         Args:
-            mode (str): The trigger mode to set. If None, we just query.
-
-        Returns (str): The trigger mode.
+            mode (str): The trigger mode.
+        Returns:
+            (str): The trigger mode.
         """
         return self.selectedDevice(c).trigger_mode(mode)
 
 
     # HORIZONTAL
-    @setting(151, "Horizontal Offset", position='v[]', returns='v[]')
-    def horiz_offset(self, c, position=None):
+    @setting(151, "Horizontal Offset", offset='v', returns='v')
+    def horiz_offset(self, c, offset=None):
         """
         Set or query the horizontal offset.
         Args:
-            position (float): Horizontal offset in units of division.
-
+            offset (float): the horizontal offset (in seconds).
         Returns:
-            (float): The horizontal offset in units of divisions.
+            (float): the horizontal offset in (in seconds).
         """
-        return self.selectedDevice(c).horiz_offset(position)
+        return self.selectedDevice(c).horiz_offset(offset)
 
-    @setting(152, "Horizontal ", scale='v[s]', returns='v[s]')
+    @setting(152, "Horizontal ", scale='v', returns='v')
     def horiz_scale(self, c, scale=None):
         """
         Set or query the horizontal scale.
         Args:
-            scale (Value[s]): Horizontal scale, i.e. time per division. If None,
-                (the default), then we just query.
-
+            scale (float): the horizontal scale (in s/div).
         Returns:
-            (Value[s]): The horizontal scale.
+            (float): the horizontal scale (in s/div).
         """
         return self.selectedDevice(c).horiz_scale(scale)
 
@@ -244,13 +217,14 @@ class OscilloscopeServer(GPIBManagedServer):
         Get a trace for a single channel.
         Args:
             channel: The channel for which we want to get the trace.
-
         Returns:
             Tuple of ((ValueArray[s]) Time axis, (ValueArray[V]) Voltages).
         """
         return self.selectedDevice(c).get_trace(channel)
 
-    @setting(210, "Measure Start ", returns='')
+
+    # MEASURE
+    @setting(210, "Measure Start", channel='i', returns='')
     def measure_start(self, c):
         '''
         (re-)start measurement statistics
@@ -264,9 +238,8 @@ class OscilloscopeServer(GPIBManagedServer):
         Turn averaging on or off.
         Args:
             average_on (bool): If True, turn averaging on.
-
         Returns:
-            (bool): Whether averaging is one or off.
+            (bool): whether averaging is on or off.
         """
         return self.selectedDevice(c).average_toggle(average_on)
 
@@ -275,10 +248,9 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         Set number of averages.
         Args:
-            averages (int): Number of averages.
-
+            averages (int): number of averages.
         Returns:
-            (int): Number of averages.
+            (int): number of averages.
         """
         return self.selectedDevice(c).average_number(averages)
 

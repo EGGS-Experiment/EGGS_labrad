@@ -3,16 +3,13 @@ from labrad.types import Value
 from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-COUPLINGS = ('AC', 'DC', 'GND')
-TRIG_CHANNELS = ('EXT', 'CHAN1', 'CHAN2', 'CHAN3', 'CHAN4', 'LINE')
-VERT_DIVISIONS = 8.0
-HORZ_DIVISIONS = 10.0
-SCALES = []
-PROBE_FACTORS = (0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000)
-TRIGGER_MODES = ('AUTO', 'NONE', 'SING')
+_RIGOLDS1000Z_VERT_DIVISIONS = 8.0
+_RIGOLDS1000Z_HORZ_DIVISIONS = 10.0
+_RIGOLDS1000Z_PROBE_ATTENUATIONS = (0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000)
 
 
 class RigolDS1000ZWrapper(GPIBDeviceWrapper):
+
 
     # SYSTEM
     @inlineCallbacks
@@ -22,6 +19,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def clear_buffers(self):
         yield self.write('*CLS')
+
 
     # CHANNEL
     @inlineCallbacks
@@ -58,155 +56,153 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def channel_coupling(self, channel, coupling=None):
-        chString = ':CHAN%d:COUP' %channel
+        chString = ':CHAN{:d}:COUP'.format(channel)
         if coupling is not None:
             coupling = coupling.upper()
-            if coupling not in COUPLINGS:
-                raise Exception('Coupling must be either: ' + str(COUPLINGS))
-            else:
+            if coupling in ('AC', 'DC', 'GND'):
                 yield self.write(chString + ' ' + coupling)
+            else:
+                raise Exception('Coupling must be one of: ' + str(('AC', 'DC', 'GND')))
         resp = yield self.query(chString + '?')
-        returnValue(resp)
+        returnValue(resp.strip())
 
     @inlineCallbacks
     def channel_scale(self, channel, scale=None):
-        # value is in volts
-        chString = ':CHAN%d:SCAL' %channel
+        chString = ':CHAN{:d}:SCAL'.format(channel)
         if scale is not None:
-            scale = format(scale['V'], 'E')
-            yield self.write(chString + ' ' + str(scale) + 'V')
-            resp = yield self.query(':CHAN%d:SCAL?' % channel)
+            if (scale > (1e-3)) and (scale < 1e1):
+                yield self.write(chString + ' ' + str(scale))
+            else:
+                raise Exception('Scale must be in range: [1e-3, 1e1]')
         resp = yield self.query(chString + '?')
-        scale = (Value(float(resp), 'V'))
-        returnValue(scale)
+        returnValue(float(resp))
 
     @inlineCallbacks
-    def channel_probe(self, channel, factor=None):
-        chString = ':CHAN%d:PROB' %channel
-        if factor in PROBE_FACTORS:
-            yield self.write(chString + ' ' + str(factor))
-        elif factor is not None:
-            raise Exception('Probe attenuation factor not in ' + str(PROBE_FACTORS))
+    def channel_probe(self, channel, atten=None):
+        chString = ':CHAN{:d}:PROB'.format(channel)
+        if atten is not None:
+            if atten in _RIGOLDS1000Z_PROBE_ATTENUATIONS:
+                yield self.write(chString + ' ' + str(atten))
+            else:
+                raise Exception('Probe attenuation must be one of: ' + str(_RIGOLDS1000Z_PROBE_ATTENUATIONS))
         resp = yield self.query(chString + '?')
-        returnValue(resp)
+        returnValue(float(resp))
 
     @inlineCallbacks
     def channel_toggle(self, channel, state=None):
-        chString = ':CHAN%d:DISP' % channel
-        if state in [0, 1]:
-            yield self.write(chString + ' ' + str(state))
-        elif state is not None:
-            raise Exception('state must be either 0 or 1')
+        chString = ':CHAN{:d}:DISP'.format(channel)
+        if state is not None:
+            yield self.write(chString + ' ' + str(int(state)))
         resp = yield self.query(chString + '?')
         returnValue(bool(resp))
 
     @inlineCallbacks
     def channel_invert(self, channel, invert=None):
-        chString = ":CHAN:%d:INV" % channel
-        if invert in [0, 1]:
-            yield self.write(chString + ' ' + str(invert))
-        elif invert is not None:
-            raise Exception('state must be either 0 (disable) or 1 (enable)')
+        chString = ":CHAN:{:d}:INV".format(channel)
+        if invert is not None:
+            yield self.write(chString + ' ' + str(int(invert)))
         resp = yield self.query(chString + '?')
         returnValue(bool(resp))
 
     @inlineCallbacks
-    def channel_offset(self, channel, position=None):
-        # value is in divs
-        resp = yield self.query(':CHAN%d:SCAL?' %channel)
-        scale_V = float(resp)
-        if position is not None:
-            pos_V = - position * scale_V
-            yield self.write((':CHAN%d:OFFS %g') % (channel, pos_V))
-        resp = yield self.query(':CHAN%d:OFFS?' % channel)
-        position = float(resp) / scale_V
-        returnValue(position)
+    def channel_offset(self, channel, offset=None):
+        # value is in volts
+        chString = ":CHAN:{:d}:OFFS".format(channel)
+        if offset is not None:
+            #todo: get scale and probe
+            if () and (): #todo
+                yield self.write(chString + ' ' + str(offset))
+            else:
+                raise Exception('Scale must be in range: [1e-3, 1e1]')
+        resp = yield self.query(chString + '?')
+        returnValue(float(resp))
 
 
     # TRIGGER
     @inlineCallbacks
     def trigger_channel(self, channel=None):
-        # trigger source must be one of "EXT","LINE", 1, 2, 3, 4, CHAN1, CHAN2...
-        if channel in TRIG_CHANNELS:
-            channel = int(channel[-1])
-            if isinstance(channel, str):
-                channel = channel.upper()
-            elif isinstance(channel, int):
-                channel = 'CHAN%d' % channel
-            yield self.write(':TRIG:EDG:SOUR ' + str(channel)) # ***
+        chString = ':TRIG:EDG:SOUR'
+        if channel is not None:
+            if channel in (1, 2, 3, 4):
+                yield self.write(chString + ' CHAN' + str(channel))
         else:
-            raise Exception('Select valid trigger channel')
-        resp = yield self.query(':TRIG:EDG:SOUR?')
-        returnValue(resp)
+            raise Exception('Trigger channel must be one of: ' + str((1, 2, 3, 4)))
+        resp = yield self.query(chString + '?')
+        returnValue(resp.strip())
 
     @inlineCallbacks
     def trigger_slope(self, slope=None):
-        # trigger can only be 'RFAL', 'POS', 'NEG'; only edge triggering is implemented here
         chString = ':TRIG:EDG:SLOP'
         if slope is not None:
             slope = slope.upper()
-            if slope not in ['RFAL', 'POS', 'NEG']:
-                raise Exception('Slope must be either: "RFAL", "POS", "NEG" ')
-            else:
-                slope = 'POS' if slope == 'RFAL' else 'NEG'
+            if slope in ('POS', 'NEG', 'RFAL'):
                 yield self.write(chString + ' ' + slope)
+            else:
+                raise Exception('Slope must be one of: ' + str(('POS', 'NEG', 'RFAL')))
         resp = yield self.query(chString + '?')
-        returnValue(resp)
+        returnValue(resp.strip())
 
     @inlineCallbacks
     def trigger_level(self, level=None):
-        # Get/set the vertical zero position of a channel in voltage
         chString = ':TRIG:EDG:LEV'
         if level is not None:
-            yield self.write(chString + ' ' + str(level))
+            #todo: get range
+            if (level > ) and (level < ):
+                    yield self.write(chString + ' ' + str(level))
+            else:
+                #todo: properly
+                raise Exception('Trigger level must be in range: ' + str(('POS', 'NEG', 'RFAL')))
         resp = yield self.query(chString + '?')
-        level = Value(float(resp), 'V')
-        returnValue(level)
+        returnValue(float(resp))
 
     @inlineCallbacks
     def trigger_mode(self, mode=None):
         chString = ':TRIG:SWE'
-        if mode in TRIGGER_MODES:
-            yield self.write(chString + ' ' + mode)
-        elif mode is not None:
-            raise Exception('Select valid trigger mode')
-        resp = yield self.query(":TRIG:SWE?")
-        returnValue(resp)
+        if mode is not None:
+            if mode in ('AUTO', 'NONE', 'SING'):
+                yield self.write(chString + ' ' + mode)
+            else:
+                raise Exception('Trigger mode must be one of: ' + str(('AUTO', 'NONE', 'SING')))
+        resp = yield self.query(chString + '?')
+        returnValue(resp.strip())
 
 
     # HORIZONTAL
     @inlineCallbacks
     def horiz_offset(self, offset=None):
-        # Get/set the horizontal trigger offset in seconds
         chString = ':TIM:OFFS'
         if offset is not None:
-            yield self.write(chString + ' ' + offset)
-        resp = yield self.query(chstring + '?')
-        offset = float(resp)
-        returnValue(offset)
+            #todo
+            if () and ():
+                yield self.write(chString + ' ' + offset)
+            else:
+                raise Exception('Horizontal offset must be in range: ' + str())
+        resp = yield self.query(chString + '?')
+        returnValue(float(resp))
 
     @inlineCallbacks
     def horiz_scale(self, scale=None):
-        # Get/set the horizontal scale value in s per div
         chString = ':TIM:SCAL'
         if scale is not None:
-            yield self.write(chString + ' ' + scale)
+            #todo
+            if () and ():
+                yield self.write(chString + ' ' + scale)
+            else:
+                raise Exception('Horizontal scale must be in range: ' + str())
         resp = yield self.query(chString + '?')
-        scale = float(resp)
-        returnValue(scale)
+        returnValue(float(resp))
 
 
-    # DATA ACQUISITION
+    # ACQUISITION
     @inlineCallbacks
     def get_trace(self, channel):
-        # returns (array voltage in volts, array time in seconds)
         # removed start and stop: start = 'i', stop = 'i' (,start=1, stop=10000)
 
         # first need to stop to record
         yield self.write(':STOP')
 
         # set trace parameters
-        yield self.write(':WAV:SOUR CHAN%d' %channel)
+        yield self.write(':WAV:SOUR CHAN{:d}'.format(channel))
         # trace mode
         yield self.write(':WAV:MODE RAW')
         # return format (default byte)
@@ -218,7 +214,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
         # transfer waveform preamble
         preamble = yield self.query(':WAV:PRE?')
-        offset = yield self.query(':TIM:OFFS?')
 
         # get waveform data
         data = yield self.query(':WAV:DATA?')
@@ -227,20 +222,18 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         yield self.write(':RUN')
 
         # parse waveform preamble
-        points, xincrement, xorigin, xreference, yincrement, yorigin, yreference = _parsePreamble(preamble)
+        points, xincrement, xorigin, xreference, yincrement, yorigin, yreference = yield self._parsePreamble(preamble)
 
         # parse data
-        trace = _parseByteData(data)
-
-        # timeUnitScaler = 1 #Value(1, timeUnits)['s']
-        voltUnitScaler = 1.0# * mV
-        timeUnitScaler = 1.0# * us
+        trace = yield self._parseByteData(data)
 
         # convert data to volts
-        traceVolts = (trace - yorigin - yreference) * yincrement * voltUnitScaler
-        timeAxis = (np.arange(points) * xincrement + xorigin) * timeUnitScaler
+        timeAxis = (np.arange(points) * xincrement + xorigin)
+        traceVolts = (trace - yorigin - yreference) * yincrement
         returnValue((timeAxis, traceVolts))
 
+
+    # MEASURE
     @inlineCallbacks
     def measure_start(self, c):
         # (re-)start measurement statistics
@@ -277,38 +270,32 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     #         yield util.wakeupCall(wait['s'])
     #     returnValue(d)
 
-def _parsePreamble(preamble):
-    '''
-    Check
-    <preamble_block> ::= <format 16-bit NR1>,
-                     <type 16-bit NR1>,
-                     <points 32-bit NR1>,
-                     <count 32-bit NR1>,
-                     <xincrement 64-bit floating point NR3>,
-                     <xorigin 64-bit floating point NR3>,
-                     <xreference 32-bit NR1>,
-                     <yincrement 32-bit floating point NR3>,
-                     <yorigin 32-bit floating point NR3>,
-                     <yreference 32-bit NR1>
-    '''
-    fields = preamble.split(',')
-    points = int(fields[2])
-    xincrement = float(fields[4])
-    xorigin = float(fields[5])
-    xreference = int(fields[6])
-    yincrement = float(fields[7])
-    yorigin = float(fields[8])
-    yreference = int(fields[9])
-    #print(yincrement, yorigin, yreference)
-    return (points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)
+    def _parsePreamble(preamble):
+        '''
+        <preamble_block> = <format 16-bit NR1>,
+                         <type 16-bit NR1>,
+                         <points 32-bit NR1>,
+                         <count 32-bit NR1>,
+                         <xincrement 64-bit floating point NR3>,
+                         <xorigin 64-bit floating point NR3>,
+                         <xreference 32-bit NR1>,
+                         <yincrement 32-bit floating point NR3>,
+                         <yorigin 32-bit floating point NR3>,
+                         <yreference 32-bit NR1>
+        '''
+        fields = preamble.split(',')
+        points = int(fields[2])
+        xincrement, xorigin, xreference = float(fields[4: 7])
+        yincrement, yorigin, yreference = float(fields[7: 10])
+        return (points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)
 
-def _parseByteData(data):
-    """
-    Parse byte data
-    """
-    # get tmc header in #NXXXXXXXXX format
-    tmc_N = int(data[1])
-    tmc_length = int(data[2: 2 + tmc_N])
-    print("tmc_N: " + str(tmc_N))
-    print("tmc_length: " + str(tmc_length))
-    return np.frombuffer(data[2 + tmc_N :], dtype=np.uint8)
+    def _parseByteData(data):
+        """
+        Parse byte data.#todo document
+        """
+        # get tmc header in #NXXXXXXXXX format
+        tmc_N = int(data[1])
+        tmc_length = int(data[2: 2 + tmc_N])
+        print("tmc_N: " + str(tmc_N))
+        print("tmc_length: " + str(tmc_length))
+        return np.frombuffer(data[2 + tmc_N :], dtype=np.uint8)

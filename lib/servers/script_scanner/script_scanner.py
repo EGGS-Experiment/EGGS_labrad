@@ -163,10 +163,7 @@ class ScriptScanner(ScriptSignalsServer):
 
         Parameter
         ---------
-        script: str, experiment to run.
-
-        TODO: change name.  The name itself should actually be something
-        like add_new_experiment_to_queue
+        script_name: str, experiment to run.
 
         Returns
         -------

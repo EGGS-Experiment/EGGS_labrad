@@ -137,7 +137,6 @@ class RGA_client(RGA_gui):
         """
         param, value = data
         self.gui.buffer_readout.appendPlainText('{}: {}'.format(param, value))
-        #todo send to widget
 
 
     # SLOTS
