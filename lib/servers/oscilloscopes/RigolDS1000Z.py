@@ -241,6 +241,8 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     #         yield util.wakeupCall(wait['s'])
     #     returnValue(d)
 
+
+    # HELPER
     def _parsePreamble(preamble):
         '''
         <preamble_block> = <format 16-bit NR1>,
@@ -256,8 +258,8 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         '''
         fields = preamble.split(',')
         points = int(fields[2])
-        xincrement, xorigin, xreference = float(fields[4: 7])
-        yincrement, yorigin, yreference = float(fields[7: 10])
+        xincrement, xorigin, xreference = list(map(float, fields[4: 7]))
+        yincrement, yorigin, yreference = list(map(float, fields[7: 10]))
         print(str((points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)))
         return (points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)
 
