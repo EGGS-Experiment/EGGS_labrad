@@ -15,14 +15,10 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
-import time
-
 from labrad.server import setting
 from labrad.units import WithUnit
 
-from twisted.internet.defer import inlineCallbacks, returnValue
-
+from twisted.internet.defer import returnValue
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 TERMINATOR = '\r\n'
@@ -40,6 +36,7 @@ class AMO8Server(SerialDeviceServer):
 
     timeout = WithUnit(3.0, 's')
     baudrate = 38400
+
 
     # GENERAL
     @setting(11, 'Clear', returns='s')
@@ -71,9 +68,10 @@ class AMO8Server(SerialDeviceServer):
         resp = self._parse()
         returnValue(resp)
 
+
     # ON/OFF
     @setting(111, 'Toggle', channel='i', power='i', returns='b')
-    def toggle(self, c, channel, power):
+    def toggle(self, c, channel=None, power=None):
         """
         Set a channel to be on or off.
         Args:
@@ -82,78 +80,92 @@ class AMO8Server(SerialDeviceServer):
         Returns:
                     (bool)  : result
         """
-        msg = 'out.w ' + str(channel) + str() + TERMINATOR
-        yield self.ser.write(msg)
-        #read and parse
-        resp = yield self.ser.read_line()
-        resp = self._parse(resp, False)
-        #convert string to bool
-        if resp == 'ON':
-            resp = True
-        elif resp == 'OFF':
-            resp = False
-        returnValue(resp)
-
-    @setting(112, 'Toggle Read', channel='i', returns='s')
-    def toggleRead(self, c, channel=None):
-        """
-        Read whether a channel is on or off.
-        Args:
-            channel (int)   : the channel to read/write
-        Returns:
-                    (float): channel power status
-        """
-        resp = None
-        #read all channels if not specified
-        if not channel:
-            yield self.ser.write('out.r' + TERMINATOR)
-            #wait for all data to be returned
-            time.sleep(0.25)
-            resp = yield self.ser.read()
-            resp = yield self._parse(resp, True)
+        if power is not None:
+            yield self.ser.acquire()
+            yield self.ser.write('out.w {:d} {:d}\n'.format(channel, power))
+            resp = yield self.ser.read_line('\n')
+            self.ser.release()
+            if resp == 'ON':
+                return True
+            elif resp == 'OFF':
+                return False
+        elif channel is not None:
+            yield self.ser.acquire()
+            yield self.ser.write('out.r {:d}\n'.format(channel))
+            resp = yield self.ser.read_line('\n')
+            self.ser.release()
+            if resp == 'ON':
+                return True
+            elif resp == 'OFF':
+                return False
         else:
-            yield self.ser.write('out.r ' + str(channel) + TERMINATOR)
-            resp = yield self.ser.read_line()
-            resp = yield self._parse(resp, False)
-        returnValue(resp)
+            yield self.ser.acquire()
+            yield self.ser.write('out.r\n')
+            resp = list()
+            for i in range(56):
+                resp_tmp = yield self.ser.read_line('\n')
+                resp_tmp = resp_tmp.split(':')[-1]
+                if resp_tmp == 'ON':
+                    resp[i] = True
+                elif resp_tmp == 'OFF':
+                    resp[i] = False
+            self.ser.release()
+            returnValue(resp)
 
-    # Voltage
-    @setting(211, 'Voltage', channel='i', voltage='v', returns='s')
-    def voltage(self, c, channel, voltage):
+
+    # VOLTAGE
+    @setting(211, 'Voltage', channel='i', voltage='v', returns=['v','*v'])
+    def voltage(self, c, channel=None, voltage=None):
         """
         Set the voltage of a channel.
         Args:
             channel (int)   : the channel to read/write
-            voltage (bool)  : the channel voltage to set
+            voltage (float)  : the channel voltage to set
         Returns:
                     (float) : channel voltage
         """
-        msg = 'vout.w ' + str(channel) + str(voltage) + TERMINATOR
-        yield self.ser.write(msg)
-        resp = yield self.ser.read_line()
-        resp = yield self._parse(resp, False)
-        returnValue(float(resp))
+        if voltage is not None:
+            yield self.ser.acquire()
+            yield self.ser.write('vout.w {:d} {:f}\n'.format(channel, voltage))
+            resp = yield self.ser.read_line('\n')
+            self.ser.release()
+            resp = resp[:-1]
+            returnValue(float(resp))
+        elif channel is not None:
+            yield self.ser.acquire()
+            yield self.ser.write('vout.r {:d}\n'.format(channel))
+            resp = yield self.ser.read_line('\n')
+            self.ser.release()
+            resp = resp[:-1]
+            returnValue(float(resp))
+        else:
+            yield self.ser.acquire()
+            yield self.ser.write('vout.r\n')
+            resp = list()
+            for i in range(56):
+                resp[i] = yield self.ser.read_line('\n')
+            resp = [float(txt.split(':')[-1][:-1]) for txt in resp]
+            returnValue(resp)
 
-    @setting(212, 'Voltage read', returns='v')
-    def voltage_all(self, c):
+
+    # RAMP
+    @setting(311, 'Ramp', channel='i', voltage='v', rate='v', returns='s')
+    def ramp(self, c, channel, voltage, rate):
         """
-        Get ion pump pressure in mbar
+        Ramps the voltage of a channel at a given rate.
+        Args:
+            channel (int)   : the channel to read/write
+            voltage (float) : the ramp endpoint
+            rate    (float) : the rate to ramp at (in volts/ms)
         Returns:
-            (float): ion pump pressure
+                    (str)   : success state of ramp
         """
-        yield self.ser.write('Tb' + TERMINATOR)
-        time.sleep(0.25)
-        resp = yield self.ser.read()
-        returnValue(float(resp))
-
-
-    #Helper functions
-    def _parse(self, resp, multiple):
-        #split response by delimiter
-        resp = resp.split('\r\n')[:-1]
-        #get only values
-        resp = [string.split(':')[-1].strip() for string in resp]
-        return resp
+        msg = 'ramp.w {:d} {:f} {:f}'.format(voltage, rate)
+        yield self.ser.acquire()
+        yield self.ser.write(msg)
+        resp = yield self.ser.read_line('\n')
+        self.ser.release()
+        returnValue(resp)
 
 
 if __name__ == '__main__':
