@@ -129,11 +129,11 @@ class ARTIQ_Server(LabradServer):
         """
         Returns a list of ARTIQ devices.
         """
-        self.ttlChanged(('ttl99',0,True))
+        self.ttlChanged(('ttl99', 0, True))
         return list(self.device_db.keys())
 
     # PULSE SEQUENCING
-    @setting(111, "Run Experiment", path='s', maxruns = 'i', returns='')
+    @setting(111, "Run Experiment", path='s', maxruns='i', returns='')
     def runExperiment(self, c, path, maxruns = 1):
         """
         Run the experiment a given number of times.
