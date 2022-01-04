@@ -1,20 +1,18 @@
-import os
-import sys
-
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame, QSizePolicy
 
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
 from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
 
+
 class TTL_channel(QFrame):
     """
     GUI for a single TTL channel.
     """
+
     def __init__(self, name=None, parent=None):
         QWidget.__init__(self, parent)
         self.name = name

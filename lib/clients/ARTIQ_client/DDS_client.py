@@ -1,20 +1,18 @@
-import os
-import sys
-
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
-from twisted.internet.defer import Deferred
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
-from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
+#from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
+
 
 class AD9910_channel(QFrame):
     """
     GUI for a single AD9910 DDS channel.
     """
+
     def __init__(self, name=None, parent=None):
         QWidget.__init__(self, parent)
         self.name = name
@@ -111,7 +109,7 @@ class DDS_client(QWidget):
         """
         Get devices from ARTIQ server and organize them.
         """
-        #get artiq server and dds list
+        # get artiq server and dds list
         try:
             self.artiq = yield self.cxn.artiq_server
             ad9910_list = yield self.artiq.dds_get()
@@ -130,12 +128,12 @@ class DDS_client(QWidget):
 
     def initializeGUI(self, cxn):
         layout = QGridLayout()
-        #set title
+        # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, self.row_length)
-        #layout widgets
+        # layout widgets
         keys_tmp = list(self.urukul_list.keys())
         for i in range(len(keys_tmp)):
             urukul_name = keys_tmp[i]
