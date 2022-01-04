@@ -10,6 +10,7 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
 from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
 
+
 class AD5372_channel(QFrame):
     """
     GUI for a single AD5372 DAC channel.
@@ -112,7 +113,7 @@ class DAC_client(QWidget):
         """
         Get devices from ARTIQ server and organize them.
         """
-        #get artiq server and dac list
+        # get artiq server and dac list
         try:
             self.artiq = yield self.cxn.artiq_server
             #todo: make dac list available from server
@@ -120,11 +121,11 @@ class DAC_client(QWidget):
             print(e)
             raise
 
-        #create holding lists
+        # create holding lists
         self.zotino_list = []
         self.ad5372_clients = {}
         for name, params in device_db.items():
-            #only get devices with named class
+            # only get devices with named class
             if 'class' not in params:
                 continue
             if params['class'] == 'Zotino':
@@ -133,12 +134,12 @@ class DAC_client(QWidget):
 
     def initializeGUI(self, cxn):
         layout = QGridLayout()
-        #set title
+        # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 4)
-        #layout widgets
+        # layout widgets
         for i in range(len(self.zotino_list)):
             name = self.zotino_list[i]
             zotino_group = self._makeZotinoGroup(name)
@@ -155,6 +156,10 @@ class DAC_client(QWidget):
         zotino_group.setLineWidth(2)
         layout = QGridLayout()
         # set title
+        title0 = QWidget()
+        #todo: add doublespinbox
+        #todo: set defaults, title, buttons
+        #todo: add title
         title = QLabel(name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         title.setAlignment(QtCore.Qt.AlignCenter)
@@ -212,10 +217,10 @@ class DAC_client(QWidget):
 
 
 if __name__ == "__main__":
-    #run channel GUI
+    # run channel GUI
     # from EGGS_labrad.lib.clients import runGUI
     # runGUI(AD5372_channel, name='AD5372 Channel')
 
-    #run DAC GUI
+    # run DAC GUI
     from EGGS_labrad.lib.clients import runClient
     runClient(DAC_client)

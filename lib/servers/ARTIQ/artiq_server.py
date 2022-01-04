@@ -47,15 +47,17 @@ DACSIGNAL_ID = 828175
 
 
 class ARTIQ_Server(LabradServer):
-    """ARTIQ box server."""
+    """ARTIQ server."""
     name = 'ARTIQ Server'
     regKey = 'ARTIQ_Server'
 
 
-    #Signals
+    # SIGNALS
     ttlChanged = Signal(TTLSIGNAL_ID, 'signal: ttl changed', '(sib)')
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(ssv)')
 
+
+    # STARTUP
     def __init__(self):
         self.api = ARTIQ_api()
         self.ddb_filepath = 'C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db.py'
@@ -69,7 +71,7 @@ class ARTIQ_Server(LabradServer):
         yield self._setClients()
         yield self._setVariables()
         yield self._setDevices()
-        self.ttlChanged(('ttl99',0,True))
+        self.ttlChanged(('ttl99', 0, True))
 
     #@inlineCallbacks
     def _setClients(self):
@@ -299,7 +301,7 @@ class ARTIQ_Server(LabradServer):
             units   (str)   : the voltage units, either 'mu' or 'v'
         """
         voltage_mu = None
-        #check that dac channel is valid
+        # check that dac channel is valid
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
         if units == 'v':
@@ -317,7 +319,7 @@ class ARTIQ_Server(LabradServer):
         Arguments:
             dac_num (int)   : the DAC channel number
             gain    (float) : the DAC channel gain
-            units   (str)   : ***todo
+            units   (str)   : the gain units, either 'mu' or 'dB'
         """
         gain_mu = None
         # only 32 channels per DAC
@@ -327,7 +329,7 @@ class ARTIQ_Server(LabradServer):
             gain_mu = int(gain * 0xffff) - 1
         elif units == 'mu':
             gain_mu = int(gain)
-        #check that gain is valid
+        # check that gain is valid
         if gain < 0 or gain > 0xffff:
             raise Exception('Error: gain outside bounds of [0,1]')
         yield self.api.setDACGain(dac_num, gain_mu)
@@ -342,7 +344,7 @@ class ARTIQ_Server(LabradServer):
             units   (str)   : the voltage units, either 'mu' or 'v'
         """
         voltage_mu = None
-        #check that dac channel is valid
+        # check that dac channel is valid
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
         if units == 'v':
@@ -352,6 +354,23 @@ class ARTIQ_Server(LabradServer):
                 raise Exception('Invalid DAC Voltage!')
             voltage_mu = int(value)
         yield self.api.setDACOffset(dac_num, voltage_mu)
+
+    @setting(423, "DAC OFS", reg_num='i', value='v', units='s', returns='')
+    def setDACglobal(self, c, value, units):
+        """
+        Write to the OFSx registers of the DAC.
+        Arguments:
+            value   (float) : the value to write to the DAC OFSx register
+            units   (str)   : the voltage units, either 'mu' or 'v'
+        """
+        voltage_mu = None
+        if units == 'v':
+            voltage_mu = yield self.voltage_to_mu(value)
+        elif units == 'mu':
+            if (value < 0) or (value > 0x2fff):
+                raise Exception('Invalid DAC Voltage!')
+            voltage_mu = int(value)
+        yield self.api.setDACOffset(voltage_mu)
 
     @setting(431, "DAC Read", dac_num='i', param='s', returns='i')
     def readDAC(self, c, dac_num, param):
@@ -376,21 +395,21 @@ class ARTIQ_Server(LabradServer):
         """
         Initialize the Sampler.
         """
-        reg_val = yield self.api.initializeSampler()
+        yield self.api.initializeSampler()
 
     @setting(512, "Sampler Gain", channel='i', gain='i', returns='')
     def setSamplerGain(self, c, channel, gain):
         """
-        Read the value of a DAC register.
+        Set the gain of a sampler channel.
         Arguments:
             channel (int)   : the dac channel number
             gain   (int) : the channel gain. must be either
         """
         if gain not in (1, 10, 100, 1000):
             raise Exception('Error: invalid gain. Must be one of (1, 10, 100, 1000).')
-        yield self.api.setSamplerGain(channel, gain)
+        yield self.api.setSamplerGain(channel, int(np.log10(gain)))
 
-    @setting(521, "Sampler Gain", samples='i', returns='*v')
+    @setting(521, "Sampler Read", samples='i', returns='*v')
     def readSampler(self, c, samples=None):
         """
         Acquire samples.
@@ -403,13 +422,19 @@ class ARTIQ_Server(LabradServer):
             samples = 8
         elif samples % 2 == 1:
             raise Exception('Error: number of samples must be even')
+        # get channel gains
         gains = yield self.api.getSamplerGains()
-        sampleArr = np.zeros(samples)
-        sampleArr = yield self.api.readSampler(sampleArr)
-        # todo convert mu to gain
+        gains = [(gains >> 2 * i) & 0b11 for i in range(8)]
+        # acquire samples
+        sampleArr = [0] * samples
+        yield self.api.readSampler(sampleArr)
+        # convert mu to gain
+        for i in range(len(sampleArr)):
+            self.adc_mu_to_volt(sampleArr[i], gains[i % 8])
         returnValue(sampleArr)
 
-    # Signal/Context functions
+
+    # CONTEXT
     def notifyOtherListeners(self, context, message, f):
         """
         Notifies all listeners except the one in the given context, executing function f
@@ -434,4 +459,4 @@ if __name__ == '__main__':
     util.runServer(ARTIQ_Server())
 
 #todo: check that device exists
-#todo: allow hotswap boxes
+#todo: block during exp run
