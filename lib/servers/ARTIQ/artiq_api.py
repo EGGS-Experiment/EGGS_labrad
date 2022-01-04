@@ -19,9 +19,9 @@ class ARTIQ_api(object):
         self._initializeDevices()
 
 
-    #Setup functions
+    # SETUP
     def _getDevices(self):
-        #get core
+        # get core
         self.core = self.device_manager.get("core")
         self.core_dma = self.device_manager.get("core_dma")
 
@@ -34,12 +34,12 @@ class ARTIQ_api(object):
         self.urukul_list = {}
         self.dac = None
 
-        #assign names and devices
+        # assign names and devices
         for name, params in self.device_db.items():
-            #only get devices with named class
+            # only get devices with named class
             if 'class' not in params:
                 continue
-            #set device as attribute
+            # set device as attribute
             devicetype = params['class']
             device = self.device_manager.get(name)
             if devicetype == 'TTLInOut':
@@ -59,7 +59,7 @@ class ARTIQ_api(object):
         """
         Initialize devices that need to be initialized.
         """
-        #set ttlinout devices to be input
+        # set ttlinout devices to be input
         # self.core.reset()
         # for device in self.ttlin_list.values():
         #     try:
@@ -67,13 +67,13 @@ class ARTIQ_api(object):
         #     except RTIOUnderflow:
         #         self.core.break_realtime()
         #         device.input()
-        #initialize DDSs
-        #self.initializeDDSAll()
-        #one-off device init
+        # initialize DDSs
+        # self.initializeDDSAll()
+        # one-off device init
         self.initializeDAC()
 
 
-    #Pulse sequencing
+    # PULSE SEQUENCING
     @kernel
     def record(self, sequencename):
         self.core.reset()
@@ -89,13 +89,13 @@ class ARTIQ_api(object):
         Processes the TTL and DDS sequence into a format
         more easily readable and processable by ARTIQ.
         """
-        #TTLs
+        # TTL
         ttl_times = list(ttl_seq.keys())
         ttl_commands = list(ttl_seq.values())
-        #DDSs
+        # DDS
         dds_times = list(dds_seq.keys())
         dds_commands = list(dds_seq.values())
-        #send to kernel
+        # send to kernel
         self._record(ttl_times, ttl_commands, dds_times, dds_commands, sequencename)
 
     @kernel
@@ -106,7 +106,7 @@ class ARTIQ_api(object):
         self.core.reset()
         self.core_dma.erase(sequencename)
 
-    #TTL functions
+    # TTL
     def setTTL(self, ttlname, state):
         """
         Manually set the state of a TTL.
@@ -126,7 +126,7 @@ class ARTIQ_api(object):
             dev.off()
 
 
-    #DDS functions
+    # DDS
     @kernel
     def initializeDDSAll(self):
         '''
@@ -134,14 +134,14 @@ class ARTIQ_api(object):
         '''
         #todo: fix, don't use dicts
         self.core.reset()
-        #initialize urukul cpld
+        # initialize urukul cpld
         for device in list(self.urukul_list.values()):
             try:
                 device.init()
             except RTIOUnderflow:
                 self.core.break_realtime()
                 device.init()
-        #initialize each DDS channel
+        # initialize each DDS channel
         self.core.reset()
         for device in self.dds_list.values():
             try:
@@ -214,9 +214,8 @@ class ARTIQ_api(object):
         """
         Read the value of a DDS register.
         """
-        #todo: fix
         dev = self.dds_list[dds_name]
-        return self._readDDS(dev, att_mu)
+        return self._readDDS(dev, reg, length)
 
     @kernel
     def _readDDS(self, dev, reg, length):
@@ -229,7 +228,7 @@ class ARTIQ_api(object):
             return dev.read64(reg)
 
 
-    #DAC functions
+    # DAC
     @kernel
     def initializeDAC(self):
         """

@@ -1,7 +1,7 @@
 @ECHO OFF
 
-activate labart
-CD "%LABRAD_ROOT%"
+::activate labart
+::CD "%LABRAD_ROOT%"
 
 ::Core
 START "Labrad Manager" /min %HOME%/Code/scalabrad-0.8.3/bin/labrad.bat --tls-required false
