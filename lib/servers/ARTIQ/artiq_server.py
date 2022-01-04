@@ -29,9 +29,11 @@ from artiq.master.worker_db import DeviceManager
 from sipyco.pc_rpc import Client
 
 # device imports
-from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET, AD53XX_READ_GAIN
 from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_ASF, _AD9910_REG_POW
 from artiq.coredevice.comm_moninj import CommMonInj, TTLProbe, TTLOverride
+from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
+                                    AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
+                                    AD53XX_READ_AB0, AD53XX_READ_AB1, AD53XX_READ_AB2, AD53XX_READ_AB3
 
 #     th1.inject(8, TTLOverride.level.value, 1)
 #     th1.inject(8, TTLOverride.oe.value, 1)
@@ -355,7 +357,7 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = int(value)
         yield self.api.setDACOffset(dac_num, voltage_mu)
 
-    @setting(423, "DAC OFS", reg_num='i', value='v', units='s', returns='')
+    @setting(424, "DAC OFS", value='v', units='s', returns='')
     def setDACglobal(self, c, value, units):
         """
         Write to the OFSx registers of the DAC.
@@ -372,20 +374,24 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = int(value)
         yield self.api.setDACOffset(voltage_mu)
 
-    @setting(431, "DAC Read", dac_num='i', param='s', returns='i')
-    def readDAC(self, c, dac_num, param):
+    @setting(431, "DAC Read", dac_num='i', reg='s', returns='i')
+    def readDAC(self, c, dac_num, reg):
         """
         Read the value of a DAC register.
         Arguments:
             dac_num (str)   : the dac channel number
             param   (float) : the register to read from
         """
+        AD53XX_registers = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53XX_READ_OFFSET,
+                            'GAIN': AD53XX_READ_GAIN, 'OFS0': AD53XX_READ_OFS1, 'OFS1': AD53XX_READ_OFS1,
+                            'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2,
+                            'AB3': AD53XX_READ_AB3}
+
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
-        elif param.lower() not in ('dac', 'offset', 'gain'):
-            raise Exception('Error: invalid register. Must be one of ["dac", "offset", "gain"].')
-        #todo: finish
-        reg_val = yield self.api.readDAC(dac_num, param)
+        elif reg.lower() not in AD53XX_registers.keys():
+            raise Exception('Error: invalid register. Must be one of ', tuple(AD53XX_registers.keys()))
+        reg_val = yield self.api.readDAC(dac_num, reg)
         returnValue(reg_val)
 
 

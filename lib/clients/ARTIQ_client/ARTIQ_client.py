@@ -1,7 +1,7 @@
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTabWidget
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget
 
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks
 
 
 class ARTIQ_client(QMainWindow):
@@ -22,7 +22,7 @@ class ARTIQ_client(QMainWindow):
         LABRADHOST = os.environ['LABRADHOST']
         from labrad.wrappers import connectAsync
         self.cxn = yield connectAsync(LABRADHOST, name=self.name)
-        #check that required servers are online
+        # check that required servers are online
         try:
             self.dv = yield self.cxn.data_vault
             self.reg = yield self.cxn.registry
@@ -33,22 +33,24 @@ class ARTIQ_client(QMainWindow):
 
     @inlineCallbacks
     def makeLayout(self, cxn):
-        #central layout
+        # central layout
         centralWidget = QWidget()
         layout = QHBoxLayout()
         self.tabWidget = QTabWidget()
 
-        #create subwidgets
+        # create subwidgets
         ttl_widget = yield self.makeTTLWidget()
         dds_widget = yield self.makeDDSWidget()
         dac_widget = yield self.makeDACWidget()
+        # adc_widget = yield self.makeADCWidget()
 
-        #create tabs for each subwidget
+        # create tabs for each subwidget
         self.tabWidget.addTab(ttl_widget, '&TTL')
         self.tabWidget.addTab(dds_widget, '&DDS')
         self.tabWidget.addTab(dac_widget, '&DAC')
+        # self.tabWidget.addTab(dac_widget, '&ADC')
 
-        #put it all together
+        # put it all together
         layout.addWidget(self.tabWidget)
         centralWidget.setLayout(layout)
         self.setCentralWidget(centralWidget)
@@ -66,10 +68,15 @@ class ARTIQ_client(QMainWindow):
         from EGGS_labrad.lib.clients.ARTIQ_client.DAC_client import DAC_client
         return DAC_client(self.reactor, self.cxn)
 
+    def makeADCWidget(self):
+        from EGGS_labrad.lib.clients.ARTIQ_client.ADC_client import ADC_client
+        return ADC_client(self.reactor, self.cxn)
+
     def closeEvent(self, x):
         self.cxn.disconnect()
         if self.reactor.running:
             self.reactor.stop()
+
 
 if __name__=="__main__":
     from EGGS_labrad.lib.clients import runClient
