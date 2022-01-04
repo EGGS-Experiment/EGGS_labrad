@@ -52,6 +52,8 @@ class ARTIQ_api(object):
                 self.urukul_list[name] = device
             elif devicetype == 'Zotino':
                 self.dac = device
+            elif devicetype == 'Sampler':
+                self.sampler = device
 
     def _initializeDevices(self):
         """
@@ -206,15 +208,15 @@ class ARTIQ_api(object):
     @kernel
     def _setDDSAtt(self, dev, att_mu):
         self.core.reset()
-        dev.set_att_mu(att)
+        dev.set_att_mu(att_mu)
 
     def readDDS(self, dds_name, reg, length):
         """
         Read the value of a DDS register.
         """
+        #todo: fix
         dev = self.dds_list[dds_name]
-        reg_val = self._readDDS(dev, att_mu)
-        return reg_val
+        return self._readDDS(dev, att_mu)
 
     @kernel
     def _readDDS(self, dev, reg, length):
@@ -225,6 +227,7 @@ class ARTIQ_api(object):
             return dev.read32(reg)
         elif length == 64:
             return dev.read64(reg)
+
 
     #DAC functions
     @kernel
@@ -271,13 +274,52 @@ class ARTIQ_api(object):
         self.dac.write_offset_dacs_mu(word)
 
     @kernel
-    def readDAC(self, channel, address):
+    def readDAC(self, channel_num, address):
         """
         Read the value of one of the DAC registers.
-        :param channel: Channel to read from
+        :param channel_num: Channel to read from
         :param address: Register to read from
         :return: the value of the register
         """
         self.core.reset()
-        reg_val = self.dac.read_reg(channel, op)
+        reg_val = self.dac.read_reg(channel_num, address)
         return reg_val
+
+    @kernel
+    def initializeSampler(self):
+        """
+        Initialize the Sampler.
+        """
+        self.core.reset()
+        self.sampler.init()
+
+    @kernel
+    def setSamplerGain(self, channel_num, gain_mu):
+        """
+        Set the gain for a sampler channel.
+        :param channel_num: Channel to set
+        :param gain_mu: Register to read from
+        :return: the value of the register
+        """
+        self.core.reset()
+        self.sampler.set_gain_mu(channel_num, gain_mu)
+
+    @kernel
+    def getSamplerGains(self):
+        """
+        Get the gain of all sampler channels.
+        :return: the sample channel gains.
+        """
+        self.core.reset()
+        return self.sampler.get_gains_mu()
+
+    @kernel
+    def readSampler(self, sampleArr):
+        """
+        Set the gain of
+        :param channel_num: Channel to set
+        :param gain_mu: Register to read from
+        :return: the value of the register
+        """
+        self.core.reset()
+        return self.sampler.sample_mu(sampleArr)

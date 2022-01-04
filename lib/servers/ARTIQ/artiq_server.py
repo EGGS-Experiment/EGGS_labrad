@@ -16,19 +16,19 @@ timeout = 20
 ### END NODE INFO
 """
 
-#labrad imports
+# labrad imports
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
 
-#artiq imports
+# artiq imports
 from artiq_api import ARTIQ_api
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
 from sipyco.pc_rpc import Client
 
-#device imports
+# device imports
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET, AD53XX_READ_GAIN
 from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_ASF, _AD9910_REG_POW
 from artiq.coredevice.comm_moninj import CommMonInj, TTLProbe, TTLOverride
@@ -50,6 +50,7 @@ class ARTIQ_Server(LabradServer):
     """ARTIQ box server."""
     name = 'ARTIQ Server'
     regKey = 'ARTIQ_Server'
+
 
     #Signals
     ttlChanged = Signal(TTLSIGNAL_ID, 'signal: ttl changed', '(sib)')
@@ -83,13 +84,13 @@ class ARTIQ_Server(LabradServer):
         """
         Sets ARTIQ-related variables.
         """
-        #used to ensure atomicity
+        # used to ensure atomicity
         self.inCommunication = DeferredLock()
-        #pulse sequencer variables
+        # pulse sequencer variables
         self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pulser\\run_ps.py'
         self.ps_rid = None
-        #conversions
-            #dds
+        # conversions
+            # dds
         dds_tmp = list(self.api.dds_list.values())[0]
         self.seconds_to_mu = self.api.core.seconds_to_mu
         self.amplitude_to_asf = dds_tmp.amplitude_to_asf
@@ -100,6 +101,9 @@ class ARTIQ_Server(LabradServer):
         from artiq.coredevice.ad53xx import voltage_to_mu #, ad53xx_cmd_read_ch
         self.voltage_to_mu = voltage_to_mu
         # self.dac_read_code = ad53xx_cmd_read_ch
+            # sampler
+        from artiq.coredevice.sampler import adc_mu_to_volt
+        self.adc_mu_to_volt = adc_mu_to_volt
 
     #@inlineCallbacks
     def _setDevices(self):
@@ -117,7 +121,7 @@ class ARTIQ_Server(LabradServer):
         self.dac_channel = self.device_db['spi_zotino0']['arguments']['channel']
 
 
-    # Core
+    # CORE
     @setting(21, "Get Devices", returns='*s')
     def getDevices(self, c):
         """
@@ -126,7 +130,7 @@ class ARTIQ_Server(LabradServer):
         self.ttlChanged(('ttl99',0,True))
         return list(self.device_db.keys())
 
-    #Pulse sequencing
+    # PULSE SEQUENCING
     @setting(111, "Run Experiment", path='s', maxruns = 'i', returns='')
     def runExperiment(self, c, path, maxruns = 1):
         """
@@ -135,7 +139,7 @@ class ARTIQ_Server(LabradServer):
             path    (string): the filepath to the ARTIQ experiment.
             maxruns (int)   : the number of times to run the experiment
         """
-        #set pipeline, priority, and expid
+        # set pipeline, priority, and expid
         ps_pipeline = 'PS'
         ps_priority = 1
         ps_expid = {'log_level': 30,
@@ -146,7 +150,7 @@ class ARTIQ_Server(LabradServer):
                                   'linetrigger_delay_us': self.linetrigger_delay,
                                   'linetrigger_ttl_name': self.linetrigger_ttl}}
 
-        #run sequence then wait for experiment to submit
+        # run sequence then wait for experiment to submit
         yield self.inCommunication.acquire()
         self.ps_rid = yield deferToThread(self.scheduler.submit, pipeline_name = ps_pipeline, expid = ps_expid, priority = ps_priority)
         self.inCommunication.release()
@@ -156,7 +160,7 @@ class ARTIQ_Server(LabradServer):
         """
         Stops any currently running sequence.
         """
-        #check that an experiment is currently running
+        # check that an experiment is currently running
         if self.ps_rid not in self.scheduler.get_status().keys(): raise Exception('No experiment currently running')
         yield self.inCommunication.acquire()
         yield deferToThread(self.scheduler.delete, self.ps_rid)
@@ -173,7 +177,7 @@ class ARTIQ_Server(LabradServer):
         returnValue(completed_runs)
 
 
-    #TTLs
+    # TTL
     @setting(211, 'TTL Get', returns='*s')
     def getTTL(self, c):
         """
@@ -194,7 +198,7 @@ class ARTIQ_Server(LabradServer):
         yield self.api.setTTL(ttl_name, state)
 
 
-    #DDS functions
+    # DDS
     @setting(311, "DDS Get", returns='*s')
     def getDDS(self, c):
         """get the list of available channels"""
@@ -277,7 +281,7 @@ class ARTIQ_Server(LabradServer):
         returnValue(reg_val)
 
 
-    #DAC
+    # DAC
     @setting(411, "DAC Initialize", returns='')
     def initializeDAC(self, c):
         """
@@ -360,16 +364,52 @@ class ARTIQ_Server(LabradServer):
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
         elif param.lower() not in ('dac', 'offset', 'gain'):
-            raise Exception('Invalid register. Must be one of ["dac", "offset", "gain"].')
+            raise Exception('Error: invalid register. Must be one of ["dac", "offset", "gain"].')
         #todo: finish
         reg_val = yield self.api.readDAC(dac_num, param)
         returnValue(reg_val)
 
 
-    #Sampler
+    # SAMPLER
+    @setting(511, "Sampler Initialize", returns='')
+    def initializeSampler(self, c):
+        """
+        Initialize the Sampler.
+        """
+        reg_val = yield self.api.initializeSampler()
 
+    @setting(512, "Sampler Gain", channel='i', gain='i', returns='')
+    def setSamplerGain(self, c, channel, gain):
+        """
+        Read the value of a DAC register.
+        Arguments:
+            channel (int)   : the dac channel number
+            gain   (int) : the channel gain. must be either
+        """
+        if gain not in (1, 10, 100, 1000):
+            raise Exception('Error: invalid gain. Must be one of (1, 10, 100, 1000).')
+        yield self.api.setSamplerGain(channel, gain)
 
-    #Signal/Context functions
+    @setting(521, "Sampler Gain", samples='i', returns='*v')
+    def readSampler(self, c, samples=None):
+        """
+        Acquire samples.
+        Arguments:
+            samples (int)   : the number of samples to read
+        Returns:
+                    (*float): the samples
+        """
+        if samples is None:
+            samples = 8
+        elif samples % 2 == 1:
+            raise Exception('Error: number of samples must be even')
+        gains = yield self.api.getSamplerGains()
+        sampleArr = np.zeros(samples)
+        sampleArr = yield self.api.readSampler(sampleArr)
+        # todo convert mu to gain
+        returnValue(sampleArr)
+
+    # Signal/Context functions
     def notifyOtherListeners(self, context, message, f):
         """
         Notifies all listeners except the one in the given context, executing function f
@@ -392,3 +432,6 @@ class ARTIQ_Server(LabradServer):
 if __name__ == '__main__':
     from labrad import util
     util.runServer(ARTIQ_Server())
+
+#todo: check that device exists
+#todo: allow hotswap boxes

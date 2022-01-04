@@ -1,24 +1,24 @@
 from artiq.master.databases import DeviceDB
 
 class Devices(object):
-    """Wrapper for """
+    """Wrapper for """#todo finish
     def __init__(self, filepath):
         self.device_db = DeviceDB(filepath)
 
-        #get device names
+        # get device names
         self.device_db = self.get_device_db()
-            #create holding lists (dict not supported in kernel methods)
+            # create holding lists (dict not supported in kernel methods)
         self.ttlout_list = list()
         self.ttlin_list = list()
         self.dds_list = list()
         self.urukul_list = list()
 
-        #assign names and devices
+        # assign names and devices
         for name, params in self.device_db.items():
             #only get devices with named class
             if 'class' not in params:
                 continue
-            #set device as attribute
+            # set device as attribute
             devicetype = params['class']
             device = self.get_device(name)
             self.setattr_device(name)
