@@ -130,13 +130,13 @@ class TTL_client(QWidget):
 
     def initializeGUI(self, cxn):
         layout = QGridLayout()
-        #set title
+        # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
         title.setMargin(4)
         layout.addWidget(title, 0, 0, 1, 10)
-        #create and layout widgets
+        # create and layout widgets
         in_ttls = self._makeTTLGroup(self.ttlin_list, "Input")
         layout.addWidget(in_ttls, 2, 0, 2, 4)
         out_ttls = self._makeTTLGroup(self.ttlout_list, "Output")
