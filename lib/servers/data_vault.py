@@ -68,7 +68,7 @@ def load_settings(cxn, name):
         print('Could not load repository location from registry.')
         print('Please enter data storage directory or hit enter to use')
         print('the default directory ({}):'.format(default_datadir))
-        datadir = os.path.expanduser(raw_input('>>>'))
+        datadir = os.path.expanduser(input('>>>'))
         if datadir == '':
             datadir = default_datadir
         if not os.path.exists(datadir):

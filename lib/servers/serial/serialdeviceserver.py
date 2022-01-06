@@ -331,7 +331,7 @@ class SerialDeviceServer(LabradServer):
             selection = None
             while True:
                 print('Select the number corresponding to the device you are using:')
-                selection = raw_input('')
+                selection = input('')
                 if selection in keyDict:
                     portStr = yield reg.get(keyDict[selection])
                     returnValue(portStr)

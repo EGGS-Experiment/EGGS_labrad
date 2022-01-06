@@ -15,6 +15,7 @@ class ADC_channel(QFrame):
     """
     GUI for a single TTL channel.
     """
+
     def __init__(self, name=None, parent=None):
         QWidget.__init__(self, parent)
         self.name = name
