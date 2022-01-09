@@ -127,13 +127,15 @@ class ADC_client(QWidget):
         sampler_title.setAlignment(QtCore.Qt.AlignCenter)
         sampler_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         sampler_sample = QPushButton('Sample', sampler_header)
-        sampler_sample.clicked.connect(lambda: self.getSamples)
+        sampler_sample.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        sampler_sample.clicked.connect(lambda: self.getSamples())
         sampler_reset = QPushButton('Reset', sampler_header)
-        sampler_sample.clicked.connect(lambda: self.reset)
+        sampler_reset.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        sampler_reset.clicked.connect(lambda: self.reset())
         sampler_header_layout.addWidget(sampler_title)
         sampler_header_layout.addWidget(sampler_sample)
         sampler_header_layout.addWidget(sampler_reset)
-        layout.addWidget(sampler_header, 0, 2, 1, 2)
+        layout.addWidget(sampler_header, 0, 3, 1, 2)
         # layout individual channels (8 per sampler)
         for i in range(8):
             # initialize GUIs for each channel
@@ -143,9 +145,9 @@ class ADC_client(QWidget):
             row = int(i / self.row_length) + 2
             column = i % self.row_length
             # connect signals to slots
-            channel_gui.gain.valueChanged.connect(lambda value, chan=i: self.setGain(chan, value))
+            channel_gui.gain.currentTextChanged.connect(lambda value, chan=i: self.setGain(chan, value))
             # add widget to client list and layout
-            self.sampler_clients[channel_name] = channel_gui
+            self.sampler_channels[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
         sampler_group.setLayout(layout)
         return sampler_group
@@ -167,7 +169,6 @@ class ADC_client(QWidget):
 
     @inlineCallbacks
     def setGain(self, channel_num, gain):
-        print(gain)
         yield self.artiq.sampler_gain(channel_num, int(gain))
 
     @inlineCallbacks
@@ -182,9 +183,9 @@ class ADC_client(QWidget):
 
 if __name__ == "__main__":
     # run channel GUI
-    from EGGS_labrad.lib.clients import runGUI
-    runGUI(ADC_channel, name='ADC Channel')
+    #from EGGS_labrad.lib.clients import runGUI
+    #runGUI(ADC_channel, name='ADC Channel')
 
     # run ADC GUI
-    #from EGGS_labrad.lib.clients import runClient
-    #runClient(ADC_client)
+    from EGGS_labrad.lib.clients import runClient
+    runClient(ADC_client)
