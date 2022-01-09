@@ -14,6 +14,7 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+from time import sleep
 from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
 
@@ -43,6 +44,7 @@ class OscilloscopeServer(GPIBManagedServer):
         """Reset the oscilloscopes to factory settings."""
         dev = self.selectedDevice(c)
         yield dev.reset()
+        sleep(5)
 
     @setting(12, "Clear Buffers", returns='')
     def clear_buffers(self, c):
@@ -163,16 +165,17 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).trigger_slope(slope)
 
-    @setting(133, "Trigger Level", level='v', returns='v')
-    def trigger_level(self, c, level=None):
+    @setting(133, "Trigger Level", channel='i', level='v', returns='v')
+    def trigger_level(self, c, channel, level=None):
         """
         Set or query the trigger level.
         Args:
-            level (float): Trigger level
+            channel (int)   :  the channel to set the trigger for
+            level   (float) : the trigger level (in V)
         Returns:
             (float): the trigger level (in V).
         """
-        return self.selectedDevice(c).trigger_level(level)
+        return self.selectedDevice(c).trigger_level(channel, level)
 
     @setting(134, "Trigger Mode", mode='s', returns='s')
     def trigger_mode(self, c, mode=None):
@@ -211,8 +214,8 @@ class OscilloscopeServer(GPIBManagedServer):
 
 
     # ACQUISITION
-    @setting(201, "Trace", channel='i', returns='(*v*v)')
-    def get_trace(self, c, channel):
+    @setting(201, "Trace", channel='i', points='i', returns='(*v*v)')
+    def get_trace(self, c, channel, points=None):
         """
         Get a trace for a single channel.
         Args:
@@ -220,7 +223,10 @@ class OscilloscopeServer(GPIBManagedServer):
         Returns:
             Tuple of ((ValueArray[s]) Time axis, (ValueArray[V]) Voltages).
         """
-        return self.selectedDevice(c).get_trace(channel)
+        if points is None:
+            return self.selectedDevice(c).get_trace(channel)
+        else:
+            return self.selectedDevice(c).get_trace(channel, points)
 
 
     # MEASURE

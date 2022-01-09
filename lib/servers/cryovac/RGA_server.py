@@ -47,6 +47,7 @@ class RGA_Server(SerialDeviceServer):
         super().initServer()
         # RGA type
         self.m_max = 200
+        self.current_to_pressure = None
 
 
     # STATUS
@@ -260,6 +261,8 @@ class RGA_Server(SerialDeviceServer):
         if (num_scans < 0) or (num_scans > 255):
             raise Exception('Invalid Input.')
 
+        #todo: get pressure conversion
+
         # get initial and final masses
         mass_initial = yield self._getter('MI')
         mass_initial = int(mass_initial)
@@ -313,6 +316,7 @@ class RGA_Server(SerialDeviceServer):
         # sanitize input
         if (mass < 0) or (mass > self.m_max):
             raise Exception('Invalid Input.')
+        #todo: get pressure conversion
         # start a single mass measurement
         msg = 'MR' + str(mass) + _SRS_EOL
         yield self.ser.acquire()
@@ -336,6 +340,7 @@ class RGA_Server(SerialDeviceServer):
         # automatically enables total pressure measurement
         yield self._setter('HV', 0)
         # start a total pressure measurement
+        #todo: get pressure conversion
         msg = 'TP?' + _SRS_EOL
         yield self.ser.acquire()
         yield self.ser.write(msg)

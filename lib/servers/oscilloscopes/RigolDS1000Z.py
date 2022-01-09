@@ -12,7 +12,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def reset(self):
         yield self.write('*RST')
-        #todo: wait until finish reset
 
     @inlineCallbacks
     def clear_buffers(self):
@@ -96,7 +95,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     # TRIGGER
     @inlineCallbacks
     def trigger_channel(self, channel=None):
-        #note: target channel must be on
+        # note: target channel must be on
         chString = ':TRIG:EDG:SOUR'
         if channel is not None:
             if channel in (1, 2, 3, 4):
@@ -119,7 +118,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         returnValue(resp.strip())
 
     @inlineCallbacks
-    def trigger_level(self, level=None):
+    def trigger_level(self, channel, level=None):
         chString = ':TRIG:EDG:LEV'
         if level is not None:
             chan_tmp = yield self.trigger_channel()
@@ -170,26 +169,25 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
     # ACQUISITION
     @inlineCallbacks
-    def get_trace(self, channel):
-        # first need to stop to record
+    def get_trace(self, channel, points=1200):
+        # oscilloscope must be stopped to get trace
         yield self.write(':STOP')
-
-        # set trace parameters
+        # set max points
+        max_points = yield self.query(':ACQ:MDEP?')
+        max_points = int(max_points)
+        if points > max_points:
+            points = max_points
+        # configure trace
         yield self.write(':WAV:SOUR CHAN{:d}'.format(channel))
-        # trace mode
         yield self.write(':WAV:MODE RAW')
-        # return format (default byte)
         yield self.write(':WAV:FORM BYTE')
-        # start point position
         yield self.write(':WAV:STAR 1')
-        # stop point position
-        yield self.write(':WAV:STOP 12000')
+        yield self.write(':WAV:STOP {:d}'.format(points))
 
         # transfer waveform preamble
         preamble = yield self.query(':WAV:PRE?')
         # get waveform data
         data = yield self.query(':WAV:DATA?')
-
         # start oscope back up
         yield self.write(':RUN')
 
@@ -197,9 +195,8 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         points, xincrement, xorigin, xreference, yincrement, yorigin, yreference = yield self._parsePreamble(preamble)
         # parse data
         trace = yield self._parseByteData(data)
-
-        # convert data to volts
-        xAxis = (np.arange(points) * xincrement + xorigin)
+        # format data
+        xAxis = np.arange(points) * xincrement + xorigin
         yAxis = (trace - yorigin - yreference) * yincrement
         returnValue((xAxis, yAxis))
 
@@ -265,7 +262,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
     def _parseByteData(data):
         """
-        Parse byte data.#todo document
+        Parse byte data.
         """
         # get tmc header in #NXXXXXXXXX format
         tmc_N = int(data[1])

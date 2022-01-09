@@ -5,15 +5,16 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
 
+
     # SYSTEM
     @inlineCallbacks
     def reset(self):
         yield self.write('*RST')
-        # todo: wait until finish reset
 
     @inlineCallbacks
     def clear_buffers(self):
         yield self.write('*CLS')
+
 
     # CHANNEL
     @inlineCallbacks
@@ -25,7 +26,6 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         coupling = yield self.channel_coupling(channel)
         invert = yield self.channel_invert(channel)
         returnValue((onoff, probeAtten, scale, offset, coupling, invert))
-        #todo
 
     @inlineCallbacks
     def channel_coupling(self, channel, coupling=None):
@@ -116,21 +116,20 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         resp = yield self.query(chString + '?')
         returnValue(resp.strip())
 
-    # @inlineCallbacks
-    # def trigger_level(self, level=None):
-    #     chString = 'TRIG:A:LEV:CH'.format(channel)
-    #     #chString = 'TRIG:A:LEV:CH'.format(channel)
-    #     if level is not None:
-    #         chan_tmp = yield self.trigger_channel()
-    #         vscale_tmp = yield self.channel_scale(int(chan_tmp[-1]))
-    #         level_max = 5 * vscale_tmp
-    #         if (level == 0) or (abs(level) <= level_max):
-    #             yield self.write(chString + ' ' + str(level))
-    #         else:
-    #             raise Exception('Trigger level must be in range: ' + str((-level_max, level_max)))
-    #     resp = yield self.query(chString + '?')
-    #     returnValue(float(resp))
-    #     #todo
+    @inlineCallbacks
+    def trigger_level(self, channel, level=None):
+        if channel not in (1, 2, 3, 4):
+            raise Exception('Channel must be one of: ' + str((1, 2, 3, 4)))
+        chString = 'TRIG:A:LEV:CH{:d}'.format(channel)
+        if level is not None:
+            vscale_tmp = yield self.channel_scale(channel)
+            level_max = 5 * vscale_tmp
+            if (level == 0) or (abs(level) <= level_max):
+                yield self.write(chString + ' ' + str(level))
+            else:
+                raise Exception('Trigger level must be in range: ' + str((-level_max, level_max)))
+        resp = yield self.query(chString + '?')
+        returnValue(float(resp))
 
     @inlineCallbacks
     def trigger_mode(self, mode=None):
@@ -170,29 +169,24 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
 
     # ACQUISITION
     @inlineCallbacks
-    def get_trace(self, channel):
-        # set trace parameters
-        yield self.write('DAT:SOUR CH%d' %channel)
-        # start point position
+    def get_trace(self, channel, points=None):
+        # configure trace
+        yield self.write('DAT:SOUR CH%d' % channel)
         yield self.write('DAT:STAR 1')
-        # stop point position
-        yield self.write('DAT:STOP 1000')
-        # set encoding
         yield self.write('DAT:ENC ASCI')
-        # transfer waveform preamble
+        yield self.write('DAT:STOP {:d}'.format(points))
+
+        # get preamble
         preamble = yield self.query('WFMO?')
-
-        # get waveform data
+        # get waveform
         data = yield self.query('CURV?')
-
         # parse waveform preamble
         points, xincrement, xorigin, yincrement, yorigin, yreference = self._parsePreamble(preamble)
         # parse data
         trace = self._parseByteData(data)
-
-        # convert data to volts
-        xAxis = (np.arange(points) * xincrement + xorigin)
-        yAxis = ((trace - yorigin) * yincrement + yreference)
+        # format data
+        xAxis = np.arange(points) * xincrement + xorigin
+        yAxis = (trace - yorigin) * yincrement + yreference
         returnValue((xAxis, yAxis))
 
 
@@ -206,7 +200,6 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     # HELPER
     def _parsePreamble(preamble):
         '''
-        Check
         <preamble_block> ::= <format 16-bit NR1>,
                          <type 16-bit NR1>,
                          <points 32-bit NR1>,
