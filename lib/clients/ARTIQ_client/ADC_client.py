@@ -18,23 +18,25 @@ class ADC_channel(QFrame):
         self.setFrameStyle(0x0001 | 0x0010)
         # self.setLineWidth(2)
         self.makeLayout(name)
-        self.setFixedSize(150, 75)
+        self.setFixedSize(150, 150)
 
     def makeLayout(self, title):
         layout = QGridLayout()
         # labels
         title = QLabel(title)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         title.setAlignment(QtCore.Qt.AlignCenter)
         title.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         # display
         self.display_label = QLabel('Output (V)')
-        self.display = QLabel('Volts')
-        self.display.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        self.display = QLabel('00.00')
+        self.display.setAlignment(QtCore.Qt.AlignCenter)
+        self.display.setFont(QFont('MS Shell Dlg 2', pointSize=18))
         self.display.setStyleSheet('color: blue')
         # gain
         self.gain_title = QLabel('Gain')
         self.gain = QComboBox()
+        self.gain.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.gain.addItem('1')
         self.gain.addItem('10')
         self.gain.addItem('100')
@@ -42,9 +44,9 @@ class ADC_channel(QFrame):
         # set layout
         layout.addWidget(title, 0, 0, 1, 2)
         layout.addWidget(self.display_label, 1, 0)
-        layout.addWidget(self.display, 2, 0)
+        layout.addWidget(self.display, 2, 0, 1, 2)
         layout.addWidget(self.gain_title, 3, 0)
-        layout.addWidget(self.gain, 4, 0)
+        layout.addWidget(self.gain, 4, 0, 1, 2)
         self.setLayout(layout)
 
 
@@ -53,7 +55,7 @@ class ADC_client(QWidget):
     Client for all ADC channels.
     """
     name = "ARTIQ ADC Client"
-    row_length = 10
+    row_length = 8
 
     TTLID = 888999
 
@@ -62,7 +64,7 @@ class ADC_client(QWidget):
         self.reactor = reactor
         self.cxn = cxn
         self.ttl_clients = {}
-        #start connections
+        # start connections
         d = self.connect()
         d.addCallback(self.getServers)
         d.addCallback(self.getDevices)
@@ -187,10 +189,10 @@ class ADC_client(QWidget):
             self.reactor.stop()
 
 if __name__ == "__main__":
-    #run channel GUI
-    # from EGGS_labrad.lib.clients import runGUI
-    # runGUI(TTL_channel, name='TTL Channel')
+    # run channel GUI
+    from EGGS_labrad.lib.clients import runGUI
+    runGUI(ADC_channel, name='ADC Channel')
 
-    #run TTL GUI
-    from EGGS_labrad.lib.clients import runClient
-    runClient(TTL_client)
+    # run TTL GUI
+    #from EGGS_labrad.lib.clients import runClient
+    #runClient(TTL_client)
