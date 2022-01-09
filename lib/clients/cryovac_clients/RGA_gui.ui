@@ -263,9 +263,9 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>270</y>
+     <y>280</y>
      <width>131</width>
-     <height>161</height>
+     <height>151</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="detector_layout">
