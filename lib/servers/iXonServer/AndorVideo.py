@@ -80,7 +80,6 @@ class AndorVideo(QWidget):
         mingain, maxgain = self.emrange
         self.emccdSpinBox.setMinimum(mingain)  # mingain)
         self.emccdSpinBox.setMaximum(maxgain)  # maxgain)
-        print(maxgain)
         self.emccdSpinBox.setKeyboardTracking(False)
         layout.addWidget(emccd_label, 2, 4, )
         layout.addWidget(self.emccdSpinBox, 2, 5)
@@ -216,8 +215,8 @@ class AndorVideo(QWidget):
             yield self.server.startAcquisition(None)
             self.binx, self.biny, self.startx, self.stopx, self.starty, self.stopy = yield self.server.getImageRegion(
                 None)
-            self.pixels_x = (self.stopx - self.startx + 1) / self.binx
-            self.pixels_y = (self.stopy - self.starty + 1) / self.biny
+            self.pixels_x = int((self.stopx - self.startx + 1) / self.binx)
+            self.pixels_y = int((self.stopy - self.starty + 1) / self.biny)
             yield self.server.waitForAcquisition(None)
             self.live_update_loop.start(0)
         else:
@@ -229,7 +228,6 @@ class AndorVideo(QWidget):
     def live_update(self):
         data = yield self.server.getMostRecentImage(None)
         image_data = np.reshape(data, (self.pixels_y, self.pixels_x))
-
         self.img_view.setImage(image_data.transpose(), autoRange=False, autoLevels=False,
                                pos=[self.startx, self.starty], scale=[self.binx, self.biny], autoHistogramRange=False)
 
@@ -414,10 +412,9 @@ class image_region_selection_dialog(QtGui.QDialog):
     def on_cancel(self, clicked):
         self.close()
 
-    def closeEvent(self, x):
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
+    # def closeEvent(self, x):
+    #     if self.reactor.running:
+    #         self.reactor.stop()
 
 
 if __name__ == "__main__":

@@ -43,9 +43,9 @@ class AndorCamera(object):
         try:
             print('Loading DLL')
             self.dll = c.windll.LoadLibrary(config.path_to_dll)
-            print('Initializing Camera')
+            print('Initializing Camera...')
             error = self.dll.Initialize(os.path.dirname(__file__))
-            print('Done Initializing, {}'.format(ERROR_CODE[error]))
+            print('Done Initializing: {}'.format(ERROR_CODE[error]))
             self.info = AndorInfo()
             self.get_detector_dimensions()
             self.get_temperature_range()
@@ -361,7 +361,7 @@ class AndorCamera(object):
         hbin, vbin, hstart, hend, vstart, vend = self.info.image_region
         dim = (hend - hstart + 1) * (vend - vstart + 1) / float(hbin * vbin)
         dim = int(dim)
-        image_struct = c.c_int * dim
+        image_struct = c.c_uint32 * dim
         image = image_struct()
         error = self.dll.GetMostRecentImage(c.pointer(image), dim)
         if (ERROR_CODE[error] == 'DRV_SUCCESS'):
