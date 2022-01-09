@@ -4,7 +4,8 @@ class AndorConfig(object):
     thkim
     '''
     #default parameters
-    path_to_dll = ('C:\\Program Files (x86)\\Andor SOLIS\\atmcd64d_legacy.dll')
+    #path_to_dll = ('C:\\Program Files (x86)\\Andor SOLIS\\atmcd64d_legacy.dll')
+    path_to_dll = ('C:\\Users\\spectroscopy\\Documents\\Code\\Andor\\atmcd64d_legacy.dll')
     set_temperature = -20 #degrees C
     read_mode = 'Image'
     acquisition_mode = 'Single Scan'
