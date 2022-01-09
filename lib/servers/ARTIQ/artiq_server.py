@@ -410,7 +410,7 @@ class ARTIQ_Server(LabradServer):
         Set the gain of a sampler channel.
         Arguments:
             channel (int)   : the dac channel number
-            gain   (int) : the channel gain. must be either
+            gain   (int)    : the channel gain
         """
         if gain not in (1, 10, 100, 1000):
             raise Exception('Error: invalid gain. Must be one of (1, 10, 100, 1000).')

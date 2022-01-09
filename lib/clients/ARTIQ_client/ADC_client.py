@@ -1,6 +1,6 @@
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QComboBox, QLabel, QGridLayout, QFrame, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QComboBox, QLabel, QPushButton, QGridLayout, QFrame, QSizePolicy
 
 from twisted.internet.defer import inlineCallbacks
 
@@ -57,16 +57,12 @@ class ADC_client(QWidget):
     name = "ARTIQ ADC Client"
     row_length = 8
 
-    TTLID = 888999
-
     def __init__(self, reactor, cxn=None, parent=None):
-        super(TTL_client, self).__init__()
+        super(ADC_client, self).__init__()
         self.reactor = reactor
         self.cxn = cxn
-        self.ttl_clients = {}
         # start connections
         d = self.connect()
-        d.addCallback(self.getServers)
         d.addCallback(self.getDevices)
         d.addCallback(self.initializeGUI)
 
@@ -80,53 +76,27 @@ class ADC_client(QWidget):
         return self.cxn
 
     @inlineCallbacks
-    def getServers(self, cxn):
-        """
-        Get required labrad servers.
-        """
-        try:
-            self.reg = self.cxn.registry
-            self.dv = self.cxn.data_vault
-            self.artiq = self.cxn.artiq_server
-        except Exception as e:
-            print(e)
-            raise
-
-        #add listener to moninj
-        yield self.artiq.signal__ttl_changed(self.TTLID)
-        yield self.artiq.addListener(listener=self.updateTTLDisplay, source=None, ID=self.TTLID)
-        return self.cxn
-
-    def updateTTLDisplay(self, c, ttl_name, probe, status):
-        print('yzde: ' + ttl_name + ', ' + str(probe))
-        if probe == 0:
-            self.ttl_clients[ttl_name].lockswitch.setText('scde')
-
     def getDevices(self, cxn):
         """
         Get devices from ARTIQ server and organize them.
         """
+        # get artiq server and dac list
+        try:
+            self.artiq = yield self.cxn.artiq_server
+        except Exception as e:
+            print(e)
+            raise
+
         # create holding lists
-        self.ttlin_list = []
-        self.ttlout_list = []
-        self.ttlurukul_list = []
-        self.ttlother_list = []
+        self.sampler = None
+        self.sampler_channels = {}
         for name, params in device_db.items():
             # only get devices with named class
             if 'class' not in params:
                 continue
-            # set device as attribute
-            devicetype = params['class']
-            if devicetype == 'TTLInOut':
-                self.ttlin_list.append(name)
-            elif devicetype == 'TTLOut':
-                other_names = ['zotino', 'led', 'sampler']
-                if 'urukul' in name:
-                    self.ttlurukul_list.append(name)
-                elif any(string in name for string in other_names):
-                    self.ttlother_list.append(name)
-                else:
-                    self.ttlout_list.append(name)
+            if params['class'] == 'Sampler':
+                self.sampler = name
+                break
         return self.cxn
 
     def initializeGUI(self, cxn):
@@ -135,64 +105,86 @@ class ADC_client(QWidget):
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(QtCore.Qt.AlignCenter)
-        title.setMargin(4)
-        layout.addWidget(title, 0, 0, 1, 10)
-        # create and layout widgets
-        in_ttls = self._makeTTLGroup(self.ttlin_list, "Input")
-        layout.addWidget(in_ttls, 2, 0, 2, 4)
-        out_ttls = self._makeTTLGroup(self.ttlout_list, "Output")
-        layout.addWidget(out_ttls, 5, 0, 3, 10)
-        urukul_ttls = self._makeTTLGroup(self.ttlurukul_list, "Urukul")
-        layout.addWidget(urukul_ttls, 9, 0, 3, 10)
-        other_ttls = self._makeTTLGroup(self.ttlother_list, "Other")
-        layout.addWidget(other_ttls, 13, 0, 2, 5)
+        layout.addWidget(title, 0, 0, 1, 4)
+        # layout widgets
+        layout.addWidget(self._makeSamplerGroup(self.sampler))
         self.setLayout(layout)
 
-    def _makeTTLGroup(self, ttl_list, name):
+    def _makeSamplerGroup(self, name):
         """
-        Creates a group of TTLs as a widget.
+        Creates a group of sampler channels as a widget.
         """
-        #create widget
-        ttl_group = QFrame()
-        ttl_group.setFrameStyle(0x0001 | 0x0010)
-        ttl_group.setLineWidth(2)
+        # create widget
+        sampler_group = QFrame()
+        sampler_group.setFrameStyle(0x0001 | 0x0010)
+        sampler_group.setLineWidth(2)
         layout = QGridLayout()
-        #set title
-        title = QLabel(name)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
-        title.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(title, 0, 0)
-        #layout individual ttls on group
-        for i in range(len(ttl_list)):
+        # set global
+        sampler_header = QWidget(self)
+        sampler_header_layout = QGridLayout(sampler_header)
+        sampler_title = QLabel(sampler_header)
+        sampler_title.setText(name)
+        sampler_title.setAlignment(QtCore.Qt.AlignCenter)
+        sampler_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        sampler_sample = QPushButton('Sample', sampler_header)
+        sampler_sample.clicked.connect(lambda: self.getSamples)
+        sampler_reset = QPushButton('Reset', sampler_header)
+        sampler_sample.clicked.connect(lambda: self.reset)
+        sampler_header_layout.addWidget(sampler_title)
+        sampler_header_layout.addWidget(sampler_sample)
+        sampler_header_layout.addWidget(sampler_reset)
+        layout.addWidget(sampler_header, 0, 2, 1, 2)
+        # layout individual channels (8 per sampler)
+        for i in range(8):
             # initialize GUIs for each channel
-            channel_name = ttl_list[i]
-            channel_gui = TTL_channel(channel_name)
+            channel_name = name + '_' + str(i)
+            channel_gui = ADC_channel(channel_name)
             # layout channel GUI
-            row = int(i / (self.row_length)) + 2
-            column = i % (self.row_length)
+            row = int(i / self.row_length) + 2
+            column = i % self.row_length
             # connect signals to slots
-            channel_gui.toggle.toggled.connect(lambda status, chan=channel_name: self.toggleSwitch(chan, status))
+            channel_gui.gain.valueChanged.connect(lambda value, chan=i: self.setGain(chan, value))
             # add widget to client list and layout
-            self.ttl_clients[channel_name] = channel_gui
+            self.sampler_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
-            #print(name + ' - row:' + str(row) + ', column: ' + str(column))
-        ttl_group.setLayout(layout)
-        return ttl_group
+        sampler_group.setLayout(layout)
+        return sampler_group
+
+    def startupData(self, cxn):
+        for channel in self.sampler_channels.values():
+            channel.lock(False)
+            # channel.locks
+            # todo: finish
+
+
+    # SLOTS
+    @inlineCallbacks
+    def getSamples(self):
+        resp = yield self.artiq.sampler_read(8)
+        channels = self.sampler_channels.values()
+        for i in range(8):
+            channels[i].display.setText(str(resp[i]))
 
     @inlineCallbacks
-    def toggleSwitch(self, channel_name, status):
-        yield self.artiq.ttl_set(channel_name, status)
+    def setGain(self, channel_num, gain):
+        print(gain)
+        yield self.artiq.sampler_gain(channel_num, int(gain))
+
+    @inlineCallbacks
+    def reset(self):
+        yield self.artiq.sampler_initialize()
 
     def closeEvent(self, x):
         self.cxn.disconnect()
         if self.reactor.running:
             self.reactor.stop()
 
+
 if __name__ == "__main__":
     # run channel GUI
     from EGGS_labrad.lib.clients import runGUI
     runGUI(ADC_channel, name='ADC Channel')
 
-    # run TTL GUI
+    # run ADC GUI
     #from EGGS_labrad.lib.clients import runClient
-    #runClient(TTL_client)
+    #runClient(ADC_client)
