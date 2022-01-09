@@ -1,6 +1,6 @@
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton, QVBoxLayout
 
 from twisted.internet.defer import inlineCallbacks
 
@@ -91,7 +91,7 @@ class DAC_client(QWidget):
         super(DAC_client, self).__init__()
         self.reactor = reactor
         self.cxn = cxn
-        #start connections
+        # start connections
         d = self.connect()
         d.addCallback(self.getDevices)
         d.addCallback(self.initializeGUI)
@@ -152,14 +152,27 @@ class DAC_client(QWidget):
         zotino_group.setFrameStyle(0x0001 | 0x0010)
         zotino_group.setLineWidth(2)
         layout = QGridLayout()
-        # set title
-        title0 = QWidget(self)
-        zotino_title = QLabel(title0)
+        # set global
+        zotino_header = QWidget(self)
+        zotino_header_layout = QGridLayout(zotino_header)
+        zotino_title = QLabel(zotino_header)
         zotino_title.setText(name)
+        zotino_title.setAlignment(QtCore.Qt.AlignCenter)
         zotino_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
-        zotino_global_ofs = QDoubleSpinBox(title0)
-        zotino_global_ofs.setMaximum(0xfff)
-        layout.addWidget(title0, 0, 0, 1, self.row_length)
+        zotino_global_ofs_title = QLabel(zotino_header)
+        zotino_global_ofs_title.setText('Global Offset Register')
+        zotino_global_ofs = QDoubleSpinBox(zotino_header)
+        zotino_global_ofs.setMaximum(0x2fff)
+        zotino_global_ofs.setMinimum(0)
+        zotino_global_ofs.setDecimals(0)
+        zotino_global_ofs.setSingleStep(1)
+        zotino_global_ofs.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        #zotino_global_ofs.setAlignment(QtCore.Qt.AlignCenter)
+        zotino_global_ofs.valueChanged.connect(lambda value: self.setOFS(value))
+        zotino_header_layout.addWidget(zotino_title)
+        zotino_header_layout.addWidget(zotino_global_ofs_title)
+        zotino_header_layout.addWidget(zotino_global_ofs)
+        layout.addWidget(zotino_header, 0, 2, 1, 2)
         # layout individual channels (32 per zotino)
         for i in range(32):
             # initialize GUIs for each channel
@@ -184,8 +197,11 @@ class DAC_client(QWidget):
     def startupData(self, cxn):
         for channel in self.ad5372_clients.values():
             channel.lock(False)
-            channel.locks
+            # channel.locks
+            # todo: finish
 
+
+    # SLOTS
     @inlineCallbacks
     def setDAC(self, channel_num, voltage_mu):
         yield self.artiq.dac_set(channel_num, voltage_mu, 'mu')
@@ -199,12 +215,18 @@ class DAC_client(QWidget):
         yield self.artiq.dac_gain(channel_num, gain_mu, 'mu')
 
     @inlineCallbacks
+    def setOFS(self, voltage_mu):
+        yield self.artiq.dac_ofs(voltage_mu, 'mu')
+
+    @inlineCallbacks
     def calibrate(self):
         pass
 
     @inlineCallbacks
-    def reset(self):
-        pass
+    def reset(self, channel_num):
+        yield self.artiq.dac_set(channel_num, 0, 'mu')
+        yield self.artiq.dac_offset(channel_num, 0, 'mu')
+        yield self.artiq.dac_set(channel_num, 0, 'mu')
 
     def closeEvent(self, x):
         self.cxn.disconnect()

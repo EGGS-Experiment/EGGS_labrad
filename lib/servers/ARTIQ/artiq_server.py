@@ -35,11 +35,16 @@ from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_REA
                                     AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
                                     AD53XX_READ_AB0, AD53XX_READ_AB1, AD53XX_READ_AB2, AD53XX_READ_AB3
 
+AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53XX_READ_OFFSET,
+                    'GAIN': AD53XX_READ_GAIN, 'OFS0': AD53XX_READ_OFS1, 'OFS1': AD53XX_READ_OFS1,
+                    'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2,
+                    'AB3': AD53XX_READ_AB3}
+
 #     th1.inject(8, TTLOverride.level.value, 1)
 #     th1.inject(8, TTLOverride.oe.value, 1)
 #     th1.inject(8, TTLOverride.en.value, 1)
 
-#function imports
+# function imports
 import numpy as np
 import asyncio
 import time
@@ -165,7 +170,7 @@ class ARTIQ_Server(LabradServer):
         Stops any currently running sequence.
         """
         # check that an experiment is currently running
-        if self.ps_rid not in self.scheduler.get_status().keys(): raise Exception('No experiment currently running')
+        if self.ps_rid not in self.scheduler.get_status().keys(): raise Exception('Error: no experiment currently running')
         yield self.inCommunication.acquire()
         yield deferToThread(self.scheduler.delete, self.ps_rid)
         self.ps_rid = None
@@ -280,7 +285,7 @@ class ARTIQ_Server(LabradServer):
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
         elif length not in (16, 32, 64):
-            raise Exception('Invalid read length. Must be one of [16, 32, 64].')
+            raise Exception('Error: invalid read length. Must be one of [16, 32, 64].')
         reg_val = yield self.api.readDDS(dds_name, addr, length)
         returnValue(reg_val)
 
@@ -310,7 +315,7 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = yield self.voltage_to_mu(value)
         elif units == 'mu':
             if (value < 0) or (value > 0xffff):
-                raise Exception('Invalid DAC Voltage!')
+                raise Exception('Error: invalid DAC Voltage!')
             voltage_mu = int(value)
         yield self.api.setDAC(dac_num, voltage_mu)
 
@@ -353,7 +358,7 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = yield self.voltage_to_mu(value)
         elif units == 'mu':
             if (value < 0) or (value > 0xffff):
-                raise Exception('Invalid DAC Voltage!')
+                raise Exception('Error: invalid DAC Voltage!')
             voltage_mu = int(value)
         yield self.api.setDACOffset(dac_num, voltage_mu)
 
@@ -370,9 +375,9 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = yield self.voltage_to_mu(value)
         elif units == 'mu':
             if (value < 0) or (value > 0x2fff):
-                raise Exception('Invalid DAC Voltage!')
+                raise Exception('Error: invalid DAC Voltage!')
             voltage_mu = int(value)
-        yield self.api.setDACOffset(voltage_mu)
+        yield self.api.setDACGlobal(voltage_mu)
 
     @setting(431, "DAC Read", dac_num='i', reg='s', returns='i')
     def readDAC(self, c, dac_num, reg):
@@ -382,16 +387,11 @@ class ARTIQ_Server(LabradServer):
             dac_num (str)   : the dac channel number
             param   (float) : the register to read from
         """
-        AD53XX_registers = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53XX_READ_OFFSET,
-                            'GAIN': AD53XX_READ_GAIN, 'OFS0': AD53XX_READ_OFS1, 'OFS1': AD53XX_READ_OFS1,
-                            'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2,
-                            'AB3': AD53XX_READ_AB3}
-
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
-        elif reg.lower() not in AD53XX_registers.keys():
-            raise Exception('Error: invalid register. Must be one of ', tuple(AD53XX_registers.keys()))
-        reg_val = yield self.api.readDAC(dac_num, reg)
+        elif reg.upper() not in AD53XX_REGISTERS.keys():
+            raise Exception('Error: invalid register. Must be one of ' + str(tuple(AD53XX_REGISTERS.keys())))
+        reg_val = yield self.api.readDAC(dac_num, AD53XX_REGISTERS[reg])
         returnValue(reg_val)
 
 
