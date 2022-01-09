@@ -214,17 +214,17 @@ class SLSServer(SerialDeviceServer, PollingServer):
         Strips echo from SLS and returns a dictionary with
         keys as parameter names and values as parameter value.
         """
-        #result = {}
+        # result = {}
         if type(string) == bytes:
             string = string.decode('utf-8')
-        #split by lines
+        # split by lines
         string = string.split('\r\n')
-        #remove echo and end message
+        # remove echo and end message
         string = string[1:-1]
-        #setter responses only give ok or not ok
+        # setter responses only give ok or not ok
         if setter:
             return string
-        #split parameters and values by '=' sign
+        # split parameters and values by '=' sign
         # for paramstring in string:
         #     params = paramstring.split('=')
         #     result[params[0]] = params[1]

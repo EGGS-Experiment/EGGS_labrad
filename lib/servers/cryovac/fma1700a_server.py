@@ -69,14 +69,7 @@ class FMA1700AServer(SerialDeviceServer, PollingServer):
         Polls the device for flow readout.
         """
         # query
-        yield self.ser.acquire()
-        yield self.ser.write('Flow?\r\n')
-        resp = yield self.ser.read_line('\n')
-        self.ser.release()
-        # parse input
-        resp = float(resp.strip())
-        # send signal
-        self.flow_update(resp)
+        yield self.flow(None)
 
 
 if __name__ == '__main__':

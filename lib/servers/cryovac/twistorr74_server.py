@@ -123,7 +123,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     @setting(211, 'Read Pressure', returns='v')
     def pressure_read(self, c):
         """
-        Get pump pressure
+        Get pump pressure.
         Returns:
             (float): pump pressure in mbar
         """
@@ -193,26 +193,9 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         """
         Polls the device for pressure readout.
         """
-        # query
-        yield self.ser.acquire()
-        yield self.ser.write(b'\x02\x802240\x0387')
-        press = yield self.ser.read_line(_TT74_ETX_msg)
-        yield self.ser.read(2)
-        yield self.ser.write(b'\x02\x802020\x0383')
-        power = yield self.ser.read_line(_TT74_ETX_msg)
-        yield self.ser.read(2)
-        yield self.ser.write(b'\x02\x802260\x0385')
-        rpm = yield self.ser.read_line(_TT74_ETX_msg)
-        yield self.ser.read(2)
-        self.ser.release()
-        # parse responses
-        press = yield self._parse(press)
-        power = yield self._parse(power)
-        rpm = yield self._parse(rpm)
-        # notify clients
-        self.pressure_update(float(press))
-        self.energy_update(float(power))
-        self.rpm_update(float(rpm))
+        yield self.pressure_read(None)
+        yield self.power_read(None)
+        yield self.rpm_read(None)
 
 
     # HELPER

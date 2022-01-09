@@ -258,13 +258,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         """
         Polls the device for temperature readout.
         """
-        yield self.ser.acquire()
-        yield self.ser.write('KRDG? 0\r\n')
-        resp = yield self.ser.read_line()
-
-        self.ser.release()
-        resp = np.array(resp.split(','), dtype=float)
-        self.temp_update(tuple(resp))
+        yield self.temperature_read(None, None)
 
 
 if __name__ == '__main__':
