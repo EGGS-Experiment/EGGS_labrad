@@ -64,7 +64,8 @@ class AndorCamera(object):
             self.get_cooler_state()
             self.get_temperature()
         except Exception as e:
-            print('Error Initializing Camera', e)
+            print('Error Initializing Camera: ', e)
+            raise Exception(e)
 
     def print_get_software_version(self):
         '''
@@ -480,6 +481,7 @@ ShutterMode = {
     'Open': 1,
     'Close': 2
 }
+
 
 if __name__ == '__main__':
     camera = AndorCamera()

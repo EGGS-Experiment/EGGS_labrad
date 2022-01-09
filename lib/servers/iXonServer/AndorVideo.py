@@ -413,3 +413,13 @@ class image_region_selection_dialog(QtGui.QDialog):
 
     def on_cancel(self, clicked):
         self.close()
+
+    def closeEvent(self, x):
+        self.cxn.disconnect()
+        if self.reactor.running:
+            self.reactor.stop()
+
+
+if __name__ == "__main__":
+    from EGGS_labrad.lib.clients import runClient
+    runClient(AndorVideo)

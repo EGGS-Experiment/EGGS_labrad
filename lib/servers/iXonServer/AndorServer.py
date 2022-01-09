@@ -49,7 +49,7 @@ class AndorServer(LabradServer):
         self.listeners = set()
         self.camera = AndorCamera()
         self.lock = DeferredLock()
-        self.gui = AndorVideo(self)
+        #self.gui = AndorVideo(self)
 
     def initContext(self, c):
         """Initialize a new context object."""
