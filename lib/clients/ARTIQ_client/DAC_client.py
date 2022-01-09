@@ -153,14 +153,13 @@ class DAC_client(QWidget):
         zotino_group.setLineWidth(2)
         layout = QGridLayout()
         # set title
-        title0 = QWidget()
-        #todo: add doublespinbox
-        #todo: set defaults, title, buttons
-        #todo: add title
-        title = QLabel(name)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
-        title.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(title, 0, 0, 1, self.row_length)
+        title0 = QWidget(self)
+        zotino_title = QLabel(title0)
+        zotino_title.setText(name)
+        zotino_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        zotino_global_ofs = QDoubleSpinBox(title0)
+        zotino_global_ofs.setMaximum(0xfff)
+        layout.addWidget(title0, 0, 0, 1, self.row_length)
         # layout individual channels (32 per zotino)
         for i in range(32):
             # initialize GUIs for each channel

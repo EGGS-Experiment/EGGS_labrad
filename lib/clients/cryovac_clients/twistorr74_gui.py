@@ -33,7 +33,7 @@ class twistorr74_gui(QFrame):
         self.pressure_display.setAlignment(Qt.AlignCenter)
         self.pressure_display.setStyleSheet('color: blue')
             # power readout
-        self.power_display_label = QLabel('Pressure (mbar)')
+        self.power_display_label = QLabel('Power (W)')
         self.power_display = QLabel('Power')
         self.power_display.setFont(QFont(shell_font, pointSize=20))
         self.power_display.setAlignment(Qt.AlignCenter)
@@ -44,9 +44,9 @@ class twistorr74_gui(QFrame):
         self.rpm_display.setFont(QFont(shell_font, pointSize=20))
         self.rpm_display.setAlignment(Qt.AlignCenter)
         self.rpm_display.setStyleSheet('color: blue')
-            #record button
+            # record button
         self.twistorr_record = TextChangingButton(('Stop Recording', 'Start Recording'))
-            #power
+            # power
         self.twistorr_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
         self.twistorr_lockswitch.setChecked(True)
         self.twistorr_power = TextChangingButton(('On', 'Off'))
@@ -71,7 +71,7 @@ class twistorr74_gui(QFrame):
         layout.addWidget(self.twistorr_lockswitch, 8, col1)
         layout.addWidget(self.twistorr_record, 9, col1)
 
-        #layout.minimumSize()
+        # layout.minimumSize()
         self.setLayout(layout)
 
 
