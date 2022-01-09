@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>651</width>
-    <height>381</height>
+    <width>649</width>
+    <height>444</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -43,31 +43,14 @@
      <x>20</x>
      <y>60</y>
      <width>131</width>
-     <height>221</height>
+     <height>201</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="general_layout">
-    <item row="7" column="1">
-     <widget class="QDoubleSpinBox" name="mass_lock">
-      <property name="decimals">
-       <number>0</number>
-      </property>
-      <property name="maximum">
-       <double>200.000000000000000</double>
-      </property>
-     </widget>
-    </item>
     <item row="4" column="1">
      <widget class="QPushButton" name="calibrate_electrometer">
       <property name="text">
        <string>Calibrate Electrometer</string>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="1">
-     <widget class="QLabel" name="mass_lock_label">
-      <property name="text">
-       <string>Mass Lock</string>
       </property>
      </widget>
     </item>
@@ -106,6 +89,13 @@
       </property>
      </widget>
     </item>
+    <item row="6" column="1">
+     <widget class="QPushButton" name="general_tp">
+      <property name="text">
+       <string>Total Pressure</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QWidget" name="layoutWidget_4">
@@ -114,38 +104,25 @@
      <x>300</x>
      <y>60</y>
      <width>141</width>
-     <height>310</height>
+     <height>371</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="scan_layout">
-    <item row="4" column="1">
+    <item row="10" column="1">
+     <widget class="QLabel" name="scan_mf_label">
+      <property name="text">
+       <string>Stop Mass (amu)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
      <widget class="QLabel" name="scan_mi_label">
       <property name="text">
        <string>Start Mass (amu)</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="1">
-     <widget class="Lockswitch" name="scan_lockswitch">
-      <property name="text">
-       <string>Lock</string>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="1">
-     <widget class="QDoubleSpinBox" name="scan_mi">
-      <property name="decimals">
-       <number>0</number>
-      </property>
-      <property name="minimum">
-       <double>0.000000000000000</double>
-      </property>
-      <property name="maximum">
-       <double>200.000000000000000</double>
-      </property>
-     </widget>
-    </item>
-    <item row="14" column="1">
+    <item row="15" column="1">
      <widget class="QDoubleSpinBox" name="scan_num">
       <property name="decimals">
        <number>0</number>
@@ -158,14 +135,7 @@
       </property>
      </widget>
     </item>
-    <item row="9" column="1">
-     <widget class="QLabel" name="scan_mf_label">
-      <property name="text">
-       <string>Stop Mass (amu)</string>
-      </property>
-     </widget>
-    </item>
-    <item row="12" column="1">
+    <item row="13" column="1">
      <widget class="QDoubleSpinBox" name="scan_sa">
       <property name="decimals">
        <number>0</number>
@@ -205,14 +175,21 @@
       </item>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="QLabel" name="scan_label">
+    <item row="1" column="1">
+     <widget class="Lockswitch" name="scan_lockswitch">
       <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Scan&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>Lock</string>
       </property>
      </widget>
     </item>
-    <item row="13" column="1">
+    <item row="12" column="1">
+     <widget class="QLabel" name="scan_sa_label">
+      <property name="text">
+       <string>Steps per amu</string>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="1">
      <widget class="QLabel" name="scan_num_label">
       <property name="text">
        <string>Number of scans</string>
@@ -226,7 +203,7 @@
       </property>
      </widget>
     </item>
-    <item row="10" column="1">
+    <item row="11" column="1">
      <widget class="QDoubleSpinBox" name="scan_mf">
       <property name="decimals">
        <number>0</number>
@@ -236,17 +213,47 @@
       </property>
      </widget>
     </item>
-    <item row="11" column="1">
-     <widget class="QLabel" name="scan_sa_label">
+    <item row="0" column="1">
+     <widget class="QLabel" name="scan_label">
       <property name="text">
-       <string>Steps per amu</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Scan&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
     </item>
-    <item row="17" column="1">
+    <item row="18" column="1">
      <widget class="QPushButton" name="scan_start">
       <property name="text">
        <string>Start</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QDoubleSpinBox" name="mass_lock">
+      <property name="decimals">
+       <number>0</number>
+      </property>
+      <property name="maximum">
+       <double>200.000000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLabel" name="mass_lock_label">
+      <property name="text">
+       <string>Mass Lock</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="1">
+     <widget class="QDoubleSpinBox" name="scan_mi">
+      <property name="decimals">
+       <number>0</number>
+      </property>
+      <property name="minimum">
+       <double>0.000000000000000</double>
+      </property>
+      <property name="maximum">
+       <double>200.000000000000000</double>
       </property>
      </widget>
     </item>
@@ -255,8 +262,8 @@
   <widget class="QWidget" name="layoutWidget_3">
    <property name="geometry">
     <rect>
-     <x>160</x>
-     <y>210</y>
+     <x>20</x>
+     <y>270</y>
      <width>131</width>
      <height>161</height>
     </rect>
@@ -358,18 +365,25 @@
      <x>160</x>
      <y>60</y>
      <width>131</width>
-     <height>146</height>
+     <height>251</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="ionizer_layout">
-    <item row="3" column="0">
-     <widget class="QLabel" name="ionizer_ee_label">
+    <item row="5" column="0">
+     <widget class="QLabel" name="ionizer_vf_label">
       <property name="text">
-       <string>Electron Energy (eV)</string>
+       <string>Focus Voltage (V)</string>
       </property>
      </widget>
     </item>
-    <item row="4" column="0">
+    <item row="2" column="0">
+     <widget class="Lockswitch" name="ionizer_lockswitch">
+      <property name="text">
+       <string>Lock</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="0">
      <widget class="QDoubleSpinBox" name="ionizer_ee">
       <property name="decimals">
        <number>0</number>
@@ -385,28 +399,7 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="0">
-     <widget class="Lockswitch" name="ionizer_lockswitch">
-      <property name="text">
-       <string>Lock</string>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="0">
-     <widget class="QComboBox" name="ionizer_ie">
-      <item>
-       <property name="text">
-        <string>8</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>12</string>
-       </property>
-      </item>
-     </widget>
-    </item>
-    <item row="5" column="0">
+    <item row="9" column="0">
      <widget class="QLabel" name="ionizer_ie_label">
       <property name="text">
        <string>Ion Energy (eV)</string>
@@ -420,6 +413,66 @@
       </property>
      </widget>
     </item>
+    <item row="7" column="0">
+     <widget class="QLabel" name="ionizer_ee_label">
+      <property name="text">
+       <string>Electron Energy (eV)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="0" rowspan="2">
+     <widget class="QComboBox" name="ionizer_ie">
+      <item>
+       <property name="text">
+        <string>8</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>12</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="ionizer_fl_label">
+      <property name="text">
+       <string>Filament Current (mA)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QDoubleSpinBox" name="ionizer_fl">
+      <property name="decimals">
+       <number>2</number>
+      </property>
+      <property name="minimum">
+       <double>0.000000000000000</double>
+      </property>
+      <property name="maximum">
+       <double>3.500000000000000</double>
+      </property>
+      <property name="singleStep">
+       <double>0.100000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0">
+     <widget class="QDoubleSpinBox" name="ionizer_vf">
+      <property name="decimals">
+       <number>2</number>
+      </property>
+      <property name="minimum">
+       <double>0.000000000000000</double>
+      </property>
+      <property name="maximum">
+       <double>150.000000000000000</double>
+      </property>
+      <property name="singleStep">
+       <double>0.100000000000000</double>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QWidget" name="layoutWidget">
@@ -428,7 +481,7 @@
      <x>450</x>
      <y>60</y>
      <width>181</width>
-     <height>311</height>
+     <height>371</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="buffer_layout">
