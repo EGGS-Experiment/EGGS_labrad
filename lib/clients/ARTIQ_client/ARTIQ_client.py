@@ -42,13 +42,13 @@ class ARTIQ_client(QMainWindow):
         ttl_widget = yield self.makeTTLWidget()
         dds_widget = yield self.makeDDSWidget()
         dac_widget = yield self.makeDACWidget()
-        # adc_widget = yield self.makeADCWidget()
+        adc_widget = yield self.makeADCWidget()
 
         # create tabs for each subwidget
         self.tabWidget.addTab(ttl_widget, '&TTL')
         self.tabWidget.addTab(dds_widget, '&DDS')
         self.tabWidget.addTab(dac_widget, '&DAC')
-        # self.tabWidget.addTab(dac_widget, '&ADC')
+        self.tabWidget.addTab(adc_widget, '&ADC')
 
         # put it all together
         layout.addWidget(self.tabWidget)
