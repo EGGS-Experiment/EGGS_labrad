@@ -76,8 +76,12 @@ class RGA_client(RGA_gui):
         # ionizer
         ee_val = yield self.rga.ionizer_electron_energy()
         ie_val = yield self.rga.ionizer_ion_energy()
+        fl_val = yield self.rga.ionizer_emission_current()
+        vf_val = yield self.rga.ionizer_focus_voltage()
         self.gui.ionizer_ee.setValue(ee_val)
         self.gui.ionizer_ie.setCurrentIndex(ie_val)
+        self.gui.ionizer_fl.setValue(fl_val)
+        self.gui.ionizer_vf.setValue(vf_val)
         # detector
         hv_val = yield self.rga.detector_cdem_voltage()
         nf_val = yield self.rga.detector_noise_floor()
