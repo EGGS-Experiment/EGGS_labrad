@@ -1,7 +1,7 @@
 class AndorConfig(object):
     '''
     path to atmcd64d.dll SDK library
-   thkim
+    thkim
     '''
     #default parameters
     path_to_dll = ('C:\\Program Files\\Andor SOLIS\\atmcd64d_legacy.dll')
