@@ -1,11 +1,7 @@
-import os
-import sys
-
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QComboBox, QLabel, QGridLayout, QFrame, QSizePolicy
 
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton
@@ -13,7 +9,7 @@ from EGGS_labrad.lib.servers.ARTIQ.device_db import device_db
 
 class ADC_channel(QFrame):
     """
-    GUI for a single TTL channel.
+    GUI for a single ADC channel.
     """
 
     def __init__(self, name=None, parent=None):
@@ -31,30 +27,32 @@ class ADC_channel(QFrame):
         title.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         title.setAlignment(QtCore.Qt.AlignCenter)
         title.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
-        # buttons
-        self.toggle = TextChangingButton(("ON", "OFF"))
-        self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
-        self.lockswitch.setFont(QFont('MS Shell Dlg 2', pointSize=8))
-        self.lockswitch.setChecked(True)
+        # display
+        self.display_label = QLabel('Output (V)')
+        self.display = QLabel('Volts')
+        self.display.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        self.display.setStyleSheet('color: blue')
+        # gain
+        self.gain_title = QLabel('Gain')
+        self.gain = QComboBox()
+        self.gain.addItem('1')
+        self.gain.addItem('10')
+        self.gain.addItem('100')
+        self.gain.addItem('1000')
         # set layout
         layout.addWidget(title, 0, 0, 1, 2)
-        layout.addWidget(self.toggle, 1, 0, 1, 1)
-        layout.addWidget(self.lockswitch, 1, 1, 1, 1)
+        layout.addWidget(self.display_label, 1, 0)
+        layout.addWidget(self.display, 2, 0)
+        layout.addWidget(self.gain_title, 3, 0)
+        layout.addWidget(self.gain, 4, 0)
         self.setLayout(layout)
 
-        #connect signal to slot
-        self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
-    @inlineCallbacks
-    def lock(self, status):
-        yield self.toggle.setEnabled(status)
-
-
-class TTL_client(QWidget):
+class ADC_client(QWidget):
     """
-    Client for all TTL channels.
+    Client for all ADC channels.
     """
-    name = "ARTIQ TTL Client"
+    name = "ARTIQ ADC Client"
     row_length = 10
 
     TTLID = 888999

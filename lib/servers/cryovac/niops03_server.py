@@ -206,24 +206,28 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
 
 
     # INTERLOCK
-    @setting(311, 'IP Interlock', status='b', press='v', returns='')
-    def interlock_ip(self, c, status, press):
+    @setting(311, 'Interlock', status='b', press='v', returns='(bv)')
+    def interlock(self, c, status, press):
         """
         Activates an interlock, switching off the ion pump
-        if pressure exceeds a given value.
+        and getter if pressure exceeds a given value.
         Pressure is taken from the Twistorr74 turbo pump server.
         Arguments:
+            status  (bool)  : the interlock status
             press   (float) : the maximum pressure in mbar
         """
         # create connection to twistorr pump as needed
-        try:
-            self.tt = yield self.client.twistorr74_server
-        except KeyError:
-            self.tt = None
-            raise Exception('Twistorr74 server not available for interlock.')
+        if status:
+            try:
+                self.tt = yield self.client.twistorr74_server
+            except KeyError:
+                self.tt = None
+                self.interlock_active = False
+                raise Exception('Twistorr74 server not available for interlock.')
         # set interlock parameters
         self.interlock_active = status
         self.interlock_pressure = press
+        return (self.interlock_active, self.interlock_pressure)
 
 
     # POLLING
@@ -256,6 +260,8 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
             if press_tmp >= self.interlock_pressure:
                 print('problem')
                 # yield self.ser.write('B' + TERMINATOR)
+                # yield self.ser.read_line()
+                # yield self.ser.write('BN' + TERMINATOR)
                 # yield self.ser.read_line()
 
 

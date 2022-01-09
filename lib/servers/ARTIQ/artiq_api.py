@@ -33,6 +33,7 @@ class ARTIQ_api(object):
         self.dds_list = {}
         self.urukul_list = {}
         self.dac = None
+        self.sampler = None
 
         # assign names and devices
         for name, params in self.device_db.items():

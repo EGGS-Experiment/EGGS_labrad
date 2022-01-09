@@ -170,7 +170,8 @@ class ARTIQ_Server(LabradServer):
         Stops any currently running sequence.
         """
         # check that an experiment is currently running
-        if self.ps_rid not in self.scheduler.get_status().keys(): raise Exception('Error: no experiment currently running')
+        if self.ps_rid not in self.scheduler.get_status().keys():
+            raise Exception('Error: no experiment currently running')
         yield self.inCommunication.acquire()
         yield deferToThread(self.scheduler.delete, self.ps_rid)
         self.ps_rid = None
