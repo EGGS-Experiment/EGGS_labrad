@@ -168,8 +168,7 @@ class DDS_client(QWidget):
             channel_gui.freq.valueChanged.connect(lambda freq, chan=channel_name: self.setFrequency(chan, freq))
             channel_gui.ampl.valueChanged.connect(lambda ampl, chan=channel_name: self.setAmplitude(chan, ampl))
             channel_gui.att.valueChanged.connect(lambda att, chan=channel_name: self.setAttenuation(chan, att))
-            #todo: fix
-            channel_gui.rfswitch.toggled.connect(lambda status, chan=channel_name: self.toggleSwitch())
+            channel_gui.rfswitch.toggled.connect(lambda status, chan=channel_name: self.toggleSwitch(chan, status))
             # add widget to client list and layout
             self.ad9910_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
