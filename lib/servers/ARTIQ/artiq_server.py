@@ -19,7 +19,7 @@ timeout = 20
 # labrad imports
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.threads import deferToThread
-from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue, Deferred
+from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
 
 # artiq imports
 from artiq_api import ARTIQ_api
@@ -34,6 +34,7 @@ from artiq.coredevice.comm_moninj import CommMonInj, TTLProbe, TTLOverride
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
                                     AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
                                     AD53XX_READ_AB0, AD53XX_READ_AB1, AD53XX_READ_AB2, AD53XX_READ_AB3
+from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_POW, _AD9910_REG_ASF
 
 AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53XX_READ_OFFSET,
                     'GAIN': AD53XX_READ_GAIN, 'OFS0': AD53XX_READ_OFS1, 'OFS1': AD53XX_READ_OFS1,
@@ -211,7 +212,11 @@ class ARTIQ_Server(LabradServer):
     # DDS
     @setting(311, "DDS Get", returns='*s')
     def getDDS(self, c):
-        """get the list of available channels"""
+        """
+        Get the list of available DDS (AD5372) channels.
+        Returns:
+            (*str)  : the list of dds names
+        """
         dds_list = yield self.api.dds_list.keys()
         returnValue(list(dds_list))
 
@@ -219,6 +224,8 @@ class ARTIQ_Server(LabradServer):
     def initializeDDS(self, c, dds_name):
         """
         Resets/initializes the DDSs.
+        Arguments:
+            dds_name    (str)   : the name of the dds
         """
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
@@ -271,22 +278,25 @@ class ARTIQ_Server(LabradServer):
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
         #todo: check input
+        #todo: sort out units
         att_mu = att
         yield self.api.setDDSAtt(dds_name, att_mu)
 
-    @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns='i')
+    @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns='w')
     def readDDS(self, c, dds_name, addr, length):
         """
         Read the value of a DDS register.
         Arguments:
-            dds_name (str)  : the name of the dds
-            addr     (float): the address to read from
-            length (int)    : how many bits to read
+            dds_name    (str)   : the name of the dds
+            addr        (int)   : the address to read from
+            length      (int)   : how many bits to read
+        Returns:
+            (word)  : the register value
         """
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
-        elif length not in (16, 32, 64):
-            raise Exception('Error: invalid read length. Must be one of [16, 32, 64].')
+        elif length not in (16, 32):
+            raise Exception('Error: invalid read length. Must be one of (16, 32).')
         reg_val = yield self.api.readDDS(dds_name, addr, length)
         returnValue(reg_val)
 
@@ -385,7 +395,7 @@ class ARTIQ_Server(LabradServer):
         """
         Read the value of a DAC register.
         Arguments:
-            dac_num (str)   : the dac channel number
+            dac_num (int)   : the dac channel number
             param   (float) : the register to read from
         """
         if (dac_num > 31) or (dac_num < 0):

@@ -5,6 +5,8 @@ from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager, DatasetManager
 #from artiq.master.worker_impl import CCB, Scheduler
 
+import numpy as np
+
 
 class ARTIQ_api(object):
     """
@@ -158,7 +160,7 @@ class ARTIQ_api(object):
     @kernel
     def _initializeDDS(self, dev):
         self.core.reset()
-        self.dev.init()
+        dev.init()
 
     def toggleDDS(self, dds_name, state):
         """
@@ -216,17 +218,27 @@ class ARTIQ_api(object):
         Read the value of a DDS register.
         """
         dev = self.dds_list[dds_name]
-        return self._readDDS(dev, reg, length)
+        if length == 16:
+            return self._readDDS16(dev, reg)
+        elif length == 32:
+            return self._readDDS32(dev, reg)
+        elif length == 64:
+            return self._readDDS64(dev, reg)
 
     @kernel
-    def _readDDS(self, dev, reg, length):
+    def _readDDS16(self, dev, reg):
         self.core.reset()
-        if length == 16:
-            return dev.read16(reg)
-        elif length == 32:
-            return dev.read32(reg)
-        elif length == 64:
-            return dev.read64(reg)
+        return dev.read16(reg)
+
+    @kernel
+    def _readDDS32(self, dev, reg):
+        self.core.reset()
+        return dev.read32(reg)
+
+    @kernel
+    def _readDDS64(self, dev, reg):
+        self.core.reset()
+        return dev.read64(reg)
 
 
     # DAC
