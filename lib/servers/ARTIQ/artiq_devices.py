@@ -15,7 +15,7 @@ class Devices(object):
 
         # assign names and devices
         for name, params in self.device_db.items():
-            #only get devices with named class
+            # only get devices with named class
             if 'class' not in params:
                 continue
             # set device as attribute
