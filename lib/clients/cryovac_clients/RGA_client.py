@@ -65,38 +65,41 @@ class RGA_client(RGA_gui):
         """
         Get startup data from servers and show on GUI.
         """
+        try:
         # lock while starting up
-        self.setEnabled(False)
-        self.buffer_readout.appendPlainText('Initializing client...')
-        # lockswitches
-        self.gui.general_lockswitch.setChecked(True)
-        self.gui.ionizer_lockswitch.setChecked(True)
-        self.gui.detector_lockswitch.setChecked(True)
-        self.gui.scan_lockswitch.setChecked(True)
-        # ionizer
-        ee_val = yield self.rga.ionizer_electron_energy()
-        ie_val = yield self.rga.ionizer_ion_energy()
-        fl_val = yield self.rga.ionizer_emission_current()
-        vf_val = yield self.rga.ionizer_focus_voltage()
-        self.gui.ionizer_ee.setValue(ee_val)
-        self.gui.ionizer_ie.setCurrentIndex(ie_val)
-        self.gui.ionizer_fl.setValue(fl_val)
-        self.gui.ionizer_vf.setValue(vf_val)
-        # detector
-        hv_val = yield self.rga.detector_cdem_voltage()
-        nf_val = yield self.rga.detector_noise_floor()
-        self.gui.detector_hv.setValue(hv_val)
-        self.gui.detector_nf.setCurrentIndex(nf_val)
-        # scan
-        mi_val = yield self.rga.scan_mass_initial()
-        mf_val = yield self.rga.scan_mass_final()
-        sa_val = yield self.rga.scan_mass_steps()
-        self.gui.scan_mi.setValue(mi_val)
-        self.gui.scan_mf.setValue(mf_val)
-        self.gui.scan_sa.setValue(sa_val)
-        # unlock after startup
-        self.setEnabled(True)
-        self.buffer_readout.appendPlainText('Initialized.')
+            self.setEnabled(False)
+            self.buffer_readout.appendPlainText('Initializing client...')
+            # lockswitches
+            self.gui.general_lockswitch.setChecked(True)
+            self.gui.ionizer_lockswitch.setChecked(True)
+            self.gui.detector_lockswitch.setChecked(True)
+            self.gui.scan_lockswitch.setChecked(True)
+            # ionizer
+            ee_val = yield self.rga.ionizer_electron_energy()
+            ie_val = yield self.rga.ionizer_ion_energy()
+            fl_val = yield self.rga.ionizer_emission_current()
+            vf_val = yield self.rga.ionizer_focus_voltage()
+            self.gui.ionizer_ee.setValue(ee_val)
+            self.gui.ionizer_ie.setCurrentIndex(ie_val)
+            self.gui.ionizer_fl.setValue(fl_val)
+            self.gui.ionizer_vf.setValue(vf_val)
+            # detector
+            hv_val = yield self.rga.detector_cdem_voltage()
+            nf_val = yield self.rga.detector_noise_floor()
+            self.gui.detector_hv.setValue(hv_val)
+            self.gui.detector_nf.setCurrentIndex(nf_val)
+            # scan
+            mi_val = yield self.rga.scan_mass_initial()
+            mf_val = yield self.rga.scan_mass_final()
+            sa_val = yield self.rga.scan_mass_steps()
+            self.gui.scan_mi.setValue(mi_val)
+            self.gui.scan_mf.setValue(mf_val)
+            self.gui.scan_sa.setValue(sa_val)
+            # unlock after startup
+            self.setEnabled(True)
+            self.buffer_readout.appendPlainText('Initialized.')
+        except Exception as e:
+            self.buffer_readout.appendPlainText('Initialization failed.')
         return cxn
 
     def initializeGUI(self, cxn):

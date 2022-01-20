@@ -9,12 +9,8 @@ class RGA_gui(QFrame):
     def setupUi(self):
         RGA_gui = self
         RGA_gui.setObjectName("RGA_gui")
-        RGA_gui.resize(650, 445)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(RGA_gui.sizePolicy().hasHeightForWidth())
-        RGA_gui.setSizePolicy(sizePolicy)
+        RGA_gui.setFixedSize(650, 445)
+        RGA_gui.setFrameStyle(0x0001 | 0x0030)
         self.RGA_label = QtWidgets.QLabel(RGA_gui)
         self.RGA_label.setGeometry(QtCore.QRect(220, 10, 181, 31))
         font = QtGui.QFont()
