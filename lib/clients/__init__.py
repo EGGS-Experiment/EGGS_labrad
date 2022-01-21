@@ -1,29 +1,34 @@
 """
-Contains stuff useful for LabRAD clients
+Contains stuff useful for LabRAD clients.
 """
 
-#imports
-import sys
+__all__ = ["runGUI", "runClient", "GUIClient", "RecordingClient", "connection"]
 
+from EGGS_labrad.lib.clients.client import GUIClient, RecordingClient
+from EGGS_labrad.lib.clients.connection import connection
+
+
+
+# imports
+import sys
 from PyQt5.QtWidgets import QApplication
 
-__all__ = ["runGUI", "runClient"]
 
-#run functions
+# run functions
 def runGUI(client, **kwargs):
     """
     Runs a LabRAD GUI file written using PyQt5
     """
-    #widgets require a QApplication to run
+    # widgets require a QApplication to run
     app = QApplication(sys.argv)
-    #instantiate gui
+    # instantiate gui
     gui = client(**kwargs)
-    #set up UI if needed
+    # set up UI if needed
     try:
         gui.setupUi()
     except Exception as e:
         print('No need to setup UI')
-    #run GUI file
+    # run GUI file
     gui.show()
     sys.exit(app.exec())
 
@@ -31,28 +36,26 @@ def runClient(client, **kwargs):
     """
     Runs a LabRAD client written using PyQt5
     """
-    #widgets require a QApplication to run
+    # widgets require a QApplication to run
     app = QApplication([])
-    #reactor may already be installed
+    # reactor may already be installed
     try:
         import qt5reactor
         qt5reactor.install()
     except Exception as e:
         print(e)
-    #instantiate client with a reactor
+    # instantiate client with a reactor
     from twisted.internet import reactor
     client = client(reactor, **kwargs)
-    #show client
+    # show client
     if hasattr(client, 'show'):
         client.show()
-    elif hasattr(client, 'gui'):
-        if hasattr(client.gui, 'show'):
-            client.gui.show()
-    #start reactor
+    elif hasattr(client, 'gui') and hasattr(client.gui, 'show'):
+        client.gui.show()
+    # start reactor
     reactor.run()
-    #run on exit
+    # close client on exit
     try:
         client.close()
-    except:
+    except Exception as e:
         sys.exit(app.exec())
-

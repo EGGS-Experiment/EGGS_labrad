@@ -1,16 +1,13 @@
 """
-Base class for building PyQt5 GUI clients for LabRAD
+Base class for building PyQt5 GUI clients for LabRAD.
 """
 
-#imports
-import time
-import datetime as datetime
-
+# imports
+from datetime import datetime
 from PyQt5.QtWidgets import QWidget
-
 from twisted.internet.defer import inlineCallbacks
 
-__all__ = ["GUIClient"]
+__all__ = ["GUIClient", "RecordingClient"]
 
 
 class GUIClient(object):
@@ -19,17 +16,27 @@ class GUIClient(object):
     """
 
     name = None
+    servers = []
 
-    def __init__(self, reactor, gui=None, cxn=None, parent=None):
+    def __init__(self, GUI, reactor, cxn=None, parent=None):
+        # set parent to GUI file
+        self.__class__ = type(self.__class__.__name__, (GUI, object), dict(self.__class__.__dict__))
+        super(self.__class__, self).__init__()
+        # todo: are below and above same?
         super().__init__()
+
+        # set client variables
         self.reactor = reactor
         self.cxn = cxn
-        self.gui = gui()
-        self.servers = []
+        self.gui = self #todo: should this be parent
+        self.parent = parent
+
         # initialization sequence
         d = self._connectLabrad()
         d.addCallback(self.initClient)
+        d.addCallback(self.initData)
         d.addCallback(self.initializeGUI)
+
 
     # SETUP
     @inlineCallbacks
@@ -54,36 +61,11 @@ class GUIClient(object):
             print(e)
             raise
 
-        # set recording stuff
-        self.c_record = self.cxn.context()
-        self.recording = False
-
         # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
         yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
-
-        return self.cxn
-
-    def initClient(self, cxn):
-        """
-        To be subclassed.
-        Called after _connectLabrad.
-        Should be used to get necessary servers,
-        setup listeners, do polling, and other labrad stuff.
-        WARNING: cxn must be an argument and returned to enforce execution order.
-        """
-        return self.cxn
-
-    def initializeGUI(self, cxn):
-        """
-        To be subclassed.
-        Called after initClient.
-        Should be used to connect GUI signals to slots
-        and set up initial data.
-        WARNING: cxn must be an argument and returned to enforce execution order.
-        """
         return self.cxn
 
 
@@ -92,6 +74,7 @@ class GUIClient(object):
         server_name = message[1]
         if server_name in self.servers:
             print(server_name + ' reconnected, enabling widget.')
+            self.initData()
             self.setEnabled(True)
 
     def on_disconnect(self, c, message):
@@ -101,33 +84,37 @@ class GUIClient(object):
             self.setEnabled(False)
 
 
-    # OTHER
-    @inlineCallbacks
-    def record(self, status, *args, **kwargs):
+    # SUBCLASSED FUNCTIONS
+    def initClient(self, cxn):
         """
-        Creates a new dataset to record data
-        and sets recording status.
+        To be subclassed.
+        Called after _connectLabrad.
+        Should be used to get necessary servers, setup listeners,
+        do polling, and other labrad stuff.
+        WARNING: cxn must be an argument and returned to enforce execution order.
         """
-        self.recording = status
-        if self.recording:
-            self.starttime = time.time()
-            date = datetime.datetime.now()
-            year = str(date.year)
-            month = '%02d' % date.month  # Padded with a zero if one digit
-            day = '%02d' % date.day  # Padded with a zero if one digit
-            hour = '%02d' % date.hour  # Padded with a zero if one digit
-            minute = '%02d' % date.minute  # Padded with a zero if one digit
+        return self.cxn
 
-            trunk1 = year + '_' + month + '_' + day
-            trunk2 = self.name + '_' + hour + ':' + minute
-            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
-            yield self.dv.new(self.name, [('Elapsed time', 't')],
-                              [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_record)
-            # todo: fix
+    def initData(self, cxn):
+        """
+        To be subclassed.
+        Called after initClient and upon server reconnections.
+        Should be used to get initial state variables from servers.
+        WARNING: cxn must be an argument and returned to enforce execution order.
+        """
+        return self.cxn
 
-    # todo: run close at end
-    def close(self):
-        print('close file')
+    def initializeGUI(self, cxn):
+        """
+        To be subclassed.
+        Called after initData.
+        Should be used to connect GUI signals to slots and initialize the GUI.
+        WARNING: cxn must be an argument and returned to enforce execution order.
+        """
+        return self.cxn
+
+    # EXIT
+    def closeEvent(self, event):
         self.cxn.disconnect()
         if self.reactor.running:
             self.reactor.stop()
@@ -137,3 +124,37 @@ class GUIClient(object):
         self.cxn.disconnect()
         if self.reactor.running:
             self.reactor.stop()
+
+
+
+class RecordingClient(GUIClient):
+    """
+    Supports client data taking.
+    """
+
+    def __init__(self, reactor, cxn=None, parent=None):
+        super().__init__()
+        # set recording variables
+        self.c_record = self.cxn.context()
+        self.recording = False
+
+    def _createDatasetTitle(self, *args, **kwargs):
+        # set up datavault
+        date = datetime.now()
+        year = str(date.year)
+        month = '{:02d}'.format(date.month)
+
+        trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
+        trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
+        return ['', year, month, trunk1, trunk2]
+
+    #todo: data vault function?
+
+
+    # SUBCLASSED FUNCTIONS
+    def record(self, *args, **kwargs):
+        """
+        Creates a new dataset to record data
+        and sets recording status.
+        """
+        pass
