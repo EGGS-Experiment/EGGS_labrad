@@ -2,15 +2,15 @@
 
 @ECHO OFF
 
-::Setup
+REM: Setup
 SET "filename=labart_%COMPUTERNAME%.yml"
 CALL activate labart
 CD "%LABRAD_ROOT%\env"
 
-::Create .yml file
+REM: Create .yml file
 CALL conda env export --name labart > %filename%
 
-::Push .yml file to main
+REM: Push .yml file to main
 CALL git add %filename%
 CALL git commit -m "updated labart environment yml file"
 CALL git push origin main
