@@ -3,14 +3,17 @@
 import labrad
 cxn = labrad.connect()
 
-rf=cxn.rf_server
+# Cryovac
 ni=cxn.niops03_server
 tt=cxn.twistorr74_server
 ls=cxn.lakeshore336_server
-sls=cxn.sls_server
-# aq=cxn.artiq_server
+rga=cxn.rga_server
 
-sls.polling(False)
-ls.polling(False)
-ni.polling(False)
-tt.polling(False)
+# Trap
+rf=cxn.rf_server
+
+# Lasers
+sls=cxn.sls_server
+
+# ARTIQ
+# aq=cxn.artiq_server

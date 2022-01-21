@@ -160,8 +160,9 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         # parse
         resp = yield self._parse(resp)
         resp = float(resp)
+        print(resp)
         # send signal and return value
-        self.power_update(resp)
+        self.energy_update(resp)
         returnValue(resp)
 
     @setting(213, 'Read RPM', returns='v')

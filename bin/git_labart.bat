@@ -1,11 +1,11 @@
-@ECHO OFF
-
 ::Saves labart environment package list as yml file and pushes it to main repository
+
+@ECHO OFF
 
 ::Setup
 SET "filename=labart_%COMPUTERNAME%.yml"
 CALL activate labart
-CD "%HOME%\Code\EGGS_labrad\env"
+CD "%LABRAD_ROOT%\env"
 
 ::Create .yml file
 CALL conda env export --name labart > %filename%

@@ -1,6 +1,6 @@
 import os
 import time
-import datetime as datetime
+from datetime import datetime
 
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
@@ -85,7 +85,7 @@ class twistorr74_client(twistorr74_gui):
         power_tmp = yield self.tt.toggle()
         self.gui.twistorr_power.setChecked(power_tmp)
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def initializeGUI(self, cxn):
         """
         Connect signals to slots and other initializations.
@@ -136,7 +136,7 @@ class twistorr74_client(twistorr74_gui):
         """
         Updates GUI when other clients have made changes to the device.
         """
-        self.gui.twistorr_power.setChecked(power)
+        self.gui.twistorr_power.setChecked(int(power))
 
 
     # SLOTS
