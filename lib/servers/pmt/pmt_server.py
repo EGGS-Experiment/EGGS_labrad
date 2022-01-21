@@ -101,6 +101,7 @@ class PMTServer(LabradServer):
         # create message
         pass
 
+#todo: reset time?
 
 if __name__ == '__main__':
     from labrad import util
