@@ -141,8 +141,9 @@ class ARTIQ_Server(LabradServer):
         """
         Returns a list of ARTIQ devices.
         """
-        self.ttlChanged(('ttl99', 0, True))
+        self.ttlChanged(('ttl99', 0, True)) # todo: what? why is this here
         return list(self.device_db.keys())
+        #todo: somehow send class device, send as array of tuple
 
     # PULSE SEQUENCING
     @setting(111, "Run Experiment", path='s', maxruns='i', returns='')

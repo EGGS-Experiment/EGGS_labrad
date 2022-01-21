@@ -35,20 +35,23 @@ class PMTServer(LabradServer):
     pressure_update = Signal(999999, 'signal: pressure update', '(ii)')
     temperature_update = Signal(999998, 'signal: temperature update', '(iiii)')
 
-    def __init__(self):
-        super(PMTServer, self).__init__()
+    def initServer(self):
+        # declare PMT variables
         self.exp_file = "%LABRAD_ROOT%\\lib\\servers\\pmt\\pmt_server.py"
         self.ttl_number = None
         self.trigger_ttl_number = None
-        #todo: get list of ttlinout
-        self.available_ttls = {}
         self.bin_time_us = 10
         self.reset_time_us = 10
         self.length_us = 1000
         self.edge_type = 'rising'
         self.dma_handle = None
+        # connect to artiq server and get available TTLs
+        self.artiq = self.client.artiq_server
+        artiq_devices = self.artiq.get_devices()
+        self.available_ttls = []
+        # todo: need to look at device classes
 
-
+#todo: need to connect datavault and move artiq data to labrad
     # HARDWARE
     @setting(11, 'Status', returns='*s')
     def status(self, c):
