@@ -6,7 +6,7 @@ from artiq.master.worker_db import DeviceManager, DatasetManager
 #from artiq.master.worker_impl import CCB, Scheduler
 
 import numpy as np
-
+#todo: allow exp submission
 
 class ARTIQ_api(object):
     """

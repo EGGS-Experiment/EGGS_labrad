@@ -18,7 +18,6 @@ class PMT_experiment(EnvExperiment):
         self.setattr_argument('bin_time_us', NumberValue(default=10, ndecimals=0, step=1, min=1, max=100))
         self.setattr_argument('reset_time_us', NumberValue(default=10, ndecimals=0, step=1, min=1, max=100))
         self.setattr_argument('length_us', NumberValue(default=1000, ndecimals=0, step=1, min=1, max=10000))
-        self.setattr_argument('device_name', StringValue())
         self.setattr_argument('edge_method', StringValue(default='rising'))
 
     def prepare(self):
@@ -70,3 +69,4 @@ class PMT_experiment(EnvExperiment):
         # get playback handle
         handle = self.core_dma.get_handle("PMT_exp")
         #todo: test
+        #todo: return dma handle

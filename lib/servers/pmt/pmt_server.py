@@ -35,8 +35,21 @@ class PMTServer(LabradServer):
     pressure_update = Signal(999999, 'signal: pressure update', '(ii)')
     temperature_update = Signal(999998, 'signal: temperature update', '(iiii)')
 
+    def __init__(self):
+        super(PMTServer, self).__init__()
+        self.exp_file = "%LABRAD_ROOT%\\lib\\servers\\pmt\\pmt_server.py"
+        self.ttl_number = None
+        self.trigger_ttl_number = None
+        #todo: get list of ttlinout
+        self.available_ttls = {}
+        self.bin_time_us = 10
+        self.reset_time_us = 10
+        self.length_us = 1000
+        self.edge_type = 'rising'
+        self.dma_handle = None
 
-    # STATUS
+
+    # HARDWARE
     @setting(11, 'Status', returns='*s')
     def status(self, c):
         """
@@ -44,64 +57,123 @@ class PMTServer(LabradServer):
         """
         # create message
         cmd_msg = b'STA'
+        #todo
 
-    @setting(12, 'Toggle', status='b', returns='b')
-    def toggle(self, c, status=None):
+    @setting(21, 'TTL Select', status='i', returns='s')
+    def ttlSelect(self, c, chan_num=None):
         """
-        Toggle the PMT.
+        Select the TTL channel.
         Arguments:
-            status  (bool)  : the power status of the PMT
+            chan_num    (bool)  : the TTL channel number for PMT input
         Returns:
-                    (bool)  : the power status of the PMT
+                        (bool)  : the TTL channel number for PMT input
         """
-        # create message
-        cmd_msg = b'STA'
+        if chan_num in self.available_ttls:
+            self.ttl_number = chan_num
+        else:
+            raise Exception('Error: invalid TTL channel.')
+        return 'ttl_' + str(self.ttl_number)
 
 
     # GATING
-    # todo: bin setting
-    # todo: gate setting
-    # todo: rising, falling, or both
-    @setting(211, 'Gate Time', time_ms='v', returns='v')
-    def gateTime(self, c, time_ms=None):
+    @setting(211, 'Gating Time', time_us='i', returns='i')
+    def gateTime(self, c, time_us=None):
         """
         Set the gate time.
         Arguments:
-            time_ms (int)   : the gate time in ms
+            time_us (int)   : the gate time in us
         Returns:
-                    (int)   : the gate time in ms
+                    (int)   : the gate time in us
         """
-        # create message
-        pass
+        if (time_us > 1) and (time_us < 1000):
+            self.bin_time_us = time_us
+        else:
+            raise Exception('Error: invalid delay time. Must be in [1us, 1ms].')
+        return self.bin_time_us
+
+    @setting(212, 'Gating Delay', time_us='i', returns='i')
+    def gateDelay(self, c, time_us=None):
+        """
+        Set the delay time between bins.
+        Arguments:
+            time_us (int)   : the delay time between bins in us
+        Returns:
+                    (int)   : the delay time between bins in us
+        """
+        if (time_us > 1) and (time_us < 1000):
+            self.reset_time_us = time_us
+        else:
+            raise Exception('Error: invalid delay time. Must be in [1us, 1ms].')
+        return self.reset_time_us
+
+    @setting(221, 'Gating Edge', edge_type='s', returns='s')
+    def gateEdge(self, c, edge_type=None):
+        """
+        Set the edge detection for each count.
+        Arguments:
+            edge_type   (str)   : the edge detection type. Must be one of ('rising', 'falling', 'both').
+        Returns:
+                        (str)   : the edge detection type
+        """
+        if edge_type.lower() in ('rising', 'falling', 'both'):
+            self.edge_type = edge_type
+        else:
+            raise Exception('Error: invalid edge type. Must be one of (rising, falling, both).')
+        return self.edge_type
 
 
     # ACQUISITION
-    # todo: set recording loc/filename
+    # todo: save dataset/return to wherever
+    # todo: save to datavault
     # todo: trigger
     # todo: fixed record length
-    @setting(311, 'Acquire', returns='v')
-    def acquire(self, c):
+    @setting(311, 'DMA Program', returns='')
+    def dmaProgram(self, c):
         """
-        Start the PMT run.
-        Arguments:
-        Returns:
+        Program the PMT sequence onto Kasli.
         """
-        # create message
+        # todo
         pass
 
-    @setting(311, 'Correction', status='b', returns='b')
-    def acquire(self, c, status=None):
+    @setting(312, 'Linetrigger', status='b', chan_num='i', returns='(bi)')
+    def dmaProgram(self, c, status=None, chan_num=None):
         """
-        Start/stop correction mode.
+        Configure the line trigger.
         Arguments:
-            status  (bool)  : whether to stop or start correction mode.
-        Returns:
-            status  (bool)  : whether to stop or start correction mode.
+            status      (bool)  : whether the linetrigger is active
+            chan_num    (int)   : the input TTL channel for the linetrigger
+        Return:
+                        (bi)    : tuple of (status, chan_num)
         """
-        # create message
+        if chan_num in self.available_ttls:
+            self.trigger_ttl_number = chan_num
+        elif chan_num is not None:
+            raise Exception('Error: invalid TTL.')
+        if status is not None:
+            self.trigger_active = status
+        return (self.trigger_active, self.trigger_ttl_number)
+
+    @setting(321, 'Start', record_length_us='i', returns='s')
+    def start(self, c, record_length_us=None):
+        """
+        Start acquisition.
+        Arguments:
+            record_length_us    (bool)  : the length of time to record in us
+        Returns:
+                                (*str)  : experiment run parameters.
+        """
+        # todo: tell artiq to start
+        # todo: check if handle exists
         pass
 
-#todo: reset time?
+    @setting(322, 'Stop', returns='')
+    def stop(self, c, status=None):
+        """
+        Stop acquisition.
+        """
+        #todo: look if DMA running
+        pass
+
 
 if __name__ == '__main__':
     from labrad import util
