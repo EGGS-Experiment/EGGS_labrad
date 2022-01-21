@@ -20,7 +20,7 @@ from labrad.units import WithUnit
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from EGGS_labrad.lib.servers.artiq_server import ARTIQServer
+from EGGS_labrad.lib.servers.server_classes import ARTIQServer
 
 
 class PMTServer(LabradServer):

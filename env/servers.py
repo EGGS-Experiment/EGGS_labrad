@@ -24,5 +24,5 @@ from labrad.gpib import GPIBDeviceWrapper, GPIBManagedServer, ManagedDeviceServe
 __all__.extend(["DeviceWrapper", "ManagedDeviceServer", "GPIBDeviceWrapper", "GPIBManagedServer"])
 
     #convenience servers
-from EGGS_labrad.lib.servers.polling_server import PollingServer
+from EGGS_labrad.lib.servers.server_classes import PollingServer
 __all__.append('PollingServer')

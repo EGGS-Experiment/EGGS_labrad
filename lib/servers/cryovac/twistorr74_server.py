@@ -19,7 +19,7 @@ from labrad.types import Value
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from EGGS_labrad.lib.servers.polling_server import PollingServer
+from EGGS_labrad.lib.servers.server_classes import PollingServer
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
 
 _TT74_STX_msg = b'\x02'

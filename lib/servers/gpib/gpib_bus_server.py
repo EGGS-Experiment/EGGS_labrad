@@ -51,7 +51,7 @@ import pyvisa as visa
 from labrad.units import WithUnit
 from labrad.server import setting
 from labrad.errors import DeviceNotSelectedError
-from EGGS_labrad.lib.servers.polling_server import PollingServer
+from EGGS_labrad.lib.servers.server_classes import PollingServer
 
 KNOWN_DEVICE_TYPES = ('GPIB', 'TCPIP', 'USB')
 
