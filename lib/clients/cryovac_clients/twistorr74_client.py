@@ -1,11 +1,8 @@
-import os
-import time
 from datetime import datetime
-
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.cryovac_clients.twistorr74_gui import twistorr74_gui
+
 
 class twistorr74_client(twistorr74_gui):
 
