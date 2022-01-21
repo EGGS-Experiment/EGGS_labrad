@@ -1,9 +1,42 @@
 ::Starts all components necessary for running ARTIQ
 
 @ECHO OFF
+SETLOCAL EnableDelayedExpansion
 
-REM: todo: make accept device_db loc as arg
-REM: todo: make accept ip address
-start "ARTIQ Master" /min cmd "/k activate labart2 && artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ARTIQ_ROOT%/device_db_2.py --bind=192.168.1.28"
-start "ARTIQ Dashboard" /min cmd "/k activate labart2 && artiq_dashboard"
-start "ARTIQ Controller Manager" /min cmd "/k activate labart2 && artiq_ctlmgr"
+REM: Enter LabRAD/ARTIQ environment
+CALL conda activate labart2
+
+REM: Parse arguments
+SET /a argCount=1
+SET /a ddb_ind=0
+SET /a ip_ind=0
+
+FOR %%x IN (%*) DO (
+    SET /a argCount+= 1
+    IF "%%x"=="-ddb" (SET /a ddb_ind=!argCount!)
+    IF "%%x"=="-ip" (SET /a ip_ind=!argCount!)
+)
+
+REM: Set arguments
+SET "ddb_name="
+SET "ip_addr="
+
+IF NOT %ddb_ind%==0 (CALL SET ddb_name=%ARTIQ_ROOT%\%%%ddb_ind%%
+) ELSE (CALL SET ddb_name=%ARTIQ_ROOT%\device_db.py)
+
+IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
+) ELSE (CALL SET ip_addr=192.168.1.28)
+
+
+REM: Start ARTIQ
+START "ARTIQ Master" CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ddb_name% --bind=%ip_addr%"
+START "ARTIQ Dashboard" /min CMD "/c artiq_dashboard"
+START "ARTIQ Controller Manager" /min CMD "/k artiq_ctlmgr"
+
+
+REM Unset variables
+SET "argCount="
+SET "ddb_ind="
+SET "ip_ind="
+SET "ddb_name="
+SET "ip_addr="
