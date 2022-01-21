@@ -3,14 +3,14 @@ from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.cryovac_clients.twistorr74_gui import twistorr74_gui
 
-
+#todo: update all power and toggle
 class twistorr74_client(twistorr74_gui):
 
     name = 'Twistorr74 Client'
 
     PRESSUREID = 694321
     ENERGYID = 694322
-    RPMID = 694323
+    SPEEDID = 694323
     POWERID = 694324
 
     def __init__(self, reactor, cxn=None, parent=None):
@@ -56,8 +56,8 @@ class twistorr74_client(twistorr74_gui):
         yield self.tt.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
         yield self.tt.signal__energy_update(self.ENERGYID)
         yield self.tt.addListener(listener=self.updateEnergy, source=None, ID=self.ENERGYID)
-        yield self.tt.signal__rpm_update(self.RPMID)
-        yield self.tt.addListener(listener=self.updateRPM, source=None, ID=self.RPMID)
+        yield self.tt.signal__speed_update(self.SPEEDID)
+        yield self.tt.addListener(listener=self.updateSpeed, source=None, ID=self.SPEEDID)
         yield self.tt.signal__power_update(self.POWERID)
         yield self.tt.addListener(listener=self.updatePower, source=None, ID=self.POWERID)
             # server connections
@@ -123,11 +123,11 @@ class twistorr74_client(twistorr74_gui):
         """
         self.gui.power_display.setText(str(energy))
 
-    def updateRPM(self, c, rpm):
+    def updateSpeed(self, c, speed):
         """
         Updates GUI when values are received from server.
         """
-        self.gui.rpm_display.setText(str(rpm))
+        self.gui.speed_display.setText(str(speed))
 
     def updatePower(self, c, power):
         """
@@ -160,7 +160,7 @@ class twistorr74_client(twistorr74_gui):
     #@inlineCallbacks
     def toggle_twistorr(self, status):
         """
-        Sets pump power on or off.
+        Toggles pump on or off.
         """
         print('set power: ' + str(status))
         #yield self.tt.toggle(status)

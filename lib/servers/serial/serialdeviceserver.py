@@ -93,6 +93,15 @@
 # Direct serial communication settings can now choose EOL/length of read.
 #===============================================================================
 
+#===============================================================================
+# 2022 - 01 - 21
+#
+# Added new setting "device_info" which returns node and port if a connection
+# is opened.
+#
+# Empty call to device_select now does default connection instead.
+#===============================================================================
+
 # imports
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
@@ -394,26 +403,25 @@ class SerialDeviceServer(LabradServer):
     def deviceSelect(self, c, node=None, port=None):
         """
         Attempt to connect to serial device on the given node and port.
+        Arguments:
+            node    (str)   : the node to connect on
+            port    (str)   : the port to connect to
+        Returns:
+                    (str,str): the connected node and port (empty if no connection)
         """
-        # empty call is getter
-        if (node is None) and (port is None):
-            if self.ser:
-                return (self.serNode, self.port)
-            else:
-                return ('', '')
-        # raise exception if connection already exists
-        elif self.ser:
-            raise Exception('A serial device is already opened.')
+        # do nothing if device is already selected
+        if self.ser:
+            Exception('A serial device is already opened.')
         # set parameters if specified
         elif (node is not None) and (port is not None):
             self.serNode = node
             self.port = port
-        # connect to default values if sole argument has value 'default'
-        elif ((node.lower() == 'default') or (port.lower() == 'default')) and (self.serNode and self.port):
+        # connect to default values if no arguments at all
+        elif ((node is None) and (port is None)) and (self.serNode and self.port):
             pass
         # raise error if only node or port is specified
         else:
-            raise Exception('Only one argument specified.')
+            raise Exception('Insufficient arguments.')
 
         # try to find the serial server and connect to the designated port
         try:
@@ -440,6 +448,13 @@ class SerialDeviceServer(LabradServer):
             self.ser.close()
             self.ser = None
             print('Serial connection closed.')
+        else:
+            raise Exception('No device selected.')
+
+    @setting(111113, 'Device Info', returns='(ss)')
+    def deviceInfo(self, c):
+        if self.ser:
+            return (self.serNode, self.port)
         else:
             raise Exception('No device selected.')
 

@@ -22,7 +22,7 @@ class fma1700a_gui(QFrame):
         self.all_label.setFont(QFont(shell_font, pointSize=18))
         self.all_label.setAlignment(Qt.AlignCenter)
             # readout
-        self.flow_display_label = QLabel('Flow (L/min)')
+        self.flow_display_label = QLabel('Flow (%)')
         self.flow_display = QLabel('Flow')
         self.flow_display.setFont(QFont(shell_font, pointSize=25))
         self.flow_display.setAlignment(Qt.AlignCenter)

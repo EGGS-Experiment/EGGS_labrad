@@ -36,7 +36,7 @@ _TT74_ERRORS_msg = {
     b'\x35': "Window disabled",
 }
 
-
+#todo: update all power and toggle
 class TwisTorr74Server(SerialDeviceServer, PollingServer):
     """
     Talks to the TwisTorr 74 Turbopump.
@@ -54,8 +54,8 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     # SIGNALS
     pressure_update = Signal(999999, 'signal: pressure update', 'v')
     energy_update = Signal(999998, 'signal: energy update', 'v')
-    rpm_update = Signal(999997, 'signal: rpm update', 'v')
-    power_update = Signal(999996, 'signal: power update', 'b')
+    speed_update = Signal(999997, 'signal: rpm update', 'v')
+    toggle_update = Signal(999996, 'signal: power update', 'b')
 
 
     # STARTUP
@@ -115,7 +115,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
             resp = False
         # update all other devices with new device state
         if onoff is not None:
-            self.power_update(resp, self.getOtherListeners(c))
+            self.toggle_update(resp, self.getOtherListeners(c))
         returnValue(resp)
 
 
@@ -165,15 +165,15 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         self.energy_update(resp)
         returnValue(resp)
 
-    @setting(213, 'Read RPM', returns='v')
-    def rpm_read(self, c):
+    @setting(213, 'Read Speed', returns='v')
+    def speed_read(self, c):
         """
-        Get pump speed.
+        Get pump rotational speed.
         Returns:
-            (float): pump speed in RPM
+            (float): pump rotational speed in Hz
         """
         # create and send message to device
-        message = yield self._create_message(CMD_msg=b'226', DIR_msg=_TT74_READ_msg)
+        message = yield self._create_message(CMD_msg=b'120', DIR_msg=_TT74_READ_msg)
         # query
         yield self.ser.acquire()
         yield self.ser.write(message)
@@ -184,7 +184,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         resp = yield self._parse(resp)
         resp = float(resp)
         # send signal and return value
-        self.rpm_update(resp)
+        self.speed_update(resp)
         returnValue(resp)
 
 
@@ -196,7 +196,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         """
         yield self.pressure_read(None)
         yield self.power_read(None)
-        yield self.rpm_read(None)
+        yield self.speed_read(None)
 
 
     # HELPER

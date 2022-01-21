@@ -4,7 +4,8 @@ from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
 
-
+#todo: update all power and toggle
+#todo: use lockswitch
 class TextChangingButton(_TextChangingButton):
     def __init__(self, button_text=None, parent=None):
         super(TextChangingButton, self).__init__(button_text, parent)
@@ -39,11 +40,11 @@ class twistorr74_gui(QFrame):
         self.power_display.setAlignment(Qt.AlignCenter)
         self.power_display.setStyleSheet('color: blue')
             # speed readout
-        self.rpm_display_label = QLabel('Speed (rpm)')
-        self.rpm_display = QLabel('Speed')
-        self.rpm_display.setFont(QFont(shell_font, pointSize=20))
-        self.rpm_display.setAlignment(Qt.AlignCenter)
-        self.rpm_display.setStyleSheet('color: blue')
+        self.speed_display_label = QLabel('Speed (Hz)')
+        self.speed_display = QLabel('Speed')
+        self.speed_display.setFont(QFont(shell_font, pointSize=20))
+        self.speed_display.setAlignment(Qt.AlignCenter)
+        self.speed_display.setStyleSheet('color: blue')
             # record button
         self.twistorr_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             # power
@@ -64,8 +65,8 @@ class twistorr74_gui(QFrame):
         layout.addWidget(self.pressure_display, 2, col1)
         layout.addWidget(self.power_display_label, 3, col1)
         layout.addWidget(self.power_display, 4, col1)
-        layout.addWidget(self.rpm_display_label, 5, col1)
-        layout.addWidget(self.rpm_display, 6, col1)
+        layout.addWidget(self.speed_display_label, 5, col1)
+        layout.addWidget(self.speed_display, 6, col1)
 
         layout.addWidget(self.twistorr_power, 7, col1)
         layout.addWidget(self.twistorr_lockswitch, 8, col1)
