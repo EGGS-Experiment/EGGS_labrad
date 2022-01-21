@@ -3,13 +3,13 @@ from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.lib.clients.cryovac_clients.twistorr74_gui import twistorr74_gui
 
-#todo: update all power and toggle
+
 class twistorr74_client(twistorr74_gui):
 
     name = 'Twistorr74 Client'
 
     PRESSUREID = 694321
-    ENERGYID = 694322
+    TOGGLEID = 694322
     SPEEDID = 694323
     POWERID = 694324
 
@@ -54,12 +54,12 @@ class twistorr74_client(twistorr74_gui):
             # device parameters
         yield self.tt.signal__pressure_update(self.PRESSUREID)
         yield self.tt.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
-        yield self.tt.signal__energy_update(self.ENERGYID)
-        yield self.tt.addListener(listener=self.updateEnergy, source=None, ID=self.ENERGYID)
-        yield self.tt.signal__speed_update(self.SPEEDID)
-        yield self.tt.addListener(listener=self.updateSpeed, source=None, ID=self.SPEEDID)
         yield self.tt.signal__power_update(self.POWERID)
         yield self.tt.addListener(listener=self.updatePower, source=None, ID=self.POWERID)
+        yield self.tt.signal__speed_update(self.SPEEDID)
+        yield self.tt.addListener(listener=self.updateSpeed, source=None, ID=self.SPEEDID)
+        yield self.tt.signal__toggle_update(self.TOGGLEID)
+        yield self.tt.addListener(listener=self.updateToggle, source=None, ID=self.TOGGLEID)
             # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
@@ -82,13 +82,12 @@ class twistorr74_client(twistorr74_gui):
         power_tmp = yield self.tt.toggle()
         self.gui.twistorr_power.setChecked(power_tmp)
 
-    #@inlineCallbacks
     def initializeGUI(self, cxn):
         """
         Connect signals to slots and other initializations.
         """
         self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.lock_twistorr(status))
-        self.gui.twistorr_power.clicked.connect(lambda status: self.toggle_twistorr(status))
+        self.gui.twistorr_toggle.clicked.connect(lambda status: self.toggle_twistorr(status))
         self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
 
 
@@ -117,11 +116,11 @@ class twistorr74_client(twistorr74_gui):
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
-    def updateEnergy(self, c, energy):
+    def updatePower(self, c, power):
         """
         Updates GUI when values are received from server.
         """
-        self.gui.power_display.setText(str(energy))
+        self.gui.power_display.setText(str(power))
 
     def updateSpeed(self, c, speed):
         """
@@ -129,11 +128,11 @@ class twistorr74_client(twistorr74_gui):
         """
         self.gui.speed_display.setText(str(speed))
 
-    def updatePower(self, c, power):
+    def updateToggle(self, c, status):
         """
         Updates GUI when other clients have made changes to the device.
         """
-        self.gui.twistorr_power.setChecked(int(power))
+        self.gui.twistorr_toggle.setChecked(status)
 
 
     # SLOTS

@@ -1,1 +1,0 @@
-@echo off && conda activate labart && python %LABRAD_ROOT%\clients\SLS_client\sls_client.py

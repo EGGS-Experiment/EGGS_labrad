@@ -4,7 +4,7 @@
 name = H11890 Server
 version = 1.0.0
 description = Controls the Hamamatsu H11890-210 PMT
-instancename = H11890 Server
+instancename = PMT Server
 
 [startup]
 cmdline = %PYTHON% %FILE%

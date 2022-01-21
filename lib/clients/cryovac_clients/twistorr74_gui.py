@@ -2,14 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout
 
-from EGGS_labrad.lib.clients.Widgets import TextChangingButton as _TextChangingButton
-
-#todo: update all power and toggle
-#todo: use lockswitch
-class TextChangingButton(_TextChangingButton):
-    def __init__(self, button_text=None, parent=None):
-        super(TextChangingButton, self).__init__(button_text, parent)
-        self.setMaximumHeight(30)
+from EGGS_labrad.lib.clients.Widgets import TextChangingButton
 
 
 class twistorr74_gui(QFrame):
@@ -50,7 +43,7 @@ class twistorr74_gui(QFrame):
             # power
         self.twistorr_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
         self.twistorr_lockswitch.setChecked(True)
-        self.twistorr_power = TextChangingButton(('On', 'Off'))
+        self.twistorr_toggle = TextChangingButton(('On', 'Off'))
 
     def makeLayout(self):
         layout = QGridLayout()
@@ -68,7 +61,7 @@ class twistorr74_gui(QFrame):
         layout.addWidget(self.speed_display_label, 5, col1)
         layout.addWidget(self.speed_display, 6, col1)
 
-        layout.addWidget(self.twistorr_power, 7, col1)
+        layout.addWidget(self.twistorr_toggle, 7, col1)
         layout.addWidget(self.twistorr_lockswitch, 8, col1)
         layout.addWidget(self.twistorr_record, 9, col1)
 

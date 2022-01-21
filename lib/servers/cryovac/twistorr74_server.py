@@ -79,7 +79,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
 
 
     # TOGGLE
-    @setting(111, 'toggle', onoff=['', 'b'], returns='b')
+    @setting(111, 'Toggle', onoff=['', 'b'], returns='b')
     def toggle(self, c, onoff=None):
         """
         Start or stop the pump
@@ -97,7 +97,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
                 message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
             yield self.ser.acquire()
             yield self.ser.write(message)
-            resp = yield self.ser.read_line(_TT74_ETX_msg)
+            yield self.ser.read_line(_TT74_ETX_msg)
             yield self.ser.read(2)
             self.ser.release()
         # getter

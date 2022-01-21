@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QPushButton
 
 from EGGS_labrad.lib.clients.Widgets import TextChangingButton, Lockswitch
 

@@ -1,1 +1,0 @@
-@echo off && conda activate labart && python %LABRAD_ROOT%\clients\trap_clients\rf_client.py
