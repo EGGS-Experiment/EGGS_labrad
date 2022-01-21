@@ -1,9 +1,9 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = H11890 Server
+name = PMT Server
 version = 1.0.0
-description = Controls the Hamamatsu H11890-210 PMT
+description = Controls the Hamamatsu H10892 PMT via ARTIQ
 instancename = PMT Server
 
 [startup]
@@ -18,25 +18,18 @@ timeout = 20
 
 from labrad.units import WithUnit
 from labrad.server import setting, Signal
-
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
-from EGGS_labrad.lib.servers.polling_server import PollingServer
+from EGGS_labrad.lib.servers.artiq_server import ARTIQServer
 
 
-class H11890Server(SerialDeviceServer, PollingServer):
+class PMTServer(LabradServer):
     """
-    Controls the Hamamatsu H11890-210 PMT.
+    Controls the Hamamatsu H10892 PMT via ARTIQ.
     """
 
-    name = 'H11890 Server'
-    regKey = 'H11890Server'
-    serNode = 'MongKok'
-    port = 'COM58'
-
-    timeout = WithUnit(3.0, 's')
-    baudrate = 9600
+    name = 'PMT Server'
+    regKey = 'PMTServer'
 
     # SIGNALS
     pressure_update = Signal(999999, 'signal: pressure update', '(ii)')
@@ -66,6 +59,9 @@ class H11890Server(SerialDeviceServer, PollingServer):
 
 
     # GATING
+    # todo: bin setting
+    # todo: gate setting
+    # todo: rising, falling, or both
     @setting(211, 'Gate Time', time_ms='v', returns='v')
     def gateTime(self, c, time_ms=None):
         """
@@ -78,7 +74,11 @@ class H11890Server(SerialDeviceServer, PollingServer):
         # create message
         pass
 
-    # ACQUIRE
+
+    # ACQUISITION
+    # todo: set recording loc/filename
+    # todo: trigger
+    # todo: fixed record length
     @setting(311, 'Acquire', returns='v')
     def acquire(self, c):
         """
@@ -104,4 +104,4 @@ class H11890Server(SerialDeviceServer, PollingServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(H11890Server())
+    util.runServer(PMTServer())

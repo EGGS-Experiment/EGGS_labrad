@@ -29,12 +29,11 @@ from artiq.master.worker_db import DeviceManager
 from sipyco.pc_rpc import Client
 
 # device imports
-from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_ASF, _AD9910_REG_POW
 from artiq.coredevice.comm_moninj import CommMonInj, TTLProbe, TTLOverride
+from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_POW, _AD9910_REG_ASF
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
                                     AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
                                     AD53XX_READ_AB0, AD53XX_READ_AB1, AD53XX_READ_AB2, AD53XX_READ_AB3
-from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_POW, _AD9910_REG_ASF
 
 AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53XX_READ_OFFSET,
                     'GAIN': AD53XX_READ_GAIN, 'OFS0': AD53XX_READ_OFS1, 'OFS1': AD53XX_READ_OFS1,
@@ -47,22 +46,27 @@ AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53X
 
 # function imports
 import numpy as np
-import asyncio
-import time
 
 TTLSIGNAL_ID = 828176
 DACSIGNAL_ID = 828175
+ADCSIGNAL_ID = 828174
 
 
 class ARTIQ_Server(LabradServer):
-    """ARTIQ server."""
+
+    """
+    The ARTIQ server.
+    A bridge between LabRAD and ARTIQ.
+    """
+
     name = 'ARTIQ Server'
-    regKey = 'ARTIQ_Server'
+    regKey = 'ARTIQServer'
 
 
     # SIGNALS
     ttlChanged = Signal(TTLSIGNAL_ID, 'signal: ttl changed', '(sib)')
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(ssv)')
+    adcChanged = Signal(ADCSIGNAL_ID, 'signal: adc changed', '(ssv)')
 
 
     # STARTUP
