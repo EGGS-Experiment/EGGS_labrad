@@ -32,7 +32,6 @@ class TextChangingButton(QtWidgets.QPushButton):
         self.toggled.connect(self.setAppearance)
         self.setAppearance(self.isDown())
 
-
     def setAppearance(self, down):
         on_text, off_text = self._set_button_texts()
         if down:
@@ -74,3 +73,6 @@ class Lockswitch(TextChangingButton):
         font_tmp.setPointSize(8)
         self.setFont(font_tmp)
         self.setChecked(True)
+
+    def sizeHint(self):
+        return QtCore.QSize(37, 26)

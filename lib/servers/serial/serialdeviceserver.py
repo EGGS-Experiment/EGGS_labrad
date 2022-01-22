@@ -460,7 +460,7 @@ class SerialDeviceServer(LabradServer):
 
 
         # DIRECT SERIAL COMMUNICATION
-    @setting(111113, 'Serial Query', data='s', stop=['i: read a given number of characters',
+    @setting(222223, 'Serial Query', data='s', stop=['i: read a given number of characters',
                                                      's: read until the given character'], returns='s')
     def serial_query(self, c, data, stop=None):
         """Write any string and read the response."""
@@ -475,14 +475,14 @@ class SerialDeviceServer(LabradServer):
         self.ser.release()
         returnValue(resp)
 
-    @setting(111114, 'Serial Write', data='s', returns='')
+    @setting(222224, 'Serial Write', data='s', returns='')
     def serial_write(self, c, data):
         """Directly write to the serial device."""
         yield self.ser.acquire()
         yield self.ser.write(data)
         self.ser.release()
 
-    @setting(111115, 'Serial Read', stop=['i: read a given number of characters',
+    @setting(222225, 'Serial Read', stop=['i: read a given number of characters',
                                           's: read until the given character'], returns='s')
     def serial_read(self, c, stop=None):
         """Directly read the serial buffer."""
@@ -498,7 +498,7 @@ class SerialDeviceServer(LabradServer):
 
 
         # DEBUGGING
-    @setting(111116, 'Serial Debug', status='b', returns='b')
+    @setting(222226, 'Serial Debug', status='b', returns='b')
     def serialDebug(self, c, status=None):
         """
         Tells the serial bus server to print input/output.

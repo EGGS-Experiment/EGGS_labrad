@@ -70,7 +70,7 @@ class AMO8Server(SerialDeviceServer):
 
 
     # ON/OFF
-    @setting(111, 'Toggle', channel='i', power='i', returns='[b, *b]')
+    @setting(111, 'Toggle', channel='i', power='i', returns=['b', '*b'])
     def toggle(self, c, channel, power=None):
         """
         Set a channel to be on or off.
