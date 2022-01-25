@@ -18,6 +18,7 @@ class GUIClient(object):
     name = None
     servers = []
 
+    # STARTUP
     def __init__(self, GUI, reactor, cxn=None, parent=None):
         # set parent to GUI file
         self.__class__ = type(self.__class__.__name__, (GUI, object), dict(self.__class__.__dict__))
@@ -38,7 +39,6 @@ class GUIClient(object):
         d.addCallback(self.initializeGUI)
 
 
-    # SETUP
     @inlineCallbacks
     def _connectLabrad(self):
         """
@@ -69,19 +69,34 @@ class GUIClient(object):
         return self.cxn
 
 
+    # SHUTDOWN
+    def closeEvent(self, event):
+        self.cxn.disconnect()
+        if self.reactor.running:
+            self.reactor.stop()
+
+    def __del__(self):
+        self.cxn.disconnect()
+        if self.reactor.running:
+            self.reactor.stop()
+
+
     # SIGNALS
     def on_connect(self, c, message):
         server_name = message[1]
         if server_name in self.servers:
-            print(server_name + ' reconnected, enabling widget.')
+            print(server_name + ' reconnected.')
             self.initData()
+            # check to see if all necessary servers are connected
+            print('Enabling client.')
             self.setEnabled(True)
 
     def on_disconnect(self, c, message):
         server_name = message[1]
         if server_name in self.servers:
-            print(server_name + ' disconnected, disabling widget.')
+            print(server_name + ' disconnected, disabling client.')
             self.setEnabled(False)
+
 
 
     # SUBCLASSED FUNCTIONS
@@ -112,18 +127,6 @@ class GUIClient(object):
         WARNING: cxn must be an argument and returned to enforce execution order.
         """
         return self.cxn
-
-    # EXIT
-    def closeEvent(self, event):
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
-
-    def __del__(self):
-        print('destructor called')
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
 
 
 

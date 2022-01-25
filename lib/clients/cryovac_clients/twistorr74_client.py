@@ -1,3 +1,4 @@
+from time import time
 from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
 
@@ -49,6 +50,7 @@ class twistorr74_client(twistorr74_gui):
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
+        self.starttime = None
 
         # connect to signals
             # device parameters
@@ -79,8 +81,8 @@ class twistorr74_client(twistorr74_gui):
         """
         Get startup data from servers and show on GUI.
         """
-        power_tmp = yield self.tt.toggle()
-        self.gui.twistorr_power.setChecked(power_tmp)
+        status_tmp = yield self.tt.toggle()
+        self.gui.twistorr_power.setChecked(status_tmp)
 
     def initializeGUI(self, cxn):
         """
@@ -113,7 +115,7 @@ class twistorr74_client(twistorr74_gui):
         """
         self.gui.pressure_display.setText(str(pressure))
         if self.recording:
-            elapsedtime = time.time() - self.starttime
+            elapsedtime = time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
     def updatePower(self, c, power):
@@ -144,8 +146,8 @@ class twistorr74_client(twistorr74_gui):
         """
         # set up datavault
         self.recording = status
-        if self.recording == True:
-            self.starttime = time.time()
+        if status:
+            self.starttime = time()
             date = datetime.now()
             year = str(date.year)
             month = '{:02d}'.format(date.month)

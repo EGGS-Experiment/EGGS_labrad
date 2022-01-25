@@ -63,6 +63,7 @@ class endcap_client(QWidget):
     Client for endcap control via AMO8.
     """
 #TODO: signal for hv in
+    #todo: get endcap config
     #todo: ramping
     name = "Endcap Client"
     row_length = 6

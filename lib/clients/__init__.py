@@ -2,11 +2,7 @@
 Contains stuff useful for LabRAD clients.
 """
 
-__all__ = ["runGUI", "runClient", "GUIClient", "RecordingClient", "connection"]
-
-from EGGS_labrad.lib.clients.client import GUIClient, RecordingClient
-from EGGS_labrad.lib.clients.connection import connection
-
+__all__ = ["runGUI", "runClient"]
 
 
 # imports
