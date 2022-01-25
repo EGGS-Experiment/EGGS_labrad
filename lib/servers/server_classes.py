@@ -99,12 +99,22 @@ class PollingServer(LabradServer):
 
 
 
+
+"""
+ARTIQ Server
+"""
+
+from sipyco.pc_rpc import Client
+
+
 class ARTIQServer(LabradServer):
     """
     A server that uses devices from the ARTIQ box.
     """
 
+    # artiq_devices holds the desired variable name as keys and the artiq hardware name as values
     artiq_devices = {}
+
 
     # STARTUP
     def initServer(self):
@@ -112,54 +122,82 @@ class ARTIQServer(LabradServer):
         super().initServer()
         # check for artiq server
         try:
-            self.artiq = cxn.artiq_server
+            self.artiq = self.client.artiq_server
             # get required devices
             for devices in self.artiq_devices.items():
                 setattr(self, devices[0], devices[1])
+            self.devicedb_client = Client('::1', 3251, 'master_device_db')
+            self.datasetdb_client = Client('::1', 3251, 'master_dataset_db')
+            self.scheduler_client = Client('::1', 3251, 'master_schedule')
         except Exception as e:
             print(e)
             raise
 
 
     # STATUS
-    # todo: get artiq box details (ip address, name, device_db)
-
-
-    # DMA
-    @setting(222222, 'DMA', status='b', returns='b')
-    def DMA(self, c, status=None):
+    def devices(self, filepath):
         """
-        Program the core DMA
-        Arguments:
-            status  (bool)  : whether to stop or start correction mode.
-        Returns:
-            status  (bool)  : whether to stop or start correction mode.
+        Returns the device_db dictionary.
         """
-        pass
-    #todo: write setting to program DMA
+        return self.devicedb_client.get_device_db()
 
 
     # EXPERIMENTS
-    def runExperiment(self, file, args):
+    def runExperiment(self, file, *args, **kwargs):
         """
         Run an experiment file.
         Arguments:
             file    (str)   : the location of the experiment file
             args    (str)   : the arguments to run the experiment with
         Returns:
-                    ((str))  : the run parameters of the experiment.
+                    (*str)  : the runID parameters of the experiment
         """
+        #todo: schedule dma programming experiment
         pass
-        #todo
 
-    def schedule(self):
+
+    # DMA
+    def DMArun(self, handle_name):
+        """
+        Run an experiment from core DMA.
+        Arguments:
+            handle_name (str)   : the handle of the DMA experiment.
+        """
+        yield self.artiq.
+
+    # DATASETS
+    def getDataset(self, dataset_name):
+        """
+        Get a dataset.
+        Arguments:
+            dataset_name    (str)   : the name of the dataset
+        Returns:
+                            (?)     : the dataset
+        """
+        return self.datasetdb_client.get(dataset_name)
+
+
+
+    @setting(111, "Run Experiment", path='s', maxruns='i', returns='')
+    def runExperiment(self, c, path, maxruns = 1):
+        """
+        Run the experiment a given number of times.
+        Argument:
+            path    (string): the filepath to the ARTIQ experiment.
+            maxruns (int)   : the number of times to run the experiment
         """
 
+
+    @setting(112, "Stop Experiment", returns='')
+    def stopSequence(self, c):
         """
-        pass
-    #todo: check scheduling
-
-
-    # DATA
-    # todo: get dataset values
-    # todo: create datasets
+        Stops any currently running sequence.
+        """
+        # check that an experiment is currently running
+        if self.ps_rid not in self.scheduler.get_status().keys():
+            raise Exception('Error: no experiment currently running')
+        yield self.inCommunication.acquire()
+        yield deferToThread(self.scheduler.delete, self.ps_rid)
+        self.ps_rid = None
+        #todo: make resetting of ps_rid contingent on defertothread completion
+        self.inCommunication.release()

@@ -75,11 +75,6 @@ class GUIClient(object):
         if self.reactor.running:
             self.reactor.stop()
 
-    def __del__(self):
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
-
 
     # SIGNALS
     def on_connect(self, c, message):
@@ -152,6 +147,16 @@ class RecordingClient(GUIClient):
         return ['', year, month, trunk1, trunk2]
 
     #todo: data vault function?
+
+    # SHUTDOWN
+    @inlineCallbacks
+    def closeEvent(self, event):
+        polling, _ = yield self.server.polling()
+        if polling:
+            yield self.server.polling(False)
+        self.cxn.disconnect()
+        if self.reactor.running:
+            self.reactor.stop()
 
 
     # SUBCLASSED FUNCTIONS

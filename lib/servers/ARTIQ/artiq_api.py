@@ -110,6 +110,13 @@ class ARTIQ_api(object):
         self.core.reset()
         self.core_dma.erase(sequencename)
 
+    # DMA
+    @kernel
+    def runDMA(self, handle_name):
+        self.core.reset()
+        self.core_dma.playback_handle(self.core_dma.get_handle(handle_name))
+
+
     # TTL
     def setTTL(self, ttlname, state):
         """

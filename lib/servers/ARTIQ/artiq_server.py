@@ -73,8 +73,7 @@ class ARTIQ_Server(LabradServer):
     def __init__(self):
         self.api = ARTIQ_api()
         self.ddb_filepath = 'C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db.py'
-        self.devices = DeviceDB(self.ddb_filepath)
-        self.device_manager = DeviceManager(self.devices)
+        self.device_manager = DeviceManager(DeviceDB(self.ddb_filepath))
         LabradServer.__init__(self)
 
     @inlineCallbacks
@@ -83,15 +82,15 @@ class ARTIQ_Server(LabradServer):
         yield self._setClients()
         yield self._setVariables()
         yield self._setDevices()
-        self.ttlChanged(('ttl99', 0, True))
+        # self.ttlChanged(('ttl99', 0, True))
 
-    #@inlineCallbacks
     def _setClients(self):
         """
         Create clients to ARTIQ master.
         Used to get datasets, submit experiments, and monitor devices.
         """
         self.scheduler = Client('::1', 3251, 'master_schedule')
+        self.devices = Client('::1', 3251, 'master_device_db')
         self.datasets = Client('::1', 3251, 'master_dataset_db')
 
     def _setVariables(self):
@@ -141,13 +140,13 @@ class ARTIQ_Server(LabradServer):
         """
         Returns a list of ARTIQ devices.
         """
-        self.ttlChanged(('ttl99', 0, True)) # todo: what? why is this here
+        # self.ttlChanged(('ttl99', 0, True)) # todo: what? why is this here
         return list(self.device_db.keys())
-        #todo: somehow send class device, send as array of tuple
+
 
     # PULSE SEQUENCING
     @setting(111, "Run Experiment", path='s', maxruns='i', returns='')
-    def runExperiment(self, c, path, maxruns = 1):
+    def runExperiment(self, c, path, maxruns=1):
         """
         Run the experiment a given number of times.
         Argument:
@@ -167,7 +166,7 @@ class ARTIQ_Server(LabradServer):
 
         # run sequence then wait for experiment to submit
         yield self.inCommunication.acquire()
-        self.ps_rid = yield deferToThread(self.scheduler.submit, pipeline_name = ps_pipeline, expid = ps_expid, priority = ps_priority)
+        self.ps_rid = yield deferToThread(self.scheduler.submit, pipeline_name=ps_pipeline, expid=ps_expid, priority=ps_priority)
         self.inCommunication.release()
 
     @setting(112, "Stop Experiment", returns='')
@@ -191,6 +190,15 @@ class ARTIQ_Server(LabradServer):
         """
         completed_runs = yield self.datasets.get('numRuns')
         returnValue(completed_runs)
+
+    @setting(121, "DMA Run", handle_name='s', returns'')
+    def runDMA(self, c, handle_name):
+        """
+        Run an experiment from core DMA.
+        Arguments:
+            handle_name     (str)   : the name of the DMA sequence
+        """
+        yield self.api.runDMA(handle_name)
 
 
     # TTL
