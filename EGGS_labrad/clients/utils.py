@@ -28,6 +28,7 @@ def runGUI(client, **kwargs):
     gui.show()
     sys.exit(app.exec())
 
+
 def runClient(client, **kwargs):
     """
     Runs a LabRAD client written using PyQt5

@@ -8,20 +8,17 @@ class PMT_client(GUIClient):
 
     """
 
-    servers = ['PMT Server', 'ARTIQ Server']
-    gui = PMT_gui('PMT Client')
+    servers = {'pmt': 'PMT Server', 'artiq': 'ARTIQ Server'}
+    #gui = PMT_gui
+
 
     @inlineCallbacks
     def initClient(self, cxn):
         """
-        Get necessary servers.
+        Initialize the GUI.
         """
-        try:
-            self.pmt = yield self.cxn.pmt_server
-            self.artiq = yield self.cxn.artiq_server
-        except Exception as e:
-            print(e)
-            raise
+        self.gui = yield PMT_gui(parent=self)
+        return cxn
 
     @inlineCallbacks
     def initData(self, cxn):
@@ -31,16 +28,16 @@ class PMT_client(GUIClient):
         try:
             # get available TTLInOuts
             ttl_list = yield self.pmt.ttl_available()
-            ttl_list = [ttl_name[3:] for ttl_name in ttl_list]
             for ttl_name in ttl_list:
-                self.gui.ttl_pmt.addItem(ttl_name)
-                self.gui.ttl_trig.addItem(ttl_name)
+                self.gui.ttl_pmt.addItem(str(ttl_name))
+                self.gui.ttl_trigger.addItem(str(ttl_name))
             # devices
             pmt_chan = yield self.pmt.ttl_pmt()
-            trig_active, trig_chan = yield self.pmt.ttl_trigger()
+            trig_chan = yield self.pmt.ttl_trigger()
+            trig_active = yield self.pmt.trigger_active()
             self.gui.ttl_pmt.setCurrentIndex(pmt_chan)
+            self.gui.ttl_trigger.setCurrentIndex(trig_chan)
             self.gui.trigger_active.setChecked(trig_active)
-            self.gui.ttl_trig.setCurrentIndex(trig_chan)
             # timing
             t_bin = yield self.pmt.gating_time()
             t_delay = yield self.pmt.gating_delay()
@@ -52,7 +49,9 @@ class PMT_client(GUIClient):
             edge_method = yield self.pmt.gating_edge()
             ind = self.gui.edge_method.findText(edge_method)
             self.gui.edge_method.setCurrentIndex(ind)
-
+        except Exception as e:
+            print(e)
+        return cxn
 
     def initializeGUI(self, cxn):
         """
@@ -60,14 +59,14 @@ class PMT_client(GUIClient):
         """
         # device
         self.gui.ttl_pmt.currentTextChanged.connect(lambda text: self.pmt.ttl_pmt(int(text)))
-        self.gui.ttl_trig.currentTextChanged.connect(lambda text, status=self.pmt_: self.pmt.ttl_trigger(int(text)))
-        self.gui.trigger_active.toggled.connect(lambda status: self.pmt.ttl_trigger(status))
+        self.gui.ttl_trigger.currentTextChanged.connect(lambda text: self.pmt.ttl_trigger(int(text)))
+        self.gui.trigger_active.toggled.connect(lambda status: self.pmt.trigger_active(status))
         # timing
         self.gui.time_record.valueChanged.connect(lambda value: self.pmt.gating_time(value))
         self.gui.time_delay.valueChanged.connect(lambda value: self.pmt.gating_delay(value))
-        self.gui.length.valueChanged.connect(lambda value: self.pmt.length(value))
+        self.gui.time_length.valueChanged.connect(lambda value: self.pmt.length(value))
         # edge
-        self.gui.time_delay.currentTextChanged.connect(lambda type: self.pmt.gating_edge(type))
+        self.gui.edge_method.currentTextChanged.connect(lambda type: self.pmt.gating_edge(type))
         # buttons
         self.gui.program_button.clicked.connect(lambda: self.pmt.program())
         self.gui.start_button.clicked.connect(lambda: self.pmt.start())
@@ -80,9 +79,6 @@ class PMT_client(GUIClient):
         self.gui.lockswitch.setEnabled(True)
 
 
-
-
-
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
-    runClient(PMT_gui)
+    runClient(PMT_client)

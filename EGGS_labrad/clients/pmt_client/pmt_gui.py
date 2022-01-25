@@ -11,22 +11,25 @@ class PMT_gui(QFrame):
     """
 
     def __init__(self, name=None, parent=None):
-        QWidget.__init__(self, parent)
-        self.name = name
+        super().__init__()
+        self.name = 'PMT Client'
+        self.parent = parent
         self.setFrameStyle(0x0001 | 0x0030)
-        self.setFixedSize(275, 225)
+        self.setFixedSize(300, 200)
         self.makeWidgets()
         self.makeLayout()
+        self.show()
 
     def makeWidgets(self):
+        self.setWindowTitle(self.name)
         # title
         self.title = QLabel(self.name)
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.title.setAlignment(Qt.AlignCenter)
         # devices
-        self.ttl_pmt_label = QLabel('PMT TTL Channel')
+        self.ttl_pmt_label = QLabel('PMT Channel')
         self.ttl_pmt = QComboBox()
-        self.ttl_trigger_label = QLabel('Trigger TTL Channel')
+        self.ttl_trigger_label = QLabel('Trigger Channel')
         self.ttl_trigger = QComboBox()
         self.trigger_active_label = QLabel('Trigger Status')
         self.trigger_active = TextChangingButton(('Active', 'Inactive'))
@@ -73,19 +76,22 @@ class PMT_gui(QFrame):
         layout.addWidget(self.ttl_trigger, 2, 1)
         layout.addWidget(self.trigger_active, 2, 2)
         # timing
-        layout.addWidget(self.time_record_label, 2, 0)
-        layout.addWidget(self.time_delay_label, 2, 1)
-        layout.addWidget(self.time_length_label, 2, 2)
-        layout.addWidget(self.time_record, 3, 0)
-        layout.addWidget(self.time_delay, 3, 1)
-        layout.addWidget(self.time_length, 3, 2)
+        layout.addWidget(self.time_record_label, 3, 0)
+        layout.addWidget(self.time_delay_label, 3, 1)
+        layout.addWidget(self.time_length_label, 3, 2)
+        layout.addWidget(self.time_record, 4, 0)
+        layout.addWidget(self.time_delay, 4, 1)
+        layout.addWidget(self.time_length, 4, 2)
         # running
-        layout.addWidget(self.program_button, 4, 0)
-        layout.addWidget(self.start_button, 4, 1)
-        layout.addWidget(self.lockswitch, 4, 2)
+        layout.addWidget(self.start_button, 5, 0)
+        layout.addWidget(self.program_button, 5, 1)
+        layout.addWidget(self.lockswitch, 5, 2)
         self.setLayout(layout)
+
+    def closeEvent(self, event):
+        self.parent.close()
 
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
-    runGUI(PMT_gui, name='PMT GUI')
+    runGUI(PMT_gui)

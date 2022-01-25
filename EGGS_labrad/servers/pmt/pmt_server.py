@@ -44,8 +44,8 @@ class PMTServer(ARTIQServer):
         super().initServer()
         # declare PMT variables
         self.ttl_number = 0
+        self.trigger_ttl_number = 1
         self.trigger_status = False
-        self.trigger_ttl_number = -1
         self.bin_time_us = 10
         self.reset_time_us = 10
         self.length_us = 1000
@@ -56,16 +56,16 @@ class PMTServer(ARTIQServer):
         for name, params in artiq_devices.items():
             # only get devices with named class
             if ('class' in params) and (params['class'] == 'TTLInOut'):
-                self.available_ttls.append(name)
+                self.available_ttls.append(int(name[3:]))
 
 
     # HARDWARE
-    @setting(211, 'TTL PMT', chan_num='i', returns='s')
+    @setting(211, 'TTL PMT', chan_num='i', returns='i')
     def PMTselect(self, c, chan_num=None):
         """
         Select the PMT TTL channel.
         Arguments:
-            chan_num    (bool)  : the TTL channel number for PMT input
+            chan_num    (int)   : the TTL channel number for PMT input
         Returns:
                         (str)   : the input TTL device name
         """
@@ -74,9 +74,9 @@ class PMTServer(ARTIQServer):
                 self.ttl_number = chan_num
             else:
                 raise Exception('Error: invalid TTL channel.')
-        return 'ttl' + str(self.ttl_number)
+        return self.ttl_number
 
-    @setting(212, 'TTL Trigger', chan_num='i', returns='(bs)')
+    @setting(212, 'TTL Trigger', chan_num='i', returns='i')
     def triggerSelect(self, c, chan_num=None):
         """
         Select the trigger TTL channel.
@@ -90,7 +90,7 @@ class PMTServer(ARTIQServer):
                 self.trigger_ttl_number = chan_num
             else:
                 raise Exception('Error: invalid TTL channel.')
-        return 'ttl' + self.trigger_ttl_number
+        return self.trigger_ttl_number
 
     @setting(213, 'Trigger Active', status='b', returns='b')
     def triggerActive(self, c, status=None):
@@ -105,8 +105,8 @@ class PMTServer(ARTIQServer):
             self.status = status
         return self.trigger_status
 
-    @setting(221, 'TTL Available', chan_num='i', returns='*i')
-    def ttlAvailable(self, c, chan_num=None):
+    @setting(221, 'TTL Available', returns='*i')
+    def ttlAvailable(self, c):
         """
         Get a list of available TTL channels.
         Returns:
@@ -189,7 +189,7 @@ class PMTServer(ARTIQServer):
         """
         Program the PMT sequence onto core DMA.
         """
-        kwargs = {'ttl_number': self.ttl_number, 'trigger_ttl_number': self.trigger_ttl_number,
+        kwargs = {'ttl_number': 'ttl' + str(self.ttl_number), 'trigger_ttl_number': 'ttl' + str(self.trigger_ttl_number),
                   'bin_time_us': self.bin_time_us, 'reset_time_us': self.reset_time_us,
                   'length_us': self.length_us, 'edge_method': self.edge_method}
         self.ps_rid = self.runExperiment(self.dma_exp_file, kwargs)

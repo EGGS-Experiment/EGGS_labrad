@@ -4,8 +4,7 @@ Base class for building PyQt5 GUI clients for LabRAD.
 
 # imports
 from datetime import datetime
-from PyQt5.QtWidgets import QWidget
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, ensureDeferred
 
 __all__ = ["GUIClient", "RecordingClient"]
 
@@ -16,18 +15,18 @@ class GUIClient(object):
     """
 
     name = None
-    servers = []
-    gui = None
+    servers = {}
+    #gui = None
 
     # STARTUP
     def __init__(self, reactor, cxn=None, parent=None):
         # set parent to GUI file
-        self.__class__ = type(self.__class__.__name__, (self.gui, object), dict(self.__class__.__dict__))
-        super(self.__class__, self).__init__()
-        # todo: are below and above same?
-        super().__init__()
-
+        #th1 = type(self.__class__.__name__, (self.gui, object), dict(self.__class__.__dict__))
+        #super(self.__class__).__init__()
+        #super(GUIClient, self).__init__()
         # set client variables
+        super().__init__()
+        #self.gui.__init__()
         self.reactor = reactor
         self.cxn = cxn
         self.parent = parent
@@ -52,11 +51,13 @@ class GUIClient(object):
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync('localhost', name=self.name)
 
-        # ensure base servers are online
-        self.servers.extend(['Registry', 'Data Vault'])
+        # set self.servers as class attributes
+        self.servers['registry'] = 'Registry'
+        self.servers['datavault'] = 'Data Vault'
         try:
-            self.reg = self.cxn.registry
-            self.dv = self.cxn.data_vault
+            for var_name, server_name in self.servers.items():
+                server =self.cxn[server_name]
+                yield setattr(self, var_name, server)
         except Exception as e:
             print(e)
             raise
@@ -70,7 +71,16 @@ class GUIClient(object):
 
 
     # SHUTDOWN
-    def closeEvent(self, event):
+    def close(self):
+        # stop polling all required servers
+        for var_name in self.servers.keys():
+            try:
+                server = getattr(self, var_name)
+                polling, _ = server.polling()
+                if polling:
+                    server.polling(False)
+            except Exception as e:
+                pass
         self.cxn.disconnect()
         if self.reactor.running:
             self.reactor.stop()
@@ -79,7 +89,7 @@ class GUIClient(object):
     # SIGNALS
     def on_connect(self, c, message):
         server_name = message[1]
-        if server_name in self.servers:
+        if server_name in self.servers.values():
             print(server_name + ' reconnected.')
             self.initData()
             # check to see if all necessary servers are connected
@@ -88,7 +98,7 @@ class GUIClient(object):
 
     def on_disconnect(self, c, message):
         server_name = message[1]
-        if server_name in self.servers:
+        if server_name in self.servers.values():
             print(server_name + ' disconnected, disabling client.')
             self.setEnabled(False)
 
