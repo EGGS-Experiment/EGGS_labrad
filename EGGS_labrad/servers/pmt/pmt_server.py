@@ -22,7 +22,7 @@ from EGGS_labrad.servers.server_classes import ARTIQServer
 _TTL_MAX_TIME_US = 10000
 _TTL_MIN_TIME_US = 1
 _RECORD_MAX_TIME_US = 100000
-_RECORD_MIN_TIME_US = 1
+_RECORD_MIN_TIME_US = 10
 
 
 class PMTServer(ARTIQServer):
@@ -60,7 +60,7 @@ class PMTServer(ARTIQServer):
 
 
     # HARDWARE
-    @setting(211, 'Select PMT', chan_num='i', returns='s')
+    @setting(211, 'TTL PMT', chan_num='i', returns='s')
     def PMTselect(self, c, chan_num=None):
         """
         Select the PMT TTL channel.
@@ -76,24 +76,43 @@ class PMTServer(ARTIQServer):
                 raise Exception('Error: invalid TTL channel.')
         return 'ttl' + str(self.ttl_number)
 
-    @setting(221, 'Select Trigger', status='b', chan_num='i', returns='(bs)')
-    def triggerSelect(self, c, status=None, chan_num=None):
+    @setting(212, 'TTL Trigger', chan_num='i', returns='(bs)')
+    def triggerSelect(self, c, chan_num=None):
+        """
+        Select the trigger TTL channel.
+        Arguments:
+            chan_num    (int)   : the TTL channel number for PMT input
+        Returns:
+                        (int)   : trigger device name
+        """
+        if chan_num is not None:
+            if chan_num in self.available_ttls:
+                self.trigger_ttl_number = chan_num
+            else:
+                raise Exception('Error: invalid TTL channel.')
+        return 'ttl' + self.trigger_ttl_number
+
+    @setting(213, 'Trigger Active', status='b', returns='b')
+    def triggerActive(self, c, status=None):
         """
         Select the trigger TTL channel.
         Arguments:
             status      (bool)  : whether triggering should be active
-            chan_num    (int)   : the TTL channel number for PMT input
         Returns:
-                        (bs)    : (triggering status, trigger device name)
+                        (bool)  : triggering status
         """
-        if chan_num is None:
-            if self.status is not None:
-                self.trigger_active = status
-        elif chan_num in self.available_ttls():
-            self.trigger_ttl_number = chan_num
-        else:
-            raise Exception('Error: invalid TTL channel.')
-        return (self.trigger_status, 'ttl'+self.trigger_ttl_number)
+        if status is not None:
+            self.status = status
+        return self.trigger_status
+
+    @setting(221, 'TTL Available', chan_num='i', returns='*i')
+    def ttlAvailable(self, c, chan_num=None):
+        """
+        Get a list of available TTL channels.
+        Returns:
+            (*i)   : a list of available TTL channels.
+        """
+        return self.available_ttls
 
 
     # GATING

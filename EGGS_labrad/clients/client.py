@@ -17,11 +17,12 @@ class GUIClient(object):
 
     name = None
     servers = []
+    gui = None
 
     # STARTUP
-    def __init__(self, GUI, reactor, cxn=None, parent=None):
+    def __init__(self, reactor, cxn=None, parent=None):
         # set parent to GUI file
-        self.__class__ = type(self.__class__.__name__, (GUI, object), dict(self.__class__.__dict__))
+        self.__class__ = type(self.__class__.__name__, (self.gui, object), dict(self.__class__.__dict__))
         super(self.__class__, self).__init__()
         # todo: are below and above same?
         super().__init__()
@@ -29,7 +30,6 @@ class GUIClient(object):
         # set client variables
         self.reactor = reactor
         self.cxn = cxn
-        self.gui = self #todo: should this be parent
         self.parent = parent
 
         # initialization sequence
