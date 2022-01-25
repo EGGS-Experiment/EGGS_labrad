@@ -82,7 +82,7 @@ class twistorr74_client(twistorr74_gui):
         Get startup data from servers and show on GUI.
         """
         status_tmp = yield self.tt.toggle()
-        self.gui.twistorr_power.setChecked(status_tmp)
+        self.gui.twistorr_toggle.setChecked(status_tmp)
 
     def initializeGUI(self, cxn):
         """
@@ -170,7 +170,7 @@ class twistorr74_client(twistorr74_gui):
         """
         Locks user interface to device.
         """
-        self.gui.twistorr_power.setEnabled(status)
+        self.gui.twistorr_toggle.setEnabled(status)
 
     def closeEvent(self, event):
         self.cxn.disconnect()
