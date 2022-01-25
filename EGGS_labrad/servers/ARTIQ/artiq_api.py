@@ -1,12 +1,8 @@
-#from sipyco.pc_rpc import Client
-
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager, DatasetManager
-#from artiq.master.worker_impl import CCB, Scheduler
 
-import numpy as np
-#todo: allow exp submission
+# import numpy as np
 
 
 class ARTIQ_api(object):
@@ -145,25 +141,22 @@ class ARTIQ_api(object):
 
 
     # DDS
-    @kernel
     def initializeDDSAll(self):
+        # initialize urukul cplds as well as dds channels
+        device_list = list(self.urukul_list.values())
+        device_list.extend(list(self.dds_list.values()))
+        self._initializeDDSAll(device_list)
+
+    @kernel
+    def _initializeDDSAll(self, device_list):
         '''
-        Initialize all DDS channels and their CPLDs.
+        Initialize all DDS channels as well as their CPLDs.
         '''
-        #todo: fix, don't use dicts
         self.core.reset()
-        # initialize urukul cpld
-        for device in list(self.urukul_list.values()):
+        for device in device_list:
             try:
                 device.init()
-            except RTIOUnderflow:
                 self.core.break_realtime()
-                device.init()
-        # initialize each DDS channel
-        self.core.reset()
-        for device in self.dds_list.values():
-            try:
-                device.init()
             except RTIOUnderflow:
                 self.core.break_realtime()
                 device.init()
