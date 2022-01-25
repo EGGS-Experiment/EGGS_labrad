@@ -70,7 +70,7 @@ class ARTIQ_api(object):
         #         self.core.break_realtime()
         #         device.input()
         # initialize DDSs
-        # self.initializeDDSAll()
+        self.initializeDDSAll()
         # one-off device init
         self.initializeDAC()
 
