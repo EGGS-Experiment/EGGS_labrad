@@ -116,6 +116,7 @@ class RGA_client(RGA_gui):
         self.gui.initialize.clicked.connect(lambda: self.tempDisable('IN', self.rga.initialize))
         self.gui.calibrate_detector.clicked.connect(lambda: self.tempDisable('CA', self.rga.detector_calibrate))
         self.gui.general_tp.clicked.connect(lambda:  self.tempDisable('TP', self.rga.tpm_start))
+        # self.gui.degas.clicked.connect(lambda: self.tempDisable('', self.rga.))
         # ionizer
         self.gui.ionizer_ee.valueChanged.connect(lambda value: self.tempDisable('EE', self.rga.ionizer_electron_energy, int(value)))
         self.gui.ionizer_ie.currentIndexChanged.connect(lambda index: self.tempDisable('IE', self.rga.ionizer_ion_energy, index))

@@ -156,7 +156,6 @@ class ADC_client(QWidget):
         for channel in self.sampler_channels.values():
             channel.lock(False)
             # channel.locks
-            # todo: finish
 
 
     # SLOTS

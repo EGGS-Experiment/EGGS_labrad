@@ -113,7 +113,6 @@ class DAC_client(QWidget):
         # get artiq server and dac list
         try:
             self.artiq = yield self.cxn.artiq_server
-            #todo: make dac list available from server
         except Exception as e:
             print(e)
             raise

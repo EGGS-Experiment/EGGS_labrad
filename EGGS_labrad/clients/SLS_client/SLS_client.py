@@ -9,6 +9,7 @@ class SLS_client(SLS_gui):
     name = 'SLS Client'
     AUTOLOCKID = 295372
 
+
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
         self.cxn = cxn
@@ -21,6 +22,7 @@ class SLS_client(SLS_gui):
         d = self.connect()
         d.addCallback(self.initData)
         d.addCallback(self.initializeGUI)
+
 
     # SETUP
     @inlineCallbacks
@@ -35,7 +37,7 @@ class SLS_client(SLS_gui):
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync(LABRADHOST, name=self.name)
 
-        #get servers
+        # get servers
         try:
             self.dv = self.cxn.data_vault
             self.reg = self.cxn.registry
@@ -45,10 +47,10 @@ class SLS_client(SLS_gui):
             self.setEnabled(False)
 
         # connect to signals
-            #device parameters
+            # device parameters
         yield self.sls.signal__autolock_update(self.AUTOLOCKID)
         yield self.sls.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
-            #server connections
+            # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
@@ -56,7 +58,7 @@ class SLS_client(SLS_gui):
 
         # start device polling
         poll_params = yield self.sls.polling()
-        #only start polling if not started
+        # only start polling if not started
         if not poll_params[0]:
             yield self.sls.polling(True, 5.0)
         return self.cxn
@@ -95,23 +97,22 @@ class SLS_client(SLS_gui):
         self.gui.servo_p.setValue(float(init_values['CurrentServoPropGain']))
         self.gui.servo_i.setValue(float(init_values['CurrentServoIntGain']))
         self.gui.servo_d.setValue(float(init_values['CurrentServoDiffGain']))
-        self.gui.PDH_filter.setCurrentIndex(int(init_values['CurrentServoOutputFilter']))
+        self.gui.servo_filter.setCurrentIndex(int(init_values['CurrentServoOutputFilter']))
         return cxn
 
     def initializeGUI(self, cxn):
         """
         Connect signals to slots and other initializations.
         """
-        # connect signals to slots
-            # autolock
+        # autolock
         self.gui.autolock_toggle.toggled.connect(lambda status: self.sls.autolock_toggle(status))
         self.gui.autolock_param.currentTextChanged.connect(lambda param: self.sls.autolock_parameter(param.upper()))
-            # pdh
+        # pdh
         self.gui.PDH_freq.valueChanged.connect(lambda value: self.changePDHValue('frequency', value))
         self.gui.PDH_phasemodulation.valueChanged.connect(lambda value: self.changePDHValue('index', value))
         self.gui.PDH_phaseoffset.valueChanged.connect(lambda value: self.changePDHValue('phase', value))
         self.gui.PDH_filter.currentIndexChanged.connect(lambda value: self.changePDHValue('filter', value))
-            # servo
+        # servo
         self.gui.servo_param.currentTextChanged.connect(lambda target: self.changeServoTarget(target))
         self.gui.servo_set.valueChanged.connect(lambda value: self.changeServoValue('set', value))
         self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.changeServoValue('filter', value))
@@ -145,19 +146,28 @@ class SLS_client(SLS_gui):
         self.gui.autolock_attempts.setText(str(lockstatus[0]))
         self.gui.autolock_time.setText(autolock_time_formatted)
 
-    # SLOTS
-    def changePDHValue(self, param_name, param_value):
-        print('pdh: ' + str(param_name) + ': ' + str(param_value))
-        #self.sls.PDH(param_name, param_value)
 
+    # SLOTS
+    @inlineCallbacks
+    def changePDHValue(self, param_name, param_value):
+        yield self.sls.PDH(param_name, param_value)
+
+    @inlineCallbacks
     def changeServoTarget(self, target):
         print('target: ' + target)
-        #self.servo_target = target.lower()
-        #todo: get new values and update them
+        self.servo_target = target.lower()
+        servo_params = {'p': self.gui.servo_p, 'i': self.gui.servo_i,
+                  'd': self.gui.servo_d, 'set': self.gui.servo_set}
+        for param_name, gui_element in servo_params.items():
+            val = yield self.sls.servo(self.servo_target, param_name)
+            gui_element.setValue(val)
+        index = yield self.sls.servo(self.servo_target, 'filter')
+        self.gui.servo_filter.setCurrentIndex(index)
 
+    @inlineCallbacks
     def changeServoValue(self, param_name, param_value):
         print('servo: ' + str(param_name) + ': ' + str(param_value))
-        #self.sls.servo(self.servo_target, param_name, param_val)
+        yield self.sls.servo(self.servo_target, param_name, param_value)
 
     def closeEvent(self, event):
         self.cxn.disconnect()

@@ -154,7 +154,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
     @setting(411, 'servo', servo_target='s', param_name='s', param_val='?', returns='s')
     def servo(self, c, servo_target, param_name, param_val=None):
         '''
-        Adjust PID servo for given parameter
+        Adjust PID servo for given parameter.
         Arguments:
             servo_target    (string): target of the PID lock
             param_name      (string): the parameter to change

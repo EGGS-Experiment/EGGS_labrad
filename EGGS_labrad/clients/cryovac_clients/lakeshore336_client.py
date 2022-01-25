@@ -102,7 +102,7 @@ class lakeshore336_client(lakeshore336_gui):
         """
         # temperature
         self.gui.tempAll_record.clicked.connect(lambda status: self.record_temp(status))
-        # heater
+        # heaters
             # lockswitch
         self.gui.heatAll_lockswitch.toggled.connect(lambda status: self.lock_heaters(status))
         self.gui.heatAll_lockswitch.setChecked(False)
@@ -122,7 +122,6 @@ class lakeshore336_client(lakeshore336_gui):
             # current
         self.gui.heat1_p1.valueChanged.connect(lambda value: self.ls.heater_power(1, value))
         self.gui.heat2_p1.valueChanged.connect(lambda value: self.ls.heater_power(2, value))
-            # output
         return cxn
 
 
