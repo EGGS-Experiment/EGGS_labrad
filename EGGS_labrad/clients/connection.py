@@ -1,6 +1,13 @@
+"""
+Contains utilities to create connections to LabRAD.
+"""
+
+__all__ = ["connection", "connectAsync"]
+
+
+from labrad.wrappers import connectAsync
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-__all__ = ["connection"]
 
 class connection(object):
     '''
