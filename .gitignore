@@ -1,14 +1,17 @@
-#files in all folders
+# files in all folders
 **/*.pyc
 **/.DS_Store
 **/__pycache__
 **/*.pyon
 **/*.h5
 
-#all of .idea (pycharm's config files)
+# all of .idea (pycharm's config files)
 .idea
 **/.idea
 .idea/**
 
-#artiq stuff
+# artiq stuff
 **/*.pyon
+
+# stuff we produce
+**/*.txt
