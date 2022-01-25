@@ -20,7 +20,7 @@ from labrad.units import WithUnit
 from labrad.server import Signal, setting
 
 from twisted.internet.defer import returnValue, inlineCallbacks
-from EGGS_labrad.servers.serial.serialdeviceserver import SerialDeviceServer
+from EGGS_labrad.servers import SerialDeviceServer
 
 _SRS_EOL = '\r'
 

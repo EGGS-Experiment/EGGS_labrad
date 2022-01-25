@@ -21,7 +21,7 @@ from labrad.server import setting, Signal
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from EGGS_labrad.servers.serial.serialdeviceserver import SerialDeviceServer
+from EGGS_labrad.servers import SerialDeviceServer
 from EGGS_labrad.servers.server_classes import PollingServer
 
 _F70_EOL_CHAR = b'\r'

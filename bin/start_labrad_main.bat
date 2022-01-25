@@ -13,7 +13,8 @@ REM: Experiment Servers
 START /min CMD /c %LABRAD_ROOT%\bin\labrad\start_labrad_experiments.bat
 
 REM: Device Bus Servers
-START "GPIB Device Manager" /min CMD "/k activate labart && python %LABRAD_ROOT%\lib\servers\gpib\gpib_device_manager.py"
+START "GPIB Device Manager" /min CMD "/k activate labart && python %LABRAD_ROOT%\EGGS_labrad\servers\gpib\gpib_device_manager.py"
+TIMEOUT 1
 START /min CMD /c %LABRAD_ROOT%\bin\labrad\start_labrad_devices.bat
 
 REM: ARTIQ

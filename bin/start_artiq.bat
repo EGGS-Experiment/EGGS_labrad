@@ -28,9 +28,9 @@ IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
 ) ELSE (CALL SET ip_addr=192.168.1.28)
 
 REM: Start ARTIQ
-START "ARTIQ Master" CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ddb_name% --bind=%ip_addr%"
-START "ARTIQ Dashboard" /min CMD "/c artiq_dashboard"
-START "ARTIQ Controller Manager" /min CMD "/k artiq_ctlmgr"
+START "ARTIQ Master" /min CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ddb_name% --bind=%ip_addr%"
+START "ARTIQ Dashboard" /min CMD "/c TIMEOUT 2 && CALL artiq_dashboard"
+START "ARTIQ Controller Manager" /min CMD "/k TIMEOUT 2 && artiq_ctlmgr"
 
 REM Unset variables
 SET "argCount="
