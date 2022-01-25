@@ -15,17 +15,17 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
-from labrad.units import WithUnit
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
-
 from EGGS_labrad.lib.servers.server_classes import ARTIQServer
+
 _TTL_MAX_TIME_US = 10000
 _TTL_MIN_TIME_US = 1
+_RECORD_MAX_TIME_US = 100000
+_RECORD_MIN_TIME_US = 1
 
 
-class PMTServer(LabradServer, ARTIQServer):
+class PMTServer(ARTIQServer):
     """
     Controls the Hamamatsu H10892 PMT via ARTIQ.
     """
@@ -33,15 +33,15 @@ class PMTServer(LabradServer, ARTIQServer):
     name = 'PMT Server'
     regKey = 'PMTServer'
 
-    ddb_path = 'C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db.py'
     dma_name = 'PMT_exp'
-    dma_exp_file = "%LABRAD_ROOT%\\lib\\servers\\pmt\\pmt_server.py"
-    dataset_name = ''
+    dma_exp_file = "C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\lib\\servers\\pmt\\pmt_exp.py"
+    dataset_name = 'pmt_test_dataset'
 
     # SIGNALS
-    pressure_update = Signal(999999, 'signal: pressure update', '(ii)')
+    # pressure_update = Signal(999999, 'signal: pressure update', '(ii)')
 
     def initServer(self):
+        super().initServer()
         # declare PMT variables
         self.ttl_number = 0
         self.trigger_status = False
@@ -49,13 +49,13 @@ class PMTServer(LabradServer, ARTIQServer):
         self.bin_time_us = 10
         self.reset_time_us = 10
         self.length_us = 1000
-        self.edge_type = 'rising'
+        self.edge_method = 'rising'
         # get all input TTLs
-        artiq_devices = self.get_devices(self.ddb_path)
+        artiq_devices = self.get_devices()
         self.available_ttls = []
         for name, params in artiq_devices.items():
             # only get devices with named class
-            if ('class' not in params) and (params['class'] == 'TTLInOut'):
+            if ('class' in params) and (params['class'] == 'TTLInOut'):
                 self.available_ttls.append(name)
 
 
@@ -69,10 +69,11 @@ class PMTServer(LabradServer, ARTIQServer):
         Returns:
                         (str)   : the input TTL device name
         """
-        if chan_num in self.available_ttls:
-            self.ttl_number = chan_num
-        else:
-            raise Exception('Error: invalid TTL channel.')
+        if chan_num is not None:
+            if chan_num in self.available_ttls:
+                self.ttl_number = chan_num
+            else:
+                raise Exception('Error: invalid TTL channel.')
         return 'ttl' + str(self.ttl_number)
 
     @setting(221, 'Select Trigger', status='b', chan_num='i', returns='(bs)')
@@ -105,10 +106,11 @@ class PMTServer(LabradServer, ARTIQServer):
         Returns:
                     (int)   : the gate time in us
         """
-        if (time_us > _TTL_MIN_TIME_US) and (time_us < _TTL_MAX_TIME_US):
-            self.bin_time_us = time_us
-        else:
-            raise Exception('Error: invalid delay time. Must be in [1us, 10ms].')
+        if time_us is not None:
+            if (time_us >= _TTL_MIN_TIME_US) and (time_us <= _TTL_MAX_TIME_US):
+                self.bin_time_us = time_us
+            else:
+                raise Exception('Error: invalid delay time. Must be in [1us, 10ms].')
         return self.bin_time_us
 
     @setting(312, 'Gating Delay', time_us='i', returns='i')
@@ -120,31 +122,33 @@ class PMTServer(LabradServer, ARTIQServer):
         Returns:
                     (int)   : the delay time between bins in us
         """
-        if (time_us > _TTL_MIN_TIME_US) and (time_us < _TTL_MAX_TIME_US):
-            self.reset_time_us = time_us
-        else:
-            raise Exception('Error: invalid delay time. Must be in [1us, 10ms].')
+        if time_us is not None:
+            if (time_us >= _TTL_MIN_TIME_US) and (time_us <= _TTL_MAX_TIME_US):
+                self.reset_time_us = time_us
+            else:
+                raise Exception('Error: invalid delay time. Must be in [1us, 10ms].')
         return self.reset_time_us
 
-    @setting(313, 'Gating Edge', edge_type='s', returns='s')
-    def gateEdge(self, c, edge_type=None):
+    @setting(313, 'Gating Edge', edge_method='s', returns='s')
+    def gateEdge(self, c, edge_method=None):
         """
         Set the edge detection for each count.
         Arguments:
-            edge_type   (str)   : the edge detection type. Must be one of ('rising', 'falling', 'both').
+            edge_method (str)   : the edge detection type. Must be one of ('rising', 'falling', 'both').
         Returns:
                         (str)   : the edge detection type
         """
-        if edge_type.lower() in ('rising', 'falling', 'both'):
-            self.edge_type = edge_type
-        else:
-            raise Exception('Error: invalid edge type. Must be one of (rising, falling, both).')
-        return self.edge_type
+        if edge_method is not None:
+            if edge_method.lower() in ('rising', 'falling', 'both'):
+                self.edge_method = edge_method
+            else:
+                raise Exception('Error: invalid edge type. Must be one of (rising, falling, both).')
+        return self.edge_method
 
 
     # RECORDING
     @setting(411, 'Length', time_us='i', returns='i')
-    def length(self, c, time_us):
+    def length(self, c, time_us=None):
         """
         Set the record time (in us).
         Arguments:
@@ -152,7 +156,12 @@ class PMTServer(LabradServer, ARTIQServer):
         Returns:
                     (int)   : the length of time to record for
         """
-        self.length_us = time_us
+        if time_us is not None:
+            if (time_us > _RECORD_MIN_TIME_US) and (time_us < _RECORD_MAX_TIME_US):
+                self.length_us = time_us
+            else:
+                raise Exception('Error: invalid ***todo')
+        return self.length_us
 
 
     # RUN
@@ -161,9 +170,12 @@ class PMTServer(LabradServer, ARTIQServer):
         """
         Program the PMT sequence onto core DMA.
         """
-        yield self.runExperiment(self.dma_exp_file)
+        kwargs = {'ttl_number': self.ttl_number, 'trigger_ttl_number': self.trigger_ttl_number,
+                  'bin_time_us': self.bin_time_us, 'reset_time_us': self.reset_time_us,
+                  'length_us': self.length_us, 'edge_method': self.edge_method}
+        self.ps_rid = self.runExperiment(self.dma_exp_file, kwargs)
 
-    @setting(521, 'Start', returns='(*v, *i)')
+    @setting(521, 'Start', returns='*v')
     def start(self, c):
         """
         Start acquisition by running the core DMA experiment.
@@ -171,7 +183,7 @@ class PMTServer(LabradServer, ARTIQServer):
                     (*v, *i)    : (time array, count array)
         """
         yield self.DMArun(self.dma_name)
-        res = yield self.getDataset(self.dataset_name)
+        res = self.getDataset(self.dataset_name)
         returnValue(res)
 
 

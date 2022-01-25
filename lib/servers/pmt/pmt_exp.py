@@ -54,6 +54,7 @@ class PMT_experiment(EnvExperiment):
         date = datetime.now()
         self.dataset_name = 'pmt_{:s}_{:02d}_{:02d}_{:02d}{:02d}'.format(str(date.year), date.month, date.day,
                                                                          date.hour, date.minute)
+        self.dataset_name = 'pmt_test_dataset'
         self.set_dataset(self.dataset_name, zeros(self.num_bins), broadcast=True)
         self.setattr_dataset(self.dataset_name)
 
