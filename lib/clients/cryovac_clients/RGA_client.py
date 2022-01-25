@@ -106,6 +106,7 @@ class RGA_client(RGA_gui):
             print(e)
             self.buffer_readout.appendPlainText('Initialization failed.')
         return cxn
+
     def initializeGUI(self, cxn):
         """
         Connect signals to slots and other initializations.
