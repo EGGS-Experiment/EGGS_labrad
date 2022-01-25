@@ -69,14 +69,21 @@ class PMT_client(GUIClient):
         self.gui.edge_method.currentTextChanged.connect(lambda type: self.pmt.gating_edge(type))
         # buttons
         self.gui.program_button.clicked.connect(lambda: self.pmt.program())
-        self.gui.start_button.clicked.connect(lambda: self.pmt.start())
+        self.gui.program_button.clicked.connect(lambda: self.pmt.start())
         self.gui.lockswitch.toggled.connect(lambda status: self.lock(status))
 
 
     # SLOTS
     def lock(self, status):
-        self.gui.setEnabled(status)
-        self.gui.lockswitch.setEnabled(True)
+        self.gui.ttl_pmt.setEnabled(status)
+        self.gui.ttl_trigger.setEnabled(status)
+        self.gui.trigger_active.setEnabled(status)
+        self.gui.time_record.setEnabled(status)
+        self.gui.time_delay.setEnabled(status)
+        self.gui.time_record.setEnabled(status)
+        self.gui.edge_method.setEnabled(status)
+        self.gui.program_button.setEnabled(status)
+        self.gui.program_button.setEnabled(status)
 
 
 if __name__ == "__main__":
