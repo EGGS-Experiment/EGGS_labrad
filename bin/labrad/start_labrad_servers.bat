@@ -13,3 +13,10 @@ START "RF Server" /min CMD "/k activate labart && python %LABRAD_ROOT%\lib\serve
 
 REM: Lasers
 START "SLS Server" /min CMD "/k activate labart && python %LABRAD_ROOT%\lib\servers\lasers\sls_server.py"
+
+REM: ARTIQ
+START "ARTIQ Server" /min CMD "/k activate labart2 && python %LABRAD_ROOT%\lib\servers\ARTIQ\artiq_server.py"
+
+REM: Imaging
+START "PMT Server" /min CMD "/k activate labart2 && python %LABRAD_ROOT%\lib\servers\pmt\pmt_server.py"
+

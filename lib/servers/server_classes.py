@@ -135,7 +135,7 @@ class ARTIQServer(LabradServer):
 
 
     # STATUS
-    def devices(self, filepath):
+    def get_devices(self):
         """
         Returns the device_db dictionary.
         """
@@ -143,17 +143,23 @@ class ARTIQServer(LabradServer):
 
 
     # EXPERIMENTS
-    def runExperiment(self, file, *args, **kwargs):
+    def runExperiment(self, filepath, kwargs):
         """
         Run an experiment file.
         Arguments:
-            file    (str)   : the location of the experiment file
-            args    (str)   : the arguments to run the experiment with
+            filepath    (str)   : the location of the experiment file
+            args        (str)   : the arguments to run the experiment with
         Returns:
-                    (*str)  : the runID parameters of the experiment
+                        (*str)  : the runID parameters of the experiment
         """
-        #todo: schedule dma programming experiment
-        pass
+        ps_pipeline = 'PS'
+        ps_priority = 1
+        ps_expid = {'log_level': 30,
+                    'file': filepath,
+                    'class_name': None,
+                    'arguments': kwargs}
+        self.ps_rid = self.scheduler_client.submit(pipeline_name=ps_pipeline, expid=ps_expid, priority=ps_priority)
+        return(self.ps_rid)
 
 
     # DMA
@@ -163,7 +169,7 @@ class ARTIQServer(LabradServer):
         Arguments:
             handle_name (str)   : the handle of the DMA experiment.
         """
-        yield self.artiq.
+        yield self.artiq.runDMA(handle_name)
 
     # DATASETS
     def getDataset(self, dataset_name):
@@ -175,29 +181,3 @@ class ARTIQServer(LabradServer):
                             (?)     : the dataset
         """
         return self.datasetdb_client.get(dataset_name)
-
-
-
-    @setting(111, "Run Experiment", path='s', maxruns='i', returns='')
-    def runExperiment(self, c, path, maxruns = 1):
-        """
-        Run the experiment a given number of times.
-        Argument:
-            path    (string): the filepath to the ARTIQ experiment.
-            maxruns (int)   : the number of times to run the experiment
-        """
-
-
-    @setting(112, "Stop Experiment", returns='')
-    def stopSequence(self, c):
-        """
-        Stops any currently running sequence.
-        """
-        # check that an experiment is currently running
-        if self.ps_rid not in self.scheduler.get_status().keys():
-            raise Exception('Error: no experiment currently running')
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.scheduler.delete, self.ps_rid)
-        self.ps_rid = None
-        #todo: make resetting of ps_rid contingent on defertothread completion
-        self.inCommunication.release()

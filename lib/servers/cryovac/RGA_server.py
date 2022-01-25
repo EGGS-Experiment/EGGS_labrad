@@ -32,14 +32,14 @@ class RGA_Server(SerialDeviceServer):
 
     name = 'RGA Server'
     regKey = 'RGAServer'
-    port = 'COM48'
+    port = 'COM63'
     serNode = 'mongkok'
 
     timeout = WithUnit(8.0, 's')
     baudrate = 28800
 
     # SIGNALS
-    buffer_update = Signal(999999, 'signal: buffer_update', '(s, s)')
+    buffer_update = Signal(999999, 'signal: buffer_update', '(ss)')
 
 
     # STARTUP
@@ -94,10 +94,10 @@ class RGA_Server(SerialDeviceServer):
         resp = yield self._getter('IE')
         returnValue(int(resp))
 
-    @setting(221, 'Ionizer Emission Current', current=['', 'v', 's'], returns='v')
-    def emissionCurrent(self, c, current=None):
+    @setting(221, 'Ionizer Filament', current=['', 'v', 's'], returns='v')
+    def filament(self, c, current=None):
         """
-        Set the electron emission current (in mA).
+        Set the filament current (in mA). Also known as electron emission current.
         """
         if current is not None:
             if type(current) is float:
@@ -134,7 +134,6 @@ class RGA_Server(SerialDeviceServer):
         Calibrate the detector.
         """
         yield self._setter('CA', '')
-        #todo: see whether error prevents things
 
     @setting(312, 'Detector Noise Floor', level=['', 'i', 's'], returns='i')
     def noiseFloor(self, c, level=None):
@@ -148,7 +147,7 @@ class RGA_Server(SerialDeviceServer):
             elif type(level) is str:
                 if level != '*':
                     raise Exception('Invalid Input.')
-            yield self._setter('NF', level)
+            yield self._setter('NF', level, False)
         resp = yield self._getter('NF')
         returnValue(int(resp))
 
@@ -191,9 +190,7 @@ class RGA_Server(SerialDeviceServer):
                 if mass != '*':
                     raise Exception('Invalid Input.')
             # set value
-            yield self.ser.acquire()
-            yield self.ser.write('MI' + str(mass) + _SRS_EOL)
-            self.ser.release()
+            yield self._setter('MI', mass, False)
         # query
         resp = yield self._getter('MI')
         returnValue(int(resp))
@@ -211,9 +208,7 @@ class RGA_Server(SerialDeviceServer):
                 if mass != '*':
                     raise Exception('Invalid Input.')
             # set value
-            yield self.ser.acquire()
-            yield self.ser.write('MF' + str(mass) + _SRS_EOL)
-            self.ser.release()
+            yield self._setter('MF', mass, False)
         # query
         resp = yield self._getter('MF')
         returnValue(int(resp))
@@ -231,9 +226,7 @@ class RGA_Server(SerialDeviceServer):
                 if steps != '*':
                     raise Exception('Invalid Input.')
             # set value
-            yield self.ser.acquire()
-            yield self.ser.write('SA' + str(steps) + _SRS_EOL)
-            self.ser.release()
+            yield self._setter('SA', steps, False)
         # query
         resp = yield self._getter('SA')
         returnValue(int(resp))
@@ -301,7 +294,7 @@ class RGA_Server(SerialDeviceServer):
         resp = yield self.ser.read(bytes_to_read)
         self.ser.release()
         # process scan
-        current_arr = [int.from_bytes(resp[i:i+4], 'big') for i in range(0, bytes_to_read, 4)]
+        current_arr = [int.from_bytes(resp[i: i+4], 'big') for i in range(0, bytes_to_read, 4)]
         # create axis
         amu_arr = list(np.linspace(mass_initial, mass_final, num_points))
         returnValue([amu_arr, current_arr[:-1]])
@@ -316,12 +309,12 @@ class RGA_Server(SerialDeviceServer):
         # sanitize input
         if (mass < 0) or (mass > self.m_max):
             raise Exception('Invalid Input.')
-        #todo: get pressure conversion
         # start a single mass measurement
         msg = 'MR' + str(mass) + _SRS_EOL
         yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(4)
+        #todo: get pressure conversion
         # set the rods back to zero
         yield self.ser.write('MR0\r')
         self.ser.release()
@@ -353,21 +346,22 @@ class RGA_Server(SerialDeviceServer):
 
     # HELPER
     @inlineCallbacks
-    def _setter(self, chString, param):
+    def _setter(self, chString, param, resp=True):
         """
         Change device parameters.
         """
         msg = chString + str(param) + _SRS_EOL
+        status = ''
         # write and read response
         yield self.ser.acquire()
         yield self.ser.write(msg)
-        status = yield self.ser.read_line(_SRS_EOL)
+        if resp:
+            status = yield self.ser.read_line(_SRS_EOL)
         self.ser.release()
-        # process status byte echo for errors
-        # todo: convert to binary array then AND the errors
-        # convert string input into binary
-        status = format(int(status), '08b')
-        self.buffer_update(('status: ', status))
+        # convert status response to binary
+        if status != '':
+            status = format(int(status), '08b')
+            self.buffer_update(('status', status))
 
     @inlineCallbacks
     def _getter(self, chString):

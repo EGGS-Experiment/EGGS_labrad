@@ -1,5 +1,6 @@
 import numpy as np
 from datetime import datetime
+from time import sleep
 
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.lib.clients.cryovac_clients.RGA_gui import RGA_gui
@@ -17,6 +18,9 @@ class RGA_client(RGA_gui):
         self.gui.setupUi()
         self.reactor = reactor
         self.servers = ['RGA Server', 'Data Vault']
+        self.gui_elements = {'EE': self.gui.ionizer_ee, 'IE': self.gui.ionizer_ie, 'FL': self.gui.ionizer_fl,
+                             'VF': self.gui.ionizer_vf, 'HV': self.gui.detector_hv, 'NF': self.gui.detector_nf,
+                             'SA': self.gui.scan_sa, 'MI': self.gui.scan_mi, 'MF': self.gui.scan_mf}
         # initialization sequence
         d = self.connect()
         d.addCallback(self.initData)
@@ -48,7 +52,7 @@ class RGA_client(RGA_gui):
         # connect to signals
             # device parameters
         yield self.rga.signal__buffer_update(self.BUFFERID)
-        yield self.rga.addListener(listener=self.updateBuffer, source=None, ID=self.BUFFERID)
+        yield self.rga.addListener(listener=self.updateValues, source=None, ID=self.BUFFERID)
             # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
@@ -77,7 +81,7 @@ class RGA_client(RGA_gui):
             # ionizer
             ee_val = yield self.rga.ionizer_electron_energy()
             ie_val = yield self.rga.ionizer_ion_energy()
-            fl_val = yield self.rga.ionizer_emission_current()
+            fl_val = yield self.rga.ionizer_filament()
             vf_val = yield self.rga.ionizer_focus_voltage()
             self.gui.ionizer_ee.setValue(ee_val)
             self.gui.ionizer_ie.setCurrentIndex(ie_val)
@@ -99,25 +103,26 @@ class RGA_client(RGA_gui):
             self.setEnabled(True)
             self.buffer_readout.appendPlainText('Initialized.')
         except Exception as e:
+            print(e)
             self.buffer_readout.appendPlainText('Initialization failed.')
         return cxn
-
     def initializeGUI(self, cxn):
         """
         Connect signals to slots and other initializations.
         """
         # general
-        self.gui.initialize.clicked.connect(lambda: self.rga.initialize())
-        self.gui.calibrate_detector.clicked.connect(lambda: self.rga.detector_calibrate())
-        self.gui.general_tp.clicked.connect(lambda: self.rga.tpm_start())
+        # todo: degas, calibrate electrometer, mass lock
+        self.gui.initialize.clicked.connect(lambda: self.tempDisable('IN', self.rga.initialize))
+        self.gui.calibrate_detector.clicked.connect(lambda: self.tempDisable('CA', self.rga.detector_calibrate))
+        self.gui.general_tp.clicked.connect(lambda:  self.tempDisable('TP', self.rga.tpm_start))
         # ionizer
-        self.gui.ionizer_ee.valueChanged.connect(lambda value: self.rga.ionizer_electron_energy(int(value)))
-        self.gui.ionizer_ie.currentIndexChanged.connect(lambda index: self.rga.ionizer_ion_energy(index))
-        self.gui.ionizer_fl.valueChanged.connect(lambda value: self.rga.ionizer_emission_current(value))
-        self.gui.ionizer_vf.valueChanged.connect(lambda value: self.rga.ionizer_focus_voltage(value))
+        self.gui.ionizer_ee.valueChanged.connect(lambda value: self.tempDisable('EE', self.rga.ionizer_electron_energy, int(value)))
+        self.gui.ionizer_ie.currentIndexChanged.connect(lambda index: self.tempDisable('IE', self.rga.ionizer_ion_energy, index))
+        self.gui.ionizer_fl.valueChanged.connect(lambda value: self.tempDisable('FL', self.rga.ionizer_filament, value))
+        self.gui.ionizer_vf.valueChanged.connect(lambda value: self.tempDisable('VF', self.rga.ionizer_focus_voltage, int(value)))
         # detector
-        self.gui.detector_hv.valueChanged.connect(lambda value: self.rga.detector_cdem_voltage(int(value)))
-        self.gui.detector_nf.currentIndexChanged.connect(lambda index: self.rga.detector_noise_floor(index))
+        self.gui.detector_hv.valueChanged.connect(lambda value: self.tempDisable('HV', self.rga.detector_cdem_voltage, int(value)))
+        self.gui.detector_nf.currentIndexChanged.connect(lambda index: self.tempDisable('NF', self.rga.detector_noise_floor, index))
         # scan
         self.gui.scan_start.clicked.connect(lambda: self.startScan())
         # buffer
@@ -141,12 +146,32 @@ class RGA_client(RGA_gui):
             print(server_name + ' disconnected, disabling widget.')
             self.setEnabled(False)
 
-    def updateBuffer(self, c, data):
+    @inlineCallbacks
+    def tempDisable(self, element, func, *args):
+        print('scde')
+        try:
+            self.gui_elements[element].setEnabled(False)
+        except Exception as e:
+            print(e)
+        yield func(*args)
+
+    def updateValues(self, c, data):
         """
         Updates GUI when values are received from server.
         """
         param, value = data
-        self.gui.buffer_readout.appendPlainText('{}: {}'.format(param, value))
+        if param != 'status':
+            try:
+                class_type = self.gui_elements[param].__class__.__name__
+                if class_type == 'QDoubleSpinBox':
+                    self.gui_elements[param].setValue(float(value))
+                elif class_type == 'QComboBox':
+                    self.gui_elements[param].setCurrentIndex(int(value))
+            except Exception as e:
+                print(e)
+                self.gui.buffer_readout.appendPlainText('{}: {}'.format(param, value))
+            finally:
+                self.gui_elements[param].setEnabled(True)
 
 
     # SLOTS
@@ -156,32 +181,29 @@ class RGA_client(RGA_gui):
         Creates a new dataset to record pressure and
         tells polling loop to add data to data vault.
         """
+        # disable
+        self.gui.setEnabled(False)
         # set up datavault
         date = datetime.now()
         year = str(date.year)
         month = '{:02d}'.format(date.month)
-
         trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
         trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
         yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
         yield self.dv.new('SRS RGA Scan', [('Mass', 'amu')],
                           [('Scan', 'Current', '1e-16 A')], context=self.c_record)
-
         # get scan parameters from widgets
         mass_initial = int(self.gui.scan_mi.value())
         mass_final = int(self.gui.scan_mf.value())
         mass_step = int(self.gui.scan_sa.value())
         type = self.gui.scan_type.currentText()
         num_scans = int(self.gui.scan_num.value())
-
         # send scan parameters to RGA
         yield self.rga.scan_mass_initial(mass_initial)
         yield self.rga.scan_mass_final(mass_final)
         yield self.rga.scan_mass_steps(mass_step)
-
         # do scan
         self.gui.buffer_readout.appendPlainText('Starting scan...')
-        self.gui.setEnabled(False)
         x, y = yield self.rga.scan_start(type, num_scans)
         data_tmp = np.array([x, y]).transpose()
         yield self.dv.add_ex(data_tmp, context=self.c_record)

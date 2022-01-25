@@ -11,7 +11,8 @@ cxn = labrad.connect()
 # list of servers we want and their shorthand names
 server_dict = {
         'ni': 'niops03_server', 'tt': 'twistorr74_server', 'ls': 'lakeshore336_server',
-        'rga': 'rga_server', 'rf': 'rf_server', 'sls': 'sls_server', 'aq': 'artiq_server'
+        'rga': 'rga_server', 'rf': 'rf_server', 'sls': 'sls_server', 'aq': 'artiq_server',
+        'pmt': 'pmt_server'
         }
 
 for servers in server_dict.items():
