@@ -253,15 +253,14 @@ class RGA_Server(SerialDeviceServer):
         # check input
         if (num_scans < 0) or (num_scans > 255):
             raise Exception('Invalid Input.')
-
-        #todo: get pressure conversion
-
+        # get pressure conversion factor
+        sp = yield self._getter('SP')
+        sp = 1e-13 / float(sp)
         # get initial and final masses
         mass_initial = yield self._getter('MI')
         mass_initial = int(mass_initial)
         mass_final = yield self._getter('MF')
         mass_final = int(mass_final)
-
         # create scan message
         msg = None
         num_points = 0
@@ -294,7 +293,7 @@ class RGA_Server(SerialDeviceServer):
         resp = yield self.ser.read(bytes_to_read)
         self.ser.release()
         # process scan
-        current_arr = [int.from_bytes(resp[i: i+4], 'big') for i in range(0, bytes_to_read, 4)]
+        current_arr = [int.from_bytes(resp[i: i+4], 'little', signed=True) for i in range(0, bytes_to_read, 4)] * sp
         # create axis
         amu_arr = list(np.linspace(mass_initial, mass_final, num_points))
         returnValue([amu_arr, current_arr[:-1]])
@@ -314,13 +313,15 @@ class RGA_Server(SerialDeviceServer):
         yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(4)
-        # todo: get pressure conversion
         # set the rods back to zero
         yield self.ser.write('MR0\r')
         self.ser.release()
+        # get partial pressure conversion
+        st = yield self._getter('ST')
+        st = 1e-13 / float(st)
         # process and return the result
-        current = int.from_bytes(resp, 'big')
-        returnValue(current)
+        current = int.from_bytes(resp, 'little', signed=True)
+        returnValue(current * st)
 
 
     # TOTAL PRESSURE MEASUREMENT
@@ -332,16 +333,18 @@ class RGA_Server(SerialDeviceServer):
         # set the electron multiplier voltage to zero which
         # automatically enables total pressure measurement
         yield self._setter('HV', 0)
+        # get total pressure conversion factor
+        sp = yield self._getter('SP')
+        sp = 1e-13 / float(sp)
         # start a total pressure measurement
-        #todo: get pressure conversion
         msg = 'TP?' + _SRS_EOL
         yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(4)
         self.ser.release()
         # process and return result
-        pressure = int.from_bytes(resp, 'big')
-        returnValue(pressure)
+        current = int.from_bytes(resp, 'big')
+        returnValue(current * sp)
 
 
     # HELPER
