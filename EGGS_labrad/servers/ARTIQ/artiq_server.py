@@ -40,9 +40,9 @@ AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53X
                     'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2,
                     'AB3': AD53XX_READ_AB3}
 
-#     th1.inject(8, TTLOverride.level.value, 1)
-#     th1.inject(8, TTLOverride.oe.value, 1)
-#     th1.inject(8, TTLOverride.en.value, 1)
+#     shortcuts.inject(8, TTLOverride.level.value, 1)
+#     shortcuts.inject(8, TTLOverride.oe.value, 1)
+#     shortcuts.inject(8, TTLOverride.en.value, 1)
 
 # function imports
 import numpy as np
