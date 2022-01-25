@@ -17,11 +17,11 @@ from labrad.gpib import GPIBDeviceWrapper, GPIBManagedServer, ManagedDeviceServe
 __all__.extend(["DeviceWrapper", "ManagedDeviceServer", "GPIBDeviceWrapper", "GPIBManagedServer"])
 
 # serial servers
-from EGGS_labrad.lib.servers.serial import serialdeviceserver
-from EGGS_labrad.lib.servers.serial.serialdeviceserver import *
+from EGGS_labrad.servers.serial import serialdeviceserver
+from EGGS_labrad.servers.serial.serialdeviceserver import *
 __all__.extend(serialdeviceserver.__all__)
 
 # convenience servers
-from EGGS_labrad.lib.servers import server_classes
-from EGGS_labrad.lib.servers.server_classes import *
+from EGGS_labrad.servers import server_classes
+from EGGS_labrad.servers.server_classes import *
 __all__.append(server_classes.__all__)
