@@ -16,10 +16,11 @@ timeout = 20
 ### END NODE INFO
 """
 from labrad.units import WithUnit
-from labrad.server import setting, inlineCallbacks
+from labrad.server import setting, Signal, inlineCallbacks
 
 from twisted.internet.defer import returnValue
 from EGGS_labrad.lib.servers.serial.serialdeviceserver import SerialDeviceServer
+from EGGS_labrad.lib.servers.server_classes import PollingServer
 
 TERMINATOR = '\r\n'
 
@@ -38,6 +39,12 @@ class AMO8Server(SerialDeviceServer):
     baudrate = 38400
 
 
+    # SIGNALS
+    voltage_update = Signal(999999, 'signal: voltage update', '(iv)')
+    hv_update = Signal(999998, 'signal: hv update', '(vvvv)')
+    toggle_update = Signal(999997, 'signal: toggle update', '(ib)')
+
+
     # GENERAL
     @setting(11, 'Clear', returns='s')
     def clear(self, c):
@@ -52,12 +59,12 @@ class AMO8Server(SerialDeviceServer):
         self.ser.release()
         returnValue(resp)
 
-    @setting(12, 'Inputs', returns='((vv), (vv))')
+    @setting(12, 'Inputs', returns='(vvvv)')
     def inputs(self, c):
         """
         Read high voltage inputs and current draws.
         Returns:
-            (vvvv): ((HVin1, Iin1), (HVin2, Iin2))
+            (vvvv): (HVin1, HVin2, Iin1, Iin2)
         """
         yield self.ser.acquire()
         yield self.ser.write('HVin.r\r\n')
@@ -66,6 +73,7 @@ class AMO8Server(SerialDeviceServer):
         i1 = yield self.ser.read_line('\n')
         i2 = yield self.ser.read_line('\n')
         self.ser.release()
+        self.hv_update((v1, v2, i1, i2))
         returnValue(((float(v1), float(i1)), (float(v2), float(i2))))
 
 
@@ -99,6 +107,7 @@ class AMO8Server(SerialDeviceServer):
         # get response
         resp = yield self.ser.read_line('\r\n')
         self.ser.release()
+        self.toggle_update((channel, resp))
         returnValue(bool(resp))
 
 

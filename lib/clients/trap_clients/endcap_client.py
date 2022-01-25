@@ -56,6 +56,7 @@ class AMO8_channel(QFrame):
         yield self.resetswitch.setEnabled(status)
         yield self.dac.setEnabled(status)
 
+
 #todo: try client class
 
 class endcap_client(QWidget):

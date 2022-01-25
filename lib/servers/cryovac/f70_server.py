@@ -42,10 +42,11 @@ class F70Server(SerialDeviceServer, PollingServer):
     name = 'F70 Server'
     regKey = 'F70Server'
     serNode = 'MongKok'
-    #port = 'COM55'
+    port = None
 
     timeout = WithUnit(3.0, 's')
     baudrate = 9600
+
 
     # SIGNALS
     pressure_update = Signal(999999, 'signal: pressure update', '(ii)')
