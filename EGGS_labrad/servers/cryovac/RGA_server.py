@@ -293,10 +293,10 @@ class RGA_Server(SerialDeviceServer):
         resp = yield self.ser.read(bytes_to_read)
         self.ser.release()
         # process scan
-        current_arr = [int.from_bytes(resp[i: i+4], 'little', signed=True) for i in range(0, bytes_to_read, 4)] * sp
+        current_arr = np.array([int.from_bytes(resp[i: i+4], 'little', signed=True) for i in range(0, bytes_to_read, 4)])
         # create axis
-        amu_arr = list(np.linspace(mass_initial, mass_final, num_points))
-        returnValue([amu_arr, current_arr[:-1]])
+        amu_arr = np.linspace(mass_initial, mass_final, num_points)
+        returnValue([amu_arr, sp * current_arr[:-1]])
 
 
     # SINGLE MASS MEASUREMENT
