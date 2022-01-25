@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = AMO8 Server
+name = DC Server
 version = 1.0.0
-description = Controls the AMO8 Box
-instancename = AMO8 Server
+description = Communicates with the AMO8 box for control of all DC voltages.
+instancename = DCServer
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -25,13 +25,13 @@ from EGGS_labrad.lib.servers.server_classes import PollingServer
 TERMINATOR = '\r\n'
 
 
-class AMO8Server(SerialDeviceServer):
+class DCServer(SerialDeviceServer, PollingServer):
     """
-    Controls AMO8 Power Supply which controls ion pumps.
+    Communicates with the AMO8 box for control of all DC voltages.
     """
 
-    name = 'AMO8 Server'
-    regKey = 'AMO8 Server'
+    name = 'DC Server'
+    regKey = 'DCServer'
     serNode = 'MongKok'
     port = 'COM57'
 
@@ -165,6 +165,10 @@ class AMO8Server(SerialDeviceServer):
 
     # HELPER
     @inlineCallbacks
+    def _poll(self):
+        yield self.inputs(None)
+
+    @inlineCallbacks
     def _parse(self, data):
         resp = list()
         yield self.ser.acquire()
@@ -177,4 +181,4 @@ class AMO8Server(SerialDeviceServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(AMO8Server())
+    util.runServer(DCServer())

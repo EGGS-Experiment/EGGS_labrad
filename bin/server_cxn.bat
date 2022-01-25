@@ -12,7 +12,7 @@ cxn = labrad.connect()
 server_dict = {
         'ni': 'niops03_server', 'tt': 'twistorr74_server', 'ls': 'lakeshore336_server',
         'rga': 'rga_server', 'rf': 'rf_server', 'sls': 'sls_server', 'aq': 'artiq_server',
-        'pmt': 'pmt_server'
+        'pmt': 'pmt_server', 'dc': 'dc_server', 'fma': 'fma1700a_server'
         }
 
 for servers in server_dict.items():
