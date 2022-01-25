@@ -42,7 +42,6 @@ import warnings
 
 from twisted.application.internet import TCPClient
 from twisted.application.service import MultiService, Service
-from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from labrad import constants, protocol, util
@@ -367,6 +366,8 @@ def start_server(args):
     service.startService()
 
 def main(argv=sys.argv):
+    from twisted.internet import reactor
+
     @inlineCallbacks
     def start():
         try:

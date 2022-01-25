@@ -23,7 +23,7 @@ class EGGS_gui(QMainWindow):
 
     @inlineCallbacks
     def connect(self):
-        from EGGS_labrad.clients.connection import connection
+        from EGGS_labrad.clients.connect import connection
         self.cxn = connection(name=self.name)
         yield self.cxn.connect()
         return self.cxn

@@ -15,9 +15,9 @@ from EGGS_labrad.clients.client import *
 __all__.extend(client.__all__)
 
 # connection objects
-from EGGS_labrad.clients import connection
-from EGGS_labrad.clients.connection import *
-__all__.extend(connection.__all__)
+from EGGS_labrad.clients import connect
+from EGGS_labrad.clients.connect import *
+__all__.extend(connect.__all__)
 
 # widgets
 from EGGS_labrad.clients import Widgets

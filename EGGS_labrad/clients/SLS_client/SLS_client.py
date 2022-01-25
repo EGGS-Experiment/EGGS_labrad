@@ -114,11 +114,11 @@ class SLS_client(SLS_gui):
         self.gui.PDH_filter.currentIndexChanged.connect(lambda value: self.changePDHValue('filter', value))
         # servo
         self.gui.servo_param.currentTextChanged.connect(lambda target: self.changeServoTarget(target))
-        self.gui.servo_set.valueChanged.connect(lambda value: self.changeServoValue('set', value))
-        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.changeServoValue('filter', value))
-        self.gui.servo_p.valueChanged.connect(lambda value: self.changeServoValue('p', value))
-        self.gui.servo_i.valueChanged.connect(lambda value: self.changeServoValue('i', value))
-        self.gui.servo_d.valueChanged.connect(lambda value: self.changeServoValue('d', value))
+        self.gui.servo_set.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'set', value))
+        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.sls.servo(self.servo_target, 'filter', value))
+        self.gui.servo_p.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'p', value))
+        self.gui.servo_i.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'i', value))
+        self.gui.servo_d.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'd', value))
         return cxn
 
 
@@ -154,20 +154,20 @@ class SLS_client(SLS_gui):
 
     @inlineCallbacks
     def changeServoTarget(self, target):
-        print('target: ' + target)
         self.servo_target = target.lower()
         servo_params = {'p': self.gui.servo_p, 'i': self.gui.servo_i,
-                  'd': self.gui.servo_d, 'set': self.gui.servo_set}
+                        'd': self.gui.servo_d, 'set': self.gui.servo_set}
         for param_name, gui_element in servo_params.items():
             val = yield self.sls.servo(self.servo_target, param_name)
-            gui_element.setValue(val)
+            gui_element.setEnabled(False)
+            gui_element.setValue(float(val))
+            print('val:', val)
+            gui_element.setEnabled(True)
         index = yield self.sls.servo(self.servo_target, 'filter')
-        self.gui.servo_filter.setCurrentIndex(index)
+        self.gui.servo_filter.setEnabled(False)
+        self.gui.servo_filter.setCurrentIndex(int(index))
+        self.gui.servo_filter.setEnabled(True)
 
-    @inlineCallbacks
-    def changeServoValue(self, param_name, param_value):
-        print('servo: ' + str(param_name) + ': ' + str(param_value))
-        yield self.sls.servo(self.servo_target, param_name, param_value)
 
     def closeEvent(self, event):
         self.cxn.disconnect()

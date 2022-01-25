@@ -35,7 +35,7 @@ from __future__ import absolute_import
 import os
 import sys
 
-from twisted.internet import reactor
+
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 import labrad.util
@@ -82,6 +82,8 @@ def load_settings(cxn, name):
     returnValue(datadir)
 
 def main(argv=sys.argv):
+    from twisted.internet import reactor
+
     @inlineCallbacks
     def start():
         opts = labrad.util.parseServerOptions(name=DataVault.name)
