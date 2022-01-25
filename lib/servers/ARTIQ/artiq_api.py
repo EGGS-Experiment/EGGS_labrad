@@ -16,7 +16,7 @@ class ARTIQ_api(object):
     """
 
     def __init__(self):
-        self.devices = DeviceDB('C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db.py')
+        self.devices = DeviceDB('C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db_2.py')
         self.device_manager = DeviceManager(self.devices)
         self._getDevices()
         self._initializeDevices()
@@ -55,6 +55,8 @@ class ARTIQ_api(object):
             elif devicetype == 'CPLD':
                 self.urukul_list[name] = device
             elif devicetype == 'Zotino':
+                self.dac = device
+            elif devicetype == 'Fastino':
                 self.dac = device
             elif devicetype == 'Sampler':
                 self.sampler = device
@@ -111,10 +113,15 @@ class ARTIQ_api(object):
         self.core_dma.erase(sequencename)
 
     # DMA
-    @kernel
     def runDMA(self, handle_name):
+        handle = self.core_dma.get_handle(handle_name)
+        self._runDMA(handle)
+
+    @kernel
+    def _runDMA(self, handle):
         self.core.reset()
-        self.core_dma.playback_handle(self.core_dma.get_handle(handle_name))
+        self.core_dma.playback_handle(handle)
+        self.core.reset()
 
 
     # TTL

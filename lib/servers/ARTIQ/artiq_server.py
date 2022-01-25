@@ -129,9 +129,9 @@ class ARTIQ_Server(LabradServer):
         self.dds_list = list(self.api.dds_list.keys())
 
         # needed for moninj
-        ttl_all_list = self.ttlout_list + self.ttlin_list
-        self.ttl_channel_to_name = {self.device_db[ttl_name]['arguments']['channel']: ttl_name for ttl_name in ttl_all_list}
-        self.dac_channel = self.device_db['spi_zotino0']['arguments']['channel']
+        #ttl_all_list = self.ttlout_list + self.ttlin_list
+        #self.ttl_channel_to_name = {self.device_db[ttl_name]['arguments']['channel']: ttl_name for ttl_name in ttl_all_list}
+        #self.dac_channel = self.device_db['spi_zotino0']['arguments']['channel']
 
 
     # CORE
@@ -191,7 +191,7 @@ class ARTIQ_Server(LabradServer):
         completed_runs = yield self.datasets.get('numRuns')
         returnValue(completed_runs)
 
-    @setting(121, "DMA Run", handle_name='s', returns'')
+    @setting(121, "DMA Run", handle_name='s', returns='')
     def runDMA(self, c, handle_name):
         """
         Run an experiment from core DMA.
