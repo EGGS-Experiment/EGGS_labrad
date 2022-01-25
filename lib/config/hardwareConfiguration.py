@@ -1,4 +1,4 @@
-#imports
+# imports
 from EGGS_labrad.lib.servers.pulser.sequence.pulser_config import channelConfiguration as ChConfig
 from EGGS_labrad.lib.servers.pulser.sequence.pulser_config import ddsConfiguration as ddsConfig
 

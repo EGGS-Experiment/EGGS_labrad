@@ -36,7 +36,7 @@ _TT74_ERRORS_msg = {
     b'\x35': "Window disabled",
 }
 
-#todo: update all power and toggle
+
 class TwisTorr74Server(SerialDeviceServer, PollingServer):
     """
     Talks to the TwisTorr 74 Turbopump.
@@ -53,9 +53,9 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
 
     # SIGNALS
     pressure_update = Signal(999999, 'signal: pressure update', 'v')
-    energy_update = Signal(999998, 'signal: energy update', 'v')
-    speed_update = Signal(999997, 'signal: rpm update', 'v')
-    toggle_update = Signal(999996, 'signal: power update', 'b')
+    power_update = Signal(999998, 'signal: power update', 'v')
+    speed_update = Signal(999997, 'signal: speed update', 'v')
+    toggle_update = Signal(999996, 'signal: toggle update', 'b')
 
 
     # STARTUP
@@ -160,9 +160,8 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         # parse
         resp = yield self._parse(resp)
         resp = float(resp)
-        print(resp)
         # send signal and return value
-        self.energy_update(resp)
+        self.power_update(resp)
         returnValue(resp)
 
     @setting(213, 'Read Speed', returns='v')
