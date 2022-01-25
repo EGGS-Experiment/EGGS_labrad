@@ -12,7 +12,6 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def reset(self):
         yield self.write('*RST')
-        #todo: wait until finish reset
 
     @inlineCallbacks
     def clear_buffers(self):
@@ -263,7 +262,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
 
     def _parseByteData(data):
         """
-        Parse byte data.#todo document
+        Parse byte data.
         """
         # get tmc header in #NXXXXXXXXX format
         tmc_N = int(data[1])

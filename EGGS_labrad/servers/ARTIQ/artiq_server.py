@@ -140,7 +140,7 @@ class ARTIQ_Server(LabradServer):
         """
         Returns a list of ARTIQ devices.
         """
-        # self.ttlChanged(('ttl99', 0, True)) # todo: what? why is this here
+        # self.ttlChanged(('ttl99', 0, True))
         return list(self.device_db.keys())
 
 
@@ -199,6 +199,7 @@ class ARTIQ_Server(LabradServer):
             handle_name     (str)   : the name of the DMA sequence
         """
         yield self.api.runDMA(handle_name)
+        #todo: fix problem when we separately run experiment?
 
 
     # TTL
@@ -265,7 +266,6 @@ class ARTIQ_Server(LabradServer):
             param       (str)   : the parameter to set
             param_val   (float) : the value of the parameter
         """
-        #todo: check input
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
         if param.lower() in ('frequency', 'f'):
@@ -281,18 +281,21 @@ class ARTIQ_Server(LabradServer):
             yield self.api.setDDS(dds_name, 2, pow)
 
     @setting(326, "DDS Attenuation", dds_name='s', att='v', units='s', returns='')
-    def setDDSAtt(self, c, dds_name, att, units):
+    def setDDSAtt(self, c, dds_name, att, units='mu'):
         """
         Manually set a DDS to the given parameters.
         Arguments:
             dds_name (str)  : the name of the dds
             att     (float) : attenuation (in dBm)
+            units   (str)   : the voltage units, either 'mu' or 'v'
         """
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
-        #todo: check input
-        #todo: sort out units
         att_mu = att
+        if units.lower() == 'dbm':
+            att_mu = self.att_to_mu(att)
+        elif units.lower() != 'mu':
+            raise Exception('Error: invalid units.')
         yield self.api.setDDSAtt(dds_name, att_mu)
 
     @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns='w')
@@ -323,7 +326,7 @@ class ARTIQ_Server(LabradServer):
         yield self.api.initializeDAC()
 
     @setting(421, "DAC Set", dac_num='i', value='v', units='s', returns='')
-    def setDAC(self, c, dac_num, value, units):
+    def setDAC(self, c, dac_num, value, units='mu'):
         """
         Manually set the voltage of a DAC channel.
         Arguments:
@@ -339,12 +342,14 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = yield self.voltage_to_mu(value)
         elif units == 'mu':
             if (value < 0) or (value > 0xffff):
-                raise Exception('Error: invalid DAC Voltage!')
+                raise Exception('Error: invalid DAC voltage.')
             voltage_mu = int(value)
+        else:
+            raise Exception('Error: invalid units.')
         yield self.api.setDAC(dac_num, voltage_mu)
 
     @setting(422, "DAC Gain", dac_num='i', gain='v', units='s', returns='')
-    def setDACGain(self, c, dac_num, gain, units):
+    def setDACGain(self, c, dac_num, gain, units='mu'):
         """
         Manually set the gain of a DAC channel.
         Arguments:
@@ -356,17 +361,19 @@ class ARTIQ_Server(LabradServer):
         # only 32 channels per DAC
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
-        if units == 'todo':
+        if units in ('pct', 'frac', 'p', 'f'):
             gain_mu = int(gain * 0xffff) - 1
         elif units == 'mu':
             gain_mu = int(gain)
+        else:
+            raise Exception('Error: invalid units.')
         # check that gain is valid
         if gain < 0 or gain > 0xffff:
             raise Exception('Error: gain outside bounds of [0,1]')
         yield self.api.setDACGain(dac_num, gain_mu)
 
     @setting(423, "DAC Offset", dac_num='i', value='v', units='s', returns='')
-    def setDACOffset(self, c, dac_num, value, units):
+    def setDACOffset(self, c, dac_num, value, units='mu'):
         """
         Manually set the offset voltage of a DAC channel.
         Arguments:
@@ -382,16 +389,19 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = yield self.voltage_to_mu(value)
         elif units == 'mu':
             if (value < 0) or (value > 0xffff):
-                raise Exception('Error: invalid DAC Voltage!')
+                raise Exception('Error: invalid DAC voltage.')
             voltage_mu = int(value)
+        else:
+            raise Exception('Error: invalid units.')
         yield self.api.setDACOffset(dac_num, voltage_mu)
 
     @setting(424, "DAC OFS", value='v', units='s', returns='')
-    def setDACglobal(self, c, value, units):
+    def setDACglobal(self, c, value, units='mu'):
         """
         Write to the OFSx registers of the DAC.
         Arguments:
             value   (float) : the value to write to the DAC OFSx register
+            units   (str)   : the voltage units, either 'mu' or 'v'
             units   (str)   : the voltage units, either 'mu' or 'v'
         """
         voltage_mu = None
@@ -399,8 +409,10 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = yield self.voltage_to_mu(value)
         elif units == 'mu':
             if (value < 0) or (value > 0x2fff):
-                raise Exception('Error: invalid DAC Voltage!')
+                raise Exception('Error: invalid DAC voltage.')
             voltage_mu = int(value)
+        else:
+            raise Exception('Error: invalid units.')
         yield self.api.setDACGlobal(voltage_mu)
 
     @setting(431, "DAC Read", dac_num='i', reg='s', returns='i')
@@ -488,6 +500,5 @@ if __name__ == '__main__':
     from labrad import util
     util.runServer(ARTIQ_Server())
 
-#todo: check that device exists
 #todo: block during exp run
 #todo: moninj

@@ -314,7 +314,7 @@ class RGA_Server(SerialDeviceServer):
         yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(4)
-        #todo: get pressure conversion
+        # todo: get pressure conversion
         # set the rods back to zero
         yield self.ser.write('MR0\r')
         self.ser.release()

@@ -213,7 +213,6 @@ class Pulser_api(EnvExperiment):
         '''
         Force reprogram of all dds chips during initialization.
         '''
-        #todo: test
         self.core.reset()
         for device in self.dds_list:
             try:
