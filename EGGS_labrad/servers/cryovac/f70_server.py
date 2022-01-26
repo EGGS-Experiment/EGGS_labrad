@@ -20,9 +20,7 @@ from labrad.units import WithUnit
 from labrad.server import setting, Signal
 
 from twisted.internet.defer import inlineCallbacks, returnValue
-
-from EGGS_labrad.servers import SerialDeviceServer
-from EGGS_labrad.servers.server_classes import PollingServer
+from EGGS_labrad.servers import SerialDeviceServer, PollingServer
 
 _F70_EOL_CHAR = b'\r'
 _F70_START_CHAR = b'\x24'
@@ -33,6 +31,8 @@ _F70_OPERATION_STATUS_MSG = ('Local Off', 'Local On', 'Remote Off', 'Remote On',
 _F70_STATUS_BITS_MSG = ('System Power', 'Motor Temperature Alarm', 'Phase Fuse Alarm',
                    'Helium Temperature Alarm', 'Water Temperature Alarm', 'Water Flow Alarm',
                    'Oil Level Alarm', 'Pressure Alarm', 'Solenoid Power', 'Serial Write Enable')
+
+
 
 class F70Server(SerialDeviceServer, PollingServer):
     """

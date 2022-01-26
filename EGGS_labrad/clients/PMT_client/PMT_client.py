@@ -1,6 +1,6 @@
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient
-from EGGS_labrad.clients.pmt_client.pmt_gui import PMT_gui
+from EGGS_labrad.clients.PMT_client.PMT_gui import PMT_gui
 
 
 class PMT_client(GUIClient):

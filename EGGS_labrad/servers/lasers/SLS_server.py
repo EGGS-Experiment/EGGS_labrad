@@ -20,8 +20,7 @@ from labrad.types import Value
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from EGGS_labrad.servers.server_classes import PollingServer
-from EGGS_labrad.servers import SerialDeviceServer
+from EGGS_labrad.servers import PollingServer, SerialDeviceServer
 
 TERMINATOR = '\r\n'
 _SLS_EOL = '>'

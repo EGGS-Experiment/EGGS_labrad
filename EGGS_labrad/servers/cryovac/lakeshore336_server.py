@@ -25,7 +25,7 @@ import numpy as np
 from time import sleep
 from serial import PARITY_ODD
 
-from EGGS_labrad.servers.server_classes import PollingServer
+from EGGS_labrad.servers import PollingServer
 from EGGS_labrad.servers import SerialDeviceServer
 
 INPUT_CHANNELS = ['A', 'B', 'C', 'D', '0']

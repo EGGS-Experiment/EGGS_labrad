@@ -30,7 +30,7 @@ from serial import Serial
 from serial.tools import list_ports
 from serial.serialutil import SerialException
 
-from EGGS_labrad.servers.server_classes import PollingServer
+from EGGS_labrad.servers import PollingServer
 
 
 # ERRORS

@@ -17,7 +17,7 @@ timeout = 20
 """
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
-from EGGS_labrad.servers.server_classes import ARTIQServer
+from EGGS_labrad.servers import ARTIQServer
 
 _TTL_MAX_TIME_US = 10000
 _TTL_MIN_TIME_US = 1
@@ -34,7 +34,7 @@ class PMTServer(ARTIQServer):
     regKey = 'PMTServer'
 
     dma_name = 'PMT_exp'
-    dma_exp_file = "C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\servers\\pmt\\pmt_exp.py"
+    dma_exp_file = "C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\servers\\PMT\\PMT_exp.py"
     dataset_name = 'pmt_test_dataset'
 
     # SIGNALS

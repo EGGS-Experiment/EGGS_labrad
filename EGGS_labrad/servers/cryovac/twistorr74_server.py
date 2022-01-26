@@ -18,9 +18,7 @@ timeout = 5
 from labrad.types import Value
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
-
-from EGGS_labrad.servers.server_classes import PollingServer
-from EGGS_labrad.servers import SerialDeviceServer
+from EGGS_labrad.servers import PollingServer, SerialDeviceServer
 
 _TT74_STX_msg = b'\x02'
 _TT74_ADDR_msg = b'\x80'
