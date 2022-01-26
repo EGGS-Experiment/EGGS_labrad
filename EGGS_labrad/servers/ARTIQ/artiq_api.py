@@ -31,7 +31,7 @@ class ARTIQ_api(object):
         self.ttlin_list = {}
         self.dds_list = {}
         self.urukul_list = {}
-        self.dac = None
+        self.zotino = None
         self.sampler = None
 
         # assign names and devices
@@ -51,9 +51,9 @@ class ARTIQ_api(object):
             elif devicetype == 'CPLD':
                 self.urukul_list[name] = device
             elif devicetype == 'Zotino':
-                self.dac = device
+                self.zotino = device
             elif devicetype == 'Fastino':
-                self.dac = device
+                self.fastino = device
             elif devicetype == 'Sampler':
                 self.sampler = device
 
@@ -61,14 +61,6 @@ class ARTIQ_api(object):
         """
         Initialize devices that need to be initialized.
         """
-        # set ttlinout devices to be input
-        # self.core.reset()
-        # for device in self.ttlin_list.values():
-        #     try:
-        #         device.input()
-        #     except RTIOUnderflow:
-        #         self.core.break_realtime()
-        #         device.input()
         # initialize DDSs
         self.initializeDDSAll()
         # one-off device init
@@ -145,21 +137,8 @@ class ARTIQ_api(object):
         # initialize urukul cplds as well as dds channels
         device_list = list(self.urukul_list.values())
         device_list.extend(list(self.dds_list.values()))
-        self._initializeDDSAll(device_list)
-
-    @kernel
-    def _initializeDDSAll(self, device_list):
-        '''
-        Initialize all DDS channels as well as their CPLDs.
-        '''
-        self.core.reset()
         for device in device_list:
-            try:
-                device.init()
-                self.core.break_realtime()
-            except RTIOUnderflow:
-                self.core.break_realtime()
-                device.init()
+            self._initializeDDS(device)
 
     def initializeDDS(self, dds_name):
         dev = self.dds_list[dds_name]
@@ -256,7 +235,7 @@ class ARTIQ_api(object):
         Initialize the DAC.
         """
         self.core.reset()
-        self.dac.init()
+        self.zotino.init()
 
     @kernel
     def setDAC(self, channel_num, volt_mu):
@@ -264,8 +243,8 @@ class ARTIQ_api(object):
         Set the voltage of a DAC register.
         """
         self.core.reset()
-        self.dac.write_dac_mu(channel_num, volt_mu)
-        self.dac.load()
+        self.zotino.write_dac_mu(channel_num, volt_mu)
+        self.zotino.load()
 
     @kernel
     def setDACGain(self, channel_num, gain_mu):
@@ -273,8 +252,8 @@ class ARTIQ_api(object):
         Set the gain of a DAC channel.
         """
         self.core.reset()
-        self.dac.write_gain_mu(channel_num, gain_mu)
-        self.dac.load()
+        self.zotino.write_gain_mu(channel_num, gain_mu)
+        self.zotino.load()
 
     @kernel
     def setDACOffset(self, channel_num, volt_mu):
@@ -282,8 +261,8 @@ class ARTIQ_api(object):
         Set the voltage of a DAC offset register.
         """
         self.core.reset()
-        self.dac.write_offset_mu(channel_num, volt_mu)
-        self.dac.load()
+        self.zotino.write_offset_mu(channel_num, volt_mu)
+        self.zotino.load()
 
     @kernel
     def setDACGlobal(self, word):
@@ -291,7 +270,7 @@ class ARTIQ_api(object):
         Set the OFSx registers on the AD5372.
         """
         self.core.reset()
-        self.dac.write_offset_dacs_mu(word)
+        self.zotino.write_offset_dacs_mu(word)
 
     @kernel
     def readDAC(self, channel_num, address):
@@ -302,7 +281,7 @@ class ARTIQ_api(object):
         :return: the value of the register
         """
         self.core.reset()
-        reg_val = self.dac.read_reg(channel_num, address)
+        reg_val = self.zotino.read_reg(channel_num, address)
         return reg_val
 
     @kernel
@@ -343,3 +322,5 @@ class ARTIQ_api(object):
         """
         self.core.reset()
         return self.sampler.sample_mu(sampleArr)
+
+#todo: add fastino, phaser

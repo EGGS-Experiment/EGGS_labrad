@@ -159,7 +159,7 @@ class ARTIQServer(LabradServer):
                     'class_name': None,
                     'arguments': kwargs}
         self.ps_rid = self.scheduler_client.submit(pipeline_name=ps_pipeline, expid=ps_expid, priority=ps_priority)
-        return(self.ps_rid)
+        return self.ps_rid
 
 
     # DMA
