@@ -334,6 +334,7 @@ class ARTIQ_Server(LabradServer):
             value   (float) : the value to write to the DAC register
             units   (str)   : the voltage units, either 'mu' or 'v'
         """
+        #todo: ensure units are all okay across ALL settings
         voltage_mu = None
         # check that dac channel is valid
         if (dac_num > 31) or (dac_num < 0):

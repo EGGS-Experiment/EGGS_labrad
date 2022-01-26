@@ -284,6 +284,8 @@ class ARTIQ_api(object):
         reg_val = self.zotino.read_reg(channel_num, address)
         return reg_val
 
+
+
     @kernel
     def initializeSampler(self):
         """
