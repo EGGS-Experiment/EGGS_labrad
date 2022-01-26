@@ -514,5 +514,5 @@ if __name__ == '__main__':
     from labrad import util
     util.runServer(ARTIQ_Server())
 
-#todo: block during exp run
+#todo: notify others and block during exp run, use subscribers
 #todo: moninj
