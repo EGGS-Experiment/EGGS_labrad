@@ -11,7 +11,8 @@ class PMT_experiment(EnvExperiment):
     def build(self):
         # get arguments
         self.setattr_argument('ttl_number', NumberValue(ndecimals=0, step=1, min=0, max=23))
-        self.setattr_argument('trigger_ttl_number', NumberValue(default=-1, ndecimals=0, step=1, min=-1, max=23))
+        self.setattr_argument('trigger_ttl_number', NumberValue(default=1, ndecimals=0, step=1, min=-1, max=23))
+        self.setattr_argument('trigger_status', BooleanValue(default=False))
         self.setattr_argument('bin_time_us', NumberValue(default=1000, ndecimals=0, step=1, min=1, max=100))
         self.setattr_argument('reset_time_us', NumberValue(default=1000, ndecimals=0, step=1, min=1, max=100))
         self.setattr_argument('length_us', NumberValue(default=10000, ndecimals=0, step=1, min=1, max=100000))
@@ -26,16 +27,21 @@ class PMT_experiment(EnvExperiment):
         self.ttl_input = self.get_device(pmt_name)
         # get trigger input
         trigger_name = 'ttl{:d}'.format(self.trigger_ttl_number)
-        if self.trigger_ttl_number != -1:
+        if self.trigger_status:
             self.trigger_input = self.get_device(trigger_name)
         else:
             self.trigger_input = self.ttl_input
+
         # check TTLs are input
         if (self.ttl_input.__class__.__name__ != 'TTLInOut') or (self.trigger_input.__class__.__name__ != 'TTLInOut'):
-            raise Exception('Error: TTLs are output-only.')
+            raise Exception('Error: TTLs must be input.')
+        # check linetrigger and PMT are on different TTLs
+        elif self.ttl_number == self.trigger_ttl_number:
+            raise Exception('Error: Trigger and PMT TTLs cannot be the same.')
         # check edge gating input valid
-        if self.edge_method not in ('rising', 'falling', 'both'):
+        elif self.edge_method not in ('rising', 'falling', 'both'):
             raise Exception('Error: invalid edge method.')
+
         # get edge gating method
         if self.edge_method == 'rising':
             self.gate_edge = getattr(self.ttl_input, 'gate_rising_mu')
@@ -43,12 +49,12 @@ class PMT_experiment(EnvExperiment):
             self.gate_edge = getattr(self.ttl_input, 'gate_falling_mu')
         elif self.edge_method == 'both':
             self.gate_edge = getattr(self.ttl_input, 'gate_both_mu')
-        # process input values into mu
+
+        # convert input values into mu
         self.bin_time_mu = self.core.seconds_to_mu(self.bin_time_us * us)
         self.reset_time_mu = self.core.seconds_to_mu(self.reset_time_us * us)
         self.length_mu = self.core.seconds_to_mu(self.length_us * us)
         # composite values
-        self.total_edges = 0
         self.num_bins = int(self.length_us / (self.bin_time_us + self.reset_time_us))
         # create dataset
         date = datetime.now()
@@ -76,3 +82,4 @@ class PMT_experiment(EnvExperiment):
                 delay_mu(self.reset_time_mu)
             self.core.break_realtime()
         self.core.break_realtime()
+        #todo: implement linetrigger

@@ -184,15 +184,18 @@ class PMTServer(ARTIQServer):
 
 
     # RUN
-    @setting(511, 'Program', returns='')
+    @setting(511, 'Program', returns='i')
     def program(self, c):
         """
         Program the PMT sequence onto core DMA.
+        Returns:
+            (int)   : the programming experiment RID
         """
-        kwargs = {'ttl_number': 'ttl' + str(self.ttl_number), 'trigger_ttl_number': 'ttl' + str(self.trigger_ttl_number),
-                  'bin_time_us': self.bin_time_us, 'reset_time_us': self.reset_time_us,
-                  'length_us': self.length_us, 'edge_method': self.edge_method}
-        self.ps_rid = self.runExperiment(self.dma_exp_file, kwargs)
+        kwargs = {'ttl_number': self.ttl_number, 'trigger_ttl_number': self.trigger_ttl_number,
+                  'trigger_status': self.trigger_status, 'bin_time_us': self.bin_time_us,
+                  'reset_time_us': self.reset_time_us, 'length_us': self.length_us, 'edge_method': self.edge_method}
+        ps_rid = self.runExperiment(self.dma_exp_file, kwargs)
+        return ps_rid
 
     @setting(521, 'Start', returns='*v')
     def start(self, c):

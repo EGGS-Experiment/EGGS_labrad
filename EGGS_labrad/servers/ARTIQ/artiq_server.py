@@ -72,7 +72,7 @@ class ARTIQ_Server(LabradServer):
     # STARTUP
     def __init__(self):
         self.api = ARTIQ_api()
-        self.ddb_filepath = 'C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db.py'
+        self.ddb_filepath = 'C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db_2.py'
         self.device_manager = DeviceManager(DeviceDB(self.ddb_filepath))
         LabradServer.__init__(self)
 
