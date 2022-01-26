@@ -6,14 +6,12 @@ SETLOCAL EnableDelayedExpansion
 REM: Enter LabRAD/ARTIQ environment
 CALL conda activate labart2
 
-REM: Set variables
+REM: Parse arguments
 SET /a argCount=1
 SET /a ddb_ind=0
 SET "ddb_name="
 SET /a ip_ind=0
 SET "ip_addr="
-
-REM: Parse arguments
 FOR %%x IN (%*) DO (
     SET /a argCount+= 1
     IF "%%x"=="-ddb" (SET /a ddb_ind=!argCount!)
@@ -25,15 +23,14 @@ IF NOT %ddb_ind%==0 (CALL SET ddb_name=%ARTIQ_ROOT%\%%%ddb_ind%%
 ) ELSE (CALL SET ddb_name=%ARTIQ_ROOT%\device_db.py)
 
 IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
-) ELSE (CALL SET ip_addr=192.168.1.28)
+) ELSE (CALL SET ip_addr=localhost)
 
-REM: Start ARTIQ
+REM: Start ARTIQ interface
 START "ARTIQ Master" CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ddb_name% --bind=%ip_addr%"
-TIMEOUT 3
-START "ARTIQ Dashboard" /min CMD "/c TIMEOUT 2 && CALL artiq_dashboard"
+TIMEOUT 2 > NUL && START "ARTIQ Dashboard" /min CMD "/c TIMEOUT 2 && CALL artiq_dashboard"
 START "ARTIQ Controller Manager" /min CMD "/k TIMEOUT 2 && artiq_ctlmgr"
 
-REM Unset variables
+REM: Unset variables
 SET "argCount="
 SET "ddb_ind="
 SET "ip_ind="
