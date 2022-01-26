@@ -20,7 +20,7 @@ from labrad.server import setting
 from twisted.internet.defer import returnValue
 from EGGS_labrad.servers import ARTIQServer
 
-_HP6256B_AMPS_TO_mV = 40
+_HP6256B_AMPS_TO_mV = 2.5e-2
 
 
 class HP6256B_server(ARTIQServer):
@@ -58,7 +58,7 @@ class HP6256B_server(ARTIQServer):
         if amps is not None:
             if (amps < 0) and (amps > 23):
                 self.current = amps
-                yield self.artiq.dac_set(self.DAC_channel, amps / 40, 'v')
+                yield self.artiq.dac_set(self.DAC_channel, amps * _HP6256B_AMPS_TO_mV, 'v')
             else:
                 raise Exception('Error: invalid current.')
         returnValue(self.current)

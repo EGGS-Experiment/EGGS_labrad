@@ -32,7 +32,9 @@ class ARTIQ_api(object):
         self.dds_list = {}
         self.urukul_list = {}
         self.zotino = None
+        self.fastino = None
         self.sampler = None
+        self.phaser = None
 
         # assign names and devices
         for name, params in self.device_db.items():
@@ -100,6 +102,7 @@ class ARTIQ_api(object):
         self.core.reset()
         self.core_dma.erase(sequencename)
 
+
     # DMA
     def runDMA(self, handle_name):
         handle = self.core_dma.get_handle(handle_name)
@@ -132,7 +135,7 @@ class ARTIQ_api(object):
             dev.off()
 
 
-    # DDS
+    # DDS/URUKUL
     def initializeDDSAll(self):
         # initialize urukul cplds as well as dds channels
         device_list = list(self.urukul_list.values())
@@ -228,7 +231,7 @@ class ARTIQ_api(object):
         return dev.read64(reg)
 
 
-    # DAC
+    # DAC/ZOTINO
     @kernel
     def initializeDAC(self):
         """
@@ -285,7 +288,43 @@ class ARTIQ_api(object):
         return reg_val
 
 
+    # FASTINO
+    @kernel
+    def initializeFastino(self):
+        """
+        Initialize the Fastino.
+        """
+        self.core.break_realtime()
+        self.fastino.init()
 
+    @kernel
+    def setFastino(self, channel_num, volt_mu):
+        """
+        Set the voltage of a Fastino register.
+        """
+        self.core.break_realtime()
+        self.fastino.write_dac_mu(channel_num, volt_mu)
+        self.fastino.load()
+        self.core.break_realtime()
+        self.fastino.write(channel_num, volt_mu)
+
+    @kernel
+    def readFastino(self, addr):
+        self.core.break_realtime()
+        return self.fastino.read(addr)
+
+    @kernel
+    def continuousFastino(self, channel_mask):
+        """
+        Allowed a Fastino channel to be updated continuously regardless of incoming data.
+        """
+        self.core.break_realtime()
+        self.fastino.set_continuous(channel_mask)
+
+    # todo: fastino interpolating/CIC
+
+
+    # SAMPLER
     @kernel
     def initializeSampler(self):
         """
@@ -325,4 +364,6 @@ class ARTIQ_api(object):
         self.core.reset()
         return self.sampler.sample_mu(sampleArr)
 
-#todo: add fastino, phaser
+#todo: phaser
+#todo: try and speed up some functions by going more machine level
+#todo: try using break_realtime() instead of reset

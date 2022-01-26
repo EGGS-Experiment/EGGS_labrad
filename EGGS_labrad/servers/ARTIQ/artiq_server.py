@@ -50,13 +50,14 @@ import numpy as np
 TTLSIGNAL_ID = 828176
 DACSIGNAL_ID = 828175
 ADCSIGNAL_ID = 828174
+EXPSIGNAL_ID = 828173
 
 
 class ARTIQ_Server(LabradServer):
-
     """
-    The ARTIQ server.
     A bridge between LabRAD and ARTIQ.
+    Allows us to easily incorporate ARTIQ into LabRAD for
+    most things.
     """
 
     name = 'ARTIQ Server'
@@ -67,6 +68,7 @@ class ARTIQ_Server(LabradServer):
     ttlChanged = Signal(TTLSIGNAL_ID, 'signal: ttl changed', '(sib)')
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(ssv)')
     adcChanged = Signal(ADCSIGNAL_ID, 'signal: adc changed', '(ssv)')
+    expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(bi)')
 
 
     # STARTUP
@@ -118,7 +120,6 @@ class ARTIQ_Server(LabradServer):
         from artiq.coredevice.sampler import adc_mu_to_volt
         self.adc_mu_to_volt = adc_mu_to_volt
 
-    #@inlineCallbacks
     def _setDevices(self):
         """
         Get the list of devices in the ARTIQ box.
@@ -142,6 +143,17 @@ class ARTIQ_Server(LabradServer):
         """
         # self.ttlChanged(('ttl99', 0, True))
         return list(self.device_db.keys())
+
+    @setting(22, 'Get Dataset', dataset_name='s', returns='?')
+    def getDataset(self, c, dataset_name):
+        """
+        Returns a dataset from ARTIQ master.
+        Arguments:
+            dataset_name    (str)   : the name of the dataset
+        Returns:
+            the dataset
+        """
+        return self.datasets.get(dataset_name, archive=False)
 
 
     # PULSE SEQUENCING
@@ -339,9 +351,10 @@ class ARTIQ_Server(LabradServer):
         # check that dac channel is valid
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
-        if units == 'v':
+        # check that units and voltage are valid
+        if units.lower() in ('v', 'volt', 'voltage'):
             voltage_mu = yield self.voltage_to_mu(value)
-        elif units == 'mu':
+        elif units.lower() == 'mu':
             if (value < 0) or (value > 0xffff):
                 raise Exception('Error: invalid DAC voltage.')
             voltage_mu = int(value)
