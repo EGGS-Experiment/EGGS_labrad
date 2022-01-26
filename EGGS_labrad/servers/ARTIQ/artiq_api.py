@@ -99,7 +99,7 @@ class ARTIQ_api(object):
         """
         Erase the given pulse sequence from DMA.
         """
-        self.core.reset()
+        self.core.reset() # todo: is this necessary
         self.core_dma.erase(sequencename)
 
 
@@ -110,9 +110,9 @@ class ARTIQ_api(object):
 
     @kernel
     def _runDMA(self, handle):
-        self.core.reset()
+        self.core.break_realtime()
         self.core_dma.playback_handle(handle)
-        self.core.reset()
+        self.core.break_realtime()
 
 
     # TTL
@@ -367,3 +367,4 @@ class ARTIQ_api(object):
 #todo: phaser
 #todo: try and speed up some functions by going more machine level
 #todo: try using break_realtime() instead of reset
+
