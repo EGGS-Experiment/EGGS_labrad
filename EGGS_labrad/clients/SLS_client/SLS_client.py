@@ -1,70 +1,33 @@
 from twisted.internet.defer import inlineCallbacks
+
+from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.SLS_client.SLS_gui import SLS_gui
 
 _TIME_STR = '{0:d}:{1:d}:{2:d}'
 
 
-class SLS_client(SLS_gui):
+class SLS_client(GUIClient):
 
     name = 'SLS Client'
     AUTOLOCKID = 295372
+    servers = {'sls': 'SLS Server'}
 
 
-    def __init__(self, reactor, cxn=None, parent=None):
-        super().__init__()
-        self.cxn = cxn
-        self.gui = self
-        self.gui.setupUi()
-        self.reactor = reactor
-        self.servo_target = None
-        self.servers = ['SLS Server', 'Data Vault']
-        # initialization sequence
-        d = self.connect()
-        d.addCallback(self.initData)
-        d.addCallback(self.initializeGUI)
-
-
-    # SETUP
-    @inlineCallbacks
-    def connect(self):
+    def initClient(self):
         """
-        Creates an asynchronous connection to labrad.
+        Initialize the GUI.
         """
-        # create connection to labrad manager
-        if not self.cxn:
-            import os
-            LABRADHOST = os.environ['LABRADHOST']
-            from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync(LABRADHOST, name=self.name)
-
-        # get servers
-        try:
-            self.dv = self.cxn.data_vault
-            self.reg = self.cxn.registry
-            self.sls = self.cxn.sls_server
-        except Exception as e:
-            print('Required servers not connected, disabling widget.')
-            self.setEnabled(False)
-
-        # connect to signals
-            # device parameters
+        self.gui = SLS_gui(parent=self)
         yield self.sls.signal__autolock_update(self.AUTOLOCKID)
         yield self.sls.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
-            # server connections
-        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
-        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
-        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
-        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
-
-        # start device polling
+        # set up polling
         poll_params = yield self.sls.polling()
-        # only start polling if not started
         if not poll_params[0]:
             yield self.sls.polling(True, 5.0)
         return self.cxn
 
     @inlineCallbacks
-    def initData(self, cxn):
+    def initData(self):
         """
         Get startup data from servers and show on GUI.
         """
@@ -98,9 +61,8 @@ class SLS_client(SLS_gui):
         self.gui.servo_i.setValue(float(init_values['CurrentServoIntGain']))
         self.gui.servo_d.setValue(float(init_values['CurrentServoDiffGain']))
         self.gui.servo_filter.setCurrentIndex(int(init_values['CurrentServoOutputFilter']))
-        return cxn
 
-    def initializeGUI(self, cxn):
+    def initializeGUI(self):
         """
         Connect signals to slots and other initializations.
         """
@@ -119,24 +81,9 @@ class SLS_client(SLS_gui):
         self.gui.servo_p.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'p', value))
         self.gui.servo_i.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'i', value))
         self.gui.servo_d.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'd', value))
-        return cxn
 
 
     # SIGNALS
-    @inlineCallbacks
-    def on_connect(self, c, message):
-        server_name = message[1]
-        if server_name in self.servers:
-            print(server_name + ' reconnected, enabling widget.')
-            yield self.initData(self.cxn)
-            self.setEnabled(True)
-
-    def on_disconnect(self, c, message):
-        server_name = message[1]
-        if server_name in self.servers:
-            print(server_name + ' disconnected, disabling widget.')
-            self.setEnabled(False)
-
     def updateAutolock(self, c, lockstatus):
         """
         Updates GUI when values are received from server.
@@ -161,18 +108,11 @@ class SLS_client(SLS_gui):
             val = yield self.sls.servo(self.servo_target, param_name)
             gui_element.setEnabled(False)
             gui_element.setValue(float(val))
-            print('val:', val)
             gui_element.setEnabled(True)
         index = yield self.sls.servo(self.servo_target, 'filter')
         self.gui.servo_filter.setEnabled(False)
         self.gui.servo_filter.setCurrentIndex(int(index))
         self.gui.servo_filter.setEnabled(True)
-
-
-    def closeEvent(self, event):
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
 
 
     # HELPER

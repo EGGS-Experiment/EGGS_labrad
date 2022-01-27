@@ -8,6 +8,7 @@ class PMT_client(GUIClient):
 
     """
 
+    name = 'PMT Client'
     servers = {'pmt': 'PMT Server', 'artiq': 'ARTIQ Server'}
     #gui = PMT_gui
 
