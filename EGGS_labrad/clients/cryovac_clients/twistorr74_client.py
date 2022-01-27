@@ -29,9 +29,9 @@ class twistorr74_client(twistorr74_gui):
     def connect(self):
         """
         Creates an asynchronous connection to pump servers
-        and relevant labrad servers
+        and relevant utils servers
         """
-        # create labrad connection
+        # create utils connection
         if not self.cxn:
             import os
             LABRADHOST = os.environ['LABRADHOST']

@@ -116,7 +116,7 @@ class PMTServer(ARTIQServer):
 
 
     # GATING
-    @setting(311, 'Gating Time', time_us='i', returns='i')
+    @setting(311, 'Gating Time', time_us='v', returns='v')
     def gateTime(self, c, time_us=None):
         """
         Set the gate time.
@@ -132,7 +132,7 @@ class PMTServer(ARTIQServer):
                 raise Exception('Error: invalid delay time. Must be in [1us, 10ms].')
         return self.bin_time_us
 
-    @setting(312, 'Gating Delay', time_us='i', returns='i')
+    @setting(312, 'Gating Delay', time_us='v', returns='v')
     def gateDelay(self, c, time_us=None):
         """
         Set the delay time between bins.
@@ -166,7 +166,7 @@ class PMTServer(ARTIQServer):
 
 
     # RECORDING
-    @setting(411, 'Length', time_us='i', returns='i')
+    @setting(411, 'Length', time_us='v', returns='v')
     def length(self, c, time_us=None):
         """
         Set the record time (in us).
@@ -184,7 +184,7 @@ class PMTServer(ARTIQServer):
 
 
     # RUN
-    @setting(511, 'Program', returns='i')
+    @setting(511, 'Program', returns='v')
     def program(self, c):
         """
         Program the PMT sequence onto core DMA.

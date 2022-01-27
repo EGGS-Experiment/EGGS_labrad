@@ -12,48 +12,43 @@ class PMT_client(GUIClient):
     #gui = PMT_gui
 
 
-    @inlineCallbacks
-    def initClient(self, cxn):
+    def initClient(self):
         """
         Initialize the GUI.
         """
-        self.gui = yield PMT_gui(parent=self)
-        return cxn
+        self.gui = PMT_gui(parent=self)
 
     @inlineCallbacks
-    def initData(self, cxn):
+    def initData(self):
         """
         Get startup data from servers and show on GUI.
         """
-        try:
-            # get available TTLInOuts
-            ttl_list = yield self.pmt.ttl_available()
-            for ttl_name in ttl_list:
-                self.gui.ttl_pmt.addItem(str(ttl_name))
-                self.gui.ttl_trigger.addItem(str(ttl_name))
-            # devices
-            pmt_chan = yield self.pmt.ttl_pmt()
-            trig_chan = yield self.pmt.ttl_trigger()
-            trig_active = yield self.pmt.trigger_active()
-            self.gui.ttl_pmt.setCurrentIndex(pmt_chan)
-            self.gui.ttl_trigger.setCurrentIndex(trig_chan)
-            self.gui.trigger_active.setChecked(trig_active)
-            # timing
-            t_bin = yield self.pmt.gating_time()
-            t_delay = yield self.pmt.gating_delay()
-            t_length = yield self.pmt.length()
-            self.gui.time_record.setValue(t_bin)
-            self.gui.time_delay.setValue(t_delay)
-            self.gui.time_length.setValue(t_length)
-            # running
-            edge_method = yield self.pmt.gating_edge()
-            ind = self.gui.edge_method.findText(edge_method)
-            self.gui.edge_method.setCurrentIndex(ind)
-        except Exception as e:
-            print(e)
-        return cxn
+        # get available TTLInOuts
+        ttl_list = yield self.pmt.ttl_available()
+        for ttl_name in ttl_list:
+            self.gui.ttl_pmt.addItem(str(ttl_name))
+            self.gui.ttl_trigger.addItem(str(ttl_name))
+        # devices
+        pmt_chan = yield self.pmt.ttl_pmt()
+        trig_chan = yield self.pmt.ttl_trigger()
+        trig_active = yield self.pmt.trigger_active()
+        self.gui.ttl_pmt.setCurrentIndex(pmt_chan)
+        self.gui.ttl_trigger.setCurrentIndex(trig_chan)
+        self.gui.trigger_active.setChecked(trig_active)
+        # timing
+        t_bin = yield self.pmt.gating_time()
+        t_delay = yield self.pmt.gating_delay()
+        t_length = yield self.pmt.length()
+        self.gui.time_record.setValue(t_bin)
+        self.gui.time_delay.setValue(t_delay)
+        self.gui.time_length.setValue(t_length)
+        # running
+        edge_method = yield self.pmt.gating_edge()
+        ind = self.gui.edge_method.findText(edge_method)
+        self.gui.edge_method.setCurrentIndex(ind)
 
-    def initializeGUI(self, cxn):
+
+    def initializeGUI(self):
         """
         Connect signals to slots.
         """

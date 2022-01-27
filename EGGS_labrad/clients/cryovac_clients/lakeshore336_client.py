@@ -145,13 +145,12 @@ class lakeshore336_client(lakeshore336_gui):
     # SLOTS
     @inlineCallbacks
     def updateTemperature(self, c, temp):
-        self.gui.temp1.setText(str(temp[0]))
-        self.gui.temp2.setText(str(temp[1]))
-        self.gui.temp3.setText(str(temp[2]))
-        self.gui.temp4.setText(str(temp[3]))
+        self.gui.temp1.setText('{:.4f}'.format(temp[0]))
+        self.gui.temp2.setText('{:.4f}'.format(temp[1]))
+        self.gui.temp3.setText('{:.4f}'.format(temp[2]))
+        self.gui.temp4.setText('{:.4f}'.format(temp[3]))
         if self.recording == True:
-            elapsedtime = time.time() - self.starttime
-            yield self.dv.add(elapsedtime, temp[0], temp[1], temp[2], temp[3], context=self.c_record)
+            yield self.dv.add(time.time() - self.starttime, temp[0], temp[1], temp[2], temp[3], context=self.c_record)
 
     @inlineCallbacks
     def record_temp(self, status):
@@ -166,7 +165,6 @@ class lakeshore336_client(lakeshore336_gui):
             date = datetime.now()
             year = str(date.year)
             month = '{:02d}'.format(date.month)
-
             trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
             trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)

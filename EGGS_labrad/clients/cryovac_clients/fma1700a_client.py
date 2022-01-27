@@ -25,9 +25,9 @@ class fma1700a_client(fma1700a_gui):
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to labrad.
+        Creates an asynchronous connection to utils.
         """
-        # create labrad connection
+        # create utils connection
         if not self.cxn:
             import os
             LABRADHOST = os.environ['LABRADHOST']

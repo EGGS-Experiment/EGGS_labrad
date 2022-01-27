@@ -1,9 +1,11 @@
 import numpy as np
 from datetime import datetime
-from time import sleep
 
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients.cryovac_clients.RGA_gui import RGA_gui
+
+_RGA_ERRORS = {0: 'Communication Error', 1: 'Filament Error', 3: 'Multiplier Error',
+               4: 'Quadrupole Filter Error', 5: 'Electrometer Error', 6: 'Power Supply Error'}
 
 
 class RGA_client(RGA_gui):
@@ -31,9 +33,9 @@ class RGA_client(RGA_gui):
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to labrad.
+        Creates an asynchronous connection to utils.
         """
-        # create connection to labrad manager
+        # create connection to utils manager
         if not self.cxn:
             import os
             LABRADHOST = os.environ['LABRADHOST']
@@ -150,7 +152,6 @@ class RGA_client(RGA_gui):
 
     @inlineCallbacks
     def tempDisable(self, element, func, *args):
-        print('scde')
         try:
             self.gui_elements[element].setEnabled(False)
         except Exception as e:
@@ -174,6 +175,11 @@ class RGA_client(RGA_gui):
                 self.gui.buffer_readout.appendPlainText('{}: {}'.format(param, value))
             finally:
                 self.gui_elements[param].setEnabled(True)
+        else:
+            # print out RGA errors
+            for i in range(len(value)):
+                if value[- (i+1)] == '1':
+                    self.gui.buffer_readout.appendPlainText('Status: ' + _RGA_ERRORS[i])
 
 
     # SLOTS

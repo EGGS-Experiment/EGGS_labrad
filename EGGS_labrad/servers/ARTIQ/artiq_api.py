@@ -56,6 +56,7 @@ class ARTIQ_api(object):
                 self.zotino = device
             elif devicetype == 'Fastino':
                 self.fastino = device
+                self.zotino = device #todo remove
             elif devicetype == 'Sampler':
                 self.sampler = device
 
@@ -139,7 +140,7 @@ class ARTIQ_api(object):
     def initializeDDSAll(self):
         # initialize urukul cplds as well as dds channels
         device_list = list(self.urukul_list.values())
-        device_list.extend(list(self.dds_list.values()))
+        #device_list.extend(list(self.dds_list.values()))
         for device in device_list:
             self._initializeDDS(device)
 

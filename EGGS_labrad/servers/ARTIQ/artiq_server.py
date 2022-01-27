@@ -16,7 +16,7 @@ timeout = 20
 ### END NODE INFO
 """
 
-# labrad imports
+# utils imports
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
@@ -29,7 +29,6 @@ from artiq.master.worker_db import DeviceManager
 from sipyco.pc_rpc import Client
 
 # device imports
-from artiq.coredevice.comm_moninj import CommMonInj, TTLProbe, TTLOverride
 from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_POW, _AD9910_REG_ASF
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
                                     AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
@@ -40,9 +39,6 @@ AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53X
                     'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2,
                     'AB3': AD53XX_READ_AB3}
 
-#     shortcuts.inject(8, TTLOverride.level.value, 1)
-#     shortcuts.inject(8, TTLOverride.oe.value, 1)
-#     shortcuts.inject(8, TTLOverride.en.value, 1)
 
 # function imports
 import numpy as np
@@ -84,7 +80,6 @@ class ARTIQ_Server(LabradServer):
         yield self._setClients()
         yield self._setVariables()
         yield self._setDevices()
-        # self.ttlChanged(('ttl99', 0, True))
 
     def _setClients(self):
         """
@@ -128,11 +123,6 @@ class ARTIQ_Server(LabradServer):
         self.ttlout_list = list(self.api.ttlout_list.keys())
         self.ttlin_list = list(self.api.ttlin_list.keys())
         self.dds_list = list(self.api.dds_list.keys())
-
-        # needed for moninj
-        #ttl_all_list = self.ttlout_list + self.ttlin_list
-        #self.ttl_channel_to_name = {self.device_db[ttl_name]['arguments']['channel']: ttl_name for ttl_name in ttl_all_list}
-        #self.dac_channel = self.device_db['spi_zotino0']['arguments']['channel']
 
 
     # CORE
@@ -506,13 +496,9 @@ class ARTIQ_Server(LabradServer):
     def expireContext(self, c):
         self.listeners.remove(c.ID)
 
-    def stopServer(self):
-        self.core_moninj_task.cancel()
-
 
 if __name__ == '__main__':
     from labrad import util
     util.runServer(ARTIQ_Server())
 
 #todo: notify others and block during exp run, use subscribers
-#todo: moninj

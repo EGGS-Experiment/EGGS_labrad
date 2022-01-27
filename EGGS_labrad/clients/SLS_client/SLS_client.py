@@ -28,9 +28,9 @@ class SLS_client(SLS_gui):
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to labrad.
+        Creates an asynchronous connection to utils.
         """
-        # create connection to labrad manager
+        # create connection to utils manager
         if not self.cxn:
             import os
             LABRADHOST = os.environ['LABRADHOST']
