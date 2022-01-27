@@ -1,4 +1,4 @@
-#labrad and artiq imports
+#utils and artiq imports
 from labrad.server import LabradServer, setting, Signal
 from labrad.units import WithUnit
 from sequence import Sequence

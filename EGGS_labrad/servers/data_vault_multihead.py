@@ -106,7 +106,7 @@ class DataVaultConnector(Service):
 
     @inlineCallbacks
     def startService(self):
-        """Connect to labrad in a loop, reconnecting after connection loss."""
+        """Connect to utils in a loop, reconnecting after connection loss."""
         self.running = True
         while self.running:
             self.report('Connecting...')
@@ -149,7 +149,7 @@ class DataVaultConnector(Service):
         need separate logic to handle the old and new cases.
 
         Args:
-            dv (DataVaultMultihead): The labrad server object that we want to
+            dv (DataVaultMultihead): The utils server object that we want to
                 start.
 
         Returns:
@@ -303,7 +303,7 @@ class DataVaultServiceHost(MultiService):
 @inlineCallbacks
 def load_settings_registry(cxn):
     '''
-    Make a client connection to the labrad host specified in the
+    Make a client connection to the utils host specified in the
     environment (i.e., by the node server) and load the rest of the settings
     from there.
 

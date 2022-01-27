@@ -225,12 +225,12 @@ class DataVault(LabradServer):
         shape is a list of integers representing the shape of the array.
             For A scalar column, use [1].
         type is the column data type including a type tag if applicable.
-            Types use the labrad typetags, but only scalar types are supported.
+            Types use the utils typetags, but only scalar types are supported.
             i:          32 bit integer
             v:          double precision floating point with unit.  Use v[] for scalar
             c:          double precision complex with unit.  Use c[] for scalar
             s:          string.  The string must be plain ASCII or UTF-8 encoded 
-                        unicode (until labrad has native unicode support)
+                        unicode (until utils has native unicode support)
                         Arbitrary binary data is *not* supported.
             t:          Timestamp
         unit is the unit of the column.  Only applies for types 'v' and 'c'.
@@ -414,7 +414,7 @@ class DataVault(LabradServer):
     @setting(102, returns='s')
     def row_type(self, c):
         """
-        Returns the labrad typetag for a single row of the current dataset.
+        Returns the utils typetag for a single row of the current dataset.
         This is mostly only useful with the extended format.
         """
         ds = self.getDataset(c)
@@ -423,7 +423,7 @@ class DataVault(LabradServer):
     @setting(103, returns='s')
     def transpose_type(self, c):
         """
-        Returns the labrad typetag for accessing the dataset with the transpose commands
+        Returns the utils typetag for accessing the dataset with the transpose commands
         add_ex_t and get_ex_t.
         """
         ds = self.getDataset(c)

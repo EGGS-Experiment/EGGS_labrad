@@ -53,19 +53,19 @@ class UtilityMethodsTest(_TestCase):
     def test_labrad_urlencode(self):
         url_string = 'foo.bar/baz'
         actual = backend.labrad_urlencode(url_string)
-        expected = ('data:application/labrad;base64,'
+        expected = ('data:application/utils;base64,'
                     'AAAAAXMAAAAPAAAAC2Zvby5iYXIvYmF6')
         self.assertEqual(expected, actual)
 
     def test_labrad_urldecode(self):
-        url_string = ('data:application/labrad;base64,'
+        url_string = ('data:application/utils;base64,'
                       'AAAAAXMAAAAPAAAAC2Zvby5iYXIvYmF6')
         actual = backend.labrad_urldecode(url_string)
         expected = 'foo.bar/baz'
         self.assertEqual(expected, actual)
 
     def test_labrad_urldecode_incorrect_prefix(self):
-        url_string = ('labrad;base64,AAAAAXMAAAAPAAAAC2Zvby5iYXIvYmF6')
+        url_string = ('utils;base64,AAAAAXMAAAAPAAAAC2Zvby5iYXIvYmF6')
         self.assertRaises(
                 ValueError, backend.labrad_urldecode, url_string)
 

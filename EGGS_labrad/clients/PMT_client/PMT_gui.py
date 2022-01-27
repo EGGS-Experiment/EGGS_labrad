@@ -21,6 +21,7 @@ class PMT_gui(QFrame):
         self.show()
 
     def makeWidgets(self):
+        # self.setStyleSheet("background-color: gray;")
         self.setWindowTitle(self.name)
         # title
         self.title = QLabel(self.name)
@@ -89,7 +90,8 @@ class PMT_gui(QFrame):
         self.setLayout(layout)
 
     def closeEvent(self, event):
-        self.parent.close()
+        if self.parent is not None:
+            self.parent.close()
 
 
 if __name__ == "__main__":

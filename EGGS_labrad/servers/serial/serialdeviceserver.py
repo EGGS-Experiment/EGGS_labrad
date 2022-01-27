@@ -138,7 +138,7 @@ class SerialDeviceServer(LabradServer):
     """
     Base class for serial device servers.
     
-    Contains a number of methods useful for using labrad's serial server.
+    Contains a number of methods useful for using utils's serial server.
     Functionality comes from ser attribute, which represents a connection that performs reading and writing to a serial port.
     Subclasses should assign some or all of the following attributes:
     
@@ -167,7 +167,7 @@ class SerialDeviceServer(LabradServer):
     class SerialConnection(object):
         """
         Wrapper for our server's client connection to the serial server.
-        @raise labrad.types.Error: Error in opening serial connection   
+        @raise utils.types.Error: Error in opening serial connection
         """
         def __init__(self, ser, port, **kwargs):
             # parse kwargs
@@ -352,7 +352,7 @@ class SerialDeviceServer(LabradServer):
         """
         Find appropriate serial server.
         
-        @param serNode: Name of labrad node possessing desired serial port
+        @param serNode: Name of utils node possessing desired serial port
         
         @return: Key of serial server
         

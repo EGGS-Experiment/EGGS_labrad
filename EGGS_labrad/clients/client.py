@@ -27,21 +27,22 @@ class GUIClient(object):
         # set client variables
         super().__init__()
         #self.gui.__init__()
+        self.gui = None
         self.reactor = reactor
         self.cxn = cxn
         self.parent = parent
 
         # initialization sequence
         d = self._connectLabrad()
-        d.addCallback(self.initClient)
-        d.addCallback(self.initData)
-        d.addCallback(self.initializeGUI)
+        d.addCallback(self._initClient)
+        d.addCallback(self._initData)
+        d.addCallback(self._initializeGUI)
 
 
     @inlineCallbacks
     def _connectLabrad(self):
         """
-        Creates an asynchronous connection to core labrad servers
+        Creates an asynchronous connection to core utils servers
         and sets up server connection signals.
         """
         # only create connection if we aren't instantiated with one
@@ -52,15 +53,13 @@ class GUIClient(object):
             self.cxn = yield connectAsync('localhost', name=self.name)
 
         # set self.servers as class attributes
-        self.servers['registry'] = 'Registry'
-        self.servers['datavault'] = 'Data Vault'
-        try:
-            for var_name, server_name in self.servers.items():
-                server =self.cxn[server_name]
-                yield setattr(self, var_name, server)
-        except Exception as e:
-            print(e)
-            raise
+        self.servers['registry'] = 'registry'
+        self.servers['datavault'] = 'data_vault'
+        for var_name, server_name in self.servers.items():
+            try:
+                setattr(self, var_name, self.cxn[server_name])
+            except Exception as e:
+                setattr(self, var_name, None)
 
         # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
@@ -68,6 +67,36 @@ class GUIClient(object):
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
         yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
         return self.cxn
+
+    @inlineCallbacks
+    def _initClient(self, cxn):
+        try:
+            yield self.initClient()
+        except Exception as e:
+            self.gui.setEnabled(False)
+            print('Error in initClient.')
+            print(e)
+        return cxn
+
+    @inlineCallbacks
+    def _initData(self, cxn):
+        try:
+            yield self.initData()
+        except Exception as e:
+            self.gui.setEnabled(False)
+            print('Error in initData.')
+            print(e)
+        return cxn
+
+    @inlineCallbacks
+    def _initializeGUI(self, cxn):
+        try:
+            yield self.initializeGUI()
+        except Exception as e:
+            self.gui.setEnabled(False)
+            print('Error in initializeGUI.')
+            print(e)
+        return cxn
 
 
     # SHUTDOWN
@@ -87,51 +116,60 @@ class GUIClient(object):
 
 
     # SIGNALS
+    @inlineCallbacks
     def on_connect(self, c, message):
         server_name = message[1]
-        if server_name in self.servers.values():
+        yield self.cxn.refresh()
+        try:
+            server_ind = list(self.servers.values()).index(server_name)
             print(server_name + ' reconnected.')
-            self.initData()
-            # check to see if all necessary servers are connected
-            print('Enabling client.')
-            self.setEnabled(True)
+            # set server if connecting for first time
+            server_nickname = list(self.servers.keys())[server_ind]
+            if getattr(self, server_nickname) is None:
+                setattr(self, server_nickname, self.cxn[server_name])
+            # check if all required servers exist
+            #todo: convert servers to lowercase and _
+            if all(server_names.lower().replace(' ', '_') in self.cxn.servers for server_names in self.servers.values()):
+                print('Enabling client.')
+                yield self._initData(self.cxn)
+                self.gui.setEnabled(True)
+        except ValueError as e:
+            pass
+        except Exception as e:
+            print(e)
 
     def on_disconnect(self, c, message):
         server_name = message[1]
         if server_name in self.servers.values():
             print(server_name + ' disconnected, disabling client.')
-            self.setEnabled(False)
-
+            self.gui.setEnabled(False)
 
 
     # SUBCLASSED FUNCTIONS
-    def initClient(self, cxn):
+    def initClient(self):
         """
         To be subclassed.
         Called after _connectLabrad.
         Should be used to get necessary servers, setup listeners,
-        do polling, and other labrad stuff.
-        WARNING: cxn must be an argument and returned to enforce execution order.
+        do polling, and other utils stuff.
         """
-        return self.cxn
+        pass
 
-    def initData(self, cxn):
+    def initData(self):
         """
         To be subclassed.
         Called after initClient and upon server reconnections.
         Should be used to get initial state variables from servers.
-        WARNING: cxn must be an argument and returned to enforce execution order.
         """
-        return self.cxn
+        pass
 
-    def initializeGUI(self, cxn):
+    def initializeGUI(self):
         """
         To be subclassed.
         Called after initData.
         Should be used to connect GUI signals to slots and initialize the GUI.
-        WARNING: cxn must be an argument and returned to enforce execution order.
         """
-        return self.cxn
+        pass
 
 
 

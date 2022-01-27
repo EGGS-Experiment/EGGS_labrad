@@ -75,7 +75,7 @@ def parse_dependent(s):
 
 ## data-url support for storing parameters
 
-DATA_URL_PREFIX = 'data:application/labrad;base64,'
+DATA_URL_PREFIX = 'data:application/utils;base64,'
 
 
 class SessionStore(object):

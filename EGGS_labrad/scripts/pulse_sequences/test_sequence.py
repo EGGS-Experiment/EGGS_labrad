@@ -24,8 +24,8 @@ class sampleDDS(pulse_sequence):
 
 
 if __name__ == '__main__':
-    # import labrad
-    # cxn = labrad.connect()
+    # import utils
+    # cxn = utils.connect()
     # cs = sampleDDS(TreeDict())
     # cs.programSequence(cxn.pulser)
     # dds = cxn.pulser.human_readable_dds()

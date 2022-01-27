@@ -23,7 +23,7 @@ IF NOT %ddb_ind%==0 (CALL SET ddb_name=%ARTIQ_ROOT%\%%%ddb_ind%%
 ) ELSE (CALL SET ddb_name=%ARTIQ_ROOT%\device_db.py)
 
 IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
-) ELSE (CALL SET ip_addr=localhost)
+) ELSE (CALL SET ip_addr=127.0.0.1)
 
 REM: Start ARTIQ interface
 START "ARTIQ Master" CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ddb_name% --bind=%ip_addr%"

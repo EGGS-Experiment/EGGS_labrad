@@ -64,7 +64,7 @@ def load_settings(cxn, name):
     elif '__default__' in keys:
         datadir = yield reg.get('__default__')
     else:
-        default_datadir = os.path.expanduser('~/.labrad/vault')
+        default_datadir = os.path.expanduser('~/.utils/vault')
         print('Could not load repository location from registry.')
         print('Please enter data storage directory or hit enter to use')
         print('the default directory ({}):'.format(default_datadir))
