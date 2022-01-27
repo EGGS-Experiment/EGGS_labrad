@@ -436,8 +436,10 @@ class SerialDeviceServer(LabradServer):
             elif e.code == 1:
                 print('Error opening serial connection')
             else:
-                raise Exception('Unknown connection error')
+                print('Unknown connection error')
+            raise e
         except Exception as e:
+            self.ser = None
             print(e)
         else:
             return (self.serNode, self.port)
