@@ -42,7 +42,7 @@ class GUIClient(object):
     @inlineCallbacks
     def _connectLabrad(self):
         """
-        Creates an asynchronous connection to core utils servers
+        Creates an asynchronous connection to core labrad servers
         and sets up server connection signals.
         """
         # only create connection if we aren't instantiated with one
@@ -151,7 +151,7 @@ class GUIClient(object):
         To be subclassed.
         Called after _connectLabrad.
         Should be used to get necessary servers, setup listeners,
-        do polling, and other utils stuff.
+        do polling, and other labrad stuff.
         """
         pass
 

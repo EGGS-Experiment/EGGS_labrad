@@ -31,9 +31,9 @@ class niops03_client(niops03_gui):
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to utils
+        Creates an asynchronous connection to labrad
         """
-        # create utils connection
+        # create labrad connection
         if not self.cxn:
             import os
             LABRADHOST = os.environ['LABRADHOST']

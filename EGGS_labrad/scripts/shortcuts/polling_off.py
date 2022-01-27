@@ -1,4 +1,4 @@
-# connect to utils
+# connect to labrad
 import labrad
 cxn = labrad.connect()
 

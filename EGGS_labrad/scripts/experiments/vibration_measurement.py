@@ -41,7 +41,7 @@ class vibration_measurement(experiment):
         self.time_interval = self.p.VibrationMeasurement.dt
         self.time_interval = 2.0
 
-        #convert parameter to utils type
+        #convert parameter to labrad type
         #welp, todo
 
         #dataset context

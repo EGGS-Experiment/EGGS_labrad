@@ -5,7 +5,7 @@ Contains utilities to create connections to LabRAD.
 __all__ = ["connection"]
 
 
-#from utils.wrappers import connectAsync
+#from labrad.wrappers import connectAsync
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 
@@ -31,7 +31,7 @@ class connection(object):
     @inlineCallbacks
     def connect(self):
         """
-        Connect asynchronously to the utils manager.
+        Connect asynchronously to the labrad manager.
         """
         import os
         LABRADHOST = os.environ['LABRADHOST']

@@ -22,7 +22,7 @@ PRECISION = 12 # digits of precision to use when saving data
 DATA_FORMAT = '%%.%dG' % PRECISION
 FILE_TIMEOUT_SEC = 60 # how long to keep datafiles open if not accessed
 DATA_TIMEOUT = 300 # how long to keep data in memory if not accessed
-DATA_URL_PREFIX = 'data:application/utils;base64,'
+DATA_URL_PREFIX = 'data:application/labrad;base64,'
 
 
 def time_to_str(t):
@@ -166,7 +166,7 @@ class IniData(object):
                     # This is a hack to parse some very old data that seems to
                     # have been created by converting delphi data to python
                     # format. '1.#IND' was produced by old versions of the
-                    # delphi utils api when stringifying NaN.
+                    # delphi labrad api when stringifying NaN.
                     if '1.#IND' in raw:
                         data = T.evalLRData(raw.replace('1.#IND', 'nan'))
                     else:

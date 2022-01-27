@@ -16,7 +16,7 @@ timeout = 20
 ### END NODE INFO
 """
 
-#utils and artiq imports
+#labrad and artiq imports
 from labrad.server import LabradServer, setting, Signal
 from labrad.units import WithUnit
 from artiq.experiment import *

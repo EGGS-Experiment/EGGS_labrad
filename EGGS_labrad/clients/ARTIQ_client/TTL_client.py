@@ -79,7 +79,7 @@ class TTL_client(QWidget):
     @inlineCallbacks
     def getServers(self, cxn):
         """
-        Get required utils servers.
+        Get required labrad servers.
         """
         try:
             self.reg = self.cxn.registry

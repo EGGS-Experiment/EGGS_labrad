@@ -42,7 +42,7 @@ class test_experiment(experiment):
         self.param2 = self.p.Test.param2
         self.param2 = 10.0
 
-        #convert parameter to utils type
+        #convert parameter to labrad type
         #welp, todo
 
         #dataset context

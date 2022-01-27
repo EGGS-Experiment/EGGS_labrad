@@ -33,9 +33,9 @@ class RGA_client(RGA_gui):
     @inlineCallbacks
     def connect(self):
         """
-        Creates an asynchronous connection to utils.
+        Creates an asynchronous connection to labrad.
         """
-        # create connection to utils manager
+        # create connection to labrad manager
         if not self.cxn:
             import os
             LABRADHOST = os.environ['LABRADHOST']
