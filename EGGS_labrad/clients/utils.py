@@ -52,7 +52,9 @@ def runClient(client, **kwargs):
     # start reactor
     reactor.run()
     # close client on exit
+    #todo: fix quit error
     try:
         client.close()
     except Exception as e:
+        print(e)
         sys.exit(app.exec())

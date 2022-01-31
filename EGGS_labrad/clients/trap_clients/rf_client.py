@@ -1,6 +1,4 @@
-import os
-
-from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients.trap_clients.rf_gui import rf_gui
 
 from PyQt5.QtWidgets import QWidget

@@ -101,18 +101,12 @@ class GUIClient(object):
 
     # SHUTDOWN
     def close(self):
-        # stop polling all required servers
-        for var_name in self.servers.keys():
-            try:
-                server = getattr(self, var_name)
-                polling, _ = server.polling()
-                if polling:
-                    server.polling(False)
-            except Exception as e:
-                pass
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
+        try:
+            self.cxn.disconnect()
+            if self.reactor.running:
+                self.reactor.stop()
+        except Exception as e:
+            print(e)
 
 
     # SIGNALS
@@ -128,7 +122,6 @@ class GUIClient(object):
             if getattr(self, server_nickname) is None:
                 setattr(self, server_nickname, self.cxn[server_name])
             # check if all required servers exist
-            #todo: convert servers to lowercase and _
             if all(server_names.lower().replace(' ', '_') in self.cxn.servers for server_names in self.servers.values()):
                 print('Enabling client.')
                 yield self._initData(self.cxn)

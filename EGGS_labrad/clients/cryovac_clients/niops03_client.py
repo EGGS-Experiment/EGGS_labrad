@@ -99,20 +99,20 @@ class niops03_client(niops03_gui):
         self.gui.ip_voltage.setEnabled(ip_on)
         return cxn
 
-    @inlineCallbacks
     def initializeGUI(self, cxn):
         """
         Connect signals to slots and other initializations.
         """
-        #ion pump
+        # ion pump
         self.gui.ip_lockswitch.toggled.connect(lambda status: self.lock_niops(status))
         self.gui.ip_power.clicked.connect(lambda status: self.toggle_niops(status))
         self.gui.ip_record.toggled.connect(lambda status: self.record_pressure(status))
         self.gui.ip_voltage.valueChanged.connect(lambda voltage: self.set_ip_voltage(voltage))
-        #getter
+        # getter
         self.gui.np_lockswitch.toggled.connect(lambda status: self.lock_np(status))
         self.gui.np_mode.currentIndexChanged.connect(lambda index: self.mode_np(index))
         self.gui.np_power.clicked.connect(lambda status: self.toggle_np(status))
+        return cxn
 
 
     # SIGNALS

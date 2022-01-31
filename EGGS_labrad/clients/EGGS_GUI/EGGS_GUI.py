@@ -11,7 +11,7 @@ class EGGS_GUI(QMainWindow):
     LABRADPASSWORD = os.environ['LABRADPASSWORD']
 
     def __init__(self, reactor, clipboard=None, parent=None):
-        super(EGGS_gui, self).__init__(parent)
+        super(EGGS_GUI, self).__init__(parent)
         self.clipboard = clipboard
         self.reactor = reactor
         self.setWindowIcon(QIcon('/eggs.png'))
@@ -36,16 +36,18 @@ class EGGS_GUI(QMainWindow):
         # create subwidgets
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac = self.makeCryovacWidget(self.reactor, cxn)
-        trap = self.makeTrapWidget(self.reactor, cxn)
+        #trap = self.makeTrapWidget(self.reactor, cxn)
         lasers = self.makeLaserWidget(self.reactor, cxn)
         #imaging = self.makeImagingWidget(self.reactor, cxn)
+        #loading = self.makeLoadingWidget(self.reactor, cxn)
 
         # create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryovac, '&Cryovac')
-        self.tabWidget.addTab(trap, '&Trap')
+        #self.tabWidget.addTab(trap, '&Trap')
         self.tabWidget.addTab(lasers, '&Lasers')
         #self.tabWidget.addTab(imaging, '&Imaging')
+        #self.tabWidget.addTab(loading, '&Loading')
 
         # put it all together
         layout.addWidget(self.tabWidget)
@@ -90,29 +92,40 @@ class EGGS_GUI(QMainWindow):
     def makeTrapWidget(self, reactor, cxn):
         # import constituent widgets
         from EGGS_labrad.clients.trap_clients.rf_client import rf_client
-        from EGGS_labrad.clients.trap_clients.DC_client import DC_client
+        #from EGGS_labrad.clients.trap_clients.DC_client import DC_client
 
         # instantiate constituent widgets
         rf = rf_client(reactor, cxn.cxn)
-        dc = DC_client(reactor, cxn.cxn)
+        #dc = DC_client(reactor, cxn.cxn)
 
         # tab layout
         holder_widget = QWidget()
         holder_layout = QGridLayout()
         holder_widget.setLayout(holder_layout)
         holder_layout.addWidget(rf, 0, 0)
-        holder_layout.addWidget(dc, 0, 1)
+        #holder_layout.addWidget(dc, 0, 1)
         return holder_widget
 
     def makeLaserWidget(self, reactor, cxn):
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
         sls_widget = SLS_client(reactor, cxn=cxn.cxn)
-        return sls_widget
+
+        # tab layout
+        holder_widget = QWidget()
+        holder_layout = QGridLayout()
+        holder_widget.setLayout(holder_layout)
+        holder_layout.addWidget(sls_widget, 0, 0)
+        return holder_widget
 
     def makeImagingWidget(self, reactor, cxn):
         from EGGS_labrad.clients.PMT_client.PMT_client import PMT_client
-        PMT_widget = pmt_client(reactor, cxn=cxn.cxn)
+        PMT_widget = PMT_client(reactor, cxn=cxn.cxn)
         return PMT_widget
+
+    def makeLoadingWidget(self, reactor, cxn):
+        from EGGS_labrad.clients.loading_clients.HP6256B_client import HP6256B_client
+        HP6256B_widget = HP6256B_client(reactor, cxn=cxn.cxn)
+        return HP6256B_widget
 
     def closeEvent(self, event):
         self.cxn.disconnect()

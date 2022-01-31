@@ -21,6 +21,8 @@ class TextChangingButton(_TextChangingButton):
 class SLS_gui(QtWidgets.QFrame):
     def __init__(self):
         super().__init__()
+        self.setupUi()
+        self.show()
 
     def setupUi(self):
         shell_font = 'MS Shell Dlg 2'

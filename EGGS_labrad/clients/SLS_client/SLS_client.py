@@ -12,12 +12,12 @@ class SLS_client(GUIClient):
     AUTOLOCKID = 295372
     servers = {'sls': 'SLS Server'}
 
-
+    @inlineCallbacks
     def initClient(self):
         """
         Initialize the GUI.
         """
-        self.gui = SLS_gui(parent=self)
+        self.gui = SLS_gui()
         yield self.sls.signal__autolock_update(self.AUTOLOCKID)
         yield self.sls.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
         # set up polling
