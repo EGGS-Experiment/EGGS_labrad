@@ -1,98 +1,37 @@
-import time
+from time import time
 from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
+
+from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.cryovac_clients.fma1700a_gui import fma1700a_gui
 
 
-class fma1700a_client(fma1700a_gui):
+class fma1700a_client(GUIClient):
 
     name = 'FMA1700A Client'
     FLOWID = 877920
+    servers = {'fma': 'FMA1700A Server'}
 
-    def __init__(self, reactor, cxn=None, parent=None):
-        super().__init__()
-        self.cxn = cxn
-        self.gui = self
-        self.reactor = reactor
-        self.servers = ['FMA1700A Server', 'Data Vault']
-        # initialization sequence
-        d = self.connect()
-        d.addCallback(self.initData)
-        d.addCallback(self.initializeGUI)
+    def getgui(self):
+        if self.gui is None:
+            self.gui = fma1700a_gui()
+        return self.gui
 
-
-    # SETUP
     @inlineCallbacks
-    def connect(self):
-        """
-        Creates an asynchronous connection to labrad.
-        """
-        # create labrad connection
-        if not self.cxn:
-            import os
-            LABRADHOST = os.environ['LABRADHOST']
-            from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync(LABRADHOST, name=self.name)
-
-        # try to get servers
-        try:
-            self.dv = self.cxn.data_vault
-            self.fma = self.cxn.fma1700a_server
-        except Exception as e:
-            print(e)
-            raise
-
+    def initClient(self):
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
-
         # connect to signals
-            # device parameters
         yield self.fma.signal__flow_update(self.FLOWID)
         yield self.fma.addListener(listener=self.updateFlow, source=None, ID=self.FLOWID)
-            # server connections
-        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
-        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
-        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
-        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
-
-        # start device polling
+        # start device polling if not already started
         poll_params = yield self.fma.polling()
-        # only start polling if not started
         if not poll_params[0]:
             yield self.fma.polling(True, 5.0)
-        return self.cxn
 
-    #@inlineCallbacks
-    def initData(self, cxn):
-        """
-        Get startup data from servers and show on GUI.
-        """
-        return self.cxn
-
-    def initializeGUI(self, cxn):
-        """
-        Connect signals to slots and other initializations.
-        """
+    def initializeGUI(self):
         self.gui.record_button.toggled.connect(lambda status: self.record_flow(status))
-        return self.cxn
-
-
-    # SIGNALS
-    @inlineCallbacks
-    def on_connect(self, c, message):
-        server_name = message[1]
-        if server_name in self.servers:
-            print(server_name + ' reconnected, enabling widget.')
-            # get latest values
-            yield self.initData(self.cxn)
-            self.setEnabled(True)
-
-    def on_disconnect(self, c, message):
-        server_name = message[1]
-        if server_name in self.servers:
-            print(server_name + ' disconnected, disabling widget.')
-            self.setEnabled(False)
 
 
     # SLOTS
@@ -105,7 +44,7 @@ class fma1700a_client(fma1700a_gui):
         # set up datavault
         self.recording = status
         if self.recording:
-            self.starttime = time.time()
+            self.starttime = time()
             date = datetime.now()
             year = str(date.year)
             month = '{:02d}'.format(date.month)
@@ -125,11 +64,6 @@ class fma1700a_client(fma1700a_gui):
         if self.recording:
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, flow, context=self.c_record)
-
-    def closeEvent(self, event):
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
 
 
 if __name__ == "__main__":
