@@ -6,6 +6,10 @@ from EGGS_labrad.clients.Widgets import Lockswitch
 
 class RGA_gui(QFrame):
 
+    def __init__(self):
+        super().__init__()
+        self.setupUi()
+
     def setupUi(self):
         RGA_gui = self
         RGA_gui.setObjectName("RGA_gui")

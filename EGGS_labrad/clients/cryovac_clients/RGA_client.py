@@ -13,7 +13,7 @@ class RGA_client(GUIClient):
 
     name = 'RGA Client'
     BUFFERID = 289961
-    servers = {'sls': 'RGA Server'}
+    servers = {'rga': 'RGA Server'}
 
     def getgui(self):
         if self.gui is None:
@@ -33,8 +33,8 @@ class RGA_client(GUIClient):
     @inlineCallbacks
     def initData(self):
         # lock while starting up
-        self.setEnabled(False)
-        self.buffer_readout.appendPlainText('Initializing client...')
+        self.gui.setEnabled(False)
+        self.gui.buffer_readout.appendPlainText('Initializing client...')
         # lockswitches
         self.gui.general_lockswitch.setChecked(True)
         self.gui.ionizer_lockswitch.setChecked(True)
@@ -62,8 +62,8 @@ class RGA_client(GUIClient):
         self.gui.scan_mf.setValue(mf_val)
         self.gui.scan_sa.setValue(sa_val)
         # unlock after startup
-        self.setEnabled(True)
-        self.buffer_readout.appendPlainText('Initialized.')
+        self.gui.setEnabled(True)
+        self.gui.buffer_readout.appendPlainText('Initialized.')
 
     def initializeGUI(self):
         # general

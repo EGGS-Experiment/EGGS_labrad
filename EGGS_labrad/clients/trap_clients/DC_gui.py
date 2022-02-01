@@ -94,6 +94,9 @@ class DC_gui(QFrame):
             self.row_length = dcConfig.rowLength
         except Exception as e:
             print(e)
+        # create GUI
+        self.createGUI()
+
 
     def createGUI(self):
         self.setFrameStyle(0x0001 | 0x0030)

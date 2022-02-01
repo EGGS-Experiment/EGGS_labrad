@@ -8,7 +8,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 from twisted.internet.defer import inlineCallbacks
 
-__all__ = ["GUIClient", "RecordingClient"]
+__all__ = ["GUIClient", "PollingClient"]
 
 
 
@@ -187,7 +187,7 @@ class PollingClient(GUIClient):
         # todo: polling on each server
         for server_nickname in self.servers.keys():
             server = getattr(self, server_nickname)
-            if hasattr(server, 'polling')
+            if hasattr(server, 'polling'):
                 poll_params = yield server.polling()
                 if not poll_params[0]:
                     yield self.tt.polling(True, 5.0)

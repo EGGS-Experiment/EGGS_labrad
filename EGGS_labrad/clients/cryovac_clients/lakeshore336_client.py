@@ -15,7 +15,7 @@ class lakeshore336_client(GUIClient):
     def getgui(self):
         if self.gui is None:
             self.gui = lakeshore336_gui()
-        return lakeshore336_gui()
+        return self.gui
 
     @inlineCallbacks
     def initClient(self):
@@ -31,12 +31,11 @@ class lakeshore336_client(GUIClient):
         if not poll_params[0]:
             yield self.ls.polling(True, 5.0)
 
-
     @inlineCallbacks
     def initData(self):
         # setup
         res1, max_curr1 = yield self.ls.heater_setup(1)
-        self.gui.heat1_res.setCurrentIndex(res1-1)
+        self.gui.heat1_res.setCurrentIndex(res1 - 1)
         self.gui.heat1_curr.setValue(max_curr1)
         res2, max_curr2 = yield self.ls.heater_setup(2)
         self.gui.heat2_res.setCurrentIndex(res2 - 1)

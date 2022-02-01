@@ -7,6 +7,10 @@ from EGGS_labrad.clients.Widgets import TextChangingButton
 
 class lakeshore336_gui(QFrame):
 
+    def __init__(self):
+        super().__init__()
+        self.setupUi()
+
     def setupUi(self):
         shell_font = 'MS Shell Dlg 2'
         lakeshore336_gui = self
