@@ -1,59 +1,27 @@
 import time
 from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
+
+from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.cryovac_clients.lakeshore336_gui import lakeshore336_gui
 
 
-class lakeshore336_client(lakeshore336_gui):
+class lakeshore336_client(GUIClient):
 
     name = 'Lakeshore336 Client'
     TEMPERATUREID = 194538
+    servers = {'ls': 'Lakeshore336 Server'}
 
-    def __init__(self, reactor, cxn=None, parent=None):
-        super().__init__()
-        self.cxn = cxn
-        self.gui = self
-        self.gui.setupUi()
-        self.reactor = reactor
-        self.servers = ['Lakeshore336 Server', 'Data Vault']
-        # initialization sequence
-        d = self.connect()
-        d.addCallback(self.initData)
-        d.addCallback(self.initializeGUI)
+    def getgui(self):
+        if self.gui is None:
+            self.gui = lakeshore336_gui()
+        return lakeshore336_gui()
 
-
-    # SETUP
     @inlineCallbacks
-    def connect(self):
-        """
-        Creates an asynchronous connection to labrad.
-        """
-        # create labrad connection
-        if not self.cxn:
-            import os
-            LABRADHOST = os.environ['LABRADHOST']
-            from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync(LABRADHOST, name=self.name)
-
-        # check that required servers are online
-        try:
-            self.dv = yield self.cxn.data_vault
-            self.ls = yield self.cxn.lakeshore336_server
-            self.reg = yield self.cxn.registry
-        except Exception as e:
-            print('Required servers not connected, disabling widget.')
-            self.setEnabled(False)
-
+    def initClient(self):
         # connect to signals
-            # device parameters
         yield self.ls.signal__temperature_update(self.TEMPERATUREID)
         yield self.ls.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATUREID)
-            # server connections
-        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 111398, True)
-        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=111398)
-        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 111397, True)
-        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=111397)
-
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
@@ -63,13 +31,9 @@ class lakeshore336_client(lakeshore336_gui):
         if not poll_params[0]:
             yield self.ls.polling(True, 5.0)
 
-        return self.cxn
 
     @inlineCallbacks
-    def initData(self, cxn):
-        """
-        Get startup data from servers and show on GUI.
-        """
+    def initData(self):
         # setup
         res1, max_curr1 = yield self.ls.heater_setup(1)
         self.gui.heat1_res.setCurrentIndex(res1-1)
@@ -94,12 +58,8 @@ class lakeshore336_client(lakeshore336_gui):
         self.gui.heat1_p1.setValue(pow1)
         pow2 = yield self.ls.heater_power(2)
         self.gui.heat2_p1.setValue(pow2)
-        return cxn
 
-    def initializeGUI(self, cxn):
-        """
-        Connect signals to slots and other initializations.
-        """
+    def initializeGUI(self):
         # temperature
         self.gui.tempAll_record.clicked.connect(lambda status: self.record_temp(status))
         # heaters
@@ -122,24 +82,6 @@ class lakeshore336_client(lakeshore336_gui):
             # current
         self.gui.heat1_p1.valueChanged.connect(lambda value: self.ls.heater_power(1, value))
         self.gui.heat2_p1.valueChanged.connect(lambda value: self.ls.heater_power(2, value))
-        return cxn
-
-
-    # SIGNALS
-    @inlineCallbacks
-    def on_connect(self, c, message):
-        server_name = message[1]
-        if server_name in self.servers:
-            print(server_name + ' reconnected, enabling widget.')
-            # get latest values
-            yield self.initData(self.cxn)
-            self.setEnabled(True)
-
-    def on_disconnect(self, c, message):
-        server_name = message[1]
-        if server_name in self.servers:
-            print(server_name + ' disconnected, disabling widget.')
-            self.setEnabled(False)
 
 
     # SLOTS
@@ -149,7 +91,7 @@ class lakeshore336_client(lakeshore336_gui):
         self.gui.temp2.setText('{:.4f}'.format(temp[1]))
         self.gui.temp3.setText('{:.4f}'.format(temp[2]))
         self.gui.temp4.setText('{:.4f}'.format(temp[3]))
-        if self.recording == True:
+        if self.recording:
             yield self.dv.add(time.time() - self.starttime, temp[0], temp[1], temp[2], temp[3], context=self.c_record)
 
     @inlineCallbacks
@@ -160,7 +102,7 @@ class lakeshore336_client(lakeshore336_gui):
         """
         # set up datavault
         self.recording = status
-        if self.recording == True:
+        if self.recording:
             self.starttime = time.time()
             date = datetime.now()
             year = str(date.year)
@@ -186,7 +128,6 @@ class lakeshore336_client(lakeshore336_gui):
         self.gui.heat1_p1.setEnabled(status)
         self.gui.heat1_set.setEnabled(status)
         self.gui.heat1_mode.setEnabled(status)
-
         # heater 2
         self.gui.heat2_in.setEnabled(status)
         self.gui.heat2_res.setEnabled(status)
@@ -194,40 +135,6 @@ class lakeshore336_client(lakeshore336_gui):
         self.gui.heat2_range.setEnabled(status)
         self.gui.heat2_p1.setEnabled(status)
         self.gui.heat2_set.setEnabled(status)
-
-    @inlineCallbacks
-    def heater_setup(self, chan, res, max_curr):
-        """
-        Set up the heater.
-        """
-        yield self.ls.heater_setup(chan, res, max_curr)
-
-    @inlineCallbacks
-    def heater_mode(self, chan, mode, input):
-        """
-        Set the heater mode.
-        """
-        yield self.ls.heater_mode(chan, mode, input)
-
-    @inlineCallbacks
-    def heater_range(self, chan, range):
-        """
-        Set the heater range.
-        """
-        yield self.ls.heater_range(chan, range)
-
-    @inlineCallbacks
-    def heater_power(self, chan, curr):
-        """
-        Set the heater power.
-        """
-        yield self.ls.heater_power(chan, curr)
-
-
-    def closeEvent(self, event):
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
 
 
 if __name__ == "__main__":

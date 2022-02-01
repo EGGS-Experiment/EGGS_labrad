@@ -21,7 +21,7 @@ START "Labrad Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 
 REM: Don't open any servers if raw flag is active
-IF "%%x"=="-r" (GOTO SHELL)
+IF %raw_flag%==1 (GOTO SHELL)
 
 REM: Experiment Servers
 START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_experiments.bat

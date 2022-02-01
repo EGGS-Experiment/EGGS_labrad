@@ -351,11 +351,8 @@ class SerialDeviceServer(LabradServer):
     def findSerial(self, serNode=None):
         """
         Find appropriate serial server.
-        
         @param serNode: Name of labrad node possessing desired serial port
-        
         @return: Key of serial server
-        
         @raise SerialConnectionError: Error code 0.  Could not find desired serial server.
         """
         if not serNode: serNode = self.serNode
@@ -373,7 +370,6 @@ class SerialDeviceServer(LabradServer):
         
         @param serNode: Name of node of desired serial server
         @param potMatch: Server name of potential match
-        
         @return: boolean indicating comparison result
         """
         serMatch = 'serial' in potMatch.lower()

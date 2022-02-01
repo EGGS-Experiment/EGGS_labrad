@@ -3,13 +3,13 @@ Base class for building PyQt5 GUI clients for LabRAD.
 """
 
 # imports
-from abc import ABC, abstractmethod
+from os import _exit, environ
 from datetime import datetime
+from abc import ABC, abstractmethod
 from twisted.internet.defer import inlineCallbacks
 
 __all__ = ["GUIClient", "RecordingClient"]
 
-import os
 
 
 class GUIClient(ABC):
@@ -43,8 +43,7 @@ class GUIClient(ABC):
         """
         # only create connection if we aren't instantiated with one
         if not self.cxn:
-            import os
-            LABRADHOST = os.environ['LABRADHOST']
+            LABRADHOST = environ['LABRADHOST']
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync('localhost', name=self.name)
 
@@ -100,10 +99,10 @@ class GUIClient(ABC):
             self.cxn.disconnect()
             if self.reactor.running:
                 self.reactor.stop()
-            os._exit(0)
+            _exit(0)
         except Exception as e:
             print(e)
-            os._exit(0)
+            _exit(0)
 
 
     # SIGNALS
