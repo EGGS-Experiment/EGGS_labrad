@@ -47,6 +47,7 @@ class QSerialConnection(QFrame):
         self.verticalLayout_3.addLayout(self.horizontalLayout)
 
 
+
 class SerialConnection_Client(QSerialConnection):
 
     name = 'SerialConnection Client'
@@ -233,5 +234,4 @@ class SerialConnection_Client(QSerialConnection):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI, runClient
-    #runGUI(QSerialConnection)
     runClient(SerialConnection_Client, server='Lakeshore336 Server')
