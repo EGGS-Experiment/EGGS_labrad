@@ -3,41 +3,37 @@ Base class for building PyQt5 GUI clients for LabRAD.
 """
 
 # imports
+from abc import ABC, abstractmethod
 from datetime import datetime
-from twisted.internet.defer import inlineCallbacks, ensureDeferred
+from twisted.internet.defer import inlineCallbacks
 
 __all__ = ["GUIClient", "RecordingClient"]
 
+import os
 
-class GUIClient(object):
+
+class GUIClient(ABC):
     """
     Creates a client from a single GUI file.
     """
 
     name = None
     servers = {}
-    #gui = None
+    gui = None
 
     # STARTUP
     def __init__(self, reactor, cxn=None, parent=None):
-        # set parent to GUI file
-        #th1 = type(self.__class__.__name__, (self.gui, object), dict(self.__class__.__dict__))
-        #super(self.__class__).__init__()
-        #super(GUIClient, self).__init__()
         # set client variables
         super().__init__()
-        #self.gui.__init__()
-        self.gui = None
         self.reactor = reactor
         self.cxn = cxn
         self.parent = parent
-
+        self.getgui()
         # initialization sequence
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._initData)
         d.addCallback(self._initializeGUI)
-
 
     @inlineCallbacks
     def _connectLabrad(self):
@@ -60,7 +56,6 @@ class GUIClient(object):
                 setattr(self, var_name, self.cxn[server_name])
             except Exception as e:
                 setattr(self, var_name, None)
-
         # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
@@ -105,8 +100,10 @@ class GUIClient(object):
             self.cxn.disconnect()
             if self.reactor.running:
                 self.reactor.stop()
+            os._exit(0)
         except Exception as e:
             print(e)
+            os._exit(0)
 
 
     # SIGNALS
@@ -139,6 +136,16 @@ class GUIClient(object):
 
 
     # SUBCLASSED FUNCTIONS
+    @property
+    @abstractmethod
+    def getgui(self):
+        """
+        To be subclassed.
+        Called during __init__.
+        Used to return an instantiated GUI class so it can be used by GUIClient.
+        """
+        pass
+
     def initClient(self):
         """
         To be subclassed.

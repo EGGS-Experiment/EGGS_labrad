@@ -80,7 +80,7 @@ class AMO8_channel(QFrame):
 
 
 
-class DC_client(QWidget):
+class DC_client(QFrame):
     """
     Client for DC voltage control via AMO8.
     """
@@ -93,6 +93,7 @@ class DC_client(QWidget):
         self.reactor = reactor
         self.cxn = cxn
         self.gui = self
+        self.setFrameStyle(0x0001 | 0x0030)
         # initialization sequence
         d = self.connectLabrad()
         d.addCallback(self.createGUI)

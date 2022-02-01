@@ -6,7 +6,7 @@ __all__ = ["runGUI", "runClient"]
 
 
 # imports
-import sys
+import os
 from PyQt5.QtWidgets import QApplication
 
 
@@ -43,18 +43,20 @@ def runClient(client, **kwargs):
         print(e)
     # instantiate client with a reactor
     from twisted.internet import reactor
-    client = client(reactor, **kwargs)
+    client_tmp = client(reactor, **kwargs)
     # show client
-    if hasattr(client, 'show'):
-        client.show()
-    elif hasattr(client, 'gui') and hasattr(client.gui, 'show'):
-        client.gui.show()
+    if hasattr(client_tmp, 'show'):
+        client_tmp.show()
+    elif hasattr(client_tmp, 'gui'):
+        gui_tmp = client_tmp.gui
+        if hasattr(gui_tmp, 'show'):
+            client_tmp.gui.show()
     # start reactor
-    reactor.run()
+    reactor.callWhenRunning(app.exec)
+    reactor.addSystemEventTrigger('after', 'shutdown', client_tmp.close)
+    reactor.runReturn()
     # close client on exit
-    #todo: fix quit error
     try:
-        client.close()
+        client_tmp.close()
     except Exception as e:
         print(e)
-        sys.exit(app.exec())

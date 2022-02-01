@@ -3,7 +3,7 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.SLS_client.SLS_gui import SLS_gui
 
-_TIME_STR = '{0:d}:{1:d}:{2:d}'
+_TIME_STR = '{0:02d}:{1:02d}:{2:02d}'
 
 
 class SLS_client(GUIClient):
@@ -12,12 +12,16 @@ class SLS_client(GUIClient):
     AUTOLOCKID = 295372
     servers = {'sls': 'SLS Server'}
 
+    def getgui(self):
+        if self.gui is None:
+            self.gui = SLS_gui()
+        return self.gui
+
     @inlineCallbacks
     def initClient(self):
         """
-        Initialize the GUI.
+        Initialize the Client.
         """
-        self.gui = SLS_gui()
         yield self.sls.signal__autolock_update(self.AUTOLOCKID)
         yield self.sls.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
         # set up polling

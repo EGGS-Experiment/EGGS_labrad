@@ -1,23 +1,24 @@
 from twisted.internet.defer import inlineCallbacks
+
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.PMT_client.PMT_gui import PMT_gui
 
 
 class PMT_client(GUIClient):
-    """
-
-    """
 
     name = 'PMT Client'
     servers = {'pmt': 'PMT Server', 'artiq': 'ARTIQ Server'}
-    #gui = PMT_gui
 
+    def getgui(self):
+        if self.gui is None:
+            self.gui = PMT_gui()
+        return self.gui
 
     def initClient(self):
         """
-        Initialize the GUI.
+        Initialize the Client.
         """
-        self.gui = PMT_gui(parent=self)
+        pass
 
     @inlineCallbacks
     def initData(self):
