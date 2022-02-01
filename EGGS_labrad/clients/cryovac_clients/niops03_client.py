@@ -1,12 +1,12 @@
-import time
+from time import time
 from datetime import datetime
-
 from twisted.internet.defer import inlineCallbacks
 
+from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.cryovac_clients.niops03_gui import niops03_gui
 
 
-class niops03_client(niops03_gui):
+class niops03_client(GUIClient):
 
     name = 'NIOPS03 Client'
     PRESSUREID = 878352
@@ -15,46 +15,16 @@ class niops03_client(niops03_gui):
     IPPOWERID = 878355
     NPPOWERID = 878356
 
-    def __init__(self, reactor, cxn=None, parent=None):
-        super().__init__()
-        self.cxn = cxn
-        self.gui = self
-        self.reactor = reactor
-        self.servers = ['NIOPS03 Server', 'Data Vault']
-        # initialization sequence
-        d = self.connect()
-        d.addCallback(self.initData)
-        d.addCallback(self.initializeGUI)
+    servers = {'niops': 'NIOPS03 Server'}
 
+    def getgui(self):
+        if self.gui is None:
+            self.gui = niops03_gui()
+        return self.gui
 
-    # SETUP
     @inlineCallbacks
-    def connect(self):
-        """
-        Creates an asynchronous connection to labrad
-        """
-        # create labrad connection
-        if not self.cxn:
-            import os
-            LABRADHOST = os.environ['LABRADHOST']
-            from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync(LABRADHOST, name=self.name)
-
-        # try to get servers
-        try:
-            self.reg = self.cxn.registry
-            self.dv = self.cxn.data_vault
-            self.niops = self.cxn.niops03_server
-        except Exception as e:
-            print('Required servers not connected, disabling widget.')
-            self.setEnabled(False)
-
-        # set recording stuff
-        self.c_record = self.cxn.context()
-        self.recording = False
-
-        # connect to signals
-            # device signals
+    def initClient(self):
+        # connect to device signals
         yield self.niops.signal__pressure_update(self.PRESSUREID)
         yield self.niops.addListener(listener=self.updatePressure, source=None, ID=self.PRESSUREID)
         yield self.niops.signal__voltage_update(self.VOLTAGEID)
@@ -65,26 +35,18 @@ class niops03_client(niops03_gui):
         yield self.niops.addListener(listener=self.updateIPPower, source=None, ID=self.IPPOWERID)
         yield self.niops.signal__np_power_update(self.NPPOWERID)
         yield self.niops.addListener(listener=self.updateNPPower, source=None, ID=self.NPPOWERID)
-            # server connections
-        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
-        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
-        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
-        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
-
+        # set recording stuff
+        self.c_record = self.cxn.context()
+        self.recording = False
         # start device polling
         poll_params = yield self.niops.polling()
         # only start polling if not started
         if not poll_params[0]:
             yield self.niops.polling(True, 5.0)
 
-        return self.cxn
-
     @inlineCallbacks
-    def initData(self, cxn):
-        """
-        Get startup data from servers and show on GUI.
-        """
-        #IP/NP power
+    def initData(self):
+        # IP/NP power
         device_status = yield self.niops.status()
         device_status = device_status.strip().split(', ')
         device_status = [text.split(' ') for text in device_status]
@@ -93,58 +55,38 @@ class niops03_client(niops03_gui):
         np_on = True if device_status['NP'] == 'ON' else False
         self.gui.ip_power.setChecked(ip_on)
         self.gui.np_power.setChecked(np_on)
-        #IP voltage
+        # IP voltage
         v_ip = yield self.niops.ip_voltage()
         self.gui.ip_voltage_display.setText(str(v_ip))
         self.gui.ip_voltage.setEnabled(ip_on)
-        return cxn
 
-    def initializeGUI(self, cxn):
-        """
-        Connect signals to slots and other initializations.
-        """
+    def initializeGUI(self):
         # ion pump
-        self.gui.ip_lockswitch.toggled.connect(lambda status: self.lock_niops(status))
-        self.gui.ip_power.clicked.connect(lambda status: self.toggle_niops(status))
+        self.gui.ip_lockswitch.toggled.connect(lambda status: self.lock_ip(status))
+        self.gui.ip_power.clicked.connect(lambda status: self.toggle_ni(status))
         self.gui.ip_record.toggled.connect(lambda status: self.record_pressure(status))
-        self.gui.ip_voltage.valueChanged.connect(lambda voltage: self.set_ip_voltage(voltage))
+        self.gui.ip_voltage.valueChanged.connect(lambda voltage: self.niops.ip_voltage(int(voltage)))
         # getter
-        self.gui.np_lockswitch.toggled.connect(lambda status: self.lock_np(status))
-        self.gui.np_mode.currentIndexChanged.connect(lambda index: self.mode_np(index))
-        self.gui.np_power.clicked.connect(lambda status: self.toggle_np(status))
-        return cxn
-
-
-    # SIGNALS
-    @inlineCallbacks
-    def on_connect(self, c, message):
-        server_name = message[1]
-        if server_name in self.servers:
-            print(server_name + ' reconnected, enabling widget.')
-            yield self.initData(self.cxn)
-            self.setEnabled(True)
-
-    def on_disconnect(self, c, message):
-        server_name = message[1]
-        if server_name in self.servers:
-            print(server_name + ' disconnected, disabling widget.')
-            self.setEnabled(False)
+        self.gui.np_lockswitch.toggled.connect(lambda status: self.gui.np_power.setEnabled(status))
+        self.gui.np_mode.currentIndexChanged.connect(lambda index: self.niops.np_mode(index + 1))
+        self.gui.np_power.clicked.connect(lambda status: self.niops.np_toggle(status))
 
 
     # SLOTS
     @inlineCallbacks
     def updatePressure(self, c, pressure):
+        # update pressure
         self.gui.ip_pressure_display.setText(str(pressure))
         if self.recording:
-            elapsedtime = time.time() - self.starttime
+            elapsedtime = time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
 
     def updateVoltage(self, c, voltage):
-        # set workingtime
+        # update voltage
         self.gui.ip_voltage_display.setText(str(voltage))
 
     def updateTemperature(self, c, temperatures):
-        # set workingtime
+        # update temperature
         self.gui.ip_temperature_display.setText(str(temperatures[0]))
         self.gui.np_temperature_display.setText(str(temperatures[1]))
 
@@ -165,7 +107,7 @@ class niops03_client(niops03_gui):
         """
         # set up datavault
         self.recording = status
-        if self.recording == True:
+        if self.recording:
             self.starttime = time.time()
             date = datetime.now()
             year = str(date.year)
@@ -174,56 +116,24 @@ class niops03_client(niops03_gui):
             trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
             trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
             yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
-            yield self.dv.new('NIOPS03 Pump', [('Elapsed time', 's')], \
-                                       [('Ion Pump', 'Pressure', 'mbar')], context=self.c_record)
+            yield self.dv.new('NIOPS03 Pump', [('Elapsed time', 's')], [('Ion Pump', 'Pressure', 'mbar')],
+                              context=self.c_record)
 
     @inlineCallbacks
-    def toggle_niops(self, status):
+    def toggle_ni(self, status):
         """
         Sets ion pump power on or off.
         """
-        #print('set: ' + str(status))
         self.gui.ip_voltage.setEnabled(status)
         yield self.niops.ip_toggle(status)
 
-    def lock_niops(self, status):
+    def lock_ip(self, status):
         """
         Locks power status of ion pump.
         """
         self.gui.ip_voltage.setEnabled(status)
         self.gui.ip_power.setEnabled(status)
 
-    @inlineCallbacks
-    def set_ip_voltage(self, voltage):
-        """
-        Sets the ion pump voltage.
-        """
-        yield self.niops.ip_voltage(int(voltage))
-
-    @inlineCallbacks
-    def toggle_np(self, status):
-        """
-        Sets getter power on or off.
-        """
-        #print('state: ' + str(status))
-        yield self.niops.np_toggle(status)
-
-    def lock_np(self, status):
-        """
-        Locks power status of getter.
-        """
-        self.gui.np_power.setEnabled(status)
-
-    def mode_np(self, index):
-        """
-        Set activation mode of getter.
-        """
-        self.niops.np_mode(index + 1)
-
-    def closeEvent(self, event):
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
 
 
 if __name__ == "__main__":
