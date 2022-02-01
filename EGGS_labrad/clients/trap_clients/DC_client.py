@@ -44,7 +44,7 @@ class DC_client(GUIClient):
             channel.dac.valueChanged.connect(lambda value: self.amo8.voltage(channel.number, value))
             channel.ramp_start.clicked.connect(lambda voltage=channel.ramp_target.value(), rate=channel.ramp_rate.value():
                                                self.amo8.ramp(channel.number, voltage, rate))
-            channel.toggle.clicked.connect(lambda status=channel.lockswitch.isChecked():
+            channel.toggleswitch.clicked.connect(lambda status=channel.lockswitch.isChecked():
                                            self.amo8.toggle(channel.number, status))
             channel.resetswitch.clicked.connect(lambda: self.reset(channel.number))
 

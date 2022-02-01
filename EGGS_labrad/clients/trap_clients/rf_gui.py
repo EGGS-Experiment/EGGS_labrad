@@ -21,6 +21,10 @@ class TextChangingButton(_TextChangingButton):
 
 class rf_gui(QFrame):
 
+    def __init__(self):
+        super().__init__()
+        self.setupUi()
+
     def setupUi(self):
         rf_gui = self
         rf_gui.setObjectName("rf_gui")

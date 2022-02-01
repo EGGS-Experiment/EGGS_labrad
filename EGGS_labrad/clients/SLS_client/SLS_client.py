@@ -19,6 +19,7 @@ class SLS_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
+        # connect to device signals
         yield self.sls.signal__autolock_update(self.AUTOLOCKID)
         yield self.sls.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
         # set up polling

@@ -85,8 +85,10 @@ class DC_gui(QFrame):
     GUI for the AMO8 high voltage box.
     """
 
-    def __init__(self):
+    def __init__(self, name=None):
+        super().__init__()
         self.amo8_channels = []
+        self.name = name
         # config
         try:
             from EGGS_labrad.config.dc_config import dcConfig

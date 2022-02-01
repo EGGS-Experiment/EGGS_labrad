@@ -16,7 +16,7 @@ def runGUI(client, **kwargs):
     Runs a LabRAD GUI file written using PyQt5
     """
     # widgets require a QApplication to run
-    app = QApplication(sys.argv)
+    app = QApplication([])
     # instantiate gui
     gui = client(**kwargs)
     # set up UI if needed
@@ -26,7 +26,7 @@ def runGUI(client, **kwargs):
         print('No need to setup UI')
     # run GUI file
     gui.show()
-    sys.exit(app.exec())
+    os._exit(app.exec())
 
 
 def runClient(client, **kwargs):
