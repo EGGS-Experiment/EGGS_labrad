@@ -172,18 +172,30 @@ class GUIClient(ABC):
 
 
 
-class RecordingClient(GUIClient):
+class PollingClient(GUIClient):
     """
-    Supports client data taking.
+    Supports client polling and data taking.
     """
 
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
-        # set recording variables
+        # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
+        self.starttime = None
+        # start device polling only if not already started
+        # todo: polling on each server
+        for server_nickname in self.servers.keys():
+            server = getattr(self, server_nickname)
+            if hasattr(server, 'polling')
+                poll_params = yield server.polling()
+                if not poll_params[0]:
+                    yield self.tt.polling(True, 5.0)
 
     def _createDatasetTitle(self, *args, **kwargs):
+        """
+
+        """
         # set up datavault
         date = datetime.now()
         year = str(date.year)
@@ -193,17 +205,14 @@ class RecordingClient(GUIClient):
         trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
         return ['', year, month, trunk1, trunk2]
 
-    #todo: data vault function?
 
     # SHUTDOWN
     @inlineCallbacks
-    def closeEvent(self, event):
+    def close(self):
         polling, _ = yield self.server.polling()
         if polling:
             yield self.server.polling(False)
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
+        super().close()
 
 
     # SUBCLASSED FUNCTIONS

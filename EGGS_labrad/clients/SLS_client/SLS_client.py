@@ -19,9 +19,6 @@ class SLS_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
-        """
-        Initialize the Client.
-        """
         yield self.sls.signal__autolock_update(self.AUTOLOCKID)
         yield self.sls.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
         # set up polling
@@ -32,9 +29,6 @@ class SLS_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
-        """
-        Get startup data from servers and show on GUI.
-        """
         # lockswitches
         self.gui.autolock_lockswitch.setChecked(True)
         self.gui.off_lockswitch.setChecked(True)
@@ -67,9 +61,6 @@ class SLS_client(GUIClient):
         self.gui.servo_filter.setCurrentIndex(int(init_values['CurrentServoOutputFilter']))
 
     def initializeGUI(self):
-        """
-        Connect signals to slots and other initializations.
-        """
         # autolock
         self.gui.autolock_toggle.toggled.connect(lambda status: self.sls.autolock_toggle(status))
         self.gui.autolock_param.currentTextChanged.connect(lambda param: self.sls.autolock_parameter(param.upper()))
