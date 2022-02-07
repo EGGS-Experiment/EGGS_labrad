@@ -1,11 +1,16 @@
+"""
+Contains all data file objects used by the server and utilities used to create/open them.
+"""
+
 import os
-import sys
-import time
 import h5py
 import base64
 import datetime
 import numpy as np
-import collections
+
+from time import time
+from sys import maxsize
+from collections import namedtuple
 
 from . import errors, util
 from labrad import types as T
@@ -13,8 +18,8 @@ from twisted.internet import reactor
 
 
 ## Data types for variable defintions
-Independent = collections.namedtuple('Independent', ['label', 'shape', 'datatype', 'unit'])
-Dependent = collections.namedtuple('Dependent', ['label', 'legend', 'shape', 'datatype', 'unit'])
+Independent = namedtuple('Independent', ['label', 'shape', 'datatype', 'unit'])
+Dependent = namedtuple('Dependent', ['label', 'legend', 'shape', 'datatype', 'unit'])
 
 
 TIME_FORMAT = '%Y-%m-%d, %H:%M:%S'
@@ -510,7 +515,7 @@ class HDF5MetaData(object):
 
     def initialize_info(self, title, indep, dep):
         """Initializes the metadata for a newly created dataset."""
-        t = time.time()
+        t = time()
 
         attrs = self.dataset.attrs
         attrs['Title'] = title
@@ -535,12 +540,12 @@ class HDF5MetaData(object):
             attrs[prefix + 'unit'] = d.unit
 
     def access(self):
-        self.dataset.attrs['Access Time'] = time.time()
+        self.dataset.attrs['Access Time'] = time()
 
     def getIndependents(self):
         attrs = self.dataset.attrs
         rv = []
-        for idx in range(sys.maxsize):
+        for idx in range(maxsize):
             prefix = 'Independent{}.'.format(idx)
             key = prefix + 'label'
             if key in attrs:
@@ -555,7 +560,7 @@ class HDF5MetaData(object):
     def getDependents(self):
         attrs = self.dataset.attrs
         rv = []
-        for idx in range(sys.maxsize):
+        for idx in range(maxsize):
             prefix = 'Dependent{}.'.format(idx)
             key = prefix + 'label'
             if key in attrs:
@@ -640,7 +645,7 @@ class HDF5MetaData(object):
 
     def addComment(self, user, comment):
         """Add a comment to the dataset."""
-        t = time.time()
+        t = time()
         new_comment = np.array([(t, user, comment)], dtype=self.comment_type)
         old_comments = self.dataset.attrs['Comments']
         data = np.hstack((old_comments, new_comment))

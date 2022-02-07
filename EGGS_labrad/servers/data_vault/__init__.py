@@ -1,3 +1,7 @@
+"""
+Contains the class structures needed for creating data files and directories.
+"""
+
 import os
 import re
 import weakref

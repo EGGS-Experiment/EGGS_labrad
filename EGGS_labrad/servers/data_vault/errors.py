@@ -1,3 +1,7 @@
+"""
+Contains error objects.
+"""
+
 from labrad import types as T
 
 class NoDatasetError(T.Error):

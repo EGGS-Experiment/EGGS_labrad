@@ -1,4 +1,51 @@
-# Data Vault signals for asynchronous updates
+# Data Vault Guide
+
+## Dataset Format
+
+HDF datasets are stored in the following fashion:
+
+* HDF5 root:
+    * Attribute: 'Version' = \[2,0,0\] for extended, \[ 1,0,0 \] for standard
+    * datasets: 'DataVault' = All data and parameters for a single dataset
+        * Simple datasets: 1-D array of (f,f,f, ...) cluster -- one float per column 
+        * Extended datasets: 1-D array of structs matching the column types
+        * Attributes
+        * Dependent variables
+        * Independent variables
+
+Datasets have the following attributes:
+
+| Attribute             | Description                                          | Type                      |
+|-----------------------|------------------------------------------------------|---------------------------|
+| Title                 | Dataset Title                                        |                           |
+| Access Time           | Access time                                          | float64                   |
+| Modification Time     | Modification time                                    |                           |
+| Creation Time         | Creation time                                        |                           |
+| Comments              | 1-D array of comments (timestamp, username, comment) | (float64, vstr, vstr)     |
+| Parameters            | Parameter "Foo" is stored as Param.Foo               | urlencoded flattened data |
+
+Independent variables have the following object attributes:
+
+| Attribute             | Description           | Type                           |
+|-----------------------|-----------------------|--------------------------------|
+| IndependentX.label    | Label                 | string                         |
+| IndependentX.shape    | Shape (todo: specify) | n-d array of int               |
+| IndependentX.datatype | Data Type             | [istvc]                        |
+| IndependentX.unit     | Units                 | 'ns' -- only if type is c or v |
+
+Dependent variables have the following object attributes:
+
+| Attribute           | Description           | Type                           |
+|---------------------|-----------------------|--------------------------------|
+| DependentX.legend   | Legend                | string                         |
+| DependentX.label    | Label                 | string                         |
+| DependentX.shape    | Shape (todo: specify) | n-d array of int               |
+| DependentX.datatype | Data Type             | [istvc]                        |
+| DependentX.unit     | Units                 | 'ns' -- only if type is c or v |
+
+
+
+## Data Vault signals for asynchronous updates
 
 The Data Vault server uses labrad messages to send asynchronous updates about
 various events to interested clients. For each message type, there is a
