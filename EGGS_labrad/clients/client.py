@@ -49,7 +49,7 @@ class GUIClient(ABC):
 
         # set self.servers as class attributes
         self.servers['registry'] = 'registry'
-        self.servers['datavault'] = 'data_vault'
+        self.servers['dv'] = 'data_vault'
         for var_name, server_name in self.servers.items():
             try:
                 setattr(self, var_name, self.cxn[server_name])

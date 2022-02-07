@@ -108,7 +108,7 @@ class niops03_client(GUIClient):
         # set up datavault
         self.recording = status
         if self.recording:
-            self.starttime = time.time()
+            self.starttime = time()
             date = datetime.now()
             year = str(date.year)
             month = '{:02d}'.format(date.month)
