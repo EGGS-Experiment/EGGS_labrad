@@ -1,6 +1,6 @@
 import labrad
 from time import time, sleep
-import datetime as datetime
+from datetime import datetime
 
 from EGGS_labrad.servers.script_scanner.experiment import experiment
 
@@ -28,12 +28,12 @@ class cooldown_experiment(experiment):
 
         # device servers
         self.ls = self.cxn.lakeshore336_server
-        self.ni = self.cxn.niops03_server
+        #self.ni = self.cxn.niops03_server
         self.tt = self.cxn.twistorr74_server
 
         # dataset context
         self.c_ls = self.cxn.context()
-        self.c_ni = self.cxn.context()
+        #self.c_ni = self.cxn.context()
         self.c_tt = self.cxn.context()
 
         # set up data vault
@@ -45,12 +45,12 @@ class cooldown_experiment(experiment):
         while True:
             sleep(2)
             temp_tmp = self.ls.read_temperature()
-            ip_tmp = self.ni.ip_pressure()
+            #ip_tmp = self.ni.ip_pressure()
             press_tmp = self.tt.read_pressure()
 
             elapsedtime = time() - starttime
             self.dv.add(elapsedtime, temp_tmp[0], temp_tmp[1], temp_tmp[2], temp_tmp[3], context=self.c_ls)
-            self.dv.add([elapsedtime, ip_tmp], context=self.c_ni)
+            #self.dv.add([elapsedtime, ip_tmp], context=self.c_ni)
             self.dv.add([elapsedtime, press_tmp], context=self.c_tt)
 
     def finalize(self, cxn, context):
@@ -67,8 +67,8 @@ class cooldown_experiment(experiment):
                           [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'),
                            ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_ls)
 
-        self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_ni)
-        self.dv.new('NIOPS03 Pump', [('Elapsed time', 's')], [('Ion Pump', 'Pressure', 'mbar')], context=self.c_ni)
+        #self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_ni)
+        #self.dv.new('NIOPS03 Pump', [('Elapsed time', 's')], [('Ion Pump', 'Pressure', 'mbar')], context=self.c_ni)
 
         self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_tt)
         self.dv.new('Twistorr74 Turbopump', [('Elapsed time', 's')], [('Turbo Pump', 'Pressure', 'mbar')], context=self.c_tt)
