@@ -7,8 +7,7 @@ __all__ = ["PollingServer", "ARTIQServer"]
 
 class PollingServer(LabradServer):
     """
-    Holds all the functionality needed to
-    run polling loops on the server.
+    Holds all the functionality needed to run polling loops on the server.
     Also contains functionality for Signals.
     """
 
@@ -36,15 +35,25 @@ class PollingServer(LabradServer):
 
     # CONTEXT
     def initContext(self, c):
-        """Initialize a new context object."""
+        """
+        Initialize a new context object.
+        """
         self.listeners.add(c.ID)
 
     def expireContext(self, c):
-        """Remove a context object."""
+        """
+        Remove a context object and stop polling if there are no more listeners.
+        """
         self.listeners.remove(c.ID)
+        if len(self.listeners) == 0:
+            self.refresher.stop()
+            print('Stopped polling due to lack of listeners.')
+
 
     def getOtherListeners(self, c):
-        """Get all listeners except for the context owner."""
+        """
+        Get all listeners except for the context owner.
+        """
         notified = self.listeners.copy()
         notified.remove(c.ID)
         return notified

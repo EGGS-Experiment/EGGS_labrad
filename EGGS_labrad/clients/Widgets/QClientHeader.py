@@ -7,19 +7,23 @@ from random import randrange
 from twisted.internet.defer import inlineCallbacks
 
 
-class QSerialConnection(QFrame):
+class QClientHeader(QFrame):
+
+    def __init__(self, parent=None):
+        super().__init__()
+        self.setFrameStyle(0x0001 | 0x0030)
+        self.makeWidgets()
+        self.makeLayout()
+        self.setWindowTitle("Client Header")
+
     def setupUi(self):
         shell_font = 'MS Shell Dlg 2'
         self.setFixedSize(330, 100)
         self.setWindowTitle("Device")
         self.setFrameShape(QFrame.StyledPanel)
         self.setFrameShadow(QFrame.Raised)
-        self.widget = QWidget(self)
-        self.widget.setGeometry(QRect(10, 10, 314, 80))
-        self.verticalLayout_3 = QVBoxLayout(self.widget)
-        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.device_label = QLabel(self.widget)
-        self.device_label.setText("Device")
+        self.
+        self.device_label = QLabel("Device")
         self.device_label.setFont(QFont(shell_font, pointSize=18))
         self.device_label.setAlignment(Qt.AlignCenter)
         self.verticalLayout_3.addWidget(self.device_label)
@@ -46,9 +50,13 @@ class QSerialConnection(QFrame):
         self.horizontalLayout.addWidget(self.disconnect_button)
         self.verticalLayout_3.addLayout(self.horizontalLayout)
 
+# name
+# server status
+# restart client
+# polling
+# serial
 
-
-class SerialConnection_Client(QSerialConnection):
+class ClientHeader(QClientHeader):
 
     name = 'SerialConnection Client'
 
@@ -234,5 +242,4 @@ class SerialConnection_Client(QSerialConnection):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI, runClient
-    runGUI(QSerialConnection)
-    #runClient(SerialConnection_Client, server='Lakeshore336 Server')
+    runClient(SerialConnection_Client, server='Lakeshore336 Server')

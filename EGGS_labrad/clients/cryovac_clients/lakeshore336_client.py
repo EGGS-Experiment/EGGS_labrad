@@ -1,4 +1,4 @@
-import time
+from time import time
 from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
 
@@ -91,7 +91,7 @@ class lakeshore336_client(GUIClient):
         self.gui.temp3.setText('{:.4f}'.format(temp[2]))
         self.gui.temp4.setText('{:.4f}'.format(temp[3]))
         if self.recording:
-            yield self.dv.add(time.time() - self.starttime, temp[0], temp[1], temp[2], temp[3], context=self.c_record)
+            yield self.dv.add(time() - self.starttime, temp[0], temp[1], temp[2], temp[3], context=self.c_record)
 
     @inlineCallbacks
     def record_temp(self, status):
@@ -102,7 +102,7 @@ class lakeshore336_client(GUIClient):
         # set up datavault
         self.recording = status
         if self.recording:
-            self.starttime = time.time()
+            self.starttime = time()
             date = datetime.now()
             year = str(date.year)
             month = '{:02d}'.format(date.month)

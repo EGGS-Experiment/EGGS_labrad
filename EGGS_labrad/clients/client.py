@@ -92,6 +92,13 @@ class GUIClient(ABC):
             print(e)
         return cxn
 
+    def _restart(self):
+        # initialization sequence
+        d = self._connectLabrad()
+        d.addCallback(self._initClient)
+        d.addCallback(self._initData)
+        d.addCallback(self._initializeGUI)
+
 
     # SHUTDOWN
     def close(self):
