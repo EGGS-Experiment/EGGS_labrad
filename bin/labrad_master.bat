@@ -31,7 +31,7 @@ START "GPIB Device Manager" /min CMD "/k activate labart && python %LABRAD_ROOT%
 TIMEOUT 1 > NUL && START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
 
 REM: ARTIQ
-REM: START /min CMD /c %LABRAD_ROOT%\bin\start_artiq.bat -ddb device_db_2.py
+START /min CMD /c %LABRAD_ROOT%\bin\start_artiq.bat
 
 REM: Clients
 START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
@@ -40,9 +40,10 @@ START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
 REM: Run all device servers as specified, then open a python shell to begin
 IF %server_flag%==1 (
-    TIMEOUT 1 > NUL && START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
+    TIMEOUT 2 > NUL && START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
     CALL %LABRAD_ROOT%\bin\server_cxn.bat
 ) ELSE ( CALL %LABRAD_ROOT%\bin\labrad_cxn.bat )
 
 REM: Unset variables
 SET "server_flag="
+SET "raw_flag="
