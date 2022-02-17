@@ -20,13 +20,13 @@ FOR %%x IN (%*) DO (
 
 REM: Set arguments
 IF NOT %ddb_ind%==0 (CALL SET ddb_name=%ARTIQ_ROOT%\%%%ddb_ind%%
-) ELSE (CALL SET ddb_name=%ARTIQ_ROOT%\device_db.py)
+) ELSE (CALL SET ddb_name=%ARTIQ_DDB%)
 
 IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
-) ELSE (CALL SET ip_addr=127.0.0.1)
+) ELSE (CALL SET ip_addr=%ARTIQ_HOST%)
 
 REM: Start ARTIQ interface
-START "ARTIQ Master" CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ddb_name% --bind=%ip_addr%"
+START "ARTIQ Master" CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"
 TIMEOUT 2 > NUL && START "ARTIQ Dashboard" /min CMD "/c TIMEOUT 2 && CALL artiq_dashboard"
 START "ARTIQ Controller Manager" /min CMD "/k TIMEOUT 2 && artiq_ctlmgr"
 
