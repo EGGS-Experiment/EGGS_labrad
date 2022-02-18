@@ -205,12 +205,14 @@ class ARTIQ_Server(LabradServer):
 
 
     # TTL
-    @setting(211, 'TTL Get', returns='*s')
-    def getTTL(self, c):
+    @setting(211, 'TTL List', returns='*s')
+    def listTTL(self, c):
         """
-        Returns all available TTL channels
+        Lists all available TTL channels.
+        Returns:
+                (*str)  : a list of all TTL channels.
         """
-        return self.ttlout_list
+        return (self.ttlout_list + self.ttlin_list)
 
     @setting(221, "TTL Set", ttl_name='s', state='b', returns='')
     def setTTL(self, c, ttl_name, state):
@@ -223,6 +225,20 @@ class ARTIQ_Server(LabradServer):
         if ttl_name not in self.ttlout_list:
             raise Exception('Error: device does not exist.')
         yield self.api.setTTL(ttl_name, state)
+
+    @setting(222, "TTL Get", ttl_name='s', returns='b')
+    def getTTL(self, c, ttl_name):
+        """
+        Read the state of a TTL.
+        Arguments:
+            ttl_name    (str)   : name of the ttl
+        Returns:
+                        (bool)  : ttl power state
+        """
+        if ttl_name not in self.ttlin_list:
+            raise Exception('Error: device does not exist.')
+        state = yield self.api.getTTL(ttl_name)
+        returnValue(bool(state))
 
 
     # DDS

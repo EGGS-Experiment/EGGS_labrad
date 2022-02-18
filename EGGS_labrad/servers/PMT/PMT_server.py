@@ -45,6 +45,7 @@ class PMTServer(ARTIQServer):
         # declare PMT variables
         self.ttl_number = 0
         self.trigger_ttl_number = 1
+        self.overexposed_ttl_number = 2
         self.trigger_status = False
         self.bin_time_us = 10
         self.reset_time_us = 10
@@ -57,6 +58,18 @@ class PMTServer(ARTIQServer):
             # only get devices with named class
             if ('class' in params) and (params['class'] == 'TTLInOut'):
                 self.available_ttls.append(int(name[3:]))
+
+    # STATUS
+    @setting(121, 'Overexposed', returns='b')
+    def overexposed(self, c):
+        """
+        Check whether PMT is overexposed.
+        Returns:
+            (bool)  :   whether the PMT is overexposed
+        """
+        ttl_name = 'ttl{:d}'.format(self.overexposed_ttl_number)
+        overexposed_state = yield self.artiq.ttl_get(ttl_name)
+        returnValue(overexposed_state)
 
 
     # HARDWARE

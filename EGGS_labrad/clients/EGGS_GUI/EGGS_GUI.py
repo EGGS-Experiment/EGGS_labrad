@@ -76,6 +76,7 @@ class EGGS_gui(QMainWindow):
 
     def makeLaserWidget(self, reactor, cxn):
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
+        #from EGGS_labrad.clients.shutter_client import shutter_client
         clients = {SLS_client: (0, 0)}
         return self._createTabLayout(clients, reactor, cxn)
 
