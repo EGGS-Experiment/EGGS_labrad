@@ -190,3 +190,46 @@ class ARTIQServer(LabradServer):
                             (?)     : the dataset
         """
         return self.datasetdb_client.get(dataset_name)
+
+
+"""
+Arduino Server
+"""
+
+from EGGS_labrad.servers import SerialDeviceServer
+
+
+class ArduinoServer(SerialDeviceServer):
+    """
+    A server that breaks out an Arduino.
+    """
+
+    # artiq_devices holds the desired variable name as keys and the artiq hardware name as values
+    artiq_devices = {}
+
+
+    # STARTUP
+    def initServer(self):
+        # call parent initserver to support further subclassing
+        super().initServer()
+        # check for artiq server
+        try:
+            self.artiq = self.client.artiq_server
+            # get required devices
+            for devices in self.artiq_devices.items():
+                setattr(self, devices[0], devices[1])
+            self.devicedb_client = Client('::1', 3251, 'master_device_db')
+            self.datasetdb_client = Client('::1', 3251, 'master_dataset_db')
+            self.scheduler_client = Client('::1', 3251, 'master_schedule')
+        except Exception as e:
+            print(e)
+            raise
+
+
+    # STATUS
+    def get_devices(self):
+        """
+        Returns the device_db dictionary.
+        """
+        return self.devicedb_client.get_device_db()
+

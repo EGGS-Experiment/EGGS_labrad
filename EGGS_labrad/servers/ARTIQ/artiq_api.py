@@ -138,6 +138,21 @@ class ARTIQ_api(object):
         else:
             dev.off()
 
+    def getTTL(self, ttlname):
+        """
+        Manually set the state of a TTL.
+        """
+        try:
+            dev = self.ttlin_list[ttlname]
+        except KeyError:
+            raise Exception('Invalid device name.')
+        self._getTTL(dev)
+
+    @kernel
+    def _getTTL(self, dev):
+        self.core.reset()
+        return dev.sample_get_nonrt()
+
 
     # DDS/URUKUL
     def initializeDDSAll(self):
