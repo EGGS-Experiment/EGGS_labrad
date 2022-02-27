@@ -23,7 +23,7 @@ class sampleDDS(pulse_sequence):
         self.addTTL('ttl_0', WithUnit(400, 'ms'), WithUnit(100, 'ms'))
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
     # import labrad
     # cxn = labrad.connect()
     # cs = sampleDDS(TreeDict())
@@ -39,5 +39,3 @@ if __name__ == '__main__':
     # cxn.pulser.start_number(1)
     # cxn.pulser.wait_sequence_done()
     # cxn.pulser.stop_sequence()
-    #
-    # # print 'DONE'

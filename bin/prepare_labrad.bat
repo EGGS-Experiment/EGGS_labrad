@@ -2,5 +2,5 @@
 
 @ECHO OFF
 
-CD %LABRAD_ROOT%\EGGS_labrad
+CD %EGGS_LABRAD_ROOT%\EGGS_labrad
 CALL conda activate labart

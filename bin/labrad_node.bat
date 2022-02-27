@@ -4,7 +4,7 @@
 SETLOCAL EnableDelayedExpansion
 
 REM: Prepare LabRAD CMD
-CALL %LABRAD_ROOT%\bin\prepare_labrad.bat
+CALL %EGGS_LABRAD_ROOT%\bin\prepare_labrad.bat
 
 REM: Parse arguments
 SET /a argCount=1
@@ -28,15 +28,15 @@ REM: Don't open any servers if raw flag is active
 IF "%%x"=="-r" (GOTO SHELL)
 
 REM: Device Busses
-TIMEOUT 2 > NUL && START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
+TIMEOUT 2 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
 
 REM: Clients
-START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
+START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
 :SHELL
 
 REM: Run all device servers as specified, then open a python shell to begin
-CALL %LABRAD_ROOT%\bin\labrad_cxn.bat
+CALL %EGGS_LABRAD_ROOT%\bin\labrad_cxn.bat
 
 REM: Unset variables
 SET "argCount="

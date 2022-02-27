@@ -4,7 +4,7 @@
 SETLOCAL EnableDelayedExpansion
 
 REM: Prepare LabRAD CMD
-CALL %LABRAD_ROOT%\bin\prepare_labrad.bat
+CALL %EGGS_LABRAD_ROOT%\bin\prepare_labrad.bat
 
 REM: Parse arguments for server activation
 SET /a server_flag=0
@@ -24,25 +24,25 @@ REM: Don't open any servers if raw flag is active
 IF %raw_flag%==1 (GOTO SHELL)
 
 REM: Experiment Servers
-START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_experiments.bat
+START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_experiments.bat
 
 REM: Device Bus Servers
-START "GPIB Device Manager" /min CMD "/k activate labart && python %LABRAD_ROOT%\EGGS_labrad\servers\gpib\gpib_device_manager.py"
-TIMEOUT 1 > NUL && START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
+START "GPIB Device Manager" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\gpib\gpib_device_manager.py"
+TIMEOUT 1 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
 
 REM: ARTIQ
-START /min CMD /c %LABRAD_ROOT%\bin\start_artiq.bat
+START /min CMD /c %EGGS_LABRAD_ROOT%\bin\start_artiq.bat
 
 REM: Clients
-START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
+START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
 :SHELL
 
 REM: Run all device servers as specified, then open a python shell to begin
 IF %server_flag%==1 (
-    TIMEOUT 2 > NUL && START /min CMD /c %LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
-    CALL %LABRAD_ROOT%\bin\server_cxn.bat
-) ELSE ( CALL %LABRAD_ROOT%\bin\labrad_cxn.bat )
+    TIMEOUT 2 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
+    CALL %EGGS_LABRAD_ROOT%\bin\server_cxn.bat
+) ELSE ( CALL %EGGS_LABRAD_ROOT%\bin\labrad_cxn.bat )
 
 REM: Unset variables
 SET "server_flag="
