@@ -127,11 +127,6 @@ class SerialConnectionError(Exception):
     def __str__(self):
         return self.errorDict[self.code]
 
-class PortRegError(SerialConnectionError):
-    errorDict = {0: 'Registry not properly configured',
-                 1: 'Key not found in registry',
-                 2: 'No keys in registry'}
-
 
 # DEVICE CLASS
 class SerialDeviceServer(LabradServer):
@@ -275,106 +270,6 @@ class SerialDeviceServer(LabradServer):
         except Error:
             self.ser = None
             raise SerialConnectionError(1)
-
-    @inlineCallbacks
-    def getPortFromReg(self, regKey=None):
-        """
-        Find port string in registry given key.
-        
-        If you do not input a parameter, it will look for the first
-        four letters of your name attribute in the registry port keys.
-        
-        @param regKey: String used to find key match.
-        
-        @return: Name of port
-        
-        @raise PortRegError: Error code 0.  Registry does not have correct directory structure (['','Ports']).
-        @raise PortRegError: Error code 1.  Did not find match.
-        """
-        reg = self.client.registry
-        # there must be a 'Ports' directory at the root of the registry folder
-        try:
-            tmp = yield reg.cd()
-            yield reg.cd(['', 'Ports'])
-            y = yield reg.dir()
-            print(y)
-            if not regKey:
-                if self.name:
-                    regKey = self.name[:4].lower()
-                else:
-                    raise SerialDeviceError('name attribute is None')
-            portStrKey = filter(lambda x: regKey in x, y[1])
-            if portStrKey:
-                portStrKey = portStrKey[0]
-            else:
-                raise PortRegError(1)
-            portStrVal = yield reg.get(portStrKey)
-            reg.cd(tmp)
-            returnValue(portStrVal)
-        except Error as e:
-            reg.cd(tmp)
-            if e.code == 17: raise PortRegError(0)
-
-    @inlineCallbacks
-    def selectPortFromReg(self):
-        """
-        Select port string from list of keys in registry.
-        
-        @return: Name of port
-        
-        @raise PortRegError: Error code 0.  Registry not properly configured (['','Ports']).
-        @raise PortRegError: Error code 1.  No port keys in registry.
-        """
-        reg = self.client.registry
-        try:
-            # change this back to 'Ports'
-            yield reg.cd(['', 'Ports'])
-            portDir = yield reg.dir()
-            portKeys = portDir[1]
-            if not portKeys: raise PortRegError(2)
-            keyDict = {}
-            map(lambda x, y: keyDict.update({x: y}),
-                 [str(i) for i in range(len(portKeys))], portKeys)
-            for key in keyDict:
-                print(key, ':', keyDict[key])
-            selection = None
-            while True:
-                print('Select the number corresponding to the device you are using:')
-                selection = input('')
-                if selection in keyDict:
-                    portStr = yield reg.get(keyDict[selection])
-                    returnValue(portStr)
-        except Error as e:
-            if e.code == 13: raise PortRegError(0)
-
-    @inlineCallbacks
-    def findSerial(self, serNode=None):
-        """
-        Find appropriate serial server.
-        @param serNode: Name of labrad node possessing desired serial port
-        @return: Key of serial server
-        @raise SerialConnectionError: Error code 0.  Could not find desired serial server.
-        """
-        if not serNode: serNode = self.serNode
-        cli = self.client
-        # look for servers with 'serial' and serNode in the name, take first result
-        servers = yield cli.manager.servers()
-        try:
-            returnValue([i[1] for i in servers if self._matchSerial(serNode, i[1])][0])
-        except IndexError: raise SerialConnectionError(0)
-
-    @staticmethod
-    def _matchSerial(serNode, potMatch):
-        """
-        Checks if server name is the correct serial server.
-        
-        @param serNode: Name of node of desired serial server
-        @param potMatch: Server name of potential match
-        @return: boolean indicating comparison result
-        """
-        serMatch = 'serial' in potMatch.lower()
-        nodeMatch = serNode.lower() in potMatch.lower()
-        return serMatch and nodeMatch
 
     def checkConnection(self):
         if not self.ser: raise SerialConnectionError(2)

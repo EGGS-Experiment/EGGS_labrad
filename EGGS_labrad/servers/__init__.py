@@ -2,7 +2,6 @@
 Contains everything needed to write LabRAD servers.
 """
 
-import sys
 __all__ = []
 
 
@@ -24,4 +23,4 @@ __all__.extend(serialdeviceserver.__all__)
 # convenience servers
 from EGGS_labrad.servers import server_classes
 from EGGS_labrad.servers.server_classes import *
-__all__.append(server_classes.__all__)
+__all__.extend(server_classes.__all__)
