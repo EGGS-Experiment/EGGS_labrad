@@ -15,6 +15,7 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.servers import ARTIQServer
