@@ -271,6 +271,35 @@ class SerialDeviceServer(LabradServer):
             self.ser = None
             raise SerialConnectionError(1)
 
+    @inlineCallbacks
+    def findSerial(self, serNode=None):
+        """
+        Find appropriate serial server.
+        @param serNode: Name of labrad node possessing desired serial port
+        @return: Key of serial server
+        @raise SerialConnectionError: Error code 0.  Could not find desired serial server.
+        """
+        if not serNode: serNode = self.serNode
+        cli = self.client
+        # look for servers with 'serial' and serNode in the name, take first result
+        servers = yield cli.manager.servers()
+        try:
+            returnValue([i[1] for i in servers if self._matchSerial(serNode, i[1])][0])
+        except IndexError: raise SerialConnectionError(0)
+
+    @staticmethod
+    def _matchSerial(serNode, potMatch):
+        """
+        Checks if server name is the correct serial server.
+
+        @param serNode: Name of node of desired serial server
+        @param potMatch: Server name of potential match
+        @return: boolean indicating comparison result
+        """
+        serMatch = 'serial' in potMatch.lower()
+        nodeMatch = serNode.lower() in potMatch.lower()
+        return serMatch and nodeMatch
+
     def checkConnection(self):
         if not self.ser: raise SerialConnectionError(2)
 

@@ -2,7 +2,7 @@ from twisted.internet.task import LoopingCall
 from labrad.server import LabradServer, setting
 
 
-__all__ = ["PollingServer", "ARTIQServer", "RegistryServer"]
+__all__ = ["PollingServer", "ARTIQServer"]
 
 
 """
