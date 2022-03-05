@@ -12,8 +12,10 @@ SET /a ip_ind=0
 SET /a raw_flag=0
 FOR %%x IN (%*) DO (
     SET /a argCount+= 1
-    IF "%%x"=="-ip" (SET /a ip_ind=!argCount!)
+    IF "%%x"=="--ip" (SET /a ip_ind=!argCount!)
     IF "%%x"=="-r" (SET /a raw_flag=1)
+    IF "%%x"=="-h" (GOTO HELP)
+    IF "%%x"=="--help" (GOTO HELP)
 )
 
 IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
@@ -37,6 +39,20 @@ START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
 REM: Run all device servers as specified, then open a python shell to begin
 CALL %EGGS_LABRAD_ROOT%\bin\labrad_cxn.bat
+
+GOTO EOF
+
+:HELP
+@ECHO usage: labrad_node [-h] [-r] [--ip IP_ADDRESS]
+@ECHO:
+@ECHO LabRAD Node
+@ECHO Optional Arguments:
+@ECHO    -h, --help          show this message and exit
+@ECHO    -r                  start only the labrad core (i.e. the manager, a node, and the Chromium GUI)
+@ECHO    --ip                connect to the labrad manager at the given IP address (default: %LABRADHOST%)
+@ECHO:
+
+:EOF
 
 REM: Unset variables
 SET "argCount="

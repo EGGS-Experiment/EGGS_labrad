@@ -1,4 +1,4 @@
-::Starts all components necessary for running ARTIQ
+::Submits an experiment to ARTIQ
 
 @ECHO OFF
 
@@ -14,13 +14,10 @@ SET /a ddb_ind=0
 SET "ddb_name="
 SET /a ip_ind=0
 SET "ip_addr="
-
 FOR %%x IN (%*) DO (
     SET /a argCount+= 1
-    IF "%%x"=="--ddb" (SET /a ddb_ind=!argCount!)
-    IF "%%x"=="--ip" (SET /a ip_ind=!argCount!)
-    IF "%%x"=="-h" (GOTO HELP)
-    IF "%%x"=="--help" (GOTO HELP)
+    IF "%%x"=="-ddb" (SET /a ddb_ind=!argCount!)
+    IF "%%x"=="-ip" (SET /a ip_ind=!argCount!)
 )
 
 REM: Set arguments
@@ -34,20 +31,6 @@ REM: Start ARTIQ interface
 START "ARTIQ Master" CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"
 TIMEOUT 2 > NUL && START "ARTIQ Dashboard" /min CMD "/c TIMEOUT 2 && CALL artiq_dashboard"
 TIMEOUT 2 > NUL && START "ARTIQ Controller Manager" /min CMD "/k TIMEOUT 2 && artiq_ctlmgr"
-
-GOTO EOF
-
-:HELP
-@ECHO usage: start_artiq [-h] [--ip IP_ADDRESS] [-ddb DEVICE_DB]
-@ECHO:
-@ECHO ARTIQ Starter
-@ECHO Optional Arguments:
-@ECHO    -h, --help          show this message and exit
-@ECHO    --ip                bind the artiq_master to the given IP address (default: %ARTIQ_HOST%)
-@ECHO    --ddb               device database file (default: %ARTIQ_DDB%
-@ECHO:
-
-:EOF
 
 REM: Unset variables
 SET "argCount="
