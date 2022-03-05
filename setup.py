@@ -40,18 +40,18 @@ setup(
     description="Experimental Control System for the EGGS Experiment",
     long_description=open("README.rst", encoding="utf-8").read(),
     license="LGPLv3+",
-    classifiers="""\
-Development Status :: 5 - Production/Stable
-Environment :: Console
-Environment :: X11 Applications :: Qt
-Intended Audience :: Science/Research
-License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)
-Operating System :: Microsoft :: Windows
-Operating System :: POSIX :: Linux
-Programming Language :: Python :: 3.7
-Topic :: Scientific/Engineering :: Physics
-Topic :: System :: Hardware
-""".splitlines(),
+    classifiers="""
+        Development Status :: 5 - Production/Stable
+        Environment :: Console
+        Environment :: X11 Applications :: Qt
+        Intended Audience :: Science/Research
+        License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)
+        Operating System :: Microsoft :: Windows
+        Operating System :: POSIX :: Linux
+        Programming Language :: Python :: 3.7
+        Topic :: Scientific/Engineering :: Physics
+        Topic :: System :: Hardware
+        """.splitlines(),
     install_requires=requirements,
     extras_require={},
     packages=find_packages(),

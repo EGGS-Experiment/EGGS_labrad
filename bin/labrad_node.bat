@@ -28,7 +28,7 @@ REM: Don't open any servers if raw flag is active
 IF "%%x"=="-r" (GOTO SHELL)
 
 REM: Device Busses
-TIMEOUT 2 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
+TIMEOUT 5 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
 
 REM: Clients
 START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat

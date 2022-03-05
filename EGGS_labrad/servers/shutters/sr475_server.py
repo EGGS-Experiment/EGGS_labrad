@@ -79,7 +79,7 @@ class SR475Server(SerialDeviceServer):
 
     # SHUTTER
     @setting(211, 'Shutter Set', state='b', returns='i')
-    def shutterSet(self, c, state):
+    def shutterSet(self, c, state=None):
         """
         Set shutter state exactly.
         Arguments:
@@ -107,9 +107,7 @@ class SR475Server(SerialDeviceServer):
         else:
             print('Error: shutter position is indeterminate.')
 
-
-
-    @setting(111, 'Shutter Toggle', returns='b')
+    @setting(212, 'Shutter Toggle', returns='b')
     def shutterToggle(self, c):
         """
         Toggle shutter state.
@@ -136,7 +134,7 @@ class SR475Server(SerialDeviceServer):
 
     # SPEED
     @setting(311, 'speed', speed='i', returns='v')
-    def speed(self, c, speed):
+    def speed(self, c, speed=None):
         """
         Set/get speed of laser shutter.
         Arguments:

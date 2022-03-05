@@ -3,6 +3,8 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
 
+REM: TODO: MOVE TO ARTIQ ROOT
+
 REM: Enter LabRAD/ARTIQ environment
 CALL conda activate labart2
 

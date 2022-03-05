@@ -40,7 +40,7 @@ START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
 REM: Run all device servers as specified, then open a python shell to begin
 IF %server_flag%==1 (
-    TIMEOUT 2 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
+    TIMEOUT 5 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
     CALL %EGGS_LABRAD_ROOT%\bin\server_cxn.bat
 ) ELSE ( CALL %EGGS_LABRAD_ROOT%\bin\labrad_cxn.bat )
 
