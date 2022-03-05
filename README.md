@@ -6,6 +6,9 @@ Our experiment uses LabRAD to interface our devices, schedule experimental seque
 This repository contains all the servers, clients, and experimental sequences that are part of the EGGS experiment,
 as well as a simplified programming environment for creating LabRAD tools.
 
+In essence, EGGS_LabRAD is a kind of wrapper for pylabrad that adds a lot of convenient
+and useful tools and functionality.
+
 ## Installation
 
 Use of the code in this repository requires a LabRAD manager/system to already be installed.
