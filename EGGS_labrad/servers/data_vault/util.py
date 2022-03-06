@@ -1,9 +1,14 @@
-import configparser as cp
+"""
+Contains utilities used by the data vault server.
+"""
+
 import numpy as np
+import configparser as cp
 
 
 class DVSafeConfigParser(cp.SafeConfigParser):
-    """.ini-style config parser with improved handling of line-endings.
+    """
+    .ini-style config parser with improved handling of line-endings.
 
     By default, SafeConfigParser uses the platform-default line ending, and
     does not allow specifying anything different. This version allows the
@@ -12,7 +17,9 @@ class DVSafeConfigParser(cp.SafeConfigParser):
     """
 
     def write(self, fp, newline='\r\n'):
-        """Write an .ini-format representation of the configuration state."""
+        """
+        Write an .ini-format representation of the configuration state.
+        """
         if self._defaults:
             fp.write("[%s]" % cp.DEFAULTSECT + newline)
             for (key, value) in self._defaults.items():
@@ -28,12 +35,15 @@ class DVSafeConfigParser(cp.SafeConfigParser):
 
 
 def to_record_array(data):
-    """Take a 2-D array of numpy data and return a 1-D array of records."""
+    """
+    Take a 2-D array of numpy data and return a 1-D array of records.
+    """
     return np.core.records.fromarrays(data.T)
 
 
 def from_record_array(data):
-    """Take a 1-D array of records and convert to a 2-D array.
+    """
+    Take a 1-D array of records and convert to a 2-D array.
 
     The records must be homogeneous.
     """
@@ -41,6 +51,7 @@ def from_record_array(data):
 
 
 def braced(s):
-    """Wrap the given string in braces, which is awkward with str.format"""
+    """
+    Wrap the given string in braces, which is awkward with str.format
+    """
     return '{' + s + '}'
-

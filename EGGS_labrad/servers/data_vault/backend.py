@@ -16,17 +16,15 @@ from . import errors, util
 from labrad import types as T
 from twisted.internet import reactor
 
-
 ## Data types for variable defintions
 Independent = namedtuple('Independent', ['label', 'shape', 'datatype', 'unit'])
 Dependent = namedtuple('Dependent', ['label', 'legend', 'shape', 'datatype', 'unit'])
 
-
 TIME_FORMAT = '%Y-%m-%d, %H:%M:%S'
-PRECISION = 12 # digits of precision to use when saving data
+PRECISION = 12  # digits of precision to use when saving data
 DATA_FORMAT = '%%.%dG' % PRECISION
-FILE_TIMEOUT_SEC = 60 # how long to keep datafiles open if not accessed
-DATA_TIMEOUT = 300 # how long to keep data in memory if not accessed
+FILE_TIMEOUT_SEC = 60  # how long to keep datafiles open if not accessed
+DATA_TIMEOUT = 300  # how long to keep data in memory if not accessed
 DATA_URL_PREFIX = 'data:application/labrad;base64,'
 
 
@@ -70,6 +68,7 @@ class SelfClosingFile(object):
     The file will be opened on demand when this container is called, then
     closed automatically if not accessed within a specified timeout.
     """
+
     def __init__(self, opener=open, open_args=(), open_kw={},
                  timeout=FILE_TIMEOUT_SEC, touch=True, reactor=reactor):
         self.opener = opener
@@ -111,13 +110,14 @@ class SelfClosingFile(object):
         return os.fstat(self().fileno()).st_size
 
     def onClose(self, callback):
-        """Calls callback *before* the file is closes."""
+        """Calls callback *before* the file is closed."""
         self.callbacks.append(callback)
 
 
 # INI & CSV FILES
 class IniData(object):
-    """Handles dataset metadata stored in INI files.
+    """
+    Handles dataset metadata stored in INI files.
 
     This is used via subclassing mostly out of laziness: this was the
     easy way to separate it from the code that messes with the acutal
@@ -127,6 +127,7 @@ class IniData(object):
     This provides the load() and save() methods to read and write the
     INI file as well as accessors for all the metadata attributes.
     """
+
     def load(self):
         S = util.DVSafeConfigParser()
         S.read(self.infofile)
@@ -138,26 +139,28 @@ class IniData(object):
         self.modified = time_from_str(S.get(gen, 'Modified'))
 
         def getInd(i):
-            sec = 'Independent {}'.format(i+1)
+            sec = 'Independent {}'.format(i + 1)
             label = S.get(sec, 'Label', raw=True)
             units = S.get(sec, 'Units', raw=True)
             return Independent(label=label, shape=(1,), datatype='v', unit=units)
+
         count = S.getint(gen, 'Independent')
         self.independents = [getInd(i) for i in range(count)]
 
         def getDep(i):
-            sec = 'Dependent {}'.format(i+1)
+            sec = 'Dependent {}'.format(i + 1)
             label = S.get(sec, 'Label', raw=True)
             units = S.get(sec, 'Units', raw=True)
             categ = S.get(sec, 'Category', raw=True)
             return Dependent(label=categ, legend=label, shape=(1,), datatype='v', unit=units)
+
         count = S.getint(gen, 'Dependent')
         self.dependents = [getDep(i) for i in range(count)]
 
         self.cols = len(self.independents + self.dependents)
 
         def getPar(i):
-            sec = 'Parameter {}'.format(i+1)
+            sec = 'Parameter {}'.format(i + 1)
             label = S.get(sec, 'Label', raw=True)
             raw = S.get(sec, 'Data', raw=True)
             if raw.startswith(DATA_URL_PREFIX):
@@ -177,6 +180,7 @@ class IniData(object):
                     else:
                         raise Exception('unable to parse parameter {}: {}'.format(label, raw))
             return dict(label=label, data=data)
+
         count = S.getint(gen, 'Parameters')
         self.parameters = [getPar(i) for i in range(count)]
 
@@ -186,6 +190,7 @@ class IniData(object):
                 sec = 'Comments'
                 time, user, comment = eval(S.get(sec, 'c{}'.format(i), raw=True))
                 return time_from_str(time), user, comment
+
             count = S.getint(gen, 'Comments')
             self.comments = [getComment(i) for i in range(count)]
         else:
@@ -196,30 +201,30 @@ class IniData(object):
 
         sec = 'General'
         S.add_section(sec)
-        S.set(sec, 'Created',  time_to_str(self.created))
+        S.set(sec, 'Created', time_to_str(self.created))
         S.set(sec, 'Accessed', time_to_str(self.accessed))
         S.set(sec, 'Modified', time_to_str(self.modified))
-        S.set(sec, 'Title',       self.title)
+        S.set(sec, 'Title', self.title)
         S.set(sec, 'Independent', repr(len(self.independents)))
-        S.set(sec, 'Dependent',   repr(len(self.dependents)))
-        S.set(sec, 'Parameters',  repr(len(self.parameters)))
-        S.set(sec, 'Comments',    repr(len(self.comments)))
+        S.set(sec, 'Dependent', repr(len(self.dependents)))
+        S.set(sec, 'Parameters', repr(len(self.parameters)))
+        S.set(sec, 'Comments', repr(len(self.comments)))
 
         for i, ind in enumerate(self.independents):
-            sec = 'Independent {}'.format(i+1)
+            sec = 'Independent {}'.format(i + 1)
             S.add_section(sec)
             S.set(sec, 'Label', ind.label)
             S.set(sec, 'Units', ind.unit)
 
         for i, dep in enumerate(self.dependents):
-            sec = 'Dependent {}'.format(i+1)
+            sec = 'Dependent {}'.format(i + 1)
             S.add_section(sec)
-            S.set(sec, 'Label',    dep.legend)
-            S.set(sec, 'Units',    dep.unit)
+            S.set(sec, 'Label', dep.legend)
+            S.set(sec, 'Units', dep.unit)
             S.set(sec, 'Category', dep.label)
 
         for i, par in enumerate(self.parameters):
-            sec = 'Parameter {}'.format(i+1)
+            sec = 'Parameter {}'.format(i + 1)
             S.add_section(sec)
             S.set(sec, 'Label', par['label'])
             # encode the parameter value as a data-url
@@ -246,7 +251,7 @@ class IniData(object):
 
     @property
     def dtype(self):
-        return np.dtype(','.join(['f8']*self.cols))
+        return np.dtype(','.join(['f8'] * self.cols))
 
     def access(self):
         self.accessed = datetime.datetime.now()
@@ -298,7 +303,7 @@ class IniData(object):
         if limit is None:
             comments = self.comments[start:]
         else:
-            comments = self.comments[start:start+limit]
+            comments = self.comments[start:start + limit]
         return comments, start + len(comments)
 
     def numComments(self):
@@ -330,7 +335,7 @@ class CsvListData(IniData):
 
     @property
     def version(self):
-        return np.asarray([1,0,0], np.int32)
+        return np.asarray([1, 0, 0], np.int32)
 
     @property
     def data(self):
@@ -378,7 +383,7 @@ class CsvListData(IniData):
         if limit is None:
             data = self.data[start:]
         else:
-            data = self.data[start:start+limit]
+            data = self.data[start:start + limit]
         return data, start + len(data)
 
     def hasMore(self, pos):
@@ -386,7 +391,8 @@ class CsvListData(IniData):
 
 
 class CsvNumpyData(CsvListData):
-    """Data backed by a csv-formatted file.
+    """
+    Data backed by a csv-formatted file.
 
     Stores the entire contents of the file in memory as a list or numpy array
     """
@@ -470,7 +476,7 @@ class CsvNumpyData(CsvListData):
         if limit is None:
             data = self.data[start:]
         else:
-            data = self.data[start:start+limit]
+            data = self.data[start:start + limit]
         # nrows should be zero for an empty row
         nrows = len(data) if data.size > 0 else 0
         return data, start + nrows
@@ -656,9 +662,9 @@ class HDF5MetaData(object):
         if limit is None:
             raw_comments = self.dataset.attrs['Comments'][start:]
         else:
-            raw_comments = self.dataset.attrs['Comments'][start:start+limit]
+            raw_comments = self.dataset.attrs['Comments'][start:start + limit]
         comments = [(datetime.datetime.fromtimestamp(c[0]), str(c[1]), str(c[2])) for c in raw_comments]
-        return comments, start+len(comments)
+        return comments, start + len(comments)
 
     def numComments(self):
         return len(self.dataset.attrs['Comments'])
@@ -756,7 +762,8 @@ class ExtendedHDF5Data(HDF5MetaData):
             if self.dataset.dtype[idx] == np.object:
                 base_type = h5py.check_dtype(vlen=self.dataset.dtype[idx])
                 if not base_type or not issubclass(base_type, str):
-                    raise RuntimeError("Found object type array, but not vlen str.  Not supported.  This shouldn't happen")
+                    raise RuntimeError(
+                        "Found object type array, but not vlen str.  Not supported.  This shouldn't happen")
                 col = [base_type(x) for x in col]
             columns.append(col)
         columns = tuple(columns)
@@ -766,7 +773,7 @@ class ExtendedHDF5Data(HDF5MetaData):
         if limit is None:
             struct_data = self.dataset[start:]
         else:
-            struct_data = self.dataset[start:start+limit]
+            struct_data = self.dataset[start:start + limit]
         return struct_data, start + struct_data.shape[0]
 
     def __len__(self):
@@ -780,6 +787,7 @@ class ExtendedHDF5Data(HDF5MetaData):
         rows = self.dataset.shape[0]
         return (rows, cols)
 
+
 class SimpleHDF5Data(HDF5MetaData):
     """
     Basic dataset backed by HDF5 file.
@@ -789,6 +797,7 @@ class SimpleHDF5Data(HDF5MetaData):
     a filesystem-like tree of datasets within one file.  Here, the single dataset
     is stored in /DataVault within the HDF5 file.
     """
+
     def __init__(self, fh):
         self._file = fh
         if 'Version' not in self.file.attrs:
@@ -814,12 +823,12 @@ class SimpleHDF5Data(HDF5MetaData):
         """Adds one or more rows or data from a 2D array of floats."""
         new_rows = data.shape[0]
         old_rows = self.dataset.shape[0]
-        #if data.shape[1] != len(self.dataset.dtype):
+        # if data.shape[1] != len(self.dataset.dtype):
         #    raise errors.BadDataError(len(self.dataset.dtype), data.shape[1])
 
         self.dataset.resize((old_rows + new_rows,))
-        #new_data = np.zeros((new_rows,), dtype=self.dataset.dtype)
-        #for col in range(data.shape[1]):
+        # new_data = np.zeros((new_rows,), dtype=self.dataset.dtype)
+        # for col in range(data.shape[1]):
         #    field = "f%d" % (col,)
         #    new_data[field] = data[:,col]
         self.dataset[old_rows:(old_rows + new_rows)] = data
@@ -831,7 +840,7 @@ class SimpleHDF5Data(HDF5MetaData):
         if limit is None:
             struct_data = self.dataset[start:]
         else:
-            struct_data = self.dataset[start:start+limit]
+            struct_data = self.dataset[start:start + limit]
         columns = []
         for idx in range(len(struct_data.dtype)):
             columns.append(struct_data['f{}'.format(idx)])

@@ -9,21 +9,21 @@ from datetime import datetime
 
 from . import backend, errors, util
 
-
 ## Filename translation.
 
 _encodings = [
-    ('%','%p'), # this one MUST be first for encode/decode to work properly
-    ('/','%f'),
-    ('\\','%b'),
-    (':','%c'),
-    ('*','%a'),
-    ('?','%q'),
-    ('"','%r'),
-    ('<','%l'),
-    ('>','%g'),
-    ('|','%v')
+    ('%', '%p'),  # this one MUST be first for encode/decode to work properly
+    ('/', '%f'),
+    ('\\', '%b'),
+    (':', '%c'),
+    ('*', '%a'),
+    ('?', '%q'),
+    ('"', '%r'),
+    ('<', '%l'),
+    ('>', '%g'),
+    ('|', '%v')
 ]
+
 
 def filename_encode(name):
     """Encode special characters to produce a name that can be used as a filename"""
@@ -31,21 +31,26 @@ def filename_encode(name):
         name = name.replace(char, code)
     return name
 
+
 def filename_decode(name):
     """Decode a string that has been encoded using filename_encode"""
     for char, code in _encodings[1:] + _encodings[0:1]:
         name = name.replace(code, char)
     return name
 
+
 def filedir(datadir, path):
     return os.path.join(datadir, *[filename_encode(d) + '.dir' for d in path[1:]])
+
 
 ## time formatting
 
 TIME_FORMAT = '%Y-%m-%d, %H:%M:%S'
 
+
 def time_to_str(t):
     return t.strftime(TIME_FORMAT)
+
 
 def time_from_str(s):
     return datetime.strptime(s, TIME_FORMAT)
@@ -53,9 +58,10 @@ def time_from_str(s):
 
 ## variable parsing
 
-_re_label = re.compile(r'^([^\[(]*)') # matches up to the first [ or (
-_re_legend = re.compile(r'\((.*)\)') # matches anything inside ( )
-_re_units = re.compile(r'\[(.*)\]') # matches anything inside [ ]
+_re_label = re.compile(r'^([^\[(]*)')  # matches up to the first [ or (
+_re_legend = re.compile(r'\((.*)\)')  # matches anything inside ( )
+_re_units = re.compile(r'\[(.*)\]')  # matches anything inside [ ]
+
 
 def _get_match(pat, s, default=None):
     matches = re.findall(pat, s)
@@ -65,10 +71,12 @@ def _get_match(pat, s, default=None):
         return default
     return matches[0].strip()
 
+
 def parse_independent(s):
     label = _get_match(_re_label, s)
     units = _get_match(_re_units, s, '')
     return label, units
+
 
 def parse_dependent(s):
     label = _get_match(_re_label, s)
@@ -145,7 +153,7 @@ class Session(object):
             self.session_tags = {}
             self.dataset_tags = {}
 
-        self.access() # update current access time and save
+        self.access()  # update current access time and save
         self.listeners = set()
 
     def load(self):
@@ -179,7 +187,7 @@ class Session(object):
 
         sec = 'Information'
         S.add_section(sec)
-        S.set(sec, 'Created',  time_to_str(self.created))
+        S.set(sec, 'Created', time_to_str(self.created))
         S.set(sec, 'Accessed', time_to_str(self.accessed))
         S.set(sec, 'Modified', time_to_str(self.modified))
 
@@ -200,18 +208,21 @@ class Session(object):
         """Get a list of directory names in this directory."""
         files = os.listdir(self.dir)
         dirs = [filename_decode(s[:-4]) for s in files if s.endswith('.dir')]
-        csv_datasets = [filename_decode(s[:-4]) for s in files if s.endswith('.ini') and s.lower() != 'session.ini' ]
+        csv_datasets = [filename_decode(s[:-4]) for s in files if s.endswith('.ini') and s.lower() != 'session.ini']
         hdf5_datasets = [filename_decode(s[:-5]) for s in files if s.endswith('.hdf5')]
         datasets = sorted(csv_datasets + hdf5_datasets)
+
         # apply tag filters
         def include(entries, tag, tags):
             """Include only entries that have the specified tag."""
             return [e for e in entries
                     if e in tags and tag in tags[e]]
+
         def exclude(entries, tag, tags):
             """Exclude all entries that have the specified tag."""
             return [e for e in entries
                     if e not in tags or tag not in tags[e]]
+
         for tag in tagFilters:
             if tag[:1] == '-':
                 filter = exclude
@@ -330,11 +341,12 @@ class Dataset(object):
     All the actual data or metadata access is proxied through to a
     backend object.
     """
+
     def __init__(self, session, name, title=None, create=False, independents=[], dependents=[], extended=False):
         self.hub = session.hub
         self.name = name
         file_base = os.path.join(session.dir, filename_encode(name))
-        self.listeners = set() # contexts that want to hear about added data
+        self.listeners = set()  # contexts that want to hear about added data
         self.param_listeners = set()
         self.comment_listeners = set()
 
@@ -372,7 +384,7 @@ class Dataset(object):
         else:
             label, units = parse_independent(label)
         return backend.Independent(label=label, shape=(1,), datatype='v', unit=units)
-    
+
     def makeDependent(self, label, extended):
         """Add a dependent variable to this dataset."""
         if extended:

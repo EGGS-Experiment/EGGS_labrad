@@ -65,28 +65,27 @@ class DataVaultTest(unittest.TestCase):
             return
         if msg is None:
             msg = 'Arrays not equal\nfirst:\n{}\nsecond:\n{}'.format(
-                    expected, actual)
+                expected, actual)
         self.assertTrue(np.array_equal(expected, actual), msg=msg)
 
     def assertListOfVariablesEqual(self, expected, actual):
         self.assertEqual(len(expected), len(actual))
         msg_template = (
-                'Mismatch in varianles list at position {}:'
-                '\nexpected:\n{}\nactual:\n{}')
+            'Mismatch in varianles list at position {}:'
+            '\nexpected:\n{}\nactual:\n{}')
 
-        items = enumerate(zip(expected ,actual))
+        items = enumerate(zip(expected, actual))
         for i, (expected_var, actual_var) in items:
             msg = msg_template.format(i, expected_var, actual_var)
             self.assertEqual(expected_var.label, actual_var.label, msg=msg)
             self.assertEqual(
-                    expected_var.datatype, actual_var.datatype, msg=msg)
+                expected_var.datatype, actual_var.datatype, msg=msg)
             self.assertEqual(expected_var.unit, actual_var.unit, msg=msg)
             self.assertEqual(expected_var.shape, actual_var.shape, msg=msg)
             if hasattr(expected_var, 'legend'):
                 self.assertTrue(hasattr(actual_var, 'legend'), msg=msg)
                 self.assertEqual(
-                        expected_var.legend, actual_var.legend, msg=msg)
-
+                    expected_var.legend, actual_var.legend, msg=msg)
 
     def assertDataRowEqual(self, expected, actual):
         """Checks that data in the expected and actual rows are equal.
@@ -123,7 +122,7 @@ class DataVaultTest(unittest.TestCase):
         self.datavault.initContext(self.context)
         # Create a dataset at root.
         path, name = self.datavault.new(
-                self.context, 'foo', [('x', 'ms')], [('y', 'E', 'eV')])
+            self.context, 'foo', [('x', 'ms')], [('y', 'E', 'eV')])
 
         self.assertEqual([''], path)
         self.assertEqual('00001 - foo', name)
@@ -137,13 +136,13 @@ class DataVaultTest(unittest.TestCase):
 
         # Extended variables output.
         independents_ex, dependents_ex = self.datavault.variables_ex(
-                self.context)
+            self.context)
         expected_independents_ex = [
-                backend.Independent(
-                    label='x', shape=(1,), datatype='v', unit='ms')]
+            backend.Independent(
+                label='x', shape=(1,), datatype='v', unit='ms')]
         expected_dependents_ex = [
-                backend.Dependent(
-                    label='y', legend='E', shape=(1,), datatype='v', unit='eV')]
+            backend.Dependent(
+                label='y', legend='E', shape=(1,), datatype='v', unit='eV')]
 
         self.assertEqual(expected_independents_ex, independents_ex)
         self.assertEqual(expected_dependents_ex, dependents_ex)
@@ -153,14 +152,14 @@ class DataVaultTest(unittest.TestCase):
         # Row and transpose type.
         self.assertEqual('*(v[ms],v[eV])', self.datavault.row_type(self.context))
         self.assertEqual(
-                '(*v[ms],*v[eV])', self.datavault.transpose_type(self.context))
+            '(*v[ms],*v[eV])', self.datavault.transpose_type(self.context))
 
     def test_expire_context(self):
         # Create the root session.
         self.datavault.initContext(self.context)
         # Create a root dataset.
         self.datavault.new(
-                self.context, 'foo', [('x', 'ms')], [('y', 'E', 'eV')])
+            self.context, 'foo', [('x', 'ms')], [('y', 'E', 'eV')])
         dataset = self.datavault.getDataset(self.context)
         # Add the context as a listener to the dataset.
         dataset.listeners.add(self.context.ID)
@@ -177,7 +176,7 @@ class DataVaultTest(unittest.TestCase):
     def test_get_dataset_not_yet_created(self):
         self.datavault.initContext(self.context)
         self.assertRaises(
-                errors.NoDatasetError, self.datavault.getDataset, self.context)
+            errors.NoDatasetError, self.datavault.getDataset, self.context)
 
     def test_add_session_with_cd(self):
         # Create the root session.
@@ -185,7 +184,7 @@ class DataVaultTest(unittest.TestCase):
         root_session = self.datavault.getSession(self.context)
         # Create another session.
         newpath = self.datavault.cd(self.context, path='first', create=True)
-        new_session =  self.datavault.getSession(self.context)
+        new_session = self.datavault.getSession(self.context)
         self.assertNotEqual(root_session, new_session)
         self.assertEqual(['', 'first'], newpath)
 
@@ -232,10 +231,10 @@ class DataVaultTest(unittest.TestCase):
         self.datavault.initContext(self.context)
         # Create a root dataset.
         self.datavault.new(
-                self.context,
-                'foo',
-                [('x', 'ms'), ('y', 'Volt')],
-                [('z', 'E', 'eV')])
+            self.context,
+            'foo',
+            [('x', 'ms'), ('y', 'Volt')],
+            [('z', 'E', 'eV')])
         # Add two rows of data.
         self.datavault.add(self.context, [(.1, .2, .3), (.4, .5, .6)])
         # Check that the data is there.
@@ -256,19 +255,19 @@ class DataVaultTest(unittest.TestCase):
 
         # Check that the data can not be fetched in extended transpose format.
         self.assertRaises(
-                RuntimeError,
-                self.datavault.get_ex_t,
-                self.context,
-                startOver=True)
+            RuntimeError,
+            self.datavault.get_ex_t,
+            self.context,
+            startOver=True)
 
     def test_add_extended_data(self):
         self.datavault.initContext(self.context)
         # Create a root dataset.
         self.datavault.new_ex(
-                self.context,
-                'foo',
-                [('x', [2, 2], 'v', 'ms'), ('y', [1], 'i', '')],
-                [('z', 'E',  [1, 2], 'c', 'eV')])
+            self.context,
+            'foo',
+            [('x', [2, 2], 'v', 'ms'), ('y', [1], 'i', '')],
+            [('z', 'E', [1, 2], 'c', 'eV')])
         # Add two rows of data.
         data_row_1 = ([[.1, .5], [.5, .9]], 2, [[.1j, 2j]])
         data_row_2 = ([[.3, .4], [.4, .8]], 3, [[.3j, 5j]])
@@ -292,29 +291,29 @@ class DataVaultTest(unittest.TestCase):
         data_t = self.datavault.get_ex_t(self.context, startOver=True)
         expected_x = [[[.1, .5], [.5, .9]], [[.3, .4], [.4, .8]]]
         expected_y = [2, 3]
-        expected_z =  [[[.1j, 2j]], [[.3j, 5j]]]
+        expected_z = [[[.1j, 2j]], [[.3j, 5j]]]
         self.assertArrayEqual(expected_x, data_t[0])
         self.assertArrayEqual(expected_y, data_t[1])
         self.assertArrayEqual(expected_z, data_t[2])
 
         # Extended data format cannot be read as simple data.
         self.assertRaises(
-                errors.DataVersionMismatchError,
-                self.datavault.get,
-                self.context)
+            errors.DataVersionMismatchError,
+            self.datavault.get,
+            self.context)
 
     def test_add_extended_data_transpose(self):
         self.datavault.initContext(self.context)
         # Create a root dataset.
         self.datavault.new_ex(
-                self.context,
-                'foo',
-                [('x', [2, 2], 'v', 'ms'), ('y', [1], 'i', '')],
-                [('z', 'E',  [1, 2], 'c', 'eV')])
+            self.context,
+            'foo',
+            [('x', [2, 2], 'v', 'ms'), ('y', [1], 'i', '')],
+            [('z', 'E', [1, 2], 'c', 'eV')])
         # Add two rows of transposed data.
         x = [[[.1, .5], [.5, .9]], [[.3, .4], [.4, .8]]]
         y = [2, 3]
-        z =  [[[.1j, 2j]], [[.3j, 5j]]]
+        z = [[[.1j, 2j]], [[.3j, 5j]]]
         self.datavault.add_ex_t(self.context, [x, y, z])
 
         # Check that the data is there as non-transposed data.
@@ -341,9 +340,10 @@ class DataVaultTest(unittest.TestCase):
 
         # Extended data format cannot be read as simple data.
         self.assertRaises(
-                errors.DataVersionMismatchError,
-                self.datavault.get,
-                self.context)
+            errors.DataVersionMismatchError,
+            self.datavault.get,
+            self.context)
+
 
 if __name__ == '__main__':
     pytest.main(['-v', __file__])

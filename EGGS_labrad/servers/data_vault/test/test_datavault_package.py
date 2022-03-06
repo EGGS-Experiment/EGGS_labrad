@@ -75,27 +75,26 @@ class _DatavaultTestCase(unittest.TestCase):
     def assertArrayEqual(self, expected, actual):
         self.assertTrue(np.array_equal(expected, actual),
                         msg='Arrays not equal\nfirst:\n{}\nsecond:\n{}'
-                            .format(expected, actual))
-
+                        .format(expected, actual))
 
     def assertListOfVariablesEqual(self, expected, actual):
         self.assertEqual(len(expected), len(actual))
         msg_template = (
-                'Mismatch in varianles list at position {}:'
-                '\nexpected:\n{}\nactual:\n{}')
+            'Mismatch in varianles list at position {}:'
+            '\nexpected:\n{}\nactual:\n{}')
 
-        items = enumerate(zip(expected ,actual))
+        items = enumerate(zip(expected, actual))
         for i, (expected_var, actual_var) in items:
             msg = msg_template.format(i, expected_var, actual_var)
             self.assertEqual(expected_var.label, actual_var.label, msg=msg)
             self.assertEqual(
-                    expected_var.datatype, actual_var.datatype, msg=msg)
+                expected_var.datatype, actual_var.datatype, msg=msg)
             self.assertEqual(expected_var.unit, actual_var.unit, msg=msg)
             self.assertEqual(expected_var.shape, actual_var.shape, msg=msg)
             if hasattr(expected_var, 'legend'):
                 self.assertTrue(hasattr(actual_var, 'legend'), msg=msg)
                 self.assertEqual(
-                        expected_var.legend, actual_var.legend, msg=msg)
+                    expected_var.legend, actual_var.legend, msg=msg)
 
     def assertDatasetsEqual(self, expected, actual):
         expected_entries, expected_num = expected.getData(None, 0)
@@ -105,11 +104,11 @@ class _DatavaultTestCase(unittest.TestCase):
         expected_independents = expected.getIndependents()
         actual_independents = actual.getIndependents()
         self.assertListOfVariablesEqual(
-                expected_independents, actual_independents)
+            expected_independents, actual_independents)
         expected_dependents = expected.getDependents()
         actual_dependents = actual.getDependents()
         self.assertListOfVariablesEqual(
-                expected_dependents, actual_dependents)
+            expected_dependents, actual_dependents)
 
 
 class SessionTest(_DatavaultTestCase):
@@ -134,7 +133,7 @@ class SessionTest(_DatavaultTestCase):
     def test_add_new_dataset(self):
         session = self._get_session()
         dataset = session.newDataset(
-                self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
+            self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
         datasets = session.listDatasets()
         self.assertEqual(len(datasets), 1)
         self.assertEqual(['00001 - Foo'], datasets)
@@ -171,10 +170,10 @@ class SessionTest(_DatavaultTestCase):
     def test_add_new_tags(self):
         session1 = self._get_session()
         dataset1 = session1.newDataset(
-                self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
+            self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
         session2 = self._get_session()
         dataset2 = session2.newDataset(
-                self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
+            self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
 
         session = self._get_session()
         session.updateTags(['foo'], [session1, session2], [dataset1, dataset2])
@@ -182,16 +181,16 @@ class SessionTest(_DatavaultTestCase):
         expected_session_tags = [(session1, ['foo']), (session2, ['foo'])]
         expected_dataset_tags = [(dataset1, ['foo']), (dataset2, ['foo'])]
         self.hub.onTagsUpdated.assert_called_with(
-                (expected_session_tags, expected_dataset_tags), set([]))
+            (expected_session_tags, expected_dataset_tags), set([]))
 
     def test_get_tags(self):
         # Create some sessions and add some datasets.
         session1 = self._get_session()
         dataset1 = session1.newDataset(
-                self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
+            self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
         session2 = self._get_session()
         dataset2 = session2.newDataset(
-                self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
+            self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
 
         # Create another session to store tags for the other sessions and
         # datasets in.
@@ -206,7 +205,7 @@ class SessionTest(_DatavaultTestCase):
 
         session_tags = tags[0]
         expected_session_tags = [
-                (session1, ['bar', 'foo']), (session2, ['foo'])]
+            (session1, ['bar', 'foo']), (session2, ['foo'])]
         self.assertEqual(expected_session_tags, session_tags)
 
         dataset_tags = tags[1]
@@ -223,7 +222,7 @@ class SessionTest(_DatavaultTestCase):
         # Create a session and add a datasets.
         session = self._get_session()
         dataset = session.newDataset(
-                self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
+            self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
 
         # Use the session to store tags for itself.
         session.updateTags(['session_tag'], [session], [])
@@ -241,7 +240,7 @@ class SessionTest(_DatavaultTestCase):
         # Create a session and add a datasets.
         session = self._get_session()
         dataset = session.newDataset(
-                self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
+            self._TITLE, self._INDEPENDENTS, self._DEPENDENTS)
 
         # Use the session to store tag for itself.
         session.updateTags(['tag'], [session], [dataset])
@@ -262,8 +261,7 @@ class SessionTest(_DatavaultTestCase):
 
 
 class DatasetTest(_DatavaultTestCase):
-
-    _EXT_INDEPENDENTS = [('t', [1], 'v', 'ns'), ('x', [2,2], 'c', 'V')]
+    _EXT_INDEPENDENTS = [('t', [1], 'v', 'ns'), ('x', [2, 2], 'c', 'V')]
     _EXT_DEPENDENTS = [('cnt', 'foo', [3, 2], 'i', '')]
 
     def setUp(self):
@@ -282,20 +280,19 @@ class DatasetTest(_DatavaultTestCase):
         return data_record
 
     def _get_records_extended(self, rows, dtype):
-        data_record = np.recarray((len(rows), ), dtype=dtype)
+        data_record = np.recarray((len(rows),), dtype=dtype)
         for i, row in enumerate(rows):
             data_record[i] = row
         return data_record
 
-
     def test_init_create_simple(self):
         dataset = Dataset(
-                self.session,
-                "Foo Name",
-                title=self._TITLE,
-                create=True,
-                independents=self._INDEPENDENTS,
-                dependents=self._DEPENDENTS)
+            self.session,
+            "Foo Name",
+            title=self._TITLE,
+            create=True,
+            independents=self._INDEPENDENTS,
+            dependents=self._DEPENDENTS)
 
         self.assertEqual('2.0.0', dataset.version())
 
@@ -319,13 +316,13 @@ class DatasetTest(_DatavaultTestCase):
 
     def test_init_create_extended(self):
         dataset = Dataset(
-                self.session,
-                "Foo Name",
-                title=self._TITLE,
-                create=True,
-                independents=self._EXT_INDEPENDENTS,
-                dependents=self._EXT_DEPENDENTS,
-                extended=True)
+            self.session,
+            "Foo Name",
+            title=self._TITLE,
+            create=True,
+            independents=self._EXT_INDEPENDENTS,
+            dependents=self._EXT_DEPENDENTS,
+            extended=True)
 
         self.assertEqual('3.0.0', dataset.version())
 
@@ -356,17 +353,17 @@ class DatasetTest(_DatavaultTestCase):
 
     def test_add_data_simple(self):
         dataset = Dataset(
-                self.session,
-                "Foo Name",
-                title=self._TITLE,
-                create=True,
-                independents=self._INDEPENDENTS,
-                dependents=self._DEPENDENTS)
+            self.session,
+            "Foo Name",
+            title=self._TITLE,
+            create=True,
+            independents=self._INDEPENDENTS,
+            dependents=self._DEPENDENTS)
 
         dataset.listeners.add('foo listener')
 
         data = self._get_records_simple(
-                [(1, 2, 3), (2, 3, 4)], dataset.data.dtype)
+            [(1, 2, 3), (2, 3, 4)], dataset.data.dtype)
 
         # Add the data.
         dataset.addData(data)
@@ -379,13 +376,13 @@ class DatasetTest(_DatavaultTestCase):
 
     def test_add_data_extended(self):
         dataset = Dataset(
-                self.session,
-                "Foo Name",
-                title=self._TITLE,
-                create=True,
-                independents=self._EXT_INDEPENDENTS,
-                dependents=self._EXT_DEPENDENTS,
-                extended=True)
+            self.session,
+            "Foo Name",
+            title=self._TITLE,
+            create=True,
+            independents=self._EXT_INDEPENDENTS,
+            dependents=self._EXT_DEPENDENTS,
+            extended=True)
 
         dataset.listeners.add('foo listener')
         row_1 = (1, [[0, 1], [1, 0]], [[0, 1], [2, 3], [4, 5]])
@@ -409,13 +406,13 @@ class DatasetTest(_DatavaultTestCase):
     def test_save_reload_data_extended(self):
         # Set up the dataset
         dataset = Dataset(
-                self.session,
-                "Foo Name",
-                title=self._TITLE,
-                create=True,
-                independents=self._EXT_INDEPENDENTS,
-                dependents=self._EXT_DEPENDENTS,
-                extended=True)
+            self.session,
+            "Foo Name",
+            title=self._TITLE,
+            create=True,
+            independents=self._EXT_INDEPENDENTS,
+            dependents=self._EXT_DEPENDENTS,
+            extended=True)
 
         dataset.listeners.add('foo listener')
         row_1 = (1, [[0, 1], [1, 0]], [[0, 1], [2, 3], [4, 5]])
@@ -429,10 +426,10 @@ class DatasetTest(_DatavaultTestCase):
 
         # Create a new dataset that loads the data.
         new_dataset = Dataset(
-                self.session,
-                "Foo Name",
-                title=self._TITLE,
-                extended=True)
+            self.session,
+            "Foo Name",
+            title=self._TITLE,
+            extended=True)
 
         data_in_dataset, count = new_dataset.getData(None, 0, simpleOnly=False)
         self.assertEqual(count, 2)
@@ -445,12 +442,12 @@ class DatasetTest(_DatavaultTestCase):
 
     def test_add_one_parameter(self):
         dataset = Dataset(
-                self.session,
-                "Foo Name",
-                title=self._TITLE,
-                create=True,
-                independents=self._INDEPENDENTS,
-                dependents=self._DEPENDENTS)
+            self.session,
+            "Foo Name",
+            title=self._TITLE,
+            create=True,
+            independents=self._INDEPENDENTS,
+            dependents=self._DEPENDENTS)
 
         dataset.param_listeners.add('listener')
         dataset.addParameter('param 1', 'data for param')
@@ -462,12 +459,12 @@ class DatasetTest(_DatavaultTestCase):
 
     def test_add_two_parameters(self):
         dataset = Dataset(
-                self.session,
-                "Foo Name",
-                title=self._TITLE,
-                create=True,
-                independents=self._INDEPENDENTS,
-                dependents=self._DEPENDENTS)
+            self.session,
+            "Foo Name",
+            title=self._TITLE,
+            create=True,
+            independents=self._INDEPENDENTS,
+            dependents=self._DEPENDENTS)
 
         dataset.param_listeners.add('listener')
         dataset.addParameters([('param 2', 'data 2'), ('param 3', 'data 3')])
@@ -478,12 +475,12 @@ class DatasetTest(_DatavaultTestCase):
 
     def test_add_comment(self):
         dataset = Dataset(
-                self.session,
-                "Foo Name",
-                title=self._TITLE,
-                create=True,
-                independents=self._INDEPENDENTS,
-                dependents=self._DEPENDENTS)
+            self.session,
+            "Foo Name",
+            title=self._TITLE,
+            create=True,
+            independents=self._INDEPENDENTS,
+            dependents=self._DEPENDENTS)
 
         dataset.comment_listeners.add('listener')
         dataset.addComment('user 1', 'comment 1')
@@ -497,12 +494,12 @@ class DatasetTest(_DatavaultTestCase):
 
     def test_keep_streaming(self):
         dataset = Dataset(
-                self.session,
-                "Foo Name",
-                title=self._TITLE,
-                create=True,
-                independents=self._INDEPENDENTS,
-                dependents=self._DEPENDENTS)
+            self.session,
+            "Foo Name",
+            title=self._TITLE,
+            create=True,
+            independents=self._INDEPENDENTS,
+            dependents=self._DEPENDENTS)
 
         data = self._get_records_simple([(1, 2, 3)], dataset.data.dtype)
 
