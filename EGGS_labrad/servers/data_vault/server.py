@@ -39,7 +39,7 @@ class DataVault(LabradServer):
         self.saveDatasetTimer = LoopingCall(self.saveAllDatasets)
         self.saveDatasetTimer.start(300)
 
-    def saveAllDatasets(self, signal):
+    def saveAllDatasets(self):
         """
         Save all datasets routinely.
         Prevents data from being corrupted due to unforeseen/uninterruptible events.

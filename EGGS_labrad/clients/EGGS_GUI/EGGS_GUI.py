@@ -16,7 +16,7 @@ class EGGS_gui(QMainWindow):
         self.clipboard = clipboard
         self.reactor = reactor
         self.setWindowTitle('EGGS GUI')
-        self.setWindowIcon(QIcon('/eggs.png'))
+        self.setWindowIcon(QIcon('C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\eggs.png'))
         # connect devices synchronously
         d = self.connect()
         d.addCallback(self.makeLayout)
