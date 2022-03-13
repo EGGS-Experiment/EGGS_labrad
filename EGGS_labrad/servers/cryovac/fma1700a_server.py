@@ -32,7 +32,7 @@ class FMA1700AServer(SerialDeviceServer, PollingServer):
     """
 
     name = 'FMA1700A Server'
-    regKey = 'FMA1700AServer'
+    regKey = 'FMA1700A Server'
     serNode = 'MongKok'
     port = 'COM58'
 

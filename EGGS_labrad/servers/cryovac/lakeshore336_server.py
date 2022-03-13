@@ -41,7 +41,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
     """
 
     name = 'Lakeshore336 Server'
-    regKey = 'Lakeshore336Server'
+    regKey = 'Lakeshore336 Server'
     serNode = 'MongKok'
     port = 'COM24'
 

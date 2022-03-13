@@ -32,7 +32,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
     """
 
     name = 'SLS Server'
-    regKey = 'SLSServer'
+    regKey = 'SLS Server'
     serNode = 'mongkok'
     port = 'COM44'
 

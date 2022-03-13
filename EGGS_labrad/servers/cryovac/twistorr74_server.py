@@ -41,7 +41,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     """
 
     name = 'TwisTorr74 Server'
-    regKey = 'TwisTorr74Server'
+    regKey = 'TwisTorr74 Server'
     serNode = 'mongkok'
     port = 'COM54'
 

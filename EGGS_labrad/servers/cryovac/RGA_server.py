@@ -31,7 +31,7 @@ class RGA_Server(SerialDeviceServer):
     """
 
     name = 'RGA Server'
-    regKey = 'RGAServer'
+    regKey = 'RGA Server'
     port = 'COM63'
     serNode = 'mongkok'
 

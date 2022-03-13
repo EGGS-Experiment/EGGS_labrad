@@ -34,7 +34,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
     """
 
     name = 'NIOPS03 Server'
-    regKey = 'NIOPS03Server'
+    regKey = 'NIOPS03 Server'
     serNode = 'MongKok'
     port = 'COM52'
 
