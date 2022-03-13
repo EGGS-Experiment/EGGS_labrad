@@ -102,6 +102,18 @@
 # Empty call to device_select now does default connection instead.
 #===============================================================================
 
+#===============================================================================
+# 2022 - 03 - 12
+#
+# Added back SelectPortFromReg function that gets default values
+# from registry before looking to hardcoded server file values.
+#
+# Removed checkConnection function since it's a one-liner.
+#
+# Made serverConnected signal function call initSerial upon
+# connection of required serial bus server.
+#===============================================================================
+
 # imports
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
@@ -117,6 +129,7 @@ class SerialDeviceError(Exception):
         self.value = value
     def __str__(self):
         return repr(self.value)
+
 
 class SerialConnectionError(Exception):
     errorDict = {0: 'Could not find serial server in list',
@@ -201,6 +214,14 @@ class SerialDeviceServer(LabradServer):
     def initServer(self):
         # call parent initServer to support further subclassing
         super().initServer()
+        # get default node and port from registry (this overrides hard-coded values)
+        if self.regKey is not None:
+            try:
+                node, port = yield self.getPortFromReg(self.regKey)
+                self.serNode = node
+                self.port = port
+            except Exception as e:
+                print(e)
         # open connection on startup if default node and port are specified
         if self.serNode and self.port:
             print('Default node and port specified. Connecting to device on startup.')
@@ -234,17 +255,40 @@ class SerialDeviceServer(LabradServer):
             self.ser.release()
 
     @inlineCallbacks
+    def getPortFromReg(self, regDir=None):
+        """
+        Finds default node and port values in
+        the registry given the directory name.
+
+        @param regKey: String used to find key match.
+        @return: Name of port
+        @raise PortRegError: Error code 0.  Registry does not have correct directory structure (['','Ports']).
+        @raise PortRegError: Error code 1.  Did not find match.
+        """
+        reg = self.client.registry
+        # There must be a 'Ports' directory at the root of the registry folder
+        try:
+            tmp = yield reg.cd()
+            yield reg.cd(['', 'Servers', regDir])
+            node = yield reg.get('default_node')
+            port = yield reg.get('default_port')
+            yield reg.cd(tmp)
+            returnValue((node, port))
+        except Error as e:
+            yield reg.cd(tmp)
+            print(e)
+
+
+    # SERIAL
+    @inlineCallbacks
     def initSerial(self, serStr, port, **kwargs):
         """
-        Initialize serial connection.
-        
-        Attempts to initialize a serial connection using
-        given key for serial serial and port string.  
+        Attempts to initialize a serial connection
+        using a given key for the node and port string.
         Sets server's ser attribute if successful.
-        
+
         @param serStr: Key for serial server
         @param port: Name of port to connect to
-        
         @raise SerialConnectionError: Error code 1.  Raised if we could not create serial connection.
         """
         # set default timeout if not specified
@@ -275,17 +319,20 @@ class SerialDeviceServer(LabradServer):
     def findSerial(self, serNode=None):
         """
         Find appropriate serial server.
+
         @param serNode: Name of labrad node possessing desired serial port
         @return: Key of serial server
         @raise SerialConnectionError: Error code 0.  Could not find desired serial server.
         """
-        if not serNode: serNode = self.serNode
+        if not serNode:
+            serNode = self.serNode
         cli = self.client
         # look for servers with 'serial' and serNode in the name, take first result
         servers = yield cli.manager.servers()
         try:
             returnValue([i[1] for i in servers if self._matchSerial(serNode, i[1])][0])
-        except IndexError: raise SerialConnectionError(0)
+        except IndexError:
+            raise SerialConnectionError(0)
 
     @staticmethod
     def _matchSerial(serNode, potMatch):
@@ -300,24 +347,30 @@ class SerialDeviceServer(LabradServer):
         nodeMatch = serNode.lower() in potMatch.lower()
         return serMatch and nodeMatch
 
-    def checkConnection(self):
-        if not self.ser: raise SerialConnectionError(2)
 
+    # SIGNALS
     @inlineCallbacks
     def serverConnected(self, ID, name):
-        """Check to see if we can connect to serial server now."""
-        if self.ser is None and None not in (self.port, self.serNode) and self._matchSerial(self.serNode, name):
-            yield self.initSerial(name, self.port)
-            print('Serial server connected after we connected')
+        """
+        Attempt to connect to last connected serial bus server upon server connection.
+        """
+        # check if we aren't connected to a device, port and node are fully specified,
+        # and connected server is the required serial bus server
+        if (self.ser is None) and (None not in (self.port, self.serNode)) and (self._matchSerial(self.serNode, name)):
+            print(name, 'connected after we connected.')
+            yield self.deviceSelect(None)
 
     def serverDisconnected(self, ID, name):
-        """Close connection (if we are connected)."""
+        """
+        Close serial device connection (if we are connected).
+        """
         if self.ser and self.ser.ID == ID:
-            print('Serial server disconnected.  Relaunch the serial server')
+            print('Serial bus server disconnected. Relaunch the serial server')
             self.ser = None
 
 
     # SETTINGS
+
         # DEVICE SELECTION
     @setting(111111, 'Device Select', node='s', port='s', returns=['', '(ss)'])
     def deviceSelect(self, c, node=None, port=None):
