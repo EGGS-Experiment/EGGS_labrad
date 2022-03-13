@@ -93,7 +93,6 @@ class DC_gui(QFrame):
         try:
             from EGGS_labrad.config.dc_config import dcConfig
             self.active_channels = dcConfig.channeldict
-            self.row_length = dcConfig.rowLength
         except Exception as e:
             print(e)
         # create GUI
@@ -108,15 +107,12 @@ class DC_gui(QFrame):
         # create header
         self.device_header = self._createHeader()
         # layout individual channels (chosen via class variable)
-        channel_names = list(self.active_channels.keys())
-        channel_numbers = list(self.active_channels.values())
-        for group in self.active_channels.values():
-            for channel_name, channel_params in group.items():
-                # initialize GUIs for each channel
-                channel_gui = AMO8_channel(channel_name, channel_params['num'])
-                # add widget to client list and layout
-                self.amo8_channels.append(channel_gui)
-                amo8_layout.addWidget(channel_gui, channel_params['row'], channel_params['col'])
+        for channel_name, channel_params in self.active_channels.items():
+            # initialize GUIs for each channel
+            channel_gui = AMO8_channel(channel_name, channel_params['num'])
+            # add widget to client list and layout
+            self.amo8_channels.append(channel_gui)
+            amo8_layout.addWidget(channel_gui, channel_params['row'], channel_params['col'])
         # layout rest of device
         amo8_layout.addWidget(self.device_header, 0, int(self.row_length / 2), 1, 1)
         self.setLayout(amo8_layout)
