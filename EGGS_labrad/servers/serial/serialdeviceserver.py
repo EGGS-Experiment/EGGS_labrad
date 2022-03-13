@@ -223,7 +223,6 @@ class SerialDeviceServer(LabradServer):
                 self.port = port
             except Exception as e:
                 print('Unable to find default node and port in registry. Using hard-coded values if they exist.')
-                print(e)
         # open connection on startup if default node and port are specified
         if self.serNode and self.port:
             print('Default node and port specified. Connecting to device on startup.')
@@ -276,9 +275,8 @@ class SerialDeviceServer(LabradServer):
             port = yield reg.get('default_port')
             yield reg.cd(tmp)
             returnValue((node, port))
-        except Error as e:
+        except Exception as e:
             yield reg.cd(tmp)
-            print(e)
 
 
     # SERIAL
