@@ -81,10 +81,10 @@ class wavemeterclient(QtGui.QWidget):
         yield self.server.addListener(listener=self.updateAmplitude, source=None, ID=SIGNALID8)
 
         # starts display of wavemeter data
-        self.initializeGUI()
+        self.initGUI()
 
     @inlineCallbacks
-    def initializeGUI(self):
+    def initGUI(self):
         layout = QtGui.QGridLayout()
 
         self.setWindowTitle('wavemeter_client')

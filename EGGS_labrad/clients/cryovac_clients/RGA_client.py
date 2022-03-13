@@ -65,7 +65,7 @@ class RGA_client(GUIClient):
         self.gui.setEnabled(True)
         self.gui.buffer_readout.appendPlainText('Initialized.')
 
-    def initializeGUI(self):
+    def initGUI(self):
         # general
         # todo: degas, calibrate electrometer, mass lock
         self.gui.initialize.clicked.connect(lambda: self.tempDisable('IN', self.rga.initialize))

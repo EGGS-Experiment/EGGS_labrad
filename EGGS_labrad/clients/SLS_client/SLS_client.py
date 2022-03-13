@@ -61,7 +61,7 @@ class SLS_client(GUIClient):
         self.gui.servo_d.setValue(float(init_values['CurrentServoDiffGain']))
         self.gui.servo_filter.setCurrentIndex(int(init_values['CurrentServoOutputFilter']))
 
-    def initializeGUI(self):
+    def initGUI(self):
         # autolock
         self.gui.autolock_toggle.toggled.connect(lambda status: self.sls.autolock_toggle(status))
         self.gui.autolock_param.currentTextChanged.connect(lambda param: self.sls.autolock_parameter(param.upper()))

@@ -34,7 +34,7 @@ class rf_client(GUIClient):
         # unlock after startup
         self.gui.setEnabled(True)
 
-    def initializeGUI(self):
+    def initGUI(self):
         # waveform parameters
         self.gui.wav_freq.valueChanged.connect(lambda freq: (self.rf.frequency(freq * 1000)))
         self.gui.wav_ampl.valueChanged.connect(lambda ampl, units='DBM': self.rf.amplitude(ampl, units))

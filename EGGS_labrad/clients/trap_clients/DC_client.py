@@ -34,7 +34,7 @@ class DC_client(GUIClient):
             self.gui.amo8_channels[i].dac.setValue(voltage_list[i])
             self.gui.amo8_channels[i].toggle.setChecked(toggle_list[i])
 
-    def initializeGUI(self):
+    def initGUI(self):
         # connect global signals
         self.gui.device_global_onswitch.clicked.connect(lambda: self.amo8.toggle(-1, 1))
         self.gui.device_global_offswitch.clicked.connect(lambda: self.amo8.toggle(-1, 0))
