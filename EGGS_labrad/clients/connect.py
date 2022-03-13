@@ -4,8 +4,6 @@ Contains utilities to create connections to LabRAD.
 
 __all__ = ["connection"]
 
-
-#from labrad.wrappers import connectAsync
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 
