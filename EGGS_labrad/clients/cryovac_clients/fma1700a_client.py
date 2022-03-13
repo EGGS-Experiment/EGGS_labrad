@@ -30,7 +30,7 @@ class fma1700a_client(GUIClient):
         if not poll_params[0]:
             yield self.fma.polling(True, 5.0)
 
-    def initializeGUI(self):
+    def initGUI(self):
         self.gui.record_button.toggled.connect(lambda status: self.record_flow(status))
 
 

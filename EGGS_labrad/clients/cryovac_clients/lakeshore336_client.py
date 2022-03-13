@@ -58,7 +58,7 @@ class lakeshore336_client(GUIClient):
         pow2 = yield self.ls.heater_power(2)
         self.gui.heat2_p1.setValue(pow2)
 
-    def initializeGUI(self):
+    def initGUI(self):
         # temperature
         self.gui.tempAll_record.clicked.connect(lambda status: self.record_temp(status))
         # heaters

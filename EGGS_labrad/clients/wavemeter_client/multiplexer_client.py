@@ -83,7 +83,7 @@ class multiplexer_client(GUIClient):
         initmeas = initmeas
         widget.measSwitch.setChecked(bool(initmeas))
 
-    def initializeGUI(self):
+    def initGUI(self):
         self.lockSwitch.toggled.connect(self.setLock)
         self.startSwitch.toggled.connect(self.setOutput)
 

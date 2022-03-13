@@ -21,7 +21,7 @@ class f70_client(f70_gui):
         # initialization sequence
         d = self.connect()
         d.addCallback(self.initData)
-        d.addCallback(self.initializeGUI)
+        d.addCallback(self.initGUI)
 
     @inlineCallbacks
     def connect(self):
@@ -77,7 +77,7 @@ class f70_client(f70_gui):
         self.gui.power_button.setChecked(power_status)
         return self.cxn
 
-    def initializeGUI(self, cxn):
+    def initGUI(self, cxn):
         """
         Connect signals to slots and other initializations.
         """

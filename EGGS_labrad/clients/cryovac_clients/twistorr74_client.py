@@ -47,7 +47,7 @@ class twistorr74_client(GUIClient):
         status_tmp = yield self.tt.toggle()
         self.gui.twistorr_toggle.setChecked(status_tmp)
 
-    def initializeGUI(self):
+    def initGUI(self):
         self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.gui.twistorr_toggle.setEnabled(status))
         self.gui.twistorr_toggle.clicked.connect(lambda status: self.tt.toggle(status))
         self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))

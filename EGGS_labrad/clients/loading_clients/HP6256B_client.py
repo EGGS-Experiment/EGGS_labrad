@@ -29,7 +29,7 @@ class HP6256B_client(GUIClient):
         self.gui.dac.setValue(voltage_list[i])
         self.gui.toggle.setChecked(toggle_list[i])
 
-    def initializeGUI(self):
+    def initGUI(self):
         # connect global signals
         self.gui.device_global_onswitch.clicked.connect(lambda: self.hp.toggle(-1, 1))
         self.gui.device_global_offswitch.clicked.connect(lambda: self.hp.toggle(-1, 0))

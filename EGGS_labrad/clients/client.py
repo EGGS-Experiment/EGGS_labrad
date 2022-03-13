@@ -33,7 +33,7 @@ class GUIClient(ABC):
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._initData)
-        d.addCallback(self._initializeGUI)
+        d.addCallback(self._initGUI)
 
     @inlineCallbacks
     def _connectLabrad(self):
@@ -83,12 +83,12 @@ class GUIClient(ABC):
         return cxn
 
     @inlineCallbacks
-    def _initializeGUI(self, cxn):
+    def _initGUI(self, cxn):
         try:
-            yield self.initializeGUI()
+            yield self.initGUI()
         except Exception as e:
             self.gui.setEnabled(False)
-            print('Error in initializeGUI.')
+            print('Error in initGUI.')
             print(e)
         return cxn
 
@@ -97,7 +97,7 @@ class GUIClient(ABC):
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._initData)
-        d.addCallback(self._initializeGUI)
+        d.addCallback(self._initGUI)
 
 
     # SHUTDOWN
@@ -169,7 +169,7 @@ class GUIClient(ABC):
         """
         pass
 
-    def initializeGUI(self):
+    def initGUI(self):
         """
         To be subclassed.
         Called after initData.

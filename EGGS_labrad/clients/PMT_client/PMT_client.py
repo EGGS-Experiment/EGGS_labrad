@@ -50,7 +50,7 @@ class PMT_client(GUIClient):
         self.gui.edge_method.setCurrentIndex(ind)
 
 
-    def initializeGUI(self):
+    def initGUI(self):
         """
         Connect signals to slots.
         """
