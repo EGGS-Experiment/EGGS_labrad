@@ -91,10 +91,12 @@ class DC_gui(QFrame):
         self.name = name
         # config
         try:
-            from EGGS_labrad.config.dc_config import dcConfig
-            self.active_channels = dcConfig.channeldict
+            from EGGS_labrad.config.dc_config import dc_config
+            self.row_length = dc_config.row_length
+            self.active_channels = dc_config.channeldict
         except Exception as e:
             print(e)
+            print('kk1')
         # create GUI
         self.createGUI()
 
