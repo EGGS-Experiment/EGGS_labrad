@@ -3,13 +3,12 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QComboBox, QLabel, QPushButton, QGridLayout, QFrame, QSizePolicy
 
 from twisted.internet.defer import inlineCallbacks
-
-from EGGS_labrad.clients.Widgets import TextChangingButton
 from EGGS_labrad.servers.ARTIQ.device_db import device_db
+
 
 class ADC_channel(QFrame):
     """
-    GUI for a single ADC channel.
+    GUI for a single ARTIQADC channel.
     """
 
     def __init__(self, name=None, parent=None):

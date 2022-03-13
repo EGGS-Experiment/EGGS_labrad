@@ -1,12 +1,14 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtGui, QtCore
+from PyQt5.QtWidgets import QPushButton, QSizePolicy
 
 __all__ = ['TextChangingButton', 'Lockswitch']
 
 
-class TextChangingButton(QtWidgets.QPushButton):
+class TextChangingButton(QPushButton):
     """
     Button that changes its text to ON or OFF and colors when it's pressed.
     """
+
     def __init__(self, button_text, parent=None):
         """
         NOTE: when both labels and addtext are not None, labels take
@@ -26,8 +28,7 @@ class TextChangingButton(QtWidgets.QPushButton):
         self.button_text = button_text
         self.setCheckable(True)
         self.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=10))
-        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
-                           QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         # connect signal for appearance changing
         self.toggled.connect(self.setAppearance)
         self.setAppearance(self.isDown())

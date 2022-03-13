@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QDoubleSpinBox, QComboBox, 
 
 
 class QCustomPID(QFrame):
+
     def __init__(self, DACPort=0, parent=None):
         QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
