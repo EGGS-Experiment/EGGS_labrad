@@ -1,8 +1,8 @@
 from EGGS_labrad.clients import GUIClient
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from EGGS_labrad.clients.wavemeter_client.multiplexerPID import QCustomPID
-from EGGS_labrad.clients.wavemeter_client.multiplexerchannel import QCustomWavemeterChannel
+from EGGS_labrad.clients.Widgets.QCustomPID import QCustomPID
+from EGGS_labrad.clients.wavemeter_client.multiplexer_channel import QCustomWavemeterChannel
 
 from EGGS_labrad.clients.wavemeter_client import multiplexer_gui
 

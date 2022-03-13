@@ -3,8 +3,10 @@ import os
 from PyQt5.QtWidgets import QWidget, QApplication
 from PyQt5 import QtCore, uic
 
+
 class QCustomSpinBox(QWidget):
     onNewValues = QtCore.pyqtSignal()
+
     def __init__(self, title, levelRange, parent=None):
         QWidget.__init__(self, parent)
         #basepath = os.path.dirname(__file__)
@@ -71,7 +73,8 @@ class QCustomSpinBox(QWidget):
         self.spinLevel.blockSignals(True)
         self.spinLevel.setValue(value)
         self.spinLevel.blockSignals(False)
-        
+
+
 if __name__=='__main__':
     app = QApplication(sys.argv)
     icon = QCustomSpinBox('Control',(-10.0,10.0))

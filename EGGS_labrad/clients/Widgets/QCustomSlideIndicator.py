@@ -3,10 +3,10 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QPen
 
 
-class SlideIndicator(QWidget):
+class QCustomSlideIndicator(QWidget):
 
     def __init__(self, limits):
-        super(SlideIndicator, self).__init__()
+        super(QCustomSlideIndicator, self).__init__()
         self.set_rails(limits)
         self.value = None
         self.setGeometry(2000, 200, 200, 30)
@@ -53,4 +53,4 @@ class SlideIndicator(QWidget):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
-    runGUI(SlideIndicator, limits=[-5.0, 5.0])
+    runGUI(QCustomSlideIndicator, limits=[-5.0, 5.0])

@@ -3,10 +3,10 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QProgressBar, QApplication
 
 
-class MQProgressBar(QProgressBar):
+class QCustomProgressBar(QProgressBar):
 
     def __init__(self):
-        super(MQProgressBar, self).__init__()
+        super(QCustomProgressBar, self).__init__()
         self.setTextVisible(False)
         self.__blockStyle = False
         self.setMaximum(4000)
@@ -49,7 +49,7 @@ class MQProgressBar(QProgressBar):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    mypb = MQProgressBar()
+    mypb = QCustomProgressBar()
     mypb.setOrientation(QtCore.Qt.Horizontal)
     mypb.setMeterColor("orange", "red")
     mypb.setMeterBorder("orange")

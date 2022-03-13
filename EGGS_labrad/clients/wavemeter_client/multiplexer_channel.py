@@ -2,9 +2,9 @@ from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QLabel, QFrame, QGridLayout, QPushButton, QDoubleSpinBox
 
-from QCustomPowerMeter import MQProgressBar
-from QCustomSlideIndicator import SlideIndicator
 from EGGS_labrad.clients.Widgets import TextChangingButton
+from EGGS_labrad.clients.Widgets import QCustomProgressBar as MQProgressBar
+from EGGS_labrad.clients.Widgets import QCustomSlideIndicator as SlideIndicator
 
 import pyqtgraph as pg
 
@@ -21,9 +21,12 @@ class StretchedLabel(QLabel):
 
 
 class QCustomWavemeterChannel(QFrame):
+    """
+    GUI for an individual wavemeter channel.
+    """
 
-    def __init__(self, chanName, wmChannel, DACPort, frequency, stretchedlabel, displayPattern, displayPIDvoltage=None,
-                 parent=None):
+    def __init__(self, chanName, wmChannel, DACPort, frequency, stretchedlabel, displayPattern,
+                 displayPIDvoltage=None, parent=None):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(chanName, wmChannel, DACPort, frequency, stretchedlabel, displayPIDvoltage, displayPattern)
