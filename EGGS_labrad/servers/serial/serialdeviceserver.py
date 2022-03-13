@@ -216,11 +216,13 @@ class SerialDeviceServer(LabradServer):
         super().initServer()
         # get default node and port from registry (this overrides hard-coded values)
         if self.regKey is not None:
+            print('RegKey specified. Looking in registry for default node and port.')
             try:
                 node, port = yield self.getPortFromReg(self.regKey)
                 self.serNode = node
                 self.port = port
             except Exception as e:
+                print('Unable to find default node and port in registry. Using hard-coded values if they exist.')
                 print(e)
         # open connection on startup if default node and port are specified
         if self.serNode and self.port:
