@@ -33,12 +33,13 @@ class StretchedLabel(QLabel):
 class multiplexer_pid(QFrame):
 
     def __init__(self, DACPort=0, parent=None):
-        super().__init__(self, parent)
+        super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(DACPort)
 
     def makeLayout(self, DACPort):
         label_font = QFont('MS Shell Dlg 2', pointSize=8)
+        label_alignment = Qt.AlignLeft
         main_font = QFont('MS Shell Dlg 2', pointSize=16)
         main_alignment = Qt.AlignRight
 
@@ -56,7 +57,8 @@ class multiplexer_pid(QFrame):
 
         for label in (pLabel, iLabel, dLabel, dtLabel, factorLabel, exponentLabel, polarityLabel):
             label.setFont(label_font)
-            label.setAlignment(main_alignment)
+            label.setAlignment(label_alignment)
+            label.setAlignment(Qt.AlignBottom)
 
         # PID control
         self.spinP = QDoubleSpinBox()
@@ -138,13 +140,10 @@ class multiplexer_channel(QFrame):
         chanName.setFont(QFont(shell_font, pointSize=16))
         chanName.setAlignment(QtCore.Qt.AlignCenter)
 
-        configtitle = QLabel('Wavemeter Connections:')
-        configtitle.setAlignment(QtCore.Qt.AlignBottom)
-        configtitle.setFont(QFont(shell_font, pointSize=13))
-
-        configLabel = QLabel("Channel " + str(wmChannel) + '        ' + "DAC Port " + str(DACPort))
+        configLabel = QLabel("Channel: " + str(wmChannel) + '        ' + "DAC Port: " + str(DACPort))
         configLabel.setFont(QFont(shell_font, pointSize=8))
-        configLabel.setAlignment(QtCore.Qt.AlignCenter)
+        configLabel.setAlignment(QtCore.Qt.AlignLeft)
+        configLabel.setAlignment(QtCore.Qt.AlignTop)
 
         self.PIDvoltage = QLabel('DAC Voltage (mV)  -.-')
         self.PIDvoltage.setFont(QFont(shell_font, pointSize=12))
@@ -215,14 +214,15 @@ class multiplexer_channel(QFrame):
             # self.plot2.hideAxis('left')
             # layout.addWidget(self.plot2,        7, 1, 1, 11)
 
+        layout.addWidget(configLabel, 0, 0)
+        layout.addWidget(chanName, 0, 0, 1, 1)
+
         layout.addWidget(self.spinFreq, 6, 0, 1, 1)
         layout.addWidget(self.spinExp, 6, 3, 1, 3)
         layout.addWidget(self.measSwitch, 0, 6, 1, 5)
         layout.addWidget(self.lockChannel, 1, 6, 1, 5)
         layout.addWidget(self.setPID, 2, 6, 1, 5)
-        layout.addWidget(chanName, 0, 0, 1, 1)
-        layout.addWidget(configtitle, 3, 6, 1, 5)
-        layout.addWidget(configLabel, 4, 6, 1, 5)
+
         layout.addWidget(self.currentfrequency, 1, 0, 4, 1)
         layout.addWidget(frequencylabel, 5, 0, 1, 1)
         layout.addWidget(exposurelabel, 5, 3, 1, 3)
@@ -330,15 +330,14 @@ class multiplexer_gui(QFrame):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
-
     # run multiplexer PID gui
     # runGUI(multiplexer_pid)
 
     # run multiplexer channel GUI
-    # runGUI(multiplexer_channel, chanName='Repumper', wmChannel=1,
-    #                             DACPort=4, frequency='Under Exposed',
-    #                             stretchedlabel=False, displayPattern=True)
+    runGUI(multiplexer_channel, chanName='Repumper', wmChannel=1,
+                                 DACPort=4, frequency='Under Exposed',
+                                 stretchedlabel=False, displayPattern=True)
 
     # run multiplexer client GUI
-    from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
-    runGUI(multiplexer_gui, multiplexer_config.info)
+    # from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
+    # runGUI(multiplexer_gui, multiplexer_config.info)

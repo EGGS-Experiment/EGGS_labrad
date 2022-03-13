@@ -87,7 +87,7 @@ class wavemeterclient(QtGui.QWidget):
     def initializeGUI(self):
         layout = QtGui.QGridLayout()
 
-        self.setWindowTitle('wavemeter_client')
+        self.setWindowTitle('Wavemeter')
 
         # this "group" contains all 8 channel outputs and settings
         qBox = QtGui.QGroupBox('Wave Length and Lock settings')
@@ -96,7 +96,7 @@ class wavemeterclient(QtGui.QWidget):
         layout.addWidget(qBox, 0, 0)
 
         # button to start wavemeter measurement (turn wavemeter on)
-        self.startSwitch = TextChangingButton('wavemeter_client')
+        self.startSwitch = TextChangingButton('Wavemeter')
         self.startSwitch.setMaximumHeight(50)
         initstartvalue = yield self.server.get_wlm_output()
         self.startSwitch.setChecked(initstartvalue)

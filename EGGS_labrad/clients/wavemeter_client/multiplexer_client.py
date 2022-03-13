@@ -3,7 +3,7 @@ from socket import gethostname
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.clients import GUIClient
-from EGGS_labrad.clients.wavemeter_client.multiplexer_gui import multiplexer_gui
+from EGGS_labrad.clients.wavemeter_clients.multiplexer_gui import multiplexer_gui
 
 
 FREQ_CHANGED_ID = 445566
