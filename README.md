@@ -32,11 +32,10 @@ these can be found in our binaries folder.
 For example, running
 
 ```commandline
-    labrad_master -s
+    labrad_master -r
 ```
 
-starts up the LabRAD manager, a LabRAD node, core device servers,
-all experimental control servers, and all device servers.
+starts up just the LabRAD manager, a LabRAD node, and the LabRAD Chromium GUI.
 
 ## ARTIQ
 

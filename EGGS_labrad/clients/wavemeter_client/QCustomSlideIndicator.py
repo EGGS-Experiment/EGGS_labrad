@@ -1,40 +1,36 @@
-import sys
-from PyQt5 import QtGui, QtWidgets, QtCore
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget
+from PyQt5.QtGui import QPainter, QPen
 
 
-class SlideIndicator(QtWidgets.QWidget):
+class SlideIndicator(QWidget):
 
     def __init__(self, limits):
         super(SlideIndicator, self).__init__()
         self.set_rails(limits)
         self.value = None
-        self.init_UI()
-
-    def init_UI(self):
-
         self.setGeometry(2000, 200, 200, 30)
         self.setWindowTitle('Slide Indicator')
-        self.show()
 
     def paintEvent(self, e):
-        qp = QtGui.QPainter()
+        qp = QPainter()
         qp.begin(self)
         self.draw_grid(qp)
         self.draw_pointer(qp)
         qp.end()
 
     def draw_grid(self, qp):
-        pen = QtGui.QPen(QtCore.Qt.gray, 2, QtCore.Qt.SolidLine)
+        pen = QPen(Qt.gray, 2, Qt.SolidLine)
         qp.setPen(pen)
         qp.drawLine(0, self.height() - 1, self.width(), self.height() - 1)
-        pen.setStyle(QtCore.Qt.CustomDashLine)
+        pen.setStyle(Qt.CustomDashLine)
         pen.setDashPattern([1, self.width() / 8.1 - 1])
         qp.setPen(pen)
         qp.drawLine(0, self.height() - 2, self.width(), self.height() - 2)
         qp.drawLine(0, self.height() - 3, self.width(), self.height() - 3)
 
     def draw_pointer(self, qp):
-        pen = QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.SolidLine)
+        pen = QPen(Qt.red, 2, Qt.SolidLine)
         qp.setPen(pen)
         if self.value is not None:
             xpos = (self.value - self.minvalue) / self.span * self.width()
@@ -56,7 +52,5 @@ class SlideIndicator(QtWidgets.QWidget):
 
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    icon = SlideIndicator([-5.0, 5.0])
-    icon.show()
-    app.exec_()
+    from EGGS_labrad.clients import runGUI
+    runGUI(SlideIndicator, limits=[-5.0, 5.0])
