@@ -1,17 +1,18 @@
-from PyQt5 import QtCore, QtWidgets
 import sys
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QProgressBar, QApplication
 
 
-class MQProgressBar(QtWidgets.QProgressBar):
+class MQProgressBar(QProgressBar):
 
     def __init__(self):
         super(MQProgressBar, self).__init__()
         self.setTextVisible(False)
         self.__blockStyle = False
-        self.setMaximum(4000.0)
+        self.setMaximum(4000)
 
     def setValue(self, integer):
-        QtWidgets.QProgressBar.setValue(self, integer)
+        QProgressBar.setValue(self, integer)
 
     def setMeterColor(self, start_color="green", end_color="red"):
         mode_val = "horizontal"
@@ -47,12 +48,11 @@ class MQProgressBar(QtWidgets.QProgressBar):
 
 
 if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyle(QtWidgets.QStyleFactory.create("plastique"))
+    app = QApplication(sys.argv)
     mypb = MQProgressBar()
     mypb.setOrientation(QtCore.Qt.Horizontal)
     mypb.setMeterColor("orange", "red")
     mypb.setMeterBorder("orange")
-    mypb.setValue(3000.0)
+    mypb.setValue(3000)
     mypb.show()
     sys.exit(app.exec_())

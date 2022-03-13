@@ -1,26 +1,28 @@
-from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QDoubleSpinBox, QComboBox, QCheckBox, QGridLayout
 
 
-class QCustomPID(QtWidgets.QFrame):
+class QCustomPID(QFrame):
     def __init__(self, DACPort=0, parent=None):
-        QtWidgets.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(DACPort)
 
     def makeLayout(self, DACPort):
-        main_font = QtGui.QFont('MS Shell Dlg 2', pointSize=16)
-        main_alignment = QtCore.Qt.AlignRight
+        main_font = QFont('MS Shell Dlg 2', pointSize=16)
+        main_alignment = Qt.AlignRight
 
         # labels
-        pLabel = QtWidgets.QLabel('P')
-        iLabel = QtWidgets.QLabel('I')
-        dLabel = QtWidgets.QLabel('D')
-        dtLabel = QtWidgets.QLabel('dt')
-        factorLabel = QtWidgets.QLabel('Factor (V)')
-        exponentLabel = QtWidgets.QLabel('THz*10^')
-        polarityLabel = QtWidgets.QLabel('Polarity')
-        sensLabel = QtWidgets.QLabel('PID Sensitivity')
-        sensLabel.setAlignment(QtCore.Qt.AlignCenter)
+        pLabel = QLabel('P')
+        iLabel = QLabel('I')
+        dLabel = QLabel('D')
+        dtLabel = QLabel('dt')
+        factorLabel = QLabel('Factor (V)')
+        exponentLabel = QLabel('THz*10^')
+        polarityLabel = QLabel('Polarity')
+        sensLabel = QLabel('PID Sensitivity')
+        sensLabel.setAlignment(Qt.AlignCenter)
         sensLabel.setFont(main_font)
 
         for label in (pLabel, iLabel, dLabel, dtLabel, factorLabel, exponentLabel, polarityLabel):
@@ -28,10 +30,10 @@ class QCustomPID(QtWidgets.QFrame):
             label.setAlignment(main_alignment)
 
         # PID control
-        self.spinP = QtWidgets.QDoubleSpinBox()
-        self.spinI = QtWidgets.QDoubleSpinBox()
-        self.spinD = QtWidgets.QDoubleSpinBox()
-        self.spinDt = QtWidgets.QDoubleSpinBox()
+        self.spinP = QDoubleSpinBox()
+        self.spinI = QDoubleSpinBox()
+        self.spinD = QDoubleSpinBox()
+        self.spinDt = QDoubleSpinBox()
 
         for spinbox in (self.spinP, self.spinI, self.spinD, self.spinDt):
             spinbox.setFont(main_font)
@@ -40,29 +42,30 @@ class QCustomPID(QtWidgets.QFrame):
             spinbox.setRange(0, 100)
             spinbox.setKeyboardTracking(False)
 
-        self.spinFactor = QtWidgets.QDoubleSpinBox()
+        # other control elements
+        self.spinFactor = QDoubleSpinBox()
         self.spinFactor.setFont(main_font)
         self.spinFactor.setDecimals(2)
         self.spinFactor.setSingleStep(0.01)
         self.spinFactor.setRange(0, 9.99)
         self.spinFactor.setKeyboardTracking(False)
 
-        self.spinExp = QtWidgets.QDoubleSpinBox()
+        self.spinExp = QDoubleSpinBox()
         self.spinExp.setFont(main_font)
         self.spinExp.setDecimals(0)
         self.spinExp.setSingleStep(1)
         self.spinExp.setRange(-6, 3)
         self.spinExp.setKeyboardTracking(False)
 
-        self.polarityBox = QtWidgets.QComboBox(self)
+        self.polarityBox = QComboBox(self)
         self.polarityBox.addItem("Positive")
         self.polarityBox.addItem("Negative")
 
-        self.useDTBox = QtWidgets.QCheckBox('Use Const dt')
+        self.useDTBox = QCheckBox('Use Const dt')
         self.useDTBox.setFont(main_font)
 
         # set layout
-        layout = QtWidgets.QGridLayout()
+        layout = QGridLayout()
         layout.minimumSize()
 
         layout.addWidget(pLabel, 0, 0, 1, 1)
