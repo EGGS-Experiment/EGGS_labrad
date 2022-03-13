@@ -2,76 +2,53 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 
 
 class QCustomPID(QtWidgets.QFrame):
-    def __init__(self, DACPort, parent=None):
+    def __init__(self, DACPort=0, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(DACPort)
 
     def makeLayout(self, DACPort):
-        layout = QtWidgets.QGridLayout()
+        main_font = QtGui.QFont('MS Shell Dlg 2', pointSize=16)
+        main_alignment = QtCore.Qt.AlignRight
+
+        # labels
         pLabel = QtWidgets.QLabel('P')
-        pLabel.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        pLabel.setAlignment(QtCore.Qt.AlignRight)
         iLabel = QtWidgets.QLabel('I')
-        iLabel.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        iLabel.setAlignment(QtCore.Qt.AlignRight)
         dLabel = QtWidgets.QLabel('D')
-        dLabel.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        dLabel.setAlignment(QtCore.Qt.AlignRight)
         dtLabel = QtWidgets.QLabel('dt')
-        dtLabel.setAlignment(QtCore.Qt.AlignRight)
-        dtLabel.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
+        factorLabel = QtWidgets.QLabel('Factor (V)')
+        exponentLabel = QtWidgets.QLabel('THz*10^')
+        polarityLabel = QtWidgets.QLabel('Polarity')
         sensLabel = QtWidgets.QLabel('PID Sensitivity')
         sensLabel.setAlignment(QtCore.Qt.AlignCenter)
-        sensLabel.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        factorLabel = QtWidgets.QLabel('Factor (V)')
-        factorLabel.setAlignment(QtCore.Qt.AlignRight)
-        factorLabel.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        exponentLabel = QtWidgets.QLabel('THz*10^')
-        exponentLabel.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        exponentLabel.setAlignment(QtCore.Qt.AlignRight)
-        polarityLabel = QtWidgets.QLabel('Polarity')
-        polarityLabel.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        polarityLabel.setAlignment(QtCore.Qt.AlignRight)
+        sensLabel.setFont(main_font)
 
-        # editable fields
+        for label in (pLabel, iLabel, dLabel, dtLabel, factorLabel, exponentLabel, polarityLabel):
+            label.setFont(main_font)
+            label.setAlignment(main_alignment)
+
+        # PID control
         self.spinP = QtWidgets.QDoubleSpinBox()
-        self.spinP.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        self.spinP.setDecimals(3)
-        self.spinP.setSingleStep(0.001)
-        self.spinP.setRange(0, 100)
-        self.spinP.setKeyboardTracking(False)
-
         self.spinI = QtWidgets.QDoubleSpinBox()
-        self.spinI.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        self.spinI.setDecimals(3)
-        self.spinI.setSingleStep(0.001)
-        self.spinI.setRange(0, 100)
-        self.spinI.setKeyboardTracking(False)
-
         self.spinD = QtWidgets.QDoubleSpinBox()
-        self.spinD.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        self.spinD.setDecimals(3)
-        self.spinD.setSingleStep(0.001)
-        self.spinD.setRange(0, 100)
-        self.spinD.setKeyboardTracking(False)
-
         self.spinDt = QtWidgets.QDoubleSpinBox()
-        self.spinDt.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
-        self.spinDt.setDecimals(3)
-        self.spinDt.setSingleStep(0.001)
-        self.spinDt.setRange(0, 100)
-        self.spinDt.setKeyboardTracking(False)
+
+        for spinbox in (self.spinP, self.spinI, self.spinD, self.spinDt):
+            spinbox.setFont(main_font)
+            spinbox.setDecimals(3)
+            spinbox.setSingleStep(0.001)
+            spinbox.setRange(0, 100)
+            spinbox.setKeyboardTracking(False)
 
         self.spinFactor = QtWidgets.QDoubleSpinBox()
-        self.spinFactor.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
+        self.spinFactor.setFont(main_font)
         self.spinFactor.setDecimals(2)
         self.spinFactor.setSingleStep(0.01)
         self.spinFactor.setRange(0, 9.99)
         self.spinFactor.setKeyboardTracking(False)
 
         self.spinExp = QtWidgets.QDoubleSpinBox()
-        self.spinExp.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=16))
+        self.spinExp.setFont(main_font)
         self.spinExp.setDecimals(0)
         self.spinExp.setSingleStep(1)
         self.spinExp.setRange(-6, 3)
@@ -81,8 +58,12 @@ class QCustomPID(QtWidgets.QFrame):
         self.polarityBox.addItem("Positive")
         self.polarityBox.addItem("Negative")
 
-        self.useDTBox = QtGui.QCheckBox('Use Const dt')
-        self.useDTBox.setFont(QtWidgets.QFont('MS Shell Dlg 2', pointSize=16))
+        self.useDTBox = QtWidgets.QCheckBox('Use Const dt')
+        self.useDTBox.setFont(main_font)
+
+        # set layout
+        layout = QtWidgets.QGridLayout()
+        layout.minimumSize()
 
         layout.addWidget(pLabel, 0, 0, 1, 1)
         layout.addWidget(self.spinP, 0, 1, 1, 1)
@@ -102,8 +83,6 @@ class QCustomPID(QtWidgets.QFrame):
         layout.addWidget(self.spinFactor, 1, 5, 1, 1)
         layout.addWidget(exponentLabel, 2, 4, 1, 1)
         layout.addWidget(self.spinExp, 2, 5, 1, 1)
-
-        layout.minimumSize()
 
         self.setLayout(layout)
 
