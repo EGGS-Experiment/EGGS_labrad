@@ -9,9 +9,9 @@ from pyqtgraph.Qt import QtGui
 
 from twisted.internet.defer import inlineCallbacks
 try:
-    from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
+    from config.multiplexerclient_config import multiplexer_config
 except:
-    pass
+    from common.lib.config.multiplexerclient_config import multiplexer_config
 
 import socket
 import os
