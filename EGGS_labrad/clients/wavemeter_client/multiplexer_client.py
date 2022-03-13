@@ -1,16 +1,11 @@
 from EGGS_labrad.clients import GUIClient
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-try:
-    from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
-except Exception as e:
-    pass
+from EGGS_labrad.clients.wavemeter_client.multiplexerPID import QCustomPID
+from EGGS_labrad.clients.wavemeter_client.multiplexerchannel import QCustomWavemeterChannel
 
-from common.lib.clients.qtui.multiplexerPID import QCustomPID
-from common.lib.clients.qtui.multiplexerchannel import QCustomWavemeterChannel
+from EGGS_labrad.clients.wavemeter_client import multiplexer_gui
 
-import socket
-import os
 import pyqtgraph as pg
 import numpy as np
 
@@ -24,8 +19,6 @@ SIGNALID7 = 148323
 SIGNALID8 = 238883
 SIGNALID9 = 462917
 
-
-# this is the signal for the updated frequencies
 
 class multiplexer_client(GUIClient):
 
@@ -41,11 +34,16 @@ class multiplexer_client(GUIClient):
         be stored for iteration. also grabs chan info
         from multiplexer_config
         """
+        try:
+            from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
+        except Exception as e:
+            pass
         super(multiplexer_client, self).__init__()
+        import os
         self.password = os.environ['LABRADPASSWORD']
         self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
-        self.reactor = reactor
-        self.name = socket.gethostname() + ' Wave Meter Client'
+        from socket import gethostname
+        self.name = gethostname() + ' Wave Meter Client'
         self.d = {}
         self.wmChannels = {}
         self.connect()
@@ -65,9 +63,9 @@ class multiplexer_client(GUIClient):
 
     @inlineCallbacks
     def connect(self):
-        """Creates an Asynchronous connection to the wavemeter computer and
+        """
+        Creates an Asynchronous connection to the wavemeter computer and
         connects incoming signals to relavent functions
-
         """
         self.chaninfo = multiplexer_config.info
         self.wavemeterIP = multiplexer_config.ip

@@ -6,13 +6,13 @@ from common.lib.clients.qtui.q_custom_text_changing_button import \
     TextChangingButton as _TextChangingButton
 import pyqtgraph as pg
 
+
 class StretchedLabel(QtGui.QLabel):
     def __init__(self, *args, **kwargs):
         QtGui.QLabel.__init__(self, *args, **kwargs)
         self.setMinimumSize(QtCore.QSize(350, 100))
 
     def resizeEvent(self, evt):
-
         font = self.font()
         font.setPixelSize(self.width() * 0.14 - 14)
         self.setFont(font)
@@ -25,7 +25,8 @@ class TextChangingButton(_TextChangingButton):
 
 
 class QCustomWavemeterChannel(QtGui.QFrame):
-    def __init__(self, chanName, wmChannel, DACPort, frequency, stretchedlabel, displayPattern, displayPIDvoltage=None, parent=None):
+    def __init__(self, chanName, wmChannel, DACPort, frequency, stretchedlabel, displayPattern, displayPIDvoltage=None,
+                 parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(chanName, wmChannel, DACPort, frequency, stretchedlabel, displayPIDvoltage, displayPattern)
@@ -58,13 +59,12 @@ class QCustomWavemeterChannel(QtGui.QFrame):
         self.powermeter.setMeterBorder("orange")
 
         if displayPIDvoltage is True:
-            layout.addWidget(self.PIDvoltage,   6,6,1,5)
-            layout.addWidget(self.PIDindicator, 5,6,1,5)
+            layout.addWidget(self.PIDvoltage, 6, 6, 1, 5)
+            layout.addWidget(self.PIDindicator, 5, 6, 1, 5)
         if stretchedlabel is True:
             self.currentfrequency = StretchedLabel(frequency)
         else:
             self.currentfrequency = QtGui.QLabel(frequency)
-
 
         self.currentfrequency.setFont(QtGui.QFont(shell_font, pointSize=60))
         self.currentfrequency.setAlignment(QtCore.Qt.AlignCenter)
@@ -87,7 +87,7 @@ class QCustomWavemeterChannel(QtGui.QFrame):
         self.zeroVoltage = QtGui.QPushButton('Zero Voltage')
         self.lockChannel.setMinimumWidth(180)
 
-        #editable fields
+        # editable fields
         self.spinFreq = QtGui.QDoubleSpinBox()
         self.spinFreq.setFont(QtGui.QFont(shell_font, pointSize=16))
         self.spinFreq.setDecimals(6)
@@ -102,31 +102,30 @@ class QCustomWavemeterChannel(QtGui.QFrame):
         # 10 seconds is the max exposure time on the wavemeter.
         self.spinExp.setRange(0, 10000.0)
         self.spinExp.setKeyboardTracking(False)
-        
+
         if displayPattern:
             pg.setConfigOption('background', 'w')
             self.plot1 = pg.PlotWidget(name='Plot 1')
-            #self.plot2 = pg.PlotWidget(name='Plot 2')
+            # self.plot2 = pg.PlotWidget(name='Plot 2')
             self.plot1.hideAxis('bottom')
             self.plot1.hideAxis('left')
-            #self.plot2.hideAxis('bottom')
-            #self.plot2.hideAxis('left')
-            layout.addWidget(self.plot1,        7, 0, 1, 12)
-            #layout.addWidget(self.plot2,        7, 1, 1, 11) 
-            
+            # self.plot2.hideAxis('bottom')
+            # self.plot2.hideAxis('left')
+            layout.addWidget(self.plot1, 7, 0, 1, 12)
+            # layout.addWidget(self.plot2,        7, 1, 1, 11)
 
-        layout.addWidget(self.spinFreq,         6, 0, 1, 1)
-        layout.addWidget(self.spinExp,          6, 3, 1, 3)
-        layout.addWidget(self.measSwitch,       0, 6, 1, 5)
-        layout.addWidget(self.lockChannel,      1, 6, 1, 5)
-        layout.addWidget(self.setPID,           2, 6, 1, 5)
-        layout.addWidget(chanName,              0, 0, 1, 1)
-        layout.addWidget(configtitle,           3, 6, 1, 5)
-        layout.addWidget(configLabel,           4, 6, 1, 5)
+        layout.addWidget(self.spinFreq, 6, 0, 1, 1)
+        layout.addWidget(self.spinExp, 6, 3, 1, 3)
+        layout.addWidget(self.measSwitch, 0, 6, 1, 5)
+        layout.addWidget(self.lockChannel, 1, 6, 1, 5)
+        layout.addWidget(self.setPID, 2, 6, 1, 5)
+        layout.addWidget(chanName, 0, 0, 1, 1)
+        layout.addWidget(configtitle, 3, 6, 1, 5)
+        layout.addWidget(configLabel, 4, 6, 1, 5)
         layout.addWidget(self.currentfrequency, 1, 0, 4, 1)
-        layout.addWidget(frequencylabel,        5, 0, 1, 1)
-        layout.addWidget(exposurelabel,         5, 3, 1, 3)
-        layout.addWidget(self.powermeter,       0, 11, 7, 1)
+        layout.addWidget(frequencylabel, 5, 0, 1, 1)
+        layout.addWidget(exposurelabel, 5, 3, 1, 3)
+        layout.addWidget(self.powermeter, 0, 11, 7, 1)
 
         layout.minimumSize()
 
