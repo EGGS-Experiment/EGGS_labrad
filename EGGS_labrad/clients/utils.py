@@ -11,14 +11,14 @@ from PyQt5.QtWidgets import QApplication
 
 
 # run functions
-def runGUI(client, **kwargs):
+def runGUI(client, *args, **kwargs):
     """
     Runs a LabRAD GUI file written using PyQt5
     """
     # widgets require a QApplication to run
     app = QApplication([])
     # instantiate gui
-    gui = client(**kwargs)
+    gui = client(*args, **kwargs)
     # set up UI if needed
     try:
         gui.setupUi()
@@ -29,7 +29,7 @@ def runGUI(client, **kwargs):
     os._exit(app.exec())
 
 
-def runClient(client, **kwargs):
+def runClient(client, *args, **kwargs):
     """
     Runs a LabRAD client written using PyQt5
     """
@@ -43,7 +43,7 @@ def runClient(client, **kwargs):
         print(e)
     # instantiate client with a reactor
     from twisted.internet import reactor
-    client_tmp = client(reactor, **kwargs)
+    client_tmp = client(reactor, *args, **kwargs)
     # show client
     if hasattr(client_tmp, 'show'):
         client_tmp.show()

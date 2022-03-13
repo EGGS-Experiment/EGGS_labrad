@@ -2,8 +2,8 @@ from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QLabel, QFrame, QGridLayout, QPushButton, QDoubleSpinBox
 
-from .QCustomPowerMeter import MQProgressBar
-from .QCustomSlideIndicator import SlideIndicator
+from QCustomPowerMeter import MQProgressBar
+from QCustomSlideIndicator import SlideIndicator
 from EGGS_labrad.clients.Widgets import TextChangingButton
 
 import pyqtgraph as pg
@@ -21,6 +21,7 @@ class StretchedLabel(QLabel):
 
 
 class QCustomWavemeterChannel(QFrame):
+
     def __init__(self, chanName, wmChannel, DACPort, frequency, stretchedlabel, displayPattern, displayPIDvoltage=None,
                  parent=None):
         super().__init__()
@@ -102,12 +103,12 @@ class QCustomWavemeterChannel(QFrame):
         if displayPattern:
             pg.setConfigOption('background', 'w')
             self.plot1 = pg.PlotWidget(name='Plot 1')
-            # self.plot2 = pg.PlotWidget(name='Plot 2')
             self.plot1.hideAxis('bottom')
             self.plot1.hideAxis('left')
+            layout.addWidget(self.plot1, 7, 0, 1, 12)
+            # self.plot2 = pg.PlotWidget(name='Plot 2')
             # self.plot2.hideAxis('bottom')
             # self.plot2.hideAxis('left')
-            layout.addWidget(self.plot1, 7, 0, 1, 12)
             # layout.addWidget(self.plot2,        7, 1, 1, 11)
 
         layout.addWidget(self.spinFreq, 6, 0, 1, 1)
@@ -137,4 +138,4 @@ if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
     runGUI(QCustomWavemeterChannel, chanName='Repumper', wmChannel=1,
                                     DACPort=4, frequency='Under Exposed',
-                                    stretchedlabel=False, displayPIDVoltage=True)
+                                    stretchedlabel=False, displayPattern=True)
