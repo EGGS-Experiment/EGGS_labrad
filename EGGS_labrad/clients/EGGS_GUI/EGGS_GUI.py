@@ -64,25 +64,39 @@ class EGGS_gui(QMainWindow):
         from EGGS_labrad.clients.cryovac_clients.RGA_client import RGA_client
         from EGGS_labrad.clients.cryovac_clients.fma1700a_client import fma1700a_client
         #from EGGS_labrad.clients.cryovac_clients.f70_client import f70_client
-        clients = {lakeshore336_client: (0, 0), RGA_client: (0, 1), twistorr74_client: (0, 2),
-                   niops03_client: (1, 1), fma1700a_client: (1, 2)}
+        clients = {
+            lakeshore336_client:    (0, 0),
+            RGA_client:             (0, 1),
+            twistorr74_client:      (0, 2),
+            niops03_client:         (1, 1),
+            fma1700a_client:        (1, 2)
+        }
         return self._createTabLayout(clients, reactor, cxn)
 
     def makeTrapWidget(self, reactor, cxn):
         from EGGS_labrad.clients.trap_clients.rf_client import rf_client
         from EGGS_labrad.clients.trap_clients.DC_client import DC_client
-        clients = {rf_client: (0, 0), DC_client: (0, 1)}
+        clients = {
+            rf_client: (0, 0),
+            DC_client: (0, 1)
+        }
         return self._createTabLayout(clients, reactor, cxn)
 
     def makeLaserWidget(self, reactor, cxn):
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
+        from EGGS_labrad.clients.wavemeter_client.multiplexer_client import multiplexer_client
         #from EGGS_labrad.clients.shutter_client import shutter_client
-        clients = {SLS_client: (0, 0)}
+        clients = {
+            SLS_client:             (0, 0),
+            multiplexer_client:     (0, 1)
+        }
         return self._createTabLayout(clients, reactor, cxn)
 
     def makeImagingWidget(self, reactor, cxn):
         from EGGS_labrad.clients.PMT_client.PMT_client import PMT_client
-        clients = {PMT_client: (0, 0)}
+        clients = {
+            PMT_client: (0, 0)
+        }
         return self._createTabLayout(clients, reactor, cxn)
 
     def closeEvent(self, event):
