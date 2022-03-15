@@ -281,7 +281,7 @@ class ARTIQ_Server(LabradServer):
         Manually set a DDS to the given parameters.
         Arguments:
             dds_name     (str)  : the name of the dds
-            param       (str)   : the parameter to set
+            param       (str)   : the parameter to set. Can be one of ('frequency', 'amplitude', 'phase).
             param_val   (float) : the value of the parameter
         """
         if dds_name not in self.dds_list:
