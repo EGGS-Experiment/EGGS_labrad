@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame, QSizePolicy
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients.Widgets import TextChangingButton
-from EGGS_labrad.servers.ARTIQ.device_db import device_db
+from EGGS_labrad.config.device_db import device_db
 
 
 class TTL_channel(QFrame):
@@ -51,6 +51,7 @@ class TTL_client(QWidget):
     """
     Client for all TTL channels.
     """
+
     name = "ARTIQ TTL Client"
     row_length = 10
 
@@ -168,7 +169,7 @@ class TTL_client(QWidget):
             row = int(i / (self.row_length)) + 2
             column = i % (self.row_length)
             # connect signals to slots
-            channel_gui.toggle.toggled.connect(lambda status, chan=channel_name: self.toggleSwitch(chan, status))
+            channel_gui.toggle.toggled.connect(lambda status, chan=channel_name: self.artiq.ttl_set(chan, status))
             # add widget to client list and layout
             self.ttl_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
@@ -176,20 +177,17 @@ class TTL_client(QWidget):
         ttl_group.setLayout(layout)
         return ttl_group
 
-    @inlineCallbacks
-    def toggleSwitch(self, channel_name, status):
-        yield self.artiq.ttl_set(channel_name, status)
-
     def closeEvent(self, x):
         self.cxn.disconnect()
         if self.reactor.running:
             self.reactor.stop()
 
+
 if __name__ == "__main__":
-    #run channel GUI
+    # run channel GUI
     # from EGGS_labrad.clients import runGUI
     # runGUI(TTL_channel, name='TTL Channel')
 
-    #run TTL GUI
+    # run TTL GUI
     from EGGS_labrad.clients import runClient
     runClient(TTL_client)

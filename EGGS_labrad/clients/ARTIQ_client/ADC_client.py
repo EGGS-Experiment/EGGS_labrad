@@ -3,12 +3,12 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QComboBox, QLabel, QPushButton, QGridLayout, QFrame, QSizePolicy
 
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.servers.ARTIQ.device_db import device_db
+from EGGS_labrad.config.device_db import device_db
 
 
 class ADC_channel(QFrame):
     """
-    GUI for a single ARTIQADC channel.
+    GUI for a single ARTIQ ADC channel.
     """
 
     def __init__(self, name=None, parent=None):
@@ -53,6 +53,7 @@ class ADC_client(QWidget):
     """
     Client for all ADC channels.
     """
+
     name = "ARTIQ ADC Client"
     row_length = 8
 
@@ -144,7 +145,7 @@ class ADC_client(QWidget):
             row = int(i / self.row_length) + 2
             column = i % self.row_length
             # connect signals to slots
-            channel_gui.gain.currentTextChanged.connect(lambda value, chan=i: self.setGain(chan, value))
+            channel_gui.gain.currentTextChanged.connect(lambda gain, chan=i: self.artiq.sampler_gain(chan, int(gain)))
             # add widget to client list and layout
             self.sampler_channels[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
@@ -164,10 +165,6 @@ class ADC_client(QWidget):
         channels = self.sampler_channels.values()
         for i in range(8):
             channels[i].display.setText(str(resp[i]))
-
-    @inlineCallbacks
-    def setGain(self, channel_num, gain):
-        yield self.artiq.sampler_gain(channel_num, int(gain))
 
     @inlineCallbacks
     def reset(self):

@@ -5,13 +5,14 @@ from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients.Widgets import TextChangingButton
-from EGGS_labrad.servers.ARTIQ.device_db import device_db
+from EGGS_labrad.config.device_db import device_db
 
 
 class AD5372_channel(QFrame):
     """
     GUI for a single AD5372 DAC channel.
     """
+
     def __init__(self, name=None, parent=None):
         QWidget.__init__(self, parent)
         self.name = name
@@ -124,7 +125,7 @@ class DAC_client(QWidget):
             # only get devices with named class
             if 'class' not in params:
                 continue
-            if params['class'] == 'Zotino':
+            if params['class'] == 'Zotino' or 'Fastino':
                 self.zotino_list.append(name)
         return self.cxn
 
@@ -165,7 +166,7 @@ class DAC_client(QWidget):
         zotino_global_ofs.setSingleStep(1)
         zotino_global_ofs.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         #zotino_global_ofs.setAlignment(QtCore.Qt.AlignCenter)
-        zotino_global_ofs.valueChanged.connect(lambda value: self.setOFS(value))
+        zotino_global_ofs.valueChanged.connect(lambda voltage_mu: self.artiq.dac_ofs(voltage_mu, 'mu'))
         zotino_header_layout.addWidget(zotino_title)
         zotino_header_layout.addWidget(zotino_global_ofs_title)
         zotino_header_layout.addWidget(zotino_global_ofs)
@@ -179,9 +180,9 @@ class DAC_client(QWidget):
             row = int(i / self.row_length) + 2
             column = i % self.row_length
             # connect signals to slots
-            channel_gui.dac.valueChanged.connect(lambda value, chan=i: self.setDAC(chan, value))
-            channel_gui.off.valueChanged.connect(lambda value, chan=i: self.setOffset(chan, value))
-            channel_gui.gain.valueChanged.connect(lambda value, chan=i: self.setGain(chan, value))
+            channel_gui.dac.valueChanged.connect(lambda voltage_mu, channel_num=i: self.artiq.dac_set(channel_num, voltage_mu, 'mu'))
+            channel_gui.off.valueChanged.connect(lambda voltage_mu, channel_num=i: self.artiq.dac_offset(channel_num, voltage_mu, 'mu'))
+            channel_gui.gain.valueChanged.connect(lambda gain_mu, channel_num=i: self.artiq.dac_offset(channel_num, gain_mu, 'mu'))
             channel_gui.calibrateswitch.clicked.connect(lambda: self.calibrate)
             channel_gui.resetswitch.clicked.connect(lambda: self.reset)
             # add widget to client list and layout
@@ -199,22 +200,6 @@ class DAC_client(QWidget):
 
 
     # SLOTS
-    @inlineCallbacks
-    def setDAC(self, channel_num, voltage_mu):
-        yield self.artiq.dac_set(channel_num, voltage_mu, 'mu')
-
-    @inlineCallbacks
-    def setOffset(self, channel_num, voltage_mu):
-        yield self.artiq.dac_offset(channel_num, voltage_mu, 'mu')
-
-    @inlineCallbacks
-    def setGain(self, channel_num, gain_mu):
-        yield self.artiq.dac_gain(channel_num, gain_mu, 'mu')
-
-    @inlineCallbacks
-    def setOFS(self, voltage_mu):
-        yield self.artiq.dac_ofs(voltage_mu, 'mu')
-
     @inlineCallbacks
     def calibrate(self):
         pass

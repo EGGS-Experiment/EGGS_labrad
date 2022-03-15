@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients.Widgets import TextChangingButton
-#from EGGS_labrad.servers.ARTIQ.device_db import device_db
 
 
 class AD9910_channel(QFrame):
@@ -73,9 +72,8 @@ class AD9910_channel(QFrame):
         #set startup value
         # self.lockswitch.toggle()
 
-    @inlineCallbacks
     def lock(self, status):
-        yield self.rfswitch.setEnabled(status)
+        self.rfswitch.setEnabled(status)
 
 
 class DDS_client(QWidget):
@@ -90,7 +88,7 @@ class DDS_client(QWidget):
         self.reactor = reactor
         self.cxn = cxn
         self.ad9910_clients = {}
-        #start connections
+        # start connections
         d = self.connect()
         d.addCallback(self.getDevices)
         d.addCallback(self.initializeGUI)
@@ -117,7 +115,7 @@ class DDS_client(QWidget):
             print(e)
             raise
 
-        #assign ad9910 channels to urukuls
+        # assign ad9910 channels to urukuls
         self.urukul_list = {}
         for device_name in ad9910_list:
             urukul_name = device_name.split('_')[0]
@@ -165,32 +163,16 @@ class DDS_client(QWidget):
             row = int(i / self.row_length) + 2
             column = i % self.row_length
             # connect signals to slots
-            channel_gui.freq.valueChanged.connect(lambda freq, chan=channel_name: self.setFrequency(chan, freq))
-            channel_gui.ampl.valueChanged.connect(lambda ampl, chan=channel_name: self.setAmplitude(chan, ampl))
-            channel_gui.att.valueChanged.connect(lambda att, chan=channel_name: self.setAttenuation(chan, att))
-            channel_gui.rfswitch.toggled.connect(lambda status, chan=channel_name: self.toggleSwitch(chan, status))
+            channel_gui.freq.valueChanged.connect(lambda freq, chan=channel_name: self.artiq.dds_waveform(chan, 'f', freq))
+            channel_gui.ampl.valueChanged.connect(lambda ampl, chan=channel_name: self.artiq.dds_waveform(chan, 'a', ampl))
+            channel_gui.att.valueChanged.connect(lambda att, chan=channel_name: self.artiq.set_DDS_attenuation(chan, att, 'v'))
+            channel_gui.rfswitch.toggled.connect(lambda status, chan=channel_name: self.artiq.toggle_DDS(chan, status))
             # add widget to client list and layout
             self.ad9910_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
             # print(name + ' - row:' + str(row) + ', column: ' + str(column))
         urukul_group.setLayout(layout)
         return urukul_group
-
-    @inlineCallbacks
-    def toggleSwitch(self, channel_name, status):
-        yield self.artiq.toggle_DDS(channel_name, status)
-
-    @inlineCallbacks
-    def setFrequency(self, channel_name, freq):
-        yield self.artiq.set_DDS_frequency(channel_name, freq)
-
-    @inlineCallbacks
-    def setAmplitude(self, channel_name, ampl):
-        yield self.artiq.set_DDS_amplitude(channel_name, ampl)
-
-    @inlineCallbacks
-    def setAttenuation(self, channel_name, att):
-        yield self.artiq.set_DDS_attenuation(channel_name, att)
 
     def closeEvent(self, x):
         self.cxn.disconnect()
@@ -199,10 +181,10 @@ class DDS_client(QWidget):
 
 
 if __name__ == "__main__":
-    #run channel GUI
+    # run channel GUI
     # from EGGS_labrad.clients import runGUI
     # runGUI(AD9910_channel, name='AD9910 Channel')
 
-    #run DDS GUI
+    # run DDS GUI
     from EGGS_labrad.clients import runClient
     runClient(DDS_client)
