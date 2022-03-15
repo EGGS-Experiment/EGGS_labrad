@@ -17,9 +17,13 @@ class GUIClient(ABC):
     Creates a client from a single GUI file.
     """
 
+    # client parameters
     name = None
     servers = {}
     gui = None
+    # LabRAD connection parameters
+    LABRADHOST = None
+    LABRADPASSWORD = None
 
     # STARTUP
     def __init__(self, reactor, cxn=None, parent=None):
@@ -43,9 +47,12 @@ class GUIClient(ABC):
         """
         # only create connection if we aren't instantiated with one
         if not self.cxn:
-            LABRADHOST = environ['LABRADHOST']
+            if self.LABRADHOST is None:
+                self.LABRADHOST = environ['LABRADHOST']
+            if self.LABRADPASSWORD is None:
+                self.LABRADPASSWORD = environ['LABRADPASSWORD']
             from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync('localhost', name=self.name)
+            self.cxn = yield connectAsync(self.LABRADHOST, name=self.name, password=self.LABRADPASSWORD)
 
         # set self.servers as class attributes
         self.servers['registry'] = 'registry'

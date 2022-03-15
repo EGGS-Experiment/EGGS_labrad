@@ -6,6 +6,7 @@ SETLOCAL EnableDelayedExpansion
 
 SET THRESHOLD=30
 SET IP=%LABRADHOST%
+SET TIMEOUTVAL=500
 REM SET LOG="watchdog.log"
 
 REM ECHO %DATE% %TIME%: Watchdog started >> %LOG%
@@ -31,7 +32,7 @@ IF %ERRORLEVEL% == 1 (
 )
 
 REM: wait a given amount of time
-TIMEOUT 10
+TIMEOUT %TIMEOUTVAL%
 
 REM: If more than a certain amount of pings fail, notify admin
 IF %COUNT% GEQ %THRESHOLD% (
@@ -42,3 +43,11 @@ IF %COUNT% GEQ %THRESHOLD% (
 GOTO LOOP
 
 :NOTIFY
+
+
+REM: Unset variables
+SET "THRESHOLD=30"
+SET "IP="
+SET "TIMEOUTVAL="
+SET "COUNT="
+REM "SET LOG="
