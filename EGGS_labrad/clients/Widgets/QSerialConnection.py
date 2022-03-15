@@ -8,6 +8,7 @@ from twisted.internet.defer import inlineCallbacks
 
 
 class QSerialConnection(QFrame):
+
     def setupUi(self):
         shell_font = 'MS Shell Dlg 2'
         self.setFixedSize(330, 100)
@@ -59,6 +60,7 @@ class SerialConnection_Client(QSerialConnection):
         self.reactor = reactor
         self.server_name = server
         self.nodes = {}
+
         self.BASE_ID = randrange(3e5, 1e6)
         # initialization sequence
         self.gui.setupUi()
@@ -234,5 +236,5 @@ class SerialConnection_Client(QSerialConnection):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI, runClient
-    runGUI(QSerialConnection)
-    #runClient(SerialConnection_Client, server='Lakeshore336 Server')
+    #runGUI(QSerialConnection)
+    runClient(SerialConnection_Client, server='TwisTorr74 Server')

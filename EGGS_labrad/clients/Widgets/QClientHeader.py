@@ -22,7 +22,7 @@ class QClientHeader(QFrame):
         self.setWindowTitle("Device")
         self.setFrameShape(QFrame.StyledPanel)
         self.setFrameShadow(QFrame.Raised)
-        self.
+        #self.
         self.device_label = QLabel("Device")
         self.device_label.setFont(QFont(shell_font, pointSize=18))
         self.device_label.setAlignment(Qt.AlignCenter)
