@@ -6,7 +6,6 @@ from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
 from EGGS_labrad.clients.wavemeter_client.multiplexer_gui import multiplexer_gui
 
-# todo: make sure slots accept correct stuff
 
 FREQ_CHANGED_ID = 445566
 CHANNEL_CHANGED_ID = 143533
@@ -19,6 +18,8 @@ AMPLITUDE_CHANGED_ID = 238883
 PATTERN_CHANGED_ID = 462917
 
 
+#todo: move all displays to one
+#todo: create single PID box
 class multiplexer_client(GUIClient):
 
     name = gethostname() + ' Wavemeter Client'
@@ -27,7 +28,7 @@ class multiplexer_client(GUIClient):
 
     def getgui(self):
         if self.gui is None:
-            self.gui = multiplexer_gui()
+            self.gui = multiplexer_gui(multiplexer_config.channels)
         return self.gui
 
     @inlineCallbacks
@@ -68,35 +69,39 @@ class multiplexer_client(GUIClient):
             wmChannel, frequency, _, _, _, dacPort, _, _ = channel_params
             widget = self.gui.channels[wmChannel]
             # get channel values
-            lock_frequency = yield self.getPIDCourse(dacPort)
+            lock_frequency = yield self.wavemeter.get_pid_course(dacPort)
             lock_status = yield self.wavemeter.get_channel_lock(dacPort, wmChannel)
             exposure_ms = yield self.wavemeter.get_exposure(wmChannel)
-            measure_state = yield self.server.get_switcher_signal_state(wmChannel)
+            measure_state = yield self.wavemeter.get_switcher_signal_state(wmChannel)
             # set channel values in GUI
-            widget.spinFreq.setValue(lock_frequency)
+            try:
+                lock_frequency_tmp = float(lock_frequency)
+                widget.spinFreq.setValue(lock_frequency_tmp)
+            except Exception as e:
+                pass
             widget.lockChannel.setChecked(bool(lock_status))
             widget.spinExp.setValue(exposure_ms)
             widget.measSwitch.setChecked(bool(measure_state))
 
     def initGUI(self):
         # global wavemeter settings
-        self.gui.lockSwitch.toggled.connect(lambda state: self.wavemeter.set_lock_state(state))
-        self.gui.startSwitch.toggled.connect(lambda state: self.wavemeter.set_wlm_output(state))
+        #self.gui.lockSwitch.toggled.connect(lambda state: self.wavemeter.set_lock_state(state))
+        #self.gui.startSwitch.toggled.connect(lambda state: self.wavemeter.set_wlm_output(state))
         # channel wavemeter settings
         for channel_name, channel_params in self.chaninfo.items():
             # expand parameters and get GUI widget
             wmChannel, frequency, _, _, _, dacPort, _, _ = channel_params
             widget = self.gui.channels[wmChannel]
             # assign slots
-            widget.spinExp.valueChanged.connect(lambda exp: self.wavemeter.set_exposure_time(wmChannel, int(exp)))
-            widget.measSwitch.toggled.connect(lambda state: self.wavemeter.set_switcher_signal_state(wmChannel, state))
-            if dacPort != 0:
-                widget.spinFreq.valueChanged.connect(lambda freq, _dacPort=dacPort: self.wavemeter.set_pid_course(_dacPort, freq))
-                widget.lockChannel.toggled.connect(
-                    lambda state, dac_port=dacPort, wm_channel=wmChannel: self.wavemeter.set_channel_lock(dacPort, wm_channel, state))
-            else:
-                widget.spinFreq.setValue(float(frequency))
-                widget.lockChannel.toggled.connect(lambda state: widget.lockChannel.setChecked(False))
+            #widget.spinExp.valueChanged.connect(lambda exp: self.wavemeter.set_exposure_time(wmChannel, int(exp)))
+            #widget.measSwitch.toggled.connect(lambda state: self.wavemeter.set_switcher_signal_state(wmChannel, state))
+            # if dacPort != 0:
+            #     widget.spinFreq.valueChanged.connect(lambda freq, _dacPort=dacPort: self.wavemeter.set_pid_course(_dacPort, freq))
+            #     widget.lockChannel.toggled.connect(
+            #         lambda state, dac_port=dacPort, wm_channel=wmChannel: self.wavemeter.set_channel_lock(dacPort, wm_channel, state))
+            # else:
+            #     widget.spinFreq.setValue(float(frequency))
+            #     widget.lockChannel.toggled.connect(lambda state: widget.lockChannel.setChecked(False))
 
     @inlineCallbacks
     def initializePIDGUI(self, dacPort):
@@ -118,16 +123,16 @@ class multiplexer_client(GUIClient):
         self.gui.pid.spinExp.setValue(sensInit[1])
         self.gui.pid.polarityBox.setCurrentIndex(self.index[polInit])
         # connect signals to slots
-        self.gui.pid.spinP.valueChanged.connect(lambda p, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, p))
-        self.gui.pid.spinI.valueChanged.connect(lambda i, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, i))
-        self.gui.pid.spinD.valueChanged.connect(lambda d, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, d))
-        self.gui.pid.spinDt.valueChanged.connect(lambda dt, _dacPort=dacPort: self.wavemeter.set_pid_dt(_dacPort, dt))
-        self.gui.pid.useDTBox.stateChanged.connect(lambda state, _dacPort=dacPort: self.wavemeter.set_const_dt(dacPort, state))
-        self.gui.pid.spinFactor.valueChanged.connect(lambda factor, _dacPort=dacPort, exp=self.gui.pid.spinExp.value():
-                                                     self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
-        self.gui.pid.spinExp.valueChanged.connect(lambda exp, _dacPort=dacPort, factor=self.gui.pid.spinFactor.value():
-                                                  self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
-        self.gui.pid.polarityBox.currentIndexChanged.connect(lambda index, _dacPort=dacPort: self.changePolarity(index, _dacPort))
+        # self.gui.pid.spinP.valueChanged.connect(lambda p, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, p))
+        # self.gui.pid.spinI.valueChanged.connect(lambda i, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, i))
+        # self.gui.pid.spinD.valueChanged.connect(lambda d, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, d))
+        # self.gui.pid.spinDt.valueChanged.connect(lambda dt, _dacPort=dacPort: self.wavemeter.set_pid_dt(_dacPort, dt))
+        # self.gui.pid.useDTBox.stateChanged.connect(lambda state, _dacPort=dacPort: self.wavemeter.set_const_dt(dacPort, state))
+        # self.gui.pid.spinFactor.valueChanged.connect(lambda factor, _dacPort=dacPort, exp=self.gui.pid.spinExp.value():
+        #                                              self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
+        # self.gui.pid.spinExp.valueChanged.connect(lambda exp, _dacPort=dacPort, factor=self.gui.pid.spinFactor.value():
+        #                                           self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
+        #self.gui.pid.polarityBox.currentIndexChanged.connect(lambda index, _dacPort=dacPort: self.changePolarity(index, _dacPort))
         self.gui.pid.show()
 
     def updateFrequency(self, c, signal):
