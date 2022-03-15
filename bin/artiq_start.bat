@@ -31,24 +31,24 @@ IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
 ) ELSE (CALL SET ip_addr=%ARTIQ_HOST%)
 
 REM: Start ARTIQ interface
-START "ARTIQ Master" CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"
+REM START "ARTIQ Master" CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"
+START "ARTIQ Master" CMD "/c artiq_master --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"
 TIMEOUT 2 > NUL && START "ARTIQ Dashboard" /min CMD "/c TIMEOUT 2 && CALL artiq_dashboard"
 TIMEOUT 2 > NUL && START "ARTIQ Controller Manager" /min CMD "/k TIMEOUT 2 && artiq_ctlmgr"
 
 GOTO EOF
 
 :HELP
-@ECHO usage: start_artiq [-h] [--ip IP_ADDRESS] [-ddb DEVICE_DB]
+@ECHO usage: artiq_start [-h] [--ip IP_ADDRESS] [-ddb DEVICE_DB]
 @ECHO:
 @ECHO ARTIQ Starter
 @ECHO Optional Arguments:
 @ECHO    -h, --help          show this message and exit
 @ECHO    --ip                bind the artiq_master to the given IP address (default: %ARTIQ_HOST%)
-@ECHO    --ddb               device database file (default: %ARTIQ_DDB%
+@ECHO    --ddb               device database file (default: %ARTIQ_DDB%)
 @ECHO:
 
 :EOF
-
 REM: Unset variables
 SET "argCount="
 SET "ddb_ind="

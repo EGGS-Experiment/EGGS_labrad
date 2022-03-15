@@ -33,7 +33,7 @@ START "GPIB Device Manager" /min CMD "/k activate labart && python %EGGS_LABRAD_
 TIMEOUT 1 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
 
 REM: ARTIQ
-START /min CMD /c %EGGS_LABRAD_ROOT%\bin\start_artiq.bat
+START /min CMD /c %EGGS_LABRAD_ROOT%\bin\artiq_start.bat
 
 REM: Clients
 START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
