@@ -280,8 +280,8 @@ class multiplexer_gui(QFrame):
 
     def _createChannel(self, name, params):
         # initialize widget
-        wmChannel, _, hint, stretched, displayPID, dacPort, rails, displayPattern = params
-        widget = multiplexer_channel(name, wmChannel, dacPort, hint, stretched, displayPattern, displayPID)
+        wmChannel, _, frequency, stretched, displayPID, dacPort, rails, displayPattern = params
+        widget = multiplexer_channel(name, wmChannel, dacPort, frequency, stretched, displayPattern, displayPID)
 
         # display PID
         if displayPID:
@@ -291,7 +291,7 @@ class multiplexer_gui(QFrame):
                 widget.PIDindicator.set_rails([-10.0, 10.0])
 
         # get color of frequency
-        color = wav2RGB(2.998e8 / (float(hint) * 1e3))
+        color = wav2RGB(2.998e8 / (float(frequency) * 1e3))
         widget.currentfrequency.setStyleSheet('color: rgb' + str(color))
         if displayPattern:
             # save handle in a dict for convenience
@@ -304,7 +304,7 @@ class multiplexer_gui(QFrame):
             widget.setPID.clicked.connect(lambda state=widget.setPID.isDown(), chan=name, dacPort=dacPort:
                                           self.initializePIDGUI(dacPort, chan))
         else:
-            widget.spinFreq.setValue(float(hint))
+            widget.spinFreq.setValue(float(frequency))
 
         return widget
 
@@ -334,10 +334,10 @@ if __name__ == "__main__":
     # runGUI(multiplexer_pid)
 
     # run multiplexer channel GUI
-    runGUI(multiplexer_channel, chanName='Repumper', wmChannel=1,
-                                 DACPort=4, frequency='Under Exposed',
-                                 stretchedlabel=False, displayPattern=True)
+    #runGUI(multiplexer_channel, chanName='Repumper', wmChannel=1,
+                                 #DACPort=4, frequency='Under Exposed',
+                                 #stretchedlabel=False, displayPattern=True)
 
     # run multiplexer client GUI
-    # from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
-    # runGUI(multiplexer_gui, multiplexer_config.info)
+    from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
+    runGUI(multiplexer_gui, multiplexer_config.info)

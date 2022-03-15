@@ -3,7 +3,7 @@ from socket import gethostname
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.clients import GUIClient
-from EGGS_labrad.clients.wavemeter_clients.multiplexer_gui import multiplexer_gui
+from EGGS_labrad.clients.wavemeter_client.multiplexer_gui import multiplexer_gui
 
 
 FREQ_CHANGED_ID = 445566
@@ -68,20 +68,27 @@ class multiplexer_client(GUIClient):
         self.gui.lockSwitch.setChecked(initlockvalue)
         self.gui.startSwitch.setChecked(initstartvalue)
 
+        for widget in self.gui.channels.values():
+            # todo: get params
+            course = thkim ***
+            try:
+                course = float(course)
+            except:
+                try:
+                    course = float(frequency)
+                except:
+                    course = 600
+            widget.spinFreq.setValue(course)
 
-        # todo: iterate for each channel
-        initcourse = yield self.getPIDCourse(dacPort, hint)
-        widget.spinFreq.setValue(initcourse)
+            initLock = yield self.wavemeter.get_channel_lock(dacPort, wmChannel)
+            widget.lockChannel.setChecked(bool(initLock))
 
-        initLock = yield self.wavemeter.get_channel_lock(dacPort, wmChannel)
-        widget.lockChannel.setChecked(bool(initLock))
+            initvalue = yield self.wavemeter.get_exposure(wmChannel)
+            widget.spinExp.setValue(initvalue)
 
-        initvalue = yield self.wavemeter.get_exposure(wmChannel)
-        widget.spinExp.setValue(initvalue)
-
-        initmeas = yield self.wavemeter.get_switcher_signal_state(wmChannel)
-        initmeas = initmeas
-        widget.measSwitch.setChecked(bool(initmeas))
+            initmeas = yield self.wavemeter.get_switcher_signal_state(wmChannel)
+            initmeas = initmeas
+            widget.measSwitch.setChecked(bool(initmeas))
 
     def initGUI(self):
         self.lockSwitch.toggled.connect(self.setLock)
@@ -96,7 +103,7 @@ class multiplexer_client(GUIClient):
                 widget.lockChannel.toggled.connect(
                     lambda state=widget.lockChannel.isDown(), dacPort=dacPort: self.lockSingleChannel(state, dacPort))
             else:
-                widget.spinFreq.setValue(float(hint))
+                widget.spinFreq.setValue(float(frequency))
                 widget.lockChannel.toggled.connect(
                     lambda state=widget.lockChannel.isDown(), wmChannel=wmChannel: self.setButtonOff(wmChannel))
 
@@ -240,18 +247,6 @@ class multiplexer_client(GUIClient):
     @inlineCallbacks
     def setOutput(self, state):
         yield self.wavemeter.set_wlm_output(state)
-
-    @inlineCallbacks
-    def getPIDCoursegetPIDCourse(self, dacPort, hint):
-        course = yield self.wavemeter.get_pid_course(dacPort)
-        try:
-            course = float(course)
-        except:
-            try:
-                course = float(hint)
-            except:
-                course = 600
-        returnValue(course)
 
     @inlineCallbacks
     def changeP(self, p, dacPort):
