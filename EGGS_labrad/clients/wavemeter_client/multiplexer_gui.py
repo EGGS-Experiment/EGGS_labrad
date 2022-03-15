@@ -21,7 +21,7 @@ class StretchedLabel(QLabel):
     """
 
     def __init__(self, *args, **kwargs):
-        QLabel.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.setMinimumSize(QtCore.QSize(350, 100))
 
     def resizeEvent(self, evt):
@@ -168,11 +168,11 @@ class multiplexer_channel(QFrame):
         self.currentfrequency.setAlignment(QtCore.Qt.AlignCenter)
         self.currentfrequency.setMinimumWidth(600)
 
-        frequencylabel = QLabel('Set Frequency')
+        frequencylabel = QLabel('Lock Frequency')
         frequencylabel.setAlignment(QtCore.Qt.AlignBottom)
         frequencylabel.setFont(QFont(shell_font, pointSize=13))
 
-        exposurelabel = QLabel('Set Exposure (ms)')
+        exposurelabel = QLabel('Exposure Time (ms)')
         exposurelabel.setAlignment(QtCore.Qt.AlignBottom)
         exposurelabel.setFont(QFont(shell_font, pointSize=13))
 
@@ -250,6 +250,7 @@ class multiplexer_gui(QFrame):
         self.setWindowTitle('Multiplexed Wavemeter')
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         self._check_window_size()
+        self.initializeGUI()
 
     def initializeGUI(self):
         # set up layouts
@@ -268,7 +269,8 @@ class multiplexer_gui(QFrame):
         subLayout.addWidget(self.startSwitch, 0, 0)
 
         # create channel widgets
-        for chan_name, chan_params in self.chaninfo:
+        for chan_name, chan_params in self.chaninfo.items():
+            print(chan_params)
             wmChannel = chan_params[0]
             position = chan_params[2]
             widget = self._createChannel(chan_name, chan_params)
@@ -280,7 +282,7 @@ class multiplexer_gui(QFrame):
 
     def _createChannel(self, name, params):
         # initialize widget
-        wmChannel, _, frequency, stretched, displayPID, dacPort, rails, displayPattern = params
+        wmChannel, frequency, _, stretched, displayPID, dacPort, rails, displayPattern = params
         widget = multiplexer_channel(name, wmChannel, dacPort, frequency, stretched, displayPattern, displayPID)
 
         # display PID
@@ -302,7 +304,7 @@ class multiplexer_gui(QFrame):
         if dacPort != 0:
             self.dacPorts[dacPort] = wmChannel
             widget.setPID.clicked.connect(lambda state=widget.setPID.isDown(), chan=name, dacPort=dacPort:
-                                          self.initializePIDGUI(dacPort, chan))
+                                          self._initializePIDGUI(dacPort, chan))
         else:
             widget.spinFreq.setValue(float(frequency))
 
