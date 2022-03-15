@@ -53,8 +53,8 @@ class TextChangingButton(QPushButton):
             on_text = self.button_text[0]
             off_text = self.button_text[1]
         elif self.button_text is None:
-            on_text = "On"
-            off_text = "Off"
+            on_text = ": On"
+            off_text = ": Off"
         else:
             error_msg = "Text gets displayed on a button needs to be a string"
             raise TypeError(error_msg)
