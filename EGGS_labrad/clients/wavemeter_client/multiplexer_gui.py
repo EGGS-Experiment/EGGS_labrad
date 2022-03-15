@@ -283,6 +283,7 @@ class multiplexer_gui(QFrame):
     def _createChannel(self, name, params):
         # initialize widget
         wmChannel, frequency, _, stretched, displayPID, dacPort, rails, displayPattern = params
+        print(displayPattern)
         widget = multiplexer_channel(name, wmChannel, dacPort, frequency, stretched, displayPattern, displayPID)
 
         # display PID
