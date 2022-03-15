@@ -270,7 +270,6 @@ class multiplexer_gui(QFrame):
 
         # create channel widgets
         for chan_name, chan_params in self.chaninfo.items():
-            print(chan_params)
             wmChannel = chan_params[0]
             position = chan_params[2]
             widget = self._createChannel(chan_name, chan_params)
@@ -312,7 +311,7 @@ class multiplexer_gui(QFrame):
 
     def _initializePIDGUI(self, dacPort, chan):
         self.pid = multiplexer_pid(dacPort)
-        self.pid.setWindowTitle(chan + ' PID settings')
+        self.pid.setWindowTitle(chan + ' PID Settings')
         self.pid.move(self.pos())
         self.index = {1: 0, -1: 1}
         self.pid.show()
@@ -342,4 +341,4 @@ if __name__ == "__main__":
 
     # run multiplexer client GUI
     from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
-    runGUI(multiplexer_gui, multiplexer_config.info)
+    runGUI(multiplexer_gui, multiplexer_config.channels)
