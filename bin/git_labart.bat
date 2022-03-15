@@ -1,4 +1,4 @@
-::Saves labart environment package list as yml file and pushes it to main repository
+:: Saves labart environment package list as yml file and pushes it to main repository
 
 @ECHO OFF
 

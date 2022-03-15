@@ -1,4 +1,5 @@
-::Starts all components necessary for running ARTIQ
+:: ARTIQ Start
+:: Starts all components necessary for running ARTIQ
 
 @ECHO OFF
 

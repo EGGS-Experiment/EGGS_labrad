@@ -1,4 +1,5 @@
-::Starts a LabRAD node and all necessary components
+:: LabRAD Node
+:: Starts a LabRAD node and all necessary components
 
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion

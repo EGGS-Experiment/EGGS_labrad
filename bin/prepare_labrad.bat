@@ -1,4 +1,4 @@
-::Prepares a CMD window for running something in LabRAD
+:: Prepares a CMD window for running something in LabRAD
 
 @ECHO OFF
 

@@ -1,4 +1,5 @@
-::Starts all main LabRAD servers
+:: LabRAD Master
+:: Starts all main LabRAD servers
 
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
