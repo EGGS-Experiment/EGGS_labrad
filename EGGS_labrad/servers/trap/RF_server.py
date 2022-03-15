@@ -14,7 +14,7 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-#imports
+# imports
 from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
 

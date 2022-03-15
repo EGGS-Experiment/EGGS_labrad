@@ -1,11 +1,17 @@
-import ctypes as c
-from EGGS_labrad.config.andor_config import AndorConfig as config
-import os
+"""
+API for Andor Cameras.
+"""
 
-'''Adopted from https://code.google.com/p/pyandor/'''
+import os
+import ctypes as c
+
+from EGGS_labrad.config.andor_config import AndorConfig as config
 
 
 class AndorInfo(object):
+    """
+    Stores information about the Andor Camera.
+    """
 
     def __init__(self):
         self.width = None
@@ -68,9 +74,9 @@ class AndorCamera(object):
             raise Exception(e)
 
     def print_get_software_version(self):
-        '''
-        gets the version of the SDK
-        '''
+        """
+        Gets the version of the SDK.
+        """
         eprom = c.c_int()
         cofFile = c.c_int()
         vxdRev = c.c_int()
@@ -88,9 +94,9 @@ class AndorCamera(object):
         print(dllVer)
 
     def print_get_capabilities(self):
-        '''
-        gets the exact capabilities of the camera
-        '''
+        """
+        Gets the exact capabilities of the camera
+        """
 
         class AndorCapabilities(c.Structure):
             _fields_ = [('ulSize', c.c_ulong),
@@ -123,9 +129,9 @@ class AndorCamera(object):
         print('ulFTReadModes', '{:06b}'.format(caps.ulFTReadModes))
 
     def get_detector_dimensions(self):
-        '''
+        """
         Gets the dimensions of the detector.
-        '''
+        """
         detector_width = c.c_int()
         detector_height = c.c_int()
         self.dll.GetDetector(c.byref(detector_width), c.byref(detector_height))
@@ -134,9 +140,9 @@ class AndorCamera(object):
         return [self.info.width, self.info.height]
 
     def get_temperature_range(self):
-        '''
+        """
         Gets the range of available temperatures.
-        '''
+        """
         min_temp = c.c_int()
         max_temp = c.c_int()
         self.dll.GetTemperatureRange(c.byref(min_temp), c.byref(max_temp))
@@ -145,29 +151,29 @@ class AndorCamera(object):
         return [self.info.min_temp, self.info.max_temp]
 
     def get_cooler_state(self):
-        '''
+        """
         Reads the state of the cooler.
-        '''
+        """
         cooler_state = c.c_int()
         error = self.dll.IsCoolerOn(c.byref(cooler_state))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.cooler_state = bool(cooler_state)
             return self.info.cooler_state
         else:
             raise Exception(ERROR_CODE[error])
 
     def set_cooler_on(self):
-        '''
+        """
         Turns on cooling.
-        '''
+        """
         error = self.dll.CoolerON()
         if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
             raise Exception(ERROR_CODE[error])
 
     def set_cooler_off(self):
-        '''
+        """
         Turns off cooling.
-        '''
+        """
         error = self.dll.CoolerOFF()
         if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
             raise Exception(ERROR_CODE[error])
@@ -193,7 +199,7 @@ class AndorCamera(object):
     def acquire_camera_serial_number(self):
         serial_number = c.c_int()
         error = self.dll.GetCameraSerialNumber(c.byref(serial_number))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.serial_number = serial_number.value
         else:
             raise Exception(ERROR_CODE[error])
@@ -205,7 +211,7 @@ class AndorCamera(object):
         min_gain = c.c_int()
         max_gain = c.c_int()
         error = self.dll.GetEMGainRange(c.byref(min_gain), c.byref(max_gain))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.min_gain = min_gain.value
             self.info.max_gain = max_gain.value
             return (min_gain.value, max_gain.value)
@@ -215,7 +221,7 @@ class AndorCamera(object):
     def get_emccd_gain(self):
         gain = c.c_int()
         error = self.dll.GetEMCCDGain(c.byref(gain))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.emccd_gain = gain.value
             return gain.value
         else:
@@ -234,7 +240,7 @@ class AndorCamera(object):
         except KeyError:
             raise Exception("Incorrect read mode {}".format(mode))
         error = self.dll.SetReadMode(c.c_int(mode_number))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.read_mode = mode
         else:
             raise Exception(ERROR_CODE[error])
@@ -248,7 +254,7 @@ class AndorCamera(object):
         except KeyError:
             raise Exception("Incorrect shutter mode {}".format(mode))
         error = self.dll.SetShutter(c.c_int(1), c.c_int(mode_number), c.c_int(0), c.c_int(0))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.shutter_mode = mode
         else:
             raise Exception(ERROR_CODE[error])
@@ -262,7 +268,7 @@ class AndorCamera(object):
         except KeyError:
             raise Exception("Incorrect acquisition mode {}".format(mode))
         error = self.dll.SetAcquisitionMode(c.c_int(mode_number))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.acquisition_mode = mode
         else:
             raise Exception(ERROR_CODE[error])
@@ -276,7 +282,7 @@ class AndorCamera(object):
         except KeyError:
             raise Exception("Incorrect trigger mode {}".format(mode))
         error = self.dll.SetTriggerMode(c.c_int(mode_number))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.trigger_mode = mode
         else:
             raise Exception(ERROR_CODE[error])
@@ -286,7 +292,7 @@ class AndorCamera(object):
 
     def set_exposure_time(self, time):
         error = self.dll.SetExposureTime(c.c_float(time))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.get_acquisition_timings()
         else:
             raise Exception(ERROR_CODE[error])
@@ -299,7 +305,7 @@ class AndorCamera(object):
         accumulate = c.c_float()
         kinetic = c.c_float()
         error = self.dll.GetAcquisitionTimings(c.byref(exposure), c.byref(accumulate), c.byref(kinetic))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.exposure_time = exposure.value
             self.info.accumulate_cycle_time = accumulate.value
             self.info.kinetic_cycle_time = kinetic.value
@@ -315,7 +321,7 @@ class AndorCamera(object):
         vend = int(vend)
         error = self.dll.SetImage(c.c_int(hbin), c.c_int(vbin), c.c_int(hstart), c.c_int(hend), c.c_int(vstart),
                                   c.c_int(vend))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.image_region = [hbin, vbin, hstart, hend, vstart, vend]
         else:
             raise Exception(ERROR_CODE[error])
@@ -325,21 +331,21 @@ class AndorCamera(object):
 
     def start_acquisition(self):
         error = self.dll.StartAcquisition()
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             return
         else:
             raise Exception(ERROR_CODE[error])
 
     def wait_for_acquisition(self):
         error = self.dll.WaitForAcquisition()
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             return
         else:
             raise Exception(ERROR_CODE[error])
 
     def abort_acquisition(self):
         error = self.dll.AbortAcquisition()
-        if (ERROR_CODE[error] in ['DRV_SUCCESS', 'DRV_IDLE']):
+        if ERROR_CODE[error] in ['DRV_SUCCESS', 'DRV_IDLE']:
             return
         else:
             raise Exception(ERROR_CODE[error])
@@ -351,7 +357,7 @@ class AndorCamera(object):
         image_struct = c.c_int * dim
         image = image_struct()
         error = self.dll.GetAcquiredData(c.pointer(image), dim)
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             image = image[:]
             return image
         else:
@@ -364,7 +370,7 @@ class AndorCamera(object):
         image_struct = c.c_uint32 * dim
         image = image_struct()
         error = self.dll.GetMostRecentImage(c.pointer(image), dim)
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             image = image[:]
             return image
         else:
@@ -372,7 +378,7 @@ class AndorCamera(object):
 
     def set_number_kinetics(self, numKin):
         error = self.dll.SetNumberKinetics(c.c_int(int(numKin)))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.number_kinetics = numKin
         else:
             raise Exception(ERROR_CODE[error])
@@ -383,7 +389,7 @@ class AndorCamera(object):
     def get_status(self):
         status = c.c_int()
         error = self.dll.GetStatus(c.byref(status))
-        if (ERROR_CODE[error] == 'DRV_SUCCESS'):
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
             return ERROR_CODE[status.value]
         else:
             raise Exception(ERROR_CODE[error])
