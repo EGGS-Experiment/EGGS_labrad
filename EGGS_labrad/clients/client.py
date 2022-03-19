@@ -11,7 +11,7 @@ from twisted.internet.defer import inlineCallbacks
 __all__ = ["GUIClient", "PollingClient"]
 
 
-
+#todo: allow relaunching of client/reinitialization process
 class GUIClient(ABC):
     """
     Creates a client from a single GUI file.
@@ -99,12 +99,17 @@ class GUIClient(ABC):
             print(e)
         return cxn
 
+    @inlineCallbacks
     def _restart(self):
-        # initialization sequence
+        """
+        Reinitializes the GUI Client.
+        """
+        print('Restarting client ...')
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._initData)
         d.addCallback(self._initGUI)
+        print('Finished restart.')
 
 
     # SHUTDOWN
@@ -157,6 +162,7 @@ class GUIClient(ABC):
         Called during __init__.
         Used to return an instantiated GUI class so it can be used by GUIClient.
         """
+        #todo: try making it an @property or ABC
         pass
 
     def initClient(self):
