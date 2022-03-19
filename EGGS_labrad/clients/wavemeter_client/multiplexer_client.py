@@ -18,8 +18,6 @@ AMPLITUDE_CHANGED_ID = 238883
 PATTERN_CHANGED_ID = 462917
 
 
-#todo: move all displays to one
-#todo: create single PID box
 class multiplexer_client(GUIClient):
 
     name = gethostname() + ' Wavemeter Client'
@@ -61,8 +59,9 @@ class multiplexer_client(GUIClient):
         # wavemeter status
         initstartvalue = yield self.wavemeter.get_wlm_output()
         initlockvalue = yield self.wavemeter.get_lock_state()
-        self.gui.lockSwitch.setChecked(initlockvalue)
         self.gui.startSwitch.setChecked(initstartvalue)
+        self.gui.lockSwitch.setChecked(initlockvalue)
+
         # set display for each channel
         for channel_name, channel_params in self.chaninfo.items():
             # expand parameters and get GUI widget
@@ -133,7 +132,6 @@ class multiplexer_client(GUIClient):
         # self.gui.pid.spinExp.valueChanged.connect(lambda exp, _dacPort=dacPort, factor=self.gui.pid.spinFactor.value():
         #                                           self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
         #self.gui.pid.polarityBox.currentIndexChanged.connect(lambda index, _dacPort=dacPort: self.changePolarity(index, _dacPort))
-        self.gui.pid.show()
 
     def updateFrequency(self, c, signal):
         chan, freq = signal
@@ -192,6 +190,7 @@ class multiplexer_client(GUIClient):
 
     def updateAmplitude(self, c, signal):
         chan, value = signal
+        print(value)
         if chan in self.gui.channels.keys():
             self.gui.channels[chan].powermeter.blockSignals(True)
             self.gui.channels[chan].powermeter.setValue(value)
@@ -199,6 +198,7 @@ class multiplexer_client(GUIClient):
 
     def updatePattern(self, c, signal):
         chan, IF1 = signal
+        print('thkim')
         points = 512
         if chan in self.gui.pattern.keys():
             self.gui.pattern[chan].setData(x=arange(points), y=IF1)

@@ -4,17 +4,16 @@ Contains all the GUI elements needed for the multiplexer client.
 
 import pyqtgraph as pg
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox, QDesktopWidget, QPushButton, QDoubleSpinBox, QComboBox, QCheckBox
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox, QDesktopWidget, QPushButton, QDoubleSpinBox, QComboBox, QCheckBox, QScrollArea
 
 from EGGS_labrad.clients.Widgets.wav2RGB import wav2RGB
-from EGGS_labrad.clients.Widgets import TextChangingButton
-from EGGS_labrad.clients.Widgets import QCustomProgressBar as MQProgressBar
-from EGGS_labrad.clients.Widgets import QCustomSlideIndicator as SlideIndicator
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomProgressBar, QCustomSlideIndicator
 
 
+#todo: align frequency and format to correct digits
+#todo: maybe remove stretchedlabel
 class StretchedLabel(QLabel):
     """
     Creates a stretched label.
@@ -22,7 +21,7 @@ class StretchedLabel(QLabel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setMinimumSize(QtCore.QSize(350, 100))
+        self.setMinimumSize(QSize(350, 100))
 
     def resizeEvent(self, evt):
         font = self.font()
@@ -31,6 +30,9 @@ class StretchedLabel(QLabel):
 
 
 class multiplexer_pid(QFrame):
+    """
+    GUI for the wavemeter PID frequency lock.
+    """
 
     def __init__(self, DACPort=0, parent=None):
         super().__init__()
@@ -138,42 +140,42 @@ class multiplexer_channel(QFrame):
 
         chanName = QLabel(name)
         chanName.setFont(QFont(shell_font, pointSize=16))
-        chanName.setAlignment(QtCore.Qt.AlignCenter)
+        chanName.setAlignment(Qt.AlignCenter)
 
         configLabel = QLabel("Channel: " + str(wmChannel) + '        ' + "DAC Port: " + str(DACPort))
         configLabel.setFont(QFont(shell_font, pointSize=8))
-        configLabel.setAlignment(QtCore.Qt.AlignLeft)
-        configLabel.setAlignment(QtCore.Qt.AlignTop)
+        configLabel.setAlignment(Qt.AlignLeft)
+        configLabel.setAlignment(Qt.AlignTop)
 
         self.PIDvoltage = QLabel('DAC Voltage (mV)  -.-')
         self.PIDvoltage.setFont(QFont(shell_font, pointSize=12))
 
-        if displayPIDvoltage:
-            self.PIDindicator = SlideIndicator([-10.0, 10.0])
-
-        self.powermeter = MQProgressBar()
-        self.powermeter.setOrientation(QtCore.Qt.Vertical)
+        self.powermeter = QCustomProgressBar()
+        self.powermeter.setOrientation(Qt.Vertical)
         self.powermeter.setMeterColor("orange", "red")
         self.powermeter.setMeterBorder("orange")
 
-        if displayPIDvoltage is True:
-            layout.addWidget(self.PIDvoltage, 6, 6, 1, 5)
-            layout.addWidget(self.PIDindicator, 5, 6, 1, 5)
+        if displayPIDvoltage:
+            self.PIDindicator = QCustomSlideIndicator([-10.0, 10.0])
+            if displayPIDvoltage is True:
+                layout.addWidget(self.PIDvoltage, 6, 6, 1, 5)
+                layout.addWidget(self.PIDindicator, 5, 6, 1, 5)
+
         if stretchedlabel is True:
             self.currentfrequency = StretchedLabel(frequency)
         else:
             self.currentfrequency = QLabel(frequency)
 
         self.currentfrequency.setFont(QFont(shell_font, pointSize=60))
-        self.currentfrequency.setAlignment(QtCore.Qt.AlignCenter)
+        self.currentfrequency.setAlignment(Qt.AlignCenter)
         self.currentfrequency.setMinimumWidth(600)
 
         frequencylabel = QLabel('Lock Frequency')
-        frequencylabel.setAlignment(QtCore.Qt.AlignBottom)
+        frequencylabel.setAlignment(Qt.AlignBottom)
         frequencylabel.setFont(QFont(shell_font, pointSize=13))
 
         exposurelabel = QLabel('Exposure Time (ms)')
-        exposurelabel.setAlignment(QtCore.Qt.AlignBottom)
+        exposurelabel.setAlignment(Qt.AlignBottom)
         exposurelabel.setFont(QFont(shell_font, pointSize=13))
 
         self.setPID = QPushButton('Set PID')
@@ -182,10 +184,10 @@ class multiplexer_channel(QFrame):
 
         self.measSwitch = TextChangingButton('WLM Measure')
         self.lockChannel = TextChangingButton('Lock Channel')
-        self.zeroVoltage = QPushButton('Zero Voltage')
+        self.showTrace = TextChangingButton('Show Trace')
         self.lockChannel.setMinimumWidth(180)
 
-        # editable fields
+        # lock frequency
         self.spinFreq = QDoubleSpinBox()
         self.spinFreq.setFont(QFont(shell_font, pointSize=16))
         self.spinFreq.setDecimals(6)
@@ -193,27 +195,15 @@ class multiplexer_channel(QFrame):
         self.spinFreq.setRange(100.0, 1000.0)
         self.spinFreq.setKeyboardTracking(False)
 
+        # exposure time
         self.spinExp = QDoubleSpinBox()
         self.spinExp.setFont(QFont(shell_font, pointSize=16))
         self.spinExp.setDecimals(0)
         self.spinExp.setSingleStep(1)
-
-        # 10 seconds is the max exposure time on the wavemeter.
         self.spinExp.setRange(0, 10000.0)
         self.spinExp.setKeyboardTracking(False)
 
-        if displayPattern:
-            pg.setConfigOption('background', 'w')
-            self.plot1 = pg.PlotWidget(name='Plot 1')
-            self.plot1.hideAxis('bottom')
-            self.plot1.hideAxis('left')
-            layout.addWidget(self.plot1, 7, 0, 1, 12)
-
-            # self.plot2 = pg.PlotWidget(name='Plot 2')
-            # self.plot2.hideAxis('bottom')
-            # self.plot2.hideAxis('left')
-            # layout.addWidget(self.plot2,        7, 1, 1, 11)
-
+        # lay out
         layout.addWidget(configLabel, 0, 0)
         layout.addWidget(chanName, 0, 0, 1, 1)
 
@@ -221,7 +211,8 @@ class multiplexer_channel(QFrame):
         layout.addWidget(self.spinExp, 6, 3, 1, 3)
         layout.addWidget(self.measSwitch, 0, 6, 1, 5)
         layout.addWidget(self.lockChannel, 1, 6, 1, 5)
-        layout.addWidget(self.setPID, 2, 6, 1, 5)
+        layout.addWidget(self.showTrace, 2, 6, 1, 5)
+        layout.addWidget(self.setPID, 3, 6, 1, 5)
 
         layout.addWidget(self.currentfrequency, 1, 0, 4, 1)
         layout.addWidget(frequencylabel, 5, 0, 1, 1)
@@ -239,6 +230,9 @@ class multiplexer_channel(QFrame):
 
 
 class multiplexer_gui(QFrame):
+    """
+    The full wavemeter GUI.
+    """
 
     def __init__(self, chaninfo):
         super().__init__()
@@ -250,23 +244,32 @@ class multiplexer_gui(QFrame):
         self.setWindowTitle('Multiplexed Wavemeter')
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         self._check_window_size()
-        self.initializeGUI()
+        self.makeLayout()
 
-    def initializeGUI(self):
-        # set up layouts
-        layout = QGridLayout()
-        subLayout = QGridLayout()
+    def makeLayout(self):
+        layout = QGridLayout(self)
+
+        # wavemeter channels
         qBox = QGroupBox('Wavelength and Lock settings')
-        qBox.setLayout(subLayout)
-        layout.addWidget(qBox, 0, 0)
+        subLayout = QGridLayout(qBox)
+        self.scroll1 = QScrollArea()
+        self.scroll1.setWidget(qBox)
 
-        # lock switches
-        self.lockSwitch = TextChangingButton('Lock Wave Meter')
-        self.lockSwitch.setMaximumHeight(50)
         self.startSwitch = TextChangingButton('Wavemeter')
         self.startSwitch.setMaximumHeight(50)
-        subLayout.addWidget(self.lockSwitch, 0, 2)
+        self.lockSwitch = TextChangingButton('Locking')
+        self.lockSwitch.setMaximumHeight(50)
         subLayout.addWidget(self.startSwitch, 0, 0)
+        subLayout.addWidget(self.lockSwitch, 0, 2)
+
+        # create PID
+        self.pidGUI = multiplexer_pid()
+
+        # create interferometer display
+        pg.setConfigOption('background', 'w')
+        self.trace_display = pg.PlotWidget(name='Interferometer Trace')
+        self.trace_display.hideAxis('bottom')
+        self.trace_display.hideAxis('left')
 
         # create channel widgets
         for chan_name, chan_params in self.chaninfo.items():
@@ -277,7 +280,9 @@ class multiplexer_gui(QFrame):
             self.channels[wmChannel] = widget
             subLayout.addWidget(self.channels[wmChannel], position[1], position[0], 1, 3)
 
-        self.setLayout(layout)
+        layout.addWidget(self.scroll1, 0, 0)
+        layout.addWidget(self.trace_display, 0, 1)
+        layout.addWidget(self.pidGUI, 1, 1)
 
     def _createChannel(self, name, params):
         # initialize widget
@@ -294,27 +299,18 @@ class multiplexer_gui(QFrame):
         # get color of frequency
         color = wav2RGB(2.998e8 / (float(frequency) * 1e3))
         widget.currentfrequency.setStyleSheet('color: rgb' + str(color))
-        if displayPattern:
-            # save handle in a dict for convenience
-            # todo: remove pg from pyqtgraph stuff
-            self.pattern[wmChannel] = widget.plot1.plot(pen=pg.mkPen(color=color))
+        self.pattern[wmChannel] = self.trace_display.plot(pen=pg.mkPen(color=color))
+
+        widget.spinFreq.setValue(float(frequency))
 
         # dacPort
         if dacPort != 0:
             self.dacPorts[dacPort] = wmChannel
-            widget.setPID.clicked.connect(lambda state=widget.setPID.isDown(), chan=name, dacPort=dacPort:
+            #todo: update values to PID
+            widget.setPID.clicked.connect(lambda state=self.setPID.isDown(), chan=name, dacPort=dacPort:
                                           self._initializePIDGUI(dacPort, chan))
-        else:
-            widget.spinFreq.setValue(float(frequency))
 
         return widget
-
-    def _initializePIDGUI(self, dacPort, chan):
-        self.pid = multiplexer_pid(dacPort)
-        self.pid.setWindowTitle(chan + ' PID Settings')
-        self.pid.move(self.pos())
-        self.index = {1: 0, -1: 1}
-        self.pid.show()
 
     def _check_window_size(self):
         """
@@ -332,7 +328,7 @@ class multiplexer_gui(QFrame):
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
     # run multiplexer PID gui
-    # runGUI(multiplexer_pid)
+    #runGUI(multiplexer_pid)
 
     # run multiplexer channel GUI
     #runGUI(multiplexer_channel, chanName='Repumper', wmChannel=1,
