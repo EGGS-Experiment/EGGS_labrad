@@ -144,6 +144,7 @@ class multiplexer_client(GUIClient):
     def updatePIDvoltage(self, c, signal):
         dacPort, value = signal
         if dacPort in self.gui.dacPorts:
+            #todo: check currently enabled
             try:
                 pass
                 # self.gui.channels[self.gui.dacPorts[dacPort]].PIDvoltage.setText('DAC Voltage (mV)  {:.1f}'.format(value))
