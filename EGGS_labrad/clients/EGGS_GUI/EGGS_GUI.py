@@ -1,5 +1,4 @@
 import os
-
 from twisted.internet.defer import inlineCallbacks
 
 from PyQt5.QtGui import QIcon
@@ -85,10 +84,12 @@ class EGGS_gui(QMainWindow):
     def makeLaserWidget(self, reactor, cxn):
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
         from EGGS_labrad.clients.wavemeter_client.multiplexer_client import multiplexer_client
+        #from EGGS_labrad.clients.toptica_client import toptica_client
         #from EGGS_labrad.clients.shutter_client import shutter_client
         clients = {
             SLS_client:             (0, 0),
-            multiplexer_client:     (0, 1)
+            multiplexer_client:     (1, 0)
+            #, toptica_client:         (0, 1)
         }
         return self._createTabLayout(clients, reactor, cxn)
 

@@ -1,14 +1,15 @@
 from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 
+
 class SMY01Wrapper(GPIBDeviceWrapper):
 
-    #need to store modulation parameters since we can't
-    #change them on the device without activating modulation
+    # need to store modulation parameters since we can't
+    # change them on the device without activating modulation
     mod_active = False
     mod_params = {'AM': 0, 'AF': 0, 'FM': 0, 'PHM': 0}
 
-    #Helper functions
+    # Helper functions
     _dbmToV = lambda self, dbm: dbm
 
     #_parse = lambda self, resp, text: resp.split(text)[-1]
@@ -18,7 +19,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         """
         result = resp.split(text)[-1]
         result = result.strip()
-        #in case device is off
+        # in case device is off
         try:
             result = float(result)
         except Exception as e:
@@ -56,19 +57,19 @@ class SMY01Wrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def amplitude(self, ampl, units):
-        #setter
+        # setter
         if ampl:
-            #check if units are valid, set default to dBm
+            # check if units are valid, set default to dBm
             if not units:
                 units = 'DBM'
             elif units.upper() not in ['DBM','V']:
                 raise Exception('Error: invalid units')
             yield self.write('LEV '+ str(ampl) + units)
-        #getter
+        # getter
         resp = yield self.query('LEV?')
-        #strip text preamble
+        # strip text preamble
         resp = self._parse(resp, 'LEVEL')
-        #special case if rf is off
+        # special case if rf is off
         if resp == ':OFF':
             returnValue(0)
         returnValue(float(resp))
@@ -79,7 +80,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
     def mod_freq(self, freq):
         if freq:
             self.mod_params['AF'] = freq
-            #only write to device if modulation is already active
+            # only write to device if modulation is already active
             if self.mod_active is True:
                 yield self.write('AF ' + str(freq))
         resp = yield self.query('AF?')
@@ -88,18 +89,18 @@ class SMY01Wrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def am_toggle(self, onoff):
-        #setter
+        # setter
         if onoff is not None:
             self.mod_active = True
             if onoff is True:
-                #activate with updated parameter
+                # activate with updated parameter
                 mod_freq = self.mod_params['AF']
                 param = self.mod_params['AM']
                 yield self.write('AF ' + str(mod_freq))
                 yield self.write('AM:I ' + str(param))
             elif onoff is False:
                 yield self.write('AM:OFF')
-        #getter
+        # getter
         resp = yield self.query('AM?')
         if resp == 'AM:OFF':
             returnValue('OFF')
@@ -110,7 +111,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
     def am_depth(self, depth):
         if depth:
             self.mod_params['AM'] = depth
-            #only write to device if modulation is already active
+            # only write to device if modulation is already active
             if self.mod_active is True:
                 yield self.write('AM ' + str(depth))
         resp = yield self.query('AM?')
@@ -119,18 +120,18 @@ class SMY01Wrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def fm_toggle(self, onoff):
-        #setter
+        # setter
         if onoff is not None:
             self.mod_active = True
             if onoff is True:
-                #activate with updated parameter
+                # activate with updated parameter
                 mod_freq = self.mod_params['AF']
                 param = self.mod_params['FM']
                 yield self.write('AF ' + str(mod_freq))
                 yield self.write('FM:I ' + str(param))
             elif onoff is False:
                 yield self.write('FM:OFF')
-        #getter
+        # getter
         resp = yield self.query('FM?')
         if resp == 'FM:OFF':
             returnValue('OFF')
@@ -141,7 +142,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
     def fm_dev(self, dev):
         if dev:
             self.mod_params['FM'] = dev
-            #only write to device if modulation is already active
+            # only write to device if modulation is already active
             if self.mod_active is True:
                 yield self.write('FM ' + str(dev))
         resp = yield self.query('FM?')
@@ -150,18 +151,18 @@ class SMY01Wrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def pm_toggle(self, onoff):
-        #setter
+        # setter
         if onoff is not None:
             self.mod_active = True
             if onoff is True:
-                #activate with updated parameter
+                # activate with updated parameter
                 mod_freq = self.mod_params['AF']
                 param = self.mod_params['PHM']
                 yield self.write('AF ' + str(mod_freq))
                 yield self.write('PHM:I ' + str(param))
             elif onoff is False:
                 yield self.write('PHM:OFF')
-        #getter
+        # getter
         resp = yield self.query('PHM?')
         if resp == 'PHM:OFF':
             returnValue('OFF')
@@ -172,7 +173,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
     def pm_dev(self, dev):
         if dev:
             self.mod_params['PHM'] = dev
-            #only write to device if modulation is already active
+            # only write to device if modulation is already active
             if self.mod_active is True:
                 yield self.write('PHM ' + str(dev))
         resp = yield self.query('PHM?')

@@ -419,6 +419,9 @@ class SerialDeviceServer(LabradServer):
 
     @setting(111112, 'Device Close', returns='')
     def deviceClose(self, c):
+        """
+        Closes the current serial device.
+        """
         if self.ser:
             self.ser.close()
             self.ser = None
@@ -428,6 +431,13 @@ class SerialDeviceServer(LabradServer):
 
     @setting(111113, 'Device Info', returns='(ss)')
     def deviceInfo(self, c):
+        """
+        Returns the currently connected serial device's
+        node and port.
+        Returns:
+            (str)   : the node
+            (str)   : the port
+        """
         if self.ser:
             return (self.serNode, self.port)
         else:
@@ -438,7 +448,14 @@ class SerialDeviceServer(LabradServer):
     @setting(222223, 'Serial Query', data='s', stop=['i: read a given number of characters',
                                                      's: read until the given character'], returns='s')
     def serial_query(self, c, data, stop=None):
-        """Write any string and read the response."""
+        """
+        Write any string and read the response.
+        Args:
+            data    (str)   : the data to write to the device
+            stop            : the stop parameter (either EOL character or the # of characters to read)
+        Returns:
+                    (str)   : the device response (stripped of EOL characters)
+        """
         yield self.ser.acquire()
         yield self.ser.write(data)
         if stop is None:
@@ -452,7 +469,11 @@ class SerialDeviceServer(LabradServer):
 
     @setting(222224, 'Serial Write', data='s', returns='')
     def serial_write(self, c, data):
-        """Directly write to the serial device."""
+        """
+        Directly write to the serial device.
+        Args:
+            data    (str)   : the data to write to the device
+        """
         yield self.ser.acquire()
         yield self.ser.write(data)
         self.ser.release()
@@ -460,7 +481,11 @@ class SerialDeviceServer(LabradServer):
     @setting(222225, 'Serial Read', stop=['i: read a given number of characters',
                                           's: read until the given character'], returns='s')
     def serial_read(self, c, stop=None):
-        """Directly read the serial buffer."""
+        """
+        Directly read the serial buffer.
+        Returns:
+                    (str)   : the device response (stripped of EOL characters)
+        """
         yield self.ser.acquire()
         if stop is None:
             resp = yield self.ser.read()
