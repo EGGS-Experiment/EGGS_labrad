@@ -22,7 +22,6 @@ class multiplexer_pid(QFrame):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(DACPort)
-        self.initializeGUI()
 
     def makeLayout(self, DACPort):
         label_font = QFont('MS Shell Dlg 2', pointSize=8)
@@ -31,15 +30,19 @@ class multiplexer_pid(QFrame):
         header_font = QFont('MS Shell Dlg 2', pointSize=12)
 
         # signal details
-        channelNum_label = QLabel('Channel')
-        channelNum = QLabel('todo')
-        channelNum.setFont(main_font)
-        dacPort_label = QLabel('DAC Port')
-        dacPort_display = QLabel('tood 2')
-        dacPort_display.setFont(main_font)
-        lock_freq_label = QLabel('Locking Frequency (THz)')
-        lock_freq = QLabel('todo 3')
-        lock_freq.setFont(main_font)
+        status_label = QLabel('Status:')
+        self.active_status = QLabel('Inactive')
+        self.active_status.setStyleSheet('background-color: red')
+        self.active_status.setFont(main_font)
+        channelNum_label = QLabel('Channel:')
+        self.channelNum = QLabel('0')
+        self.channelNum.setFont(main_font)
+        dacPort_label = QLabel('DAC Port:')
+        self.dacPort_display = QLabel('0')
+        self.dacPort_display.setFont(main_font)
+        lock_freq_label = QLabel('Lock Frequency (THz):')
+        self.lock_freq = QLabel('0')
+        self.lock_freq.setFont(main_font)
 
         # labels
         inputLabel = QLabel('Details')
@@ -51,14 +54,17 @@ class multiplexer_pid(QFrame):
         vLabel = QLabel('Voltage Output')
         vLabel.setFont(header_font)
 
-        pLabel = QLabel('Proportional')
-        iLabel = QLabel('Integral')
-        dLabel = QLabel('Derivative')
-        dtLabel = QLabel('dt (s)')
-        factorLabel = QLabel('V')
-        exponentLabel = QLabel('GHz')
-        polarityLabel = QLabel('Polarity')
-        sensLabel = QLabel('Sensitivity (V/GHz): ')
+        pLabel = QLabel('Proportional:')
+        iLabel = QLabel('Integral:')
+        dLabel = QLabel('Derivative:')
+        dtLabel = QLabel('dt (s):')
+        factorLabel = QLabel('V:')
+        exponentLabel = QLabel('GHz:')
+        polarityLabel = QLabel('Polarity:')
+        boundLabel = QLabel('Output Voltage Bounds:')
+        boundLabel.setAlignment(Qt.AlignLeft)
+        boundLabel.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        sensLabel = QLabel('Sensitivity (V/GHz):')
         sensLabel.setAlignment(Qt.AlignLeft)
         sensLabel.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         for label in (pLabel, iLabel, dLabel, dtLabel, factorLabel, exponentLabel, polarityLabel):
@@ -71,7 +77,8 @@ class multiplexer_pid(QFrame):
         self.spinI = QDoubleSpinBox()
         self.spinD = QDoubleSpinBox()
         self.spinDt = QDoubleSpinBox()
-        self.useDTBox = QCheckBox('Use Const dt')
+        self.useDTBox = QCheckBox('Const dt')
+        #self.useDTBox.setCheckable(True)
         self.useDTBox.setFont(QFont('MS Shell Dlg 2', pointSize=12))
 
         for spinbox in (self.spinP, self.spinI, self.spinD, self.spinDt):
@@ -101,7 +108,7 @@ class multiplexer_pid(QFrame):
         self.polarityBox.addItem("Negative")
         self.polarityBox.setFont(main_font)
 
-        self.minBound_label = QLabel('Min (mV)')
+        self.minBound_label = QLabel('Min (mV):')
         self.minBound_label.setFont(label_font)
         self.minBound = QDoubleSpinBox()
         self.minBound.setFont(main_font)
@@ -110,7 +117,7 @@ class multiplexer_pid(QFrame):
         self.minBound.setRange(-5000, 0)
         self.minBound.setKeyboardTracking(False)
 
-        self.maxBound_label = QLabel('Max (mV)')
+        self.maxBound_label = QLabel('Max (mV):')
         self.maxBound_label.setFont(label_font)
         self.maxBound = QDoubleSpinBox()
         self.maxBound.setFont(main_font)
@@ -120,24 +127,27 @@ class multiplexer_pid(QFrame):
         self.maxBound.setKeyboardTracking(False)
 
         # voltage output
-        self.PIDindicator = QCustomSlideIndicator([-10.0, 10.0])
-        self.PIDvoltage_label = QLabel('DAC Voltage (mV)')
+        self.PIDvoltage_label = QLabel('DAC Voltage (mV):')
         self.PIDvoltage_label.setFont(label_font)
-        self.PIDvoltage = QLabel('0000')
+        self.PIDvoltage = QLabel('0')
         self.PIDvoltage.setFont(main_font)
+        self.PIDvoltage.setAlignment(Qt.AlignRight)
+        self.PIDindicator = QCustomSlideIndicator([-10.0, 10.0])
 
         # set layout
         layout = QGridLayout(self)
         layout.minimumSize()
 
-        # todo 1 th layout
-        layout.addWidget(inputLabel,            0, 0, 1, 2)
-        layout.addWidget(channelNum_label,      1, 0, 1, 2)
-        layout.addWidget(channelNum,            2, 0, 1, 2)
-        layout.addWidget(dacPort_label,         3, 0, 1, 2)
-        layout.addWidget(dacPort_display,       4, 0, 1, 2)
-        layout.addWidget(lock_freq_label,       5, 0, 1, 2)
-        layout.addWidget(lock_freq,             6, 0, 1, 2)
+        # channel details
+        layout.addWidget(inputLabel,            0, 0, 1, 1)
+        layout.addWidget(status_label,          1, 0, 1, 1)
+        layout.addWidget(self.active_status,    2, 0, 1, 1)
+        layout.addWidget(channelNum_label,      3, 0, 1, 1)
+        layout.addWidget(self.channelNum,       4, 0, 1, 1)
+        layout.addWidget(dacPort_label,         5, 0, 1, 1)
+        layout.addWidget(self.dacPort_display,  6, 0, 1, 1)
+        layout.addWidget(lock_freq_label,       7, 0, 1, 1)
+        layout.addWidget(self.lock_freq,        8, 0, 1, 1)
 
         # PID layout
         layout.addWidget(PIDlabel,              0, 2, 1, 2)
@@ -155,24 +165,28 @@ class multiplexer_pid(QFrame):
         layout.addWidget(outLabel,              0, 4, 1, 2)
         layout.addWidget(polarityLabel,         1, 4, 1, 2)
         layout.addWidget(self.polarityBox,      2, 4, 1, 2)
-        layout.addWidget(self.minBound_label,   3, 4, 1, 1)
-        layout.addWidget(self.minBound,         4, 4, 1, 1)
-        layout.addWidget(self.maxBound_label,   3, 5, 1, 1)
-        layout.addWidget(self.maxBound,         4, 5, 1, 1)
-        layout.addWidget(sensLabel,             5, 4, 1, 2)
-        layout.addWidget(factorLabel,           6, 4, 1, 1)
-        layout.addWidget(self.spinFactor,       7, 4, 1, 1)
-        layout.addWidget(exponentLabel,         6, 5, 1, 1)
-        layout.addWidget(self.spinExp,          7, 5, 1, 1)
+        layout.addWidget(boundLabel,            3, 4, 1, 2)
+        layout.addWidget(self.minBound_label,   4, 4, 1, 1)
+        layout.addWidget(self.minBound,         5, 4, 1, 1)
+        layout.addWidget(self.maxBound_label,   4, 5, 1, 1)
+        layout.addWidget(self.maxBound,         5, 5, 1, 1)
+        layout.addWidget(sensLabel,             6, 4, 1, 2)
+        layout.addWidget(factorLabel,           7, 4, 1, 1)
+        layout.addWidget(self.spinFactor,       8, 4, 1, 1)
+        layout.addWidget(exponentLabel,         7, 5, 1, 1)
+        layout.addWidget(self.spinExp,          8, 5, 1, 1)
 
         # voltage output layout
         layout.addWidget(vLabel,                0, 6, 1, 2)
-        layout.addWidget(self.PIDindicator,     1, 6, 1, 2)
-        layout.addWidget(self.PIDvoltage_label, 2, 6, 1, 2)
-        layout.addWidget(self.PIDvoltage,       3, 6, 1, 2)
+        layout.addWidget(self.PIDvoltage_label, 1, 6, 1, 2)
+        layout.addWidget(self.PIDvoltage,       2, 6, 1, 2)
+        layout.addWidget(self.PIDindicator,     4, 6, 1, 2)
 
-    def initializeGUI(self):
-        self.useDTBox.stateChanged.connect(lambda state: self.spinDt.setEnabled(state))
+        # connect slots
+        # PID
+        self.useDTBox.stateChanged.connect(lambda status: self.spinDt.setEnabled(status))
+        self.useDTBox.click()
+        self.useDTBox.click()
 
 
 class multiplexer_channel(QFrame):
@@ -212,10 +226,12 @@ class multiplexer_channel(QFrame):
         channel_header_layout.addWidget(chanName,       0, 0, 3, 1)
 
         # display frequency
+        currentfrequency_label = QLabel('Measured Frequency (THz):')
+        #currentfrequency_label.setAlignment(Qt.AlignTop)
         self.currentfrequency = QLabel(frequency)
         self.currentfrequency.setFont(QFont(shell_font, pointSize=30))
         self.currentfrequency.setAlignment(Qt.AlignCenter)
-        self.currentfrequency.setMinimumWidth(300)
+        self.currentfrequency.setMinimumWidth(500)
 
         # power meter
         self.powermeter = QCustomProgressBar()
@@ -266,16 +282,17 @@ class multiplexer_channel(QFrame):
 
         # lay out
         layout.addWidget(self.channel_header,   0, 0, 2, 1)
-        layout.addWidget(self.currentfrequency, 1, 0, 3, 1)
-        layout.addWidget(self.frequencylabel,   5, 0, 1, 1)
-        layout.addWidget(self.spinFreq,         6, 0, 1, 1)
-        layout.addWidget(self.exposurelabel,    5, 3, 1, 1)
-        layout.addWidget(self.spinExp,          6, 3, 1, 1)
+        layout.addWidget(currentfrequency_label, 1, 0, 2, 1)
+        layout.addWidget(self.currentfrequency, 2, 0, 3, 1)
+        layout.addWidget(self.frequencylabel,   6, 0, 1, 1)
+        layout.addWidget(self.spinFreq,         7, 0, 1, 1)
+        layout.addWidget(self.exposurelabel,    6, 3, 1, 1)
+        layout.addWidget(self.spinExp,          7, 3, 1, 1)
         layout.addWidget(self.measSwitch,       0, 3, 1, 1)
         layout.addWidget(self.lockChannel,      1, 3, 1, 1)
         layout.addWidget(self.showTrace,        2, 3, 1, 1)
         layout.addWidget(self.setPID,           3, 3, 1, 1)
-        layout.addWidget(self.powermeter,       0, 4, 7, 1)
+        layout.addWidget(self.powermeter,       0, 4, 8, 1)
 
 
 class multiplexer_gui(QFrame):
@@ -320,7 +337,7 @@ class multiplexer_gui(QFrame):
         self.pidGUI_label = QLabel('Lock Settings')
         self.pidGUI_label.setFont(label_font)
         self.pidGUI = multiplexer_pid()
-        self.pidGUI.setMaximumHeight(200)
+        self.pidGUI.setMaximumHeight(250)
 
         # interferometer display
         #interferometer_wrapper = QWidget()
@@ -332,7 +349,7 @@ class multiplexer_gui(QFrame):
         self.trace_display.showGrid(x=True, y=True, alpha=0.5)
         self.trace_display.setRange(yRange=[0, 2e8])
         self.trace_display.setMinimumHeight(400)
-        self.trace_display.setMinimumWidth(400)
+        self.trace_display.setMaximumWidth(1000)
 
         # create channel widgets
         for chan_name, chan_params in self.chaninfo.items():

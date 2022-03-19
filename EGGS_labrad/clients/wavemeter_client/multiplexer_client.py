@@ -40,7 +40,7 @@ class multiplexer_client(GUIClient):
         yield self.wavemeter.signal__update_exp(UPDATEEXP_ID)
         yield self.wavemeter.addListener(listener=self.updateExp, source=None, ID=UPDATEEXP_ID)
         yield self.wavemeter.signal__lock_changed(LOCK_CHANGED_ID)
-        yield self.wavemeter.addListener(listener=self.updateWLMOutput, source=None, ID=OUTPUT_CHANGED_ID)
+        yield self.wavemeter.addListener(listener=self.updateWMOutput, source=None, ID=OUTPUT_CHANGED_ID)
         yield self.wavemeter.signal__output_changed(OUTPUT_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.toggleLock, source=None, ID=LOCK_CHANGED_ID)
         yield self.wavemeter.signal__pidvoltage_changed(PID_CHANGED_ID)
@@ -72,32 +72,44 @@ class multiplexer_client(GUIClient):
             widget.lockChannel.setChecked(bool(lock_status))
             widget.spinExp.setValue(exposure_ms)
             widget.measSwitch.setChecked(bool(measure_state))
+            widget.spinFreq.setValue(float(lock_frequency))
+        # PID
 
     def initGUI(self):
         # global wavemeter settings
-        #self.gui.lockSwitch.toggled.connect(lambda state: self.wavemeter.set_lock_state(state))
-        #self.gui.startSwitch.toggled.connect(lambda state: self.wavemeter.set_wlm_output(state))
+        #self.gui.lockSwitch.clicked.connect(lambda state: self.wavemeter.set_lock_state(state))
+        #self.gui.startSwitch.clicked.connect(lambda state: self.wavemeter.set_wlm_output(state))
         # channel wavemeter settings
         for channel_name, channel_params in self.chaninfo.items():
             # expand parameters and get GUI widget
             wmChannel, frequency, _, _, dacPort, _ = channel_params
             widget = self.gui.channels[wmChannel]
             # assign slots
-            widget.showTrace.toggled.connect(lambda status, chan=wmChannel: self.toggleTrace(status, chan))
-            widget.setPID.clicked.connect(lambda status, _dacPort=dacPort: self.setupPID(dacPort))
-            #widget.spinExp.valueChanged.connect(lambda exp: self.wavemeter.set_exposure_time(wmChannel, int(exp)))
-            #widget.measSwitch.toggled.connect(lambda state: self.wavemeter.set_switcher_signal_state(wmChannel, state))
+            widget.showTrace.clicked.connect(lambda status, _wmChannel=wmChannel: self.toggleTrace(status, _wmChannel))
+            widget.setPID.clicked.connect(lambda status, _wmChannel=wmChannel, _dacPort=dacPort: self.setupPID(_wmChannel, _dacPort))
+            #widget.spinExp.valueChanged.connect(lambda exp, _wmChannel=wmChannel: self.wavemeter.set_exposure_time(_wmChannel, int(exp)))
+            #widget.measSwitch.clicked.connect(lambda state, _wmChannel=wmChannel: self.wavemeter.set_switcher_signal_state(_wmChannel, state))
             # if dacPort != 0:
             #     widget.spinFreq.valueChanged.connect(lambda freq, _dacPort=dacPort: self.wavemeter.set_pid_course(_dacPort, freq))
-            #     widget.lockChannel.toggled.connect(
-            #         lambda state, dac_port=dacPort, wm_channel=wmChannel: self.wavemeter.set_channel_lock(dacPort, wm_channel, state))
-            # else:
-            #     widget.spinFreq.setValue(float(frequency))
-            #     widget.lockChannel.toggled.connect(lambda state: widget.lockChannel.setChecked(False))
+            #     widget.lockChannel.clicked.connect(
+            #         lambda state, _dacPort=dacPort, _wmChannel=wmChannel: self.wavemeter.set_channel_lock(_dacPort, _wmChannel, state))
+
 
     @inlineCallbacks
-    def setupPID(self, dacPort):
-        index_tmp = {1: 0, -1: 1}
+    def setupPID(self, channel, dacPort):
+        pidGUI = self.gui.pidGUI
+        channel_widget = self.gui.channels[channel]
+        # channel details
+        if channel_widget.lockChannel.isChecked():
+            pidGUI.active_status.setText('Active')
+            pidGUI.active_status.setStyleSheet('background-color: green')
+        else:
+            pidGUI.active_status.setText('Inactive')
+            pidGUI.active_status.setStyleSheet('background-color: red')
+        pidGUI.channelNum.setText(str(channel))
+        pidGUI.dacPort_display.setText(str(dacPort))
+        freq_val = channel_widget.spinFreq.value()
+        pidGUI.lock_freq.setText('{:.4f}'.format(freq_val))
         # get initial values
         pInit = yield self.wavemeter.get_pid_p(dacPort)
         iInit = yield self.wavemeter.get_pid_i(dacPort)
@@ -107,14 +119,14 @@ class multiplexer_client(GUIClient):
         sensInit = yield self.wavemeter.get_pid_sensitivity(dacPort)
         polInit = yield self.wavemeter.get_pid_polarity(dacPort)
         # set initial values
-        self.gui.pidGUI.spinP.setValue(pInit)
-        self.gui.pidGUI.spinI.setValue(iInit)
-        self.gui.pidGUI.spinD.setValue(dInit)
-        self.gui.pidGUI.spinDt.setValue(dtInit)
-        self.gui.pidGUI.useDTBox.setCheckState(bool(constInit))
-        self.gui.pidGUI.spinFactor.setValue(sensInit[0])
-        self.gui.pidGUI.spinExp.setValue(sensInit[1])
-        self.gui.pidGUI.polarityBox.setCurrentIndex(index_tmp[polInit])
+        pidGUI.spinP.setValue(pInit)
+        pidGUI.spinI.setValue(iInit)
+        pidGUI.spinD.setValue(dInit)
+        pidGUI.spinDt.setValue(dtInit)
+        pidGUI.useDTBox.setChecked(constInit)
+        pidGUI.spinFactor.setValue(sensInit[0])
+        pidGUI.spinExp.setValue(sensInit[1])
+        pidGUI.polarityBox.setCurrentIndex({1:0, -1:1}[polInit])
         # connect signals to slots
         # self.gui.pidGUI.spinP.valueChanged.connect(lambda p, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, p))
         # self.gui.pidGUI.spinI.valueChanged.connect(lambda i, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, i))
@@ -143,12 +155,11 @@ class multiplexer_client(GUIClient):
 
     def updatePIDvoltage(self, c, signal):
         dacPort, value = signal
-        if dacPort in self.gui.dacPorts:
-            #todo: check currently enabled
+        active_dacPort = int(self.gui.pidGUI.dacPort_display.text())
+        if (dacPort in self.gui.dacPorts) and (dacPort == active_dacPort):
             try:
-                pass
-                # self.gui.channels[self.gui.dacPorts[dacPort]].PIDvoltage.setText('DAC Voltage (mV)  {:.1f}'.format(value))
-                # self.gui.channels[self.gui.dacPorts[dacPort]].PIDindicator.update_slider(value / 1000.0)
+                self.gui.pidGUI.PIDvoltage.setText('{:4.2f}'.format(value))
+                self.gui.pidGUI.PIDindicator.update_slider(value / 1000.0)
             except Exception as e:
                 print(e)
 
@@ -162,22 +173,15 @@ class multiplexer_client(GUIClient):
     def toggleMeas(self, c, signal):
         chan, state = signal
         if chan in self.gui.channels.keys():
-            widget = self.gui.channels[chan]
-            widget.measSwitch.blockSignals(True)
-            widget.measSwitch.setChecked(state)
-            widget.measSwitch.blockSignals(False)
+            self.gui.channels[chan].setChecked(state)
 
     def toggleLock(self, c, signal):
-        self.gui.lockSwitch.blockSignals(True)
         self.gui.lockSwitch.setChecked(signal)
-        self.gui.lockSwitch.blockSignals(False)
 
     def toggleChannelLock(self, c, signal):
         _, chan, state = signal
         if chan in self.gui.channels.keys():
-            self.gui.channels[chan].lockChannel.blockSignals(True)
             self.gui.channels[chan].lockChannel.setChecked(bool(state))
-            self.gui.channels[chan].lockChannel.blockSignals(False)
 
     def updateExp(self, c, signal):
         chan, value = signal
@@ -186,17 +190,13 @@ class multiplexer_client(GUIClient):
             self.gui.channels[chan].spinExp.setValue(value)
             self.gui.channels[chan].spinExp.blockSignals(False)
 
-    def updateWLMOutput(self, c, signal):
-        self.gui.startSwitch.blockSignals(True)
+    def updateWMOutput(self, c, signal):
         self.gui.startSwitch.setChecked(signal)
-        self.gui.startSwitch.blockSignals(False)
 
     def updateAmplitude(self, c, signal):
         chan, value = signal
         if chan in self.gui.channels.keys():
-            self.gui.channels[chan].powermeter.blockSignals(True)
             self.gui.channels[chan].powermeter.setValue(value)
-            self.gui.channels[chan].powermeter.blockSignals(False)
 
     def updatePattern(self, c, signal):
         chan, trace = signal

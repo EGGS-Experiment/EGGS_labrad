@@ -5,11 +5,15 @@ from PyQt5.QtGui import QPainter, QPen
 
 class QCustomSlideIndicator(QWidget):
 
-    def __init__(self, limits):
+    def __init__(self, limits, horizontal=True):
         super(QCustomSlideIndicator, self).__init__()
         self.set_rails(limits)
         self.value = None
-        self.setGeometry(2000, 200, 200, 30)
+        self.horizontal = horizontal
+        if horizontal == True:
+            self.setGeometry(2000, 200, 200, 30)
+        else:
+            self.setGeometry(2000, 200, 30, 200)
         self.setWindowTitle('Slide Indicator')
 
     def paintEvent(self, e):
@@ -25,6 +29,7 @@ class QCustomSlideIndicator(QWidget):
         qp.drawLine(0, self.height() - 1, self.width(), self.height() - 1)
         pen.setStyle(Qt.CustomDashLine)
         pen.setDashPattern([1, self.width() / 8.1 - 1])
+        #print([1, self.width() / 8.1 - 1])
         qp.setPen(pen)
         qp.drawLine(0, self.height() - 2, self.width(), self.height() - 2)
         qp.drawLine(0, self.height() - 3, self.width(), self.height() - 3)
