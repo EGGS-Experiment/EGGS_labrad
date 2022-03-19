@@ -262,7 +262,7 @@ class multiplexer_gui(QFrame):
         pg.setConfigOption('background', 'k')
         self.trace_display_label = QLabel('Interferometer')
         self.trace_display_label.setFont(label_font)
-        self.trace_display = pg.PlotWidget(name='Interferometer Trace')
+        self.trace_display = pg.PlotWidget(name='Interferometer Trace', border=True)
         self.trace_display.showGrid(x=True, y=True, alpha=0.5)
         self.trace_display.setRange(yRange=[0, 2e8])
         #self.trace_display.setYRange(4000)
