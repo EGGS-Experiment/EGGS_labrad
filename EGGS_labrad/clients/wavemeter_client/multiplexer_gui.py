@@ -375,12 +375,6 @@ class multiplexer_gui(QFrame):
         widget = multiplexer_channel(name, wmChannel, dacPort, frequency, displayPID)
         widget.spinFreq.setValue(float(frequency))
 
-        # display PID
-        # try:
-        #     widget.PIDindicator.set_rails(rails)
-        # except Exception as e:
-        #     widget.PIDindicator.set_rails([-10.0, 10.0])
-
         # get color of frequency
         color = wav2RGB(2.998e8 / (float(frequency) * 1e3))
         widget.currentfrequency.setStyleSheet('color: rgb' + str(color))
