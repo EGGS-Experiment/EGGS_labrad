@@ -317,39 +317,39 @@ class multiplexer_gui(QFrame):
         layout = QGridLayout(self)
 
         # wavemeter channels
-        self.wm_label = QLabel('Wavemeter Channels')
-        self.wm_label.setFont(label_font)
-        #qBox = QGroupBox('Wavelength and Lock settings')
-        qBox = QFrame()
-        qBox.setFrameStyle(0x0001 | 0x0030)
-        subLayout = QGridLayout(qBox)
-        #self.channel_scroll = QScrollArea()
-        #self.channel_scroll.setWidget(qBox)
-
+        qBox_wm = QGroupBox('Wavemeter Channels')
+        qBox_wm_layout = QGridLayout(qBox_wm)
+            # wavemeter buttons
         self.startSwitch = TextChangingButton('Wavemeter')
         self.startSwitch.setMaximumHeight(50)
         self.lockSwitch = TextChangingButton('Locking')
         self.lockSwitch.setMaximumHeight(50)
-        subLayout.addWidget(self.startSwitch, 0, 0)
-        subLayout.addWidget(self.lockSwitch, 0, 2)
+        qBox_wm_layout.addWidget(self.startSwitch, 0, 0)
+        qBox_wm_layout.addWidget(self.lockSwitch, 0, 1)
+            # holder for wavemeter channels
+        wm_scroll = QScrollArea()
+        wm_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        wmChan_widget = QWidget()
+        wmChan_layout = QGridLayout(wmChan_widget)
+        qBox_wm_layout.addWidget(wm_scroll, 1, 0, 1, 2)
 
         # PID
-        self.pidGUI_label = QLabel('Lock Settings')
-        self.pidGUI_label.setFont(label_font)
+        qBox_PID = QGroupBox('Lock Settings')
+        qBox_PID_layout = QGridLayout(qBox_PID)
         self.pidGUI = multiplexer_pid()
         self.pidGUI.setMaximumHeight(250)
+        qBox_PID_layout.addWidget(self.pidGUI)
 
         # interferometer display
-        #interferometer_wrapper = QWidget()
-        #interferometer_layout = QVBoxLayout(interferometer_wrapper)
+        qBox_intTrace = QGroupBox('Interferometer')
+        qBox_intTrace_layout = QGridLayout(qBox_intTrace)
         pg.setConfigOption('background', 'k')
-        self.trace_display_label = QLabel('Interferometer')
-        self.trace_display_label.setFont(label_font)
         self.trace_display = pg.PlotWidget(name='Interferometer Trace', border=True)
         self.trace_display.showGrid(x=True, y=True, alpha=0.5)
         self.trace_display.setRange(yRange=[0, 2e8])
         self.trace_display.setMinimumHeight(400)
         self.trace_display.setMaximumWidth(1000)
+        qBox_intTrace_layout.addWidget(self.trace_display)
 
         # create channel widgets
         for chan_name, chan_params in self.chaninfo.items():
@@ -359,14 +359,15 @@ class multiplexer_gui(QFrame):
             widget.setMaximumHeight(200)
             # add to holders
             self.channels[wmChannel] = widget
-            subLayout.addWidget(self.channels[wmChannel], position[1], position[0], 1, 3)
+            wmChan_layout.addWidget(self.channels[wmChannel], position[1], position[0], 1, 3)
 
-        layout.addWidget(self.wm_label, 0, 0)
-        layout.addWidget(qBox, 1, 0, 4, 1)
-        layout.addWidget(self.trace_display_label, 0, 1)
-        layout.addWidget(self.trace_display, 1, 1)
-        layout.addWidget(self.pidGUI_label, 2, 1)
-        layout.addWidget(self.pidGUI, 3, 1)
+        # add wavemeter channel holder to qBox
+        wm_scroll.setWidget(wmChan_widget)
+        wm_scroll.setMinimumWidth(wmChan_widget.sizeHint().width())
+        # final layout
+        layout.addWidget(qBox_wm,           0, 0, 4, 1)
+        layout.addWidget(qBox_intTrace,     0, 1, 3, 1)
+        layout.addWidget(qBox_PID,          3, 1, 1, 1)
 
     def _createChannel(self, name, params):
         # initialize widget
