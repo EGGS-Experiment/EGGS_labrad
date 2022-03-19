@@ -31,15 +31,19 @@ class multiplexer_pid(QFrame):
         header_font = QFont('MS Shell Dlg 2', pointSize=12)
 
         # signal details
-        inputLabel = QLabel('Details')
         channelNum_label = QLabel('Channel')
         channelNum = QLabel('todo')
+        channelNum.setFont(main_font)
         dacPort_label = QLabel('DAC Port')
         dacPort_display = QLabel('tood 2')
+        dacPort_display.setFont(main_font)
         lock_freq_label = QLabel('Locking Frequency (THz)')
         lock_freq = QLabel('todo 3')
+        lock_freq.setFont(main_font)
 
         # labels
+        inputLabel = QLabel('Details')
+        inputLabel.setFont(header_font)
         PIDlabel = QLabel('PID Settings')
         PIDlabel.setFont(header_font)
         outLabel = QLabel('Output Settings')
@@ -132,6 +136,8 @@ class multiplexer_pid(QFrame):
         layout.addWidget(channelNum,            2, 0, 1, 2)
         layout.addWidget(dacPort_label,         3, 0, 1, 2)
         layout.addWidget(dacPort_display,       4, 0, 1, 2)
+        layout.addWidget(lock_freq_label,       5, 0, 1, 2)
+        layout.addWidget(lock_freq,             6, 0, 1, 2)
 
         # PID layout
         layout.addWidget(PIDlabel,              0, 2, 1, 2)
@@ -142,7 +148,7 @@ class multiplexer_pid(QFrame):
         layout.addWidget(dLabel,                5, 2, 1, 2)
         layout.addWidget(self.spinD,            6, 2, 1, 2)
         layout.addWidget(dtLabel,               7, 2, 1, 1)
-        layout.addWidget(self.spinDt,           8, 3, 1, 1)
+        layout.addWidget(self.spinDt,           8, 2, 1, 1)
         layout.addWidget(self.useDTBox,         8, 3, 1, 1)
 
         # signal layout
