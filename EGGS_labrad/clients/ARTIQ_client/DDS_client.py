@@ -69,7 +69,7 @@ class AD9910_channel(QFrame):
     def initializeGUI(self):
         # connect signal to slot
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
-        #set startup value
+        # set startup value
         # self.lockswitch.toggle()
 
     def lock(self, status):
