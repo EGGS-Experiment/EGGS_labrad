@@ -15,7 +15,7 @@ class DC_client(GUIClient):
 
     def getgui(self):
         if self.gui is None:
-            self.gui = DC_gui()
+            self.gui = DC_gui('DC Client')
         return self.gui
 
     @inlineCallbacks

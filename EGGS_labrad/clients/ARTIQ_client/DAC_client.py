@@ -20,7 +20,7 @@ class AD5372_channel(QFrame):
         self.makeLayout(name)
 
     def makeLayout(self, title):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         # labels
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
@@ -68,7 +68,6 @@ class AD5372_channel(QFrame):
         layout.addWidget(self.lockswitch, 3, 0)
         layout.addWidget(self.calibrateswitch, 3, 1)
         layout.addWidget(self.resetswitch, 3, 2)
-        self.setLayout(layout)
         # connect signal to slot
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
@@ -130,7 +129,7 @@ class DAC_client(QWidget):
         return self.cxn
 
     def initializeGUI(self, cxn):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
@@ -141,7 +140,6 @@ class DAC_client(QWidget):
             name = self.zotino_list[i]
             zotino_group = self._makeZotinoGroup(name)
             layout.addWidget(zotino_group, 2 + i, 0)
-        self.setLayout(layout)
 
     def _makeZotinoGroup(self, name):
         """
@@ -151,7 +149,7 @@ class DAC_client(QWidget):
         zotino_group = QFrame()
         zotino_group.setFrameStyle(0x0001 | 0x0010)
         zotino_group.setLineWidth(2)
-        layout = QGridLayout()
+        layout = QGridLayout(zotino_group)
         # set global
         zotino_header = QWidget(self)
         zotino_header_layout = QGridLayout(zotino_header)
@@ -189,7 +187,6 @@ class DAC_client(QWidget):
             self.ad5372_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
             # print(name + ' - row:' + str(row) + ', column: ' + str(column))
-        zotino_group.setLayout(layout)
         return zotino_group
 
     def startupData(self, cxn):

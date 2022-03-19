@@ -20,7 +20,7 @@ class AD9910_channel(QFrame):
         self.initializeGUI()
 
     def makeLayout(self, title):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         # labels
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
@@ -53,7 +53,7 @@ class AD9910_channel(QFrame):
         self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
         self.lockswitch.setChecked(True)
 
-        #add widgets to layout
+        # add widgets to layout
         layout.addWidget(title, 0, 0, 1, 3)
         layout.addWidget(freqlabel, 1, 0, 1, 1)
         layout.addWidget(powerlabel, 1, 1, 1, 1)
@@ -64,7 +64,6 @@ class AD9910_channel(QFrame):
         layout.addWidget(self.resetswitch, 3, 0)
         layout.addWidget(self.rfswitch, 3, 1)
         layout.addWidget(self.lockswitch, 3, 2)
-        self.setLayout(layout)
 
     def initializeGUI(self):
         # connect signal to slot
@@ -125,7 +124,7 @@ class DDS_client(QWidget):
         return self.cxn
 
     def initializeGUI(self, cxn):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
@@ -138,7 +137,6 @@ class DDS_client(QWidget):
             ad9910_list = self.urukul_list[urukul_name]
             urukul_group = self._makeUrukulGroup(urukul_name, ad9910_list)
             layout.addWidget(urukul_group, 2 + i, 0, 1, self.row_length)
-        self.setLayout(layout)
 
     def _makeUrukulGroup(self, urukul_name, ad9910_list):
         """
@@ -148,7 +146,7 @@ class DDS_client(QWidget):
         urukul_group = QFrame()
         urukul_group.setFrameStyle(0x0001 | 0x0010)
         urukul_group.setLineWidth(2)
-        layout = QGridLayout()
+        layout = QGridLayout(urukul_group)
         # set title
         title = QLabel(urukul_name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
@@ -171,7 +169,6 @@ class DDS_client(QWidget):
             self.ad9910_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
             # print(name + ' - row:' + str(row) + ', column: ' + str(column))
-        urukul_group.setLayout(layout)
         return urukul_group
 
     def closeEvent(self, x):

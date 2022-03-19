@@ -35,7 +35,7 @@ class ARTIQ_client(QMainWindow):
     def makeLayout(self, cxn):
         # central layout
         centralWidget = QWidget()
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(centralWidget)
         self.tabWidget = QTabWidget()
 
         # create subwidgets
@@ -52,7 +52,6 @@ class ARTIQ_client(QMainWindow):
 
         # put it all together
         layout.addWidget(self.tabWidget)
-        centralWidget.setLayout(layout)
         self.setCentralWidget(centralWidget)
         self.setWindowTitle(self.name)
 

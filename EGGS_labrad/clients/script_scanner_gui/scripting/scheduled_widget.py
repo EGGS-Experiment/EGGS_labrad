@@ -29,7 +29,7 @@ class scheduled_widget(QtWidgets.QWidget):
         self.setup_layout()
 
     def setup_layout(self):
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout(self)
         self.id_label = QtWidgets.QLabel('{0}'.format(self.ident))
         self.id_label.setFont(self.font)
         self.id_label.setMinimumWidth(30)
@@ -54,7 +54,6 @@ class scheduled_widget(QtWidgets.QWidget):
         layout.addWidget(self.name_label)
         layout.addWidget(self.scheduled_duration)
         layout.addWidget(self.cancel_button)
-        self.setLayout(layout)
 
     def closeEvent(self, x):
         self.reactor.stop()

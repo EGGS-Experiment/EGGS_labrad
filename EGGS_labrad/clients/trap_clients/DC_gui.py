@@ -20,7 +20,7 @@ class AMO8_channel(QFrame):
         self.makeLayout(name)
 
     def makeLayout(self, title):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         # title
         self.title = QLabel(title)
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
@@ -69,7 +69,6 @@ class AMO8_channel(QFrame):
         layout.addWidget(self.toggleswitch, 5, 0)
         layout.addWidget(self.lockswitch, 5, 1)
         layout.addWidget(self.resetswitch, 5, 2)
-        self.setLayout(layout)
         # connect signal to slot
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
@@ -89,6 +88,8 @@ class DC_gui(QFrame):
         super().__init__()
         self.amo8_channels = []
         self.name = name
+        print('th1', name)
+
         # config
         try:
             from EGGS_labrad.config.dc_config import dc_config
@@ -104,8 +105,8 @@ class DC_gui(QFrame):
     def createGUI(self):
         self.setFrameStyle(0x0001 | 0x0030)
         # set client title
-        self.setWindowTitle('Trap DC Client')
-        amo8_layout = QGridLayout()
+        self.setWindowTitle('DC Client')
+        amo8_layout = QGridLayout(self)
         # create header
         self.device_header = self._createHeader()
         # layout individual channels (chosen via class variable)
@@ -116,8 +117,7 @@ class DC_gui(QFrame):
             self.amo8_channels.append(channel_gui)
             amo8_layout.addWidget(channel_gui, channel_params['row'], channel_params['col'])
         # layout rest of device
-        amo8_layout.addWidget(self.device_header, 0, int(self.row_length / 2), 1, 1)
-        self.setLayout(amo8_layout)
+        amo8_layout.addWidget(self.device_header, 0, 0, 1, 1)
 
     def _createHeader(self):
         # create header layout

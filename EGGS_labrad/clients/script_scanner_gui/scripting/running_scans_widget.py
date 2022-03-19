@@ -47,7 +47,7 @@ class script_status_widget(QtWidgets.QWidget):
         self.finished = False
 
     def setup_layout(self):
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout(self)
         self.id_label = QtWidgets.QLabel('{0}'.format(self.ident))
         self.id_label.setFont(self.font)
         self.id_label.setMinimumWidth(30)
@@ -68,7 +68,6 @@ class script_status_widget(QtWidgets.QWidget):
         layout.addWidget(self.progress_bar)
         layout.addWidget(self.pause_button)
         layout.addWidget(self.stop_button)
-        self.setLayout(layout)
 
     def connect_layout(self):
         self.stop_button.pressed.connect(self.on_user_stop)

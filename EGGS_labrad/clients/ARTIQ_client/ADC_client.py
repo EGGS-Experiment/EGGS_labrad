@@ -20,7 +20,7 @@ class ADC_channel(QFrame):
         self.setFixedSize(150, 150)
 
     def makeLayout(self, title):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         # labels
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
@@ -46,7 +46,6 @@ class ADC_channel(QFrame):
         layout.addWidget(self.display, 2, 0, 1, 2)
         layout.addWidget(self.gain_title, 3, 0)
         layout.addWidget(self.gain, 4, 0, 1, 2)
-        self.setLayout(layout)
 
 
 class ADC_client(QWidget):
@@ -100,7 +99,7 @@ class ADC_client(QWidget):
         return self.cxn
 
     def initializeGUI(self, cxn):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
@@ -108,7 +107,6 @@ class ADC_client(QWidget):
         layout.addWidget(title, 0, 0, 1, 4)
         # layout widgets
         layout.addWidget(self._makeSamplerGroup(self.sampler))
-        self.setLayout(layout)
 
     def _makeSamplerGroup(self, name):
         """
@@ -118,7 +116,7 @@ class ADC_client(QWidget):
         sampler_group = QFrame()
         sampler_group.setFrameStyle(0x0001 | 0x0010)
         sampler_group.setLineWidth(2)
-        layout = QGridLayout()
+        layout = QGridLayout(sampler_group)
         # set global
         sampler_header = QWidget(self)
         sampler_header_layout = QGridLayout(sampler_header)
@@ -149,7 +147,6 @@ class ADC_client(QWidget):
             # add widget to client list and layout
             self.sampler_channels[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
-        sampler_group.setLayout(layout)
         return sampler_group
 
     def startupData(self, cxn):

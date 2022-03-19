@@ -67,7 +67,7 @@ class PMT_gui(QFrame):
         self.lockswitch = Lockswitch()
 
     def makeLayout(self):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         layout.addWidget(self.title, 0, 0, 1, 3)
         # devices
         layout.addWidget(self.ttl_pmt_label, 1, 0)
@@ -87,7 +87,6 @@ class PMT_gui(QFrame):
         layout.addWidget(self.start_button, 5, 0)
         layout.addWidget(self.program_button, 5, 1)
         layout.addWidget(self.lockswitch, 5, 2)
-        self.setLayout(layout)
 
     def closeEvent(self, event):
         if self.parent is not None:

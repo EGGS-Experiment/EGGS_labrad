@@ -46,7 +46,7 @@ class twistorr74_gui(QFrame):
         self.twistorr_toggle = TextChangingButton(('On', 'Off'))
 
     def makeLayout(self):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         shell_font = 'MS Shell Dlg 2'
 
         col1 = 0
@@ -66,7 +66,6 @@ class twistorr74_gui(QFrame):
         layout.addWidget(self.twistorr_record, 9, col1)
 
         # layout.minimumSize()
-        self.setLayout(layout)
 
 
 if __name__ == "__main__":

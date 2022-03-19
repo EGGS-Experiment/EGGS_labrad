@@ -22,7 +22,7 @@ class TTL_channel(QFrame):
         self.setFixedSize(150, 75)
 
     def makeLayout(self, title):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         # labels
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=10))
@@ -37,7 +37,6 @@ class TTL_channel(QFrame):
         layout.addWidget(title, 0, 0, 1, 2)
         layout.addWidget(self.toggle, 1, 0, 1, 1)
         layout.addWidget(self.lockswitch, 1, 1, 1, 1)
-        self.setLayout(layout)
 
         # connect signal to slot
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
@@ -128,7 +127,7 @@ class TTL_client(QWidget):
         return self.cxn
 
     def initializeGUI(self, cxn):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
@@ -144,7 +143,6 @@ class TTL_client(QWidget):
         layout.addWidget(urukul_ttls, 9, 0, 3, 10)
         other_ttls = self._makeTTLGroup(self.ttlother_list, "Other")
         layout.addWidget(other_ttls, 13, 0, 2, 5)
-        self.setLayout(layout)
 
     def _makeTTLGroup(self, ttl_list, name):
         """
@@ -154,7 +152,7 @@ class TTL_client(QWidget):
         ttl_group = QFrame()
         ttl_group.setFrameStyle(0x0001 | 0x0010)
         ttl_group.setLineWidth(2)
-        layout = QGridLayout()
+        layout = QGridLayout(ttl_group)
         # set title
         title = QLabel(name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
@@ -174,7 +172,6 @@ class TTL_client(QWidget):
             self.ttl_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
             #print(name + ' - row:' + str(row) + ', column: ' + str(column))
-        ttl_group.setLayout(layout)
         return ttl_group
 
     def closeEvent(self, x):

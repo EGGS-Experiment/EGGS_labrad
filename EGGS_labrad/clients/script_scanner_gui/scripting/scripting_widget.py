@@ -30,7 +30,7 @@ class scripting_widget(QtWidgets.QWidget):
         self.setupLayout()
 
     def setupLayout(self):
-        layout = QtWidgets.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout(self)
         self.selector = experiment_selector_widget(self.reactor, parent=self)
         self.running = running_combined(self.reactor)
         self.scheduled = scheduled_combined(self.reactor)
@@ -39,7 +39,6 @@ class scripting_widget(QtWidgets.QWidget):
         layout.addWidget(self.scheduled)
         layout.addWidget(self.queued)
         layout.addWidget(self.running)
-        self.setLayout(layout)
 
     def get_scannable_parameters(self):
         return self.parent.get_scannable_parameters()

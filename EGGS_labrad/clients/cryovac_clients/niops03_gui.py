@@ -89,7 +89,7 @@ class niops03_gui(QFrame):
         self.np_power = TextChangingButton(('On', 'Off'))
 
     def makeLayout(self):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         shell_font = 'MS Shell Dlg 2'
 
         layout.addWidget(self.all_label, 0, 0, 1, 2)
@@ -119,7 +119,6 @@ class niops03_gui(QFrame):
         layout.addWidget(self.np_lockswitch, 11, pump2_col)
 
         #layout.minimumSize()
-        self.setLayout(layout)
 
 
 if __name__ == "__main__":

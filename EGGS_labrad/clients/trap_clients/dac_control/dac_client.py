@@ -57,12 +57,11 @@ class DAC_client(QWidget):
         self.initialize_GUI()
 
     def initialize_GUI(self):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         self.electrodes = {}
         qBox = QGroupBox('DAC Channels')
 
-        subLayout = QGridLayout()
-        qBox.setLayout(subLayout)
+        subLayout = QGridLayout(qBox)
         layout.addWidget(qBox, 0, 0)
 
         self.electrodeind = ElectrodeIndicator([-12, 12])
@@ -93,7 +92,6 @@ class DAC_client(QWidget):
                                                              electrode=electrode: self.update_dac(value, electrode))
 
         self.change_multipole('dummy value')
-        self.setLayout(layout)
 
     @inlineCallbacks
     def change_multipole(self, value):

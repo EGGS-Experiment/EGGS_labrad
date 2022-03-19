@@ -30,23 +30,24 @@ class EGGS_gui(QMainWindow):
     def makeLayout(self, cxn):
         # central layout
         centralWidget = QWidget()
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(centralWidget)
         self.tabWidget = QTabWidget()
         # create subwidgets
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac = self.makeCryovacWidget(self.reactor, cxn)
         trap = self.makeTrapWidget(self.reactor, cxn)
         lasers = self.makeLaserWidget(self.reactor, cxn)
+        wavemeter = self.makeWavemeterWidget(self.reactor, cxn)
         imaging = self.makeImagingWidget(self.reactor, cxn)
         # create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryovac, '&Cryovac')
         self.tabWidget.addTab(trap, '&Trap')
         self.tabWidget.addTab(lasers, '&Lasers')
+        self.tabWidget.addTab(wavemeter, '&Wavemeter')
         self.tabWidget.addTab(imaging, '&Imaging')
         # put it all together
         layout.addWidget(self.tabWidget)
-        centralWidget.setLayout(layout)
         self.setCentralWidget(centralWidget)
         self.setWindowTitle(self.name)
 
@@ -83,15 +84,21 @@ class EGGS_gui(QMainWindow):
 
     def makeLaserWidget(self, reactor, cxn):
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
-        from EGGS_labrad.clients.wavemeter_client.multiplexer_client import multiplexer_client
         #from EGGS_labrad.clients.toptica_client import toptica_client
         #from EGGS_labrad.clients.shutter_client import shutter_client
         clients = {
             SLS_client:             (0, 0),
-            multiplexer_client:     (1, 0)
             #, toptica_client:         (0, 1)
         }
         return self._createTabLayout(clients, reactor, cxn)
+
+    def makeWavemeterWidget(self, reactor, cxn):
+        from EGGS_labrad.clients.wavemeter_client.multiplexer_client import multiplexer_client
+        holder_widget = QWidget()
+        holder_layout = QGridLayout(holder_widget)
+        client_tmp = multiplexer_client(reactor)
+        holder_layout.addWidget(client_tmp.gui, 0, 0)
+        return holder_widget
 
     def makeImagingWidget(self, reactor, cxn):
         from EGGS_labrad.clients.PMT_client.PMT_client import PMT_client
@@ -110,8 +117,7 @@ class EGGS_gui(QMainWindow):
         Creates a tab widget from constituent widgets stored in a dictionary.
         """
         holder_widget = QWidget()
-        holder_layout = QGridLayout()
-        holder_widget.setLayout(holder_layout)
+        holder_layout = QGridLayout(holder_widget)
         for client, position in clientDict.items():
             client_tmp = client(reactor, cxn=cxn.cxn)
             try:

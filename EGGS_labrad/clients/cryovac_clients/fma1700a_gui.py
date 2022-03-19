@@ -32,13 +32,12 @@ class fma1700a_gui(QFrame):
         self.record_button.setMaximumHeight(25)
 
     def makeLayout(self):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         col1 = 0
         layout.addWidget(self.all_label, 0, col1)
         layout.addWidget(self.flow_display_label, 1, col1)
         layout.addWidget(self.flow_display, 2, col1)
         layout.addWidget(self.record_button, 3, col1)
-        self.setLayout(layout)
 
 
 if __name__ == "__main__":

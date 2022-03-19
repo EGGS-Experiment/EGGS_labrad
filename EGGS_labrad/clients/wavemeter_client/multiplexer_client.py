@@ -1,4 +1,4 @@
-from numpy import arange
+from numpy import arange, linspace
 from socket import gethostname
 from twisted.internet.defer import inlineCallbacks
 
@@ -62,7 +62,7 @@ class multiplexer_client(GUIClient):
         # set display for each channel
         for channel_name, channel_params in self.chaninfo.items():
             # expand parameters and get GUI widget
-            wmChannel, frequency, _, _, _, dacPort, _, _ = channel_params
+            wmChannel, frequency, _, _, dacPort, _ = channel_params
             widget = self.gui.channels[wmChannel]
             # get channel values
             lock_frequency = yield self.wavemeter.get_pid_course(dacPort)
@@ -80,10 +80,11 @@ class multiplexer_client(GUIClient):
         # channel wavemeter settings
         for channel_name, channel_params in self.chaninfo.items():
             # expand parameters and get GUI widget
-            wmChannel, frequency, _, _, _, dacPort, _, _ = channel_params
+            wmChannel, frequency, _, _, dacPort, _ = channel_params
             widget = self.gui.channels[wmChannel]
             # assign slots
             widget.showTrace.toggled.connect(lambda status, chan=wmChannel: self.toggleTrace(status, chan))
+            widget.setPID.clicked.connect(lambda status, chan=wmChannel: self.setupPID(dacPort))
             #widget.spinExp.valueChanged.connect(lambda exp: self.wavemeter.set_exposure_time(wmChannel, int(exp)))
             #widget.measSwitch.toggled.connect(lambda state: self.wavemeter.set_switcher_signal_state(wmChannel, state))
             # if dacPort != 0:
@@ -95,7 +96,8 @@ class multiplexer_client(GUIClient):
             #     widget.lockChannel.toggled.connect(lambda state: widget.lockChannel.setChecked(False))
 
     @inlineCallbacks
-    def initializePIDGUI(self, dacPort):
+    def setupPID(self, dacPort):
+        index_tmp = {1: 0, -1: 1}
         # get initial values
         pInit = yield self.wavemeter.get_pid_p(dacPort)
         iInit = yield self.wavemeter.get_pid_i(dacPort)
@@ -105,25 +107,25 @@ class multiplexer_client(GUIClient):
         sensInit = yield self.wavemeter.get_pid_sensitivity(dacPort)
         polInit = yield self.wavemeter.get_pid_polarity(dacPort)
         # set initial values
-        self.gui.pid.spinP.setValue(pInit)
-        self.gui.pid.spinI.setValue(iInit)
-        self.gui.pid.spinD.setValue(dInit)
-        self.gui.pid.spinDt.setValue(dtInit)
-        self.gui.pid.useDTBox.setCheckState(bool(constInit))
-        self.gui.pid.spinFactor.setValue(sensInit[0])
-        self.gui.pid.spinExp.setValue(sensInit[1])
-        self.gui.pid.polarityBox.setCurrentIndex(self.index[polInit])
+        self.gui.pidGUI.spinP.setValue(pInit)
+        self.gui.pidGUI.spinI.setValue(iInit)
+        self.gui.pidGUI.spinD.setValue(dInit)
+        self.gui.pidGUI.spinDt.setValue(dtInit)
+        self.gui.pidGUI.useDTBox.setCheckState(bool(constInit))
+        self.gui.pidGUI.spinFactor.setValue(sensInit[0])
+        self.gui.pidGUI.spinExp.setValue(sensInit[1])
+        self.gui.pidGUI.polarityBox.setCurrentIndex(index_tmp[polInit])
         # connect signals to slots
-        # self.gui.pid.spinP.valueChanged.connect(lambda p, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, p))
-        # self.gui.pid.spinI.valueChanged.connect(lambda i, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, i))
-        # self.gui.pid.spinD.valueChanged.connect(lambda d, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, d))
-        # self.gui.pid.spinDt.valueChanged.connect(lambda dt, _dacPort=dacPort: self.wavemeter.set_pid_dt(_dacPort, dt))
-        # self.gui.pid.useDTBox.stateChanged.connect(lambda state, _dacPort=dacPort: self.wavemeter.set_const_dt(dacPort, state))
-        # self.gui.pid.spinFactor.valueChanged.connect(lambda factor, _dacPort=dacPort, exp=self.gui.pid.spinExp.value():
+        # self.gui.pidGUI.spinP.valueChanged.connect(lambda p, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, p))
+        # self.gui.pidGUI.spinI.valueChanged.connect(lambda i, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, i))
+        # self.gui.pidGUI.spinD.valueChanged.connect(lambda d, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, d))
+        # self.gui.pidGUI.spinDt.valueChanged.connect(lambda dt, _dacPort=dacPort: self.wavemeter.set_pid_dt(_dacPort, dt))
+        # self.gui.pidGUI.useDTBox.stateChanged.connect(lambda state, _dacPort=dacPort: self.wavemeter.set_const_dt(dacPort, state))
+        # self.gui.pidGUI.spinFactor.valueChanged.connect(lambda factor, _dacPort=dacPort, exp=self.gui.pidGUI.spinExp.value():
         #                                              self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
-        # self.gui.pid.spinExp.valueChanged.connect(lambda exp, _dacPort=dacPort, factor=self.gui.pid.spinFactor.value():
+        # self.gui.pidGUI.spinExp.valueChanged.connect(lambda exp, _dacPort=dacPort, factor=self.gui.pidGUI.spinFactor.value():
         #                                           self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
-        #self.gui.pid.polarityBox.currentIndexChanged.connect(lambda index, _dacPort=dacPort: self.changePolarity(index, _dacPort))
+        #self.gui.pidGUI.polarityBox.currentIndexChanged.connect(lambda index, _dacPort=dacPort: self.changePolarity(index, _dacPort))
 
     def updateFrequency(self, c, signal):
         chan, freq = signal
@@ -143,8 +145,9 @@ class multiplexer_client(GUIClient):
         dacPort, value = signal
         if dacPort in self.gui.dacPorts:
             try:
-                self.gui.channels[self.gui.dacPorts[dacPort]].PIDvoltage.setText('DAC Voltage (mV)  {:.1f}'.format(value))
-                self.gui.channels[self.gui.dacPorts[dacPort]].PIDindicator.update_slider(value / 1000.0)
+                pass
+                # self.gui.channels[self.gui.dacPorts[dacPort]].PIDvoltage.setText('DAC Voltage (mV)  {:.1f}'.format(value))
+                # self.gui.channels[self.gui.dacPorts[dacPort]].PIDindicator.update_slider(value / 1000.0)
             except Exception as e:
                 print(e)
 
@@ -198,7 +201,7 @@ class multiplexer_client(GUIClient):
         chan, trace = signal
         num_points = 512
         if chan in self.gui.pattern.keys():
-            self.gui.pattern[chan].setData(x=arange(num_points), y=trace)
+            self.gui.pattern[chan].setData(x=linspace(0, 2000, num_points), y=trace)
 
     @inlineCallbacks
     def changePolarity(self, index, dacPort):

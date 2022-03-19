@@ -20,7 +20,7 @@ class HP6256B_gui(QFrame):
         self.makeLayout(name)
 
     def makeLayout(self, title):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         # title
         self.title = QLabel(title)
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
@@ -69,7 +69,6 @@ class HP6256B_gui(QFrame):
         layout.addWidget(self.toggleswitch, 5, 0)
         layout.addWidget(self.lockswitch, 5, 1)
         layout.addWidget(self.resetswitch, 5, 2)
-        self.setLayout(layout)
         # connect signal to slot
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
