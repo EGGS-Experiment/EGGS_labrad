@@ -11,30 +11,38 @@ class ARTIQ_api(object):
     Directly accesses the hardware on the box without having to use artiq_master.
     """
 
-    def __init__(self, ddb=None):
-        if ddb is None:
-            ddb = 'C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db_2.py'
-        self.devices = DeviceDB(ddb)
-        self.device_manager = DeviceManager(self.devices)
+    def __init__(self, ddb_filepath):
+        devices = DeviceDB(ddb_filepath)
+        self.device_manager = DeviceManager(devices)
+        self.device_db = devices.get_device_db()
         self._getDevices()
         self._initializeDevices()
 
 
+    def stopAPI(self):
+        """
+        Closes the gotten devices.
+        """
+        self.device_manager.close_devices()
+
+
     # SETUP
     def _getDevices(self):
+        """
+        Gets necessary device objects.
+        """
         # get core
         self.core = self.device_manager.get("core")
         self.core_dma = self.device_manager.get("core_dma")
-
-        # store devices in dictionary where device name is key
-        # and device itself is value
-        self.device_db = self.devices.get_device_db()
+        # store devices in dictionary where device
+        # name is key and device itself is value
         self.ttlout_list = {}
         self.ttlin_list = {}
         self.dds_list = {}
         self.urukul_list = {}
         self.zotino = None
         self.fastino = None
+        self.dacType = None
         self.sampler = None
         self.phaser = None
 
@@ -55,13 +63,19 @@ class ARTIQ_api(object):
             elif devicetype == 'CPLD':
                 self.urukul_list[name] = device
             elif devicetype == 'Zotino':
+                # need to specify both device types since
+                # all kernel functions need to be valid
                 self.zotino = device
-                self.fastino = device #todo: remove
+                self.fastino = device
+                self.dacType = devicetype
             elif devicetype == 'Fastino':
                 self.fastino = device
-                self.zotino = device #todo remove
+                self.zotino = device
+                self.dacType = devicetype
             elif devicetype == 'Sampler':
                 self.sampler = device
+            elif devicetype == 'Phaser':
+                self.phaser = device
 
     def _initializeDevices(self):
         """
@@ -260,7 +274,7 @@ class ARTIQ_api(object):
         self.zotino.init()
 
     @kernel
-    def setDAC(self, channel_num, volt_mu):
+    def setZotino(self, channel_num, volt_mu):
         """
         Set the voltage of a DAC register.
         """
@@ -269,7 +283,7 @@ class ARTIQ_api(object):
         self.zotino.load()
 
     @kernel
-    def setDACGain(self, channel_num, gain_mu):
+    def setZotinoGain(self, channel_num, gain_mu):
         """
         Set the gain of a DAC channel.
         """
@@ -278,7 +292,7 @@ class ARTIQ_api(object):
         self.zotino.load()
 
     @kernel
-    def setDACOffset(self, channel_num, volt_mu):
+    def setZotinoOffset(self, channel_num, volt_mu):
         """
         Set the voltage of a DAC offset register.
         """
@@ -287,7 +301,7 @@ class ARTIQ_api(object):
         self.zotino.load()
 
     @kernel
-    def setDACGlobal(self, word):
+    def setZotinoGlobal(self, word):
         """
         Set the OFSx registers on the AD5372.
         """
@@ -295,7 +309,7 @@ class ARTIQ_api(object):
         self.zotino.write_offset_dacs_mu(word)
 
     @kernel
-    def readDAC(self, channel_num, address):
+    def readZotino(self, channel_num, address):
         """
         Read the value of one of the DAC registers.
         :param channel_num: Channel to read from

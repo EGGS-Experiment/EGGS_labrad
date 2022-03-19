@@ -23,17 +23,15 @@ from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
 
 # artiq imports
 from artiq_api import ARTIQ_api
-from artiq.experiment import *
-from artiq.master.databases import DeviceDB
-from artiq.master.worker_db import DeviceManager
-from sipyco.pc_rpc import Client
+#from artiq_tools import ARTIQ_scheduler, ARTIQ_datasets
+from EGGS_labrad.config.device_db import device_db as device_db_file
+ddb_filepath = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\config\\device_db.py'
 
 # device imports
-from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_POW, _AD9910_REG_ASF
+#from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_POW, _AD9910_REG_ASF
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
                                     AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
                                     AD53XX_READ_AB0, AD53XX_READ_AB1, AD53XX_READ_AB2, AD53XX_READ_AB3
-
 AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53XX_READ_OFFSET,
                     'GAIN': AD53XX_READ_GAIN, 'OFS0': AD53XX_READ_OFS1, 'OFS1': AD53XX_READ_OFS1,
                     'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2,
@@ -47,6 +45,11 @@ TTLSIGNAL_ID = 828176
 DACSIGNAL_ID = 828175
 ADCSIGNAL_ID = 828174
 EXPSIGNAL_ID = 828173
+
+#todo: signals
+#todo: ensure units are all OK
+#todo: dataset support
+#todo: scheduler support
 
 
 class ARTIQ_Server(LabradServer):
@@ -68,27 +71,25 @@ class ARTIQ_Server(LabradServer):
 
 
     # STARTUP
-    def __init__(self):
-        self.api = ARTIQ_api()
-        self.ddb_filepath = 'C:\\Users\\EGGS1\\Documents\\ARTIQ\\artiq-master\\device_db_2.py'
-        self.device_manager = DeviceManager(DeviceDB(self.ddb_filepath))
-        LabradServer.__init__(self)
-
     @inlineCallbacks
     def initServer(self):
-        self.listeners = set()
+        # initialize ARTIQ API
+        self.api = ARTIQ_api(ddb_filepath)
+        # set up ARTIQ stuff
         yield self._setClients()
         yield self._setVariables()
         yield self._setDevices()
+        # set up context stuff
+        self.listeners = set()
 
     def _setClients(self):
         """
         Create clients to ARTIQ master.
         Used to get datasets, submit experiments, and monitor devices.
         """
-        self.scheduler = Client('::1', 3251, 'master_schedule')
-        self.devices = Client('::1', 3251, 'master_device_db')
-        self.datasets = Client('::1', 3251, 'master_dataset_db')
+        # self.scheduler = ARTIQ_scheduler()
+        # self.datasets = ARTIQ_datasets()
+        pass
 
     def _setVariables(self):
         """
@@ -97,18 +98,17 @@ class ARTIQ_Server(LabradServer):
         # used to ensure atomicity
         self.inCommunication = DeferredLock()
         # pulse sequencer variables
-        self.ps_filename = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\servers\\pulser\\run_ps.py'
         self.ps_rid = None
         # conversions
+        #self.seconds_to_mu = self.api.core.seconds_to_mu
             # dds
         dds_tmp = list(self.api.dds_list.values())[0]
-        self.seconds_to_mu = self.api.core.seconds_to_mu
-        self.amplitude_to_asf = dds_tmp.amplitude_to_asf
-        self.frequency_to_ftw = dds_tmp.frequency_to_ftw
-        self.turns_to_pow = dds_tmp.turns_to_pow
-        self.dbm_to_fampl = lambda dbm: 10**(float(dbm/10))
-            #dac
-        from artiq.coredevice.ad53xx import voltage_to_mu #, ad53xx_cmd_read_ch
+        self.dds_amplitude_to_asf = dds_tmp.amplitude_to_asf
+        self.dds_frequency_to_ftw = dds_tmp.frequency_to_ftw
+        self.dds_turns_to_pow = dds_tmp.turns_to_pow
+        self.dds_att_to_mu = lambda dbm: 10**(float(dbm/10))
+            # dac
+        from artiq.coredevice.ad53xx import voltage_to_mu
         self.voltage_to_mu = voltage_to_mu
         # self.dac_read_code = ad53xx_cmd_read_ch
             # sampler
@@ -119,10 +119,11 @@ class ARTIQ_Server(LabradServer):
         """
         Get the list of devices in the ARTIQ box.
         """
-        self.device_db = self.devices.get_device_db()
+        self.device_db = device_db_file
         self.ttlout_list = list(self.api.ttlout_list.keys())
         self.ttlin_list = list(self.api.ttlin_list.keys())
         self.dds_list = list(self.api.dds_list.keys())
+        self.dacType = self.api.dacType
 
 
     # CORE
@@ -134,8 +135,19 @@ class ARTIQ_Server(LabradServer):
         # self.ttlChanged(('ttl99', 0, True))
         return list(self.device_db.keys())
 
-    @setting(22, 'Get Dataset', dataset_name='s', returns='?')
+    @setting(31, 'Dataset Get', dataset_name='s', returns='?')
     def getDataset(self, c, dataset_name):
+        """
+        Returns a dataset from ARTIQ master.
+        Arguments:
+            dataset_name    (str)   : the name of the dataset
+        Returns:
+            the dataset
+        """
+        return self.datasets.get(dataset_name, archive=False)
+
+    @setting(32, 'Dataset Set', dataset_name='s')
+    def setDataset(self, c, dataset_name):
         """
         Returns a dataset from ARTIQ master.
         Arguments:
@@ -212,24 +224,26 @@ class ARTIQ_Server(LabradServer):
         Returns:
                 (*str)  : a list of all TTL channels.
         """
-        return (self.ttlout_list + self.ttlin_list)
+        return self.ttlout_list + self.ttlin_list
 
-    @setting(221, "TTL Set", ttl_name='s', state='b', returns='')
+    @setting(221, "TTL Set", ttl_name='s', state=['b', 'i'], returns='')
     def setTTL(self, c, ttl_name, state):
         """
-        Manually set a TTL to the given state.
+        Manually set a TTL to the given state. TTL can be of classes TTLOut or TTLInOut.
         Arguments:
-            ttl_name (str)  : name of the ttl
-            state   (bool)  : ttl power state
+            ttl_name    (str)           : name of the ttl
+            state       [bool, int]     : ttl power state
         """
         if ttl_name not in self.ttlout_list:
             raise Exception('Error: device does not exist.')
+        if (type(state) == int) and (state not in (0, 1)):
+            raise Exception('Error: invalid state.')
         yield self.api.setTTL(ttl_name, state)
 
     @setting(222, "TTL Get", ttl_name='s', returns='b')
     def getTTL(self, c, ttl_name):
         """
-        Read the state of a TTL.
+        Read the power state of a TTL. TTL must be of class TTLInOut.
         Arguments:
             ttl_name    (str)   : name of the ttl
         Returns:
@@ -242,8 +256,8 @@ class ARTIQ_Server(LabradServer):
 
 
     # DDS
-    @setting(311, "DDS Get", returns='*s')
-    def getDDS(self, c):
+    @setting(311, "DDS List", returns='*s')
+    def listDDS(self, c):
         """
         Get the list of available DDS (AD5372) channels.
         Returns:
@@ -263,40 +277,64 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         yield self.api.initializeDDS(dds_name)
 
-    @setting(322, "DDS Toggle", dds_name='s', state='b', returns='')
+    @setting(322, "DDS Toggle", dds_name='s', state=['b', 'i'], returns='')
     def toggleDDS(self, c, dds_name, state):
         """
         Manually toggle a DDS via the RF switch
         Arguments:
-            dds_name    (str)   : the name of the dds
-            state       (bool)  : power state
+            dds_name    (str)           : the name of the dds
+            state       [bool, int]     : power state
         """
         if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
+        if (type(state) == int) and (state not in (0, 1)):
             raise Exception('Error: device does not exist.')
         yield self.api.toggleDDS(dds_name, state)
 
-    @setting(323, "DDS Waveform", dds_name='s', param='s', param_val='v', returns='')
-    def setDDSWav(self, c, dds_name, param, param_val):
+    @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='')
+    def setDDSFreq(self, c, dds_name, freq):
         """
-        Manually set a DDS to the given parameters.
+        Manually set the frequency of a DDS.
         Arguments:
-            dds_name     (str)  : the name of the dds
-            param       (str)   : the parameter to set. Can be one of ('frequency', 'amplitude', 'phase).
-            param_val   (float) : the value of the parameter
+            dds_name    (str)   : the name of the dds
+            freq        (float) : the frequency in Hz
         """
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
-        if param.lower() in ('frequency', 'f'):
-            ftw = yield self.frequency_to_ftw(param_val)
-            yield self.api.setDDS(dds_name, 0, ftw)
-        elif param.lower() in ('amplitude', 'a'):
-            asf = yield self.amplitude_to_asf(param_val)
-            yield self.api.setDDS(dds_name, 1, asf)
-        elif param.lower() in ('phase', 'p'):
-            if param_val >= 1 or pow < 0:
-                raise Exception('Error: phase outside bounds of [0,1]')
-            pow = yield self.turns_to_pow(param_val)
-            yield self.api.setDDS(dds_name, 2, pow)
+        if freq > 400 or freq < 0:
+            raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
+        ftw = self.dds_frequency_to_ftw(freq)
+        yield self.api.setDDS(dds_name, 0, ftw)
+
+    @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='')
+    def setDDSAmpl(self, c, dds_name, ampl):
+        """
+        Manually set the amplitude of a DDS.
+        Arguments:
+            dds_name    (str)   : the name of the dds
+            ampl        (float) : the fractional amplitude
+        """
+        if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
+        if ampl > 1 or ampl < 0:
+            raise Exception('Error: amplitude must be within [0, 1].')
+        asf = self.dds_amplitude_to_asf(ampl)
+        yield self.api.setDDS(dds_name, 1, asf)
+
+    @setting(325, "DDS Phase", dds_name='s', phase='v', returns='')
+    def setDDSPhase(self, c, dds_name, phase):
+        """
+        Manually set the phase of a DDS.
+        Arguments:
+            dds_name    (str)   : the name of the dds
+            phase       (float) : the phase in rotations (i.e. x2pi)
+        """
+        if dds_name not in self.dds_list:
+            raise Exception('Error: device does not exist.')
+        if phase >= 1 or pow < 0:
+            raise Exception('Error: phase must be within [0, 1).')
+        pow_dds = self.dds_turns_to_pow(phase)
+        yield self.api.setDDS(dds_name, 2, pow_dds)
 
     @setting(326, "DDS Attenuation", dds_name='s', att='v', units='s', returns='')
     def setDDSAtt(self, c, dds_name, att, units='mu'):
@@ -311,7 +349,7 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         att_mu = att
         if units.lower() == 'dbm':
-            att_mu = self.att_to_mu(att)
+            att_mu = self.dds_att_to_mu(att)
         elif units.lower() != 'mu':
             raise Exception('Error: invalid units.')
         yield self.api.setDDSAtt(dds_name, att_mu)
@@ -359,14 +397,18 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         # check that units and voltage are valid
         if units.lower() in ('v', 'volt', 'voltage'):
-            voltage_mu = yield self.voltage_to_mu(value)
+            voltage_mu = yield self.dac_volt_to_mu(value)
         elif units.lower() == 'mu':
             if (value < 0) or (value > 0xffff):
                 raise Exception('Error: invalid DAC voltage.')
             voltage_mu = int(value)
         else:
             raise Exception('Error: invalid units.')
-        yield self.api.setDAC(dac_num, voltage_mu)
+        # send to correct device
+        if self.dacType == 'Zotino':
+            yield self.api.setZotino(dac_num, voltage_mu)
+        elif self.dacType == 'Fastino':
+            yield self.api.setFastino(dac_num, voltage_mu)
 
     @setting(422, "DAC Gain", dac_num='i', gain='v', units='s', returns='')
     def setDACGain(self, c, dac_num, gain, units='mu'):
@@ -377,6 +419,8 @@ class ARTIQ_Server(LabradServer):
             gain    (float) : the DAC channel gain
             units   (str)   : the gain units, either 'mu' or 'dB'
         """
+        if self.dacType != 'Zotino':
+            raise Exception('Error: DAC does not support this function.')
         gain_mu = None
         # only 32 channels per DAC
         if (dac_num > 31) or (dac_num < 0):
@@ -390,7 +434,7 @@ class ARTIQ_Server(LabradServer):
         # check that gain is valid
         if gain < 0 or gain > 0xffff:
             raise Exception('Error: gain outside bounds of [0,1]')
-        yield self.api.setDACGain(dac_num, gain_mu)
+        yield self.api.setZotinoGain(dac_num, gain_mu)
 
     @setting(423, "DAC Offset", dac_num='i', value='v', units='s', returns='')
     def setDACOffset(self, c, dac_num, value, units='mu'):
@@ -401,39 +445,43 @@ class ARTIQ_Server(LabradServer):
             value   (float) : the value to write to the DAC offset register
             units   (str)   : the voltage units, either 'mu' or 'v'
         """
+        if self.dacType != 'Zotino':
+            raise Exception('Error: DAC does not support this function.')
         voltage_mu = None
         # check that dac channel is valid
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
         if units == 'v':
-            voltage_mu = yield self.voltage_to_mu(value)
+            voltage_mu = yield self.dac_volt_to_mu(value)
         elif units == 'mu':
             if (value < 0) or (value > 0xffff):
                 raise Exception('Error: invalid DAC voltage.')
             voltage_mu = int(value)
         else:
             raise Exception('Error: invalid units.')
-        yield self.api.setDACOffset(dac_num, voltage_mu)
+        yield self.api.setZotinoOffset(dac_num, voltage_mu)
 
     @setting(424, "DAC OFS", value='v', units='s', returns='')
-    def setDACglobal(self, c, value, units='mu'):
+    def setDACGlobal(self, c, value, units='mu'):
         """
-        Write to the OFSx registers of the DAC.
+        Write to the global OFSx registers of the DAC.
         Arguments:
             value   (float) : the value to write to the DAC OFSx register
             units   (str)   : the voltage units, either 'mu' or 'v'
             units   (str)   : the voltage units, either 'mu' or 'v'
         """
+        if self.dacType != 'Zotino':
+            raise Exception('Error: DAC does not support this function.')
         voltage_mu = None
         if units == 'v':
-            voltage_mu = yield self.voltage_to_mu(value)
+            voltage_mu = yield self.dac_volt_to_mu(value)
         elif units == 'mu':
             if (value < 0) or (value > 0x2fff):
                 raise Exception('Error: invalid DAC voltage.')
             voltage_mu = int(value)
         else:
             raise Exception('Error: invalid units.')
-        yield self.api.setDACGlobal(voltage_mu)
+        yield self.api.setZotinoGlobal(voltage_mu)
 
     @setting(431, "DAC Read", dac_num='i', reg='s', returns='i')
     def readDAC(self, c, dac_num, reg):
@@ -447,7 +495,11 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         elif reg.upper() not in AD53XX_REGISTERS.keys():
             raise Exception('Error: invalid register. Must be one of ' + str(tuple(AD53XX_REGISTERS.keys())))
-        reg_val = yield self.api.readDAC(dac_num, AD53XX_REGISTERS[reg])
+        # send to correct device
+        if self.dacType == 'Zotino':
+            reg_val = yield self.api.readZotino(dac_num, AD53XX_REGISTERS[reg])
+        elif self.dacType == 'Fastino':
+            reg_val = yield self.api.readFastino(dac_num, AD53XX_REGISTERS[reg])
         returnValue(reg_val)
 
 
@@ -516,5 +568,3 @@ class ARTIQ_Server(LabradServer):
 if __name__ == '__main__':
     from labrad import util
     util.runServer(ARTIQ_Server())
-
-#todo: notify others and block during exp run, use subscribers

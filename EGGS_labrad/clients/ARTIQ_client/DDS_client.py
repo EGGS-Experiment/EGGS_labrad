@@ -163,8 +163,8 @@ class DDS_client(QWidget):
             row = int(i / self.row_length) + 2
             column = i % self.row_length
             # connect signals to slots
-            channel_gui.freq.valueChanged.connect(lambda freq, chan=channel_name: self.artiq.dds_waveform(chan, 'f', freq))
-            channel_gui.ampl.valueChanged.connect(lambda ampl, chan=channel_name: self.artiq.dds_waveform(chan, 'a', ampl))
+            channel_gui.freq.valueChanged.connect(lambda freq, chan=channel_name: self.artiq.dds_frequency(chan, freq))
+            channel_gui.ampl.valueChanged.connect(lambda ampl, chan=channel_name: self.artiq.dds_amplitude(chan, ampl))
             channel_gui.att.valueChanged.connect(lambda att, chan=channel_name: self.artiq.set_DDS_attenuation(chan, att, 'v'))
             channel_gui.rfswitch.toggled.connect(lambda status, chan=channel_name: self.artiq.toggle_DDS(chan, status))
             # add widget to client list and layout
