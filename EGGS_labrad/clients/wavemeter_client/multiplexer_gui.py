@@ -22,12 +22,22 @@ class multiplexer_pid(QFrame):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(DACPort)
+        self.initializeGUI()
 
     def makeLayout(self, DACPort):
         label_font = QFont('MS Shell Dlg 2', pointSize=8)
         label_alignment = Qt.AlignLeft
         main_font = QFont('MS Shell Dlg 2', pointSize=14)
         header_font = QFont('MS Shell Dlg 2', pointSize=12)
+
+        # signal details
+        inputLabel = QLabel('Details')
+        channelNum_label = QLabel('Channel')
+        channelNum = QLabel('todo')
+        dacPort_label = QLabel('DAC Port')
+        dacPort_display = QLabel('tood 2')
+        lock_freq_label = QLabel('Locking Frequency (THz)')
+        lock_freq = QLabel('todo 3')
 
         # labels
         PIDlabel = QLabel('PID Settings')
@@ -116,38 +126,47 @@ class multiplexer_pid(QFrame):
         layout = QGridLayout(self)
         layout.minimumSize()
 
+        # todo 1 th layout
+        layout.addWidget(inputLabel,            0, 0, 1, 2)
+        layout.addWidget(channelNum_label,      1, 0, 1, 2)
+        layout.addWidget(channelNum,            2, 0, 1, 2)
+        layout.addWidget(dacPort_label,         3, 0, 1, 2)
+        layout.addWidget(dacPort_display,       4, 0, 1, 2)
+
         # PID layout
-        layout.addWidget(PIDlabel,              0, 0, 1, 2)
-        layout.addWidget(pLabel,                1, 0, 1, 2)
-        layout.addWidget(self.spinP,            2, 0, 1, 2)
-        layout.addWidget(iLabel,                3, 0, 1, 2)
-        layout.addWidget(self.spinI,            4, 0, 1, 2)
-        layout.addWidget(dLabel,                5, 0, 1, 2)
-        layout.addWidget(self.spinD,            6, 0, 1, 2)
-        layout.addWidget(dtLabel,               7, 0, 1, 1)
-        layout.addWidget(self.spinDt,           8, 0, 1, 1)
-        layout.addWidget(self.useDTBox,         8, 1, 1, 1)
+        layout.addWidget(PIDlabel,              0, 2, 1, 2)
+        layout.addWidget(pLabel,                1, 2, 1, 2)
+        layout.addWidget(self.spinP,            2, 2, 1, 2)
+        layout.addWidget(iLabel,                3, 2, 1, 2)
+        layout.addWidget(self.spinI,            4, 2, 1, 2)
+        layout.addWidget(dLabel,                5, 2, 1, 2)
+        layout.addWidget(self.spinD,            6, 2, 1, 2)
+        layout.addWidget(dtLabel,               7, 2, 1, 1)
+        layout.addWidget(self.spinDt,           8, 3, 1, 1)
+        layout.addWidget(self.useDTBox,         8, 3, 1, 1)
 
         # signal layout
-        layout.addWidget(outLabel,              0, 2, 1, 2)
-        layout.addWidget(polarityLabel,         1, 2, 1, 2)
-        layout.addWidget(self.polarityBox,      2, 2, 1, 2)
-        layout.addWidget(self.minBound_label,   3, 2, 1, 1)
-        layout.addWidget(self.minBound,         4, 2, 1, 1)
-        layout.addWidget(self.maxBound_label,   3, 3, 1, 1)
-        layout.addWidget(self.maxBound,         4, 3, 1, 1)
-        layout.addWidget(sensLabel,             5, 2, 1, 2)
-        layout.addWidget(factorLabel,           6, 2, 1, 1)
-        layout.addWidget(self.spinFactor,       7, 2, 1, 1)
-        layout.addWidget(exponentLabel,         6, 3, 1, 1)
-        layout.addWidget(self.spinExp,          7, 3, 1, 1)
+        layout.addWidget(outLabel,              0, 4, 1, 2)
+        layout.addWidget(polarityLabel,         1, 4, 1, 2)
+        layout.addWidget(self.polarityBox,      2, 4, 1, 2)
+        layout.addWidget(self.minBound_label,   3, 4, 1, 1)
+        layout.addWidget(self.minBound,         4, 4, 1, 1)
+        layout.addWidget(self.maxBound_label,   3, 5, 1, 1)
+        layout.addWidget(self.maxBound,         4, 5, 1, 1)
+        layout.addWidget(sensLabel,             5, 4, 1, 2)
+        layout.addWidget(factorLabel,           6, 4, 1, 1)
+        layout.addWidget(self.spinFactor,       7, 4, 1, 1)
+        layout.addWidget(exponentLabel,         6, 5, 1, 1)
+        layout.addWidget(self.spinExp,          7, 5, 1, 1)
 
         # voltage output layout
-        layout.addWidget(vLabel,                0, 4, 1, 2)
-        layout.addWidget(self.PIDindicator,     1, 4, 1, 2)
-        layout.addWidget(self.PIDvoltage_label, 2, 4, 1, 2)
-        layout.addWidget(self.PIDvoltage,       3, 4, 1, 2)
+        layout.addWidget(vLabel,                0, 6, 1, 2)
+        layout.addWidget(self.PIDindicator,     1, 6, 1, 2)
+        layout.addWidget(self.PIDvoltage_label, 2, 6, 1, 2)
+        layout.addWidget(self.PIDvoltage,       3, 6, 1, 2)
 
+    def initializeGUI(self):
+        self.useDTBox.stateChanged.connect(lambda state: self.spinDt.setEnabled(state))
 
 
 class multiplexer_channel(QFrame):

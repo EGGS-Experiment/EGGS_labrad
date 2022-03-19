@@ -84,7 +84,7 @@ class multiplexer_client(GUIClient):
             widget = self.gui.channels[wmChannel]
             # assign slots
             widget.showTrace.toggled.connect(lambda status, chan=wmChannel: self.toggleTrace(status, chan))
-            widget.setPID.clicked.connect(lambda status, chan=wmChannel: self.setupPID(dacPort))
+            widget.setPID.clicked.connect(lambda status, _dacPort=dacPort: self.setupPID(dacPort))
             #widget.spinExp.valueChanged.connect(lambda exp: self.wavemeter.set_exposure_time(wmChannel, int(exp)))
             #widget.measSwitch.toggled.connect(lambda state: self.wavemeter.set_switcher_signal_state(wmChannel, state))
             # if dacPort != 0:
