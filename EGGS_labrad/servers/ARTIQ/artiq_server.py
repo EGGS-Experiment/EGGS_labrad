@@ -23,12 +23,11 @@ from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
 
 # artiq imports
 from artiq_api import ARTIQ_api
-#from artiq_tools import ARTIQ_scheduler, ARTIQ_datasets
+from artiq_tools import ARTIQ_scheduler, ARTIQ_datasets
 from EGGS_labrad.config.device_db import device_db as device_db_file
 ddb_filepath = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\config\\device_db.py'
 
 # device imports
-#from artiq.coredevice.ad9910 import _AD9910_REG_FTW, _AD9910_REG_POW, _AD9910_REG_ASF
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
                                     AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
                                     AD53XX_READ_AB0, AD53XX_READ_AB1, AD53XX_READ_AB2, AD53XX_READ_AB3
@@ -45,18 +44,16 @@ TTLSIGNAL_ID = 828176
 DACSIGNAL_ID = 828175
 ADCSIGNAL_ID = 828174
 EXPSIGNAL_ID = 828173
+DDSSIGNAL_ID = 828172
 
-#todo: signals
 #todo: ensure units are all OK
-#todo: dataset support
-#todo: scheduler support
 
 
 class ARTIQ_Server(LabradServer):
     """
     A bridge between LabRAD and ARTIQ.
-    Allows us to easily incorporate ARTIQ into LabRAD for
-    most things.
+    Allows us to easily incorporate ARTIQ into LabRAD for most things.
+    Can run without the existence of an ARTIQ Master.
     """
 
     name = 'ARTIQ Server'
@@ -64,9 +61,10 @@ class ARTIQ_Server(LabradServer):
 
 
     # SIGNALS
-    ttlChanged = Signal(TTLSIGNAL_ID, 'signal: ttl changed', '(sib)')
+    ttlChanged = Signal(TTLSIGNAL_ID, 'signal: ttl changed', '(sb)')
+    ddsChanged = Signal(DDSSIGNAL_ID, 'signal: dds changed', '(ssv)')
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(ssv)')
-    adcChanged = Signal(ADCSIGNAL_ID, 'signal: adc changed', '(ssv)')
+    adcUpdated = Signal(ADCSIGNAL_ID, 'signal: adc updated', '(*v)')
     expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(bi)')
 
 
@@ -87,8 +85,8 @@ class ARTIQ_Server(LabradServer):
         Create clients to ARTIQ master.
         Used to get datasets, submit experiments, and monitor devices.
         """
-        # self.scheduler = ARTIQ_scheduler()
-        # self.datasets = ARTIQ_datasets()
+        self.scheduler = ARTIQ_scheduler()
+        self.datasets = ARTIQ_datasets()
         pass
 
     def _setVariables(self):
@@ -100,7 +98,6 @@ class ARTIQ_Server(LabradServer):
         # pulse sequencer variables
         self.ps_rid = None
         # conversions
-        #self.seconds_to_mu = self.api.core.seconds_to_mu
             # dds
         dds_tmp = list(self.api.dds_list.values())[0]
         self.dds_amplitude_to_asf = dds_tmp.amplitude_to_asf
@@ -110,7 +107,6 @@ class ARTIQ_Server(LabradServer):
             # dac
         from artiq.coredevice.ad53xx import voltage_to_mu
         self.voltage_to_mu = voltage_to_mu
-        # self.dac_read_code = ad53xx_cmd_read_ch
             # sampler
         from artiq.coredevice.sampler import adc_mu_to_volt
         self.adc_mu_to_volt = adc_mu_to_volt
@@ -119,7 +115,6 @@ class ARTIQ_Server(LabradServer):
         """
         Get the list of devices in the ARTIQ box.
         """
-        self.device_db = device_db_file
         self.ttlout_list = list(self.api.ttlout_list.keys())
         self.ttlin_list = list(self.api.ttlin_list.keys())
         self.dds_list = list(self.api.dds_list.keys())
@@ -132,13 +127,12 @@ class ARTIQ_Server(LabradServer):
         """
         Returns a list of ARTIQ devices.
         """
-        # self.ttlChanged(('ttl99', 0, True))
-        return list(self.device_db.keys())
+        return list(self.api.device_db.keys())
 
     @setting(31, 'Dataset Get', dataset_name='s', returns='?')
     def getDataset(self, c, dataset_name):
         """
-        Returns a dataset from ARTIQ master.
+        Returns a dataset.
         Arguments:
             dataset_name    (str)   : the name of the dataset
         Returns:
@@ -146,16 +140,16 @@ class ARTIQ_Server(LabradServer):
         """
         return self.datasets.get(dataset_name, archive=False)
 
-    @setting(32, 'Dataset Set', dataset_name='s')
+    @setting(32, 'Dataset Set', dataset_name='s', values='?')
     def setDataset(self, c, dataset_name):
         """
-        Returns a dataset from ARTIQ master.
+        Sets the values of a dataset.
         Arguments:
             dataset_name    (str)   : the name of the dataset
-        Returns:
-            the dataset
+            values                  : the values for the dataset
         """
-        return self.datasets.get(dataset_name, archive=False)
+        #return self.datasets.get(dataset_name, archive=False)
+        pass
 
 
     # PULSE SEQUENCING
@@ -239,6 +233,7 @@ class ARTIQ_Server(LabradServer):
         if (type(state) == int) and (state not in (0, 1)):
             raise Exception('Error: invalid state.')
         yield self.api.setTTL(ttl_name, state)
+        self.ttlChanged((ttl_name, state))
 
     @setting(222, "TTL Get", ttl_name='s', returns='b')
     def getTTL(self, c, ttl_name):
@@ -305,6 +300,7 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
         ftw = self.dds_frequency_to_ftw(freq)
         yield self.api.setDDS(dds_name, 0, ftw)
+        self.ddsChanged((dds_name, 'freq', freq))
 
     @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='')
     def setDDSAmpl(self, c, dds_name, ampl):
@@ -320,6 +316,7 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: amplitude must be within [0, 1].')
         asf = self.dds_amplitude_to_asf(ampl)
         yield self.api.setDDS(dds_name, 1, asf)
+        self.ddsChanged((dds_name, 'ampl', ampl))
 
     @setting(325, "DDS Phase", dds_name='s', phase='v', returns='')
     def setDDSPhase(self, c, dds_name, phase):
@@ -335,6 +332,7 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: phase must be within [0, 1).')
         pow_dds = self.dds_turns_to_pow(phase)
         yield self.api.setDDS(dds_name, 2, pow_dds)
+        self.ddsChanged((dds_name, 'phase', phase))
 
     @setting(326, "DDS Attenuation", dds_name='s', att='v', units='s', returns='')
     def setDDSAtt(self, c, dds_name, att, units='mu'):
@@ -353,6 +351,7 @@ class ARTIQ_Server(LabradServer):
         elif units.lower() != 'mu':
             raise Exception('Error: invalid units.')
         yield self.api.setDDSAtt(dds_name, att_mu)
+        self.ddsChanged((dds_name, 'att', att))
 
     @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns='w')
     def readDDS(self, c, dds_name, addr, length):
@@ -390,7 +389,6 @@ class ARTIQ_Server(LabradServer):
             value   (float) : the value to write to the DAC register
             units   (str)   : the voltage units, either 'mu' or 'v'
         """
-        #todo: ensure units are all okay across ALL settings
         voltage_mu = None
         # check that dac channel is valid
         if (dac_num > 31) or (dac_num < 0):
@@ -409,6 +407,7 @@ class ARTIQ_Server(LabradServer):
             yield self.api.setZotino(dac_num, voltage_mu)
         elif self.dacType == 'Fastino':
             yield self.api.setFastino(dac_num, voltage_mu)
+        self.dacChanged((dac_num, 'chan', voltage_mu))
 
     @setting(422, "DAC Gain", dac_num='i', gain='v', units='s', returns='')
     def setDACGain(self, c, dac_num, gain, units='mu'):
@@ -435,6 +434,7 @@ class ARTIQ_Server(LabradServer):
         if gain < 0 or gain > 0xffff:
             raise Exception('Error: gain outside bounds of [0,1]')
         yield self.api.setZotinoGain(dac_num, gain_mu)
+        self.dacChanged((dac_num, 'gain', voltage_mu))
 
     @setting(423, "DAC Offset", dac_num='i', value='v', units='s', returns='')
     def setDACOffset(self, c, dac_num, value, units='mu'):
@@ -460,6 +460,7 @@ class ARTIQ_Server(LabradServer):
         else:
             raise Exception('Error: invalid units.')
         yield self.api.setZotinoOffset(dac_num, voltage_mu)
+        self.dacChanged((dac_num, 'offset', voltage_mu))
 
     @setting(424, "DAC OFS", value='v', units='s', returns='')
     def setDACGlobal(self, c, value, units='mu'):
@@ -482,6 +483,7 @@ class ARTIQ_Server(LabradServer):
         else:
             raise Exception('Error: invalid units.')
         yield self.api.setZotinoGlobal(voltage_mu)
+        self.dacChanged((0, 'ofs', voltage_mu))
 
     @setting(431, "DAC Read", dac_num='i', reg='s', returns='i')
     def readDAC(self, c, dac_num, reg):
@@ -545,6 +547,7 @@ class ARTIQ_Server(LabradServer):
         # convert mu to gain
         for i in range(len(sampleArr)):
             self.adc_mu_to_volt(sampleArr[i], gains[i % 8])
+        self.adcUpdated(sampleArr)
         returnValue(sampleArr)
 
 
