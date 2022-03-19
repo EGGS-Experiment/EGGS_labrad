@@ -22,10 +22,9 @@ from twisted.internet.threads import deferToThread
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
 
 # artiq imports
+import numpy as np
 from artiq_api import ARTIQ_api
-from artiq_tools import ARTIQ_scheduler, ARTIQ_datasets
-from EGGS_labrad.config.device_db import device_db as device_db_file
-ddb_filepath = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\config\\device_db.py'
+DDB_FILEPATH = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\config\\device_db.py'
 
 # device imports
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
@@ -37,16 +36,11 @@ AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53X
                     'AB3': AD53XX_READ_AB3}
 
 
-# function imports
-import numpy as np
-
 TTLSIGNAL_ID = 828176
 DACSIGNAL_ID = 828175
 ADCSIGNAL_ID = 828174
 EXPSIGNAL_ID = 828173
 DDSSIGNAL_ID = 828172
-
-#todo: ensure units are all OK
 
 
 class ARTIQ_Server(LabradServer):
@@ -72,7 +66,7 @@ class ARTIQ_Server(LabradServer):
     @inlineCallbacks
     def initServer(self):
         # initialize ARTIQ API
-        self.api = ARTIQ_api(ddb_filepath)
+        self.api = ARTIQ_api(DDB_FILEPATH)
         # set up ARTIQ stuff
         yield self._setClients()
         yield self._setVariables()
@@ -85,8 +79,12 @@ class ARTIQ_Server(LabradServer):
         Create clients to ARTIQ master.
         Used to get datasets, submit experiments, and monitor devices.
         """
-        self.scheduler = ARTIQ_scheduler()
-        self.datasets = ARTIQ_datasets()
+        from sipyco.pc_rpc import Client
+        try:
+            self.scheduler = Client('::1', 3251, 'master_schedule')
+            self.datasets = Client('::1', 3251, 'master_dataset_db')
+        except Exception as e:
+            print('ARTIQ Master not running. Scheduler and datasets disabled.')
         pass
 
     def _setVariables(self):
