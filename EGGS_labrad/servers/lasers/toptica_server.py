@@ -221,10 +221,10 @@ class TopticaServer(LabradServer):
 
 
     # PIEZO
-    @setting(411, 'th1', temp='v', returns='v')
-    def th1(self, c, temp=None):
+    @setting(411, 'Piezo Toggle', temp='v', returns='v')
+    def piezoToggle(self, c, temp=None):
         """
-        Get/set the maximum temperature of the selected laser head.
+        Toggle piezo control.
         Arguments:
             temp    (float) : the maximum temperature (in K).
         Returns:
