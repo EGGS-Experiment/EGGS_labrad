@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox,
 from EGGS_labrad.clients.Widgets import TextChangingButton
 
 SHELL_FONT = 'MS Shell Dlg 2'
-LABEL_FONT = QFont(SHELL_FONT, pointSize=10)
+LABEL_FONT = QFont(SHELL_FONT, pointSize=8)
 MAIN_FONT = QFont(SHELL_FONT, pointSize=15)
 DISPLAY_FONT = QFont(SHELL_FONT, pointSize=20)
 
@@ -61,9 +61,11 @@ class toptica_channel(QFrame):
         freqDisplay = QLabel('729.0012')
         serDisplay = QLabel('002129')
         typeDisplay = QLabel('DL Pro')
-        for label in (chanLabel, freqLabel, serLabel, typeLabel):
+        for label in (channelDisplay, freqDisplay, serDisplay, typeDisplay):
             label.setFont(MAIN_FONT)
             label.setAlignment(Qt.AlignCenter)
+        # emission
+        emissionButton = TextChangingButton('Emission')
         box_layout.addWidget(chanLabel,         0, 0)
         box_layout.addWidget(channelDisplay,    1, 0)
         box_layout.addWidget(freqLabel,         2, 0)
@@ -72,6 +74,7 @@ class toptica_channel(QFrame):
         box_layout.addWidget(serDisplay,        5, 0)
         box_layout.addWidget(typeLabel,         6, 0)
         box_layout.addWidget(typeDisplay,       7, 0)
+        box_layout.addWidget(emissionButton,    9, 0)
         return box
 
     def _createControlBox(self, name, label_titles):
