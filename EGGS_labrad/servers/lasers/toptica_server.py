@@ -142,9 +142,9 @@ class TopticaServer(LabradServer):
         """
         if curr is not None:
             if (curr <= 0) or (curr >= 200):
-                yield self._write(str(chan), 'dl:cc:current-set')
-            else:
                 raise Exception('Error: target current is set too high. Must be less than 200mA.')
+            else:
+                yield self._write(str(chan), 'dl:cc:current-set', curr)
         resp = yield self._read(str(chan), 'dl:cc:current-set')
         returnValue(float(resp))
 
@@ -160,9 +160,9 @@ class TopticaServer(LabradServer):
         """
         if curr is not None:
             if (curr <= 0) or (curr >= 200):
-                yield self._write(str(chan), 'dl:cc:current-clip')
+                raise Exception('Error: target current is set too high. Must be less than 200mA.')
             else:
-                raise Exception('Error: maximum current is set too high. Must be less than 200mA.')
+                yield self._write(str(chan), 'dl:cc:current-clip', curr)
         resp = yield self._read(str(chan), 'dl:cc:current-clip')
         returnValue(float(resp))
 
@@ -191,9 +191,9 @@ class TopticaServer(LabradServer):
         """
         if temp is not None:
             if (temp <= 15) or (temp >= 50):
-                yield self._write(str(chan), 'dl:tc:temp-set')
-            else:
                 raise Exception('Error: target temperature is set too high. Must be less than 200mA.')
+            else:
+                yield self._write(str(chan), 'dl:tc:temp-set')
         resp = yield self._read(str(chan), 'dl:tc:temp-set')
         returnValue(float(resp))
 
@@ -208,11 +208,13 @@ class TopticaServer(LabradServer):
                     (float)         : the temperatures bounds (minimum, maximum) in K.
         """
         if temp is not None:
-            if (temp <= 15) or (temp >= 50):
+            if temp[0] >= temp[1]:
+                raise Exception('Error: target temperature is set too high. Must be less than 200mA.')
+            elif (temp[0] <= 15) or (temp[1] >= 50):
+                raise Exception('Error: minimum temperature must be lower than maximum temperature.')
+            else:
                 yield self._write(str(chan), 'dl:tc:limits:temp-min', temp[0])
                 yield self._write(str(chan), 'dl:tc:limits:temp-max', temp[1])
-            else:
-                raise Exception('Error: target temperature is set too high. Must be less than 200mA.')
         respMin = yield self._read(str(chan), 'dl:tc:limits:temp-min')
         respMax = yield self._read(str(chan), 'dl:tc:limits:temp-max')
         returnValue((float(respMin), float(respMax)))
@@ -244,6 +246,7 @@ class TopticaServer(LabradServer):
     def _read(self, chan, param):
         dev_name, laser_num = self.channels[chan]
         dev = self.devices[dev_name]
+        #print('laser{:d}:{}'.format(laser_num, param))
         resp = yield dev.get('laser{:d}:{}'.format(laser_num, param))
         returnValue(resp)
 
@@ -251,6 +254,7 @@ class TopticaServer(LabradServer):
     def _write(self, chan, param, value):
         dev_name, laser_num = self.channels[chan]
         dev = self.devices[dev_name]
+        #print('write: ', 'laser{:d}:{}'.format(laser_num, param), ', value: ', value)
         yield dev.set('laser{:d}:{}'.format(laser_num, param), value)
 
 
