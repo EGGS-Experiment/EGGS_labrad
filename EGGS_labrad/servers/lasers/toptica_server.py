@@ -28,41 +28,43 @@ class TopticaServer(LabradServer):
 
     name = 'Toptica Server'
     regKey = 'Toptica Server'
-    device = None
     devices = {}
     channels = {}
 
+    @inlineCallbacks
     def initServer(self):
+        super().initServer()
         # get DLC pro addresses from registry
         reg = self.client.registry
         ip_addresses = {}
         try:
             tmp = yield reg.cd()
             yield reg.cd(['', 'Servers', self.regKey])
-            _, ip_addresses = yield reg.dir()
+            _, ip_address_list = yield reg.dir()
             # get DLC Pro ip addresses
-            for key in ip_addresses:
+            for key in ip_address_list:
                 ip_addresses[key] = yield reg.get(key)
             # get channel parameters
             yield reg.cd(['Channels'])
             _, channel_list = yield reg.dir()
             for channel_num in channel_list:
-                self.channels[key] = yield reg.get(key)
+                self.channels[channel_num] = yield reg.get(channel_num)
             yield reg.cd(tmp)
         except Exception as e:
             yield reg.cd(tmp)
         # create DLC Pro device objects
         for name, ip_address in ip_addresses.items():
             try:
-                self.devices[name] = Client(NetworkConnection(ip_address))
+                dev = Client(NetworkConnection(ip_address))
+                dev.open()
+                self.devices[name] = dev
             except Exception as e:
                 print(e)
-                print('yzde thkim')
 
     def stopServer(self):
         # close all devices on completion
-        if self.device is not None:
-            self.device.close()
+        for device in self.devices.values():
+            device.close()
 
 
     # DIRECT COMMUNICATION
@@ -125,7 +127,7 @@ class TopticaServer(LabradServer):
         Returns:
                         (float) : the current (in mA).
         """
-        resp = yield self.device.get('laser1:dl:cc:current-act')
+        resp = yield self._read(str(chan), 'dl:cc:current-act')
         returnValue(float(resp))
 
     @setting(312, 'Current Target', chan='i', curr='v', returns='v')
@@ -223,8 +225,21 @@ class TopticaServer(LabradServer):
         pass
         # yield self.temperature_read(None, None)
 
-    def th21
+    @inlineCallbacks
+    def _read(self, chan, param):
+        dev_name, laser_num = self.channels[chan]
+        print(dev_name, laser_num)
+        dev = self.devices[dev_name]
+        print('laser{:d}:{}'.format(laser_num, param))
+        resp = yield dev.get('laser{:d}:{}'.format(laser_num, param))
+        returnValue(resp)
 
+    @inlineCallbacks
+    def _write(self, chan, param, value):
+        dev_name, laser_num = self.channels[chan]
+        dev = self.devices[dev_name]
+        resp = yield dev.set('laser{:d}:{}'.format(laser_num, param), value)
+        returnValue(resp)
 
 
 if __name__ == '__main__':
