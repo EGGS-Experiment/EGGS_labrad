@@ -14,9 +14,8 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
-from labrad.server import LabradServer, setting
 from EGGS_labrad.servers import PollingServer
+from labrad.server import LabradServer, setting
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
 from toptica.lasersdk.client import Client, NetworkConnection
@@ -30,19 +29,35 @@ class TopticaServer(LabradServer):
     name = 'Toptica Server'
     regKey = 'Toptica Server'
     device = None
+    devices = {}
+    channels = {}
 
     def initServer(self):
         # get DLC pro addresses from registry
         reg = self.client.registry
-        pass
-        # try:
-        #     tmp = yield reg.cd()
-        #     yield reg.cd(['', 'Servers', regKey])
-        #     # todo: iteratively get all ip addresses
-        #     node = yield reg.get('default_node')
-        #     yield reg.cd(tmp)
-        # except Exception as e:
-        #     yield reg.cd(tmp)
+        ip_addresses = {}
+        try:
+            tmp = yield reg.cd()
+            yield reg.cd(['', 'Servers', self.regKey])
+            _, ip_addresses = yield reg.dir()
+            # get DLC Pro ip addresses
+            for key in ip_addresses:
+                ip_addresses[key] = yield reg.get(key)
+            # get channel parameters
+            yield reg.cd(['Channels'])
+            _, channel_list = yield reg.dir()
+            for channel_num in channel_list:
+                self.channels[key] = yield reg.get(key)
+            yield reg.cd(tmp)
+        except Exception as e:
+            yield reg.cd(tmp)
+        # create DLC Pro device objects
+        for name, ip_address in ip_addresses.items():
+            try:
+                self.devices[name] = Client(NetworkConnection(ip_address))
+            except Exception as e:
+                print(e)
+                print('yzde thkim')
 
     def stopServer(self):
         # close all devices on completion
@@ -50,43 +65,8 @@ class TopticaServer(LabradServer):
             self.device.close()
 
 
-    # DEVICE CONNECTION
-    @setting(11, 'Device Select', ip_address='s', returns='')
-    def deviceSelect(self, c, ip_address):
-        """
-        Attempt to connect to a DLC Pro at the given IP address.
-        Arguments:
-            ip_address  (str)   : the DLC Pro IP address
-        """
-        if self.device is None:
-            print('Attempting to connect at:', ip_address)
-            try:
-                self.device = Client(NetworkConnection(ip_address))
-                self.device.open()
-                print('Successfully connected to device.')
-            except Exception as e:
-                print(e)
-                print('Error: unable to connect to specified device.')
-                self.device.close()
-                self.device = None
-        else:
-            raise Exception('Error: another device is already connected.')
-
-    @setting(12, 'Device Close', returns='')
-    def deviceClose(self, c):
-        """
-        Closes the current serial device.
-        """
-        if self.device:
-            self.device.close()
-            self.device = None
-            print('Device connection closed.')
-        else:
-            raise Exception('No device selected.')
-
-
     # DIRECT COMMUNICATION
-    @setting(21, 'Direct Read', key='s', returns='s')
+    @setting(11, 'Direct Read', key='s', returns='s')
     def directRead(self, c, key):
         """
         Directly read the given parameter (verbatim).
@@ -95,7 +75,7 @@ class TopticaServer(LabradServer):
         """
         pass
 
-    @setting(22, 'Direct Write', key='s', returns='s')
+    @setting(12, 'Direct Write', key='s', returns='s')
     def directWrite(self, c, key):
         """
         Directly write a value to a given parameter (verbatim).
@@ -153,6 +133,7 @@ class TopticaServer(LabradServer):
         """
         Get/set the target current of the selected laser channel.
         Arguments:
+            chan    (int)   : the desired laser channel.
             curr    (float) : the target current (in mA).
         Returns:
                     (float) : the target current (in mA).
@@ -165,11 +146,12 @@ class TopticaServer(LabradServer):
         resp = yield self.device.get('laser1:dl:cc:current-set')
         returnValue(float(resp))
 
-    @setting(313, 'Current Max', curr='v', returns='v')
-    def currentMax(self, c, curr=None):
+    @setting(313, 'Current Max', chan='i', curr='v', returns='v')
+    def currentMax(self, c, chan, curr=None):
         """
         Get/set the maximum current of the selected laser head.
         Arguments:
+            chan    (int)   : the desired laser channel.
             curr    (float) : the maximum current (in mA).
         Returns:
                     (float) : the maximum current (in mA).
@@ -184,31 +166,34 @@ class TopticaServer(LabradServer):
 
 
     # TEMPERATURE
-    @setting(321, 'Temperature Actual', returns='v')
-    def tempActual(self, c):
+    @setting(321, 'Temperature Actual', chan='i', returns='v')
+    def tempActual(self, c, chan):
         """
         Returns the actual temperature of the selected laser head.
-        Returns:
-            (float) : the temperature (in K).
+        Arguments:
+            chan    (int)   : the desired laser channel.
+                    (float) : the temperature (in K).
         """
         pass
 
-    @setting(322, 'Temperature Target', temp='v', returns='v')
-    def tempSet(self, c, temp=None):
+    @setting(322, 'Temperature Target', chan='i', temp='v', returns='v')
+    def tempSet(self, c, chan, temp=None):
         """
         Get/set the target temperature of the selected laser head.
         Arguments:
+            chan    (int)   : the desired laser channel.
             temp    (float) : the target temperature (in K).
         Returns:
                     (float) : the target temperature (in K).
         """
         pass
 
-    @setting(323, 'Temperature Max', temp='v', returns='v')
-    def tempMax(self, c, temp=None):
+    @setting(323, 'Temperature Max', chan='i', temp='v', returns='v')
+    def tempMax(self, c, chan, temp=None):
         """
         Get/set the maximum temperature of the selected laser head.
         Arguments:
+            chan    (int)   : the desired laser channel.
             temp    (float) : the maximum temperature (in K).
         Returns:
                     (float) : the maximum temperature (in K).
@@ -237,6 +222,8 @@ class TopticaServer(LabradServer):
         """
         pass
         # yield self.temperature_read(None, None)
+
+    def th21
 
 
 
