@@ -15,9 +15,8 @@ timeout = 20
 ### END NODE INFO
 """
 
-# imports
 from labrad.server import LabradServer, setting
-from twisted.internet.defer import returnValue, inlineCallbacks
+from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
 from toptica.lasersdk.client import Client, NetworkConnection
 
@@ -28,67 +27,79 @@ class TopticaServer(LabradServer):
     """
 
     name = 'Toptica Server'
+    regKey = 'Toptica Server'
+    device = None
+
+    def initServer(self):
+        # get DLC pro addresses from registry
+        reg = self.client.registry
+        pass
+        # try:
+        #     tmp = yield reg.cd()
+        #     yield reg.cd(['', 'Servers', regKey])
+        #     # todo: iteratively get all ip addresses
+        #     node = yield reg.get('default_node')
+        #     yield reg.cd(tmp)
+        # except Exception as e:
+        #     yield reg.cd(tmp)
 
 
     # DEVICE CONNECTION
-    @setting(111111, 'Device Select', node='s', port='s', returns=['', '(ss)'])
-    def deviceSelect(self, c, node=None, port=None):
+    @setting(11, 'Device Select', ip_address='s', returns='')
+    def deviceSelect(self, c, ip_address):
         """
-        Attempt to connect to serial device on the given node and port.
+        Attempt to connect to a DLC Pro at the given IP address.
         Arguments:
-            node    (str)   : the node to connect on
-            port    (str)   : the port to connect to
-        Returns:
-                    (str,str): the connected node and port (empty if no connection)
+            ip_address  (str)   : the DLC Pro IP address
         """
-        # do nothing if device is already selected
-        if self.ser:
-            Exception('A serial device is already opened.')
-        # set parameters if specified
-        elif (node is not None) and (port is not None):
-            self.serNode = node
-            self.port = port
-        # connect to default values if no arguments at all
-        elif ((node is None) and (port is None)) and (self.serNode and self.port):
-            pass
-        # raise error if only node or port is specified
+        if self.device is None:
+            try:
+                self.device = Client(NetworkConnection(ip_address))
+                self.device.open()
+            except Exception as e:
+                print(e)
+                print('Error: unable to connect to specified device.')
+                self.device.close()
+                self.device = None
         else:
-            raise Exception('Insufficient arguments.')
+            raise Exception('Error: another device is already connected.')
 
-        # try to find the serial server and connect to the designated port
-        try:
-            serStr = yield self.findSerial(self.serNode)
-            yield self.initSerial(serStr, self.port, baudrate=self.baudrate, timeout=self.timeout,
-                                  bytesize=self.bytesize, parity=self.parity)
-        except SerialConnectionError as e:
-            self.ser = None
-            if e.code == 0:
-                print('Could not find serial server for node: %s' % self.serNode)
-                print('Please start correct serial server')
-            elif e.code == 1:
-                print('Error opening serial connection')
-            else:
-                print('Unknown connection error')
-            raise e
-        except Exception as e:
-            self.ser = None
-            print(e)
-        else:
-            return (self.serNode, self.port)
-
-    @setting(111112, 'Device Close', returns='')
+    @setting(12, 'Device Close', returns='')
     def deviceClose(self, c):
         """
         Closes the current serial device.
         """
-        if self.ser:
-            self.ser.close()
-            self.ser = None
-            print('Serial connection closed.')
+        if self.device:
+            self.device.close()
+            self.device = None
+            print('Device connection closed.')
         else:
             raise Exception('No device selected.')
 
-    @setting(111113, 'Device Info', returns='(ss)')
+
+    # DIRECT COMMUNICATION
+    @setting(21, 'Direct Read', key='s', returns='s')
+    def directRead(self, c, key):
+        """
+        Directly read the given parameter (verbatim).
+        Arguments:
+            key     (str)   : the parameter key to read from.
+        """
+        pass
+
+    @setting(22, 'Direct Write', key='s', returns='s')
+    def directWrite(self, c, key):
+        """
+        Directly write a value to a given parameter (verbatim).
+        Arguments:
+            key     (str)   : the parameter key to read from.
+            value   (?)     : the value to set the parameter to
+        """
+        pass
+#todo: errors
+
+    # STATUS
+    @setting(111, 'Device Info', returns='(ss)')
     def deviceInfo(self, c):
         """
         Returns the currently connected serial device's
@@ -103,35 +114,98 @@ class TopticaServer(LabradServer):
             raise Exception('No device selected.')
 
 
-    # DIRECT SERIAL COMMUNICATION
-    @setting(222224, 'Serial Write', data='s', returns='')
-    def serial_write(self, c, data):
+    # EMISSION
+    @setting(211, 'Emission Interlock', status='b', returns='v')
+    def emissionInterlock(self, c, status=None):
         """
-        Directly write to the serial device.
-        Args:
-            data    (str)   : the data to write to the device
-        """
-        yield self.ser.acquire()
-        yield self.ser.write(data)
-        self.ser.release()
-
-    @setting(222225, 'Serial Read', stop=['i: read a given number of characters',
-                                          's: read until the given character'], returns='s')
-    def serial_read(self, c, stop=None):
-        """
-        Directly read the serial buffer.
+        Get/set the status of the emission interlock.
+        Arguments:
+            status      (bool)  : the emission status of the laser head.
         Returns:
-                    (str)   : the device response (stripped of EOL characters)
+                        (bool)  : the emission status of the laser head.
         """
-        yield self.ser.acquire()
-        if stop is None:
-            resp = yield self.ser.read()
-        elif type(stop) == int:
-            resp = yield self.ser.read(stop)
-        elif type(stop) == str:
-            resp = yield self.ser.read_line(stop)
-        self.ser.release()
-        returnValue(resp)
+        pass
+
+
+    # CURRENT
+    @setting(311, 'Current Actual', returns='v')
+    def currentActual(self, c):
+        """
+        Returns the actual current of the selected laser head.
+        Returns:
+            (float) : the current (in mA).
+        """
+        curr = yield self.device.get('laser1:dll:cc:current-act')
+        returnValue(float(curr))
+
+    @setting(312, 'Current Target', curr='v', returns='v')
+    def currentSet(self, c, curr=None):
+        """
+        Get/set the target current of the selected laser head.
+        Arguments:
+            curr    (float) : the target current (in mA).
+        Returns:
+                    (float) : the target current (in mA).
+        """
+        pass
+
+    @setting(313, 'Current Max', curr='v', returns='v')
+    def currentMax(self, c, curr=None):
+        """
+        Get/set the maximum current of the selected laser head.
+        Arguments:
+            curr    (float) : the maximum current (in mA).
+        Returns:
+                    (float) : the maximum current (in mA).
+        """
+        pass
+
+
+    # TEMPERATURE
+    @setting(321, 'Temperature Actual', returns='v')
+    def tempActual(self, c):
+        """
+        Returns the actual temperature of the selected laser head.
+        Returns:
+            (float) : the temperature (in K).
+        """
+        pass
+
+    @setting(322, 'Temperature Target', temp='v', returns='v')
+    def tempSet(self, c, temp=None):
+        """
+        Get/set the target temperature of the selected laser head.
+        Arguments:
+            temp    (float) : the target temperature (in K).
+        Returns:
+                    (float) : the target temperature (in K).
+        """
+        pass
+
+    @setting(323, 'Temperature Max', temp='v', returns='v')
+    def tempMax(self, c, temp=None):
+        """
+        Get/set the maximum temperature of the selected laser head.
+        Arguments:
+            temp    (float) : the maximum temperature (in K).
+        Returns:
+                    (float) : the maximum temperature (in K).
+        """
+        pass
+
+
+    # PIEZO
+    @setting(411, 'th1', temp='v', returns='v')
+    def th1(self, c, temp=None):
+        """
+        Get/set the maximum temperature of the selected laser head.
+        Arguments:
+            temp    (float) : the maximum temperature (in K).
+        Returns:
+                    (float) : the maximum temperature (in K).
+        """
+        pass
+
 
 
 if __name__ == '__main__':
