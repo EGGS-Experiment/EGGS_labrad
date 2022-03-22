@@ -142,10 +142,10 @@ class TopticaServer(LabradServer):
         """
         if curr is not None:
             if (curr <= 0) or (curr >= 200):
-                yield self.device.set('laser1:dl:cc:current-set', curr)
+                yield self._write(str(chan), 'dl:cc:current-set')
             else:
                 raise Exception('Error: maximum current is set too high. Must be less than 200mA.')
-        resp = yield self.device.get('laser1:dl:cc:current-set')
+        resp = yield self._read(str(chan), 'dl:cc:current-set')
         returnValue(float(resp))
 
     @setting(313, 'Current Max', chan='i', curr='v', returns='v')
@@ -160,10 +160,10 @@ class TopticaServer(LabradServer):
         """
         if curr is not None:
             if (curr <= 0) or (curr >= 200):
-                yield self.device.set('laser1:dl:cc:current-clip', curr)
+                yield self._write(str(chan), 'dl:cc:current-clip')
             else:
                 raise Exception('Error: maximum current is set too high. Must be less than 200mA.')
-        resp = yield self.device.get('laser1:dl:cc:current-act')
+        resp = yield self._read(str(chan), 'dl:cc:current-clip')
         returnValue(float(resp))
 
 
@@ -238,8 +238,7 @@ class TopticaServer(LabradServer):
     def _write(self, chan, param, value):
         dev_name, laser_num = self.channels[chan]
         dev = self.devices[dev_name]
-        resp = yield dev.set('laser{:d}:{}'.format(laser_num, param), value)
-        returnValue(resp)
+        yield dev.set('laser{:d}:{}'.format(laser_num, param), value)
 
 
 if __name__ == '__main__':
