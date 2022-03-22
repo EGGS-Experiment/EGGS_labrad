@@ -125,6 +125,7 @@ class toptica_gui():
     """
 
 
+
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
     # run toptica channel gui
