@@ -21,7 +21,7 @@ from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 from toptica.lasersdk.client import Client, NetworkConnection
 
 
-class TopticaServer(LabradServer):
+class TopticaServer(LabradServer, PollingServer):
     """
     Talks to Toptica devices.
     """
@@ -221,17 +221,52 @@ class TopticaServer(LabradServer):
 
 
     # PIEZO
-    @setting(411, 'Piezo Toggle', temp='v', returns='v')
-    def piezoToggle(self, c, temp=None):
+    @setting(411, 'Piezo Toggle', chan='i', status='b', returns='b')
+    def piezoToggle(self, c, chan, status=None):
         """
         Toggle piezo control.
         Arguments:
-            temp    (float) : the maximum temperature (in K).
+            chan        (int)   : the desired laser channel.
+            status      (bool)  : whether piezo control is on or off.
         Returns:
-                    (float) : the maximum temperature (in K).
+                        (bool)  : whether piezo control is on or off.
         """
-        pass
+        if status is not None:
+            yield self._write(str(chan), 'dl:pc:enabled', status)
+        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        returnValue(resp)
 
+    @setting(412, 'Piezo Channel', chan='i', input_chan='i', returns='i')
+    def piezoChannel(self, c, chan, input_chan=None):
+        """
+        Assign an input channel for piezo control.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            input_chan  (int)   : the input channel for the error signal.
+        Returns:
+                        (int)   : the input channel for the error signal.
+        """
+        conv_dict = {1: 0, 2: 1, 3: 2, 4: 4}
+        if input_chan is not None:
+            if input_chan not in (1, 2, 3, 4):
+                raise Exception('Error: input channel must be one of (1, 2, 3, 4).')
+            else:
+                # convert channel to device value
+                input_chan = conv_dict[input_chan]
+                yield self._write(str(chan), 'dl:pc:external-input', input_chan)
+        resp = yield self._read(str(chan), 'dl:pc:external-input')
+        returnValue(resp)
+
+    @setting(413, 'Piezo Actual', chan='i', returns='v')
+    def piezoActual(self, c, chan):
+        """
+        Returns the actual piezo voltage of the selected laser head.
+        Arguments:
+            chan    (int)   : the desired laser channel.
+                    (float) : the piezo voltage (in V).
+        """
+        resp = yield self._read(str(chan), 'dl:pc:voltage-act')
+        returnValue(float(resp))
 
     # POLLING
     @inlineCallbacks

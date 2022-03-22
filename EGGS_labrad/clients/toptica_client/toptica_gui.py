@@ -8,6 +8,7 @@ from EGGS_labrad.clients.Widgets import TextChangingButton
 
 SHELL_FONT = 'MS Shell Dlg 2'
 LABEL_FONT = QFont(SHELL_FONT, pointSize=10)
+MAIN_FONT = QFont(SHELL_FONT, pointSize=15)
 DISPLAY_FONT = QFont(SHELL_FONT, pointSize=20)
 
 #todo: record button
@@ -26,18 +27,10 @@ class toptica_channel(QFrame):
         th
         """
         # create status box
-        statusBox = QGroupBox()
-        statusBox_layout = QGridLayout(statusBox)
-        chanLabel = QLabel('Channel')
-        freqLabel = QLabel('Center Frequency')
-        serLabel = QLabel('Serial Number')
-        typeLabel = QLabel('Laser Type')
-
-
+        statusBox = self._createStatusBox()
         # create piezo box
         piezoBox = QGroupBox()
         piezoBox_layout = QGridLayout(piezoBox)
-
         # control boxes
         tempLabels = ('Actual Temperature (K)', 'Set Temperature (K)', 'Min. Temperature (K)', 'Max. Temperature (K)')
         tempBox = self._createControlBox('Temperature Control', tempLabels)
@@ -47,10 +40,39 @@ class toptica_channel(QFrame):
         # add to self
         layout = QGridLayout(self)
         layout.minimumSize()
-        #layout.addWidget(statusBox)
+        layout.addWidget(statusBox,     0, 0)
         layout.addWidget(tempBox,       0, 3)
         layout.addWidget(currBox,       0, 4)
-        #layout.addWidget(piezoBox)
+        #layout.addWidget(piezoBox,     0, 5)
+
+    def _createStatusBox(self):
+        box = QGroupBox('Laser')
+        box_layout = QGridLayout(box)
+        # create labels
+        chanLabel = QLabel('Channel')
+        freqLabel = QLabel('Center Frequency')
+        serLabel = QLabel('Serial Number')
+        typeLabel = QLabel('Laser Type')
+        for label in (chanLabel, freqLabel, serLabel, typeLabel):
+            label.setFont(LABEL_FONT)
+            label.setAlignment(Qt.AlignLeft)
+        # create displays
+        channelDisplay = QLabel('#1')
+        freqDisplay = QLabel('729.0012')
+        serDisplay = QLabel('002129')
+        typeDisplay = QLabel('DL Pro')
+        for label in (chanLabel, freqLabel, serLabel, typeLabel):
+            label.setFont(MAIN_FONT)
+            label.setAlignment(Qt.AlignCenter)
+        box_layout.addWidget(chanLabel,         0, 0)
+        box_layout.addWidget(channelDisplay,    1, 0)
+        box_layout.addWidget(freqLabel,         2, 0)
+        box_layout.addWidget(freqDisplay,       3, 0)
+        box_layout.addWidget(serLabel,          4, 0)
+        box_layout.addWidget(serDisplay,        5, 0)
+        box_layout.addWidget(typeLabel,         6, 0)
+        box_layout.addWidget(typeDisplay,       7, 0)
+        return box
 
     def _createControlBox(self, name, label_titles):
         # create holding box
