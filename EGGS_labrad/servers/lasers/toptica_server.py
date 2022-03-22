@@ -44,39 +44,6 @@ class TopticaServer(LabradServer):
         #     yield reg.cd(tmp)
 
 
-    # DEVICE CONNECTION
-    @setting(11, 'Device Select', ip_address='s', returns='')
-    def deviceSelect(self, c, ip_address):
-        """
-        Attempt to connect to a DLC Pro at the given IP address.
-        Arguments:
-            ip_address  (str)   : the DLC Pro IP address
-        """
-        if self.device is None:
-            try:
-                self.device = Client(NetworkConnection(ip_address))
-                self.device.open()
-            except Exception as e:
-                print(e)
-                print('Error: unable to connect to specified device.')
-                self.device.close()
-                self.device = None
-        else:
-            raise Exception('Error: another device is already connected.')
-
-    @setting(12, 'Device Close', returns='')
-    def deviceClose(self, c):
-        """
-        Closes the current serial device.
-        """
-        if self.device:
-            self.device.close()
-            self.device = None
-            print('Device connection closed.')
-        else:
-            raise Exception('No device selected.')
-
-
     # DIRECT COMMUNICATION
     @setting(21, 'Direct Read', key='s', returns='s')
     def directRead(self, c, key):
@@ -99,11 +66,10 @@ class TopticaServer(LabradServer):
 #todo: errors
 
     # STATUS
-    @setting(111, 'Device Info', returns='(ss)')
-    def deviceInfo(self, c):
+    @setting(111, 'Device Info', chan='i', returns='(ss)')
+    def deviceInfo(self, c, chan):
         """
-        Returns the currently connected serial device's
-        node and port.
+        Returns key information about the specified laser channel.
         Returns:
             (str)   : the node
             (str)   : the port
@@ -115,11 +81,12 @@ class TopticaServer(LabradServer):
 
 
     # EMISSION
-    @setting(211, 'Emission Interlock', status='b', returns='v')
-    def emissionInterlock(self, c, status=None):
+    @setting(211, 'Emission Interlock', chan='i', status='b', returns='v')
+    def emissionInterlock(self, c, chan, status=None):
         """
         Get/set the status of the emission interlock.
         Arguments:
+            chan        (int)   : the desired laser channel.
             status      (bool)  : the emission status of the laser head.
         Returns:
                         (bool)  : the emission status of the laser head.
@@ -128,20 +95,22 @@ class TopticaServer(LabradServer):
 
 
     # CURRENT
-    @setting(311, 'Current Actual', returns='v')
-    def currentActual(self, c):
+    @setting(311, 'Current Actual', chan='i', returns='v')
+    def currentActual(self, c, chan):
         """
         Returns the actual current of the selected laser head.
+        Arguments:
+            chan        (int)   : the desired laser channel.
         Returns:
-            (float) : the current (in mA).
+                        (float) : the current (in mA).
         """
         curr = yield self.device.get('laser1:dll:cc:current-act')
         returnValue(float(curr))
 
-    @setting(312, 'Current Target', curr='v', returns='v')
-    def currentSet(self, c, curr=None):
+    @setting(312, 'Current Target', chan='i', curr='v', returns='v')
+    def currentSet(self, c, chan, curr=None):
         """
-        Get/set the target current of the selected laser head.
+        Get/set the target current of the selected laser channel.
         Arguments:
             curr    (float) : the target current (in mA).
         Returns:
