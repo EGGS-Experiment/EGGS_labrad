@@ -16,6 +16,7 @@ timeout = 20
 """
 
 from labrad.server import LabradServer, setting
+from EGGS_labrad.servers import PollingServer
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
 from toptica.lasersdk.client import Client, NetworkConnection
@@ -42,6 +43,46 @@ class TopticaServer(LabradServer):
         #     yield reg.cd(tmp)
         # except Exception as e:
         #     yield reg.cd(tmp)
+
+    def stopServer(self):
+        # close all devices on completion
+        if self.device is not None:
+            self.device.close()
+
+
+    # DEVICE CONNECTION
+    @setting(11, 'Device Select', ip_address='s', returns='')
+    def deviceSelect(self, c, ip_address):
+        """
+        Attempt to connect to a DLC Pro at the given IP address.
+        Arguments:
+            ip_address  (str)   : the DLC Pro IP address
+        """
+        if self.device is None:
+            print('Attempting to connect at:', ip_address)
+            try:
+                self.device = Client(NetworkConnection(ip_address))
+                self.device.open()
+                print('Successfully connected to device.')
+            except Exception as e:
+                print(e)
+                print('Error: unable to connect to specified device.')
+                self.device.close()
+                self.device = None
+        else:
+            raise Exception('Error: another device is already connected.')
+
+    @setting(12, 'Device Close', returns='')
+    def deviceClose(self, c):
+        """
+        Closes the current serial device.
+        """
+        if self.device:
+            self.device.close()
+            self.device = None
+            print('Device connection closed.')
+        else:
+            raise Exception('No device selected.')
 
 
     # DIRECT COMMUNICATION
@@ -104,8 +145,8 @@ class TopticaServer(LabradServer):
         Returns:
                         (float) : the current (in mA).
         """
-        curr = yield self.device.get('laser1:dll:cc:current-act')
-        returnValue(float(curr))
+        resp = yield self.device.get('laser1:dl:cc:current-act')
+        returnValue(float(resp))
 
     @setting(312, 'Current Target', chan='i', curr='v', returns='v')
     def currentSet(self, c, chan, curr=None):
@@ -116,7 +157,13 @@ class TopticaServer(LabradServer):
         Returns:
                     (float) : the target current (in mA).
         """
-        pass
+        if curr is not None:
+            if (curr <= 0) or (curr >= 200):
+                yield self.device.set('laser1:dl:cc:current-set', curr)
+            else:
+                raise Exception('Error: maximum current is set too high. Must be less than 200mA.')
+        resp = yield self.device.get('laser1:dl:cc:current-set')
+        returnValue(float(resp))
 
     @setting(313, 'Current Max', curr='v', returns='v')
     def currentMax(self, c, curr=None):
@@ -127,7 +174,13 @@ class TopticaServer(LabradServer):
         Returns:
                     (float) : the maximum current (in mA).
         """
-        pass
+        if curr is not None:
+            if (curr <= 0) or (curr >= 200):
+                yield self.device.set('laser1:dl:cc:current-clip', curr)
+            else:
+                raise Exception('Error: maximum current is set too high. Must be less than 200mA.')
+        resp = yield self.device.get('laser1:dl:cc:current-act')
+        returnValue(float(resp))
 
 
     # TEMPERATURE
@@ -174,6 +227,16 @@ class TopticaServer(LabradServer):
                     (float) : the maximum temperature (in K).
         """
         pass
+
+
+    # POLLING
+    @inlineCallbacks
+    def _poll(self):
+        """
+        Polls #.
+        """
+        pass
+        # yield self.temperature_read(None, None)
 
 
 
