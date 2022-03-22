@@ -144,7 +144,7 @@ class TopticaServer(LabradServer):
             if (curr <= 0) or (curr >= 200):
                 yield self._write(str(chan), 'dl:cc:current-set')
             else:
-                raise Exception('Error: maximum current is set too high. Must be less than 200mA.')
+                raise Exception('Error: target current is set too high. Must be less than 200mA.')
         resp = yield self._read(str(chan), 'dl:cc:current-set')
         returnValue(float(resp))
 
@@ -176,7 +176,7 @@ class TopticaServer(LabradServer):
             chan    (int)   : the desired laser channel.
                     (float) : the temperature (in K).
         """
-        resp = yield self._read(str(chan), 'dl:cc:temp-act')
+        resp = yield self._read(str(chan), 'dl:tc:temp-act')
         returnValue(float(resp))
 
     @setting(322, 'Temperature Target', chan='i', temp='v', returns='v')
@@ -189,19 +189,33 @@ class TopticaServer(LabradServer):
         Returns:
                     (float) : the target temperature (in K).
         """
-        pass
+        if temp is not None:
+            if (temp <= 15) or (temp >= 50):
+                yield self._write(str(chan), 'dl:tc:temp-set')
+            else:
+                raise Exception('Error: target temperature is set too high. Must be less than 200mA.')
+        resp = yield self._read(str(chan), 'dl:tc:temp-set')
+        returnValue(float(resp))
 
-    @setting(323, 'Temperature Max', chan='i', temp='v', returns='v')
+    @setting(323, 'Temperature Max', chan='i', temp='(vv)', returns='(vv)')
     def tempMax(self, c, chan, temp=None):
         """
         Get/set the maximum temperature of the selected laser head.
         Arguments:
-            chan    (int)   : the desired laser channel.
-            temp    (float) : the maximum temperature (in K).
+            chan    (int)           : the desired laser channel.
+            temp    (float, float)  : the temperatures bounds (minimum, maximum) in K.
         Returns:
-                    (float) : the maximum temperature (in K).
+                    (float)         : the temperatures bounds (minimum, maximum) in K.
         """
-        pass
+        if temp is not None:
+            if (temp <= 15) or (temp >= 50):
+                yield self._write(str(chan), 'dl:tc:limits:temp-min', temp[0])
+                yield self._write(str(chan), 'dl:tc:limits:temp-max', temp[1])
+            else:
+                raise Exception('Error: target temperature is set too high. Must be less than 200mA.')
+        respMin = yield self._read(str(chan), 'dl:tc:limits:temp-min')
+        respMax = yield self._read(str(chan), 'dl:tc:limits:temp-max')
+        returnValue((float(respMin), float(respMax)))
 
 
     # PIEZO
