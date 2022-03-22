@@ -176,7 +176,8 @@ class TopticaServer(LabradServer):
             chan    (int)   : the desired laser channel.
                     (float) : the temperature (in K).
         """
-        pass
+        resp = yield self._read(str(chan), 'dl:cc:temp-act')
+        returnValue(float(resp))
 
     @setting(322, 'Temperature Target', chan='i', temp='v', returns='v')
     def tempSet(self, c, chan, temp=None):
@@ -228,9 +229,7 @@ class TopticaServer(LabradServer):
     @inlineCallbacks
     def _read(self, chan, param):
         dev_name, laser_num = self.channels[chan]
-        print(dev_name, laser_num)
         dev = self.devices[dev_name]
-        print('laser{:d}:{}'.format(laser_num, param))
         resp = yield dev.get('laser{:d}:{}'.format(laser_num, param))
         returnValue(resp)
 
