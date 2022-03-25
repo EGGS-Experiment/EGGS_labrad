@@ -109,7 +109,7 @@ class DDS_client(QWidget):
         # get artiq server and dds list
         try:
             self.artiq = yield self.cxn.artiq_server
-            ad9910_list = yield self.artiq.dds_get()
+            ad9910_list = yield self.artiq.dds_list()
         except Exception as e:
             print(e)
             raise

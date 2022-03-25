@@ -202,7 +202,7 @@ class multiplexer_client(GUIClient):
         chan, trace = signal
         num_points = 512
         if chan in self.gui.pattern.keys():
-            print(trace[100])
+            #print(trace[100])
             self.gui.pattern[chan].setData(x=linspace(0, 2000, num_points), y=trace)
 
     @inlineCallbacks
