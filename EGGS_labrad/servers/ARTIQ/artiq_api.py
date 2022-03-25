@@ -1,8 +1,7 @@
+# import numpy as np
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
-from artiq.master.worker_db import DeviceManager, DatasetManager
-
-# import numpy as np
+from artiq.master.worker_db import DeviceManager
 
 
 class ARTIQ_api(object):
