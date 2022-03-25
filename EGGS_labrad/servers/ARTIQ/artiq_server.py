@@ -2,8 +2,8 @@
 ### BEGIN NODE INFO
 [info]
 name = ARTIQ Server
-version = 1.0
-description = Pulser using the ARTIQ box. Backwards compatible with old pulse sequences and experiments.
+version = 1.1.0
+description = A bridge to use LabRAD for ARTIQ.
 instancename = ARTIQ Server
 
 [startup]
@@ -15,7 +15,6 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 # labrad imports
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.threads import deferToThread
@@ -51,7 +50,7 @@ class ARTIQ_Server(LabradServer):
     """
 
     name = 'ARTIQ Server'
-    regKey = 'ARTIQServer'
+    regKey = 'ARTIQ Server'
 
 
     # SIGNALS
@@ -431,7 +430,7 @@ class ARTIQ_Server(LabradServer):
         if gain < 0 or gain > 0xffff:
             raise Exception('Error: gain outside bounds of [0,1]')
         yield self.api.setZotinoGain(dac_num, gain_mu)
-        self.dacChanged((dac_num, 'gain', voltage_mu))
+        self.dacChanged((dac_num, 'gain', gain_mu))
 
     @setting(423, "DAC Offset", dac_num='i', value='v', units='s', returns='')
     def setDACOffset(self, c, dac_num, value, units='mu'):
