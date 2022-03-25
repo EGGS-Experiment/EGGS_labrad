@@ -11,7 +11,6 @@ from twisted.internet.defer import inlineCallbacks
 __all__ = ["GUIClient", "PollingClient"]
 
 
-#todo: allow relaunching of client/reinitialization process
 class GUIClient(ABC):
     """
     Creates a client from a single GUI file.

@@ -8,9 +8,9 @@ REM: Prepare LabRAD CMD
 CALL %EGGS_LABRAD_ROOT%\bin\prepare_labrad.bat
 
 REM: Parse arguments
-SET /a argCount=1
-SET /a ip_ind=0
-SET /a raw_flag=0
+SET /A argCount=1
+SET /A ip_ind=0
+SET /A raw_flag=0
 FOR %%x IN (%*) DO (
     SET /a argCount+= 1
     IF "%%x"=="--ip" (SET /a ip_ind=!argCount!)

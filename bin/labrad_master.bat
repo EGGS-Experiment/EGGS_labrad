@@ -8,8 +8,8 @@ REM: Prepare LabRAD CMD
 CALL %EGGS_LABRAD_ROOT%\bin\prepare_labrad.bat
 
 REM: Parse arguments for server activation
-SET /a server_flag=0
-SET /a raw_flag=0
+SET /A server_flag=0
+SET /A raw_flag=0
 FOR %%x IN (%*) DO (
     IF "%%x"=="-s" (SET /a server_flag=1)
     IF "%%x"=="-r" (SET /a raw_flag=1)

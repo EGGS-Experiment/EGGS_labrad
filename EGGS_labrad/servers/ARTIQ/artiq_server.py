@@ -85,7 +85,6 @@ class ARTIQ_Server(LabradServer):
             self.datasets = Client('::1', 3251, 'master_dataset_db')
         except Exception as e:
             print('ARTIQ Master not running. Scheduler and datasets disabled.')
-        pass
 
     def _setVariables(self):
         """
@@ -138,16 +137,16 @@ class ARTIQ_Server(LabradServer):
         """
         return self.datasets.get(dataset_name, archive=False)
 
-    @setting(32, 'Dataset Set', dataset_name='s', values='?')
-    def setDataset(self, c, dataset_name):
-        """
-        Sets the values of a dataset.
-        Arguments:
-            dataset_name    (str)   : the name of the dataset
-            values                  : the values for the dataset
-        """
-        #return self.datasets.get(dataset_name, archive=False)
-        pass
+    # @setting(32, 'Dataset Set', dataset_name='s', values='?')
+    # def setDataset(self, c, dataset_name):
+    #     """
+    #     Sets the values of a dataset.
+    #     Arguments:
+    #         dataset_name    (str)   : the name of the dataset
+    #         values                  : the values for the dataset
+    #     """
+    #     #return self.datasets.get(dataset_name, archive=False)
+    #     pass
 
 
     # PULSE SEQUENCING

@@ -9,13 +9,13 @@ cxn_wm = labrad.connect('10.97.111.8', password='lab')
 wm = cxn_wm.multiplexerserver
 cr_wm = cxn_wm.context()
 
-cxn_eggs = labrad.connect('192.168.1.28', password='lab')
+cxn_eggs = labrad.connect('localhost', password='lab')
 dv = cxn_eggs.data_vault
 cr_dv = cxn_eggs.context()
 
 
 # create dataset
-dv.cd(['', '397_1'], True, context=cr_dv)
+dv.cd(['', '397_2'], True, context=cr_dv)
 dv.new('397nm Power', [('Elapsed time', 's')], [('397', 'Power', 'arb')], context=cr_dv)
 
 # start recording
