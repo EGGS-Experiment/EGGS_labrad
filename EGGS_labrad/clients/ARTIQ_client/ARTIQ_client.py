@@ -13,6 +13,7 @@ class ARTIQ_client(QMainWindow):
         self.clipboard = clipboard
         self.reactor = reactor
         self.setWindowTitle(self.name)
+        self.setWindowIcon(QIcon('C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\clients\ARTIQ_client\\labart_icon.png'))
         d = self.connect()
         d.addCallback(self.makeLayout)
 

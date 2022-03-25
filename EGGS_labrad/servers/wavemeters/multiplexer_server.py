@@ -352,6 +352,12 @@ class MultiplexerServer(LabradServer):
         exp = yield self.wmdll.GetExposureNum(chan_c, 1, self.l)
         returnValue(exp)
 
+    @setting(211, "get_exposure_2", chan='i', returns='i')
+    def get_exposure(self, c, chan):
+        chan_c = ctypes.c_long(chan)
+        exp = yield self.wmdll.GetExposureNum(chan_c, 2, self.l)
+        returnValue(exp)
+
     @setting(22, "get_frequency", chan='i', returns='v')
     def get_frequency(self, c, chan):
         chan_c = ctypes.c_long(chan)
