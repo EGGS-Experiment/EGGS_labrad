@@ -205,7 +205,7 @@ class DetachableTabWidget(QTabWidget):
                 mimeData.setData('action', b'application/tab-detach')
                 drag.setMimeData(mimeData)
                 # Create the appearance of dragging the tab content
-                pixmap = QPixmap.grab(self.parentWidget().currentWidget().winId())
+                pixmap = self.parentWidget().currentWidget().grab()
                 targetPixmap = QPixmap(pixmap.size())
                 targetPixmap.fill(Qt.transparent)
                 painter = QPainter(targetPixmap)
