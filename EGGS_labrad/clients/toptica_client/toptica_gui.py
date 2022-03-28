@@ -23,9 +23,6 @@ class toptica_channel(QFrame):
         self.makeLayout(piezoControl)
 
     def makeLayout(self, piezoControl):
-        """
-        th
-        """
         # create status box
         statusBox = self._createStatusBox()
         # create piezo box

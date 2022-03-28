@@ -249,9 +249,9 @@ class multiplexer_channel(QFrame):
         self.showTrace.setChecked(True)
 
         # set frequency
-        self.frequencylabel = QLabel('Lock Frequency (THz)')
-        self.frequencylabel.setAlignment(Qt.AlignBottom)
-        self.frequencylabel.setFont(QFont(shell_font, pointSize=10))
+        frequencylabel = QLabel('Lock Frequency (THz)')
+        frequencylabel.setAlignment(Qt.AlignBottom)
+        frequencylabel.setFont(QFont(shell_font, pointSize=10))
         self.spinFreq = QDoubleSpinBox()
         self.spinFreq.setFont(QFont(shell_font, pointSize=16))
         self.spinFreq.setDecimals(6)
@@ -260,9 +260,9 @@ class multiplexer_channel(QFrame):
         self.spinFreq.setKeyboardTracking(False)
 
         # exposure time
-        self.exposurelabel = QLabel('Exposure Time (ms)')
-        self.exposurelabel.setAlignment(Qt.AlignBottom)
-        self.exposurelabel.setFont(QFont(shell_font, pointSize=10))
+        exposurelabel = QLabel('Exposure Time (ms)')
+        exposurelabel.setAlignment(Qt.AlignBottom)
+        exposurelabel.setFont(QFont(shell_font, pointSize=10))
         self.spinExp = QDoubleSpinBox()
         self.spinExp.setFont(QFont(shell_font, pointSize=16))
         self.spinExp.setDecimals(0)
@@ -281,9 +281,9 @@ class multiplexer_channel(QFrame):
         layout.addWidget(self.channel_header,   0, 0, 2, 1)
         layout.addWidget(currentfrequency_label, 1, 0, 2, 1)
         layout.addWidget(self.currentfrequency, 2, 0, 3, 1)
-        layout.addWidget(self.frequencylabel,   6, 0, 1, 1)
+        layout.addWidget(frequencylabel,        6, 0, 1, 1)
         layout.addWidget(self.spinFreq,         7, 0, 1, 1)
-        layout.addWidget(self.exposurelabel,    6, 3, 1, 1)
+        layout.addWidget(exposurelabel,         6, 3, 1, 1)
         layout.addWidget(self.spinExp,          7, 3, 1, 1)
         layout.addWidget(self.measSwitch,       0, 3, 1, 1)
         layout.addWidget(self.lockChannel,      1, 3, 1, 1)
