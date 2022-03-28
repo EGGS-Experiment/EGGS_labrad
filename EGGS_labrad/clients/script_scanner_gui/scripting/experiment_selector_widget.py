@@ -1,14 +1,13 @@
 """
 Experiment selector widget and the dialog boxes used to select and run an experiment.
 """
-
-from PyQt5 import QtWidgets, QtGui, QtCore, uic
-from numpy import linspace
 import os
+from numpy import linspace
+from PyQt5 import QtWidgets, QtGui, QtCore, uic
 
 basepath = os.path.dirname(os.path.dirname(__file__))
 path = os.path.join(basepath, "Views", "selectScan.ui")
-base, form=uic.loadUiType(path)
+base, form = uic.loadUiType(path)
 
 class dialog_ui(base, form):
     def __init__(self, parent=None):

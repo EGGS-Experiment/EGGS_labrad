@@ -9,11 +9,13 @@ from twisted.internet.defer import inlineCallbacks, DeferredLock, Deferred, Defe
 
 from EGGS_labrad.config.scriptscanner_config import config
 
+
 class priority_queue(object):
     '''
     A normal queue data structure, but with levels of priority.
-    Designed for ease of use, not speed
+    Designed for ease of use, not speed.
     '''
+
     priorities = [0, 1]
 
     def __init__(self):
@@ -65,6 +67,7 @@ class running_script(object):
     '''
     Holds information about a script that is currently running.
     '''
+
     def __init__(self, scan, defer_on_done, status, priority=-1, externally_launched=False):
         self.scan = scan
         self.name = scan.name
@@ -135,8 +138,10 @@ class script_semaphore(object):
             self.pause_lock.release()
 
     def set_pausing(self, should_pause):
-        '''if asking to pause, returns a deferred which is fired when sciprt
-        actually paused'''
+        '''
+        If asking to pause, returns a deferred which
+        is fired when script is actually paused.
+        '''
         if should_pause:
             request = Deferred()
             print('made request', request)
@@ -277,8 +282,8 @@ class scheduler(object):
 
     def get_non_conflicting(self):
         '''
-        returns a list of experiments that can run concurrently with currently
-        running experiments
+        Returns a list of experiments that can run
+        concurrently with currently running experiments.
         '''
         non_conflicting = []
         for running, script in self.running.items():
