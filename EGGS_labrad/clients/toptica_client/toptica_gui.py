@@ -1,8 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox,\
-                            QDesktopWidget, QPushButton, QDoubleSpinBox, QComboBox,\
-                            QCheckBox, QScrollArea, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QGroupBox, QPushButton, QDoubleSpinBox,\
+    QComboBox, QCheckBox, QScrollArea, QWidget, QVBoxLayout, QSizePolicy
 
 from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
 
@@ -17,11 +16,10 @@ class toptica_channel(QFrame):
     GUI for an individual Toptica Laser channel.
     """
 
-    def __init__(self, piezoControl=False, parent=None):
+    def __init__(self, piezoControl=True, parent=None):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(piezoControl)
-        print(self.children())
 
     def makeLayout(self, piezoControl):
         # create status box
@@ -52,12 +50,13 @@ class toptica_channel(QFrame):
         box = QWidget()
         box_layout = QGridLayout(box)
         # create labels
-        chanLabel = QLabel('Channel')
-        freqLabel = QLabel('Center Frequency')
-        serLabel = QLabel('Serial Number')
-        typeLabel = QLabel('Laser Type')
-        feedback_label = QLabel('Feedback')
-        for label in (chanLabel, freqLabel, serLabel, typeLabel, feedback_label):
+        chanLabel = QLabel('Channel:')
+        freqLabel = QLabel('Center Frequency:')
+        serLabel = QLabel('Serial Number:')
+        typeLabel = QLabel('Laser Type:')
+        emission_label = QLabel('Emission:')
+        feedback_label = QLabel('Feedback:')
+        for label in (chanLabel, freqLabel, serLabel, typeLabel, feedback_label, emission_label):
             label.setFont(LABEL_FONT)
             label.setAlignment(Qt.AlignLeft)
         # create displays
@@ -67,17 +66,19 @@ class toptica_channel(QFrame):
         typeDisplay = QLabel('DL Pro')
         for label in (channelDisplay, freqDisplay, serDisplay, typeDisplay):
             label.setFont(MAIN_FONT)
-            label.setAlignment(Qt.AlignCenter)
+            label.setAlignment(Qt.AlignRight)
         # emission
-        box.emissionButton = TextChangingButton('Emission')
+        box.emissionButton = TextChangingButton(None)
         # feedback
         box.feedbackEnableButton = TextChangingButton(('On', 'Off'))
         box.feedbackChannel = QComboBox()
+        box.feedbackChannel.setFont(QFont(SHELL_FONT, pointSize=10))
         box.feedbackChannel.addItem('Fine In 1')
         box.feedbackChannel.addItem('Fine In 2')
         box.feedbackChannel.addItem('Fast In 3')
         box.feedbackChannel.addItem('Fast In 4')
         box.feedbackMode = QComboBox()
+        box.feedbackMode.setFont(QFont(SHELL_FONT, pointSize=10))
         # lay out
         box_layout.addWidget(chanLabel,                 0, 0)
         box_layout.addWidget(channelDisplay,            1, 0)
@@ -87,6 +88,7 @@ class toptica_channel(QFrame):
         box_layout.addWidget(serDisplay,                5, 0)
         box_layout.addWidget(typeLabel,                 6, 0)
         box_layout.addWidget(typeDisplay,               7, 0)
+        box_layout.addWidget(emission_label,            8, 0)
         box_layout.addWidget(box.emissionButton,        9, 0)
         box_layout.addWidget(feedback_label,            10, 0)
         box_layout.addWidget(box.feedbackEnableButton,  11, 0)
@@ -94,10 +96,9 @@ class toptica_channel(QFrame):
         box_layout.addWidget(box.feedbackMode,          13, 0)
         # set self attribute and create wrapper
         setattr(self, 'statusBox', box)
-        wrapper = self._wrapGroup('Status', box)
-        return wrapper
+        return self._wrapGroup('Status', box)
 
-    def _createControlBox(self, name, name2, label_titles):
+    def _createControlBox(self, name, objName, label_titles):
         # create holding box
         box = QWidget()
         box_layout = QGridLayout(box)
@@ -122,27 +123,27 @@ class toptica_channel(QFrame):
             doublespinbox.setSingleStep(0.0004)
             doublespinbox.setRange(15, 50)
             doublespinbox.setKeyboardTracking(False)
+            doublespinbox.setFont(QFont(SHELL_FONT, pointSize=10))
         # create buttons
         box.lockswitch = Lockswitch()
         box.record_button = TextChangingButton(('Stop Recording', 'Record'))
         # lay out
-        box_layout.addWidget(actual_label,      1, 0, 1, 1)
+        box_layout.addWidget(actual_label,          1, 0, 1, 1)
         box_layout.addWidget(box.actualValue,       2, 0, 2, 1)
-        box_layout.addWidget(set_label,         4, 0, 1, 1)
+        box_layout.addWidget(set_label,             4, 0, 1, 1)
         box_layout.addWidget(box.setBox,            5, 0, 1, 1)
-        box_layout.addWidget(min_label,         6, 0, 1, 1)
+        box_layout.addWidget(min_label,             6, 0, 1, 1)
         box_layout.addWidget(box.minBox,            7, 0, 1, 1)
-        box_layout.addWidget(max_label,         8, 0, 1, 1)
+        box_layout.addWidget(max_label,             8, 0, 1, 1)
         box_layout.addWidget(box.maxBox,            9, 0, 1, 1)
         box_layout.addWidget(box.lockswitch,        10, 0, 1, 1)
         box_layout.addWidget(box.record_button,     11, 0, 1, 1)
         # connect signals to slots
-        box.lockswitch.toggled.connect(lambda status, parent=name2: self._lock(status, parent))
+        box.lockswitch.toggled.connect(lambda status, parent=objName: self._lock(status, parent))
         box.lockswitch.setChecked(True)
         # create QGroupBox wrapper
-        setattr(self, name2, box)
-        wrapper = self._wrapGroup(name, box)
-        return wrapper
+        setattr(self, objName, box)
+        return self._wrapGroup(name, box)
 
     def _wrapGroup(self, name, widget):
         wrapper = QGroupBox(name)
@@ -150,8 +151,8 @@ class toptica_channel(QFrame):
         wrapper_layout.addWidget(widget)
         return wrapper
 
-    def _lock(self, status, name2):
-        parent = getattr(self, name2)
+    def _lock(self, status, objName):
+        parent = getattr(self, objName)
         parent.setBox.setEnabled(status)
         parent.minBox.setEnabled(status)
         parent.maxBox.setEnabled(status)
@@ -162,15 +163,37 @@ class toptica_gui(QFrame):
     The full Toptica GUI.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, numChannels=4):
+        super().__init__()
+        self.setFrameStyle(0x0001 | 0x0030)
+        self.channels = {}
+        self.setWindowTitle('Toptica GUI')
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.makeLayout(numChannels)
+
+    def makeLayout(self, numChannels):
+        layout = QGridLayout(self)
+        # scrollable holder for laser channels
+        wm_scroll = QScrollArea()
+        wm_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        wmChan_widget = QWidget()
+        wmChan_layout = QGridLayout(wmChan_widget)
+        for i in range(numChannels):
+            channel_gui = toptica_channel(piezoControl=True)
+            self.channels[i] = channel_gui
+            wmChan_layout.addWidget(channel_gui, i, 0, 1, 1)
+
+        # add wavemeter channel holder to qBox
+        wm_scroll.setWidget(wmChan_widget)
+        wm_scroll.setMinimumWidth(wmChan_widget.sizeHint().width())
+        # final layout
+        layout.addWidget(wm_scroll)
 
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
     # run toptica channel gui
-    runGUI(toptica_channel)
+    #runGUI(toptica_channel)
 
     # run toptica client gui
-    # from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
-    # runGUI(multiplexer_gui, multiplexer_config.channels)
+    runGUI(toptica_gui)

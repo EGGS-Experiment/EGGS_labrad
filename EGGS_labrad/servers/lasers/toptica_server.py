@@ -291,6 +291,81 @@ class TopticaServer(LabradServer, PollingServer):
     @setting(511, 'Scan Toggle', chan='i', status='b', returns='b')
     def scanToggle(self, c, chan, status=None):
         """
+        Toggle scan control.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            status      (bool)  : whether scan control is on or off.
+        Returns:
+                        (bool)  : whether scan control is on or off.
+        """
+        if status is not None:
+            yield self._write(str(chan), 'dl:pc:enabled', status)
+        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        returnValue(resp)
+
+    @setting(512, 'Scan Mode', chan='i', mode='b', returns='b')
+    def scanMode(self, c, chan, mode=None):
+        """
+        Toggle piezo control.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            status      (bool)  : whether piezo control is on or off.
+        Returns:
+                        (bool)  : whether piezo control is on or off.
+        """
+        if status is not None:
+            yield self._write(str(chan), 'dl:pc:enabled', status)
+        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        returnValue(resp)
+
+    @setting(513, 'Scan Shape', chan='i', shape='b', returns='b')
+    def scanShape(self, c, chan, shape=None):
+        """
+        Toggle piezo control.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            status      (bool)  : whether piezo control is on or off.
+        Returns:
+                        (bool)  : whether piezo control is on or off.
+        """
+        if status is not None:
+            yield self._write(str(chan), 'dl:pc:enabled', status)
+        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        returnValue(resp)
+
+    @setting(521, 'Scan Amplitude', chan='i', amp='b', returns='b')
+    def scanAmplitude(self, c, chan, amp=None):
+        """
+        Toggle piezo control.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            status      (bool)  : whether piezo control is on or off.
+        Returns:
+                        (bool)  : whether piezo control is on or off.
+        """
+        if status is not None:
+            yield self._write(str(chan), 'dl:pc:enabled', status)
+        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        returnValue(resp)
+
+    @setting(522, 'Scan Offset', chan='i', offset='b', returns='b')
+    def scanOffset(self, c, chan, offset=None):
+        """
+        Toggle piezo control.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            status      (bool)  : whether piezo control is on or off.
+        Returns:
+                        (bool)  : whether piezo control is on or off.
+        """
+        if status is not None:
+            yield self._write(str(chan), 'dl:pc:enabled', status)
+        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        returnValue(resp)
+
+    @setting(523, 'Scan Frequency', chan='i', freq='b', returns='b')
+    def scanFrequency(self, c, chan, freq=None):
+        """
         Toggle piezo control.
         Arguments:
             chan        (int)   : the desired laser channel.

@@ -70,13 +70,10 @@ class Lockswitch(TextChangingButton):
     preventing changes to a GUI element.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *args, **kwargs):
         super().__init__(button_text=('Unlocked', 'Locked'), parent=parent)
         # set default parameters
-        self.setFixedHeight(23)
-        font_tmp = QFont()
-        font_tmp.setPointSize(8)
-        self.setFont(font_tmp)
+        #self.setFixedHeight(23)
         self.setChecked(True)
 
     def sizeHint(self):
