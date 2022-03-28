@@ -17,7 +17,7 @@ class toptica_channel(QFrame):
     GUI for an individual Toptica Laser channel.
     """
 
-    def __init__(self, piezoControl=True, parent=None):
+    def __init__(self, piezoControl=False, parent=None):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(piezoControl)
@@ -157,9 +157,9 @@ class toptica_channel(QFrame):
         parent.maxBox.setEnabled(status)
 
 
-class toptica_gui():
+class toptica_gui(QFrame):
     """
-
+    The full Toptica GUI.
     """
 
     def __init__(self):
