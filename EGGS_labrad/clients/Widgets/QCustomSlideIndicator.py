@@ -10,13 +10,18 @@ class QCustomSlideIndicator(QWidget):
 
     def __init__(self, limits, horizontal=True):
         super(QCustomSlideIndicator, self).__init__()
-        self.set_rails(limits)
+        self.setWindowTitle('Slide Indicator')
+        # set class variables
         self.value = None
+        self.minvalue = None
+        self.maxvalue = None
+        self.span = None
+        # set rails
+        self.setRails(limits)
         if horizontal:
             self.setGeometry(2000, 200, 200, 30)
         else:
             self.setGeometry(2000, 200, 30, 200)
-        self.setWindowTitle('Slide Indicator')
 
     def paintEvent(self, e):
         qp = QPainter()
@@ -26,33 +31,30 @@ class QCustomSlideIndicator(QWidget):
         qp.end()
 
     def drawGrid(self, qp):
-        pen = QPen(Qt.gray, 2, Qt.SolidLine)
-        qp.setPen(pen)
+        qp.setPen(QPen(Qt.gray, 2, Qt.SolidLine))
         qp.drawLine(0, self.height() - 1, self.width(), self.height() - 1)
         pen.setStyle(Qt.CustomDashLine)
         pen.setDashPattern([1, self.width() / 8.1 - 1])
         #print([1, self.width() / 8.1 - 1])
-        qp.setPen(pen)
+        #qp.setPen(pen)
         qp.drawLine(0, self.height() - 2, self.width(), self.height() - 2)
         qp.drawLine(0, self.height() - 3, self.width(), self.height() - 3)
 
     def drawPointer(self, qp):
-        pen = QPen(Qt.red, 2, Qt.SolidLine)
-        qp.setPen(pen)
+        qp.setPen(QPen(Qt.red, 2, Qt.SolidLine))
         if self.value is not None:
-            xpos = (self.value - self.minvalue) / self.span * self.width()
+            xpos = ((self.value - self.minvalue) / self.span) * self.width()
             qp.drawLine(xpos, self.height() - 15, xpos, self.height() - 2)
 
-    def set_rails(self, rails):
-        self.minvalue = rails[0]
-        self.maxvalue = rails[1]
+    def setRails(self, rails):
+        self.minvalue, self.maxvalue = rails
         self.span = self.maxvalue - self.minvalue
         self.repaint()
 
     def updateSlider(self, value):
-        if value >= self.maxvalue:
+        if value > self.maxvalue:
             value = self.maxvalue
-        elif value <= self.minvalue:
+        elif value < self.minvalue:
             value = self.minvalue
         self.value = value
         self.repaint()
