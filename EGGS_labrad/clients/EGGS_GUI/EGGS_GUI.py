@@ -1,4 +1,4 @@
-from os import environ, _exit
+from os import environ, _exit, path
 from twisted.internet.defer import inlineCallbacks
 
 from PyQt5.QtGui import QIcon
@@ -15,7 +15,10 @@ class EGGS_gui(QMainWindow):
         self.clipboard = clipboard
         self.reactor = reactor
         self.setWindowTitle('EGGS GUI')
-        self.setWindowIcon(QIcon('C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\eggs.png'))
+        # set window icon
+        path_root = environ['EGGS_LABRAD_ROOT']
+        icon_path = path.join(path_root, 'eggs.png')
+        self.setWindowIcon(QIcon(icon_path))
         # connect devices synchronously
         d = self.connect()
         d.addCallback(self.makeLayout)
