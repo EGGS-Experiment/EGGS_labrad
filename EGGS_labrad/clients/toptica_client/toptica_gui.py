@@ -4,14 +4,14 @@ from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox,
                             QDesktopWidget, QPushButton, QDoubleSpinBox, QComboBox,\
                             QCheckBox, QScrollArea, QWidget, QVBoxLayout
 
-from EGGS_labrad.clients.Widgets import TextChangingButton
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
 
 SHELL_FONT = 'MS Shell Dlg 2'
 LABEL_FONT = QFont(SHELL_FONT, pointSize=8)
 MAIN_FONT = QFont(SHELL_FONT, pointSize=15)
 DISPLAY_FONT = QFont(SHELL_FONT, pointSize=20)
 
-#todo: record button
+
 class toptica_channel(QFrame):
     """
     GUI for an individual Toptica Laser channel.
@@ -21,26 +21,29 @@ class toptica_channel(QFrame):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(piezoControl)
+        self.initializeGUI()
 
     def makeLayout(self, piezoControl):
         # create status box
         statusBox = self._createStatusBox()
-        # create piezo box
-        piezoBox = QGroupBox()
-        piezoBox_layout = QGridLayout(piezoBox)
         # control boxes
         tempLabels = ('Actual Temperature (K)', 'Set Temperature (K)', 'Min. Temperature (K)', 'Max. Temperature (K)')
         tempBox = self._createControlBox('Temperature Control', tempLabels)
         currLabels = ('Actual Current (mA)', 'Set Current (mA)', 'Min. Current (mA)', 'Max. Current (mA)')
         currBox = self._createControlBox('Current Control', currLabels)
-
-        # add to self
+        piezoBox = None
+        # create piezo box
+        if piezoControl:
+            piezoLabels = ('Actual Voltage (V)', 'Set Voltage (V)', 'Min. Voltage (V)', 'Max. Voltage (V)')
+            piezoBox = self._createControlBox('Piezo Control', piezoLabels)
+        # lay out
         layout = QGridLayout(self)
         layout.minimumSize()
         layout.addWidget(statusBox,     0, 0)
         layout.addWidget(tempBox,       0, 3)
         layout.addWidget(currBox,       0, 4)
-        #layout.addWidget(piezoBox,     0, 5)
+        if piezoControl:
+            layout.addWidget(piezoBox,     0, 5)
 
     def _createStatusBox(self):
         box = QGroupBox('Laser')
@@ -63,15 +66,21 @@ class toptica_channel(QFrame):
             label.setAlignment(Qt.AlignCenter)
         # emission
         emissionButton = TextChangingButton('Emission')
-        box_layout.addWidget(chanLabel,         0, 0)
-        box_layout.addWidget(channelDisplay,    1, 0)
-        box_layout.addWidget(freqLabel,         2, 0)
-        box_layout.addWidget(freqDisplay,       3, 0)
-        box_layout.addWidget(serLabel,          4, 0)
-        box_layout.addWidget(serDisplay,        5, 0)
-        box_layout.addWidget(typeLabel,         6, 0)
-        box_layout.addWidget(typeDisplay,       7, 0)
-        box_layout.addWidget(emissionButton,    9, 0)
+        # feedback
+        feedbackEnableButton = TextChangingButton('Feedback')
+        feedbackEnableChannel = QComboBox()
+        # lay out
+        box_layout.addWidget(chanLabel,             0, 0)
+        box_layout.addWidget(channelDisplay,        1, 0)
+        box_layout.addWidget(freqLabel,             2, 0)
+        box_layout.addWidget(freqDisplay,           3, 0)
+        box_layout.addWidget(serLabel,              4, 0)
+        box_layout.addWidget(serDisplay,            5, 0)
+        box_layout.addWidget(typeLabel,             6, 0)
+        box_layout.addWidget(typeDisplay,           7, 0)
+        box_layout.addWidget(emissionButton,        9, 0)
+        box_layout.addWidget(feedbackEnableButton,  10, 0)
+        box_layout.addWidget(feedbackEnableChannel, 11, 0)
         return box
 
     def _createControlBox(self, name, label_titles):
@@ -87,34 +96,41 @@ class toptica_channel(QFrame):
             label.setFont(LABEL_FONT)
             label.setAlignment(Qt.AlignLeft)
         # create display
-        actualValue = QLabel('00.0000')
-        actualValue.setFont(DISPLAY_FONT)
-        actualValue.setAlignment(Qt.AlignCenter)
+        self.actualValue = QLabel('00.0000')
+        self.actualValue.setFont(DISPLAY_FONT)
+        self.actualValue.setAlignment(Qt.AlignCenter)
         # create boxes
-        setBox = QDoubleSpinBox()
-        minBox = QDoubleSpinBox()
-        maxBox = QDoubleSpinBox()
+        self.setBox = QDoubleSpinBox()
+        self.minBox = QDoubleSpinBox()
+        self.maxBox = QDoubleSpinBox()
         for doublespinbox in (setBox, minBox, maxBox):
             doublespinbox.setDecimals(4)
             doublespinbox.setSingleStep(0.0004)
             doublespinbox.setRange(15, 50)
             doublespinbox.setKeyboardTracking(False)
-        # create lockswitch
-        lockswitch = TextChangingButton(('Lock', 'Unlock'))
+        # create buttons
+        lockswitch = Lockswitch()
+        record_button = TextChangingButton(('Record', 'Stop Recording'))
         # lay out
-        box_layout.addWidget(actual_label,      1, 0, 1, 1)
-        box_layout.addWidget(actualValue,       2, 0, 2, 1)
-        box_layout.addWidget(set_label,         4, 0, 1, 1)
-        box_layout.addWidget(setBox,            5, 0, 1, 1)
-        box_layout.addWidget(min_label,         6, 0, 1, 1)
-        box_layout.addWidget(minBox,            7, 0, 1, 1)
-        box_layout.addWidget(max_label,         8, 0, 1, 1)
-        box_layout.addWidget(maxBox,            9, 0, 1, 1)
-        box_layout.addWidget(lockswitch,        10, 0, 1, 1)
-
-        # todo: connect widgets and switch
+        box_layout.addWidget(actual_label,          1, 0, 1, 1)
+        box_layout.addWidget(self.actualValue,      2, 0, 2, 1)
+        box_layout.addWidget(set_label,             4, 0, 1, 1)
+        box_layout.addWidget(self.setBox,           5, 0, 1, 1)
+        box_layout.addWidget(min_label,             6, 0, 1, 1)
+        box_layout.addWidget(self.minBox,           7, 0, 1, 1)
+        box_layout.addWidget(max_label,             8, 0, 1, 1)
+        box_layout.addWidget(self.maxBox,           9, 0, 1, 1)
+        box_layout.addWidget(self.lockswitch,       10, 0, 1, 1)
+        box_layout.addWidget(self.record_button,    11, 0, 1, 1)
+        # connect signals to slots
+        lockswitch.toggled.connect(lambda status, parent=box: self._lock(status, parent))
         return box
-            
+
+    def _lock(self, status, parent):
+        parent.setBox.setEnabled(status)
+        parent.minBox.setEnabled(status)
+        parent.maxBox.setEnabled(status)
+
 
 class toptica_gui():
     """

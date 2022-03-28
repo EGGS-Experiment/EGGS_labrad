@@ -257,7 +257,25 @@ class TopticaServer(LabradServer, PollingServer):
         resp = yield self._read(str(chan), 'dl:pc:external-input')
         returnValue(resp)
 
-    @setting(413, 'Piezo Actual', chan='i', returns='v')
+    @setting(413, 'Piezo Factor', chan='i', factor='v', returns='v')
+    def piezoFactor(self, c, chan, factor=None):
+        """
+        Get/set the piezo input factor.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            factor      (float) : the piezo input factor
+        Returns:
+                        (float) : the piezo input factor
+        """
+        if factor is not None:
+            if (factor < 0.01) or (factor > 10):
+                raise Exception('Error: ARC factor must be within [0.01, 10].')
+            else:
+                yield self._write(str(chan), 'dl:pc:external-input:factor', factor)
+        resp = yield self._read(str(chan), 'dl:pc:external-input:factor')
+        returnValue(resp)
+
+    @setting(414, 'Piezo Actual', chan='i', returns='v')
     def piezoActual(self, c, chan):
         """
         Returns the actual piezo voltage of the selected laser head.
@@ -267,6 +285,23 @@ class TopticaServer(LabradServer, PollingServer):
         """
         resp = yield self._read(str(chan), 'dl:pc:voltage-act')
         returnValue(float(resp))
+
+
+    # SCAN
+    @setting(511, 'Scan Toggle', chan='i', status='b', returns='b')
+    def scanToggle(self, c, chan, status=None):
+        """
+        Toggle piezo control.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            status      (bool)  : whether piezo control is on or off.
+        Returns:
+                        (bool)  : whether piezo control is on or off.
+        """
+        if status is not None:
+            yield self._write(str(chan), 'dl:pc:enabled', status)
+        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        returnValue(resp)
 
 
     # HELPER
