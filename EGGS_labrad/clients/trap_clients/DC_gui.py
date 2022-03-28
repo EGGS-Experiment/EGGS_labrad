@@ -88,8 +88,6 @@ class DC_gui(QFrame):
         super().__init__()
         self.amo8_channels = []
         self.name = name
-        print('th1', name)
-
         # config
         try:
             from EGGS_labrad.config.dc_config import dc_config

@@ -1,14 +1,14 @@
-import os
+from os import environ, _exit
 from twisted.internet.defer import inlineCallbacks
 
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout, QApplication
 
 
 class EGGS_gui(QMainWindow):
 
     name = 'EGGS GUI'
-    LABRADPASSWORD = os.environ['LABRADPASSWORD']
+    LABRADPASSWORD = environ['LABRADPASSWORD']
 
     def __init__(self, reactor, clipboard=None, parent=None):
         super(EGGS_gui, self).__init__(parent)
@@ -107,10 +107,15 @@ class EGGS_gui(QMainWindow):
         }
         return self._createTabLayout(clients, reactor, cxn)
 
-    def closeEvent(self, event):
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
+    def close(self):
+        try:
+            self.cxn.disconnect()
+            if self.reactor.running:
+                self.reactor.stop()
+            _exit(0)
+        except Exception as e:
+            print(e)
+            _exit(0)
 
     def _createTabLayout(self, clientDict, reactor, cxn):
         """
@@ -131,5 +136,30 @@ class EGGS_gui(QMainWindow):
 
 
 if __name__ == "__main__":
-    from EGGS_labrad.clients import runClient
-    runClient(EGGS_gui)
+    # from EGGS_labrad.clients import runClient
+    # runClient(EGGS_gui)
+    app = QApplication([])
+    try:
+        import qt5reactor
+        qt5reactor.install()
+    except Exception as e:
+        print(e)
+    # instantiate client with a reactor
+    from twisted.internet import reactor
+    client_tmp = EGGS_gui(reactor)
+    # show client
+    if hasattr(client_tmp, 'show'):
+        client_tmp.show()
+    elif hasattr(client_tmp, 'gui'):
+        gui_tmp = client_tmp.gui
+        if hasattr(gui_tmp, 'show'):
+            client_tmp.gui.show()
+    # start reactor
+    reactor.callWhenRunning(app.exec)
+    reactor.addSystemEventTrigger('after', 'shutdown', client_tmp.close)
+    reactor.runReturn()
+    # close client on exit
+    try:
+        client_tmp.close()
+    except Exception as e:
+        print(e)
