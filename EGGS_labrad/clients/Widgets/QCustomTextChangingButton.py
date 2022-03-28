@@ -10,7 +10,7 @@ class TextChangingButton(QPushButton):
     Button that changes its text to ON or OFF and colors when it's pressed.
     """
 
-    def __init__(self, button_text, parent=None):
+    def __init__(self, button_text, parent=None, fontsize=10):
         """
         NOTE: when both labels and addtext are not
         None, labels take precedence.
@@ -28,7 +28,7 @@ class TextChangingButton(QPushButton):
         super(TextChangingButton, self).__init__(parent)
         self.button_text = button_text
         self.setCheckable(True)
-        self.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.setFont(QFont('MS Shell Dlg 2', pointSize=fontsize))
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         # connect signal for appearance changing
         self.toggled.connect(self.setAppearance)

@@ -195,7 +195,9 @@ class multiplexer_client(GUIClient):
     def updateAmplitude(self, c, signal):
         chan, value = signal
         if chan in self.gui.channels.keys():
-            self.gui.channels[chan].powermeter.setValue(int(value))
+            value = int(value)
+            self.gui.channels[chan].powermeter.setValue(value)
+            self.gui.channels[chan].powermeter_display.setText('{:4d}'.format(value))
 
     def updatePattern(self, c, signal):
         chan, trace = signal

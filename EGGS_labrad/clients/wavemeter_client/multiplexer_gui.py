@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox,
                             QCheckBox, QScrollArea, QWidget, QVBoxLayout
 
 from EGGS_labrad.clients.Widgets.wav2RGB import wav2RGB
-from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomProgressBar, QCustomSlideIndicator
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomProgressBar, QCustomSlideIndicator
 
 
 class multiplexer_pid(QFrame):
@@ -199,6 +199,7 @@ class multiplexer_channel(QFrame):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(chanName, wmChannel, DACPort, frequency, displayPIDvoltage)
+        self.initializeGUI()
 
     def makeLayout(self, name, wmChannel, DACPort, frequency, displayPIDvoltage):
         layout = QGridLayout(self)
@@ -235,11 +236,10 @@ class multiplexer_channel(QFrame):
         # power meter
         self.powermeter = QCustomProgressBar(max=4000, orientation=Qt.Vertical, border_color="orange",
                                              start_color="orange", end_color="red")
-
-        # PID
-        self.setPID = QPushButton('Set PID')
-        self.setPID.setMaximumHeight(30)
-        self.setPID.setFont(QFont(shell_font, pointSize=10))
+        self.powermeter.setAlignment(Qt.AlignCenter)
+        self.powermeter_display = QLabel('0000')
+        self.powermeter_display.setFont(QFont(shell_font, pointSize=12))
+        self.powermeter_display.setAlignment(Qt.AlignLeft)
 
         # buttons
         self.measSwitch = TextChangingButton(('Stop Measuring', 'Start Measuring'))
@@ -247,6 +247,10 @@ class multiplexer_channel(QFrame):
         self.lockChannel.setMinimumWidth(150)
         self.showTrace = TextChangingButton(('Hide Trace', 'Show Trace'))
         self.showTrace.setChecked(True)
+        self.setPID = QPushButton('Set PID')
+        self.setPID.setMaximumHeight(30)
+        self.setPID.setFont(QFont(shell_font, pointSize=10))
+        self.lockswitch = TextChangingButton(('Allow Changes', 'Prevent Changes'))
 
         # set frequency
         frequencylabel = QLabel('Lock Frequency (THz)')
@@ -258,7 +262,6 @@ class multiplexer_channel(QFrame):
         self.spinFreq.setSingleStep(0.000001)
         self.spinFreq.setRange(100.0, 1000.0)
         self.spinFreq.setKeyboardTracking(False)
-
         # exposure time
         exposurelabel = QLabel('Exposure Time (ms)')
         exposurelabel.setAlignment(Qt.AlignBottom)
@@ -270,26 +273,31 @@ class multiplexer_channel(QFrame):
         self.spinExp.setRange(0, 10000.0)
         self.spinExp.setKeyboardTracking(False)
 
-        # if displayPIDvoltage is True:
-        #     self.PIDindicator = QCustomSlideIndicator([-10.0, 10.0])
-        #     self.PIDvoltage = QLabel('DAC Voltage (mV)  -.-')
-        #     self.PIDvoltage.setFont(QFont(shell_font, pointSize=12))
-        #     layout.addWidget(self.PIDvoltage, 6, 6, 1, 5)
-        #     layout.addWidget(self.PIDindicator, 5, 6, 1, 5)
-
         # lay out
-        layout.addWidget(self.channel_header,   0, 0, 2, 1)
-        layout.addWidget(currentfrequency_label, 1, 0, 2, 1)
-        layout.addWidget(self.currentfrequency, 2, 0, 3, 1)
-        layout.addWidget(frequencylabel,        6, 0, 1, 1)
-        layout.addWidget(self.spinFreq,         7, 0, 1, 1)
-        layout.addWidget(exposurelabel,         6, 3, 1, 1)
-        layout.addWidget(self.spinExp,          7, 3, 1, 1)
-        layout.addWidget(self.measSwitch,       0, 3, 1, 1)
-        layout.addWidget(self.lockChannel,      1, 3, 1, 1)
-        layout.addWidget(self.showTrace,        2, 3, 1, 1)
-        layout.addWidget(self.setPID,           3, 3, 1, 1)
-        layout.addWidget(self.powermeter,       0, 4, 8, 1)
+        layout.addWidget(self.channel_header,       0, 0, 2, 3)
+        layout.addWidget(currentfrequency_label,    1, 0, 2, 1)
+        layout.addWidget(self.currentfrequency,     2, 0, 3, 3)
+        layout.addWidget(frequencylabel,            5, 0, 1, 1)
+        layout.addWidget(self.spinFreq,             6, 0, 1, 2)
+        layout.addWidget(exposurelabel,             5, 2, 1, 1)
+        layout.addWidget(self.spinExp,              6, 2, 1, 1)
+        layout.addWidget(self.measSwitch,           0, 3, 1, 1)
+        layout.addWidget(self.lockChannel,          1, 3, 1, 1)
+        layout.addWidget(self.showTrace,            2, 3, 1, 1)
+        layout.addWidget(self.setPID,               3, 3, 1, 1)
+        layout.addWidget(self.lockswitch,           6, 3, 1, 1)
+        layout.addWidget(self.powermeter,           0, 4, 6, 1)
+        layout.addWidget(self.powermeter_display,   6, 4, 1, 1)
+
+    def initializeGUI(self):
+        self.lockswitch.toggled.connect(lambda status: self._lock(status))
+        self.lockswitch.setChecked(True)
+
+    def _lock(self, status):
+        self.spinFreq.setEnabled(status)
+        self.spinExp.setEnabled(status)
+        self.measSwitch.setEnabled(status)
+        self.lockChannel.setEnabled(status)
 
 
 class multiplexer_gui(QFrame):
@@ -317,7 +325,7 @@ class multiplexer_gui(QFrame):
         qBox_wm_layout = QGridLayout(qBox_wm)
             # wavemeter buttons
         self.startSwitch = TextChangingButton('Wavemeter')
-        self.startSwitch.setMaximumHeight(50)
+        #self.startSwitch.setMaximumHeight(50)
         self.lockSwitch = TextChangingButton('Locking')
         self.lockSwitch.setMaximumHeight(50)
         qBox_wm_layout.addWidget(self.startSwitch, 0, 0)
