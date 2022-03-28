@@ -73,7 +73,6 @@ class multiplexer_client(GUIClient):
             widget.spinExp.setValue(exposure_ms)
             widget.measSwitch.setChecked(bool(measure_state))
             widget.spinFreq.setValue(float(lock_frequency))
-        # PID
 
     def initGUI(self):
         # global wavemeter settings
@@ -196,7 +195,7 @@ class multiplexer_client(GUIClient):
     def updateAmplitude(self, c, signal):
         chan, value = signal
         if chan in self.gui.channels.keys():
-            self.gui.channels[chan].powermeter.setValue(value)
+            self.gui.channels[chan].powermeter.setValue(int(value))
 
     def updatePattern(self, c, signal):
         chan, trace = signal

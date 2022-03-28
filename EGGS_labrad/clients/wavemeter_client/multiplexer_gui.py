@@ -233,7 +233,7 @@ class multiplexer_channel(QFrame):
         self.currentfrequency.setMinimumWidth(500)
 
         # power meter
-        self.powermeter = QCustomProgressBar(max=4000, orientation=Qt.Horizontal, border_color="orange",
+        self.powermeter = QCustomProgressBar(max=4000, orientation=Qt.Vertical, border_color="orange",
                                              start_color="orange", end_color="red")
 
         # PID
