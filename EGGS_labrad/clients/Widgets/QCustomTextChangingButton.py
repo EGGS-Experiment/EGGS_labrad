@@ -1,4 +1,5 @@
-from PyQt5 import QtGui, QtCore
+from PyQt5.QtGui import QFont, QPalette
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import QPushButton, QSizePolicy
 
 __all__ = ['TextChangingButton', 'Lockswitch']
@@ -27,7 +28,7 @@ class TextChangingButton(QPushButton):
         super(TextChangingButton, self).__init__(parent)
         self.button_text = button_text
         self.setCheckable(True)
-        self.setFont(QtGui.QFont('MS Shell Dlg 2', pointSize=10))
+        self.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         # connect signal for appearance changing
         self.toggled.connect(self.setAppearance)
@@ -37,11 +38,11 @@ class TextChangingButton(QPushButton):
         on_text, off_text = self._set_button_texts()
         if down:
             self.setText(on_text)
-            self.setPalette(QtGui.QPalette(QtCore.Qt.darkGreen))
+            self.setPalette(QPalette(Qt.darkGreen))
             self.setStyleSheet("color: black;")
         else:
             self.setText(off_text)
-            self.setPalette(QtGui.QPalette(QtCore.Qt.black))
+            self.setPalette(QPalette(Qt.black))
             self.setStyleSheet("color: black;")
 
     def _set_button_texts(self):
@@ -61,19 +62,23 @@ class TextChangingButton(QPushButton):
         return on_text, off_text
 
     def sizeHint(self):
-        return QtCore.QSize(37, 26)
+        return QSize(37, 26)
 
 
 class Lockswitch(TextChangingButton):
+    """
+    A TextChangingButton used just for
+    preventing changes to a GUI element.
+    """
 
     def __init__(self, parent=None):
         super().__init__(button_text=('Unlocked', 'Locked'), parent=parent)
         # set default parameters
         self.setFixedHeight(23)
-        font_tmp = QtGui.QFont()
+        font_tmp = QFont()
         font_tmp.setPointSize(8)
         self.setFont(font_tmp)
         self.setChecked(True)
 
     def sizeHint(self):
-        return QtCore.QSize(37, 26)
+        return QSize(37, 26)

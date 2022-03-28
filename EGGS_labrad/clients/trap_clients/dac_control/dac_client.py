@@ -1,18 +1,19 @@
 import time
-
+from twisted.internet.defer import inlineCallbacks
 from PyQt5.QtWidgets import QWidget, QSizePolicy, QGridLayout, QGroupBox
 
-from twisted.internet.defer import inlineCallbacks
 
 #from config.dac_ad660_config import hardwareConfiguration as hc
-from EGGS_labrad.clients.trap_clients.dac_control.electrodewidget import ElectrodeIndicator
 from EGGS_labrad.clients.Widgets.QCustomSpinBox import QCustomSpinBox
+from EGGS_labrad.clients.trap_clients.dac_control.electrodewidget import ElectrodeIndicator
 
 
 class Electrode(object):
+    """
+    todo
+    """
 
     def __init__(self, dac, octant, minval, maxval):
-
         self.dac = dac
         self.octant = octant
         self.minval = minval
@@ -21,7 +22,6 @@ class Electrode(object):
         self.setup_widget()
 
     def setup_widget(self):
-
         self.spinBox = QCustomSpinBox(self.name, (self.minval, self.maxval))
         self.init_voltage = 0.0
         self.spinBox.spinLevel.setValue(0.0)
@@ -31,9 +31,11 @@ class Electrode(object):
 
 
 class DAC_client(QWidget):
+    """
+    todo
+    """
 
     def __init__(self, reactor, parent=None):
-
         super(DAC_client, self).__init__()
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.reactor = reactor
@@ -41,7 +43,6 @@ class DAC_client(QWidget):
 
     @inlineCallbacks
     def connect(self):
-
         from labrad.wrappers import connectAsync
         from labrad.units import WithUnit as U
         #self.elec_dict = hc.elec_dict
@@ -117,6 +118,7 @@ class DAC_client(QWidget):
 
     def closeEvent(self, event):
         pass
+
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient

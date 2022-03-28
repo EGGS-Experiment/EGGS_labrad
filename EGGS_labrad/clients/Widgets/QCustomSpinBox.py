@@ -1,11 +1,15 @@
 import sys
-import os
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5 import QtCore, uic
 
 
 class QCustomSpinBox(QWidget):
-    onNewValues = QtCore.pyqtSignal()
+    """
+    A custom QDoubleSpinBox.
+    """
+
+    onNewValues = pyqtSignal()
 
     def __init__(self, title, levelRange, parent=None):
         QWidget.__init__(self, parent)

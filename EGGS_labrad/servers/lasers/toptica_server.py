@@ -268,15 +268,8 @@ class TopticaServer(LabradServer, PollingServer):
         resp = yield self._read(str(chan), 'dl:pc:voltage-act')
         returnValue(float(resp))
 
-    # POLLING
-    @inlineCallbacks
-    def _poll(self):
-        """
-        Polls #.
-        """
-        pass
-        # yield self.temperature_read(None, None)
 
+    # HELPER
     @inlineCallbacks
     def _read(self, chan, param):
         dev_name, laser_num = self.channels[chan]
@@ -291,6 +284,16 @@ class TopticaServer(LabradServer, PollingServer):
         dev = self.devices[dev_name]
         #print('write: ', 'laser{:d}:{}'.format(laser_num, param), ', value: ', value)
         yield dev.set('laser{:d}:{}'.format(laser_num, param), value)
+
+
+    # POLLING
+    @inlineCallbacks
+    def _poll(self):
+        """
+        Polls #todo finish.
+        """
+        pass
+        # yield self.temperature_read(None, None)
 
 
 if __name__ == '__main__':

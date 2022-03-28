@@ -227,17 +227,14 @@ class multiplexer_channel(QFrame):
 
         # display frequency
         currentfrequency_label = QLabel('Measured Frequency (THz):')
-        #currentfrequency_label.setAlignment(Qt.AlignTop)
         self.currentfrequency = QLabel(frequency)
         self.currentfrequency.setFont(QFont(shell_font, pointSize=30))
         self.currentfrequency.setAlignment(Qt.AlignCenter)
         self.currentfrequency.setMinimumWidth(500)
 
         # power meter
-        self.powermeter = QCustomProgressBar()
-        self.powermeter.setOrientation(Qt.Vertical)
-        self.powermeter.setMeterColor("orange", "red")
-        self.powermeter.setMeterBorder("orange")
+        self.powermeter = QCustomProgressBar(max=4000, orientation=Qt.Horizontal, border_color="orange",
+                                             start_color="orange", end_color="red")
 
         # PID
         self.setPID = QPushButton('Set PID')
@@ -313,7 +310,6 @@ class multiplexer_gui(QFrame):
         self.makeLayout()
 
     def makeLayout(self):
-        label_font = QFont('MS Shell Dlg 2', pointSize=12)
         layout = QGridLayout(self)
 
         # wavemeter channels

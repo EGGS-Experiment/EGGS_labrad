@@ -4,13 +4,15 @@ from PyQt5.QtGui import QPainter, QPen
 
 
 class QCustomSlideIndicator(QWidget):
+    """
+    A slide indicator that shows a value.
+    """
 
     def __init__(self, limits, horizontal=True):
         super(QCustomSlideIndicator, self).__init__()
         self.set_rails(limits)
         self.value = None
-        self.horizontal = horizontal
-        if horizontal == True:
+        if horizontal:
             self.setGeometry(2000, 200, 200, 30)
         else:
             self.setGeometry(2000, 200, 30, 200)
@@ -19,11 +21,11 @@ class QCustomSlideIndicator(QWidget):
     def paintEvent(self, e):
         qp = QPainter()
         qp.begin(self)
-        self.draw_grid(qp)
-        self.draw_pointer(qp)
+        self.drawGrid(qp)
+        self.drawPointer(qp)
         qp.end()
 
-    def draw_grid(self, qp):
+    def drawGrid(self, qp):
         pen = QPen(Qt.gray, 2, Qt.SolidLine)
         qp.setPen(pen)
         qp.drawLine(0, self.height() - 1, self.width(), self.height() - 1)
@@ -34,7 +36,7 @@ class QCustomSlideIndicator(QWidget):
         qp.drawLine(0, self.height() - 2, self.width(), self.height() - 2)
         qp.drawLine(0, self.height() - 3, self.width(), self.height() - 3)
 
-    def draw_pointer(self, qp):
+    def drawPointer(self, qp):
         pen = QPen(Qt.red, 2, Qt.SolidLine)
         qp.setPen(pen)
         if self.value is not None:
@@ -47,7 +49,7 @@ class QCustomSlideIndicator(QWidget):
         self.span = self.maxvalue - self.minvalue
         self.repaint()
 
-    def update_slider(self, value):
+    def updateSlider(self, value):
         if value >= self.maxvalue:
             value = self.maxvalue
         elif value <= self.minvalue:

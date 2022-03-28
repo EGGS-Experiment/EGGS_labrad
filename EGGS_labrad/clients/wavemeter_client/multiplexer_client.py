@@ -159,7 +159,7 @@ class multiplexer_client(GUIClient):
         if (dacPort in self.gui.dacPorts) and (dacPort == active_dacPort):
             try:
                 self.gui.pidGUI.PIDvoltage.setText('{:4.2f}'.format(value))
-                self.gui.pidGUI.PIDindicator.update_slider(value / 1000.0)
+                self.gui.pidGUI.PIDindicator.updateSlider(value / 1000.0)
             except Exception as e:
                 print(e)
 
