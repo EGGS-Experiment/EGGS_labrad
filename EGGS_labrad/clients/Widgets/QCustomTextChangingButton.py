@@ -1,5 +1,5 @@
-from PyQt5.QtGui import QFont, QPalette
 from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QFont, QPalette
 from PyQt5.QtWidgets import QPushButton, QSizePolicy
 
 __all__ = ['TextChangingButton', 'Lockswitch']
@@ -12,8 +12,8 @@ class TextChangingButton(QPushButton):
 
     def __init__(self, button_text, parent=None):
         """
-        NOTE: when both labels and addtext are not None, labels take
-        precedence.
+        NOTE: when both labels and addtext are not
+        None, labels take precedence.
 
         Parameters
         ----------
@@ -35,30 +35,29 @@ class TextChangingButton(QPushButton):
         self.setAppearance(self.isDown())
 
     def setAppearance(self, down):
-        on_text, off_text = self._set_button_texts()
+        on_text, off_text = self._setButtonTexts()
         if down:
             self.setText(on_text)
             self.setPalette(QPalette(Qt.darkGreen))
-            self.setStyleSheet("color: black;")
         else:
             self.setText(off_text)
             self.setPalette(QPalette(Qt.black))
-            self.setStyleSheet("color: black;")
+        self.setStyleSheet("color: black;")
 
-    def _set_button_texts(self):
-        """Return button texts when they are on or off."""
+    def _setButtonTexts(self):
+        """
+        Return button texts when they are on or off.
+        """
         if type(self.button_text) == str:
-            on_text = self.button_text + "   On"
-            off_text = self.button_text + "   Off"
+            on_text = self.button_text + ": On"
+            off_text = self.button_text + ": Off"
         elif type(self.button_text) == tuple:
-            on_text = self.button_text[0]
-            off_text = self.button_text[1]
+            on_text, off_text = self.button_text
         elif self.button_text is None:
-            on_text = ": On"
-            off_text = ": Off"
+            on_text = "On"
+            off_text = "Off"
         else:
-            error_msg = "Text gets displayed on a button needs to be a string"
-            raise TypeError(error_msg)
+            raise TypeError("Error: text to be displayed on a button needs to be a string.")
         return on_text, off_text
 
     def sizeHint(self):
