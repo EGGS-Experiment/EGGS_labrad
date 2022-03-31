@@ -31,4 +31,3 @@ while True:
     elapsedtime = time() - starttime
     dv.add(elapsedtime, freq, context=cr_dv)
     sleep(5)
-
