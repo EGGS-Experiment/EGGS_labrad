@@ -16,7 +16,7 @@ timeout = 20
 """
 from EGGS_labrad.servers import PollingServer
 from labrad.server import LabradServer, setting
-from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
+from twisted.internet.defer import returnValue, inlineCallbacks
 
 from toptica.lasersdk.client import Client, NetworkConnection
 
@@ -299,83 +299,87 @@ class TopticaServer(LabradServer, PollingServer):
                         (bool)  : whether scan control is on or off.
         """
         if status is not None:
-            yield self._write(str(chan), 'dl:pc:enabled', status)
-        resp = yield self._read(str(chan), 'dl:pc:enabled')
+            yield self._write(str(chan), 'scan:enabled', status)
+        resp = yield self._read(str(chan), 'scan:enabled')
         returnValue(resp)
 
     @setting(512, 'Scan Mode', chan='i', mode='b', returns='b')
     def scanMode(self, c, chan, mode=None):
         """
-        Toggle piezo control.
+        Get/set the scan output.
         Arguments:
             chan        (int)   : the desired laser channel.
-            status      (bool)  : whether piezo control is on or off.
+            mode        (int)   : the scan mode (1 = current, 2 = temperature, 3 = piezo).
         Returns:
-                        (bool)  : whether piezo control is on or off.
+                        (int)   : the scan mode (1 = current, 2 = temperature, 3 = piezo).
         """
-        if status is not None:
-            yield self._write(str(chan), 'dl:pc:enabled', status)
-        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        if mode is not None:
+            if mode not in (0, 1, 2):
+                raise Exception("Error: invalid scan mode. Must be one of (0, 1, 2).")
+            yield self._write(str(chan), 'scan:enabled', mode)
+        resp = yield self._read(str(chan), 'scan:enabled')
         returnValue(resp)
 
-    @setting(513, 'Scan Shape', chan='i', shape='b', returns='b')
+    @setting(513, 'Scan Shape', chan='i', shape='i', returns='b')
     def scanShape(self, c, chan, shape=None):
         """
-        Toggle piezo control.
+        Get/set the scan amplitude.
         Arguments:
             chan        (int)   : the desired laser channel.
-            status      (bool)  : whether piezo control is on or off.
+            shape       (int)   : the desired scan shape (0 = sine, 1 = triangle, 2 = triangle rounded).
         Returns:
-                        (bool)  : whether piezo control is on or off.
+                        (int)   : the desired scan shape (0 = sine, 1 = triangle, 2 = triangle rounded).
         """
-        if status is not None:
-            yield self._write(str(chan), 'dl:pc:enabled', status)
-        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        if shape is not None:
+            if shape not in (0, 1, 2):
+                raise Exception("Error: invalid scan shape. Must be one of (0, 1, 2).")
+            yield self._write(str(chan), 'scan:signal-type', shape)
+        resp = yield self._read(str(chan), 'scan:signal-type')
         returnValue(resp)
 
     @setting(521, 'Scan Amplitude', chan='i', amp='b', returns='b')
     def scanAmplitude(self, c, chan, amp=None):
         """
-        Toggle piezo control.
+        Get/set the scan amplitude.
         Arguments:
             chan        (int)   : the desired laser channel.
-            status      (bool)  : whether piezo control is on or off.
+            amp         (float) : the scan amplitude.
         Returns:
-                        (bool)  : whether piezo control is on or off.
+                        (bool)  : the scan amplitude.
         """
-        if status is not None:
-            yield self._write(str(chan), 'dl:pc:enabled', status)
-        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        if amp is not None:
+            yield self._write(str(chan), 'scan:amplitude', amp)
+        resp = yield self._read(str(chan), 'scan:amplitude')
         returnValue(resp)
 
     @setting(522, 'Scan Offset', chan='i', offset='b', returns='b')
     def scanOffset(self, c, chan, offset=None):
         """
-        Toggle piezo control.
+        Get/set the scan offset.
         Arguments:
             chan        (int)   : the desired laser channel.
-            status      (bool)  : whether piezo control is on or off.
+            offset      (float) : the scan offset value.
         Returns:
-                        (bool)  : whether piezo control is on or off.
+                        (float) : the scan offset value.
         """
-        if status is not None:
-            yield self._write(str(chan), 'dl:pc:enabled', status)
-        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        if offset is not None:
+            yield self._write(str(chan), 'scan:offset', offset)
+        resp = yield self._read(str(chan), 'scan:offset')
         returnValue(resp)
 
     @setting(523, 'Scan Frequency', chan='i', freq='b', returns='b')
     def scanFrequency(self, c, chan, freq=None):
         """
-        Toggle piezo control.
+        Get/set the scan frequency.
         Arguments:
             chan        (int)   : the desired laser channel.
-            status      (bool)  : whether piezo control is on or off.
+            freq        (float) : the scan frequency (in Hz).
         Returns:
-                        (bool)  : whether piezo control is on or off.
+                        (float) : the scan frequency (in Hz).
         """
-        if status is not None:
-            yield self._write(str(chan), 'dl:pc:enabled', status)
-        resp = yield self._read(str(chan), 'dl:pc:enabled')
+        if freq is not None:
+            yield self._write(str(chan), 'scan:frequency', freq)
+        resp = yield self._read(str(chan), 'scan:enabled')
         returnValue(resp)
 
 
@@ -405,7 +409,7 @@ class TopticaServer(LabradServer, PollingServer):
         pass
         # yield self.temperature_read(None, None)
 
-
+#todo: subscribe to param updates
 if __name__ == '__main__':
     from labrad import util
     util.runServer(TopticaServer())
