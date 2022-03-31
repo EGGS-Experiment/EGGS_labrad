@@ -3,7 +3,7 @@ class AndorConfig(object):
     path to atmcd64d.dll SDK library
     '''
     #default parameters
-    path_to_dll = ('C:\\Users\\Elizabeth\\Documents\\Code\\Andor\\atmcd64d_legacy.dll')
+    path_to_dll = ('C:\\Program Files\\Andor SOLIS\\atmcd64d_legacy.dll')
     #path_to_dll = ('C:\\Users\\spectroscopy\\Documents\\Code\\Andor\\atmcd64d_legacy.dll')
     set_temperature = -20 #degrees C
     read_mode = 'Image'
