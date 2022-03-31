@@ -109,7 +109,7 @@ class TopticaServer(PollingServer):
 
     # STATUS
     # todo: errors
-    # todo: param updates
+    # todo: param updates/signals/subscription
     @setting(111, 'Device List', returns='?')
     def deviceList(self, c, chan):
         """

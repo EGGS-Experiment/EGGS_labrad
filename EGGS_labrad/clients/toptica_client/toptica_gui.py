@@ -1,7 +1,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QGroupBox, QPushButton, QDoubleSpinBox,\
-    QComboBox, QCheckBox, QScrollArea, QWidget, QVBoxLayout, QSizePolicy
+from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QComboBox, QScrollArea, QWidget, QSizePolicy
 
 from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
 

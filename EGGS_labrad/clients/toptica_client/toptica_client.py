@@ -38,15 +38,6 @@ class toptica_client(GUIClient):
         yield self.wavemeter.signal__lock_changed(LOCK_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.updateWMOutput, source=None, ID=OUTPUT_CHANGED_ID)
         yield self.wavemeter.signal__output_changed(OUTPUT_CHANGED_ID)
-        yield self.wavemeter.addListener(listener=self.toggleLock, source=None, ID=LOCK_CHANGED_ID)
-        yield self.wavemeter.signal__pidvoltage_changed(PID_CHANGED_ID)
-        yield self.wavemeter.addListener(listener=self.updatePIDvoltage, source=None, ID=PID_CHANGED_ID)
-        yield self.wavemeter.signal__channel_lock_changed(CHAN_LOCK_CHANGED_ID)
-        yield self.wavemeter.addListener(listener=self.toggleChannelLock, source=None, ID=CHAN_LOCK_CHANGED_ID)
-        yield self.wavemeter.signal__amplitude_changed(AMPLITUDE_CHANGED_ID)
-        yield self.wavemeter.addListener(listener=self.updateAmplitude, source=None, ID=AMPLITUDE_CHANGED_ID)
-        yield self.wavemeter.signal__pattern_changed(PATTERN_CHANGED_ID)
-        yield self.wavemeter.addListener(listener=self.updatePattern, source=None, ID=PATTERN_CHANGED_ID)
 
     @inlineCallbacks
     def initData(self):
@@ -71,10 +62,7 @@ class toptica_client(GUIClient):
             widget.spinFreq.setValue(float(lock_frequency))
 
     def initGUI(self):
-        # global wavemeter settings
-        #self.gui.lockSwitch.clicked.connect(lambda state: self.wavemeter.set_lock_state(state))
-        #self.gui.startSwitch.clicked.connect(lambda state: self.wavemeter.set_wlm_output(state))
-        # channel wavemeter settings
+        # laser channel settings
         for channel_name, channel_params in self.chaninfo.items():
             # expand parameters and get GUI widget
             wmChannel, frequency, _, _, dacPort, _ = channel_params
