@@ -108,7 +108,6 @@ class TopticaServer(PollingServer):
 
 
     # STATUS
-    # todo: errors
     # todo: param updates/signals/subscription
     @setting(111, 'Device List', returns='?')
     def deviceList(self, c, chan):
@@ -120,16 +119,18 @@ class TopticaServer(PollingServer):
         device_list = [(int(chan_num), chan_params['name'], chan_params['wavelength']) for chan_num, chan_params in self.channels.items()]
         return device_list
 
-    @setting(112, 'Device Info', chan='i', returns='*(s?)')
+    @setting(112, 'Device Info', chan='i', returns='*(ss)')
     def deviceInfo(self, c, chan):
         """
         Returns key information about the specified laser channel.
-        Returns: todo finish
+        Returns:
+                    *(str, str): a list of tuples (param_name, param_value).
         """
         chan = str(chan)
         if chan in self.channels.keys():
             param_dict = self.channels[chan]
-            return list(zip(param_dict.keys(), str(param_dict.values())))
+            param_dict_values = map(str, param_dict.values())
+            return list(zip(param_dict.keys(), param_dict_values))
         else:
             raise Exception('Error: channel does not exist.')
 
@@ -342,11 +343,11 @@ class TopticaServer(PollingServer):
         Returns:
                         (int)   : the scan mode (1 = current, 2 = temperature, 3 = piezo).
         """
-        #todo: convert mode to actual mode number
+        mode_to_output = {1: 51, 2: 56, 3: 50}
         if mode is not None:
             if mode not in (0, 1, 2):
                 raise Exception("Error: invalid scan mode. Must be one of (0, 1, 2).")
-            yield self._write(chan, 'scan:output-channel', mode)
+            yield self._write(chan, 'scan:output-channel', mode_to_output[mode])
         resp = yield self._read(chan, 'scan:output-channel')
         returnValue(resp)
 
