@@ -14,11 +14,15 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-from EGGS_labrad.servers import PollingServer
-from labrad.server import setting
+from labrad.server import setting, Signal
 from twisted.internet.defer import returnValue, inlineCallbacks
-
 from toptica.lasersdk.client import Client, NetworkConnection
+
+from EGGS_labrad.servers import PollingServer
+
+CURRENTSIGNAL = 913548
+TEMPERATURESIGNAL = 913549
+VOLTAGESIGNAL = 913550
 
 
 class TopticaServer(PollingServer):
@@ -31,6 +35,13 @@ class TopticaServer(PollingServer):
     devices = {}
     device_params = {}
     channels = {}
+
+
+    # SIGNALS
+    current_update = Signal(CURRENTSIGNAL, 'signal: current updated', '(iv)')
+    temperature_update = Signal(TEMPERATURESIGNAL, 'signal: temperature updated', '(iv)')
+    voltage_update = Signal(VOLTAGESIGNAL, 'signal: voltage updated', '(iv)')
+
 
     @inlineCallbacks
     def initServer(self):
@@ -50,7 +61,7 @@ class TopticaServer(PollingServer):
             _, channel_list = yield reg.dir()
             for channel_num in channel_list:
                 dev_params = yield reg.get(channel_num)
-                self.channels[channel_num] = {'dev_params': dev_params}
+                self.channels[int(channel_num)] = {'dev_params': dev_params}
             yield reg.cd(tmp)
         except Exception as e:
             yield reg.cd(tmp)
@@ -65,6 +76,7 @@ class TopticaServer(PollingServer):
         # get laser parameters
         for chan_num in self.channels.keys():
             try:
+                chan_num = int(chan_num)
                 fac_params = yield self._read(chan_num, 'dl:factory-settings')
                 self.channels[chan_num]['name'] = yield self._read(chan_num, 'product-name')
                 self.channels[chan_num]['wavelength'] = fac_params[0]
@@ -74,7 +86,9 @@ class TopticaServer(PollingServer):
                 self.channels[chan_num]['temp_max'] = fac_params[4][1]
             except Exception as e:
                 print(e)
-        print(self.channels)
+        #todo: subscribe to things and call back via poll
+        # for client in self.devices.values():
+        #     client.subscribe()
 
     def stopServer(self):
         # close all devices on completion
@@ -109,7 +123,6 @@ class TopticaServer(PollingServer):
 
 
     # STATUS
-    # todo: param updates/signals/subscription
     @setting(111, 'Device List', returns='?')
     def deviceList(self, c, chan):
         """
@@ -117,7 +130,8 @@ class TopticaServer(PollingServer):
         Returns:
                 (int, str, int): (channel number, device name, center wavelength)
         """
-        device_list = [(int(chan_num), chan_params['name'], chan_params['wavelength']) for chan_num, chan_params in self.channels.items()]
+        device_list = [(chan_num, chan_params['name'], str(chan_params['wavelength']))
+                       for chan_num, chan_params in self.channels.items()]
         return device_list
 
     @setting(112, 'Device Info', chan='i', returns='*(ss)')
@@ -127,7 +141,6 @@ class TopticaServer(PollingServer):
         Returns:
                     *(str, str): a list of tuples (param_name, param_value).
         """
-        chan = str(chan)
         if chan in self.channels.keys():
             param_dict = self.channels[chan]
             param_dict_values = map(str, param_dict.values())
@@ -145,7 +158,7 @@ class TopticaServer(PollingServer):
                         (bool)  : the emission status of the laser head.
         """
         resp = yield self._read(chan, 'emission')
-        returnValue(float(resp))
+        returnValue(bool(resp))
 
 
     # CURRENT
@@ -222,7 +235,7 @@ class TopticaServer(PollingServer):
         """
         if temp is not None:
             if (temp <= 15) or (temp >= 50):
-                raise Exception('Error: target temperature is set too high. Must be less than 200mA.')
+                raise Exception('Error: target temperature is set too high. Must be less than 50C.')
             else:
                 yield self._write(chan, 'dl:tc:temp-set', temp)
         resp = yield self._read(chan, 'dl:tc:temp-set')
@@ -240,7 +253,7 @@ class TopticaServer(PollingServer):
         """
         if temp is not None:
             if (temp <= 15) or (temp >= 50):
-                raise Exception('Error: minimum temperature must be lower than maximum temperature.')
+                raise Exception('Error: maximum temperature must not exceed factory maximum settings.')
             else:
                 yield self._write(chan, 'dl:tc:limits:temp-max', temp)
         resp = yield self._read(chan, 'dl:tc:limits:temp-max')
@@ -254,9 +267,46 @@ class TopticaServer(PollingServer):
         Returns the actual piezo voltage of the selected laser head.
         Arguments:
             chan    (int)   : the desired laser channel.
+        Returns:
                     (float) : the piezo voltage (in V).
         """
         resp = yield self._read(chan, 'dl:pc:voltage-act')
+        returnValue(float(resp))
+
+    @setting(412, 'Piezo Set', chan='i', voltage='v', returns='v')
+    def piezoSet(self, c, chan, voltage=None):
+        """
+        Get/set the target piezo voltage of the selected laser head.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            voltage     (float) : the piezo voltage (in V).
+        Returns:
+                        (float) : the piezo voltage (in V).
+        """
+        if voltage is not None:
+            if (voltage <= 15) or (voltage >= 150):
+                raise Exception('Error: target voltage is set too high. Must be less than 150V.')
+            else:
+                yield self._write(chan, 'dl:pc:voltage-set', voltage)
+        resp = yield self._read(chan, 'dl:pc:voltage-set')
+        returnValue(float(resp))
+
+    @setting(413, 'Piezo Max', chan='i', voltage='v', returns='v')
+    def piezoMax(self, c, chan, voltage=None):
+        """
+        Get/set the maximum voltage of the selected laser head.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            voltage     (float) : the maximum piezo voltage (in V).
+        Returns:
+                        (float) : the maximum piezo voltage (in V).
+        """
+        if voltage is not None:
+            if (voltage <= 15) or (voltage >= 150):
+                raise Exception('Error: maximum temperature must not exceed factory maximum settings.')
+            else:
+                yield self._write(chan, 'dl:pc:voltage-max', voltage)
+        resp = yield self._read(chan, 'dl:pc:voltage-max')
         returnValue(float(resp))
 
 
@@ -400,7 +450,7 @@ class TopticaServer(PollingServer):
         resp = yield self._read(chan, 'dl:pc:external-input')
         returnValue(resp)
 
-    @setting(413, 'Feedback Factor', chan='i', factor='v', returns='v')
+    @setting(613, 'Feedback Factor', chan='i', factor='v', returns='v')
     def feedbackFactor(self, c, chan, factor=None):
         """
         Get/set the feedback input factor.
@@ -422,7 +472,6 @@ class TopticaServer(PollingServer):
     # HELPER
     @inlineCallbacks
     def _read(self, chan, param):
-        chan = str(chan)
         if chan not in self.channels.keys():
             raise Exception('Error: invalid channel.')
         dev_name, laser_num = self.channels[chan]['dev_params']
@@ -433,10 +482,9 @@ class TopticaServer(PollingServer):
 
     @inlineCallbacks
     def _write(self, chan, param, value):
-        chan = str(chan)
         if chan not in self.channels.keys():
             raise Exception('Error: invalid channel.')
-        dev_name, laser_num = self.channels[chan]
+        dev_name, laser_num = self.channels[chan]['dev_params']
         dev = self.devices[dev_name]
         #print('write: ', 'laser{:d}:{}'.format(laser_num, param), ', value: ', value)
         yield dev.set('laser{:d}:{}'.format(laser_num, param), value)
@@ -446,10 +494,11 @@ class TopticaServer(PollingServer):
     @inlineCallbacks
     def _poll(self):
         """
-        Polls #todo finish.
+        #todo finish
         """
         pass
-        # yield self.temperature_read(None, None)
+        # for client in self.devices.values():
+        #     client.poll()
 
 
 if __name__ == '__main__':

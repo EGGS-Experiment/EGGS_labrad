@@ -6,8 +6,8 @@ from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
 
 SHELL_FONT = 'MS Shell Dlg 2'
 LABEL_FONT = QFont(SHELL_FONT, pointSize=8)
-MAIN_FONT = QFont(SHELL_FONT, pointSize=14)
-DISPLAY_FONT = QFont(SHELL_FONT, pointSize=20)
+MAIN_FONT = QFont(SHELL_FONT, pointSize=13)
+DISPLAY_FONT = QFont(SHELL_FONT, pointSize=22)
 
 
 class toptica_channel(QFrame):
@@ -50,21 +50,20 @@ class toptica_channel(QFrame):
         box_layout = QGridLayout(box)
         # create labels
         chanLabel = QLabel('Channel:')
-        wavLabel = QLabel('Center Wavelength:')
+        wavLabel = QLabel('Center Wavelength (nm):')
         serLabel = QLabel('Device Name:')
-        emission_label = QLabel('Emission:')
-        for label in (chanLabel, wavLabel, serLabel, emission_label):
+        for label in (chanLabel, wavLabel, serLabel):
             label.setFont(LABEL_FONT)
             label.setAlignment(Qt.AlignBottom)
         # create displays
-        channelDisplay = QLabel('#1')
-        wavDisplay = QLabel('854.441')
-        serDisplay = QLabel('002129')
-        for label in (channelDisplay, wavDisplay, serDisplay):
+        box.channelDisplay = QLabel('1')
+        box.wavDisplay = QLabel('854.441')
+        box.serDisplay = QLabel('002129')
+        for label in (box.channelDisplay, box.wavDisplay, box.serDisplay):
             label.setFont(MAIN_FONT)
-            label.setAlignment(Qt.AlignRight)
+            label.setAlignment(Qt.AlignCenter)
         # emission
-        box.emissionButton = TextChangingButton(None)
+        box.emissionButton = TextChangingButton('Emission')
         # create labels
         feedback_label = QLabel('Feedback Channel:')
         feedbackMode_label = QLabel('Feedback Mode:')
@@ -75,8 +74,8 @@ class toptica_channel(QFrame):
         # feedback
         box.feedbackFactor = QDoubleSpinBox()
         box.feedbackFactor.setDecimals(4)
-        box.feedbackFactor.setSingleStep(0.0004)
-        box.feedbackFactor.setRange(0.001, 10)
+        box.feedbackFactor.setSingleStep(0.0001)
+        box.feedbackFactor.setRange(0, 200)
         box.feedbackFactor.setKeyboardTracking(False)
         box.feedbackFactor.setFont(QFont(SHELL_FONT, pointSize=10))
         box.feedbackChannel = QComboBox()
@@ -92,19 +91,18 @@ class toptica_channel(QFrame):
         box.feedbackMode.setFont(QFont(SHELL_FONT, pointSize=10))
         # lay out
         box_layout.addWidget(chanLabel,                 0, 0)
-        box_layout.addWidget(channelDisplay,            1, 0)
+        box_layout.addWidget(box.channelDisplay,        1, 0)
         box_layout.addWidget(wavLabel,                  2, 0)
-        box_layout.addWidget(wavDisplay,                3, 0)
+        box_layout.addWidget(box.wavDisplay,            3, 0)
         box_layout.addWidget(serLabel,                  4, 0)
-        box_layout.addWidget(serDisplay,                5, 0)
-        box_layout.addWidget(emission_label,            6, 0)
-        box_layout.addWidget(box.emissionButton,        7, 0)
-        box_layout.addWidget(feedback_label,            8, 0)
-        box_layout.addWidget(box.feedbackChannel,       9, 0)
-        box_layout.addWidget(feedbackMode_label,        10, 0)
-        box_layout.addWidget(box.feedbackMode,          11, 0)
+        box_layout.addWidget(box.serDisplay,            5, 0)
+        box_layout.addWidget(box.emissionButton,        6, 0)
+        box_layout.addWidget(feedback_label,            7, 0)
+        box_layout.addWidget(box.feedbackChannel,       8, 0)
+        box_layout.addWidget(feedbackMode_label,        9, 0)
+        box_layout.addWidget(box.feedbackMode,          10, 0)
         box_layout.addWidget(feedbackFactor_label,      12, 0)
-        box_layout.addWidget(box.feedbackFactor,        13, 0)
+        box_layout.addWidget(box.feedbackFactor,        12, 0)
         box_layout.minimumSize()
         # set self attribute and create wrapper
         setattr(self, 'statusBox', box)
@@ -125,15 +123,15 @@ class toptica_channel(QFrame):
         # create display
         box.actualValue = QLabel('00.0000')
         box.actualValue.setFont(DISPLAY_FONT)
-        box.actualValue.setAlignment(Qt.AlignCenter)
+        box.actualValue.setAlignment(Qt.AlignRight)
         # create boxes
         box.setBox = QDoubleSpinBox()
-        box.minBox = QDoubleSpinBox()
+        #box.minBox = QDoubleSpinBox()
         box.maxBox = QDoubleSpinBox()
-        for doublespinbox in (box.setBox, box.minBox, box.maxBox):
+        for doublespinbox in (box.setBox, box.maxBox):
             doublespinbox.setDecimals(4)
-            doublespinbox.setSingleStep(0.0004)
-            doublespinbox.setRange(15, 50)
+            doublespinbox.setSingleStep(0.0001)
+            doublespinbox.setRange(0, 200)
             doublespinbox.setKeyboardTracking(False)
             doublespinbox.setFont(QFont(SHELL_FONT, pointSize=10))
         # create buttons
@@ -142,12 +140,12 @@ class toptica_channel(QFrame):
         # lay out
         box_layout.addWidget(actual_label,          0, 0, 1, 1)
         box_layout.addWidget(box.actualValue,       1, 0, 1, 1)
-        box_layout.addWidget(set_label,             2, 0, 1, 1)
-        box_layout.addWidget(box.setBox,            3, 0, 1, 1)
-        box_layout.addWidget(max_label,             4, 0, 1, 1)
-        box_layout.addWidget(box.maxBox,            5, 0, 1, 1)
-        box_layout.addWidget(box.lockswitch,        6, 0, 1, 1)
-        box_layout.addWidget(box.record_button,     7, 0, 1, 1)
+        box_layout.addWidget(box.record_button,     2, 0, 1, 1)
+        box_layout.addWidget(set_label,             3, 0, 1, 1)
+        box_layout.addWidget(box.setBox,            4, 0, 1, 1)
+        box_layout.addWidget(max_label,             5, 0, 1, 1)
+        box_layout.addWidget(box.maxBox,            6, 0, 1, 1)
+        box_layout.addWidget(box.lockswitch,        7, 0, 1, 1)
         box_layout.minimumSize()
         # connect signals to slots
         box.lockswitch.toggled.connect(lambda status, parent=objName: self._lock(status, parent))
@@ -185,8 +183,8 @@ class toptica_channel(QFrame):
         box.offBox = QDoubleSpinBox()
         for doublespinbox in (box.freqBox, box.ampBox, box.offBox):
             doublespinbox.setDecimals(4)
-            doublespinbox.setSingleStep(0.0004)
-            doublespinbox.setRange(15, 50)
+            doublespinbox.setSingleStep(0.0001)
+            doublespinbox.setRange(0, 200)
             doublespinbox.setKeyboardTracking(False)
             doublespinbox.setFont(QFont(SHELL_FONT, pointSize=10))
         # lay out
@@ -214,7 +212,7 @@ class toptica_channel(QFrame):
     def _lock(self, status, objName):
         parent = getattr(self, objName)
         parent.setBox.setEnabled(status)
-        parent.minBox.setEnabled(status)
+        #parent.minBox.setEnabled(status)
         parent.maxBox.setEnabled(status)
 
 
@@ -223,22 +221,24 @@ class toptica_gui(QFrame):
     The full Toptica GUI.
     """
 
-    def __init__(self, numChannels=4):
+    def __init__(self, channelinfo=None):
         super().__init__()
         self.channels = {}
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle('Toptica GUI')
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-        self.makeLayout(numChannels)
+        #self.makeLayout(0)
 
-    def makeLayout(self, numChannels):
+    def makeLayout(self, channelinfo):
         layout = QGridLayout(self)
         # scrollable holder for laser channels
         wm_scroll = QScrollArea()
         wm_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         wmChan_widget = QWidget()
         wmChan_layout = QGridLayout(wmChan_widget)
-        for i in range(numChannels):
+        channel_nums = list(zip(*channelinfo))[0]
+        #todo: get whether piezo exists
+        for i in channel_nums:
             channel_gui = toptica_channel(piezoControl=True)
             self.channels[i] = channel_gui
             wmChan_layout.addWidget(channel_gui, i, 0, 1, 1)
