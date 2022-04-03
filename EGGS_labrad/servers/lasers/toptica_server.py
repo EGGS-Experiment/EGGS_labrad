@@ -74,6 +74,7 @@ class TopticaServer(PollingServer):
                 self.channels[chan_num]['temp_max'] = fac_params[4][1]
             except Exception as e:
                 print(e)
+        print(self.channels)
 
     def stopServer(self):
         # close all devices on completion
@@ -227,85 +228,27 @@ class TopticaServer(PollingServer):
         resp = yield self._read(chan, 'dl:tc:temp-set')
         returnValue(float(resp))
 
-    @setting(323, 'Temperature Max', chan='i', temp='(vv)', returns='(vv)')
+    @setting(323, 'Temperature Max', chan='i', temp='v', returns='v')
     def tempMax(self, c, chan, temp=None):
         """
-        Get/set the minimum and maximum temperatures of the selected laser head.
+        Get/set the maximum temperature of the selected laser head.
         Arguments:
             chan    (int)           : the desired laser channel.
-            temp    (float, float)  : the temperatures bounds (minimum, maximum) in K.
+            temp    (float)         : the temperatures bound (maximum) in K.
         Returns:
-                    (float)         : the temperatures bounds (minimum, maximum) in K.
+                    (float)         : the temperatures bound (maximum) in K.
         """
         if temp is not None:
-            if temp[0] >= temp[1]:
-                raise Exception('Error: target temperature is set too high. Must be less than 200mA.')
-            elif (temp[0] <= 15) or (temp[1] >= 50):
+            if (temp <= 15) or (temp >= 50):
                 raise Exception('Error: minimum temperature must be lower than maximum temperature.')
             else:
-                yield self._write(chan, 'dl:tc:limits:temp-min', temp[0])
-                yield self._write(chan, 'dl:tc:limits:temp-max', temp[1])
-        respMin = yield self._read(chan, 'dl:tc:limits:temp-min')
-        respMax = yield self._read(chan, 'dl:tc:limits:temp-max')
-        returnValue((float(respMin), float(respMax)))
+                yield self._write(chan, 'dl:tc:limits:temp-max', temp)
+        resp = yield self._read(chan, 'dl:tc:limits:temp-max')
+        returnValue(float(resp))
 
 
     # PIEZO
-    @setting(411, 'Piezo Toggle', chan='i', status='b', returns='b')
-    def piezoToggle(self, c, chan, status=None):
-        """
-        Toggle piezo control.
-        Arguments:
-            chan        (int)   : the desired laser channel.
-            status      (bool)  : whether piezo control is on or off.
-        Returns:
-                        (bool)  : whether piezo control is on or off.
-        """
-        if status is not None:
-            yield self._write(chan, 'dl:pc:enabled', status)
-        resp = yield self._read(chan, 'dl:pc:enabled')
-        returnValue(resp)
-
-    @setting(412, 'Piezo Channel', chan='i', input_chan='i', returns='i')
-    def piezoChannel(self, c, chan, input_chan=None):
-        """
-        Assign an input channel for piezo control.
-        Arguments:
-            chan        (int)   : the desired laser channel.
-            input_chan  (int)   : the input channel for the error signal.
-        Returns:
-                        (int)   : the input channel for the error signal.
-        """
-        conv_dict = {1: 0, 2: 1, 3: 2, 4: 4}
-        if input_chan is not None:
-            if input_chan not in (1, 2, 3, 4):
-                raise Exception('Error: input channel must be one of (1, 2, 3, 4).')
-            else:
-                # convert channel to device value
-                input_chan = conv_dict[input_chan]
-                yield self._write(chan, 'dl:pc:external-input', input_chan)
-        resp = yield self._read(chan, 'dl:pc:external-input')
-        returnValue(resp)
-
-    @setting(413, 'Piezo Factor', chan='i', factor='v', returns='v')
-    def piezoFactor(self, c, chan, factor=None):
-        """
-        Get/set the piezo input factor.
-        Arguments:
-            chan        (int)   : the desired laser channel.
-            factor      (float) : the piezo input factor
-        Returns:
-                        (float) : the piezo input factor
-        """
-        if factor is not None:
-            if (factor < 0.01) or (factor > 10):
-                raise Exception('Error: ARC factor must be within [0.01, 10].')
-            else:
-                yield self._write(chan, 'dl:pc:external-input:factor', factor)
-        resp = yield self._read(chan, 'dl:pc:external-input:factor')
-        returnValue(resp)
-
-    @setting(414, 'Piezo Actual', chan='i', returns='v')
+    @setting(411, 'Piezo Actual', chan='i', returns='v')
     def piezoActual(self, c, chan):
         """
         Returns the actual piezo voltage of the selected laser head.
@@ -411,6 +354,68 @@ class TopticaServer(PollingServer):
         if freq is not None:
             yield self._write(chan, 'scan:frequency', freq)
         resp = yield self._read(chan, 'scan:enabled')
+        returnValue(resp)
+
+
+    # FEEDBACK
+    @setting(611, 'Feedback Mode', chan='i', mode='i', returns='i')
+    def feedbackMode(self, c, chan, mode=None):
+        """
+        Assign an input channel for piezo control.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            mode        (int)   : the parameter for feedback to control: (0 = Off, 1 = Current, 2 = Temperature, 3 = Piezo)
+        Returns:
+                        (int)   : the parameter for feedback to control
+        """
+        conv_dict = {1: 0, 2: 1, 3: 2, 4: 4}
+        if input_chan is not None:
+            if input_chan not in (1, 2, 3, 4):
+                raise Exception('Error: input channel must be one of (1, 2, 3, 4).')
+            else:
+                # convert channel to device value
+                input_chan = conv_dict[input_chan]
+                yield self._write(chan, 'dl:pc:external-input', input_chan)
+        resp = yield self._read(chan, 'dl:pc:external-input')
+        returnValue(resp)
+
+    @setting(612, 'Feedback Channel', chan='i', input_chan='i', returns='i')
+    def feedbackChannel(self, c, chan, input_chan=None):
+        """
+        Assign an input channel for feedback.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            input_chan  (int)   : the input channel for the feedback signal. Can be one of (1, 2, 3, 4).
+        Returns:
+                        (int)   : the input channel for the feedback signal.
+        """
+        conv_dict = {1: 0, 2: 1, 3: 2, 4: 4}
+        if input_chan is not None:
+            if input_chan not in (1, 2, 3, 4):
+                raise Exception('Error: input channel must be one of (1, 2, 3, 4).')
+            else:
+                # convert channel to device value
+                input_chan = conv_dict[input_chan]
+                yield self._write(chan, 'dl:pc:external-input', input_chan)
+        resp = yield self._read(chan, 'dl:pc:external-input')
+        returnValue(resp)
+
+    @setting(413, 'Feedback Factor', chan='i', factor='v', returns='v')
+    def feedbackFactor(self, c, chan, factor=None):
+        """
+        Get/set the feedback input factor.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            factor      (float) : the feedback input factor.
+        Returns:
+                        (float) : the feedback input factor.
+        """
+        if factor is not None:
+            if (factor < 0.01) or (factor > 10):
+                raise Exception('Error: ARC factor must be within [0.001, 10].')
+            else:
+                yield self._write(chan, 'dl:pc:external-input:factor', factor)
+        resp = yield self._read(chan, 'dl:pc:external-input:factor')
         returnValue(resp)
 
 
