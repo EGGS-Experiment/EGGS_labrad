@@ -33,7 +33,7 @@ IF %dev_flag%==1 (
 )
 
 REM: Clients
-START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
+TIMEOUT 8 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
 :SHELL
 
