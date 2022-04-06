@@ -59,12 +59,12 @@ class toptica_client(GUIClient):
             # todo
             # current
             current_set = yield self.toptica.current_set(chan_num)
-            current_max = yield self.toptica.current_set(chan_num)
+            current_max = yield self.toptica.current_max(chan_num)
             widget.currBox.setBox.setValue(current_set)
             widget.currBox.maxBox.setValue(current_max)
             # temperature
             temperature_set = yield self.toptica.temperature_set(chan_num)
-            temperature_max = yield self.toptica.temperature_set(chan_num)
+            temperature_max = yield self.toptica.temperature_max(chan_num)
             widget.tempBox.setBox.setValue(temperature_set)
             widget.tempBox.maxBox.setValue(temperature_max)
             # piezo

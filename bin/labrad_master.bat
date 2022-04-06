@@ -26,13 +26,6 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 REM: Don't open any servers if raw flag is active
 IF %raw_flag%==1 (GOTO SHELL)
 
-REM: Experiment Servers
-START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_experiments.bat
-
-REM: Device Bus Servers
-START "GPIB Device Manager" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\gpib\gpib_device_manager.py"
-TIMEOUT 1 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
-
 REM: Clients
 START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
@@ -55,7 +48,7 @@ GOTO EOF
 @ECHO LabRAD Master
 @ECHO Optional Arguments:
 @ECHO    -h, --help          show this message and exit
-@ECHO    -s                  start all day-to-day servers (specific to EGGS Experiment)
+@ECHO    -s                  start all day-to-day device servers (specific to EGGS Experiment)
 @ECHO    -r                  start only the labrad core (i.e. the manager, a node, and the Chromium GUI)
 @ECHO:
 
