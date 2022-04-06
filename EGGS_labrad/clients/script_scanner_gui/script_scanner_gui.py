@@ -2,14 +2,15 @@ from PyQt5 import QtWidgets
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients.connect import connection
 
-#import constituent widgets
-#need to use try/except since relative imports don't work when called externally
+# import constituent widgets
+# need to use try/except since relative imports don't work when called externally
 try:
     from scripting import scripting_widget
     from tree_view import ParametersEditor
 except:
     from .scripting import scripting_widget
     from .tree_view import ParametersEditor
+
 
 class script_scanner_gui(QtWidgets.QWidget):
 

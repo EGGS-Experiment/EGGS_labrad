@@ -9,6 +9,7 @@ basepath = os.path.dirname(os.path.dirname(__file__))
 path = os.path.join(basepath, "Views", "selectScan.ui")
 base, form = uic.loadUiType(path)
 
+
 class dialog_ui(base, form):
     def __init__(self, parent=None):
         super(dialog_ui, self).__init__(parent)
