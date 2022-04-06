@@ -13,8 +13,8 @@ class wavemeter_measurement(experiment):
     name = 'Wavemeter Measurement'
 
     exp_parameters = [
-        ('WavemeterMeasurement', 'Parameter'),
-        ('WavemeterMeasurement', 'Channel')
+        # ('WavemeterMeasurement', 'Parameter'),
+        ('WavemeterMeasurement', 'channel')
     ]
 
     @classmethod
@@ -33,23 +33,25 @@ class wavemeter_measurement(experiment):
             self.wm = self.cxn_wm.multiplexerserver
             # dataset context
             self.cr_wm = self.cxn.context()
+            # assign parameters
+            self.p = self.parameters
+            self.chan = self.p.WavemeterMeasurement.channel
+            # get channel name and wavelength
+            # get function to poll (freq, power)
+            lock_freq = float(self.wm.get_pid_course(self.chan))
+            self.lock_wav = round(3e8 / lock_freq / 1e3)
+            self.wm_func = self.wm.get_frequency
             # set up data vault
             self.set_up_datavault()
+            # elif th1 == th2:
+            #     self.wm_func = self.wm.get_amplitude
         except Exception as e:
             print(e)
 
-        # get parameters
-
-        # get function to poll (freq, power)
-        if th1 == th2:
-            self.wm_func = self.wm.get_frequency
-        elif th1 == th2:
-            self.wm_func = self.wm.get_amplitude
-
     def run(self, cxn, context, replacement_parameters={}):
         starttime = time()
-        while True:
-            freq = self.func(14)
+        while (True) and (not self.pause_or_stop()):
+            freq = self.wm_func(self.chan)
             elapsedtime = time() - starttime
             self.dv.add(elapsedtime, freq, context=self.cr_wm)
             sleep(5)
@@ -63,11 +65,10 @@ class wavemeter_measurement(experiment):
         year = str(date.year)
         month = '{:02d}'.format(date.month)
         trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
-        #todo: fix
-        trunk2 = '{0:s}_{1:02d}:{2:02d}'.format('397 Measure', date.hour, date.minute)
+        trunk2 = '{0:d} Measure_{1:02d}:{2:02d}'.format(self.lock_wav, date.hour, date.minute)
         self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.cr_wm)
-        #todo: fix
-        self.dv.new('397nm Measurement', [('Elapsed time', 's')], [('397', 'Frequency', 'THz')], context=self.cr_wm)
+        self.dv.new('{:d}nm Measurement'.format(self.lock_wav), [('Elapsed time', 's')],
+                    [('{:d}'.format(self.lock_wav), 'Frequency', 'THz')], context=self.cr_wm)
 
         # add parameters to datavault
         for parameter in self.p:
