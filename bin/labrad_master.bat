@@ -26,9 +26,6 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 REM: Don't open any servers if raw flag is active
 IF %raw_flag%==1 (GOTO SHELL)
 
-REM: Clients
-START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
-
 REM: ARTIQ
 START /min CMD /c %EGGS_LABRAD_ROOT%\bin\artiq_start.bat
 
@@ -39,6 +36,9 @@ IF %server_flag%==1 (
     TIMEOUT 8 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
     TIMEOUT 8 > NUL && CALL %EGGS_LABRAD_ROOT%\bin\server_cxn.bat
 ) ELSE ( CALL %EGGS_LABRAD_ROOT%\bin\labrad_cxn.bat )
+
+REM: Clients
+START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
 GOTO EOF
 
