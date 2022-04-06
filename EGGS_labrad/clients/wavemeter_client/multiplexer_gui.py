@@ -35,13 +35,13 @@ class multiplexer_pid(QFrame):
         self.active_status.setStyleSheet('background-color: red')
         self.active_status.setFont(main_font)
         channelNum_label = QLabel('Channel:')
-        self.channelNum = QLabel('0')
+        self.channelNum = QLabel('N/A')
         self.channelNum.setFont(main_font)
         dacPort_label = QLabel('DAC Port:')
-        self.dacPort_display = QLabel('0')
+        self.dacPort_display = QLabel('N/A')
         self.dacPort_display.setFont(main_font)
         lock_freq_label = QLabel('Lock Frequency (THz):')
-        self.lock_freq = QLabel('0')
+        self.lock_freq = QLabel('N/A')
         self.lock_freq.setFont(main_font)
 
         # labels
