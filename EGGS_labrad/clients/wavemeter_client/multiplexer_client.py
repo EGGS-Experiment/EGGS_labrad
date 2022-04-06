@@ -138,6 +138,8 @@ class multiplexer_client(GUIClient):
         #                                           self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
         #self.gui.pidGUI.polarityBox.currentIndexChanged.connect(lambda index, _dacPort=dacPort: self.changePolarity(index, _dacPort))
 
+
+    # SLOTS
     def updateFrequency(self, c, signal):
         chan, freq = signal
         if chan in self.gui.channels.keys():

@@ -27,7 +27,7 @@ dv.new('397nm Power', [('Elapsed time', 's')], [('397', 'Frequency', 'THz')], co
 # start recording
 starttime = time()
 while True:
-    freq = wm.get_frequency(5)
+    freq = wm.get_frequency(14)
     elapsedtime = time() - starttime
     dv.add(elapsedtime, freq, context=cr_dv)
     sleep(5)

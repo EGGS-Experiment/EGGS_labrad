@@ -31,6 +31,7 @@ class GUIClient(ABC):
         self.reactor = reactor
         self.cxn = cxn
         self.parent = parent
+        #todo: should getgui be after connectlabrad and initclient so we can access config?
         self.getgui()
         # initialization sequence
         d = self._connectLabrad()
