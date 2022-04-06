@@ -45,6 +45,7 @@ class toptica_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
+        #todo: remove S/N from device name
         # set display for each channel
         for chan_num, widget in self.gui.channels.items():
             # status
