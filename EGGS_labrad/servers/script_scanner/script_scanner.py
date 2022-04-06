@@ -83,10 +83,11 @@ class ScriptScanner(ScriptSignalsServer):
                 import_module(import_path)
                 # gets the file
                 module = sys.modules[import_path]
+                print(module)
                 # gets the experiment class from the module
                 cls = getattr(module, class_name)
             except ImportError as e:
-                print('Script Control Error importing: ', e)
+                print('Script Control Error importing:', e)
             except AttributeError:
                 print('There is no class {0} in module {1}'.format(class_name, module))
             except SyntaxError as e:

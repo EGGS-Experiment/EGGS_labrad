@@ -9,7 +9,8 @@ class config(object):
     scripts = [('EGGS_labrad.scripts.experiments.vibration_measurement', 'vibration_measurement'),
                ('EGGS_labrad.scripts.experiments.test_experiment', 'test_experiment'),
                ('EGGS_labrad.scripts.experiments.sample_experiment', 'conflicting_experiment'),
-               ('EGGS_labrad.scripts.experiments.cooldown_experiment', 'cooldown_experiment')
+               ('EGGS_labrad.scripts.experiments.cooldown_experiment', 'cooldown_experiment'),
+               ('EGGS_labrad.scripts.experiments.wavemeter_measurement', 'wavemeter_measurement')
         ]
 
     allowed_concurrent = {
