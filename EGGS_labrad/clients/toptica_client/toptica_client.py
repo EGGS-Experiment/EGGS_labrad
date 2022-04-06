@@ -1,7 +1,7 @@
 from twisted.internet.defer import inlineCallbacks
-
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.toptica_client.toptica_gui import toptica_gui
+
 TOPTICA_CHANNELS = [(1, 'DLpro (S/N 029432)', '397'),
                     (2, 'DLpro (S/N 022111)', '852.36'),
                     (3, 'DLpro (S/N 029431)', '422'),
@@ -9,8 +9,7 @@ TOPTICA_CHANNELS = [(1, 'DLpro (S/N 029432)', '397'),
 
 CURRENTUPDATED_ID = 192611
 TEMPERATUREUPDATED_ID = 192612
-VOLTAGEUPDATED_ID = 192613
-
+PIEZOUPDATED_ID = 192613
 
 
 class toptica_client(GUIClient):
@@ -31,9 +30,18 @@ class toptica_client(GUIClient):
         self.gui.show()
         # connect to device signals
         yield self.toptica.signal__current_updated(CURRENTUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updateCurrent, source=None, ID=CURRENTUPDATED_ID)
         yield self.toptica.signal__temperature_updated(TEMPERATUREUPDATED_ID)
-        yield self.toptica.signal__voltage_updated(VOLTAGEUPDATED_ID)
-        yield self.toptica.addListener(listener=self.updateFrequency, source=None, ID=CURRENTUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updateTemperature, source=None, ID=TEMPERATUREUPDATED_ID)
+        yield self.toptica.signal__piezo_updated(PIEZOUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updatePiezo, source=None, ID=PIEZOUPDATED_ID)
+        # set recording stuff
+        self.c_record = self.cxn.context()
+        self.recording = False
+        # start device polling if not already started
+        poll_params = yield self.toptica.polling()
+        if not poll_params[0]:
+            yield self.toptica.polling(True, 5.0)
 
     @inlineCallbacks
     def initData(self):
@@ -75,6 +83,7 @@ class toptica_client(GUIClient):
     def initGUI(self):
         # laser channel settings
         for chan_num, widget in self.gui.channels.items():
+            #todo: set emission button
             # assign feedback slots
             # todo
             # assign current slots
@@ -107,7 +116,7 @@ class toptica_client(GUIClient):
         if chan_num in self.gui.channels.keys():
             self.gui.channels[chan_num].tempBox.actualValue.setText('{:0.4f}'.format(temp))
 
-    def updateVoltage(self, c, signal):
+    def updatePiezo(self, c, signal):
         chan_num, voltage = signal
         if chan_num in self.gui.channels.keys():
             self.gui.channels[chan_num].piezoBox.actualValue.setText('{:0.4f}'.format(voltage))

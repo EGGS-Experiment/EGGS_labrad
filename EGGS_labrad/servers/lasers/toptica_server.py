@@ -86,9 +86,6 @@ class TopticaServer(PollingServer):
                 self.channels[chan_num]['temp_max'] = fac_params[4][1]
             except Exception as e:
                 print('Channel ', chan_num, ':', e)
-        #todo: subscribe to things and call back via poll
-        # for client in self.devices.values():
-        #     client.subscribe()
 
     def stopServer(self):
         # close all devices on completion
@@ -419,13 +416,13 @@ class TopticaServer(PollingServer):
                         (int)   : the parameter for feedback to control
         """
         conv_dict = {1: 0, 2: 1, 3: 2, 4: 4}
-        if input_chan is not None:
-            if input_chan not in (1, 2, 3, 4):
+        if mode is not None:
+            if mode not in (1, 2, 3, 4):
                 raise Exception('Error: input channel must be one of (1, 2, 3, 4).')
             else:
                 # convert channel to device value
-                input_chan = conv_dict[input_chan]
-                yield self._write(chan, 'dl:pc:external-input', input_chan)
+                mode = conv_dict[mode]
+                yield self._write(chan, 'dl:pc:external-input', mode)
         resp = yield self._read(chan, 'dl:pc:external-input')
         returnValue(resp)
 

@@ -31,11 +31,12 @@ class GUIClient(ABC):
         self.reactor = reactor
         self.cxn = cxn
         self.parent = parent
-        #todo: should getgui be after connectlabrad and initclient so we can access config?
         self.getgui()
+        #todo: move getgui to after initclient
         # initialization sequence
         d = self._connectLabrad()
         d.addCallback(self._initClient)
+        # initData has to be before initGUI otherwise signals will be active
         d.addCallback(self._initData)
         d.addCallback(self._initGUI)
 
@@ -74,9 +75,8 @@ class GUIClient(ABC):
         try:
             yield self.initClient()
         except Exception as e:
-            self.gui.setEnabled(False)
-            print('Error in initClient.')
-            print(e)
+            #self.gui.setEnabled(False)
+            print('Error in initClient:', e)
         return cxn
 
     @inlineCallbacks
@@ -85,8 +85,7 @@ class GUIClient(ABC):
             yield self.initData()
         except Exception as e:
             self.gui.setEnabled(False)
-            print('Error in initData.')
-            print(e)
+            print('Error in initData:', e)
         return cxn
 
     @inlineCallbacks
@@ -95,8 +94,7 @@ class GUIClient(ABC):
             yield self.initGUI()
         except Exception as e:
             self.gui.setEnabled(False)
-            print('Error in initGUI.')
-            print(e)
+            print('Error in initGUI:', e)
         return cxn
 
     @inlineCallbacks
@@ -162,7 +160,6 @@ class GUIClient(ABC):
         Called during __init__.
         Used to return an instantiated GUI class so it can be used by GUIClient.
         """
-        #todo: try making it an @property or ABC
         pass
 
     def initClient(self):
@@ -189,7 +186,6 @@ class GUIClient(ABC):
         Should be used to connect GUI signals to slots and initialize the GUI.
         """
         pass
-
 
 
 class PollingClient(GUIClient):
