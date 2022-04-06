@@ -5,7 +5,7 @@
 
 REM: MOVE TO ARTIQ ROOT
 CD %ARTIQ_ROOT%
-CALL conda activate labart2
+CALL conda activate artiq
 
 SETLOCAL EnableDelayedExpansion
 
@@ -31,9 +31,12 @@ IF NOT %ddb_ind%==0 (CALL SET ddb_name=%ARTIQ_ROOT%\%%%ddb_ind%%
 IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
 ) ELSE (CALL SET ip_addr=%ARTIQ_HOST%)
 
+ECHO %ddb_name%
+ECHO %ip_addr%
+TIMEOUT 3
 REM: Start ARTIQ interface
-REM START "ARTIQ Master" CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"
-START "ARTIQ Master" CMD "/c artiq_master --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"
+TIMEOUT 3 > NUL && START "ARTIQ Master" /min CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"
+REM: START "ARTIQ Master" CMD "/c artiq_master --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"
 TIMEOUT 3 > NUL && START "ARTIQ Dashboard" /min CMD "/c TIMEOUT 2 && CALL artiq_dashboard"
 TIMEOUT 3 > NUL && START "ARTIQ Controller Manager" /min CMD "/k TIMEOUT 2 && artiq_ctlmgr"
 
