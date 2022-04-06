@@ -22,7 +22,7 @@ from EGGS_labrad.servers import PollingServer
 
 CURRENTSIGNAL = 913548
 TEMPERATURESIGNAL = 913549
-VOLTAGESIGNAL = 913550
+PIEZOSIGNAL = 913550
 
 
 class TopticaServer(PollingServer):
@@ -40,7 +40,7 @@ class TopticaServer(PollingServer):
     # SIGNALS
     current_update = Signal(CURRENTSIGNAL, 'signal: current updated', '(iv)')
     temperature_update = Signal(TEMPERATURESIGNAL, 'signal: temperature updated', '(iv)')
-    voltage_update = Signal(VOLTAGESIGNAL, 'signal: voltage updated', '(iv)')
+    piezo_update = Signal(PIEZOSIGNAL, 'signal: piezo updated', '(iv)')
 
 
     @inlineCallbacks
@@ -85,7 +85,7 @@ class TopticaServer(PollingServer):
                 self.channels[chan_num]['temp_min'] = fac_params[4][0]
                 self.channels[chan_num]['temp_max'] = fac_params[4][1]
             except Exception as e:
-                print(e)
+                print('Channel ', chan_num, ':', e)
         #todo: subscribe to things and call back via poll
         # for client in self.devices.values():
         #     client.subscribe()
@@ -494,11 +494,15 @@ class TopticaServer(PollingServer):
     @inlineCallbacks
     def _poll(self):
         """
-        #todo finish
+        Update listeners with actual values of current, temperature, and piezo voltage.
         """
-        pass
-        # for client in self.devices.values():
-        #     client.poll()
+        for chan_num in self.channels.keys():
+            curr = yield self.currentActual(None, chan_num)
+            temp = yield self.tempActual(None, chan_num)
+            voltage = yield self.piezoActual(None, chan_num)
+            self.current_update((chan_num, curr))
+            self.temperature_update((chan_num, temp))
+            self.piezo_update((chan_num, voltage))
 
 
 if __name__ == '__main__':

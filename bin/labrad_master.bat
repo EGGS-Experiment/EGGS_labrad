@@ -33,18 +33,18 @@ REM: Device Bus Servers
 START "GPIB Device Manager" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\gpib\gpib_device_manager.py"
 TIMEOUT 1 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
 
-REM: ARTIQ
-START /min CMD /c %EGGS_LABRAD_ROOT%\bin\artiq_start.bat
-
 REM: Clients
 START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
+
+REM: ARTIQ
+START /min CMD /c %EGGS_LABRAD_ROOT%\bin\artiq_start.bat
 
 :SHELL
 
 REM: Run all device servers as specified, then open a python shell to begin
 IF %server_flag%==1 (
-    TIMEOUT 5 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
-    TIMEOUT 5 > NUL && CALL %EGGS_LABRAD_ROOT%\bin\server_cxn.bat
+    TIMEOUT 8 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
+    TIMEOUT 8 > NUL && CALL %EGGS_LABRAD_ROOT%\bin\server_cxn.bat
 ) ELSE ( CALL %EGGS_LABRAD_ROOT%\bin\labrad_cxn.bat )
 
 GOTO EOF
