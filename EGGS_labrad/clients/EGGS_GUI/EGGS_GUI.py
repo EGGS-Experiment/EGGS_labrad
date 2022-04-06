@@ -87,8 +87,7 @@ class EGGS_gui(QMainWindow):
 
     def makeLaserWidget(self, reactor, cxn):
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
-        from EGGS_labrad.clients.toptica_client import toptica_client
-        print('yzde')
+        from EGGS_labrad.clients.toptica_client.toptica_client import toptica_client
         #from EGGS_labrad.clients.shutter_client import shutter_client
         clients = {
             SLS_client:             (0, 0),
@@ -128,7 +127,10 @@ class EGGS_gui(QMainWindow):
         holder_widget = QWidget()
         holder_layout = QGridLayout(holder_widget)
         for client, position in clientDict.items():
-            client_tmp = client(reactor, cxn=cxn.cxn)
+            try:
+                client_tmp = client(reactor, cxn=cxn.cxn)
+            except Exception as e:
+                print(client, e)
             try:
                 if hasattr(client_tmp, 'getgui'):
                     holder_layout.addWidget(client_tmp.getgui(), *position)
