@@ -38,7 +38,7 @@ IF %server_flag%==1 (
 ) ELSE ( CALL %EGGS_LABRAD_ROOT%\bin\labrad_cxn.bat )
 
 REM: Clients
-START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
+TIMEOUT 10 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
 GOTO EOF
 
