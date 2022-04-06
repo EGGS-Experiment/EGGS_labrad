@@ -15,10 +15,11 @@ START "DC Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS
 
 REM: Lasers
 START "SLS Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\lasers\sls_server.py"
+START "Toptica Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\lasers\toptica_server.py"
 
 REM: ARTIQ
 START "ARTIQ Server" /min CMD "/k activate labart2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\ARTIQ\artiq_server.py"
 
 REM: Imaging
-START "PMT Server" /min CMD "/k activate labart2 && TIMEOUT 2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\pmt\pmt_server.py"
+TIMEOUT 5 > NUL && START "PMT Server" /min CMD "/k activate labart2 && TIMEOUT 2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\pmt\pmt_server.py"
 

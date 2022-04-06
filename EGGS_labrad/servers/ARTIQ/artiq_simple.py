@@ -15,16 +15,14 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 # labrad imports
 from labrad.server import LabradServer, setting
 from twisted.internet.defer import inlineCallbacks
-
 # artiq imports
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
-DDB_FILEPATH = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\config\\device_db.py'
+from EGGS_labrad.config import device_db as device_db_module
 
 
 class ARTIQ_api_Simple(object):
@@ -62,6 +60,8 @@ class ARTIQ_api_Simple(object):
         self.core_dma = self.device_manager.get("core_dma")
         # Store devices in dictionary where device
         # name is key and device itself is value.
+        self.ttlout_list = {}
+        # Store DAC type.
         self.zotino = None
         self.fastino = None
         self.dacType = None
@@ -174,7 +174,8 @@ class ARTIQ_Server_Simple(LabradServer):
     def initServer(self):
         # Initialize the ARTIQ api and set it as an instance
         # variable so we can use it later on.
-        self.api = ARTIQ_api_Simple(DDB_FILEPATH)
+        ddb_filepath = device_db_module.__file__
+        self.api = ARTIQ_api_Simple(ddb_filepath)
         # This tries to create connections to the ARTIQ Master
         # to use its experiment scheduler and dataset manager.
         # Error handling in _setClients handles the case where we

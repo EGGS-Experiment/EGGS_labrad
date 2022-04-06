@@ -20,6 +20,8 @@ from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.servers import ARTIQServer
 
+from EGGS_labrad.servers.pmt import PMT_exp as DMA_EXP
+
 _TTL_MAX_TIME_US = 10000
 _TTL_MIN_TIME_US = 1
 _RECORD_MAX_TIME_US = 100000
@@ -34,9 +36,9 @@ class PMTServer(ARTIQServer):
     name = 'PMT Server'
     regKey = 'PMTServer'
 
-    dma_name = 'PMT_exp'
-    dma_exp_file = "C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\servers\\PMT\\PMT_exp.py"
-    dataset_name = 'pmt_test_dataset'
+    dma_name = DMA_EXP._DMA_HANDLE
+    dma_exp_filepath = DMA_EXP.__file__
+    dataset_name = DMA_EXP._DATASET_NAME
 
     # SIGNALS
     # pressure_update = Signal(999999, 'signal: pressure update', '(ii)')
@@ -208,7 +210,7 @@ class PMTServer(ARTIQServer):
         kwargs = {'ttl_number': self.ttl_number, 'trigger_ttl_number': self.trigger_ttl_number,
                   'trigger_status': self.trigger_status, 'bin_time_us': self.bin_time_us,
                   'reset_time_us': self.reset_time_us, 'length_us': self.length_us, 'edge_method': self.edge_method}
-        ps_rid = self.runExperiment(self.dma_exp_file, kwargs)
+        ps_rid = self.runExperiment(self.dma_exp_filepath, kwargs)
         return ps_rid
 
     @setting(521, 'Start', returns='*v')

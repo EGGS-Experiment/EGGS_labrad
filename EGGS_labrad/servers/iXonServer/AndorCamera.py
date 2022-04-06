@@ -1,7 +1,7 @@
 """
 API for Andor Cameras.
+Updated for Andor's SDK3.
 """
-
 import os
 import ctypes as c
 
@@ -47,11 +47,13 @@ class AndorCamera(object):
 
     def __init__(self):
         try:
+            # load and initialize DLL
             print('Loading DLL')
             self.dll = c.windll.LoadLibrary(config.path_to_dll)
             print('Initializing Camera...')
-            error = self.dll.Initialize(os.path.dirname(__file__))
+            error = self.dll.AT_InitialiseLibrary()
             print('Done Initializing: {}'.format(ERROR_CODE[error]))
+            # get camera parameters
             self.info = AndorInfo()
             self.get_detector_dimensions()
             self.get_temperature_range()
@@ -70,7 +72,7 @@ class AndorCamera(object):
             self.get_cooler_state()
             self.get_temperature()
         except Exception as e:
-            print('Error Initializing Camera: ', e)
+            print('Error Initializing Camera:', e)
             raise Exception(e)
 
     def print_get_software_version(self):

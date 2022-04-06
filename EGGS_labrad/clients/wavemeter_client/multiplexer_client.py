@@ -138,6 +138,8 @@ class multiplexer_client(GUIClient):
         #                                           self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
         #self.gui.pidGUI.polarityBox.currentIndexChanged.connect(lambda index, _dacPort=dacPort: self.changePolarity(index, _dacPort))
 
+
+    # SLOTS
     def updateFrequency(self, c, signal):
         chan, freq = signal
         if chan in self.gui.channels.keys():
@@ -154,13 +156,16 @@ class multiplexer_client(GUIClient):
 
     def updatePIDvoltage(self, c, signal):
         dacPort, value = signal
-        active_dacPort = int(self.gui.pidGUI.dacPort_display.text())
-        if (dacPort in self.gui.dacPorts) and (dacPort == active_dacPort):
-            try:
-                self.gui.pidGUI.PIDvoltage.setText('{:4.2f}'.format(value))
-                self.gui.pidGUI.PIDindicator.updateSlider(value / 1000.0)
-            except Exception as e:
-                print(e)
+        try:
+            active_dacPort = int(self.gui.pidGUI.dacPort_display.text())
+            if (dacPort in self.gui.dacPorts) and (dacPort == active_dacPort):
+                try:
+                    self.gui.pidGUI.PIDvoltage.setText('{:4.2f}'.format(value))
+                    self.gui.pidGUI.PIDindicator.updateSlider(value / 1000.0)
+                except Exception as e:
+                    print(e)
+        except Exception as e:
+            pass
 
     def toggleTrace(self, status, chan):
         pi = self.gui.pattern[chan]
@@ -195,7 +200,9 @@ class multiplexer_client(GUIClient):
     def updateAmplitude(self, c, signal):
         chan, value = signal
         if chan in self.gui.channels.keys():
-            self.gui.channels[chan].powermeter.setValue(int(value))
+            value = int(value)
+            self.gui.channels[chan].powermeter.setValue(value)
+            self.gui.channels[chan].powermeter_display.setText('{:4d}'.format(value))
 
     def updatePattern(self, c, signal):
         chan, trace = signal

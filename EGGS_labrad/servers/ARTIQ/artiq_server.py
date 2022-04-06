@@ -19,13 +19,11 @@ timeout = 20
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
-
-# artiq imports
+# server imports
 import numpy as np
 from artiq_api import ARTIQ_api
-DDB_FILEPATH = 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\config\\device_db.py'
-
-# device imports
+from EGGS_labrad.config import device_db as device_db_module
+# artiq imports
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
                                     AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
                                     AD53XX_READ_AB0, AD53XX_READ_AB1, AD53XX_READ_AB2, AD53XX_READ_AB3
@@ -64,8 +62,7 @@ class ARTIQ_Server(LabradServer):
     # STARTUP
     @inlineCallbacks
     def initServer(self):
-        # initialize ARTIQ API
-        self.api = ARTIQ_api(DDB_FILEPATH)
+        self.api = ARTIQ_api(device_db_module.__file__)
         # set up ARTIQ stuff
         yield self._setClients()
         yield self._setVariables()

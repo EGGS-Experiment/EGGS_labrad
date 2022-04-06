@@ -2,6 +2,9 @@ from artiq.experiment import *
 from datetime import datetime
 from numpy import zeros
 
+_DMA_HANDLE = 'PMT_exp'
+_DATASET_NAME = 'pmt_test_dataset'
+
 
 class PMT_experiment(EnvExperiment):
     """
@@ -60,7 +63,7 @@ class PMT_experiment(EnvExperiment):
         date = datetime.now()
         self.dataset_name = 'pmt_{:s}_{:02d}_{:02d}_{:02d}{:02d}'.format(str(date.year), date.month, date.day,
                                                                          date.hour, date.minute)
-        self.dataset_name = 'pmt_test_dataset'
+        self.dataset_name = _DATASET_NAME
         self.set_dataset(self.dataset_name, zeros(self.num_bins), broadcast=True)
         self.setattr_dataset(self.dataset_name)
 
@@ -70,7 +73,7 @@ class PMT_experiment(EnvExperiment):
         self.ttl_input.input()
         self.trigger_input.input()
         self.core.break_realtime()
-        with self.core_dma.record('PMT_exp'):
+        with self.core_dma.record(_DMA_HANDLE):
             # wait for linetrigger if active
             #     if self.trigger_ttl_number != -1:
             #         while True:

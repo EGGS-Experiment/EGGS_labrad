@@ -27,7 +27,6 @@ from script_signals_server import ScriptSignalsServer
 
 import sys
 from importlib import reload, import_module, __import__
-
 import EGGS_labrad.config.scriptscanner_config as sc_config
 
 
@@ -53,13 +52,13 @@ class script_class_parameters(object):
 
 
 class ScriptScanner(ScriptSignalsServer):
-    """Manages experiment scheduling"""
     """
+    Manages experiment scheduling.
     Attributes
     ----------
     scheduler: scheduler instance.
     script_parameters: dict, experiment names are keys, values are
-        script_class_parameters instances.
+                        script_class_parameters instances.
     """
 
     name = 'Script Scanner'
@@ -75,19 +74,19 @@ class ScriptScanner(ScriptSignalsServer):
 
     def load_scripts(self):
         '''
-        loads script information from the configuration file
+        Loads script information from the configuration file.
         '''
         config = sc_config.config
         for import_path, class_name in config.scripts:
             try:
-                #imports path
+                # imports the file
                 import_module(import_path)
-                #gets the file
+                # gets the file
                 module = sys.modules[import_path]
-                #gets the class from the file
+                # gets the experiment class from the module
                 cls = getattr(module, class_name)
             except ImportError as e:
-                print('Script Control Error importing: ', e)
+                print('Script Control Error importing:', e)
             except AttributeError:
                 print('There is no class {0} in module {1}'.format(class_name, module))
             except SyntaxError as e:
@@ -125,17 +124,17 @@ class ScriptScanner(ScriptSignalsServer):
     @setting(3, "get_scheduled", returns='*(wsv[s])')
     def get_scheduled(self, c):
         '''
-        Returns the list of currently scheduled scans with their IDs and
-        durtation
+        Returns the list of currently scheduled scans with
+        their IDs and duration.
         '''
         scheduled = self.scheduler.get_scheduled()
-        scheduled = [(ident, name, WithUnit(dur,'s') ) for (ident, name, dur) in scheduled]
+        scheduled = [(ident, name, WithUnit(dur, 's')) for (ident, name, dur) in scheduled]
         return scheduled
 
     @setting(4, "get_queue", returns='*(wsw)')
     def get_queue(self, c):
         '''
-        Returns the current queue of scans in the form ID / Name / order
+        Returns the current queue of scans in the form ID / Name / order.
         '''
         return self.scheduler.get_queue()
 
@@ -146,7 +145,7 @@ class ScriptScanner(ScriptSignalsServer):
     @setting(6, "get_progress", script_ID='w', returns='sv')
     def get_progress(self, c, script_ID):
         '''
-        Get progress of a currently running experiment
+        Get progress of a currently running experiment.
         '''
         status = self.scheduler.get_running_status(script_ID)
         if status is None:
@@ -158,7 +157,7 @@ class ScriptScanner(ScriptSignalsServer):
     @setting(10, 'new_experiment', script_name='s', returns='w')
     def new_experiment(self, c, script_name):
         '''
-        Queue an experiment for launching.  Returns the scan ID of the queued
+        Queue an experiment for launching. Returns the scan ID of the queued
         experiment from a scheduler instance.
 
         Parameter

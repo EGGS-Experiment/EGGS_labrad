@@ -1,4 +1,4 @@
-from os import environ, _exit
+from os import environ, _exit, path
 from twisted.internet.defer import inlineCallbacks
 
 from PyQt5.QtGui import QIcon
@@ -15,7 +15,10 @@ class EGGS_gui(QMainWindow):
         self.clipboard = clipboard
         self.reactor = reactor
         self.setWindowTitle('EGGS GUI')
-        self.setWindowIcon(QIcon('C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\eggs.png'))
+        # set window icon
+        path_root = environ['EGGS_LABRAD_ROOT']
+        icon_path = path.join(path_root, 'eggs.png')
+        self.setWindowIcon(QIcon(icon_path))
         # connect devices synchronously
         d = self.connect()
         d.addCallback(self.makeLayout)
@@ -84,11 +87,11 @@ class EGGS_gui(QMainWindow):
 
     def makeLaserWidget(self, reactor, cxn):
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
-        #from EGGS_labrad.clients.toptica_client import toptica_client
+        from EGGS_labrad.clients.toptica_client.toptica_client import toptica_client
         #from EGGS_labrad.clients.shutter_client import shutter_client
         clients = {
             SLS_client:             (0, 0),
-            #, toptica_client:         (0, 1)
+            toptica_client:         (0, 1)
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -124,7 +127,10 @@ class EGGS_gui(QMainWindow):
         holder_widget = QWidget()
         holder_layout = QGridLayout(holder_widget)
         for client, position in clientDict.items():
-            client_tmp = client(reactor, cxn=cxn.cxn)
+            try:
+                client_tmp = client(reactor, cxn=cxn.cxn)
+            except Exception as e:
+                print(client, e)
             try:
                 if hasattr(client_tmp, 'getgui'):
                     holder_layout.addWidget(client_tmp.getgui(), *position)

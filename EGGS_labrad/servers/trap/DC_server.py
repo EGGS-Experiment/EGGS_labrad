@@ -32,7 +32,7 @@ class DCServer(SerialDeviceServer, PollingServer):
     name = 'DC Server'
     regKey = 'DCServer'
     serNode = 'MongKok'
-    port = 'COM57'
+    port = 'COM3'
 
     timeout = WithUnit(3.0, 's')
     baudrate = 38400

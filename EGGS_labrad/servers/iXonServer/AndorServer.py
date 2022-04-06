@@ -36,6 +36,8 @@ import numpy as np
 
 IMAGE_UPDATED_SIGNAL = 142312
 
+#todo: strip units
+#todo: clean up imports
 
 class AndorServer(LabradServer):
     """

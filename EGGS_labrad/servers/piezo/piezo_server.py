@@ -32,8 +32,8 @@ class PiezoServer(SerialDeviceServer):
 
     name = 'Piezo Server'
     regKey = 'PiezoServer'
-    serNode = None
-    port = None
+    serNode = 'MongKok'
+    port = 'COM4'
 
     timeout = WithUnit(3.0, 's')
     baudrate = 38400
