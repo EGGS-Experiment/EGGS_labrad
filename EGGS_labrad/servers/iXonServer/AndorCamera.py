@@ -51,7 +51,7 @@ class AndorCamera(object):
             print('Loading DLL')
             self.dll = c.windll.LoadLibrary(config.path_to_dll)
             print('Initializing Camera...')
-            error = self.dll.AT_InitialiseLibrary()
+            error = self.dll.Initialize(os.path.dirname(__file__))
             print('Done Initializing: {}'.format(ERROR_CODE[error]))
             # get camera parameters
             self.info = AndorInfo()
