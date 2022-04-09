@@ -110,6 +110,7 @@ class PollingServer(LabradServer):
         yield self.ser.flush_input()
         yield self.ser.flush_output()
         self.startRefresher(5)
+        #todo: maybe don't have it auto restart polling
 
 
 """
