@@ -12,16 +12,19 @@ SET /A argCount=1
 SET /A ip_ind=0
 SET /A dev_flag=0
 FOR %%x IN (%*) DO (
-    SET /a argCount+= 1
+    SET /A argCount+= 1
     IF "%%x"=="--ip" (SET /a ip_ind=!argCount!)
     IF "%%x"=="--devices" (SET /a dev_flag=1)
     IF "%%x"=="-h" (GOTO HELP)
     IF "%%x"=="--help" (GOTO HELP)
+    REM: IF "%%x"=="-w" (SET /a
 )
 
-IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
-) ELSE (CALL SET ip_addr=%LABRADHOST%)
-
+IF NOT %ip_ind%==0 (
+    CALL SET ip_addr=%%%ip_ind%%
+) ELSE (
+    CALL SET ip_addr=%LABRADHOST%
+)
 
 REM: Set up logfile for logging
 SET LOGFILENAME=%DATE:~4%_%TIME:~0,5%
