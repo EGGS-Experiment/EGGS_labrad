@@ -22,9 +22,15 @@ FOR %%x IN (%*) DO (
 IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
 ) ELSE (CALL SET ip_addr=%LABRADHOST%)
 
+
+REM: Set up logfile for logging
+SET LOGFILENAME=%DATE:~4%_%TIME:~0,5%
+SET LOGFILENAME=%LOGFILENAME:/=_%
+SET LOGFILENAME=%LOGFILENAME::=%
+
 REM: Core Servers
 START "Labrad Web GUI" /min %HOME%\Code\scalabrad-web-server-2.0.6\bin\labrad-web.bat
-START "Labrad Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\labrad\node\__init__.py"
+START "Labrad Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\labrad\node\__init__.py -l %HOME%\.labrad\logfiles\%LOGFILENAME%.txt"
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 
 REM: Run device busses if device flag is active
