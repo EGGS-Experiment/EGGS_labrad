@@ -26,11 +26,6 @@ IF NOT %ip_ind%==0 (
     CALL SET ip_addr=%LABRADHOST%
 )
 
-REM: Set up logfile for logging
-SET LOGFILENAME=%DATE:~4%_%TIME:~0,5%
-SET LOGFILENAME=%LOGFILENAME:/=_%
-SET LOGFILENAME=%LOGFILENAME::=%
-SET LOGFILENAME=%LOGFILENAME: =0%
 
 REM: Core Servers
 START "Labrad Web GUI" /min %HOME%\Code\scalabrad-web-server-2.0.6\bin\labrad-web.bat
