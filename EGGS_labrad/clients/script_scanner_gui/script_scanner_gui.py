@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QMessageBox
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients.connect import connection
 
@@ -12,8 +12,7 @@ except:
     from .tree_view import ParametersEditor
 
 
-class script_scanner_gui(QtWidgets.QWidget):
-
+class script_scanner_gui(QWidget):
     SIGNALID = 319245
     name = 'Script Scanner Client'
 
@@ -47,10 +46,10 @@ class script_scanner_gui(QtWidgets.QWidget):
             raise
             print('script_scanner_gui: servers not available')
             self.disable(True)
-        yield self.cxn.add_on_connect('Script Scanner',self.reinitialize_scriptscanner)
-        yield self.cxn.add_on_connect('Parameter Vault',self.reinitialize_parameter_vault)
-        yield self.cxn.add_on_disconnect('Script Scanner',self.disable)
-        yield self.cxn.add_on_disconnect('Parameter Vault',self.disable)
+        yield self.cxn.add_on_connect('Script Scanner', self.reinitialize_scriptscanner)
+        yield self.cxn.add_on_connect('Parameter Vault', self.reinitialize_parameter_vault)
+        yield self.cxn.add_on_disconnect('Script Scanner', self.disable)
+        yield self.cxn.add_on_disconnect('Parameter Vault', self.disable)
         try:
             yield self.cxn.get_server('Parameter Vault')
         except Exception as e:
@@ -392,7 +391,7 @@ class script_scanner_gui(QtWidgets.QWidget):
     def setupWidgets(self):
         self.scripting_widget = scripting_widget(self.reactor, self)
         self.ParametersEditor = ParametersEditor(self.reactor)
-        layout = QtWidgets.QHBoxLayout()
+        layout = QHBoxLayout()
         layout.addWidget(self.scripting_widget)
         layout.addWidget(self.ParametersEditor)
         self.setLayout(layout)
@@ -400,7 +399,7 @@ class script_scanner_gui(QtWidgets.QWidget):
 
     def displayError(self, text):
         # runs the message box in a non-blocking method
-        message = QtWidgets.QMessageBox(self.scripting_widget)
+        message = QMessageBox(self.scripting_widget)
         message.setText(text)
         message.open()
         message.show()
@@ -413,10 +412,6 @@ class script_scanner_gui(QtWidgets.QWidget):
 
 
 if __name__ == "__main__":
-    a = QtWidgets.QApplication(["Script Scanner"])
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
-    gui = script_scanner_gui(reactor)
-    gui.show()
-    reactor.run()
+    from EGGS_labrad.clients import runGUI
+
+    runGUI(script_scanner_gui)

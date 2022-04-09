@@ -3,6 +3,7 @@ Shows all queued experiments.
 """
 from PyQt5 import QtGui, QtCore, QtWidgets
 
+
 class fixed_width_button(QtWidgets.QPushButton):
     def __init__(self, text, size):
         super(fixed_width_button, self).__init__(text)
@@ -156,11 +157,7 @@ class queued_combined(QtWidgets.QWidget):
     def closeEvent(self, x):
         self.reactor.stop()
 
+
 if __name__ == "__main__":
-    a = QtWidgets.QApplication([])
-    import qt5reactor
-    qt5reactor.install()
-    from twisted.internet import reactor
-    widget = queued_combined(reactor)
-    widget.show()
-    reactor.run()
+    from EGGS_labrad.clients import runGUI
+    runGUI(queued_combined)

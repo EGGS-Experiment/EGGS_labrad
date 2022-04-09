@@ -1,7 +1,8 @@
 """
-Displays currently running experiments
+Displays currently running experiments.
 """
 from PyQt5 import QtGui, QtCore, QtWidgets
+
 
 class progress_bar(QtWidgets.QProgressBar):
     def __init__(self, reactor, parent=None):
