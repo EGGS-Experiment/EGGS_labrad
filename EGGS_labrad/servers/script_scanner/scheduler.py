@@ -63,6 +63,7 @@ class priority_queue(object):
                 pass
         raise ValueError("Object not found")
 
+
 class running_script(object):
     '''
     Holds information about a script that is currently running.
@@ -75,6 +76,7 @@ class running_script(object):
         self.defer_on_done = defer_on_done
         self.priority = priority
         self.externally_launched = externally_launched
+
 
 class script_semaphore(object):
     '''
@@ -188,9 +190,11 @@ class script_semaphore(object):
 
 class scheduler(object):
     """
-
-    TODO: proper class name and document
+    Scheduler object which manages experiment scheduling.
+    Basically the backend of the script scanner, while the script scanner
+    server is just a front end.
     """
+
     def __init__(self, signals):
         self.signals = signals
         # dict[identification] = running_script_instance

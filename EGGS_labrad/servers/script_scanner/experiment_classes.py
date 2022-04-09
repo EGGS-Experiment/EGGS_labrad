@@ -1,19 +1,24 @@
 """
-Superclass of experiments
+Superclass of experiments.
 """
 import numpy as np
-from time import localtime, strftime
 from labrad.units import WithUnit
 from experiment import experiment
+from time import localtime, strftime
 
 __all__ = ["single", "scan_experiment_1D", "scan_experiment_1D_measure", "repeat_reload"]
+
 
 """
 Individual Experiments
 """
 
+
 class single(experiment):
-    '''Runs a single experiment'''
+    '''
+    Runs a single experiment.
+    '''
+
     def __init__(self, script_cls):
         """
         script_cls: the experiment class
@@ -31,13 +36,15 @@ class single(experiment):
     def finalize(self, cxn, context):
         self.script.finalize(cxn, context)
 
+
 """
 Scanning Experiments
 """
 
+
 class scan_experiment_1D(experiment):
     '''
-    Used to repeat an experiment multiple times
+    Used to repeat an experiment multiple times.
     '''
 
     def __init__(self, script_cls, parameter, minim, maxim, steps, units):
@@ -89,7 +96,7 @@ class scan_experiment_1D(experiment):
 class scan_experiment_1D_measure(experiment):
     '''
     Used to repeat an experiment multiple times.
-    Same as scan_experiment_1D but with a measure script as well
+    Same as scan_experiment_1D but with a measure script as well.
     '''
 
     def __init__(self, scan_script_cls, measure_script_cls, parameter, minim, maxim, steps, units):

@@ -16,14 +16,12 @@ timeout = 20
 ### END NODE INFO
 '''
 
-from labrad.server import setting
-from labrad.units import WithUnit
+from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, DeferredList, returnValue
 
 from scheduler import scheduler
 from experiment_classes import *
 from experiment import experiment_info
-from script_signals_server import ScriptSignalsServer
 
 import sys
 from importlib import reload, import_module, __import__
@@ -51,7 +49,7 @@ class script_class_parameters(object):
         self.parameters = parameters
 
 
-class ScriptScanner(ScriptSignalsServer):
+class ScriptScanner(LabradServer):
     """
     Manages experiment scheduling.
     Attributes
@@ -63,13 +61,30 @@ class ScriptScanner(ScriptSignalsServer):
 
     name = 'Script Scanner'
 
-    def initServer(self):
+    # SIGNALS: RUNNING SCRIPTS
+    on_running_new_script = Signal(200000, "signal_on_running_new_script", '(ws)')
+    on_running_new_status = Signal(200001, "signal_on_running_new_status", '(wsv)')
+    on_running_script_paused = Signal(200002, "signal_on_running_script_paused", 'wb')
+    on_running_script_stopped = Signal(200003, "signal_on_running_script_stopped", 'w')
+    on_running_script_finished = Signal(200005, "signal_on_running_script_finished", 'w')
+    on_running_script_finished_error = Signal(200006, "signal_on_running_script_finished_error", 'ws')
 
+    # SIGNALS: QUEUED EXPERIMENTS
+    on_queued_new_script = Signal(200010, "signal_on_queued_new_script", 'wsw')
+    on_queued_removed = Signal(200011, "signal_on_queued_removed", 'w')
+
+    # SIGNALS: SCHEDULED SCRIPTS
+    on_scheduled_new_script = Signal(200020, "signal_on_scheduled_new_script", '(wsv)')
+    on_scheduled_new_duration = Signal(200021, "signal_on_scheduled_new_duration", 'wv')
+    on_scheduled_removed = Signal(200022, "signal_on_scheduled_removed", 'w')
+
+
+    def initServer(self):
         # Dictionary with experiment.name as keys and
         # script_class_parameters instances are the values.
         self.script_parameters = {}
         # Instance of a complicated object
-        self.scheduler = scheduler(ScriptSignalsServer)
+        self.scheduler = scheduler(self)
         self.load_scripts()
 
     def load_scripts(self):
@@ -121,14 +136,13 @@ class ScriptScanner(ScriptSignalsServer):
         '''
         return self.scheduler.get_running()
 
-    @setting(3, "get_scheduled", returns='*(wsv[s])')
+    @setting(3, "get_scheduled", returns='*(wsv)')
     def get_scheduled(self, c):
         '''
         Returns the list of currently scheduled scans with
         their IDs and duration.
         '''
         scheduled = self.scheduler.get_scheduled()
-        scheduled = [(ident, name, WithUnit(dur, 's')) for (ident, name, dur) in scheduled]
         return scheduled
 
     @setting(4, "get_queue", returns='*(wsw)')
