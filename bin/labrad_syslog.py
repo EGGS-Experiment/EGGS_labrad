@@ -9,7 +9,7 @@
 
 # get labrad syslog socket
 from os import environ
-HOST, PORT = "localhost", int(environ["EGGS_LABRAD_SYSLOG_PORT"])
+HOST, PORT = "192.168.1.48", int(environ["EGGS_LABRAD_SYSLOG_PORT"])
 
 # format date for filename
 from datetime import datetime
