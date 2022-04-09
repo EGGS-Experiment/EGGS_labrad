@@ -1,8 +1,6 @@
 """
 Base class for building PyQt5 GUI clients for LabRAD.
 """
-
-# imports
 from os import _exit, environ
 from datetime import datetime
 from abc import ABC, abstractmethod
