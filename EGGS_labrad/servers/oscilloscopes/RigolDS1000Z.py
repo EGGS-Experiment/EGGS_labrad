@@ -7,7 +7,6 @@ _RIGOLDS1000Z_PROBE_ATTENUATIONS = (0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10
 
 class RigolDS1000ZWrapper(GPIBDeviceWrapper):
 
-
     # SYSTEM
     @inlineCallbacks
     def reset(self):
@@ -16,7 +15,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def clear_buffers(self):
         yield self.write('*CLS')
-
 
     # CHANNEL
     @inlineCallbacks
@@ -91,7 +89,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
-
     # TRIGGER
     @inlineCallbacks
     def trigger_channel(self, channel=None):
@@ -125,7 +122,7 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
             vscale_tmp = yield self.channel_scale(int(chan_tmp[-1]))
             level_max = 5 * vscale_tmp
             if (level == 0) or (abs(level) <= level_max):
-                    yield self.write(chString + ' ' + str(level))
+                yield self.write(chString + ' ' + str(level))
             else:
                 raise Exception('Trigger level must be in range: ' + str((-level_max, level_max)))
         resp = yield self.query(chString + '?')
@@ -141,7 +138,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
                 raise Exception('Trigger mode must be one of: ' + str(('AUTO', 'NORM', 'SING')))
         resp = yield self.query(chString + '?')
         returnValue(resp.strip())
-
 
     # HORIZONTAL
     @inlineCallbacks
@@ -165,7 +161,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
                 raise Exception('Horizontal scale must be in range: ' + str('(1e-6, 50)'))
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
-
 
     # ACQUISITION
     @inlineCallbacks
@@ -199,7 +194,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         xAxis = np.arange(points) * xincrement + xorigin
         yAxis = (trace - yorigin - yreference) * yincrement
         returnValue((xAxis, yAxis))
-
 
     # MEASURE
     @inlineCallbacks
@@ -238,7 +232,6 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     #         yield util.wakeupCall(wait['s'])
     #     returnValue(d)
 
-
     # HELPER
     def _parsePreamble(preamble):
         '''
@@ -269,4 +262,4 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         tmc_length = int(data[2: 2 + tmc_N])
         print("tmc_N: " + str(tmc_N))
         print("tmc_length: " + str(tmc_length))
-        return np.frombuffer(data[2 + tmc_N :], dtype=np.uint8)
+        return np.frombuffer(data[2 + tmc_N:], dtype=np.uint8)

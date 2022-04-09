@@ -5,7 +5,6 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
 
-
     # SYSTEM
     @inlineCallbacks
     def reset(self):
@@ -14,7 +13,6 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def clear_buffers(self):
         yield self.write('*CLS')
-
 
     # CHANNEL
     @inlineCallbacks
@@ -55,11 +53,11 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         chString = 'CH{:d}:PRO:GAIN'.format(channel)
         if atten is not None:
             if atten in (0.1, 1, 10):
-                yield self.write(chString + ' ' + str(1/atten))
+                yield self.write(chString + ' ' + str(1 / atten))
             else:
                 raise Exception('Probe attenuation must be one of: ' + str((0.1, 1, 10)))
         resp = yield self.query(chString + '?')
-        returnValue(1/float(resp))
+        returnValue(1 / float(resp))
 
     @inlineCallbacks
     def channel_toggle(self, channel, state=None):
@@ -88,7 +86,6 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
                 raise Exception('Scale must be in range: [1e-3, 1e1]')
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
-
 
     # TRIGGER
     @inlineCallbacks
@@ -142,7 +139,6 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         resp = yield self.query(chString + '?')
         returnValue(resp.strip())
 
-
     # HORIZONTAL
     @inlineCallbacks
     def horizontal_offset(self, offset=None):
@@ -166,7 +162,6 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
-
     # ACQUISITION
     @inlineCallbacks
     def get_trace(self, channel, points=None):
@@ -189,13 +184,11 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         yAxis = (trace - yorigin) * yincrement + yreference
         returnValue((xAxis, yAxis))
 
-
     # MEASURE
     @inlineCallbacks
     def measure_start(self, c):
         # (re-)start measurement statistics
         self.write('MEAS:STAT:RES')
-
 
     # HELPER
     def _parsePreamble(preamble):
