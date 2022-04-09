@@ -17,6 +17,9 @@ FOR %%x IN (%*) DO (
     IF "%%x"=="--help" (GOTO HELP)
 )
 
+REM: Set up syslog daemon
+
+
 REM: Set up logfile for logging
 SET LOGFILENAME=%DATE:~4%_%TIME:~0,5%
 SET LOGFILENAME=%LOGFILENAME:/=_%
