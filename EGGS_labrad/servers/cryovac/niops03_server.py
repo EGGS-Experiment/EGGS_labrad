@@ -25,6 +25,7 @@ from EGGS_labrad.servers import PollingServer, SerialDeviceServer
 TERMINATOR = '\r\n'
 _NI03_QUERY_msg = '\x05'
 _NI03_ACK_msg = '\x06'
+_NI03_MIN_PRESSURE = 1e-3
 
 
 class NIOPS03Server(SerialDeviceServer, PollingServer):
@@ -55,10 +56,9 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
     def initServer(self):
         # call parent initserver to support further subclassing
         super().initServer()
-        # interlock stuff
-        self.tt = None
-        self.interlock_active = False
-        self.interlock_pressure = None
+        # interlock
+        self.interlock_active = True
+        self.interlock_pressure = _NI03_MIN_PRESSURE
 
 
     # STATUS
@@ -219,11 +219,10 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         # create connection to twistorr pump as needed
         if status:
             try:
-                self.tt = yield self.client.twistorr74_server
+                yield self.client.refresh()
+                tt = yield self.client.twistorr74_server
             except KeyError:
-                self.tt = None
-                self.interlock_active = False
-                raise Exception('Twistorr74 server not available for interlock.')
+                print('Warning: Twistorr74 server not currently available for interlock.')
         # set interlock parameters
         self.interlock_active = status
         self.interlock_pressure = press
@@ -234,19 +233,33 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
     @inlineCallbacks
     def _poll(self):
         """
-        Polls the device for pressure readout.
+        Polls the device for pressure readout and checks the interlock.
         """
-        # interlock: checks
+        # check interlock
         if self.interlock_active:
-            # switch off ion pump if pressure is above a certain value
-            press_tmp = yield self.tt.read_pressure()
-            if press_tmp >= self.interlock_pressure:
-                print('Error: TwisTorr74 pressure reads {:f} mbar. Above safe value for Ion Pump to be active.')
-                print('Sending shutoff signal ion pump and getter.')
-                yield self.ser.write('B' + TERMINATOR)
-                yield self.ser.read_line()
-                yield self.ser.write('BN' + TERMINATOR)
-                yield self.ser.read_line()
+            tt = None
+            try:
+                # try to get twistorr74 server
+                yield self.client.refresh()
+                tt = yield self.client.twistorr74_server
+                # switch off ion pump if pressure is above a certain value
+                press_tmp = yield tt.read_pressure()
+                if press_tmp >= self.interlock_pressure:
+                    print('Error: Twistorr74 pressure reads {:f} mbar.'
+                          'Above current threshold value of {:f} mbar for Ion Pump to be active.'.format(press_tmp, self.interlock_pressure))
+                    print('Sending shutoff signal ion pump and getter.')
+                    try:
+                        yield self.ser.write('B' + TERMINATOR)
+                        yield self.ser.read_line()
+                        yield self.ser.write('BN' + TERMINATOR)
+                        yield self.ser.read_line()
+                    except Exception as e:
+                        print('Error: unable to shut off ion pump and/or getter.')
+            except KeyError:
+                print('Warning: Twistorr74 server not available for interlock.')
+            except Exception as e:
+                print('Warning: unable to read pressure from Twistorr74 server.'
+                      'Skipping this loop.')
         # query
         yield self.ser.acquire()
         yield self.ser.write('Tb\r\n')
@@ -264,7 +277,6 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         self.temperature_update((float(temp[1]), float(temp[3])))
         # process & update voltage
         self.voltage_update(int(volt_resp, 16))
-    # todo: activate interlock whenever tt comes online
 
 
 if __name__ == '__main__':
