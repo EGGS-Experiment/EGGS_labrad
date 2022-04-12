@@ -14,7 +14,7 @@ wm = cxn_wm.multiplexerserver
 
 # list of servers we want and their shorthand names
 server_dict = {
-        'ss': 'script_scanner', 'pv': 'parameter_vault',
+        'ss': 'script_scanner', 'pv': 'parameter_vault', 'dv': 'data_vault',
         'ni': 'niops03_server', 'tt': 'twistorr74_server', 'ls': 'lakeshore336_server',
         'rga': 'rga_server', 'rf': 'rf_server', 'sls': 'sls_server', 'aq': 'artiq_server',
         'pmt': 'pmt_server', 'dc': 'dc_server', 'fma': 'fma1700a_server', 'to': 'toptica_server'

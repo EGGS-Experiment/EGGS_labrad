@@ -212,10 +212,7 @@ class PollingClient(GUIClient):
         """
         # set up datavault
         date = datetime.now()
-        year = str(date.year)
-        month = '{:02d}'.format(date.month)
-
-        trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
+        trunk1 = '{0:d}_{1:02d}_{2:02d}'.format(date.year, date.month, date.day)
         trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
         return ['', year, month, trunk1, trunk2]
 
