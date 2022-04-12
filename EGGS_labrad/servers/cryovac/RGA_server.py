@@ -293,21 +293,29 @@ class RGA_Server(SerialDeviceServer):
         resp = yield self.ser.read(bytes_to_read)
         self.ser.release()
         # process scan
-        current_arr = np.array([int.from_bytes(resp[i: i+4], 'little', signed=True) for i in range(0, bytes_to_read, 4)])
+        current_arr = np.array([int.from_bytes(resp[i: i+4], 'little', signed=True)
+                                for i in range(0, bytes_to_read, 4)])
         # create axis
         amu_arr = np.linspace(mass_initial, mass_final, num_points)
         returnValue([amu_arr, sp * current_arr[:-1]])
 
 
     # SINGLE MASS MEASUREMENT
-    @setting(511, 'SMM Start', mass='i', returns='w')
+    @setting(511, 'SMM Start', mass='i', returns='v')
     def singleMassMeasurement(self, c, mass):
         """
         Start a single mass measurement.
+        Arguments:
+            mass    (int)   : the mass species to measure (in amu).
+        Returns:
+                    (float) : the partial pressure of the mass species (in mbar).
         """
         # sanitize input
         if (mass < 0) or (mass > self.m_max):
             raise Exception('Error: invalid input.')
+        # get partial pressure conversion
+        st = yield self._getter('ST')
+        st = 1e-13 / float(st)
         # start a single mass measurement
         msg = 'MR' + str(mass) + _SRS_EOL
         yield self.ser.acquire()
@@ -316,10 +324,10 @@ class RGA_Server(SerialDeviceServer):
         # set the rods back to zero
         yield self.ser.write('MR0\r')
         self.ser.release()
-        # get partial pressure conversion
-        st = yield self._getter('ST')
-        st = 1e-13 / float(st)
         # process and return the result
+        print('text:', resp)
+        if type(resp) == str:
+            resp = bytes(resp, encoding='utf-8')
         current = int.from_bytes(resp, 'little', signed=True)
         returnValue(current * st)
 
@@ -329,6 +337,8 @@ class RGA_Server(SerialDeviceServer):
     def totalPressureMeasurement(self, c):
         """
         Start a total pressure measurement.
+        Returns:
+                (float) : the total pressure (in mbar).
         """
         # set the electron multiplier voltage to zero which
         # automatically enables total pressure measurement
@@ -343,7 +353,9 @@ class RGA_Server(SerialDeviceServer):
         resp = yield self.ser.read(4)
         self.ser.release()
         # process and return result
-        current = int.from_bytes(resp, 'big')
+        if type(resp) == str:
+            resp = bytes(resp, encoding='utf-8')
+        current = int.from_bytes(resp, 'little', signed=True)
         returnValue(current * sp)
 
 
