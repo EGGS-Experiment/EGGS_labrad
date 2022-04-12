@@ -32,7 +32,7 @@ class RGA_Server(SerialDeviceServer):
 
     name = 'RGA Server'
     regKey = 'RGA Server'
-    port = 'COM63'
+    port = 'COM55'
     serNode = 'mongkok'
 
     timeout = WithUnit(8.0, 's')
@@ -325,7 +325,7 @@ class RGA_Server(SerialDeviceServer):
 
 
     # TOTAL PRESSURE MEASUREMENT
-    @setting(611, 'TPM Start', returns='w')
+    @setting(611, 'TPM Start', returns='v')
     def totalPressureMeasurement(self, c):
         """
         Start a total pressure measurement.

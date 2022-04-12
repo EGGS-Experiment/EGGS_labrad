@@ -1,5 +1,5 @@
 :: LabRAD Watchdog
-:: Pings the LabRAD manager regularly, and sends an email if it fails
+:: Pings the LabRAD manager regularly, and sends an email if it fails.
 
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
@@ -31,7 +31,7 @@ IF %ERRORLEVEL% == 1 (
     SET /A COUNT=0
 )
 
-REM: wait a given amount of time
+REM: Wait a given amount of time
 TIMEOUT %TIMEOUTVAL%
 
 REM: If more than a certain amount of pings fail, notify admin
@@ -50,4 +50,3 @@ SET "THRESHOLD=30"
 SET "IP="
 SET "TIMEOUTVAL="
 SET "COUNT="
-REM "SET LOG="

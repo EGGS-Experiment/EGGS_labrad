@@ -13,7 +13,7 @@ dv = cxn.data_vault
 cr = cxn.context()
 
 # parameters
-(mass_initial, mass_final, mass_steps) = (0, 35, 0.1)
+(mass_initial, mass_final, mass_steps) = (39, 41, 2)
 dv_dep_var = [(':.01f amu'.format(mass), 'Pressure', 'Torr')
               for mass in arange(mass_initial, mass_final + mass_steps, mass_steps)]
 
