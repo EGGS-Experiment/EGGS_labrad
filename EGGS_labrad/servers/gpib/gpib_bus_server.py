@@ -112,7 +112,7 @@ class GPIBBusServer(PollingServer):
 
     def getDevice(self, c):
         if 'addr' not in c:
-            raise DeviceNotSelectedError("No GPIB address selected")
+            raise DeviceNotSelectedError("No GPIB address selected.")
         if c['addr'] not in self.devices:
             raise Exception('Could not find device ' + c['addr'])
         instr = self.devices[c['addr']]
@@ -132,19 +132,25 @@ class GPIBBusServer(PollingServer):
 
     @setting(2, time='v[s]', returns='v[s]')
     def timeout(self, c, time=None):
-        """Get or set the GPIB timeout."""
+        """
+        Get or set the GPIB timeout.
+        """
         if time is not None:
             c['timeout'] = time
         return c['timeout']
 
     @setting(3, data='s', returns='')
     def write(self, c, data):
-        """Write a string to the GPIB bus."""
+        """
+        Write a string to the GPIB bus.
+        """
         self.getDevice(c).write(data)
 
     @setting(8, data='y', returns='')
     def write_raw(self, c, data):
-        """Write a string to the GPIB bus."""
+        """
+        Write a string to the GPIB bus.
+        """
         self.getDevice(c).write_raw(data)
 
     @setting(4, n_bytes='w', returns='s')
@@ -182,7 +188,8 @@ class GPIBBusServer(PollingServer):
 
     @setting(7, n_bytes='w', returns='y')
     def read_raw(self, c, n_bytes=None):
-        """Read raw bytes from the GPIB bus.
+        """
+        Read raw bytes from the GPIB bus.
 
         Termination characters, if any, will not be stripped.
         If n_bytes is specified, reads only that many bytes.
@@ -197,12 +204,16 @@ class GPIBBusServer(PollingServer):
 
     @setting(20, returns='*s')
     def list_devices(self, c):
-        """Get a list of devices on this bus."""
+        """
+        Get a list of devices on this bus.
+        """
         return sorted(self.devices.keys())
 
     @setting(21)
     def refresh_devices(self, c):
-        """Manually refresh devices."""
+        """
+        Manually refresh devices.
+        """
         self.refreshDevices()
 
 

@@ -15,7 +15,6 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 from labrad.units import WithUnit
 from labrad.server import setting, Signal
 
@@ -40,6 +39,8 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
 
     timeout = WithUnit(3.0, 's')
     baudrate = 115200
+
+    POLL_ON_STARTUP = True
 
 
     # SIGNALS
@@ -235,6 +236,17 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         """
         Polls the device for pressure readout.
         """
+        # interlock: checks
+        if self.interlock_active:
+            # switch off ion pump if pressure is above a certain value
+            press_tmp = yield self.tt.read_pressure()
+            if press_tmp >= self.interlock_pressure:
+                print('Error: TwisTorr74 pressure reads {:f} mbar. Above safe value for Ion Pump to be active.')
+                print('Sending shutoff signal ion pump and getter.')
+                yield self.ser.write('B' + TERMINATOR)
+                yield self.ser.read_line()
+                yield self.ser.write('BN' + TERMINATOR)
+                yield self.ser.read_line()
         # query
         yield self.ser.acquire()
         yield self.ser.write('Tb\r\n')
@@ -252,16 +264,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         self.temperature_update((float(temp[1]), float(temp[3])))
         # process & update voltage
         self.voltage_update(int(volt_resp, 16))
-        # interlock: checks
-        if self.interlock_active:
-            # switch off ion pump if pressure is above a certain value
-            press_tmp = yield self.tt.read_pressure()
-            if press_tmp >= self.interlock_pressure:
-                print('problem')
-                # yield self.ser.write('B' + TERMINATOR)
-                # yield self.ser.read_line()
-                # yield self.ser.write('BN' + TERMINATOR)
-                # yield self.ser.read_line()
+    # todo: activate interlock whenever tt comes online
 
 
 if __name__ == '__main__':
