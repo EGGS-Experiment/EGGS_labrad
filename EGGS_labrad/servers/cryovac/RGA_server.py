@@ -57,7 +57,7 @@ class RGA_Server(SerialDeviceServer):
         Initialize the RGA.
         """
         if level not in (0, 1, 2):
-            raise Exception('Invalid Input.')
+            raise Exception('Error: Invalid Input.')
         yield self._setter('IN', level)
 
 
@@ -70,10 +70,10 @@ class RGA_Server(SerialDeviceServer):
         if energy is not None:
             if type(energy) is int:
                 if (energy < 25) or (energy > 105):
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             elif type(energy) is str:
                 if energy != '*':
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             yield self._setter('EE', energy)
         resp = yield self._getter('EE')
         returnValue(int(resp))
@@ -86,10 +86,10 @@ class RGA_Server(SerialDeviceServer):
         if energy is not None:
             if type(energy) is int:
                 if energy not in (0, 1):
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             elif type(energy) is str:
                 if energy != '*':
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             yield self._setter('IE', energy)
         resp = yield self._getter('IE')
         returnValue(int(resp))
@@ -102,10 +102,10 @@ class RGA_Server(SerialDeviceServer):
         if current is not None:
             if type(current) is float:
                 if (current < 0) or (current > 3.5):
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             elif type(current) is str:
                 if current != '*':
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             yield self._setter('FL', current)
         resp = yield self._getter('FL')
         returnValue(float(resp))
@@ -118,10 +118,10 @@ class RGA_Server(SerialDeviceServer):
         if voltage is not None:
             if type(voltage) is int:
                 if (voltage < 0) or (voltage > 150):
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             elif type(voltage) is str:
                 if voltage != '*':
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             yield self._setter('VF', voltage)
         resp = yield self._getter('VF')
         returnValue(int(resp))
@@ -143,10 +143,10 @@ class RGA_Server(SerialDeviceServer):
         if level is not None:
             if type(level) is int:
                 if (level < 0) or (level > 7):
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             elif type(level) is str:
                 if level != '*':
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             yield self._setter('NF', level, False)
         resp = yield self._getter('NF')
         returnValue(int(resp))
@@ -167,10 +167,10 @@ class RGA_Server(SerialDeviceServer):
         if voltage is not None:
             if type(voltage) is int:
                 if (voltage < 0) or (voltage > 2490):
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             elif type(voltage) is str:
                 if voltage != '*':
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             yield self._setter('HV', voltage)
         resp = yield self._getter('HV')
         returnValue(int(resp))
@@ -185,10 +185,10 @@ class RGA_Server(SerialDeviceServer):
         if mass is not None:
             if type(mass) is int:
                 if (mass < 0) or (mass > self.m_max):
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             elif type(mass) is str:
                 if mass != '*':
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             # set value
             yield self._setter('MI', mass, False)
         # query
@@ -203,10 +203,10 @@ class RGA_Server(SerialDeviceServer):
         if mass is not None:
             if type(mass) is int:
                 if (mass < 0) or (mass > self.m_max):
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             elif type(mass) is str:
                 if mass != '*':
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             # set value
             yield self._setter('MF', mass, False)
         # query
@@ -221,10 +221,10 @@ class RGA_Server(SerialDeviceServer):
         if steps is not None:
             if type(steps) is int:
                 if (steps < 10) or (steps > 25):
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             elif type(steps) is str:
                 if steps != '*':
-                    raise Exception('Invalid Input.')
+                    raise Exception('Error: invalid input.')
             # set value
             yield self._setter('SA', steps, False)
         # query
@@ -242,7 +242,7 @@ class RGA_Server(SerialDeviceServer):
         elif mode.lower() in ('h', 'histogram'):
             resp = yield self._getter('HP')
         else:
-            raise Exception('Invalid Input.')
+            raise Exception('Error: invalid input.')
         returnValue(int(resp))
 
     @setting(421, 'Scan Start', mode='s', num_scans='i', returns='*2v')
@@ -252,7 +252,7 @@ class RGA_Server(SerialDeviceServer):
         """
         # check input
         if (num_scans < 0) or (num_scans > 255):
-            raise Exception('Invalid Input.')
+            raise Exception('Error: invalid input.')
         # get pressure conversion factor
         sp = yield self._getter('SP')
         sp = 1e-13 / float(sp)
@@ -286,7 +286,7 @@ class RGA_Server(SerialDeviceServer):
             bytes_to_read = num_scans * 4 * (num_points + 1)
             msg = 'HS' + str(num_scans) + _SRS_EOL
         else:
-            raise Exception('Invalid Input.')
+            raise Exception('Error: invalid input.')
         # initiate scan
         yield self.ser.acquire()
         yield self.ser.write(msg)
@@ -307,7 +307,7 @@ class RGA_Server(SerialDeviceServer):
         """
         # sanitize input
         if (mass < 0) or (mass > self.m_max):
-            raise Exception('Invalid Input.')
+            raise Exception('Error: invalid input.')
         # start a single mass measurement
         msg = 'MR' + str(mass) + _SRS_EOL
         yield self.ser.acquire()

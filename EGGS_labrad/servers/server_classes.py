@@ -16,6 +16,7 @@ class PollingServer(LabradServer):
     Also contains functionality for Signals.
     """
 
+    # tells server whether to start polling upon startup
     POLL_ON_STARTUP = False
 
     # STARTUP
