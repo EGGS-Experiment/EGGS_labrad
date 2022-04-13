@@ -41,14 +41,18 @@ class OscilloscopeServer(GPIBManagedServer):
     # SYSTEM
     @setting(11, "Reset", returns='')
     def reset(self, c):
-        """Reset the oscilloscopes to factory settings."""
+        """
+        Reset the oscilloscopes to factory settings.
+        """
         dev = self.selectedDevice(c)
         yield dev.reset()
         sleep(5)
 
     @setting(12, "Clear Buffers", returns='')
     def clear_buffers(self, c):
-        """Clear device status buffers."""
+        """
+        Clear device status buffers.
+        """
         dev = self.selectedDevice(c)
         yield dev.clear_buffers()
 
@@ -259,6 +263,21 @@ class OscilloscopeServer(GPIBManagedServer):
             (int): number of averages.
         """
         return self.selectedDevice(c).average_number(averages)
+
+    @setting(291, 'Measure Amplitude', channel='i', returns='i')
+    def measure_amplitude(self, c, channel):
+        """
+        Measure channel amplitude.
+        Arguments:
+            channel (int):      channel to query
+        Returns:
+                    (float):    the current channel amplitude
+        """
+        # todo set channel source MEAS:SOUR CH1
+        # todo activate statistic MEAS:STAT:ITEM VAMP,CHAN2
+        # todo get measurement MEAS:STAT:ITEM? CURR,VAMP
+        return self.selectedDevice(c).measure_amplitude(channel)
+
 
 
 if __name__ == '__main__':

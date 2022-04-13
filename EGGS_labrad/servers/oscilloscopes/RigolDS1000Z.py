@@ -232,6 +232,15 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     #         yield util.wakeupCall(wait['s'])
     #     returnValue(d)
 
+    def measure_amplitude(self, c, channel):
+        # enable measurement of parameter
+        yield self.write(":MEAS:ITEM VAMP,CHAN{:d}".format(channel))
+        # get parameter value
+        chString = ":MEAS:ITEM? VAMP,CHAN{:d}".format(channel)
+        resp = yield self.query(chString)
+        returnValue(float(resp))
+
+
     # HELPER
     def _parsePreamble(preamble):
         '''
