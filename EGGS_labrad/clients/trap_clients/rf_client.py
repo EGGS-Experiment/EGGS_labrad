@@ -18,9 +18,12 @@ class rf_client(GUIClient):
     def initData(self):
         # lock while starting up
         self.gui.setEnabled(False)
+        # select device
+        yield self.rf.select_device()
         # get parameters
         freq = yield self.rf.frequency()
-        self.gui.wav_freq.setValue(freq / 1000)
+        print(freq)
+        self.gui.wav_freq.setValue(freq / 1000000)
         ampl = yield self.rf.amplitude()
         self.gui.wav_ampl.setValue(ampl)
         mod_freq = yield self.rf.modulation_frequency()
@@ -36,7 +39,7 @@ class rf_client(GUIClient):
 
     def initGUI(self):
         # waveform parameters
-        self.gui.wav_freq.valueChanged.connect(lambda freq: (self.rf.frequency(freq * 1000)))
+        self.gui.wav_freq.valueChanged.connect(lambda freq: (self.rf.frequency(freq * 1000000)))
         self.gui.wav_ampl.valueChanged.connect(lambda ampl, units='DBM': self.rf.amplitude(ampl, units))
         # waveform buttons
         self.gui.wav_toggle.clicked.connect(lambda status: self.rf.toggle(status))

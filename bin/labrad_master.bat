@@ -26,13 +26,15 @@ START "Labrad Web GUI" /min %HOME%\Code\scalabrad-web-server-2.0.6\bin\labrad-we
 START "Labrad Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\labrad\node\__init__.py -s -x %LABRADHOST%:%EGGS_LABRAD_SYSLOG_PORT%"
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 
-REM: Temporary solution: need to have device
-
 REM: Don't open any servers if raw flag is active
 IF %raw_flag%==1 (GOTO SHELL)
 
 REM: ARTIQ
 START /min CMD /c %EGGS_LABRAD_ROOT%\bin\artiq_start.bat
+
+REM: Temporary solution: need to have device
+START "GPIB Device Manager" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\gpib\gpib_device_manager.py"
+
 
 :SHELL
 
@@ -56,6 +58,7 @@ GOTO EOF
 @ECHO    -s                  start all day-to-day device servers (specific to EGGS Experiment)
 @ECHO    -r                  start only the labrad core (i.e. the manager, a node, and the Chromium GUI)
 @ECHO:
+
 
 :EOF
 

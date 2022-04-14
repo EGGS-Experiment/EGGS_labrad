@@ -148,7 +148,7 @@ class rf_gui(QFrame):
         rf_gui.setWindowTitle(_translate("rf_gui", "RF Client"))
         self.rf_label.setText(_translate("rf_gui", "<html><head/><body><p align=\"center\"><span style=\" font-size:26pt; vertical-align:super;\">Trap RF Client</span></p></body></html>"))
         self.wav_ampl_label.setText(_translate("rf_gui", "Amplitude (dBm)"))
-        self.wav_freq_label.setText(_translate("rf_gui", "Frequency (kHz)"))
+        self.wav_freq_label.setText(_translate("rf_gui", "Frequency (MHz)"))
         self.wav_reset.setText(_translate("rf_gui", "Reset"))
         self.mod_freq_label.setText(_translate("rf_gui", "Modulation Frequency (kHz)"))
         self.mod_ampl_toggle_label.setText(_translate("rf_gui", "Amplitude Mod."))
