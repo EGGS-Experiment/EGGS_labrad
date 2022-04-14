@@ -26,6 +26,8 @@ START "Labrad Web GUI" /min %HOME%\Code\scalabrad-web-server-2.0.6\bin\labrad-we
 START "Labrad Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\labrad\node\__init__.py -s -x %LABRADHOST%:%EGGS_LABRAD_SYSLOG_PORT%"
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 
+REM: Temporary solution: need to have device
+
 REM: Don't open any servers if raw flag is active
 IF %raw_flag%==1 (GOTO SHELL)
 
@@ -41,7 +43,7 @@ IF %server_flag%==1 (
 ) ELSE ( CALL %EGGS_LABRAD_ROOT%\bin\labrad_cxn.bat )
 
 REM: Clients
-TIMEOUT 10 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
+START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
 GOTO EOF
 
