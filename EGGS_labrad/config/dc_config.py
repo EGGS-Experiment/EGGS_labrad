@@ -16,10 +16,8 @@ class dc_config(object):
     row_length = 2
 
     channeldict = {
-        'Endcap 1':     {'num': 0, 'row': 1, 'col': 0},
-        'Endcap 2':     {'num': 1, 'row': 1, 'col': 1},
-        'Shim 1':       {'num': 2, 'row': 2, 'col': 0},
-        'Shim 2':       {'num': 3, 'row': 2, 'col': 1},
-        'Shim 3':       {'num': 4, 'row': 2, 'col': 3},
-        'Shim 4':       {'num': 5, 'row': 2, 'col': 4},
+        'E Endcap':     {'num': 0, 'row': 1, 'col': 0},
+        'W Endcap':     {'num': 1, 'row': 1, 'col': 1},
+        'V Shim':       {'num': 2, 'row': 2, 'col': 0},
+        'H Shim':       {'num': 3, 'row': 2, 'col': 1},
     }
