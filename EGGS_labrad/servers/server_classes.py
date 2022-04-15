@@ -107,10 +107,11 @@ class PollingServer(LabradServer):
         pass
 
     def _poll_fail(self, failure):
-        print('Polling failed.')
-        #yield self.ser.flush_input()
-        #yield self.ser.flush_output()
-        #self.startRefresher(5)
+        print('Polling failed. Restarting polling.')
+        yield self.ser.flush_input()
+        yield self.ser.flush_output()
+        self.startRefresher(5)
+        #todo: maybe don't have it auto restart polling
 
 
 """

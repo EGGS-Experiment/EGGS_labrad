@@ -216,6 +216,9 @@ class GPIBBusServer(PollingServer):
         """
         self.refreshDevices()
 
+    def _poll_fail(self, failure):
+        print('Polling failed.')
+
 
 __server__ = GPIBBusServer()
 
