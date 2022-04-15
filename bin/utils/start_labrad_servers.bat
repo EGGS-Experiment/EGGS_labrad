@@ -20,6 +20,9 @@ START "Toptica Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%
 REM: ARTIQ
 START "ARTIQ Server" /min CMD "/k activate labart2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\ARTIQ\artiq_server.py"
 
+REM: Devices
+START "Oscilloscope Server" /min CMD "/k activate labart && %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\oscilloscopes\oscilloscope_server.py"
+
 REM: Imaging
 TIMEOUT 5 > NUL && START "PMT Server" /min CMD "/k activate labart2 && TIMEOUT 2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\pmt\pmt_server.py"
 

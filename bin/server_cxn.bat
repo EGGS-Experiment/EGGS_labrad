@@ -17,7 +17,9 @@ server_dict = {
         'ss': 'script_scanner', 'pv': 'parameter_vault', 'dv': 'data_vault',
         'ni': 'niops03_server', 'tt': 'twistorr74_server', 'ls': 'lakeshore336_server',
         'rga': 'rga_server', 'rf': 'rf_server', 'sls': 'sls_server', 'aq': 'artiq_server',
-        'pmt': 'pmt_server', 'dc': 'dc_server', 'fma': 'fma1700a_server', 'to': 'toptica_server'
+        'pmt': 'pmt_server', 'dc': 'dc_server', 'fma': 'fma1700a_server', 'to': 'toptica_server',
+        'os': 'oscilloscope_server',
+        'gpib': 'gpib_device_manager', 'mk_gpib': 'mongkok_gpib_bus', 'hf_gpib': 'hengfachuen_gpib_bus'
         }
 
 for servers in server_dict.items():
