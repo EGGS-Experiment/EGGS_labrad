@@ -264,7 +264,7 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).average_number(averages)
 
-    @setting(291, 'Measure Amplitude', channel='i', returns='i')
+    @setting(291, 'Measure Amplitude', channel='i', returns='v')
     def measure_amplitude(self, c, channel):
         """
         Measure channel amplitude.

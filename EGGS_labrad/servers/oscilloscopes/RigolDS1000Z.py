@@ -232,7 +232,8 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     #         yield util.wakeupCall(wait['s'])
     #     returnValue(d)
 
-    def measure_amplitude(self, c, channel):
+    @inlineCallbacks
+    def measure_amplitude(self, channel):
         # enable measurement of parameter
         yield self.write(":MEAS:ITEM VAMP,CHAN{:d}".format(channel))
         # get parameter value
