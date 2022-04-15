@@ -40,7 +40,7 @@ class DCServer(SerialDeviceServer, PollingServer):
 
     # SIGNALS
     voltage_update = Signal(999999, 'signal: voltage update', '(iv)')
-    hv_update = Signal(999998, 'signal: hv update', '(vvvv)')
+    hv_update = Signal(999998, 'signal: hv update', '(vv)')
     toggle_update = Signal(999997, 'signal: toggle update', '(ib)')
 
 
@@ -58,22 +58,23 @@ class DCServer(SerialDeviceServer, PollingServer):
         self.ser.release()
         returnValue(resp)
 
-    @setting(12, 'Inputs', returns='(vvvv)')
+    @setting(12, 'Inputs', returns='(vv)')
     def inputs(self, c):
         """
         Read high voltage inputs and current draws.
         Returns:
-            (vvvv): (HVin1, HVin2, Iin1, Iin2)
+            (vv): (HVin1, Iin1)
         """
         yield self.ser.acquire()
         yield self.ser.write('HVin.r\r\n')
         v1 = yield self.ser.read_line('\n')
-        v2 = yield self.ser.read_line('\n')
         i1 = yield self.ser.read_line('\n')
-        i2 = yield self.ser.read_line('\n')
         self.ser.release()
-        self.hv_update((v1, v2, i1, i2))
-        returnValue(((float(v1), float(i1)), (float(v2), float(i2))))
+        # parse input
+        inputs = [float((tmpval.strip().split(':'))[1]) for tmpval in (v1, i1)]
+        inputs = tuple(inputs)
+        self.hv_update(inputs)
+        returnValue(inputs)
 
 
     # ON/OFF
@@ -87,24 +88,20 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                     (bool)  : result
         """
-        if channel == -1:
-            yield self.ser.acquire()
-            if power is None:
-                yield self.ser.write('out.r\r\n')
-            elif power:
-                yield self.ser.write('allon.w\r\n')
-            else:
-                yield self.ser.write('allon.w\r\n')
-            self.ser.release()
-            resp = yield self._parse()
-            returnValue(list(map(bool, resp)))
+        yield self.ser.acquire()
         if power is not None:
-            yield self.ser.acquire()
             yield self.ser.write('out.w {:d} {:d}\r\n'.format(channel, power))
         else:
             yield self.ser.write('out.r {:d}\r\n'.format(channel))
         # get response
         resp = yield self.ser.read_line('\r\n')
+        resp = resp.strip()
+        if resp == 'ON':
+            resp = 1
+        elif resp == 'OFF':
+            resp = 0
+        else:
+            raise Exception('Error: bad readback from device.')
         self.ser.release()
         self.toggle_update((channel, resp))
         returnValue(bool(resp))
@@ -128,18 +125,13 @@ class DCServer(SerialDeviceServer, PollingServer):
             self.ser.release()
             returnValue(float(resp))
         elif channel is not None:
-            if channel == -1:
-                yield self.ser.acquire()
-                yield self.ser.write('vout.r\r\n')
-                self.ser.release()
-                resp = yield self._parse()
-                returnValue(resp)
-            else:
-                yield self.ser.acquire()
-                yield self.ser.write('vout.r {:d}\r\n'.format(channel))
-                resp = yield self.ser.read_line('\r\n')
-                self.ser.release()
-                returnValue(float(resp))
+            yield self.ser.acquire()
+            yield self.ser.write('vout.r {:d}\r\n'.format(channel))
+            resp = yield self.ser.read_line('\r\n')
+            self.ser.release()
+            resp = (resp.strip())[:-1]
+            print(resp)
+            returnValue(float(resp))
 
 
     # RAMP
@@ -171,7 +163,7 @@ class DCServer(SerialDeviceServer, PollingServer):
     def _parse(self, data):
         resp = list()
         yield self.ser.acquire()
-        for i in range(56):
+        for i in range(28):
             resp[i] = yield self.ser.read_line('\n')
         self.ser.release()
         resp = [float(txt.split(':')[-1][:-1]) for txt in resp]
