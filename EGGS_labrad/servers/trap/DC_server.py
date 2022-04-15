@@ -123,6 +123,7 @@ class DCServer(SerialDeviceServer, PollingServer):
             yield self.ser.write('vout.w {:d} {:f}\r\n'.format(channel, voltage))
             resp = yield self.ser.read_line('\r\n')
             self.ser.release()
+            resp = (resp.strip())[:-1]
             returnValue(float(resp))
         elif channel is not None:
             yield self.ser.acquire()
@@ -130,7 +131,6 @@ class DCServer(SerialDeviceServer, PollingServer):
             resp = yield self.ser.read_line('\r\n')
             self.ser.release()
             resp = (resp.strip())[:-1]
-            print(resp)
             returnValue(float(resp))
 
 
