@@ -22,7 +22,6 @@ class rf_client(GUIClient):
         yield self.rf.select_device()
         # get parameters
         freq = yield self.rf.frequency()
-        print(freq)
         self.gui.wav_freq.setValue(freq / 1000000)
         ampl = yield self.rf.amplitude()
         self.gui.wav_ampl.setValue(ampl)
