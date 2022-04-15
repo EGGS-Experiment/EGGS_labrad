@@ -102,6 +102,7 @@ class GPIBBusServer(PollingServer):
                 self.sendDeviceMessage('GPIB Device Disconnect', addr)
         except Exception as e:
             print('Problem while refreshing devices:', str(e))
+            raise e
 
     def sendDeviceMessage(self, msg, addr):
         print(msg + ': ' + addr)
