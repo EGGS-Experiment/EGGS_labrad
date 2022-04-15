@@ -225,7 +225,7 @@ class OscilloscopeServer(GPIBManagedServer):
         Args:
             channel: The channel for which we want to get the trace.
         Returns:
-            Tuple of ((ValueArray[s]) Time axis, (ValueArray[V]) Voltages).
+            (*float, *float): (the time
         """
         if points is None:
             return self.selectedDevice(c).get_trace(channel)
