@@ -51,11 +51,11 @@ class DC_client(GUIClient):
         #self.gui.device_global_clear.clicked.connect(lambda: self.amo8.clear())
         # connect each channel
         for channel in self.gui.amo8_channels:
-            channel.dac.valueChanged.connect(lambda value: self.amo8.voltage(channel.number, value))
+            channel.dac.valueChanged.connect(lambda value, _channel_num=channel.number: self.amo8.voltage(_channel_num, value))
             #channel.ramp_start.clicked.connect(lambda voltage=channel.ramp_target.value(), rate=channel.ramp_rate.value():
                                                #self.amo8.ramp(channel.number, voltage, rate))
-            channel.toggleswitch.clicked.connect(lambda status=channel.lockswitch.isChecked():
-                                           self.amo8.toggle(channel.number, status))
+            channel.toggleswitch.clicked.connect(lambda status=channel.lockswitch.isChecked(), _channel_num=channel.number:
+                                           self.amo8.toggle(_channel_num, status))
             #channel.resetswitch.clicked.connect(lambda: self.reset(channel.number))
 
 
