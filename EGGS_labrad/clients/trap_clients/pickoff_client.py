@@ -21,12 +21,12 @@ class pickoff_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
-        # select oscilloscope
-        devices = yield self.rf.list_devices()
-        for dev_name in devices:
+        # find Rigol DS1000z oscilloscope
+        devices = yield self.os.list_devices()
+        for dev_id in devices:
+            dev_name = dev_id[1]
             if 'DS1Z' in dev_name:
-                print('yzdethkim')
-                yield self.rf.select_device()
+                yield self.os.select_device(dev_name)
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
