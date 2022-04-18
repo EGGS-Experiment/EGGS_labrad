@@ -1,7 +1,6 @@
 """
 Contains all the GUI elements needed for the multiplexer client.
 """
-
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
@@ -250,7 +249,7 @@ class multiplexer_channel(QFrame):
         self.setPID = QPushButton('Set PID')
         self.setPID.setMaximumHeight(30)
         self.setPID.setFont(QFont(shell_font, pointSize=10))
-        self.lockswitch = TextChangingButton(('Allow Changes', 'Prevent Changes'))
+        self.lockswitch = TextChangingButton(('Prevent Changes', 'Allow Changes'))
         self.record_button = TextChangingButton(('Stop Recording', 'Start Recording'))
         self.record_button.setMinimumHeight(25)
 
@@ -371,10 +370,15 @@ class multiplexer_gui(QFrame):
         # add wavemeter channel holder to qBox
         wm_scroll.setWidget(wmChan_widget)
         wm_scroll.setMinimumWidth(wmChan_widget.sizeHint().width())
+        #todo tmp
+        title_tmp = QLabel('Wavemeter Client')
+        font1 = QFont('MS Shell Dlg 2', pointSize=14)
+        self.active_status.setFont(font1)
         # final layout
-        layout.addWidget(qBox_wm,           0, 0, 4, 1)
-        layout.addWidget(qBox_intTrace,     0, 1, 3, 1)
-        layout.addWidget(qBox_PID,          3, 1, 1, 1)
+        layout.addWidget(title_tmp,         0, 0, 1, 2)
+        layout.addWidget(qBox_wm,           1, 0, 4, 1)
+        layout.addWidget(qBox_intTrace,     1, 1, 3, 1)
+        layout.addWidget(qBox_PID,          4, 1, 1, 1)
 
     def _createChannel(self, name, params):
         # initialize widget
