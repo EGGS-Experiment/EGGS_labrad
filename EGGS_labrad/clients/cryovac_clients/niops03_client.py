@@ -135,7 +135,6 @@ class niops03_client(GUIClient):
         self.gui.ip_power.setEnabled(status)
 
 
-
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
     runClient(niops03_client)
