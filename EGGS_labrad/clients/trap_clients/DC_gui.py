@@ -87,6 +87,8 @@ class DC_gui(QFrame):
         super().__init__()
         self.amo8_channels = []
         self.name = name
+        self.setFrameStyle(0x0001 | 0x0030)
+        self.setFixedSize(575, 675)
         # config
         try:
             from EGGS_labrad.config.dc_config import dc_config
@@ -130,13 +132,13 @@ class DC_gui(QFrame):
         device_hv_monitor_layout = QGridLayout(self.device_hv_monitor)
         # create HV monitor displays
         device_hv_v1_label = QLabel('V1 (V)')
-        device_hv_v1 = QLabel('V1')
-        device_hv_v1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        device_hv_v1.setStyleSheet('color: red')
+        self.device_hv_v1 = QLabel('V1')
+        self.device_hv_v1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.device_hv_v1.setStyleSheet('color: red')
         device_hv_i1_label = QLabel('I1 (mA)')
-        device_hv_i1 = QLabel('I1')
-        device_hv_i1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        device_hv_i1.setStyleSheet('color: red')
+        self.device_hv_i1 = QLabel('I1')
+        self.device_hv_i1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.device_hv_i1.setStyleSheet('color: red')
         # create global buttons
         self.device_global_onswitch = QPushButton('ALL ON')
         self.device_global_onswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
@@ -150,9 +152,9 @@ class DC_gui(QFrame):
         device_hv_title.setAlignment(Qt.AlignCenter)
         device_hv_monitor_layout.addWidget(device_hv_title, 0, 0, 1, 2)
         device_hv_monitor_layout.addWidget(device_hv_v1_label, 1, 0)
-        device_hv_monitor_layout.addWidget(device_hv_v1, 2, 0)
+        device_hv_monitor_layout.addWidget(self.device_hv_v1, 2, 0)
         device_hv_monitor_layout.addWidget(device_hv_i1_label, 3, 0)
-        device_hv_monitor_layout.addWidget(device_hv_i1, 4, 0)
+        device_hv_monitor_layout.addWidget(self.device_hv_i1, 4, 0)
         # lay out header
         device_header_layout.addWidget(device_header_title, 0, 0, 1, 2)
         device_header_layout.addWidget(self.device_global_onswitch, 1, 0, 1, 1)

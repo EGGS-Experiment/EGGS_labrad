@@ -213,7 +213,6 @@ class DCServer(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read()
         self.ser.release()
         # separate response for each channel
-        print(resp)
         resp = resp.strip().split('\r\n')
         # remove channel number
         resp = [val.split(': ')[1] for val in resp]
