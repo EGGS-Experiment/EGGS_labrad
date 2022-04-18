@@ -100,7 +100,6 @@ class DC_gui(QFrame):
         # create GUI
         self.createGUI()
 
-
     def createGUI(self):
         self.setFrameStyle(0x0001 | 0x0030)
         # set client title

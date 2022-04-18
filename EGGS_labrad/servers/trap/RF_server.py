@@ -14,9 +14,8 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-# imports
-from labrad.gpib import GPIBManagedServer
 from labrad.server import setting
+from labrad.gpib import GPIBManagedServer
 
 from SMY01 import SMY01Wrapper
 
@@ -32,29 +31,48 @@ class RFServer(GPIBManagedServer):
         'ROHDE&SCHWARZ SMY01': SMY01Wrapper,
     }
 
+
     # GENERAL
     @setting(111, 'Reset', returns='')
     def reset(self, c):
-        """Reset the signal generator."""
+        """
+        Reset the signal generator.
+        """
         yield self.selectedDevice(c).reset()
 
-    @setting(121, 'Toggle', onoff='b', returns='s')
-    def toggle(self, c, onoff=None):
-        """Turn the signal generator on/off."""
-        return self.selectedDevice(c).toggle(onoff)
+    @setting(121, 'Toggle', status=['b', 'i'], returns='b')
+    def toggle(self, c, status=None):
+        """
+        Turn the signal generator on/off.
+        """
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).toggle(status)
 
 
     # WAVEFORM
     @setting(211, 'Frequency', freq='v', returns='v')
     def frequency(self, c, freq=None):
-        """Set the signal generator frequency (in Hz)."""
+        """
+        Get/set the signal generator frequency (in Hz).
+        Arguments:
+            freq    (float) : the frequency (in Hz).
+        Returns:
+                    (float) : the frequency (in Hz).
+        """
         return self.selectedDevice(c).frequency(freq)
 
     @setting(212, 'Amplitude', ampl='v', units='s', returns='v')
     def amplitude(self, c, ampl=None, units=None):
         """
         Set/get the signal generator amplitude.
-        Returns the amplitude in dBm.
+        Arguments:
+            ampl    (float) : the amplitude (units to be specified).
+        Returns:
+                    (float) : the amplitude (in dBm).
         """
         return self.selectedDevice(c).amplitude(ampl, units)
 
@@ -62,37 +80,82 @@ class RFServer(GPIBManagedServer):
     # MODULATION
     @setting(311, 'Modulation Frequency', freq='v', returns='v')
     def mod_freq(self, c, freq=None):
-        """Set modulation frequency (in Hz)."""
+        """
+        Get/set modulation frequency.
+        Arguments:
+            freq    (float) : the modulation frequency (in Hz).
+        Returns:
+                    (float) : the modulation frequency (in Hz).
+        """
         return self.selectedDevice(c).mod_freq(freq)
 
-    @setting(312, 'AM Toggle', onoff='b', returns='s')
-    def am_toggle(self, c, onoff=None):
-        """Toggle amplitude modulation."""
-        return self.selectedDevice(c).am_toggle(onoff)
+    @setting(321, 'Toggle AM', status=['b', 'i'], returns='b')
+    def am_toggle(self, c, status=None):
+        """
+        Toggle amplitude modulation.
+        """
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).am_toggle(status)
 
-    @setting(313, 'AM Depth', depth='v', returns='v')
+    @setting(322, 'Modulation AM Depth', depth='v', returns='v')
     def am_depth(self, c, depth=None):
-        """Set amplitude modulation depth (in %)."""
+        """
+        Get/set amplitude modulation depth.
+        Arguments:
+            depth   (float) : the modulation depth (in %).
+        Returns:
+                    (float) : the modulation depth (in %).
+        """
         return self.selectedDevice(c).am_depth(depth)
 
-    @setting(321, 'FM Toggle', onoff='b', returns='s')
-    def fm_toggle(self, c, onoff=None):
-        """Toggle frequency modulation."""
-        return self.selectedDevice(c).fm_toggle(onoff)
+    @setting(331, 'Toggle FM', status='b', returns='b')
+    def fm_toggle(self, c, status=None):
+        """
+        Toggle frequency modulation.
+        """
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).fm_toggle(status)
 
-    @setting(322, 'FM Deviation', dev='v', returns='v')
+    @setting(332, 'Modulation FM Deviation', dev='v', returns='v')
     def fm_dev(self, c, dev=None):
-        """Set frequency modulation deviation (in Hz)."""
+        """
+        Get/set frequency modulation deviation.
+        Arguments:
+            dev     (float) : the modulation deviation (in Hz).
+        Returns:
+                    (float) : the modulation deviation (in Hz).
+        """
         return self.selectedDevice(c).fm_dev(dev)
 
-    @setting(323, 'PM Toggle', onoff='b', returns='s')
-    def pm_toggle(self, c, onoff=None):
-        """Toggle phase modulation."""
-        return self.selectedDevice(c).pm_toggle(onoff)
+    @setting(341, 'Toggle PM', status=['b', 'i'], returns='b')
+    def pm_toggle(self, c, status=None):
+        """
+        Toggle phase modulation.
+        """
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).pm_toggle(status)
 
-    @setting(324, 'PM Deviation', dev='v', returns='v')
+    @setting(342, 'Modulation PM Deviation', dev='v', returns='v')
     def pm_dev(self, c, dev=None):
-        """Set phase modulation deviation (in Hz)."""
+        """
+        Get/set phase modulation deviation.
+       Arguments:
+            dev     (float) : the modulation deviation (in rad).
+        Returns:
+                    (float) : the modulation deviation (in rad).
+        """
         return self.selectedDevice(c).pm_dev(dev)
 
 

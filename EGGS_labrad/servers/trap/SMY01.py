@@ -33,17 +33,18 @@ class SMY01Wrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def toggle(self, onoff):
-        #setter
+        # setter
         if onoff is True:
             yield self.write('LEV:ON')
         elif onoff is False:
             yield self.write('LEV:OFF')
-        #getter
+        # getter
         resp = yield self.query('LEV?')
+        # need to check LEVEL:OFF since there is no LEVEL:ON response
         if resp == 'LEVEL:OFF':
-            returnValue('OFF')
+            returnValue(False)
         else:
-            returnValue('ON')
+            returnValue(True)
 
 
     # WAVEFORM
@@ -103,9 +104,9 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         # getter
         resp = yield self.query('AM?')
         if resp == 'AM:OFF':
-            returnValue('OFF')
+            returnValue(False)
         else:
-            returnValue('ON')
+            returnValue(True)
 
     @inlineCallbacks
     def am_depth(self, depth):
@@ -134,9 +135,9 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         # getter
         resp = yield self.query('FM?')
         if resp == 'FM:OFF':
-            returnValue('OFF')
+            returnValue(False)
         else:
-            returnValue('ON')
+            returnValue(True)
 
     @inlineCallbacks
     def fm_dev(self, dev):
@@ -165,9 +166,9 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         # getter
         resp = yield self.query('PHM?')
         if resp == 'PHM:OFF':
-            returnValue('OFF')
+            returnValue(False)
         else:
-            returnValue('ON')
+            returnValue(True)
 
     @inlineCallbacks
     def pm_dev(self, dev):
