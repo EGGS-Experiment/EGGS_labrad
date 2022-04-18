@@ -157,7 +157,21 @@ class RF_gui(QFrame):
         self.mod_phase_toggle_label.setText(_translate("RF_gui", "Phase Mod."))
         self.mod_phase_dev_label.setText(_translate("RF_gui", "Phase Dev. (rad)"))
 
+class RF_gui2(QFrame):
+
+    def __init__(self):
+        super().__init__()
+        self.makeLayout()
+
+    def makeLayout(self):
+        self.layout = QGridLayout()
+        th1 = QLabel('yzde')
+        self.layout.addWidget(th1, 0, 1)
+        self.layout.addWidget(RF_gui, 1, 1)
+
+
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
-    runGUI(RF_gui)
+    #runGUI(RF_gui)
+    runGUI(RF_gui2)
