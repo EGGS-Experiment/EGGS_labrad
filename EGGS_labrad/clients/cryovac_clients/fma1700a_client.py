@@ -62,7 +62,7 @@ class fma1700a_client(GUIClient):
         """
         self.gui.flow_display.setText(str(flow))
         if self.recording:
-            elapsedtime = time.time() - self.starttime
+            elapsedtime = time() - self.starttime
             yield self.dv.add(elapsedtime, flow, context=self.c_record)
 
 
