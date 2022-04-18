@@ -17,7 +17,11 @@ class RF_client(GUIClient):
     @inlineCallbacks
     def initClient(self):
         # select device
-        yield self.rf.select_device()
+        devices = yield self.rf.list_devices()
+        for dev_name in devices:
+            if 'GPIB0::1::INSTR' in dev_name:
+                print('yzdethkim')
+                yield self.rf.select_device()
         # set lockswitch to unlocked
         self.gui.wav_lockswitch.setChecked(False)
 
