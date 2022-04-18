@@ -61,6 +61,7 @@ class GUIClient(ABC):
                 setattr(self, var_name, self.cxn[server_name])
             except Exception as e:
                 setattr(self, var_name, None)
+                print('Server unavailable:', server_name)
         # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
