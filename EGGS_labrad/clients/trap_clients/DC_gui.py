@@ -78,7 +78,6 @@ class AMO8_channel(QFrame):
         yield self.dac.setEnabled(status)
 
 
-
 class DC_gui(QFrame):
     """
     GUI for the AMO8 high voltage box.

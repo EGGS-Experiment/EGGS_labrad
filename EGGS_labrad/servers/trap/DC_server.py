@@ -94,7 +94,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         else:
             yield self.ser.write('out.r {:d}\r\n'.format(channel))
         # get response
-        resp = yield self.ser.read_line('\r\n')
+        resp = yield self.ser.read_line('\n')
         resp = resp.strip()
         if resp == 'ON':
             resp = 1
@@ -121,14 +121,14 @@ class DCServer(SerialDeviceServer, PollingServer):
         if voltage is not None:
             yield self.ser.acquire()
             yield self.ser.write('vout.w {:d} {:f}\r\n'.format(channel, voltage))
-            resp = yield self.ser.read_line('\r\n')
+            resp = yield self.ser.read_line('\n')
             self.ser.release()
             resp = (resp.strip())[:-1]
             returnValue(float(resp))
         elif channel is not None:
             yield self.ser.acquire()
             yield self.ser.write('vout.r {:d}\r\n'.format(channel))
-            resp = yield self.ser.read_line('\r\n')
+            resp = yield self.ser.read_line('\n')
             self.ser.release()
             resp = (resp.strip())[:-1]
             returnValue(float(resp))
@@ -148,8 +148,8 @@ class DCServer(SerialDeviceServer, PollingServer):
         """
         msg = 'ramp.w {:d} {:f} {:f}\r\n'.format(voltage, rate)
         yield self.ser.acquire()
-        yield self.ser.write(msg)
-        resp = yield self.ser.read_line('\r\n')
+        yield self.ser.wfrite(msg)
+        resp = yield self.ser.read_line('\n')
         self.ser.release()
         returnValue(resp)
 
