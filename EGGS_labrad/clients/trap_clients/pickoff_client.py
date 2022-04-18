@@ -1,11 +1,12 @@
 from time import time
 from datetime import datetime
+from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.trap_clients.pickoff_gui import pickoff_gui
 
-VOLTAGEID = 788135
+_PICKOFF_FACTOR = 300
 
 
 class pickoff_client(GUIClient):
@@ -26,6 +27,8 @@ class pickoff_client(GUIClient):
         self.c_record = self.cxn.context()
         self.recording = False
         # create loopingcall
+        self.refresher = LoopingCall(self.updateVoltage)
+        self.refresher.start(3, now=False)
 
     def initGUI(self):
         self.gui.record_button.toggled.connect(lambda status: self.record_flow(status))
@@ -52,14 +55,16 @@ class pickoff_client(GUIClient):
                               [('Pickoff', 'Peak-Peak Voltage', 'V')], context=self.c_record)
 
     @inlineCallbacks
-    def updateVoltage(self, voltage):
+    def updateVoltage(self):
         """
         Updates GUI when values are received from server.
         """
-        self.gui.voltage_display.setText(str(voltage))
+        voltage_tmp = yield self.os.measure_amplitude(1)
+        voltage_tmp = voltage_tmp / 2 * _PICKOFF_FACTOR
+        self.gui.voltage_display.setText('{:.2f}'.format(voltage_tmp))
         if self.recording:
             elapsedtime = time.time() - self.starttime
-            yield self.dv.add(elapsedtime, voltage, context=self.c_record)
+            yield self.dv.add(elapsedtime, voltage_tmp, context=self.c_record)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ from twisted.internet.defer import inlineCallbacks
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout, QApplication
-
+#todo: add shapes
 
 class EGGS_gui(QMainWindow):
 
@@ -79,11 +79,11 @@ class EGGS_gui(QMainWindow):
     def makeTrapWidget(self, reactor, cxn):
         from EGGS_labrad.clients.trap_clients.RF_client import RF_client
         from EGGS_labrad.clients.trap_clients.DC_client import DC_client
-        #
+        from EGGS_labrad.clients.trap_clients.pickoff_client import pickoff_client
         clients = {
-            RF_client: (0, 0),
-            DC_client: (0, 1),
-            #
+            RF_client:      (1, 0),
+            DC_client:      (0, 1),
+            pickoff_client: (0, 0)
         }
         return self._createTabLayout(clients, reactor, cxn)
 
