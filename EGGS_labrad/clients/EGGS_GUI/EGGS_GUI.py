@@ -79,9 +79,11 @@ class EGGS_gui(QMainWindow):
     def makeTrapWidget(self, reactor, cxn):
         from EGGS_labrad.clients.trap_clients.RF_client import RF_client
         from EGGS_labrad.clients.trap_clients.DC_client import DC_client
+        #
         clients = {
             RF_client: (0, 0),
-            DC_client: (0, 1)
+            DC_client: (0, 1),
+            #
         }
         return self._createTabLayout(clients, reactor, cxn)
 

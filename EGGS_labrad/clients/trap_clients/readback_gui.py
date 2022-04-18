@@ -43,6 +43,3 @@ class fma1700a_gui(QFrame):
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
     runGUI(fma1700a_gui)
-
-
-
