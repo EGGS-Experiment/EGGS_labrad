@@ -13,7 +13,7 @@ class TextChangingButton(_TextChangingButton):
 
 class niops03_gui(QFrame):
     def __init__(self, parent=None):
-        window = QWidget.__init__(self, parent)
+        super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeWidgets()
         self.makeLayout()
