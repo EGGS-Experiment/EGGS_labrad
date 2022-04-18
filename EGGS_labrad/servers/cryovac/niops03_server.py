@@ -243,7 +243,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                 yield self.client.refresh()
                 tt = yield self.client.twistorr74_server
                 # switch off ion pump if pressure is above a certain value
-                press_tmp = yield tt.read_pressure()
+                press_tmp = yield tt.pressure()
                 if press_tmp >= self.interlock_pressure:
                     print('Error: Twistorr74 pressure reads {:f} mbar.'
                           'Above current threshold value of {:f} mbar for Ion Pump to be active.'.format(press_tmp, self.interlock_pressure))

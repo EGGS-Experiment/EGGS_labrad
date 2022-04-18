@@ -65,7 +65,7 @@ class vibration_measurement(experiment):
                 continue
 
             #get data
-            pressure = self.pump.read_pressure()
+            pressure = self.pump.pressure()
             tempK = self.tempcontroller.read_temperature('0')
             trace = self.oscope.get_trace(1)
             trace = np.array([trace[0], trace[1]]).transpose()

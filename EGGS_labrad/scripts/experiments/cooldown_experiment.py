@@ -46,8 +46,7 @@ class cooldown_experiment(experiment):
             sleep(2)
             temp_tmp = self.ls.read_temperature()
             #ip_tmp = self.ni.ip_pressure()
-            press_tmp = self.tt.read_pressure()
-
+            press_tmp = self.tt.pressure()
             elapsedtime = time() - starttime
             self.dv.add(elapsedtime, temp_tmp[0], temp_tmp[1], temp_tmp[2], temp_tmp[3], context=self.c_ls)
             #self.dv.add([elapsedtime, ip_tmp], context=self.c_ni)

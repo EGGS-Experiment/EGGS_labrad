@@ -118,7 +118,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
 
 
     # PARAMETERS
-    @setting(211, 'Read Pressure', returns='v')
+    @setting(211, 'Pressure', returns='v')
     def pressure_read(self, c):
         """
         Get pump pressure.
@@ -140,7 +140,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         self.pressure_update(resp)
         returnValue(resp)
 
-    @setting(212, 'Read Power', returns='v')
+    @setting(212, 'Power', returns='v')
     def power_read(self, c):
         """
         Get pump power.
@@ -162,7 +162,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         self.power_update(resp)
         returnValue(resp)
 
-    @setting(213, 'Read Speed', returns='v')
+    @setting(213, 'Speed', returns='v')
     def speed_read(self, c):
         """
         Get pump rotational speed.
