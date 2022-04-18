@@ -20,7 +20,7 @@ class RF_gui(QFrame):
     def setupUi(self):
         RF_gui = self
         RF_gui.setObjectName("RF_gui")
-        RF_gui.setFixedSize(460, 250)
+        RF_gui.setFixedSize(470, 250)
         RF_gui.setFrameStyle(0x0001 | 0x0030)
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.rf_label = QLabel(RF_gui)
@@ -77,7 +77,7 @@ class RF_gui(QFrame):
         self.mod_freq.setObjectName("mod_freq")
         self.mod_freq.setKeyboardTracking(False)
         self.widget = QWidget(RF_gui)
-        self.widget.setGeometry(QRect(145, 150, 300, 91))
+        self.widget.setGeometry(QRect(145, 150, 320, 91))
         self.widget.setObjectName("widget")
         self.horizontalLayout = QHBoxLayout(self.widget)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
