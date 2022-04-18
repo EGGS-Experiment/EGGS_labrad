@@ -314,6 +314,7 @@ class multiplexer_gui(QFrame):
         self.dacPorts = {}
         self.pattern = {}
 
+        self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle('Multiplexed Wavemeter')
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         self._check_window_size()
@@ -370,12 +371,12 @@ class multiplexer_gui(QFrame):
         # add wavemeter channel holder to qBox
         wm_scroll.setWidget(wmChan_widget)
         wm_scroll.setMinimumWidth(wmChan_widget.sizeHint().width())
-        #todo tmp
-        title_tmp = QLabel('Wavemeter Client')
-        font1 = QFont('MS Shell Dlg 2', pointSize=14)
-        self.active_status.setFont(font1)
+        # add title header
+        title = QLabel('Wavemeter Client')
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=18))
+        title.setMaximumHeight(40)
         # final layout
-        layout.addWidget(title_tmp,         0, 0, 1, 2)
+        layout.addWidget(title,             0, 0, 1, 2)
         layout.addWidget(qBox_wm,           1, 0, 4, 1)
         layout.addWidget(qBox_intTrace,     1, 1, 3, 1)
         layout.addWidget(qBox_PID,          4, 1, 1, 1)

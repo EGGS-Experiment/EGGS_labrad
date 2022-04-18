@@ -244,9 +244,14 @@ class toptica_gui(QFrame):
             wmChan_layout.addWidget(channel_gui, i, 0, 1, 1)
         # add wavemeter channel holder to qBox
         wm_scroll.setWidget(wmChan_widget)
-        wm_scroll.setMinimumWidth(wmChan_widget.sizeHint().width())
+        wm_scroll.setFixedWidth(wmChan_widget.sizeHint().width())
+        # add title header
+        title = QLabel('Toptica Client')
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=18))
+        title.setMaximumHeight(40)
         # final layout
-        layout.addWidget(wm_scroll)
+        layout.addWidget(title,         0, 0, 1, 1)
+        layout.addWidget(wm_scroll,     1, 0, 1, 1)
 
 
 if __name__ == "__main__":
