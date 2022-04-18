@@ -4,9 +4,6 @@ Contains stuff useful for LabRAD clients.
 
 __all__ = ["runGUI", "runClient"]
 
-
-# imports
-import os
 from PyQt5.QtWidgets import QApplication
 
 
@@ -15,6 +12,7 @@ def runGUI(client, *args, **kwargs):
     """
     Runs a LabRAD GUI file written using PyQt5
     """
+    from os import _exit
     # widgets require a QApplication to run
     app = QApplication([])
     # instantiate gui
@@ -26,7 +24,7 @@ def runGUI(client, *args, **kwargs):
         print('No need to setup UI')
     # run GUI file
     gui.show()
-    os._exit(app.exec())
+    _exit(app.exec())
 
 
 def runClient(client, *args, **kwargs):
@@ -60,3 +58,14 @@ def runClient(client, *args, **kwargs):
         client_tmp.close()
     except Exception as e:
         print(e)
+
+# time trunk
+
+def create_trunk(name):
+    from datetime import datetime
+    date = datetime.now()
+
+    trunk1 = '{0:d}_{1:02d}_{2:02d}'.format(date.year, date.month, date.day)
+    trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(name, date.hour, date.minute)
+
+    return ['', str(date.year), str(date.month), trunk1, trunk2]
