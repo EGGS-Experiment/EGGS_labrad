@@ -1,4 +1,4 @@
-@echo off && conda activate labart && python -ix "%~f0" %* & goto :eof
+@ECHO OFF && TITLE LabRAD Shell && CALL conda activate labart && python -ix "%~f0" %* & goto :eof
 
 # get current module to set server variables
 from sys import modules
