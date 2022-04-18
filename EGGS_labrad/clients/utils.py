@@ -70,6 +70,7 @@ def createTrunk(name):
     Returns:
                 (*str)  : the trunk for *** in data_vault.
     """
+
     from datetime import datetime
     date = datetime.now()
 
