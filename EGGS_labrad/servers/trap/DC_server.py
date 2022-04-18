@@ -18,6 +18,8 @@ timeout = 20
 from labrad.units import WithUnit
 from labrad.server import setting, Signal, inlineCallbacks
 
+from time import sleep
+
 from twisted.internet.defer import returnValue
 from EGGS_labrad.servers import SerialDeviceServer, PollingServer
 
@@ -78,7 +80,7 @@ class DCServer(SerialDeviceServer, PollingServer):
 
 
     # ON/OFF
-    @setting(111, 'Toggle', channel='i', power='i', returns=['b', '*b'])
+    @setting(111, 'Toggle', channel='i', power=['i','b'], returns='b')
     def toggle(self, c, channel, power=None):
         """
         Set a channel to be on or off.
@@ -88,6 +90,8 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                     (bool)  : result
         """
+        if (type(power) == int) and (power not in (1, 2)):
+            raise Exception('Error: invalid input. Must be a boolean, 0, or 1.')
         yield self.ser.acquire()
         if power is not None:
             yield self.ser.write('out.w {:d} {:d}\r\n'.format(channel, power))
@@ -96,6 +100,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         # get response
         resp = yield self.ser.read_line('\n')
         resp = resp.strip()
+        # parse response
         if resp == 'ON':
             resp = 1
         elif resp == 'OFF':
@@ -106,9 +111,38 @@ class DCServer(SerialDeviceServer, PollingServer):
         self.toggle_update((channel, resp))
         returnValue(bool(resp))
 
+    @setting(121, 'Toggle All', power=['i', 'b'], returns=['', '*b'])
+    def toggle_all(self, c, power=None):
+        """
+        Get/set power state of all channels.
+        Args:
+            power   (bool)  : whether channels are to be on or off.
+        Returns:
+                    (*bool) : power state of all channels.
+        """
+        if (type(power) == int) and (power not in (1, 2)):
+            raise Exception('Error: invalid input. Must be a boolean, 0, or 1.')
+        # set power states
+        yield self.ser.acquire()
+        if power is not None:
+            if power is True:
+                yield self.ser.write('allon.w\r\n')
+            elif power is False:
+                yield self.ser.write('alloff.w\r\n')
+            yield self.ser.read_line('\n')
+            self.ser.release()
+            return
+        else:
+            yield self.ser.write('out.r\r\n')
+        self.ser.release()
+        # get power states
+        resp = yield self._parse()
+        resp = [True if val == 'ON' else False for val in resp]
+        returnValue(resp)
+
 
     # VOLTAGE
-    @setting(211, 'Voltage', channel='i', voltage='v', returns=['v', '*v'])
+    @setting(211, 'Voltage', channel='i', voltage='v', returns='v')
     def voltage(self, c, channel=None, voltage=None):
         """
         Set the voltage of a channel.
@@ -133,6 +167,19 @@ class DCServer(SerialDeviceServer, PollingServer):
             resp = (resp.strip())[:-1]
             returnValue(float(resp))
 
+    @setting(221, 'Voltage All', returns='*v')
+    def voltage_all(self, c):
+        """
+        Get the voltages of all channels.
+        Returns:
+                    (*float) : voltages of all channels.
+        """
+        yield self.ser.acquire()
+        yield self.ser.write('vout.r\r\n')
+        self.ser.release()
+        resp = yield self._parse()
+        resp = [float(val[:-1]) for val in resp]
+        returnValue(resp)
 
     # RAMP
     @setting(311, 'Ramp', channel='i', voltage='v', rate='v', returns='s')
@@ -160,13 +207,16 @@ class DCServer(SerialDeviceServer, PollingServer):
         yield self.inputs(None)
 
     @inlineCallbacks
-    def _parse(self, data):
-        resp = list()
+    def _parse(self):
         yield self.ser.acquire()
-        for i in range(28):
-            resp[i] = yield self.ser.read_line('\n')
+        sleep(1) # wait until device has finished writing
+        resp = yield self.ser.read()
         self.ser.release()
-        resp = [float(txt.split(':')[-1][:-1]) for txt in resp]
+        # separate response for each channel
+        print(resp)
+        resp = resp.strip().split('\r\n')
+        # remove channel number
+        resp = [val.split(': ')[1] for val in resp]
         returnValue(resp)
 
 

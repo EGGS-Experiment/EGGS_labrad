@@ -279,7 +279,6 @@ class OscilloscopeServer(GPIBManagedServer):
         return self.selectedDevice(c).measure_amplitude(channel)
 
 
-
 if __name__ == '__main__':
     from labrad import util
     util.runServer(OscilloscopeServer())
