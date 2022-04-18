@@ -1,17 +1,17 @@
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
-from EGGS_labrad.clients.trap_clients.rf_gui import rf_gui
+from EGGS_labrad.clients.trap_clients.RF_gui import RF_gui
 
 
-class rf_client(GUIClient):
+class RF_client(GUIClient):
 
     name = 'RF Client'
-    servers = {'rf': 'RF Server'}
+    servers = {'rf': 'RF Server', 'os': 'Oscilloscope Server'}
 
     def getgui(self):
         if self.gui is None:
-            self.gui = rf_gui()
+            self.gui = RF_gui()
         return self.gui
 
     @inlineCallbacks
@@ -71,7 +71,7 @@ class rf_client(GUIClient):
         Locks signal generator interface.
         """
         # invert since textchangingbutton is weird
-        status = not status
+        #status = not status
         # waveform parameters
         self.gui.wav_ampl.setEnabled(status)
         self.gui.wav_freq.setEnabled(status)
@@ -90,4 +90,4 @@ class rf_client(GUIClient):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
-    runClient(rf_client)
+    runClient(RF_client)
