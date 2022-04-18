@@ -71,10 +71,12 @@ class GUIClient(ABC):
 
     @inlineCallbacks
     def _initClient(self, cxn):
+        # disable GUI until initialization finishes
+        # self.gui.setEnabled(False)
         try:
             yield self.initClient()
         except Exception as e:
-            #self.gui.setEnabled(False)
+            self.gui.setEnabled(False)
             print('Error in initClient:', e)
         return cxn
 
@@ -91,6 +93,8 @@ class GUIClient(ABC):
     def _initGUI(self, cxn):
         try:
             yield self.initGUI()
+            # reenable GUI upon completion of initialization
+            self.gui.setEnabled(True)
         except Exception as e:
             self.gui.setEnabled(False)
             print('Error in initGUI:', e)
@@ -133,6 +137,9 @@ class GUIClient(ABC):
             server_nickname = list(self.servers.keys())[server_ind]
             if getattr(self, server_nickname) is None:
                 setattr(self, server_nickname, self.cxn[server_name])
+                print('th, connecting for first time:', server_name)
+                # todo: redo initClient, initGUI, and initData
+                # todo: check where the issue is in the above three, is maybe b/c haven't connected to client?
             # check if all required servers exist
             if all(server_names.lower().replace(' ', '_') in self.cxn.servers for server_names in self.servers.values()):
                 print('Enabling client.')

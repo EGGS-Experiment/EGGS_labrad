@@ -1,8 +1,9 @@
-from numpy import arange, linspace
+from time import time
+from numpy import linspace
 from socket import gethostname
 from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.clients import GUIClient
+from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
 from EGGS_labrad.clients.wavemeter_client.multiplexer_gui import multiplexer_gui
 
@@ -32,6 +33,25 @@ class multiplexer_client(GUIClient):
     def initClient(self):
         # get config
         self.chaninfo = multiplexer_config.channels
+
+        # create dictionary for keeping track of which channels to record
+        self.record_dict = {}
+        # create connection to eggs_labrad to get data vault
+        from labrad.wrappers import connectAsync
+        from os import environ
+        LABRADHOST_EGGS = environ['LABRADHOST']
+        LABRADPASSWORD_EGGS = environ['LABRADPASSWORD']
+        self.cxn_eggs = yield connectAsync(LABRADHOST_EGGS, name=self.name, password=LABRADPASSWORD_EGGS)
+        self.dv = self.cxn_eggs['data_vault']
+        # create parameters for recording
+        for chan in self.gui.channels.keys():
+            cntx_chan = self.cxn.context()
+            name_tmp = 'tbh'
+            for chan_name, chan_params in self.chaninfo.items():
+                if chan == chan_params[0]:
+                    name_tmp = chan_name
+            self.record_dict[chan] = {'status': False, 'context': cntx_chan, 'starttime': None, 'name': name_tmp}
+
         # connect to device signals
         yield self.wavemeter.signal__frequency_changed(FREQ_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.updateFrequency, source=None, ID=FREQ_CHANGED_ID)
@@ -84,15 +104,23 @@ class multiplexer_client(GUIClient):
             wmChannel, frequency, _, _, dacPort, _ = channel_params
             widget = self.gui.channels[wmChannel]
             # assign slots
-            widget.showTrace.clicked.connect(lambda status, _wmChannel=wmChannel: self.toggleTrace(status, _wmChannel))
-            widget.setPID.clicked.connect(lambda status, _wmChannel=wmChannel, _dacPort=dacPort: self.setupPID(_wmChannel, _dacPort))
-            #widget.spinExp.valueChanged.connect(lambda exp, _wmChannel=wmChannel: self.wavemeter.set_exposure_time(_wmChannel, int(exp)))
-            #widget.measSwitch.clicked.connect(lambda state, _wmChannel=wmChannel: self.wavemeter.set_switcher_signal_state(_wmChannel, state))
-            # if dacPort != 0:
-            #     widget.spinFreq.valueChanged.connect(lambda freq, _dacPort=dacPort: self.wavemeter.set_pid_course(_dacPort, freq))
-            #     widget.lockChannel.clicked.connect(
-            #         lambda state, _dacPort=dacPort, _wmChannel=wmChannel: self.wavemeter.set_channel_lock(_dacPort, _wmChannel, state))
-
+            widget.showTrace.clicked.connect(lambda status, _wmChannel=wmChannel:
+                                             self.toggleTrace(status, _wmChannel))
+            widget.setPID.clicked.connect(lambda status, _wmChannel=wmChannel, _dacPort=dacPort:
+                                          self.setupPID(_wmChannel, _dacPort))
+            widget.spinExp.valueChanged.connect(lambda exp, _wmChannel=wmChannel:
+                                                self.wavemeter.set_exposure_time(_wmChannel, int(exp)))
+            widget.measSwitch.clicked.connect(lambda state, _wmChannel=wmChannel:
+                                              self.wavemeter.set_switcher_signal_state(_wmChannel, state))
+            if dacPort != 0:
+                widget.spinFreq.valueChanged.connect(lambda freq, _dacPort=dacPort:
+                                                     self.wavemeter.set_pid_course(_dacPort, freq))
+                widget.lockChannel.clicked.connect(lambda state, _dacPort=dacPort, _wmChannel=wmChannel:
+                                                   self.wavemeter.set_channel_lock(_dacPort, _wmChannel, state))
+            # lock channels on startup to prevent accidental change of values
+            widget.lockswitch.setChecked(False)
+            # frequency recording
+            widget.record_button.toggled.connect(lambda status, _wmChannel=wmChannel: self.record_freq(status, _wmChannel))
 
     @inlineCallbacks
     def setupPID(self, channel, dacPort):
@@ -140,9 +168,11 @@ class multiplexer_client(GUIClient):
 
 
     # SLOTS
+    @inlineCallbacks
     def updateFrequency(self, c, signal):
         chan, freq = signal
         if chan in self.gui.channels.keys():
+            freq_tmp = float('NaN')
             if not self.gui.channels[chan].measSwitch.isChecked():
                 self.gui.channels[chan].currentfrequency.setText('Not Measured')
             elif freq == -3.0:
@@ -153,6 +183,16 @@ class multiplexer_client(GUIClient):
                 self.gui.channels[chan].currentfrequency.setText('Data Error')
             else:
                 self.gui.channels[chan].currentfrequency.setText('{:.6f}'.format(freq))
+                freq_tmp = freq
+            record_params = self.record_dict[chan]
+            if record_params['status']:
+                starttime = record_params['starttime']
+                cntx = record_params['context']
+                elapsedtime = time() - starttime
+                try:
+                    yield self.dv.add(elapsedtime, freq_tmp, context=cntx)
+                except Exception as e:
+                    pass
 
     def updatePIDvoltage(self, c, signal):
         dacPort, value = signal
@@ -166,26 +206,6 @@ class multiplexer_client(GUIClient):
                     print(e)
         except Exception as e:
             pass
-
-    def toggleTrace(self, status, chan):
-        pi = self.gui.pattern[chan]
-        if status:
-            self.gui.trace_display.addItem(pi)
-        else:
-            self.gui.trace_display.removeItem(pi)
-
-    def toggleMeas(self, c, signal):
-        chan, state = signal
-        if chan in self.gui.channels.keys():
-            self.gui.channels[chan].setChecked(state)
-
-    def toggleLock(self, c, signal):
-        self.gui.lockSwitch.setChecked(signal)
-
-    def toggleChannelLock(self, c, signal):
-        _, chan, state = signal
-        if chan in self.gui.channels.keys():
-            self.gui.channels[chan].lockChannel.setChecked(bool(state))
 
     def updateExp(self, c, signal):
         chan, value = signal
@@ -208,8 +228,27 @@ class multiplexer_client(GUIClient):
         chan, trace = signal
         num_points = 512
         if chan in self.gui.pattern.keys():
-            #print(trace[100])
             self.gui.pattern[chan].setData(x=linspace(0, 2000, num_points), y=trace)
+
+    def toggleTrace(self, status, chan):
+        pi = self.gui.pattern[chan]
+        if status:
+            self.gui.trace_display.addItem(pi)
+        else:
+            self.gui.trace_display.removeItem(pi)
+
+    def toggleMeas(self, c, signal):
+        chan, state = signal
+        if chan in self.gui.channels.keys():
+            self.gui.channels[chan].setChecked(state)
+
+    def toggleLock(self, c, signal):
+        self.gui.lockSwitch.setChecked(signal)
+
+    def toggleChannelLock(self, c, signal):
+        _, chan, state = signal
+        if chan in self.gui.channels.keys():
+            self.gui.channels[chan].lockChannel.setChecked(bool(state))
 
     @inlineCallbacks
     def changePolarity(self, index, dacPort):
@@ -217,6 +256,23 @@ class multiplexer_client(GUIClient):
             yield self.wavemeter.set_pid_polarity(dacPort, 1)
         else:
             yield self.wavemeter.set_pid_polarity(dacPort, -1)
+
+    @inlineCallbacks
+    def record_freq(self, status, channel):
+        record_params = self.record_dict[channel]
+        # create trunk
+        record_params['status'] = status
+        if status:
+            record_params['starttime'] = time()
+            cntx = record_params['context']
+            trunk_tmp = createTrunk(self.name)
+            dataset_name = record_params['name']
+            # reassign parameters first to minimize yielding
+            self.record_dict[channel] = record_params
+            # create dataset
+            yield self.dv.cd(trunk_tmp, True, context=cntx)
+            yield self.dv.new(dataset_name, [('Elapsed time', 't')],
+                              [('Laser', 'Frequency', 'THz')], context=cntx)
 
 
 if __name__ == "__main__":

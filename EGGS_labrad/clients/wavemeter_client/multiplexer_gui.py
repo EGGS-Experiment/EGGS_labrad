@@ -251,6 +251,8 @@ class multiplexer_channel(QFrame):
         self.setPID.setMaximumHeight(30)
         self.setPID.setFont(QFont(shell_font, pointSize=10))
         self.lockswitch = TextChangingButton(('Allow Changes', 'Prevent Changes'))
+        self.record_button = TextChangingButton(('Stop Recording', 'Start Recording'))
+        self.record_button.setMinimumHeight(25)
 
         # set frequency
         frequencylabel = QLabel('Lock Frequency (THz)')
@@ -285,6 +287,7 @@ class multiplexer_channel(QFrame):
         layout.addWidget(self.lockChannel,          1, 3, 1, 1)
         layout.addWidget(self.showTrace,            2, 3, 1, 1)
         layout.addWidget(self.setPID,               3, 3, 1, 1)
+        layout.addWidget(self.record_button,        5, 3, 1, 1)
         layout.addWidget(self.lockswitch,           6, 3, 1, 1)
         layout.addWidget(self.powermeter,           0, 4, 6, 1)
         layout.addWidget(self.powermeter_display,   6, 4, 1, 1)
