@@ -2,7 +2,7 @@
 Contains stuff useful for LabRAD clients.
 """
 
-__all__ = ["runGUI", "runClient"]
+__all__ = ["runGUI", "runClient", "createTrunk"]
 
 from PyQt5.QtWidgets import QApplication
 
@@ -59,9 +59,17 @@ def runClient(client, *args, **kwargs):
     except Exception as e:
         print(e)
 
-# time trunk
 
-def create_trunk(name):
+# recording functions
+def createTrunk(name):
+    """
+    Creates a trunk name for data in data_vault
+    corresponding to the current date.
+    Arguments:
+        name    (str)   : the name of the client.
+    Returns:
+                (*str)  : the trunk for *** in data_vault.
+    """
     from datetime import datetime
     date = datetime.now()
 
