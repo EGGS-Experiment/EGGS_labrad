@@ -90,7 +90,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                     (bool)  : result
         """
-        if (type(power) == int) and (power not in (1, 2)):
+        if (type(power) == int) and (power not in (0, 1)):
             raise Exception('Error: invalid input. Must be a boolean, 0, or 1.')
         yield self.ser.acquire()
         if power is not None:
@@ -102,15 +102,15 @@ class DCServer(SerialDeviceServer, PollingServer):
         resp = resp.strip()
         # parse response
         if resp == 'ON':
-            resp = 1
+            resp = True
         elif resp == 'OFF':
-            resp = 0
+            resp = False
         else:
             raise Exception('Error: bad readback from device.')
         self.ser.release()
         # send signal to all other listeners
         self.toggle_update((channel, resp), self.getOtherListeners(c))
-        returnValue(bool(resp))
+        returnValue(resp)
 
     @setting(121, 'Toggle All', power=['i', 'b'], returns=['', '*b'])
     def toggle_all(self, c, power=None):
@@ -121,7 +121,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                     (*bool) : power state of all channels.
         """
-        if (type(power) == int) and (power not in (1, 2)):
+        if (type(power) == int) and (power not in (0, 1)):
             raise Exception('Error: invalid input. Must be a boolean, 0, or 1.')
         # set power states
         yield self.ser.acquire()
