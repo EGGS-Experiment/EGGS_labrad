@@ -41,9 +41,9 @@ class DCServer(SerialDeviceServer, PollingServer):
 
 
     # SIGNALS
+    toggle_update = Signal(999997, 'signal: toggle update', '(ib)')
     voltage_update = Signal(999999, 'signal: voltage update', '(iv)')
     hv_update = Signal(999998, 'signal: hv update', '(vv)')
-    toggle_update = Signal(999997, 'signal: toggle update', '(ib)')
 
 
     # GENERAL
@@ -108,7 +108,8 @@ class DCServer(SerialDeviceServer, PollingServer):
         else:
             raise Exception('Error: bad readback from device.')
         self.ser.release()
-        self.toggle_update((channel, resp))
+        # send signal to all other listeners
+        self.toggle_update((channel, resp), self.getOtherListeners(c))
         returnValue(bool(resp))
 
     @setting(121, 'Toggle All', power=['i', 'b'], returns=['', '*b'])
@@ -152,20 +153,22 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                     (float) : channel voltage
         """
+        # setter
         if voltage is not None:
             yield self.ser.acquire()
             yield self.ser.write('vout.w {:d} {:f}\r\n'.format(channel, voltage))
-            resp = yield self.ser.read_line('\n')
-            self.ser.release()
-            resp = (resp.strip())[:-1]
-            returnValue(float(resp))
+        # getter
         elif channel is not None:
             yield self.ser.acquire()
             yield self.ser.write('vout.r {:d}\r\n'.format(channel))
-            resp = yield self.ser.read_line('\n')
-            self.ser.release()
-            resp = (resp.strip())[:-1]
-            returnValue(float(resp))
+        resp = yield self.ser.read_line('\n')
+        self.ser.release()
+        # parse response
+        resp = (resp.strip())[:-1]
+        # send signal to all other listeners
+        self.voltage_update((channel, resp), self.getOtherListeners(c))
+        returnValue(float(resp))
+
 
     @setting(221, 'Voltage All', returns='*v')
     def voltage_all(self, c):

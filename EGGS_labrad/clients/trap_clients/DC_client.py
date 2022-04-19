@@ -3,6 +3,8 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.trap_clients.DC_gui import DC_gui
 
+TOGGLEID = 374683
+VOLTAGEID = 374682
 HVID = 374861
 
 
@@ -21,8 +23,15 @@ class DC_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
+        yield self.amo8.signal__toggle_update(TOGGLEID)
+        yield self.amo8.addListener(listener=self.updateToggle, source=None, ID=TOGGLEID)
+        yield self.amo8.signal__voltage_update(VOLTAGEID)
+        yield self.amo8.addListener(listener=self.updateVoltage, source=None, ID=VOLTAGEID)
         yield self.amo8.signal__hv_update(HVID)
         yield self.amo8.addListener(listener=self.updateHV, source=None, ID=HVID)
+        # todo tmp remove
+        for channel in self.gui.amo8_channels:
+            print(channel.num)
         # start device polling
         poll_params = yield self.amo8.polling()
         # only start polling if not started
@@ -68,6 +77,17 @@ class DC_client(GUIClient):
     def reset(self, channel_num):
         yield self.amo8.voltage(channel_num, 0)
         yield self.amo8.toggle(channel_num, 0)
+
+    def updateToggle(self, c, signal):
+        chan, status = signal
+        if chan in
+        self.gui.device_hv_v1.setText(str(hv[0]))
+        self.gui.device_hv_i1.setText(str(hv[1]))
+
+    def updateVoltage(self, c, signal):
+        chan, voltage = signal
+        self.gui.device_hv_v1.setText(str(hv[0]))
+        self.gui.device_hv_i1.setText(str(hv[1]))
 
     def updateHV(self, c, hv):
         self.gui.device_hv_v1.setText(str(hv[0]))
