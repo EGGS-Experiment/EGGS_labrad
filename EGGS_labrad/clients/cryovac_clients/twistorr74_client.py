@@ -59,7 +59,7 @@ class twistorr74_client(GUIClient):
         """
         Updates GUI when values are received from server.
         """
-        self.gui.pressure_display.setText(str(pressure))
+        self.gui.pressure_display.setText('{:.2e}'.format(pressure))
         if self.recording:
             elapsedtime = time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
