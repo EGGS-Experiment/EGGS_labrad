@@ -32,11 +32,13 @@ class GUIClient(ABC):
         self.getgui()
         #todo: move getgui to after initclient
         # initialization sequence
+        print("Starting up client...")
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         # initData has to be before initGUI otherwise signals will be active
         d.addCallback(self._initData)
         d.addCallback(self._initGUI)
+        print("Client initialization successful.")
 
     @inlineCallbacks
     def _connectLabrad(self):
@@ -44,6 +46,7 @@ class GUIClient(ABC):
         Creates an asynchronous connection to core labrad servers
         and sets up server connection signals.
         """
+        print("Connecting to LabRAD...")
         # only create connection if we aren't instantiated with one
         if not self.cxn:
             if self.LABRADHOST is None:
@@ -52,8 +55,9 @@ class GUIClient(ABC):
                 self.LABRADPASSWORD = environ['LABRADPASSWORD']
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync(self.LABRADHOST, name=self.name, password=self.LABRADPASSWORD)
-
+        print("Connection successful.")
         # set self.servers as class attributes
+        print("Getting required servers...")
         self.servers['registry'] = 'registry'
         self.servers['dv'] = 'data_vault'
         for var_name, server_name in self.servers.items():
@@ -73,6 +77,7 @@ class GUIClient(ABC):
     def _initClient(self, cxn):
         # disable GUI until initialization finishes
         # self.gui.setEnabled(False)
+        print("Initializing client...")
         try:
             yield self.initClient()
         except Exception as e:
@@ -82,6 +87,7 @@ class GUIClient(ABC):
 
     @inlineCallbacks
     def _initData(self, cxn):
+        print("Getting default values...")
         try:
             yield self.initData()
         except Exception as e:
@@ -91,6 +97,7 @@ class GUIClient(ABC):
 
     @inlineCallbacks
     def _initGUI(self, cxn):
+        print("Initializing GUI...")
         try:
             yield self.initGUI()
             # reenable GUI upon completion of initialization
