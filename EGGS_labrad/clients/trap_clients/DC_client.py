@@ -37,8 +37,6 @@ class DC_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
-        # lock while starting up
-        self.gui.setEnabled(False)
         # get voltages and power states
         voltage_list = yield self.amo8.voltage_all()
         toggle_list = yield self.amo8.toggle_all()
@@ -48,8 +46,6 @@ class DC_client(GUIClient):
         # get HV status
         hv_status = yield self.amo8.inputs()
         self.updateHV(None, hv_status)
-        # reenable after startup
-        self.gui.setEnabled(True)
 
     def initGUI(self):
         # connect global signals

@@ -32,8 +32,6 @@ class RGA_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
-        # lock while starting up
-        self.gui.setEnabled(False)
         self.gui.buffer_readout.appendPlainText('Initializing client...')
         # lockswitches
         self.gui.general_lockswitch.setChecked(True)
@@ -61,8 +59,6 @@ class RGA_client(GUIClient):
         self.gui.scan_mi.setValue(mi_val)
         self.gui.scan_mf.setValue(mf_val)
         self.gui.scan_sa.setValue(sa_val)
-        # unlock after startup
-        self.gui.setEnabled(True)
         self.gui.buffer_readout.appendPlainText('Initialized.')
 
     def initGUI(self):

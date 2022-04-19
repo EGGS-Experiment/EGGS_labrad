@@ -27,8 +27,6 @@ class RF_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
-        # lock while starting up
-        self.gui.setEnabled(False)
         # get and assign parameters
         freq = yield self.rf.frequency()
         ampl = yield self.rf.amplitude()
@@ -51,8 +49,6 @@ class RF_client(GUIClient):
         self.gui.mod_ampl_toggle.setChecked(am_toggle)
         self.gui.mod_ampl_toggle.setChecked(pm_toggle)
         self.gui.mod_ampl_toggle.setChecked(fm_toggle)
-        # unlock after startup
-        self.gui.setEnabled(True)
 
     def initGUI(self):
         # waveform parameters
