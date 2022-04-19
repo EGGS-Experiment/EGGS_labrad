@@ -76,7 +76,7 @@ class niops03_client(GUIClient):
     @inlineCallbacks
     def updatePressure(self, c, pressure):
         # update pressure
-        self.gui.ip_pressure_display.setText('{:.2e}'.format(pressure))
+        self.gui.ip_pressure_display.setText('{:.1e}'.format(pressure))
         if self.recording:
             elapsedtime = time() - self.starttime
             yield self.dv.add(elapsedtime, pressure, context=self.c_record)
