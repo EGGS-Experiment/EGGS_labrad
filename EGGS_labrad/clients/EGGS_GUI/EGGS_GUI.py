@@ -3,7 +3,7 @@ from twisted.internet.defer import inlineCallbacks
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout, QApplication
-#todo: add shapes
+
 
 class EGGS_gui(QMainWindow):
 
@@ -14,6 +14,7 @@ class EGGS_gui(QMainWindow):
         super(EGGS_gui, self).__init__(parent)
         self.clipboard = clipboard
         self.reactor = reactor
+        #self.setStyleSheet("background-color:black; color:white; border: 1px solid white")
         self.setWindowTitle('EGGS GUI')
         # set window icon
         path_root = environ['EGGS_LABRAD_ROOT']

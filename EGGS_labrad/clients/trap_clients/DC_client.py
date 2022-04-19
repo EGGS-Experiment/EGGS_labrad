@@ -29,9 +29,6 @@ class DC_client(GUIClient):
         yield self.amo8.addListener(listener=self.updateVoltage, source=None, ID=VOLTAGEID)
         yield self.amo8.signal__hv_update(HVID)
         yield self.amo8.addListener(listener=self.updateHV, source=None, ID=HVID)
-        # todo tmp remove
-        for channel in self.gui.amo8_channels:
-            print(channel.num)
         # start device polling
         poll_params = yield self.amo8.polling()
         # only start polling if not started
@@ -42,15 +39,12 @@ class DC_client(GUIClient):
     def initData(self):
         # lock while starting up
         self.gui.setEnabled(False)
-        # get voltages
+        # get voltages and power states
         voltage_list = yield self.amo8.voltage_all()
-        voltage_list = [voltage_list[channel.number] for channel in self.gui.amo8_channels]
-        # get power states
         toggle_list = yield self.amo8.toggle_all()
-        toggle_list = [toggle_list[channel.number] for channel in self.gui.amo8_channels]
-        for i in range(len(self.gui.amo8_channels)):
-            self.gui.amo8_channels[i].dac.setValue(voltage_list[i])
-            self.gui.amo8_channels[i].toggleswitch.setChecked(bool(toggle_list[i]))
+        for channel_num, channel_widget in self.gui.amo8_channels.items():
+            channel_widget.dac.setValue(voltage_list[channel_num - 1])
+            channel_widget.toggleswitch.setChecked(bool(toggle_list[channel_num - 1]))
         # get HV status
         hv_status = yield self.amo8.inputs()
         self.updateHV(None, hv_status)
@@ -63,7 +57,7 @@ class DC_client(GUIClient):
         self.gui.device_global_offswitch.clicked.connect(lambda: self.amo8.toggle_all(False))
         self.gui.device_global_clear.clicked.connect(lambda: self.amo8.clear())
         # connect each channel
-        for channel in self.gui.amo8_channels:
+        for channel in self.gui.amo8_channels.values():
             channel.dac.valueChanged.connect(lambda value, _channel_num=channel.number: self.amo8.voltage(_channel_num, value))
             #channel.ramp_start.clicked.connect(lambda voltage=channel.ramp_target.value(), rate=channel.ramp_rate.value():
                                                #self.amo8.ramp(channel.number, voltage, rate))
@@ -79,15 +73,27 @@ class DC_client(GUIClient):
         yield self.amo8.toggle(channel_num, 0)
 
     def updateToggle(self, c, signal):
-        chan, status = signal
-        if chan in
-        self.gui.device_hv_v1.setText(str(hv[0]))
-        self.gui.device_hv_i1.setText(str(hv[1]))
+        chan_num, status = signal
+        if chan_num in self.gui.amo8_channels.keys():
+            # set element disable
+            widget = self.gui.amo8_channels[chan_num]
+            widget.toggleswitch.setEnabled(False)
+            # update value
+            widget.toggleswitch.setChecked(status)
+            # enable element
+            widget.toggleswitch.setEnabled(True)
 
     def updateVoltage(self, c, signal):
-        chan, voltage = signal
-        self.gui.device_hv_v1.setText(str(hv[0]))
-        self.gui.device_hv_i1.setText(str(hv[1]))
+        from time import sleep
+        chan_num, voltage = signal
+        if chan_num in self.gui.amo8_channels.keys():
+            # set element disable
+            widget = self.gui.amo8_channels[chan_num]
+            widget.dac.setEnabled(False)
+            # update value
+            widget.dac.setValue(voltage)
+            # enable element
+            widget.dac.setEnabled(True)
 
     def updateHV(self, c, hv):
         self.gui.device_hv_v1.setText(str(hv[0]))

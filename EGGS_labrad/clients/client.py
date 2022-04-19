@@ -38,7 +38,6 @@ class GUIClient(ABC):
         # initData has to be before initGUI otherwise signals will be active
         d.addCallback(self._initData)
         d.addCallback(self._initGUI)
-        print("Client initialization successful.")
 
     @inlineCallbacks
     def _connectLabrad(self):
@@ -83,6 +82,8 @@ class GUIClient(ABC):
         except Exception as e:
             self.gui.setEnabled(False)
             print('Error in initClient:', e)
+        else:
+            print("Successfully initialized client.")
         return cxn
 
     @inlineCallbacks
@@ -93,6 +94,8 @@ class GUIClient(ABC):
         except Exception as e:
             self.gui.setEnabled(False)
             print('Error in initData:', e)
+        else:
+            print("Successfully retrieved default values.")
         return cxn
 
     @inlineCallbacks
@@ -105,6 +108,8 @@ class GUIClient(ABC):
         except Exception as e:
             self.gui.setEnabled(False)
             print('Error in initGUI:', e)
+        else:
+            print("GUI initialization successful.")
         return cxn
 
     @inlineCallbacks

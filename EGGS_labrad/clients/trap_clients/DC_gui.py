@@ -85,7 +85,7 @@ class DC_gui(QFrame):
 
     def __init__(self, name=None):
         super().__init__()
-        self.amo8_channels = []
+        self.amo8_channels = {}
         self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
         self.setFixedSize(575, 675)
@@ -109,10 +109,11 @@ class DC_gui(QFrame):
         self.device_header = self._createHeader()
         # layout individual channels (chosen via class variable)
         for channel_name, channel_params in self.active_channels.items():
+            channel_num = channel_params['num']
             # initialize GUIs for each channel
-            channel_gui = AMO8_channel(channel_name, channel_params['num'])
+            channel_gui = AMO8_channel(channel_name, channel_num)
             # add widget to client list and layout
-            self.amo8_channels.append(channel_gui)
+            self.amo8_channels[channel_num] = channel_gui
             amo8_layout.addWidget(channel_gui, channel_params['row'], channel_params['col'])
         # layout rest of device
         amo8_layout.addWidget(self.device_header, 0, 0, 1, 1)
