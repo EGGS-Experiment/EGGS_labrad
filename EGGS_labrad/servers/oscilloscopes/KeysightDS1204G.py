@@ -22,12 +22,13 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
         """
         yield self.write('*CLS')
 
+
     # CHANNEL
     @inlineCallbacks
     def channel_info(self, channel):
         """
         Get channel information.
-        Args:
+        Arguments:
             channel (int): channel to query
         Returns:
             Tuple of (on/off, attenuation, scale, offset, coupling, invert)
@@ -44,7 +45,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def channel_coupling(self, channel, coupling=None):
         """
         Set or query channel coupling.
-        Args:
+        Arguments:
             channel (int): Which channel to set coupling.
             coup (str): Coupling, 'AC' or 'DC'. If None (the default) just query
                 the coupling without setting it.
@@ -65,7 +66,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def channel_scale(self, channel, scale=None):
         """
         Get or set the vertical scale.
-        Args:
+        Arguments:
             channel (int): The channel to get or set.
             scale   (float): The vertical scale (in volts/div).
         Returns:
@@ -85,7 +86,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
         """
         todo
         Get/set the probe attenuation factor.
-        Args:
+        Arguments:
             channel (int): the channel to get/set
             factor (float): the probe attenuation factor
         Returns:
@@ -104,7 +105,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def channel_toggle(self, channel, state=None):
         """
         Set or query channel on/off state.
-        Args:
+        Arguments:
             channel (int): the channel to get/set
             state (bool): True->On, False->Off.
         Returns:
@@ -120,7 +121,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def channel_invert(self, channel, invert=None):
         """
         Get or set channel inversion.
-        Args:
+        Arguments:
             channel (int): the channel to get/set
             invert (bool): True->invert, False->do not invert channel.
         Returns:
@@ -136,7 +137,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def channel_offset(self, channel, offset=None):
         """
         Get or set the vertical offset.
-        Args:
+        Arguments:
             channel (int): the channel to get/set
             offset (float): Vertical offset in units of divisions. If None,
                 (the default), then we only query.
@@ -159,7 +160,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def trigger_channel(self, channel=None):
         """
         Set or query trigger channel.
-        Args:
+        Arguments:
             source (str): channel name
         Returns:
             (str): Trigger source.
@@ -178,7 +179,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def trigger_slope(self, slope=None):
         """
         Set or query trigger slope.
-        Args:
+        Arguments:
             slope (str): the slope to trigger on (e.g. rising edge)
         Returns:
             (str): the slope being triggered off
@@ -197,7 +198,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def trigger_level(self, level=None):
         """
         Set or query the trigger level.
-        Args:
+        Arguments:
             channel (int)   :  the channel to set the trigger for
             level   (float) : the trigger level (in V)
         Returns:
@@ -219,7 +220,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def trigger_mode(self, mode=None):
         """
         Set or query the trigger mode.
-        Args:
+        Arguments:
             mode (str): The trigger mode.
         Returns:
             (str): The trigger mode.
@@ -239,7 +240,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def horizontal_offset(self, offset=None):
         """
         Set or query the horizontal offset.
-        Args:
+        Arguments:
             offset (float): the horizontal offset (in seconds).
         Returns:
             (float): the horizontal offset in (in seconds).
@@ -257,7 +258,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def horizontal_scale(self, scale=None):
         """
         Set or query the horizontal scale.
-        Args:
+        Arguments:
             scale (float): the horizontal scale (in s/div).
         Returns:
             (float): the horizontal scale (in s/div).
@@ -277,7 +278,7 @@ class KeysightDS1204GWrapper(GPIBDeviceWrapper):
     def get_trace(self, channel, points=None):
         """
         Get a trace for a single channel.
-        Args:
+        Arguments:
             channel: The channel for which we want to get the trace.
         Returns:
             Tuple of ((ValueArray[s]) Time axis, (ValueArray[V]) Voltages).

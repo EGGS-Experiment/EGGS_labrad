@@ -80,8 +80,8 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     @setting(111, 'Toggle', onoff=['', 'b'], returns='b')
     def toggle(self, c, onoff=None):
         """
-        Start or stop the pump
-        Args:
+        Start or stop the pump.
+        Arguments:
             onoff   (bool)  : desired pump state
         Returns:
                     (bool)  : pump state

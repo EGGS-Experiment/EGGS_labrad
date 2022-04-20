@@ -59,8 +59,8 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
     @setting(111, 'Read Temperature', channel='s', returns='*1v')
     def temperature_read(self, c, channel=None):
         """
-        Get sensor temperature
-        Args:
+        Get sensor temperature.
+        Arguments:
             channel (str): sensor channel to measure
         Returns:
             (*float): sensor temperature in Kelvin
@@ -87,8 +87,8 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
     def heater_setup(self, c, output_channel, resistance=None, max_current=None):
         """
         Set up the physical parameters of the heater.
-        This shold be done after the heater mode is set.
-        Args:
+        This should be done after the heater mode is set.
+        Arguments:
             output_channel  (int): the heater channel
             resistance      (int): the heater resistance setting (1 = 25 Ohms, 2 = 50 Ohms)
             max_current     (float): maximum heater output current
@@ -117,7 +117,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
     def heater_mode(self, c, output_channel, mode=None, input_channel=None):
         """
         Set the output mode of the heater.
-        Args:
+        Arguments:
             output_channel  (int): the heater channel
             mode            (int): heater operation mode (0=off, 1=PID, 2=zone, 3=open loop,
                                                         4=monitor out, 5=warmup)
@@ -147,7 +147,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
     def heater_range(self, c, output_channel, range=None):
         """
         Set or query heater range.
-        Args:
+        Arguments:
             output_channel  (int): the heater channel
             range           (int): the heater range (0=off, 1=1% of max, 2=10% of max, 3=100% of max)
         Returns:
@@ -175,7 +175,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         Set or query heater power.
         If heater is in manual mode, then heater directly controls power/current.
         If heater is in closed loop mode, then heater sets power/current offset for PID.
-        Args:
+        Arguments:
             output_channel (int): the heater channel
             power (float): the heater power as a percentage of max amount
         Returns:
@@ -201,7 +201,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
     def heater_PID(self, c, output_channel, prop=None, integ=None, diff=None):
         """
         Set or query heater PID parameters. Only available if heater is in PID mode.
-        Args:
+        Arguments:
             output_channel (int): the heater channel
             prop           (float): Proportional
             integ           (float): Integral
@@ -229,7 +229,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
     def heater_setpoint(self, c, output_channel, setpoint=None):
         """
         Set the heater setpoint in closed-loop output mode.
-        Args:
+        Arguments:
             output_channel  (int): the heater channel
             setpoint        (float): the setpoint (in Kelvin)
         Returns:

@@ -62,7 +62,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def channel_info(self, c, channel):
         """
         Get channel information.
-        Args:
+        Arguments:
             channel (int): channel to query
         Returns:
             Tuple of (on/off, attenuation, scale, offset, coupling, invert)
@@ -73,7 +73,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def channel_coupling(self, c, channel, coup=None):
         """
         Set or query channel coupling.
-        Args:
+        Arguments:
             channel (int): Which channel to set coupling.
             coup (str): Coupling, 'AC' or 'DC'. If None (the default) just query
                 the coupling without setting it.
@@ -86,7 +86,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def channel_scale(self, c, channel, scale=None):
         """
         Get or set the vertical scale.
-        Args:
+        Arguments:
             channel (int): The channel to get or set.
             scale   (float): The vertical scale (in volts/div).
         Returns:
@@ -98,7 +98,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def channel_probe(self, c, channel, factor=None):
         """
         Get/set the probe attenuation factor.
-        Args:
+        Arguments:
             channel (int): the channel to get/set
             factor (float): the probe attenuation factor
         Returns:
@@ -110,7 +110,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def channel_toggle(self, c, channel, state=None):
         """
         Set or query channel on/off state.
-        Args:
+        Arguments:
             channel (int): the channel to get/set
             state (bool): True->On, False->Off.
         Returns:
@@ -122,7 +122,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def channel_invert(self, c, channel, invert=None):
         """
         Get or set channel inversion.
-        Args:
+        Arguments:
             channel (int): the channel to get/set
             invert (bool): True->invert, False->do not invert channel.
         Returns:
@@ -134,7 +134,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def channel_offset(self, c, channel, offset=None):
         """
         Get or set the vertical offset.
-        Args:
+        Arguments:
             channel (int): the channel to get/set
             offset (float): Vertical offset in units of divisions. If None,
                 (the default), then we only query.
@@ -149,7 +149,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def trigger_channel(self, c, source=None):
         """
         Set or query trigger channel.
-        Args:
+        Arguments:
             source (str): channel name
         Returns:
             (str): Trigger source.
@@ -162,7 +162,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def trigger_slope(self, c, slope=None):
         """
         Set or query trigger slope.
-        Args:
+        Arguments:
             slope (str): the slope to trigger on (e.g. rising edge)
         Returns:
             (str): the slope being triggered off
@@ -173,7 +173,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def trigger_level(self, c, channel, level=None):
         """
         Set or query the trigger level.
-        Args:
+        Arguments:
             channel (int)   :  the channel to set the trigger for
             level   (float) : the trigger level (in V)
         Returns:
@@ -185,7 +185,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def trigger_mode(self, c, mode=None):
         """
         Set or query the trigger mode.
-        Args:
+        Arguments:
             mode (str): The trigger mode.
         Returns:
             (str): The trigger mode.
@@ -198,7 +198,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def horizontal_offset(self, c, offset=None):
         """
         Set or query the horizontal offset.
-        Args:
+        Arguments:
             offset (float): the horizontal offset (in seconds).
         Returns:
             (float): the horizontal offset in (in seconds).
@@ -209,7 +209,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def horizontal_scale(self, c, scale=None):
         """
         Set or query the horizontal scale.
-        Args:
+        Arguments:
             scale (float): the horizontal scale (in s/div).
         Returns:
             (float): the horizontal scale (in s/div).
@@ -222,7 +222,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def get_trace(self, c, channel, points=None):
         """
         Get a trace for a single channel.
-        Args:
+        Arguments:
             channel: The channel for which we want to get the trace.
         Returns:
             (*float, *float): (the time
@@ -246,7 +246,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def average_toggle(self, c, average_on=None):
         """
         Turn averaging on or off.
-        Args:
+        Arguments:
             average_on (bool): If True, turn averaging on.
         Returns:
             (bool): whether averaging is on or off.
@@ -257,7 +257,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def average_number(self, c, averages=None):
         """
         Set number of averages.
-        Args:
+        Arguments:
             averages (int): number of averages.
         Returns:
             (int): number of averages.

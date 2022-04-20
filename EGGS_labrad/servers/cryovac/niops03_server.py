@@ -81,7 +81,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
     def toggle_ip(self, c, power):
         """
         Set ion pump power.
-        Args:
+        Arguments:
             power   (bool)  : whether pump is to be on or off
         Returns:
                     (str)   : response from device
@@ -103,7 +103,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
     def toggle_np(self, c, power):
         """
         Set getter power.
-        Args:
+        Arguments:
             power   (bool)  : getter power status
         Returns:
                     (str)   : response from device
@@ -125,7 +125,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
     def np_mode(self, c, mode):
         """
         Set getter mode.
-        Args:
+        Arguments:
             mode (int)  : NP mode. [1=activation, 2=timed activation,
                                     3=conditioning, 4=timed conditioning]
         Returns:
