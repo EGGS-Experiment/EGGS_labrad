@@ -6,7 +6,7 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.trap_clients.stability_gui import stability_gui
 
-_STABILITY_FACTOR = 300
+_PICKOFF_FACTOR = 300
 
 
 class stability_client(GUIClient):
@@ -59,13 +59,18 @@ class stability_client(GUIClient):
                               [('Pickoff', 'Peak-Peak Voltage', 'V')], context=self.c_record)
 
     @inlineCallbacks
-    def updateVoltage(self):
+    def updateValues(self):
         """
         Updates GUI when values are received from server.
         """
+        # calculate voltage
         voltage_tmp = yield self.os.measure_amplitude(1)
-        voltage_tmp = voltage_tmp / 2 * _STABILITY_FACTOR
-        self.gui.voltage_display.setText('{:.2f}'.format(voltage_tmp))
+        voltage_tmp = voltage_tmp / 2 * _PICKOFF_FACTOR
+        self.gui.voltage_display.setText('{:.3f}'.format(voltage_tmp))
+        # calculate a parameter
+
+        # calculate q parameter
+        # calculate secular frequency
         if self.recording:
             elapsedtime = time.time() - self.starttime
             yield self.dv.add(elapsedtime, voltage_tmp, context=self.c_record)

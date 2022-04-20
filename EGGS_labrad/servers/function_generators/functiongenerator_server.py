@@ -34,229 +34,71 @@ class FunctionGeneratorServer(GPIBManagedServer):
     }
 
 
-    # SYSTEM
-    @setting(11, "Reset", returns='')
+    # GENERAL
+    @setting(111, 'Reset', returns='')
     def reset(self, c):
         """
-        Reset the function generators to factory settings.
+        Reset the function generator.
         """
-        dev = self.selectedDevice(c)
-        yield dev.reset()
-        sleep(5)
+        yield self.selectedDevice(c).reset()
 
-    @setting(12, "Clear Buffers", returns='')
-    def clear_buffers(self, c):
-        """Clear device status buffers."""
-        dev = self.selectedDevice(c)
-        yield dev.clear_buffers()
-
-
-    # CHANNEL
-    @setting(100, "Channel Info", channel='i', returns='(bvvvsb)')
-    def channel_info(self, c, channel):
+    @setting(121, 'Toggle', status=['b', 'i'], returns='b')
+    def toggle(self, c, status=None):
         """
-        Get channel information.
-        Args:
-            channel (int): channel to query
+        Turn the function generator on/off.
+        """
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).toggle(status)
+
+
+    # WAVEFORM
+    @setting(211, 'Function', shape='s', returns='s')
+    def function(self, c, shape=None):
+        """
+        Get/set the function shape.
+        Arguments:
+            shape   (str) : the function shape.
         Returns:
-            Tuple of (on/off, attenuation, scale, offset, coupling, invert)
+                    (str) : the frequency shape.
         """
-        return self.selectedDevice(c).channel_info(channel)
+        return self.selectedDevice(c).function(shape)
 
-    @setting(111, "Channel Coupling", channel='i', coup='s', returns='s')
-    def channel_coupling(self, c, channel, coup=None):
+    @setting(221, 'Frequency', freq='v', returns='v')
+    def frequency(self, c, freq=None):
         """
-        Set or query channel coupling.
-        Args:
-            channel (int): Which channel to set coupling.
-            coup (str): Coupling, 'AC' or 'DC'. If None (the default) just query
-                the coupling without setting it.
+        Get/set the function frequency (in Hz).
+        Arguments:
+            freq    (float) : the frequency (in Hz).
         Returns:
-            string indicating the channel's coupling.
+                    (float) : the frequency (in Hz).
         """
-        return self.selectedDevice(c).channel_coupling(channel, coup)
+        return self.selectedDevice(c).frequency(freq)
 
-    @setting(112, "Channel Scale", channel='i', scale='v', returns='v')
-    def channel_scale(self, c, channel, scale=None):
+    @setting(222, 'Amplitude', ampl='v', returns='v')
+    def amplitude(self, c, ampl=None):
         """
-        Get or set the vertical scale.
-        Args:
-            channel (int): The channel to get or set.
-            scale   (float): The vertical scale (in volts/div).
+        Get/set the function amplitude.
+        Arguments:
+            ampl    (float) : the amplitude (in V).
         Returns:
-            (float): The vertical scale (in volts/div).
+                    (float) : the amplitude (in V).
         """
-        return self.selectedDevice(c).channel_scale(channel, scale)
-
-    @setting(113, "Channel Probe", channel='i', factor='v', returns='v')
-    def channel_probe(self, c, channel, factor=None):
+        return self.selectedDevice(c).amplitude(ampl)
+    
+    @setting(223, 'Offset', off='v', returns='v')
+    def amplitude(self, c, off=None):
         """
-        Get/set the probe attenuation factor.
-        Args:
-            channel (int): the channel to get/set
-            factor (float): the probe attenuation factor
+        Get/set the function amplitude.
+        Arguments:
+            off     (float) : the offset (in V).
         Returns:
-            (float): the probe attenuation factor
+                    (float) : the offset (in V).
         """
-        return self.selectedDevice(c).channel_probe(channel, factor)
-
-    @setting(114, "Channel Toggle", channel='i', state=['i', 'b'], returns='b')
-    def channel_toggle(self, c, channel, state=None):
-        """
-        Set or query channel on/off state.
-        Args:
-            channel (int): the channel to get/set
-            state (bool): True->On, False->Off.
-        Returns:
-            (bool): The channel state.
-        """
-        return self.selectedDevice(c).channel_toggle(channel, state)
-
-    @setting(115, "Channel Invert", channel='i', invert=['i', 'b'], returns='b')
-    def channel_invert(self, c, channel, invert=None):
-        """
-        Get or set channel inversion.
-        Args:
-            channel (int): the channel to get/set
-            invert (bool): True->invert, False->do not invert channel.
-        Returns:
-            (int): 0: not inverted, 1: inverted.
-        """
-        return self.selectedDevice(c).channel_invert(channel, invert)
-
-    @setting(116, "Channel Offset", channel='i', offset='v', returns='v')
-    def channel_offset(self, c, channel, offset=None):
-        """
-        Get or set the vertical offset.
-        Args:
-            channel (int): the channel to get/set
-            offset (float): Vertical offset in units of divisions. If None,
-                (the default), then we only query.
-        Returns:
-            (float): Vertical offset in units of divisions.
-        """
-        return self.selectedDevice(c).channel_offset(channel, offset)
-
-
-    # TRIGGER
-    @setting(131, "Trigger Channel", source=['s', 'i'], returns='s')
-    def trigger_channel(self, c, source=None):
-        """
-        Set or query trigger channel.
-        Args:
-            source (str): channel name
-        Returns:
-            (str): Trigger source.
-        """
-        if source == '':
-            source = None
-        return self.selectedDevice(c).trigger_channel(source)
-
-    @setting(132, "Trigger Slope", slope='s', returns='s')
-    def trigger_slope(self, c, slope=None):
-        """
-        Set or query trigger slope.
-        Args:
-            slope (str): the slope to trigger on (e.g. rising edge)
-        Returns:
-            (str): the slope being triggered off
-        """
-        return self.selectedDevice(c).trigger_slope(slope)
-
-    @setting(133, "Trigger Level", channel='i', level='v', returns='v')
-    def trigger_level(self, c, channel, level=None):
-        """
-        Set or query the trigger level.
-        Args:
-            channel (int)   :  the channel to set the trigger for
-            level   (float) : the trigger level (in V)
-        Returns:
-            (float): the trigger level (in V).
-        """
-        return self.selectedDevice(c).trigger_level(channel, level)
-
-    @setting(134, "Trigger Mode", mode='s', returns='s')
-    def trigger_mode(self, c, mode=None):
-        """
-        Set or query the trigger mode.
-        Args:
-            mode (str): The trigger mode.
-        Returns:
-            (str): The trigger mode.
-        """
-        return self.selectedDevice(c).trigger_mode(mode)
-
-
-    # HORIZONTAL
-    @setting(151, "Horizontal Offset", offset='v', returns='v')
-    def horizontal_offset(self, c, offset=None):
-        """
-        Set or query the horizontal offset.
-        Args:
-            offset (float): the horizontal offset (in seconds).
-        Returns:
-            (float): the horizontal offset in (in seconds).
-        """
-        return self.selectedDevice(c).horizontal_offset(offset)
-
-    @setting(152, "Horizontal Scale", scale='v', returns='v')
-    def horizontal_scale(self, c, scale=None):
-        """
-        Set or query the horizontal scale.
-        Args:
-            scale (float): the horizontal scale (in s/div).
-        Returns:
-            (float): the horizontal scale (in s/div).
-        """
-        return self.selectedDevice(c).horizontal_scale(scale)
-
-
-    # ACQUISITION
-    @setting(201, "Trace", channel='i', points='i', returns='(*v*v)')
-    def get_trace(self, c, channel, points=None):
-        """
-        Get a trace for a single channel.
-        Args:
-            channel: The channel for which we want to get the trace.
-        Returns:
-            Tuple of ((ValueArray[s]) Time axis, (ValueArray[V]) Voltages).
-        """
-        if points is None:
-            return self.selectedDevice(c).get_trace(channel)
-        else:
-            return self.selectedDevice(c).get_trace(channel, points)
-
-
-    # MEASURE
-    @setting(210, "Measure Start", channel='i', returns='')
-    def measure_start(self, c, channel):
-        '''
-        (re-)start measurement statistics
-        (see measure)
-        '''
-        return self.selectedDevice(c).measure_start(channel)
-
-    @setting(221, "Average Toggle", average_on='b', returns='b')
-    def average_toggle(self, c, average_on=None):
-        """
-        Turn averaging on or off.
-        Args:
-            average_on (bool): If True, turn averaging on.
-        Returns:
-            (bool): whether averaging is on or off.
-        """
-        return self.selectedDevice(c).average_toggle(average_on)
-
-    @setting(222, "Average Number", averages='i', returns='i')
-    def average_number(self, c, averages=None):
-        """
-        Set number of averages.
-        Args:
-            averages (int): number of averages.
-        Returns:
-            (int): number of averages.
-        """
-        return self.selectedDevice(c).average_number(averages)
+        return self.selectedDevice(c).amplitude(off)
 
 
 if __name__ == '__main__':
