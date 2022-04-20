@@ -1,4 +1,3 @@
-import numpy as np
 from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 

@@ -14,7 +14,6 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-from time import sleep
 from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
 
@@ -30,7 +29,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
     name = 'Function Generator Server'
 
     deviceWrappers = {
-        'AGILENT TECHNOLOGIES 33210A': Agilent33210AWrapper,
+        'Agilent Technologies 33210A': Agilent33210AWrapper
     }
 
 

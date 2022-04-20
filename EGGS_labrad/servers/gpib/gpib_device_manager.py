@@ -176,7 +176,7 @@ class GPIBDeviceManager(LabradServer):
         otherwise returns None.
         """
         try:
-            #yield self.client.refresh()
+            yield self.client.refresh()
             s = self.client[identifier]
             setting, context = self.identFunctions[identifier]
             print('Trying to identify device', server, channel,)
@@ -285,7 +285,8 @@ class GPIBDeviceManager(LabradServer):
             callLater(0, self.identifyDevicesWithServer, ID)
         
     def serverDisconnected(self, ID, name):
-        """Disconnect devices when a bus server disconnects."""
+        """
+        Disconnect devices when a bus server disconnects."""
         for (server, channel) in list(self.knownDevices.keys()):
             if server == name:
                 self.gpib_device_disconnect(server, channel)
