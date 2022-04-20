@@ -89,6 +89,17 @@ class RFServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).mod_freq(freq)
 
+    @setting(312, 'Toggle Modulation', status=['b', 'i'], returns='b')
+    def mod_toggle(self, c, status=None):
+        """
+        Toggle modulation.
+        Arguments:
+            status  (bool) : the modulation status.
+        Returns:
+                    (bool) : the modulation status.
+        """
+        return self.selectedDevice(c).mod_toggle(status)
+
     @setting(321, 'Toggle AM', status=['b', 'i'], returns='b')
     def am_toggle(self, c, status=None):
         """

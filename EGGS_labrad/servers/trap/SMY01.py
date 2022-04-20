@@ -63,7 +63,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
             # check if units are valid, set default to dBm
             if not units:
                 units = 'DBM'
-            elif units.upper() not in ['DBM','V']:
+            elif units.upper() not in ['DBM', 'V']:
                 raise Exception('Error: invalid units')
             yield self.write('LEV '+ str(ampl) + units)
         # getter
@@ -87,6 +87,21 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         resp = yield self.query('AF?')
         resp = self._parse(resp, 'AF')
         returnValue(float(resp))
+
+    @inlineCallbacks
+    def mod_toggle(self, status):
+        if status:
+            # get stored modulation frequency
+            freq = self.mod_params['AF']
+            if self.mod_active is True:
+                yield self.write('AF ' + str(freq))
+        resp = yield self.query('AF?')
+        resp = resp.split('AF')[1]
+        print('yzde:', resp)
+        if resp == ':OFF':
+            returnValue(False)
+        else:
+            returnValue(True)
 
     @inlineCallbacks
     def am_toggle(self, onoff):
