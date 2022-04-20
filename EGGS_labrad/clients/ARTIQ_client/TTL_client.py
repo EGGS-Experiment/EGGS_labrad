@@ -1,4 +1,4 @@
-from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame, QSizePolicy
 
@@ -26,7 +26,7 @@ class TTL_channel(QFrame):
         # labels
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=10))
-        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setAlignment(Qt.AlignCenter)
         title.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         # buttons
         self.toggle = TextChangingButton(("ON", "OFF"))
@@ -131,7 +131,7 @@ class TTL_client(QWidget):
         # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setAlignment(Qt.AlignCenter)
         title.setMargin(4)
         layout.addWidget(title, 0, 0, 1, 10)
         # create and layout widgets
@@ -156,7 +156,7 @@ class TTL_client(QWidget):
         # set title
         title = QLabel(name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
-        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0)
         # layout individual ttls on group
         for i in range(len(ttl_list)):
@@ -171,7 +171,6 @@ class TTL_client(QWidget):
             # add widget to client list and layout
             self.ttl_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
-            #print(name + ' - row:' + str(row) + ', column: ' + str(column))
         return ttl_group
 
     def closeEvent(self, x):

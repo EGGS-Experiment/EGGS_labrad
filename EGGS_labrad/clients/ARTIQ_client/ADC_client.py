@@ -1,4 +1,4 @@
-from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QComboBox, QLabel, QPushButton, QGridLayout, QFrame, QSizePolicy
 
@@ -24,12 +24,12 @@ class ADC_channel(QFrame):
         # labels
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
-        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setAlignment(Qt.AlignCenter)
         title.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         # display
         self.display_label = QLabel('Output (V)')
         self.display = QLabel('00.00')
-        self.display.setAlignment(QtCore.Qt.AlignCenter)
+        self.display.setAlignment(Qt.AlignCenter)
         self.display.setFont(QFont('MS Shell Dlg 2', pointSize=18))
         self.display.setStyleSheet('color: blue')
         # gain
@@ -103,7 +103,7 @@ class ADC_client(QWidget):
         # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 4)
         # layout widgets
         layout.addWidget(self._makeSamplerGroup(self.sampler))
@@ -122,7 +122,7 @@ class ADC_client(QWidget):
         sampler_header_layout = QGridLayout(sampler_header)
         sampler_title = QLabel(sampler_header)
         sampler_title.setText(name)
-        sampler_title.setAlignment(QtCore.Qt.AlignCenter)
+        sampler_title.setAlignment(Qt.AlignCenter)
         sampler_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         sampler_sample = QPushButton('Sample', sampler_header)
         sampler_sample.setFont(QFont('MS Shell Dlg 2', pointSize=10))

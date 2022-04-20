@@ -1,4 +1,4 @@
-from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
@@ -24,7 +24,7 @@ class AD9910_channel(QFrame):
         # labels
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
-        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setAlignment(Qt.AlignCenter)
         freqlabel = QLabel('Frequency (MHz)')
         powerlabel = QLabel('Amplitude (V)')
         attlabel = QLabel('Attenuation (dBm)')
@@ -128,7 +128,7 @@ class DDS_client(QWidget):
         # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, self.row_length)
         # layout widgets
         keys_tmp = list(self.urukul_list.keys())
@@ -150,7 +150,7 @@ class DDS_client(QWidget):
         # set title
         title = QLabel(urukul_name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
-        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, self.row_length)
         # layout individual ad9910 channels
         for i in range(len(ad9910_list)):
