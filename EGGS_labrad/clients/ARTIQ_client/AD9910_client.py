@@ -101,7 +101,7 @@ class AD9910_client(GUIClient):
     @inlineCallbacks
     def initGUI(self):
         channel_name = 'th0'
-        self.gui.freq.valueChanged.connect(lambda freq, chan=channel_name: self.artiq.dds_frequency(chan, freq))
+        self.gui.freq.valueChanged.connect(lambda freq, chan=channel_name: self.artiq.dds_frequency(chan, freq*1e6))
         self.ampl.valueChanged.connect(lambda ampl, chan=channel_name: self.artiq.dds_amplitude(chan, ampl))
         self.att.valueChanged.connect(lambda att, chan=channel_name: self.artiq.dds_attenuation(chan, att, 'v'))
         self.rfswitch.toggled.connect(lambda status, chan=channel_name: self.artiq.dds_toggle(chan, status))
