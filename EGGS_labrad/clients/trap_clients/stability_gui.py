@@ -12,13 +12,13 @@ class stability_gui(QFrame):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
+        #self.setFixedSize(550, 130)
         self.makeWidgets()
         self.makeLayout()
         self.setWindowTitle("Stability Client")
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        self.setFixedSize(550, 130)
         # title
         self.all_label = QLabel('Stability Client')
         self.all_label.setFont(QFont(shell_font, pointSize=18))
@@ -35,18 +35,18 @@ class stability_gui(QFrame):
         self.record_button.setMaximumHeight(25)
         # a parameter
         self.aparam_display_label = QLabel('a-parameter')
-        self.aparam_display = QLabel('000.000')
+        self.aparam_display = QLabel('0.0000')
         self.aparam_display.setFont(QFont(shell_font, pointSize=22))
         self.aparam_display.setAlignment(Qt.AlignCenter)
         self.aparam_display.setStyleSheet('color: blue')
         # q parameter
         self.qparam_display_label = QLabel('q-parameter')
-        self.qparam_display = QLabel('000.000')
+        self.qparam_display = QLabel('0.0000')
         self.qparam_display.setFont(QFont(shell_font, pointSize=22))
         self.qparam_display.setAlignment(Qt.AlignCenter)
         self.qparam_display.setStyleSheet('color: blue')
         # wsec
-        self.wsec_display_label = QLabel('Secular Frequency (MHz)')
+        self.wsec_display_label = QLabel('Secular Frequency (x2pi MHz)')
         self.wsec_display = QLabel('000.000')
         self.wsec_display.setFont(QFont(shell_font, pointSize=22))
         self.wsec_display.setAlignment(Qt.AlignCenter)
@@ -57,9 +57,13 @@ class stability_gui(QFrame):
         pg.setConfigOption('background', 'k')
         self.stability_display = pg.PlotWidget(name='Mathieu Stability Display', border=True)
         self.stability_display.showGrid(x=True, y=True, alpha=0.5)
-        self.stability_display.setRange(yRange=[0, 2e8])
+        self.stability_display.setRange(xRange=[0, 1], yRange=[0, 1])
         self.stability_display.setMinimumHeight(400)
-        self.stability_display.setMaximumWidth(1000)
+        self.stability_display.setMinimumWidth(400)
+        self.stability_point = self.stability_display.plot(pen=pg.mkPen(color='r'), symbol='o')
+        # todo: set width/size of pen
+        # todo: draw mathieu stability
+        # todo: prevent resizing of trace
         qBox_stability_display.addWidget(self.stability_display)
         # todo: open dialog box to change values
 
@@ -75,7 +79,6 @@ class stability_gui(QFrame):
         layout.addWidget(self.wsec_display_label,           1, 3, 1, 1)
         layout.addWidget(self.wsec_display,                 2, 3, 1, 1)
         layout.addWidget(self.qBox_stability,               3, 0, 4, 4)
-        # todo: add
 
 
 if __name__ == "__main__":
