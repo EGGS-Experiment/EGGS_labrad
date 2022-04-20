@@ -1,21 +1,88 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
+from EGGS_labrad.clients.Widgets import TextChangingButton
 
-from EGGS_labrad.clients.ARTIQ_client.AD9910_client import AD9910_channel
 
-
-class DDS_client(QWidget):
+class AD9910_channel(QFrame):
     """
-    Client for all DDS channels.
+    GUI for a single AD9910 DDS channel.
     """
-    name = "ARTIQ DDS Client"
-    row_length = 4
+
+    def __init__(self, name=None, parent=None):
+        QWidget.__init__(self, parent)
+        self.name = name
+        self.setFrameStyle(0x0001 | 0x0030)
+        self.makeLayout(name)
+        self.initializeGUI()
+
+    def makeLayout(self, title):
+        layout = QGridLayout(self)
+        # labels
+        title = QLabel(title)
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        title.setAlignment(Qt.AlignCenter)
+        freqlabel = QLabel('Frequency (MHz)')
+        powerlabel = QLabel('Amplitude (V)')
+        attlabel = QLabel('Attenuation (dBm)')
+
+        # editable fields
+        self.freq = QDoubleSpinBox()
+        self.freq.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        self.freq.setDecimals(3)
+        self.freq.setSingleStep(0.1)
+        self.freq.setRange(10.0, 250.0)
+        self.freq.setKeyboardTracking(False)
+        self.ampl = QDoubleSpinBox()
+        self.ampl.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        self.ampl.setDecimals(3)
+        self.ampl.setSingleStep(0.1)
+        self.ampl.setRange(-145.0, 30.0)
+        self.ampl.setKeyboardTracking(False)
+        self.att = QDoubleSpinBox()
+        self.att.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        self.att.setDecimals(3)
+        self.att.setSingleStep(0.1)
+        self.att.setRange(-145.0, 30.0)
+        self.att.setKeyboardTracking(False)
+        self.resetswitch = QPushButton('Initialize')
+        self.rfswitch = TextChangingButton(("On", "Off"))
+        self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
+        self.lockswitch.setChecked(True)
+
+        # add widgets to layout
+        layout.addWidget(title, 0, 0, 1, 3)
+        layout.addWidget(freqlabel, 1, 0, 1, 1)
+        layout.addWidget(powerlabel, 1, 1, 1, 1)
+        layout.addWidget(attlabel, 1, 2, 1, 1)
+        layout.addWidget(self.freq, 2, 0)
+        layout.addWidget(self.ampl, 2, 1)
+        layout.addWidget(self.att, 2, 2)
+        layout.addWidget(self.resetswitch, 3, 0)
+        layout.addWidget(self.rfswitch, 3, 1)
+        layout.addWidget(self.lockswitch, 3, 2)
+
+    def initializeGUI(self):
+        # connect signal to slot
+        self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
+        # set startup value
+        # self.lockswitch.toggle()
+
+    def lock(self, status):
+        self.rfswitch.setEnabled(status)
+
+
+class AD9910_client(GUIClient):
+    """
+    Client for a single DDS channel.
+    """
+
+    name = "AD9910 Client"
 
     def __init__(self, reactor, cxn=None, parent=None):
-        super(DDS_client, self).__init__()
+        super(AD9910_client, self).__init__()
         self.reactor = reactor
         self.cxn = cxn
         self.ad9910_clients = {}
@@ -110,6 +177,10 @@ class DDS_client(QWidget):
 
 
 if __name__ == "__main__":
-    # run DDS Client
+    # run channel GUI
+    # from EGGS_labrad.clients import runGUI
+    # runGUI(AD9910_channel, name='AD9910 Channel')
+
+    # run AD9910 Client
     from EGGS_labrad.clients import runClient
-    runClient(DDS_client)
+    runClient(AD9910_client)

@@ -1,9 +1,9 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Oscilloscope Server
+name = Function Generator Server
 version = 1.1.0
-description = Talks to oscilloscopes
+description = Talks to function generators.
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -19,29 +19,27 @@ from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
 
 # import device wrappers
-from RigolDS1000Z import RigolDS1000ZWrapper
-from TektronixMSO2000 import TektronixMSO2000Wrapper
-from KeysightDS1204G import KeysightDS1204GWrapper
+from Agilent33210A import Agilent33210AWrapper
 
 
-class OscilloscopeServer(GPIBManagedServer):
+class FunctionGeneratorServer(GPIBManagedServer):
     """
-    Manages communication with all oscilloscopes.
+    Manages communication with all function generators..
     """
 
-    name = 'Oscilloscope Server'
+    name = 'Function Generator Server'
 
     deviceWrappers = {
-        'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper,
-        'TEKTRONIX MSO2024B': TektronixMSO2000Wrapper,
-        'KEYSIGHT DS1204G': KeysightDS1204GWrapper
+        'RIGOL TECHNOLOGIES DS1104Z Plus': Agilent33210AWrapper,
     }
 
 
     # SYSTEM
     @setting(11, "Reset", returns='')
     def reset(self, c):
-        """Reset the oscilloscopes to factory settings."""
+        """
+        Reset the function generators to factory settings.
+        """
         dev = self.selectedDevice(c)
         yield dev.reset()
         sleep(5)
@@ -263,4 +261,4 @@ class OscilloscopeServer(GPIBManagedServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(OscilloscopeServer())
+    util.runServer(FunctionGeneratorServer())
