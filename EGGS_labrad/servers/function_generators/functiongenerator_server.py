@@ -30,7 +30,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
     name = 'Function Generator Server'
 
     deviceWrappers = {
-        'RIGOL TECHNOLOGIES DS1104Z Plus': Agilent33210AWrapper,
+        'AGILENT TECHNOLOGIES 33210A': Agilent33210AWrapper,
     }
 
 
@@ -90,15 +90,20 @@ class FunctionGeneratorServer(GPIBManagedServer):
         return self.selectedDevice(c).amplitude(ampl)
     
     @setting(223, 'Offset', off='v', returns='v')
-    def amplitude(self, c, off=None):
+    def offset(self, c, off=None):
         """
-        Get/set the function amplitude.
+        Get/set the function amplitude offset.
         Arguments:
             off     (float) : the offset (in V).
         Returns:
                     (float) : the offset (in V).
         """
         return self.selectedDevice(c).amplitude(off)
+
+
+    # MODULATION
+
+    # SWEEP
 
 
 if __name__ == '__main__':
