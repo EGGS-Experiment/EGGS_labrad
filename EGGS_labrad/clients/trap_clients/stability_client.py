@@ -29,11 +29,10 @@ class stability_client(GUIClient):
     @inlineCallbacks
     def initClient(self):
         # find Rigol DS1000z oscilloscope
-        # todo: connect to correct rigol oscope
         devices = yield self.os.list_devices()
         for dev_id in devices:
             dev_name = dev_id[1]
-            if 'DS1Z' in dev_name:
+            if ('DS1Z' in dev_name) and ('2765' in dev_name):
                 yield self.os.select_device(dev_name)
         # connect to RF server
         yield self.rf.select_device()
