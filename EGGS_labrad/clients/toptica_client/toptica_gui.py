@@ -149,7 +149,7 @@ class toptica_channel(QFrame):
         box_layout.minimumSize()
         # connect signals to slots
         box.lockswitch.toggled.connect(lambda status, parent=objName: self._lock(status, parent))
-        box.lockswitch.setChecked(True)
+        box.lockswitch.setChecked(False)
         # create QGroupBox wrapper
         setattr(self, objName, box)
         return self._wrapGroup(name, box)
@@ -169,7 +169,7 @@ class toptica_channel(QFrame):
         # create lockswitch
         box.lockswitch = Lockswitch()
         box.lockswitch.toggled.connect(lambda status: self._lock(status, 'scanBox'))
-        box.lockswitch.setChecked(True)
+        box.lockswitch.setChecked(False)
         # create comboboxes
         box.modeBox = QComboBox()
         box.modeBox.addItem('Current')
