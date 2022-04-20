@@ -18,7 +18,6 @@ class AD9910_channel(QFrame):
         self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(name)
-        self.initializeGUI()
 
     def makeLayout(self, title):
         layout = QGridLayout(self)
@@ -80,10 +79,11 @@ class AD9910_client(GUIClient):
 
     name = "AD9910 Client"
     servers = {'aq': 'ARTIQ Server'}
+    dds_name = 'urukul0_ch0'
 
-    def __init__(self, dds_name):
-        self.dds_name = dds_name
-        super().__init__()
+    # def __init__(self, dds_name):
+    #     self.dds_name = dds_name
+    #     super().__init__()
 
     def getgui(self):
         if self.gui is None:
@@ -98,14 +98,12 @@ class AD9910_client(GUIClient):
     def initData(self):
         pass
 
-    @inlineCallbacks
     def initGUI(self):
-        channel_name = 'th0'
-        self.gui.freq.valueChanged.connect(lambda freq, chan=channel_name: self.artiq.dds_frequency(chan, freq*1e6))
-        self.ampl.valueChanged.connect(lambda ampl, chan=channel_name: self.artiq.dds_amplitude(chan, ampl))
-        self.att.valueChanged.connect(lambda att, chan=channel_name: self.artiq.dds_attenuation(chan, att, 'v'))
-        self.rfswitch.toggled.connect(lambda status, chan=channel_name: self.artiq.dds_toggle(chan, status))
-        self.gui.lock()
+        self.gui.freq.valueChanged.connect(lambda freq, chan=self.dds_name: self.artiq.dds_frequency(chan, freq))
+        self.gui.ampl.valueChanged.connect(lambda ampl, chan=self.dds_name: self.artiq.dds_amplitude(chan, ampl))
+        self.gui.att.valueChanged.connect(lambda att, chan=self.dds_name: self.artiq.dds_attenuation(chan, att, 'v'))
+        self.gui.rfswitch.toggled.connect(lambda status, chan=self.dds_name: self.artiq.dds_toggle(chan, status))
+        self.gui.lock(False)
 
 
 if __name__ == "__main__":
