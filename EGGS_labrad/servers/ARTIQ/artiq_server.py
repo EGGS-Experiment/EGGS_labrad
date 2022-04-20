@@ -268,7 +268,7 @@ class ARTIQ_Server(LabradServer):
     @setting(322, "DDS Toggle", dds_name='s', state=['b', 'i'], returns='')
     def toggleDDS(self, c, dds_name, state):
         """
-        Manually toggle a DDS via the RF switch
+        Manually toggle a DDS via the RF switch.
         Arguments:
             dds_name    (str)           : the name of the dds
             state       [bool, int]     : power state
