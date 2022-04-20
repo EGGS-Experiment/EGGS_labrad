@@ -90,11 +90,11 @@ class AD9910_client(GUIClient):
             self.gui = AD9910_channel(self.dds_name)
         return self.gui
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def initClient(self):
         pass
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def initData(self):
         pass
 

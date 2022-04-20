@@ -112,8 +112,19 @@ class GUIClient(ABC):
             print("GUI initialization successful.")
         return cxn
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def _restart(self):
+        """
+        Reinitializes the GUI Client.
+        """
+        print('Restarting client ...')
+        d = self._connectLabrad()
+        d.addCallback(self._initClient)
+        d.addCallback(self._initData)
+        d.addCallback(self._initGUI)
+        print('Finished restart.')
+
+    def _thre(self):
         """
         Reinitializes the GUI Client.
         """
@@ -149,12 +160,13 @@ class GUIClient(ABC):
             server_nickname = list(self.servers.keys())[server_ind]
             if getattr(self, server_nickname) is None:
                 setattr(self, server_nickname, self.cxn[server_name])
-                print('th, connecting for first time:', server_name)
-                # todo: redo initClient, initGUI, and initData
-                # todo: check where the issue is in the above three, is maybe b/c haven't connected to client?
+                print('Connecting for first time:', server_name)
             # check if all required servers exist
             if all(server_names.lower().replace(' ', '_') in self.cxn.servers for server_names in self.servers.values()):
                 print('Enabling client.')
+                # redo initClient to reconnect to signals
+                yield self._initClient(self.cxn)
+                # redo initData to get new state of server
                 yield self._initData(self.cxn)
                 self.gui.setEnabled(True)
         except ValueError as e:
