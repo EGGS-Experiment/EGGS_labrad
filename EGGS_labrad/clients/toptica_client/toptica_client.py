@@ -45,14 +45,15 @@ class toptica_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
-        #todo: remove S/N from device name
         # set display for each channel
         for chan_num, widget in self.gui.channels.items():
             # status
             _, name, wav, _, _, _, _ = yield self.toptica.device_info(chan_num)
             emission_status = yield self.toptica.emission(chan_num)
             widget.statusBox.channelDisplay.setText(str(chan_num))
-            widget.statusBox.serDisplay.setText(name[1])
+            name_tmp = name[1].split('S/N ')[1]
+            name_tmp = name_tmp[:-1]
+            widget.statusBox.serDisplay.setText(name_tmp)
             widget.statusBox.wavDisplay.setText(wav[1])
             widget.statusBox.emissionButton.setChecked(emission_status)
             # feedback
@@ -62,16 +63,19 @@ class toptica_client(GUIClient):
             current_max = yield self.toptica.current_max(chan_num)
             widget.currBox.setBox.setValue(current_set)
             widget.currBox.maxBox.setValue(current_max)
+            widget.currBox.lockswitch.setChecked(False)
             # temperature
             temperature_set = yield self.toptica.temperature_set(chan_num)
             temperature_max = yield self.toptica.temperature_max(chan_num)
             widget.tempBox.setBox.setValue(temperature_set)
             widget.tempBox.maxBox.setValue(temperature_max)
+            widget.tempBox.lockswitch.setChecked(False)
             # piezo
             piezo_set = yield self.toptica.piezo_set(chan_num)
             piezo_max = yield self.toptica.piezo_max(chan_num)
             widget.piezoBox.setBox.setValue(piezo_set)
             widget.piezoBox.maxBox.setValue(piezo_max)
+            widget.piezoBox.lockswitch.setChecked(False)
             # scan
             scan_freq = yield self.toptica.scan_frequency(chan_num)
             scan_amp = yield self.toptica.scan_amplitude(chan_num)
@@ -79,15 +83,12 @@ class toptica_client(GUIClient):
             widget.scanBox.freqBox.setValue(scan_freq)
             widget.scanBox.ampBox.setValue(scan_amp)
             widget.scanBox.offBox.setValue(scan_off)
-
+            #widget.scanBox.lockswitch.setChecked(False)
 
     def initGUI(self):
         # laser channel settings
         for chan_num, widget in self.gui.channels.items():
-            #todo: set emission button
-            # assign feedback slots
-            # todo
-            # assign current slots
+            #todo: set emission button, assign feedback slots, assign current slots
             widget.currBox.setBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.current_set(_chan_num, value))
             widget.currBox.maxBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.current_max(_chan_num, value))
             # assign temperature slots

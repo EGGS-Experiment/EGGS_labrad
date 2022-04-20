@@ -51,7 +51,7 @@ class toptica_channel(QFrame):
         # create labels
         chanLabel = QLabel('Channel:')
         wavLabel = QLabel('Center Wavelength (nm):')
-        serLabel = QLabel('Device Name:')
+        serLabel = QLabel('Serial Number:')
         for label in (chanLabel, wavLabel, serLabel):
             label.setFont(LABEL_FONT)
             label.setAlignment(Qt.AlignBottom)
@@ -149,7 +149,7 @@ class toptica_channel(QFrame):
         box_layout.minimumSize()
         # connect signals to slots
         box.lockswitch.toggled.connect(lambda status, parent=objName: self._lock(status, parent))
-        box.lockswitch.setChecked(False)
+        box.lockswitch.setChecked(True)
         # create QGroupBox wrapper
         setattr(self, objName, box)
         return self._wrapGroup(name, box)
@@ -168,8 +168,8 @@ class toptica_channel(QFrame):
             label.setAlignment(Qt.AlignBottom)
         # create lockswitch
         box.lockswitch = Lockswitch()
-        box.lockswitch.toggled.connect(lambda status: self._lock(status, 'scanBox'))
-        box.lockswitch.setChecked(False)
+        #box.lockswitch.toggled.connect(lambda status: self._lock(status, 'scanBox'))
+        #box.lockswitch.setChecked(True)
         # create comboboxes
         box.modeBox = QComboBox()
         box.modeBox.addItem('Current')
