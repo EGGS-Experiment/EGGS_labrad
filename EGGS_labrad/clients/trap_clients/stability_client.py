@@ -7,6 +7,7 @@ from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.trap_clients.stability_gui import stability_gui
 
 _PICKOFF_FACTOR = 300
+_
 
 
 class stability_client(GUIClient):
@@ -22,6 +23,7 @@ class stability_client(GUIClient):
     @inlineCallbacks
     def initClient(self):
         # find Rigol DS1000z oscilloscope
+        # todo: connect to correct rigol oscope
         devices = yield self.os.list_devices()
         for dev_id in devices:
             dev_name = dev_id[1]

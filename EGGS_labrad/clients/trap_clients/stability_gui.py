@@ -1,6 +1,8 @@
+import pyqtgraph as pg
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout
+from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox
 
 from EGGS_labrad.clients.Widgets import TextChangingButton
 
@@ -21,6 +23,7 @@ class stability_gui(QFrame):
         self.all_label = QLabel('Stability Client')
         self.all_label.setFont(QFont(shell_font, pointSize=18))
         self.all_label.setAlignment(Qt.AlignCenter)
+        # todo: put in qgroupbox
         # readout
         self.pickoff_display_label = QLabel('VPP (V)')
         self.pickoff_display = QLabel('000.000')
@@ -37,18 +40,28 @@ class stability_gui(QFrame):
         self.aparam_display.setAlignment(Qt.AlignCenter)
         self.aparam_display.setStyleSheet('color: blue')
         # q parameter
-        self.qparam_display_label = QLabel('a-parameter')
+        self.qparam_display_label = QLabel('q-parameter')
         self.qparam_display = QLabel('000.000')
         self.qparam_display.setFont(QFont(shell_font, pointSize=22))
         self.qparam_display.setAlignment(Qt.AlignCenter)
         self.qparam_display.setStyleSheet('color: blue')
         # wsec
-        self.wsec_display_label = QLabel('a-parameter')
+        self.wsec_display_label = QLabel('Secular Frequency (MHz)')
         self.wsec_display = QLabel('000.000')
         self.wsec_display.setFont(QFont(shell_font, pointSize=22))
         self.wsec_display.setAlignment(Qt.AlignCenter)
         self.wsec_display.setStyleSheet('color: blue')
-        # todo: stability plot
+        # stability plot display
+        self.qBox_stability = QGroupBox('Interferometer')
+        qBox_stability_display = QGridLayout(self.qBox_stability)
+        pg.setConfigOption('background', 'k')
+        self.stability_display = pg.PlotWidget(name='Mathieu Stability Display', border=True)
+        self.stability_display.showGrid(x=True, y=True, alpha=0.5)
+        self.stability_display.setRange(yRange=[0, 2e8])
+        self.stability_display.setMinimumHeight(400)
+        self.stability_display.setMaximumWidth(1000)
+        qBox_stability_display.addWidget(self.stability_display)
+        # todo: open dialog box to change values
 
     def makeLayout(self):
         layout = QGridLayout(self)
@@ -61,6 +74,8 @@ class stability_gui(QFrame):
         layout.addWidget(self.qparam_display,               2, 2, 1, 1)
         layout.addWidget(self.wsec_display_label,           1, 3, 1, 1)
         layout.addWidget(self.wsec_display,                 2, 3, 1, 1)
+        layout.addWidget(self.qBox_stability,               3, 0, 4, 4)
+        # todo: add
 
 
 if __name__ == "__main__":
