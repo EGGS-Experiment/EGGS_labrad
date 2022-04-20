@@ -4,19 +4,19 @@ from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
-from EGGS_labrad.clients.trap_clients.pickoff_gui import pickoff_gui
+from EGGS_labrad.clients.trap_clients.stability_gui import stability_gui
 
-_PICKOFF_FACTOR = 300
+_STABILITY_FACTOR = 300
 
 
-class pickoff_client(GUIClient):
+class stability_client(GUIClient):
 
-    name = 'Pickoff Client'
+    name = 'Stability Client'
     servers = {'os': 'Oscilloscope Server'}
 
     def getgui(self):
         if self.gui is None:
-            self.gui = pickoff_gui()
+            self.gui = stability_gui()
         return self.gui
 
     @inlineCallbacks
@@ -64,7 +64,7 @@ class pickoff_client(GUIClient):
         Updates GUI when values are received from server.
         """
         voltage_tmp = yield self.os.measure_amplitude(1)
-        voltage_tmp = voltage_tmp / 2 * _PICKOFF_FACTOR
+        voltage_tmp = voltage_tmp / 2 * _STABILITY_FACTOR
         self.gui.voltage_display.setText('{:.2f}'.format(voltage_tmp))
         if self.recording:
             elapsedtime = time.time() - self.starttime
@@ -73,4 +73,4 @@ class pickoff_client(GUIClient):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
-    runClient(pickoff_client)
+    runClient(stability_client)

@@ -5,20 +5,20 @@ from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout
 from EGGS_labrad.clients.Widgets import TextChangingButton
 
 
-class pickoff_gui(QFrame):
+class stability_gui(QFrame):
 
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeWidgets()
         self.makeLayout()
-        self.setWindowTitle("Pickoff Client")
+        self.setWindowTitle("Stability Client")
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
         self.setFixedSize(190, 150)
         # title
-        self.all_label = QLabel('Pickoff Client')
+        self.all_label = QLabel('Stability Client')
         self.all_label.setFont(QFont(shell_font, pointSize=18))
         self.all_label.setAlignment(Qt.AlignCenter)
             # readout
@@ -42,4 +42,4 @@ class pickoff_gui(QFrame):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
-    runGUI(pickoff_gui)
+    runGUI(stability_gui)
