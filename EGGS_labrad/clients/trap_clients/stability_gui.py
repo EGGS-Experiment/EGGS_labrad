@@ -16,7 +16,7 @@ class stability_gui(QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        self.setFixedSize(190, 150)
+        self.setFixedSize(550, 130)
         # title
         self.all_label = QLabel('Stability Client')
         self.all_label.setFont(QFont(shell_font, pointSize=18))
