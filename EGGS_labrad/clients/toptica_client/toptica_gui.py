@@ -215,6 +215,11 @@ class toptica_channel(QFrame):
         #parent.minBox.setEnabled(status)
         parent.maxBox.setEnabled(status)
 
+    def _scanlock(self, status, objName):
+        parent = getattr(self, objName)
+        parent.setEnabled(status)
+        parent.lockswitch.setEnabled(True)
+
 
 class toptica_gui(QFrame):
     """
