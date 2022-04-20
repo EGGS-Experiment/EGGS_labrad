@@ -1,11 +1,10 @@
-from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
-
-from EGGS_labrad.clients.Widgets import TextChangingButton
 from EGGS_labrad.config.device_db import device_db
+from EGGS_labrad.clients.Widgets import TextChangingButton
 
 
 class AD5372_channel(QFrame):
@@ -24,7 +23,7 @@ class AD5372_channel(QFrame):
         # labels
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setAlignment(Qt.AlignCenter)
         dac_label = QLabel('DAC Register')
         off_label = QLabel('Offset Register')
         gain_label = QLabel('Gain Register')
@@ -36,18 +35,21 @@ class AD5372_channel(QFrame):
         self.dac.setSingleStep(1)
         self.dac.setRange(0, 0xffff)
         self.dac.setKeyboardTracking(False)
+        self.dac.setAlignment(Qt.AlignRight)
         self.gain = QDoubleSpinBox()
         self.gain.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.gain.setDecimals(0)
         self.gain.setSingleStep(1)
         self.gain.setRange(0, 0xffff)
         self.gain.setKeyboardTracking(False)
+        self.gain.setAlignment(Qt.AlignRight)
         self.off = QDoubleSpinBox()
         self.off.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.off.setDecimals(0)
         self.off.setSingleStep(1)
         self.off.setRange(0, 0xffff)
         self.off.setKeyboardTracking(False)
+        self.off.setAlignment(Qt.AlignRight)
 
         # buttons
         self.resetswitch = QPushButton('Reset')
@@ -55,7 +57,7 @@ class AD5372_channel(QFrame):
         self.calibrateswitch = QPushButton('Calibrate')
         self.calibrateswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
-        self.lockswitch.setChecked(True)
+        self.lockswitch.toggled.connect(lambda status: self.lock(status))
 
         # add widgets to layout
         layout.addWidget(title, 0, 0, 1, 3)
@@ -68,16 +70,13 @@ class AD5372_channel(QFrame):
         layout.addWidget(self.lockswitch, 3, 0)
         layout.addWidget(self.calibrateswitch, 3, 1)
         layout.addWidget(self.resetswitch, 3, 2)
-        # connect signal to slot
-        self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
-    @inlineCallbacks
     def lock(self, status):
-        yield self.resetswitch.setEnabled(status)
-        yield self.calibrateswitch.setEnabled(status)
-        yield self.dac.setEnabled(status)
-        yield self.off.setEnabled(status)
-        yield self.gain.setEnabled(status)
+        self.resetswitch.setEnabled(status)
+        self.calibrateswitch.setEnabled(status)
+        self.dac.setEnabled(status)
+        self.off.setEnabled(status)
+        self.gain.setEnabled(status)
 
 
 class DAC_client(QWidget):
@@ -95,6 +94,7 @@ class DAC_client(QWidget):
         d = self.connect()
         d.addCallback(self.getDevices)
         d.addCallback(self.initializeGUI)
+        d.addCallback(self.startupData)
 
     @inlineCallbacks
     def connect(self):
@@ -124,7 +124,7 @@ class DAC_client(QWidget):
             # only get devices with named class
             if 'class' not in params:
                 continue
-            if params['class'] == 'Zotino' or 'Fastino':
+            if params['class'] in ('Zotino', 'Fastino'):
                 self.zotino_list.append(name)
         return self.cxn
 
@@ -133,7 +133,7 @@ class DAC_client(QWidget):
         # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 4)
         # layout widgets
         for i in range(len(self.zotino_list)):
@@ -154,7 +154,7 @@ class DAC_client(QWidget):
         zotino_header = QWidget(self)
         zotino_header_layout = QGridLayout(zotino_header)
         zotino_title = QLabel(name, zotino_header)
-        zotino_title.setAlignment(QtCore.Qt.AlignCenter)
+        zotino_title.setAlignment(Qt.AlignCenter)
         zotino_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         zotino_global_ofs_title = QLabel('Global Offset Register', zotino_header)
         zotino_global_ofs = QDoubleSpinBox(zotino_header)
@@ -163,7 +163,7 @@ class DAC_client(QWidget):
         zotino_global_ofs.setDecimals(0)
         zotino_global_ofs.setSingleStep(1)
         zotino_global_ofs.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        #zotino_global_ofs.setAlignment(QtCore.Qt.AlignCenter)
+        zotino_global_ofs.setAlignment(Qt.AlignCenter)
         zotino_global_ofs.valueChanged.connect(lambda voltage_mu: self.artiq.dac_ofs(voltage_mu, 'mu'))
         zotino_header_layout.addWidget(zotino_title)
         zotino_header_layout.addWidget(zotino_global_ofs_title)
@@ -192,7 +192,6 @@ class DAC_client(QWidget):
     def startupData(self, cxn):
         for channel in self.ad5372_clients.values():
             channel.lock(False)
-            # channel.locks
             # todo: finish
 
 
