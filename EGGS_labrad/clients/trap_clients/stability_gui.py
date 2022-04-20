@@ -12,7 +12,7 @@ class stability_gui(QFrame):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
-        self.setFixedSize(550, 900)
+        self.setFixedSize(600, 600)
         self.makeWidgets()
         self.makeLayout()
         self.setWindowTitle("Stability Client")
