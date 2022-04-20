@@ -168,7 +168,7 @@ class toptica_channel(QFrame):
             label.setAlignment(Qt.AlignBottom)
         # create lockswitch
         box.lockswitch = Lockswitch()
-        #box.lockswitch.toggled.connect(lambda status: self._lock(status, 'scanBox'))
+        box.lockswitch.toggled.connect(lambda status: self._scanlock(status, 'scanBox'))
         #box.lockswitch.setChecked(True)
         # create comboboxes
         box.modeBox = QComboBox()
@@ -217,8 +217,11 @@ class toptica_channel(QFrame):
 
     def _scanlock(self, status, objName):
         parent = getattr(self, objName)
-        parent.setEnabled(status)
-        parent.lockswitch.setEnabled(True)
+        parent.modeBox.setEnabled(status)
+        parent.shapeBox.setEnabled(status)
+        parent.freqBox.setEnabled(status)
+        parent.ampBox.setEnabled(status)
+        parent.offBox.setEnabled(status)
 
 
 class toptica_gui(QFrame):

@@ -83,7 +83,7 @@ class toptica_client(GUIClient):
             widget.scanBox.freqBox.setValue(scan_freq)
             widget.scanBox.ampBox.setValue(scan_amp)
             widget.scanBox.offBox.setValue(scan_off)
-            #widget.scanBox.lockswitch.setChecked(False)
+            widget.scanBox.lockswitch.setChecked(False)
 
     def initGUI(self):
         # laser channel settings
