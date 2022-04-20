@@ -83,10 +83,10 @@ class EGGS_gui(QMainWindow):
         from EGGS_labrad.clients.trap_clients.stability_client import stability_client
         from EGGS_labrad.clients.ARTIQ_client.AD9910_client import AD9910_client
         clients = {
-            RF_client:          (1, 0),
+            RF_client:          (1, 1),
             DC_client:          (0, 1),
             stability_client:   (0, 0),
-            AD9910_client:      (2, 0)
+            AD9910_client:      (1, 0)
         }
         return self._createTabLayout(clients, reactor, cxn)
 

@@ -60,6 +60,7 @@ class stability_gui(QFrame):
         self.stability_display.setRange(xRange=[0, 1], yRange=[0, 1])
         self.stability_display.setMinimumHeight(400)
         self.stability_display.setMinimumWidth(400)
+        self.stability_display.setMaximumWidth(500)
         self.stability_point = self.stability_display.plot(pen=pg.mkPen(color='r'), symbol='o')
         # todo: set width/size of pen
         # todo: draw mathieu stability
