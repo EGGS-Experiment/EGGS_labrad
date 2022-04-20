@@ -289,7 +289,7 @@ class ARTIQ_Server(LabradServer):
         """
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
-        if freq > 400 or freq < 0:
+        if freq > 4e8 or freq < 0:
             raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
         ftw = self.dds_frequency_to_ftw(freq)
         yield self.api.setDDS(dds_name, 0, ftw)
