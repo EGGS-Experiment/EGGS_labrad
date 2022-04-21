@@ -72,19 +72,20 @@ class stability_client(GUIClient):
         """
         Updates GUI when values are received from server.
         """
-        # calculate voltage
-        voltage_tmp = yield self.os.measure_amplitude(1)
-        voltage_tmp = voltage_tmp / 2 * _PICKOFF_FACTOR
-        self.gui.pickoff_display.setText('{:.3f}'.format(voltage_tmp))
-        # get trap frequency
+        # get trap parameters
+        v_rf = yield self.os.measure_amplitude(1)
+        v_rf = v_rf / 2 * _PICKOFF_FACTOR
+        # if value is too large (>1e38), oscope is reading a null value
+        if v_rf > 1e20:
+            v_rf = 0
+        self.gui.pickoff_display.setText('{:.3f}'.format(v_rf))
         freq = yield self.rf.frequency()
-        # get endcap voltage
         v_dc = yield self.dc.voltage(1)
         # calculate a parameter
         a_param = _ELECTRON_CHARGE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
         self.gui.aparam_display.setText('{:.5f}'.format(a_param))
         # calculate q parameter
-        q_param = 2 * _ELECTRON_CHARGE * (voltage_tmp * _GEOMETRIC_FACTOR_RADIAL) / (_ELECTRODE_DISTANCE_RADIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
+        q_param = 2 * _ELECTRON_CHARGE * (v_rf * _GEOMETRIC_FACTOR_RADIAL) / (_ELECTRODE_DISTANCE_RADIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
         self.gui.qparam_display.setText('{:.5f}'.format(q_param))
         # calculate secular frequency
         wsec = (freq / 2) * sqrt(0.5 * q_param ** 2 + a_param) / 1e6
@@ -94,7 +95,7 @@ class stability_client(GUIClient):
         # recording
         if self.recording:
             elapsedtime = time.time() - self.starttime
-            yield self.dv.add(elapsedtime, voltage_tmp, context=self.c_record)
+            yield self.dv.add(elapsedtime, v_rf, context=self.c_record)
 
 
 if __name__ == "__main__":

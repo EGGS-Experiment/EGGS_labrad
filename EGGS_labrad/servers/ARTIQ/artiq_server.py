@@ -276,7 +276,7 @@ class ARTIQ_Server(LabradServer):
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
         if (type(state) == int) and (state not in (0, 1)):
-            raise Exception('Error: device does not exist.')
+            raise Exception('Error: invalid input. Value must be a boolean, 0, or 1.')
         yield self.api.toggleDDS(dds_name, state)
 
     @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='')
@@ -292,6 +292,7 @@ class ARTIQ_Server(LabradServer):
         if freq > 4e8 or freq < 0:
             raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
         ftw = self.dds_frequency_to_ftw(freq)
+        print(ftw)
         yield self.api.setDDS(dds_name, 0, ftw)
         self.ddsChanged((dds_name, 'freq', freq))
 
@@ -308,6 +309,7 @@ class ARTIQ_Server(LabradServer):
         if ampl > 1 or ampl < 0:
             raise Exception('Error: amplitude must be within [0, 1].')
         asf = self.dds_amplitude_to_asf(ampl)
+        print(asf)
         yield self.api.setDDS(dds_name, 1, asf)
         self.ddsChanged((dds_name, 'ampl', ampl))
 
@@ -332,9 +334,9 @@ class ARTIQ_Server(LabradServer):
         """
         Manually set a DDS to the given parameters.
         Arguments:
-            dds_name (str)  : the name of the dds
-            att     (float) : attenuation (in dBm)
-            units   (str)   : the voltage units, either 'mu' or 'v'
+            dds_name    (str)   : the name of the dds
+            att         (float) : attenuation (in dBm)
+            units       (str)   : the voltage units, either 'mu' or 'v' (default is mu)
         """
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
@@ -343,7 +345,7 @@ class ARTIQ_Server(LabradServer):
             att_mu = self.dds_att_to_mu(att)
         elif units.lower() != 'mu':
             raise Exception('Error: invalid units.')
-        yield self.api.setDDSAtt(dds_name, att_mu)
+        yield self.api.setDDSAtt(dds_name, int(att_mu))
         self.ddsChanged((dds_name, 'att', att))
 
     @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns='w')
@@ -554,7 +556,9 @@ class ARTIQ_Server(LabradServer):
         f(message, notified)
 
     def initContext(self, c):
-        """Initialize a new context object."""
+        """
+        Initialize a new context object.
+        """
         self.listeners.add(c.ID)
 
     def expireContext(self, c):

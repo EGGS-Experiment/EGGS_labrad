@@ -45,28 +45,34 @@ class stability_gui(QFrame):
         self.qparam_display.setFont(QFont(shell_font, pointSize=22))
         self.qparam_display.setAlignment(Qt.AlignRight)
         self.qparam_display.setStyleSheet('color: blue')
-        # wsec
-        self.wsec_display_label = QLabel('Secular Frequency (x2pi MHz)')
-        self.wsec_display = QLabel('000.000')
-        self.wsec_display.setFont(QFont(shell_font, pointSize=22))
-        self.wsec_display.setAlignment(Qt.AlignRight)
-        self.wsec_display.setStyleSheet('color: blue')
+        # wsecr - radial
+        self.wsecr_display_label = QLabel('Secular Frequency (x2pi MHz)')
+        self.wsecr_display = QLabel('000.000')
+        self.wsecr_display.setFont(QFont(shell_font, pointSize=22))
+        self.wsecr_display.setAlignment(Qt.AlignRight)
+        self.wsecr_display.setStyleSheet('color: blue')
+        # wsecz - radial
+        self.wsecz_display_label = QLabel('Secular Frequency (x2pi MHz)')
+        self.wsecz_display = QLabel('000.000')
+        self.wsecz_display.setFont(QFont(shell_font, pointSize=22))
+        self.wsecz_display.setAlignment(Qt.AlignRight)
+        self.wsecz_display.setStyleSheet('color: blue')
         # stability plot display
         self.qBox_stability = QGroupBox('Mathieu Stability')
         qBox_stability_display = QGridLayout(self.qBox_stability)
         pg.setConfigOption('background', 'k')
         self.stability_display = pg.PlotWidget(name='Mathieu Stability Display', border=True)
         self.stability_display.showGrid(x=True, y=True, alpha=0.5)
-        self.stability_display.setRange(xRange=[0, 1], yRange=[0, 1])
+        self.stability_display.setRange(xRange=[0, 1], yRange=[0, 0.2])
         self.stability_display.setMinimumHeight(400)
         self.stability_display.setMinimumWidth(400)
         self.stability_display.setMaximumWidth(500)
+        self.stability_display.setLabel('left', 'a')
+        self.stability_display.setLabel('bottom', 'q')
         self.stability_point = self.stability_display.plot(pen=pg.mkPen(color='r'), symbol='o')
-        # todo: set width/size of pen
         # todo: draw mathieu stability
         # todo: prevent resizing of trace
         qBox_stability_display.addWidget(self.stability_display)
-        # todo: open dialog box to change values
 
     def makeLayout(self):
         layout = QGridLayout(self)
@@ -77,9 +83,11 @@ class stability_gui(QFrame):
         layout.addWidget(self.aparam_display,               2, 1, 1, 1)
         layout.addWidget(self.qparam_display_label,         1, 2, 1, 1)
         layout.addWidget(self.qparam_display,               2, 2, 1, 1)
-        layout.addWidget(self.wsec_display_label,           1, 3, 1, 1)
-        layout.addWidget(self.wsec_display,                 2, 3, 1, 1)
-        layout.addWidget(self.qBox_stability,               3, 0, 4, 4)
+        layout.addWidget(self.wsecr_display_label,          1, 3, 1, 1)
+        layout.addWidget(self.wsecr_display,                2, 3, 1, 1)
+        layout.addWidget(self.wsecz_display_label,          1, 4, 1, 1)
+        layout.addWidget(self.wsecz_display,                2, 4, 1, 1)
+        layout.addWidget(self.qBox_stability,               3, 0, 5, 5)
 
 
 if __name__ == "__main__":
