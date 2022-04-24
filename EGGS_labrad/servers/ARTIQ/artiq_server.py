@@ -54,7 +54,7 @@ class ARTIQ_Server(LabradServer):
     # SIGNALS
     ttlChanged = Signal(TTLSIGNAL_ID, 'signal: ttl changed', '(sb)')
     ddsChanged = Signal(DDSSIGNAL_ID, 'signal: dds changed', '(ssv)')
-    dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(ssv)')
+    dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(isv)')
     adcUpdated = Signal(ADCSIGNAL_ID, 'signal: adc updated', '(*v)')
     expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(bi)')
 
@@ -225,8 +225,8 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         if (type(state) == int) and (state not in (0, 1)):
             raise Exception('Error: invalid state.')
+        self.notifyOtherListeners(c, (ttl_name, state), self.ttlChanged)
         yield self.api.setTTL(ttl_name, state)
-        self.ttlChanged((ttl_name, state))
 
     @setting(222, "TTL Get", ttl_name='s', returns='b')
     def getTTL(self, c, ttl_name):
@@ -277,6 +277,7 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         if (type(state) == int) and (state not in (0, 1)):
             raise Exception('Error: invalid input. Value must be a boolean, 0, or 1.')
+        self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
         yield self.api.toggleDDS(dds_name, state)
 
     @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='')
@@ -292,9 +293,8 @@ class ARTIQ_Server(LabradServer):
         if freq > 4e8 or freq < 0:
             raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
         ftw = self.dds_frequency_to_ftw(freq)
-        print(ftw)
+        self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
         yield self.api.setDDS(dds_name, 0, ftw)
-        self.ddsChanged((dds_name, 'freq', freq))
 
     @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='')
     def setDDSAmpl(self, c, dds_name, ampl):
@@ -309,9 +309,8 @@ class ARTIQ_Server(LabradServer):
         if ampl > 1 or ampl < 0:
             raise Exception('Error: amplitude must be within [0, 1].')
         asf = self.dds_amplitude_to_asf(ampl)
-        print(asf)
+        self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
         yield self.api.setDDS(dds_name, 1, asf)
-        self.ddsChanged((dds_name, 'ampl', ampl))
 
     @setting(325, "DDS Phase", dds_name='s', phase='v', returns='')
     def setDDSPhase(self, c, dds_name, phase):
@@ -325,9 +324,9 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         if phase >= 1 or pow < 0:
             raise Exception('Error: phase must be within [0, 1).')
-        pow_dds = self.dds_turns_to_pow(phase)
-        yield self.api.setDDS(dds_name, 2, pow_dds)
-        self.ddsChanged((dds_name, 'phase', phase))
+        pow = self.dds_turns_to_pow(phase)
+        self.notifyOtherListeners(c, (dds_name, 'pow', pow), self.ddsChanged)
+        yield self.api.setDDS(dds_name, 2, pow)
 
     @setting(326, "DDS Attenuation", dds_name='s', att='v', units='s', returns='')
     def setDDSAtt(self, c, dds_name, att, units='mu'):
@@ -345,8 +344,8 @@ class ARTIQ_Server(LabradServer):
             att_mu = self.dds_att_to_mu(att)
         elif units.lower() != 'mu':
             raise Exception('Error: invalid units.')
+        self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
         yield self.api.setDDSAtt(dds_name, int(att_mu))
-        self.ddsChanged((dds_name, 'att', att))
 
     @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns='w')
     def readDDS(self, c, dds_name, addr, length):
@@ -397,12 +396,12 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = int(value)
         else:
             raise Exception('Error: invalid units.')
+        self.notifyOtherListeners(c, (dac_num, 'dac', voltage_mu), self.dacChanged)
         # send to correct device
         if self.dacType == 'Zotino':
             yield self.api.setZotino(dac_num, voltage_mu)
         elif self.dacType == 'Fastino':
             yield self.api.setFastino(dac_num, voltage_mu)
-        self.dacChanged((dac_num, 'chan', voltage_mu))
 
     @setting(422, "DAC Gain", dac_num='i', gain='v', units='s', returns='')
     def setDACGain(self, c, dac_num, gain, units='mu'):
@@ -428,8 +427,8 @@ class ARTIQ_Server(LabradServer):
         # check that gain is valid
         if gain < 0 or gain > 0xffff:
             raise Exception('Error: gain outside bounds of [0,1]')
+        self.notifyOtherListeners(c, (dac_num, 'gain', gain_mu), self.dacChanged)
         yield self.api.setZotinoGain(dac_num, gain_mu)
-        self.dacChanged((dac_num, 'gain', gain_mu))
 
     @setting(423, "DAC Offset", dac_num='i', value='v', units='s', returns='')
     def setDACOffset(self, c, dac_num, value, units='mu'):
@@ -454,8 +453,8 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = int(value)
         else:
             raise Exception('Error: invalid units.')
+        self.notifyOtherListeners(c, (dac_num, 'off', voltage_mu), self.dacChanged)
         yield self.api.setZotinoOffset(dac_num, voltage_mu)
-        self.dacChanged((dac_num, 'offset', voltage_mu))
 
     @setting(424, "DAC OFS", value='v', units='s', returns='')
     def setDACGlobal(self, c, value, units='mu'):
@@ -477,8 +476,8 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = int(value)
         else:
             raise Exception('Error: invalid units.')
+        self.notifyOtherListeners(c, (-1, 'ofs', voltage_mu), self.dacChanged)
         yield self.api.setZotinoGlobal(voltage_mu)
-        self.dacChanged((0, 'ofs', voltage_mu))
 
     @setting(431, "DAC Read", dac_num='i', reg='s', returns='i')
     def readDAC(self, c, dac_num, reg):
@@ -554,6 +553,14 @@ class ARTIQ_Server(LabradServer):
         notified = self.listeners.copy()
         notified.remove(context.ID)
         f(message, notified)
+
+    def getOtherListeners(self, c):
+        """
+        Get all listeners except for the context owner.
+        """
+        notified = self.listeners.copy()
+        notified.remove(c.ID)
+        return notified
 
     def initContext(self, c):
         """
