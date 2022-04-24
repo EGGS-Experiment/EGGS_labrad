@@ -1,5 +1,5 @@
 from time import time
-from numpy import pi, sqrt
+from numpy import pi, sqrt, nan
 from datetime import datetime
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
@@ -45,7 +45,9 @@ class stability_client(GUIClient):
 
     def initGUI(self):
         self.gui.record_button.toggled.connect(lambda status: self.record_flow(status))
-
+        self.gui.beta_setting.valueChanged.connect(lambda value: self.gui.drawStability(value))
+        # set initial value for stability
+        self.gui.beta_setting.setValue(0.4)
 
     # SLOTS
     @inlineCallbacks
@@ -72,24 +74,29 @@ class stability_client(GUIClient):
         """
         Updates GUI when values are received from server.
         """
-        # get trap parameters
+        # get RF parameters
         v_rf = yield self.os.measure_amplitude(1)
-        v_rf = v_rf / 2 * _PICKOFF_FACTOR
         # if value is too large (>1e38), oscope is reading a null value
         if v_rf > 1e20:
-            v_rf = 0
+            v_rf = nan
+        else:
+            v_rf = 0.5 * v_rf * _PICKOFF_FACTOR
         self.gui.pickoff_display.setText('{:.3f}'.format(v_rf))
         freq = yield self.rf.frequency()
+        Omega = freq / 2e6 # convert to Mathieu Omega
+        # get endcap parameters
         v_dc = yield self.dc.voltage(1)
         # calculate a parameter
         a_param = _ELECTRON_CHARGE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
         self.gui.aparam_display.setText('{:.5f}'.format(a_param))
         # calculate q parameter
         q_param = 2 * _ELECTRON_CHARGE * (v_rf * _GEOMETRIC_FACTOR_RADIAL) / (_ELECTRODE_DISTANCE_RADIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
-        self.gui.qparam_display.setText('{:.5f}'.format(q_param))
-        # calculate secular frequency
-        wsec = (freq / 2) * sqrt(0.5 * q_param ** 2 + a_param) / 1e6
-        self.gui.wsec_display.setText('{:.2f}'.format(wsec))
+        self.gui.qparam_display.setText('{:.3f}'.format(q_param))
+        # calculate secular frequencies
+        wsecr = Omega * sqrt(0.5 * q_param ** 2 + a_param)
+        wsecz = Omega * sqrt(2 * a_param)
+        self.gui.wsecr_display.setText('{:.2f}'.format(wsecr))
+        self.gui.wsecz_display.setText('{:.2f}'.format(wsecz))
         # display on stability diagram
         self.gui.stability_point.setData(x=[q_param], y=[a_param])
         # recording
