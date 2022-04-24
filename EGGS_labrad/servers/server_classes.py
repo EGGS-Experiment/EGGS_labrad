@@ -55,7 +55,6 @@ class PollingServer(LabradServer):
             self.refresher.stop()
             print('Stopped polling due to lack of listeners.')
 
-
     def getOtherListeners(self, c):
         """
         Get all listeners except for the context owner.
@@ -63,6 +62,14 @@ class PollingServer(LabradServer):
         notified = self.listeners.copy()
         notified.remove(c.ID)
         return notified
+
+    def notifyOtherListeners(self, context, message, f):
+        """
+        Notifies all listeners except the one in the given context, executing function f
+        """
+        notified = self.listeners.copy()
+        notified.remove(context.ID)
+        f(message, notified)
 
 
     # POLLING
