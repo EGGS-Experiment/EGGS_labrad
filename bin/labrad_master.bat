@@ -26,30 +26,27 @@ START "Labrad Web GUI" /min %HOME%\Code\scalabrad-web-server-2.0.6\bin\labrad-we
 START "Labrad Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\labrad\node\__init__.py -s -x %LABRADHOST%:%EGGS_LABRAD_SYSLOG_PORT%"
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 
-REM: Don't open any servers if raw flag is active
-IF %raw_flag%==1 (GOTO SHELL)
-
 REM: ARTIQ
 START /min CMD /c %EGGS_LABRAD_ROOT%\bin\artiq_start.bat
 
 REM: Temporary solution: need to have device
 START "GPIB Device Manager" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\gpib\gpib_device_manager.py"
 
-REM: Clients
-START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
-
-
-:SHELL
-
 REM: Run all device servers as specified, then open a python shell to begin
 IF %server_flag%==1 (
     TIMEOUT 8 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
+)
+
+REM: Clients
+START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
+
+REM: If all device servers are specified, open cxn with all servers assigned standard nicknames, otherwise run normal shell
+IF %server_flag%==1 (
     TIMEOUT 8 > NUL && CALL %EGGS_LABRAD_ROOT%\bin\server_cxn.bat
 ) ELSE ( CALL %EGGS_LABRAD_ROOT%\bin\labrad_cxn.bat )
 
 
 GOTO EOF
-
 :HELP
 @ECHO usage: labrad_master [-h] [-s] [-r]
 @ECHO:
