@@ -18,7 +18,7 @@ class AD9910_channel(QFrame):
         self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(name)
-        self.setMaximumSize(200, 100)
+        self.setMaximumSize(300, 150)
 
     def makeLayout(self, title):
         layout = QGridLayout(self)

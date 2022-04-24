@@ -30,7 +30,7 @@ class stability_gui(QFrame):
         self.all_label.setAlignment(Qt.AlignCenter)
         # readout
         pickoff_display_label = QLabel('VPP (V)')
-        self.pickoff_display = QLabel('000.000')
+        self.pickoff_display = QLabel('000.00')
         # record button
         self.record_button = TextChangingButton(('Stop Recording', 'Start Recording'))
         self.record_button.setMaximumHeight(25)

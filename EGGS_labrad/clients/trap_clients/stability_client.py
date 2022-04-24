@@ -81,7 +81,7 @@ class stability_client(GUIClient):
             v_rf = nan
         else:
             v_rf = 0.5 * v_rf * _PICKOFF_FACTOR
-        self.gui.pickoff_display.setText('{:.3f}'.format(v_rf))
+        self.gui.pickoff_display.setText('{:.2f}'.format(v_rf))
         freq = yield self.rf.frequency()
         Omega = freq / 2e6 # convert to Mathieu Omega
         # get endcap parameters
