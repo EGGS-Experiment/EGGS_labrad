@@ -143,8 +143,14 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
 
 
     # BANDWIDTH
-    def markerReadout(self, time):
-        # todo: :SENS:SWE:TIME
+    def bandwidthSweepTime(self, time):
+        if time is not None:
+            if (time > 2e-6) and (time < 7500):
+                yield self.write(':SENS:SWE:TIME {:f}'.format(time))
+            else:
+                raise Exception('Error: sweep time must be in range: [2e-6, 7500].')
+        resp = yield self.query(':SENS:SWE:TIME?')
+        returnValue(float(resp))
 
     def bandwidthResolution(self, bw):
         if bw is not None:
