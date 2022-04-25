@@ -30,7 +30,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
     name = 'Spectrum Analyzer Server'
 
     deviceWrappers = {
-        'RIGOL TECHNOLOGIES DSA815': RigolDSA800Wrapper
+        'Rigol Technologies DSA815': RigolDSA800Wrapper
     }
 
 
@@ -69,7 +69,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).preamplifier(status)
 
     @setting(22, "Attenuation", att='v', returns='v')
-    def attenuation(self, c, att):
+    def attenuation(self, c, att=None):
         """
         Get/set the attenuation of the RF attenuator.
         Arguments:
@@ -82,7 +82,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
 
     # FREQUENCY RANGE
     @setting(111, "Frequency Start", freq='v', returns='v')
-    def frequencyStart(self, c, freq):
+    def frequencyStart(self, c, freq=None):
         """
         Get/set the start frequency.
         Arguments:
@@ -93,7 +93,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).frequencyStart(freq)
 
     @setting(112, "Frequency Stop", freq='v', returns='v')
-    def frequencyStop(self, c, freq):
+    def frequencyStop(self, c, freq=None):
         """
         Get/set the stop frequency.
         Arguments:
@@ -104,7 +104,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).frequencyStop(freq)
 
     @setting(113, "Frequency Center", freq='v', returns='v')
-    def frequencyCenter(self, c, freq):
+    def frequencyCenter(self, c, freq=None):
         """
         Get/set center frequency.
         Arguments:
@@ -117,7 +117,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
 
     # AMPLITUDE
     @setting(211, "Amplitude Reference", ampl='v', returns='v')
-    def amplitudeReference(self, c, ampl):
+    def amplitudeReference(self, c, ampl=None):
         """
         Get/set the amplitude reference level (i.e. the top of the trace).
         Arguments:
@@ -128,7 +128,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).amplitudeReference(ampl)
 
     @setting(212, "Amplitude Offset", ampl='v', returns='v')
-    def amplitudeOffset(self, c, ampl):
+    def amplitudeOffset(self, c, ampl=None):
         """
         Get/set the amplitude offset level. #todo better note and understand
         Arguments:
@@ -139,7 +139,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).amplitudeOffset(ampl)
 
     @setting(213, "Amplitude Scale", factor='v', returns='v')
-    def amplitudeScale(self, c, factor):
+    def amplitudeScale(self, c, factor=None):
         """
         Get/set the amplitude scale.
         Arguments:
@@ -151,7 +151,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
 
 
     # MARKER SETUP
-    @setting(311, "Marker Toggle", number='i', status=['b', 'i'], returns='b')
+    @setting(311, "Marker Toggle", channel='i', status=['b', 'i'], returns='b')
     def markerToggle(self, c, channel, status=None):
         """
         Enable/disable a marker channel.
@@ -178,7 +178,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).markerTrace(channel, trace)
 
-    @setting(313, "Marker Mode", channel='i', mode='i', returns='b')
+    @setting(313, "Marker Mode", channel='i', mode='i', returns='i')
     def markerMode(self, c, channel, mode=None):
         """
         Get/set the marker mode.
@@ -194,7 +194,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).markerMode(channel, mode)
 
-    @setting(314, "Marker Readout Mode", channel='i', mode='i', returns='v')
+    @setting(314, "Marker Readout Mode", channel='i', mode='i', returns='i')
     def markerReadoutMode(self, c, channel, mode=None):
         """
         Get/set the readout mode of a marker channel.
@@ -211,7 +211,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).markerReadoutMode(channel, mode)
 
     @setting(315, "Marker Track", channel='i', status=['b', 'i'], returns='b')
-    def markerTrack(self, c, channel, status):
+    def markerTrack(self, c, channel, status=None):
         """
         Get/set the status of signal tracking.
         If a marker is already active, signal tracking will
@@ -241,7 +241,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).markerAmplitude(channel)
 
-    @setting(321, "Marker Frequency", channel='i', freq='v', returns='v')
+    @setting(322, "Marker Frequency", channel='i', freq='v', returns='v')
     def markerFrequency(self, c, channel, freq=None):
         """
         Get/set the x-position of a normal mode marker.
@@ -255,24 +255,27 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
 
 
     # PEAK
-    @setting(411, "Peak Search", status='v', returns='b')
-    def peakSearch(self, c, status):
+    @setting(411, "Peak Search", status=['b', 'i'], returns='b')
+    def peakSearch(self, c, status=None):
         """
         Get/set the status of signal tracking.
         If a marker is already active, signal tracking will
         use that marker to set the center frequency.
         If a marker does not already exist, signal tracking
         will create a marker and use it to set the center frequency.
+
         Arguments:
             status  (bool): the status of signal tracking.
         Returns:
                     (bool): the status of signal tracking.
         """
-        # todo
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).peakSearch(status)
 
     @setting(412, "Peak Set", status='v', returns='b')
-    def peakSet(self, c, status):
+    def peakSet(self, c, status=None):
         """
         Arguments:
             status  (bool): the status of signal tracking.
@@ -283,7 +286,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).peakSet(status)
 
     @setting(421, "Peak Next", status='v', returns='b')
-    def peakNext(self, c, status):
+    def peakNext(self, c, status=None):
         """
         Arguments:
             status  (bool): the status of signal tracking.
