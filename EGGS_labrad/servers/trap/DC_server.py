@@ -196,9 +196,9 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                     (str)   : success state of ramp
         """
-        msg = 'ramp.w {:d} {:f} {:f}\r\n'.format(voltage, rate)
+        msg = 'ramp.w {:d} {:f} {:f}\r\n'.format(channel, voltage, rate)
         yield self.ser.acquire()
-        yield self.ser.wfrite(msg)
+        yield self.ser.write(msg)
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         returnValue(resp)
