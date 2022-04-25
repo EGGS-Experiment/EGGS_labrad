@@ -25,7 +25,8 @@ from EGGS_labrad.servers import PollingServer, SerialDeviceServer
 TERMINATOR = '\r\n'
 _NI03_QUERY_msg = '\x05'
 _NI03_ACK_msg = '\x06'
-_NI03_MIN_PRESSURE = 1e-5
+_NI03_MAX_PRESSURE = 1e-5
+_NI03_MIN_PRESSURE = 1e-8
 
 
 class NIOPS03Server(SerialDeviceServer, PollingServer):
@@ -58,7 +59,10 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         super().initServer()
         # interlock
         self.interlock_active = True
-        self.interlock_pressure = _NI03_MIN_PRESSURE
+        self.interlock_pressure = _NI03_MAX_PRESSURE
+        # interlock 2
+        self.interlock2_active = False
+        self.interlock2_pressure = _NI03_MIN_PRESSURE
 
 
     # STATUS
@@ -242,6 +246,45 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         # set interlock parameters
         self.interlock_active = status
         return (self.interlock_active, self.interlock_pressure)
+    
+    @setting(312, 'Interlock 2', status='b', press='v', returns='(bv)')
+    def interlock2(self, c, status=None, press=None):
+        """
+        Activates an interlock, switching ON the getter
+        if pressure goes below a given value.
+        Pressure is taken from the Twistorr74 turbo pump server.
+        This is designed to allow completely self-regulating
+        getter activation sequences.
+        Arguments:
+            status  (bool)  : the interlock status.
+            press   (float) : the minimum pressure (in mbar).
+        Returns:
+                    (bool)  : the interlock status.
+                    (float) :  the minimum pressure (in mbar).
+        """
+        # empty call returns getter
+        if (status is None) and (press is None):
+            return (self.interlock2_active, self.interlock2_pressure)
+
+        # ensure pressure is valid
+        if press is None:
+            pass
+        elif (press < 1e-11) or (press > 1e-4):
+            raise Exception('Error: invalid pressure interlock range. Must be between (1e-11, 1e-4) mbar.')
+        else:
+            self.interlock2_pressure = press
+
+        # create connection to twistorr pump as needed
+        if (status is True) and (self.interlock_active is False):
+            try:
+                yield self.client.refresh()
+                tt = yield self.client.twistorr74_server
+            except KeyError:
+                print('Warning: Twistorr74 server not currently available for interlock.')
+
+        # set interlock parameters
+        self.interlock_active = status
+        return (self.interlock_active, self.interlock_pressure)
 
 
     # POLLING
@@ -267,28 +310,24 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                     try:
                         # send shutoff signals; don't use ser.acquire() since
                         # shutoff needs to happen NOW
-                        yield self.ser.acquire()
                         yield self.ser.write('B' + TERMINATOR)
                         yield self.ser.read_line('\r')
                         yield self.ser.write('BN' + TERMINATOR)
                         yield self.ser.read_line('\r')
-                        self.ser.release()
                         # update listeners on power status
                         self.ip_power_update(False)
                         self.np_power_update(False)
                     except Exception as e:
                         print('Error: unable to shut off ion pump and/or getter.')
-                elif press_tmp <= 1e-7: #tmp remove here
+                elif press_tmp <= 1e-7:
                     print('Sending activation signal to getter.')
                     try:
                         # set NP activation mode
-                        yield self.ser.acquire()
                         yield self.ser.write('M' + str(1) + TERMINATOR)
                         yield self.ser.read_line('\r')
                         # switch on NP
                         yield self.ser.write('GN' + TERMINATOR)
                         yield self.ser.read_line('\r')
-                        self.ser.release()
                         # update listeners on power status
                         self.np_power_update(True)
                     except Exception as e:
@@ -298,7 +337,6 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
             except Exception as e:
                 print('Warning: unable to read pressure from Twistorr74 server.'
                       'Skipping this loop.')
-
         # query
         yield self.ser.acquire()
         yield self.ser.write('Tb\r\n')
