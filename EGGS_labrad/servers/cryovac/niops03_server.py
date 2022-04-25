@@ -265,10 +265,14 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                           .format(press_tmp, self.interlock_pressure))
                     print('Sending shutoff signal to ion pump and getter.')
                     try:
+                        # send shutoff signals
                         yield self.ser.write('B' + TERMINATOR)
                         yield self.ser.read_line()
                         yield self.ser.write('BN' + TERMINATOR)
                         yield self.ser.read_line()
+                        # update listeners on power status
+                        self.ip_power_update(False)
+                        self.np_power_update(False)
                     except Exception as e:
                         print('Error: unable to shut off ion pump and/or getter.')
             except KeyError:
