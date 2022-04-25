@@ -99,7 +99,7 @@ class ARTIQ_Server(LabradServer):
         self.dds_att_to_mu = lambda dbm: 10**(float(dbm/10))
             # dac
         from artiq.coredevice.ad53xx import voltage_to_mu
-        self.voltage_to_mu = voltage_to_mu
+        self.dac_voltage_to_mu = voltage_to_mu
             # sampler
         from artiq.coredevice.sampler import adc_mu_to_volt
         self.adc_mu_to_volt = adc_mu_to_volt
@@ -389,7 +389,7 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         # check that units and voltage are valid
         if units.lower() in ('v', 'volt', 'voltage'):
-            voltage_mu = yield self.dac_volt_to_mu(value)
+            voltage_mu = yield self.dac_voltage_to_mu(value)
         elif units.lower() == 'mu':
             if (value < 0) or (value > 0xffff):
                 raise Exception('Error: invalid DAC voltage.')
@@ -446,7 +446,7 @@ class ARTIQ_Server(LabradServer):
         if (dac_num > 31) or (dac_num < 0):
             raise Exception('Error: device does not exist.')
         if units == 'v':
-            voltage_mu = yield self.dac_volt_to_mu(value)
+            voltage_mu = yield self.dac_voltage_to_mu(value)
         elif units == 'mu':
             if (value < 0) or (value > 0xffff):
                 raise Exception('Error: invalid DAC voltage.')
@@ -469,7 +469,7 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: DAC does not support this function.')
         voltage_mu = None
         if units == 'v':
-            voltage_mu = yield self.dac_volt_to_mu(value)
+            voltage_mu = yield self.dac_voltage_to_mu(value)
         elif units == 'mu':
             if (value < 0) or (value > 0x2fff):
                 raise Exception('Error: invalid DAC voltage.')

@@ -334,11 +334,10 @@ class ARTIQ_api(object):
         """
         Set the voltage of a Fastino register.
         """
+        self.core.reset()
+        self.fastino.set_dac_mu(channel_num, volt_mu)
+        self.fastino.update(1 << channel_num)
         self.core.break_realtime()
-        self.fastino.write_dac_mu(channel_num, volt_mu)
-        self.fastino.load()
-        self.core.break_realtime()
-        self.fastino.write(channel_num, volt_mu)
 
     @kernel
     def readFastino(self, addr):
@@ -346,12 +345,12 @@ class ARTIQ_api(object):
         return self.fastino.read(addr)
 
     @kernel
-    def continuousFastino(self, channel_mask):
+    def continuousFastino(self, channel_num):
         """
-        Allowed a Fastino channel to be updated continuously regardless of incoming data.
+        Allows a Fastino channel to be updated continuously regardless of incoming data.
         """
         self.core.break_realtime()
-        self.fastino.set_continuous(channel_mask)
+        self.fastino.set_continuous(1 << channel_num)
 
     # todo: fastino interpolating/CIC
 
