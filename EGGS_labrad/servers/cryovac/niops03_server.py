@@ -275,7 +275,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
             self.interlock2_pressure = press
 
         # create connection to twistorr pump as needed
-        if (status is True) and (self.interlock_active is False):
+        if (status is True) and (self.interlock2_active is False):
             try:
                 yield self.client.refresh()
                 tt = yield self.client.twistorr74_server
@@ -283,8 +283,8 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                 print('Warning: Twistorr74 server not currently available for interlock.')
 
         # set interlock parameters
-        self.interlock_active = status
-        return (self.interlock_active, self.interlock_pressure)
+        self.interlock2_active = status
+        return (self.interlock2_active, self.interlock2_pressure)
 
 
     # POLLING
@@ -295,7 +295,6 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         """
         # check interlock
         if self.interlock_active:
-            tt = None
             try:
                 # try to get twistorr74 server
                 yield self.client.refresh()
@@ -303,10 +302,9 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                 # switch off ion pump if pressure is above a certain value
                 press_tmp = yield tt.pressure()
                 if press_tmp >= self.interlock_pressure:
-                    print('Error: Twistorr74 pressure reads {:.2e} mbar.',
-                          'Above current threshold value of {:.2e} mbar for Ion Pump to be active.'
-                          .format(press_tmp, self.interlock_pressure))
-                    print('Sending shutoff signal to ion pump and getter.')
+                    print('Error: Twistorr74 pressure reads {:.2e} mbar,'.format(press_tmp))
+                    print('\tAbove current threshold value of {:.2e} mbar for Ion Pump to be active.'.format(self.interlock_pressure))
+                    print('\tSending shutoff signal to ion pump and getter.')
                     try:
                         # send shutoff signals; don't use ser.acquire() since
                         # shutoff needs to happen NOW
@@ -319,11 +317,12 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                         self.np_power_update(False)
                     except Exception as e:
                         print('Error: unable to shut off ion pump and/or getter.')
-                elif press_tmp <= 1e-7:
-                    print('Sending activation signal to getter.')
+                elif (press_tmp <= self.interlock2_pressure) and (self.interlock2_active):
+                    print('Below activation pressure for getter to turn on.')
+                    print('\tSending activation signal to getter.')
                     try:
                         # set NP activation mode
-                        yield self.ser.write('M' + str(1) + TERMINATOR)
+                        yield self.ser.write('M1' + TERMINATOR)
                         yield self.ser.read_line('\r')
                         # switch on NP
                         yield self.ser.write('GN' + TERMINATOR)
@@ -331,29 +330,22 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                         # update listeners on power status
                         self.np_power_update(True)
                     except Exception as e:
-                        print('Error: unable to activate getter getter.')
+                        print('Error: unable to activate getter.')
             except KeyError:
                 print('Warning: Twistorr74 server not available for interlock.')
             except Exception as e:
-                print('Warning: unable to read pressure from Twistorr74 server.'
-                      'Skipping this loop.')
+                print('Warning: unable to read pressure from Twistorr74 server.')
+                print('\tSkipping this loop.')
         # query
+        yield self.pressure_ip(None)
+        yield self.voltage_ip(None, None)
         yield self.ser.acquire()
-        yield self.ser.write('Tb\r\n')
-        ip_pressure = yield self.ser.read_line('\r')
         yield self.ser.write('TC\r\n')
         temp_resp = yield self.ser.read_line('\r')
-        yield self.ser.write('u\r\n')
-        volt_resp = yield self.ser.read_line('\r')
         self.ser.release()
-
-        # update pressure
-        self.pressure_update(float(ip_pressure))
-        # process & update temperature
+        # update values
         temp = temp_resp.split()
         self.temperature_update((float(temp[1]), float(temp[3])))
-        # process & update voltage
-        self.voltage_update(int(volt_resp, 16))
 
 
 if __name__ == '__main__':
