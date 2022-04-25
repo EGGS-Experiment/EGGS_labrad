@@ -265,21 +265,35 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                           .format(press_tmp, self.interlock_pressure))
                     print('Sending shutoff signal to ion pump and getter.')
                     try:
-                        # send shutoff signals
+                        # send shutoff signals; don't use ser.acquire() since
+                        # shutoff needs to happen NOW
                         yield self.ser.write('B' + TERMINATOR)
-                        yield self.ser.read_line()
+                        yield self.ser.read_line('\r')
                         yield self.ser.write('BN' + TERMINATOR)
-                        yield self.ser.read_line()
+                        yield self.ser.read_line('\r')
                         # update listeners on power status
                         self.ip_power_update(False)
                         self.np_power_update(False)
                     except Exception as e:
                         print('Error: unable to shut off ion pump and/or getter.')
+                elif press_tmp <= 1e-7: #tmp remove here
+                    try:
+                        # set NP activation mode
+                        yield self.ser.write('M' + str(1) + TERMINATOR)
+                        yield self.ser.read_line('\r')
+                        # switch on NP
+                        yield self.ser.write('GN' + TERMINATOR)
+                        yield self.ser.read_line('\r')
+                        # update listeners on power status
+                        self.np_power_update(True)
+                    except Exception as e:
+                        print('Error: unable to activate getter getter.')
             except KeyError:
                 print('Warning: Twistorr74 server not available for interlock.')
             except Exception as e:
                 print('Warning: unable to read pressure from Twistorr74 server.'
                       'Skipping this loop.')
+
         # query
         yield self.ser.acquire()
         yield self.ser.write('Tb\r\n')
