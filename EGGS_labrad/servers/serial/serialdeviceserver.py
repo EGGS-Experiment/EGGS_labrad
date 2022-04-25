@@ -496,9 +496,19 @@ class SerialDeviceServer(LabradServer):
         self.ser.release()
         returnValue(resp)
 
+        @setting(222226, 'Serial Flush', returns='')
+        def serial_flush(self, c):
+            """
+            Flush the serial input and output buffers.
+            """
+            yield self.ser.acquire()
+            yield self.ser.flush_input()
+            yield self.ser.flush_output()
+            self.ser.release()
+
 
         # DEBUGGING
-    @setting(222226, 'Serial Debug', status='b', returns='b')
+    @setting(222227, 'Serial Debug', status='b', returns='b')
     def serialDebug(self, c, status=None):
         """
         Tells the serial bus server to print input/output.
