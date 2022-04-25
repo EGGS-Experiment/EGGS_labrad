@@ -4,7 +4,7 @@
 name = multiplexerserver
 version = 1.0
 description =
-instancename = multiplexerserver
+instancename = MultiplexerServer
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -15,11 +15,12 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
-from labrad.server import LabradServer, setting, Signal
-from twisted.internet.defer import returnValue
 import ctypes
-from twisted.internet import reactor
+from labrad.server import setting, Signal
+from twisted.internet.defer import inlineCallbacks, returnValue
+
+from EGGS_labrad.servers import PollingServer
+
 
 UPDATEEXP = 122387
 CHANSIGNAL = 122485
@@ -32,16 +33,16 @@ AMPCHANGED = 142308
 UPDATEPATTERN = 462916
 
 
-class MultiplexerServer(LabradServer):
+class MultiplexerServer(PollingServer):
     """
-    Multiplexer server for WS-U wavelength meter.
+    Multiplexer server for the WS-U wavelength meter.
+    A DLL is required to run this server.
+    See initServer for the path location for the library.
+    """
 
-    A DLL is required to run this server.  See initServer for the path location
-    for the library.
-    """
     name = 'multiplexerserver'
 
-    # Set up signals to be sent to listeners
+    # SIGNALS
     channel_text = 'signal: selected channels changed'
     measuredchanged = Signal(CHANSIGNAL, channel_text, '(ib)')
     freqchanged = Signal(FREQSIGNAL, 'signal: frequency changed', '(iv)')
@@ -53,12 +54,12 @@ class MultiplexerServer(LabradServer):
     channellock = Signal(CHANNELLOCK, 'signal: channel lock changed', '(wwb)')
     ampchanged = Signal(AMPCHANGED, 'signal: amplitude changed', '(wv)')
     patternchanged = Signal(UPDATEPATTERN, 'signal: pattern changed', '(i*v)')
-    
-    def initServer(self):
 
+
+    # STARTUP
+    def initServer(self):
         # load wavemeter dll file for use of API functions self.d and self.l
         # are dummy c_types for unused wavemeter functions
-
         dll_path = "C:\Windows\System32\wlmData.dll"
         self.wmdll = ctypes.windll.LoadLibrary(dll_path)
         self.d = ctypes.c_double(0)
@@ -74,16 +75,9 @@ class MultiplexerServer(LabradServer):
         self.AmplitudeAvg = ctypes.c_long(4)
                 
         self.set_dll_variables()
-        
         self.WavemeterVersion = self.wmdll.GetWLMVersion(ctypes.c_long(1))
-
         self.pattern1_ptr = None
         self.set_interferometer_pattern_variables()
-
-        self.listeners = set()
-
-        self.measureChan()
-
 
     def set_pid_variables(self):
         """
@@ -141,18 +135,6 @@ class MultiplexerServer(LabradServer):
         #length1 = self.wmdll.GetPatternItemCount(ctypes.c_long(1))
         #ref1 = (ctypes.c_long * length1)()
         #self.pattern2_ptr = ctypes.cast(ref1, ctypes.POINTER(ctypes.c_ulong))
-        
-    def initContext(self, c):
-        """Initialize a new context object."""
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        self.listeners.remove(c.ID)
-
-    def getOtherListeners(self, c):
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
 
     @setting(1, "check_wlm_running")
     def instance(self, c):
@@ -164,8 +146,8 @@ class MultiplexerServer(LabradServer):
         status = yield instance(RFC, self.l, self.l, self.l)
         returnValue(status)
 
-    # Set functions
 
+    # SETTERS
     @setting(93, "set_active_channel", chan='w')
     def set_active_channel(self, c, chan):
         chan_c = ctypes.c_long(chan)
@@ -181,8 +163,10 @@ class MultiplexerServer(LabradServer):
 
     @setting(11, "set_lock_state", state='b')
     def set_lock_state(self, c, state):
-        """ Turns on PID regulation for all channels. Must be on
-        for individual channel locking to work."""
+        """
+        Turns on PID regulation for all channels. Must be on
+        for individual channel locking to work.
+        """
         notified = self.getOtherListeners(c)
         state_c = ctypes.c_bool(state)
         yield self.wmdll.SetDeviationMode(state_c)
@@ -190,14 +174,18 @@ class MultiplexerServer(LabradServer):
 
     @setting(12, "set_switcher_mode", mode='b')
     def set_switcher_mode(self, c, mode):
-        """ Allows measuring of multiple channels with multiplexer.
-        Should always be set to on."""
+        """
+        Allows measuring of multiple channels with multiplexer.
+        Should always be set to on.
+        """
         mode_c = ctypes.c_long(mode)
         yield self.wmdll.SetSwitcherMode(mode_c)
 
     @setting(13, "set_switcher_signal_state", chan='i', state='b')
     def set_switcher_signal_state(self, c, chan, state):
-        """ Turns on and off individual channel measurement"""
+        """
+        Turns on and off individual channel measurement.
+        """
         notified = self.getOtherListeners(c)
         chan_c = ctypes.c_long(chan)
         state_c = ctypes.c_long(state)
@@ -208,24 +196,29 @@ class MultiplexerServer(LabradServer):
 
     @setting(14, "set_pid_course", dacPort='w', course='v')
     def set_pid_course(self, c, dacPort, course):
-        """Set reference frequency in THz for the PID control"""
+        """
+        Set reference frequency in THz for the PID control.
+        """
         chan_c = ctypes.c_long(dacPort)
         course_c = ctypes.c_char_p('=' + str(course))
         yield self.wmdll.SetPIDCourseNum(chan_c, course_c)
 
     @setting(15, "set_dac_voltage", dacPort='i', value='v')
     def set_dac_voltage(self, c, dacPort, value):
-        """Sets voltage of specified DAC channel in V. Can only be used
-        when all PID control is off: set_lock_state = 0"""
+        """
+        Sets voltage of specified DAC channel in V. Can only be used
+        when all PID control is off: set_lock_state = 0
+        """
         chan_c = ctypes.c_long(dacPort)
         # convert Volts to mV
-        value = value*1000
+        value *= 1000
         value_c = ctypes.c_double(value)
         yield self.wmdll.SetDeviationSignalNum(chan_c, value_c)
 
     @setting(16, "set_wlm_output", output='b')
     def set_wlm_output(self, c, output):
-        """Start or stops wavemeter
+        """
+        Starts or stops the wavemeter.
         """
         notified = self.getOtherListeners(c)
         if output is True:
@@ -236,28 +229,36 @@ class MultiplexerServer(LabradServer):
 
     @setting(17, "set_pid_p", dacPort='w', P='v')
     def set_pid_p(self, c, dacPort, P):
-        """Sets the P PID settings for a given DAC port."""
+        """
+        Sets the P PID settings for a given DAC port.
+        """
         port_c = ctypes.c_long(dacPort)
         value = ctypes.c_double(P)
         yield self.wmdll.SetPIDSetting(self.PID_P, port_c, self.l, value)
 
     @setting(18, "set_pid_i", dacPort='w', I='v')
     def set_pid_i(self, c, dacPort, I):
-        """Sets the I PID settings for a given DAC port."""
+        """
+        Sets the Integral PID settings for a given DAC port.
+        """
         port_c = ctypes.c_long(dacPort)
         value = ctypes.c_double(I)
         yield self.wmdll.SetPIDSetting(self.PID_I, port_c, self.l, value)
 
     @setting(19, "set_pid_d", dacPort='w', D='v')
     def set_pid_d(self, c, dacPort, D):
-        """Sets the D PID settings for a given DAC port."""
+        """
+        Sets the Derivative PID settings for a given DAC port.
+        """
         port_c = ctypes.c_long(dacPort)
         value = ctypes.c_double(D)
         yield self.wmdll.SetPIDSetting(self.PID_D, port_c, self.l, value)
 
     @setting(39, "set_pid_dt", dacPort='w', dt='v')
     def set_pid_dt(self, c, dacPort, dt):
-        """Sets the dt PID settings for a given DAC port."""
+        """
+        Sets the dt PID settings for a given DAC port.
+        """
         if dt <= 0:
             returnValue("dt must be greater than zero")
         else:
@@ -267,9 +268,11 @@ class MultiplexerServer(LabradServer):
 
     @setting(121, "set_const_dt", dacPort='w', dt='b')
     def set_const_dt(self, c, dacPort, dt):
-        """Activates the dt PID settings for a given DAC port. This makes each
+        """
+        Activates the dt PID settings for a given DAC port. This makes each
         dt in the integration constant as opposed to oscillating values based
-        on the system time, which changes when changing wm settings."""
+        on the system time, which changes when changing wm settings.
+        """
         port_c = ctypes.c_long(dacPort)
         value = ctypes.c_long(dt)
         yield self.wmdll.SetPIDSetting(self.PIDConstdt, port_c, value, self.d)
@@ -278,9 +281,11 @@ class MultiplexerServer(LabradServer):
              sensitivityExponent='i')
     def set_pid_sensitivity(self, c, dacPort, sensitivityFactor,
                             sensitivityExponent):
-        """Sets the sensitivity of the analog output for a given DAC port.
+        """
+        Sets the sensitivity of the analog output for a given DAC port.
         Sensitivity = (sensitivityFactor*V)/(THz*10^[sensitivityExponent])
-        sensitivityFactor range is [1,9.99]."""
+        sensitivityFactor range is [1,9.99].
+        """
         port_c = ctypes.c_long(dacPort)
         sFactor = ctypes.c_double(sensitivityFactor)
         sExponent = ctypes.c_long(sensitivityExponent)
@@ -296,7 +301,9 @@ class MultiplexerServer(LabradServer):
 
     @setting(41, "set_pid_polarity", dacPort='w', polarity='i')
     def set_pid_polarity(self, c, dacPort, polarity):
-        """Sets the polarity for a given DAC port. Allowed values are +/- 1."""
+        """
+        Sets the polarity for a given DAC port. Allowed values are +/- 1.
+        """
         if polarity == 1 or polarity == -1:
             port_c = ctypes.c_long(dacPort)
             value = ctypes.c_long(polarity)
@@ -309,7 +316,9 @@ class MultiplexerServer(LabradServer):
     @setting(42, "set_channel_lock", dacPort='w', waveMeterChannel='w',
              lock='b')
     def set_channel_lock(self, c, dacPort, waveMeterChannel, lock):
-        """Locks a wavemeter channel to a given DAC port."""
+        """
+        Locks a wavemeter channel to a given DAC port.
+        """
         port_c = ctypes.c_long(dacPort)
         chan_c = ctypes.c_long(waveMeterChannel)
 
@@ -335,14 +344,12 @@ class MultiplexerServer(LabradServer):
 
             self.channellock((dacPort, waveMeterChannel, lock), notified)
 
-    # Get Functions
 
+    # GETTERS
     @setting(20, "get_amplitude", chan='w', returns='v')
     def get_amplitude(self, c, chan):
         chan_c = ctypes.c_long(chan)
-        amp = yield self.wmdll.GetAmplitudeNum(chan_c, self.AmplitudeMax,
-                                               self.l)
-
+        amp = yield self.wmdll.GetAmplitudeNum(chan_c, self.AmplitudeMax, self.l)
         self.ampchanged((chan, amp))
         returnValue(amp)
 
@@ -377,7 +384,9 @@ class MultiplexerServer(LabradServer):
 
     @setting(25, "get_output_voltage", dacPort='w', returns='v')
     def get_output_voltage(self, c, dacPort):
-        """Gets the output voltage (mV) of the specified DAC channel"""
+        """
+        Gets the output voltage (mV) of the specified DAC channel.
+        """
         chan_c = ctypes.c_long(dacPort)
         volts = yield self.wmdll.GetDeviationSignalNum(chan_c, self.d)
         self.pidvoltagechanged((dacPort, volts))
@@ -390,7 +399,6 @@ class MultiplexerServer(LabradServer):
         show_c = ctypes.c_long(0)
         yield self.wmdll.GetSwitcherSignalStates(chan_c, ctypes.pointer(use_c),
                                                  ctypes.pointer(show_c))
-
         use = bool(use_c)
         returnValue(use)
 
@@ -411,19 +419,19 @@ class MultiplexerServer(LabradServer):
             value = False
         returnValue(value)
 
-    @setting(29, "get_channel_lock", dacPort='w', waveMeterChannel='w',
-             returns='?')
+    @setting(29, "get_channel_lock", dacPort='w', waveMeterChannel='w', returns='?')
     def get_channel_lock(self, c, dacPort, waveMeterChannel):
-        """ Checks if the wm channel is assigned to the DAC port, equivalent to
+        """
+        Checks if the wm channel is assigned to the DAC port, equivalent to
         that wm channel being locked. 0 means no channel assigned which is
-        equivalent to unlocked."""
+        equivalent to unlocked.
+        """
         if self.WavemeterVersion == 1312:
             returnValue(0)
         port_c = ctypes.c_long(dacPort)
         wmChannel = ctypes.c_long()
         yield self.wmdll.GetPIDSetting(self.DeviationChannel, port_c,
                                        ctypes.pointer(wmChannel), self.d)
-
         returnChannel = wmChannel.value
         if returnChannel == waveMeterChannel:
             returnValue(1)
@@ -437,49 +445,51 @@ class MultiplexerServer(LabradServer):
 
     @setting(32, "get_pid_p", dacPort='w', returns='v')
     def get_pid_p(self, c, dacPort):
-        """Gets the P PID settings for a given DAC port."""
+        """
+        Gets the Proportional PID settings for a given DAC port.
+        """
         port_c = ctypes.c_long(dacPort)
         P = ctypes.c_double()
-        yield self.wmdll.GetPIDSetting(self.PID_P, port_c, self.l,
-                                       ctypes.pointer(P))
-
+        yield self.wmdll.GetPIDSetting(self.PID_P, port_c, self.l, ctypes.pointer(P))
         returnValue(P.value)
 
     @setting(33, "get_pid_i", dacPort='w', returns='v')
     def get_pid_i(self, c, dacPort):
-        """Gets the I PID settings for a given DAC port."""
+        """
+        Gets the Integral PID settings for a given DAC port.
+        """
         port_c = ctypes.c_long(dacPort)
         I = ctypes.c_double()
-        yield self.wmdll.GetPIDSetting(self.PID_I, port_c, self.l,
-                                       ctypes.pointer(I))
-
+        yield self.wmdll.GetPIDSetting(self.PID_I, port_c, self.l, ctypes.pointer(I))
         returnValue(I.value)
 
     @setting(34, "get_pid_d", dacPort='w', returns='v')
     def get_pid_d(self, c, dacPort):
-        """Gets the D PID settings for a given DAC port."""
+        """
+        Gets the Derivative PID settings for a given DAC port.
+        """
         port_c = ctypes.c_long(dacPort)
         D = ctypes.c_double()
-        yield self.wmdll.GetPIDSetting(self.PID_D, port_c, self.l,
-                                       ctypes.pointer(D))
-
+        yield self.wmdll.GetPIDSetting(self.PID_D, port_c, self.l, ctypes.pointer(D))
         returnValue(D.value)
 
     @setting(35, "get_pid_dt", dacPort='w', returns='v')
     def get_pid_dt(self, c, dacPort):
-        """Gets the dt PID settings for a given DAC port."""
+        """
+        Gets the dt PID settings for a given DAC port.
+        """
         port_c = ctypes.c_long(dacPort)
         dt = ctypes.c_double()
-        yield self.wmdll.GetPIDSetting(self.PID_dt, port_c, self.l,
-                                       ctypes.pointer(dt))
-
+        yield self.wmdll.GetPIDSetting(self.PID_dt, port_c, self.l, ctypes.pointer(dt))
         returnValue(dt.value)
 
     @setting(122, "get_const_dt", dacPort='w', returns='i')
     def get_const_dt(self, c, dacPort):
-        """Gets the dt PID settings for a given DAC port. This makes each dt in
+        """
+        Gets the dt PID settings for a given DAC port. This makes each dt in
         the integration constant as opposed to oscillating values based on the
-        system time, which changes when changing wm settings."""
+        system time, which changes when changing wm settings.
+        """
         port_c = ctypes.c_long(dacPort)
         dt = ctypes.c_long()
         
@@ -495,8 +505,10 @@ class MultiplexerServer(LabradServer):
 
     @setting(55, "get_pid_sensitivity", dacPort='w', returns='*v')
     def get_pid_sensitivity(self, c, dacPort):
-        """Gets the PID sensitivity for a given DAC port
-        [sensitivity factor, sensitivity power]."""
+        """
+        Gets the PID sensitivity for a given DAC port
+        [sensitivity factor, sensitivity power].
+        """
         port_c = ctypes.c_long(dacPort)
         sFactor = ctypes.c_double()
         sExponent = ctypes.c_long()
@@ -517,7 +529,10 @@ class MultiplexerServer(LabradServer):
 
     @setting(36, "get_pid_polarity", dacPort='w', returns='i')
     def get_pid_polarity(self, c, dacPort):
-        """Gets the polarity for a given DAC port. Allowed values are +/- 1."""
+        """
+        Gets the polarity for a given DAC port.
+        Allowed values are +/- 1.
+        """
         port_c = ctypes.c_long(dacPort)
         polarity = ctypes.c_long()
         
@@ -531,29 +546,34 @@ class MultiplexerServer(LabradServer):
 
         returnValue(polarity.value)
         
-    @setting(37, "get_wavemeter_pattern", chan='i', returns = '*2v')
+    @setting(37, "get_wavemeter_pattern", chan='i', returns='*2v')
     def get_wavemeter_pattern(self, c, chan):
         """
-        Gets the wavemeter pattern. Broadcast signal with results.
-
+        Gets the wavemeter pattern of a channel.
+        Results are also broadcasted to all listeners via signal.
+        Arguments:
+            chan    (int): the channel number.
+        Returns:
+                    (*2v): [[f0, p0], [f1, p1], ...]
         """
-        yield self.wmdll.GetPatternDataNum(ctypes.c_ulong(chan),\
-                    ctypes.c_long(0), self.pattern1_ptr)
+        yield self.wmdll.GetPatternDataNum(ctypes.c_ulong(chan), ctypes.c_long(0), self.pattern1_ptr)
         # use every other data point
         IF1 = self.pattern1_ptr[:1024:2]
         self.patternchanged((chan, IF1))
         returnValue([IF1])
 
-    def measureChan(self):
-        # TODO: Improve this with a looping call
-        reactor.callLater(0.1, self.measureChan)
+
+    # POLLING
+    @inlineCallbacks
+    def _poll(self):
         count = self.wmdll.GetChannelsCount(ctypes.c_long(0))
         for chan in range(count):
-            if self.get_switcher_signal_state(self, chan + 1):
-                self.get_frequency(self, chan + 1)
-                self.get_output_voltage(self, chan + 1)
-                self.get_amplitude(self, chan + 1)
-                self.get_wavemeter_pattern(self, chan + 1)
+            tmp = yield self.get_switcher_signal_state(self, chan + 1)
+            if tmp:
+                yield self.get_frequency(self, chan + 1)
+                yield self.get_output_voltage(self, chan + 1)
+                yield self.get_amplitude(self, chan + 1)
+                yield self.get_wavemeter_pattern(self, chan + 1)
 
 
 if __name__ == "__main__":

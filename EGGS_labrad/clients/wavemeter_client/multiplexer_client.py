@@ -33,7 +33,6 @@ class multiplexer_client(GUIClient):
     def initClient(self):
         # get config
         self.chaninfo = multiplexer_config.channels
-
         # create dictionary for keeping track of which channels to record
         self.record_dict = {}
         # create connection to eggs_labrad to get data vault
@@ -96,8 +95,8 @@ class multiplexer_client(GUIClient):
 
     def initGUI(self):
         # global wavemeter settings
-        #self.gui.lockSwitch.clicked.connect(lambda state: self.wavemeter.set_lock_state(state))
-        #self.gui.startSwitch.clicked.connect(lambda state: self.wavemeter.set_wlm_output(state))
+        self.gui.lockSwitch.clicked.connect(lambda state: self.wavemeter.set_lock_state(state))
+        self.gui.startSwitch.clicked.connect(lambda state: self.wavemeter.set_wlm_output(state))
         # channel wavemeter settings
         for channel_name, channel_params in self.chaninfo.items():
             # expand parameters and get GUI widget
@@ -153,18 +152,18 @@ class multiplexer_client(GUIClient):
         pidGUI.useDTBox.setChecked(constInit)
         pidGUI.spinFactor.setValue(sensInit[0])
         pidGUI.spinExp.setValue(sensInit[1])
-        pidGUI.polarityBox.setCurrentIndex({1:0, -1:1}[polInit])
+        pidGUI.polarityBox.setCurrentIndex({1: 0, -1: 1}[polInit])
         # connect signals to slots
-        # self.gui.pidGUI.spinP.valueChanged.connect(lambda p, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, p))
-        # self.gui.pidGUI.spinI.valueChanged.connect(lambda i, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, i))
-        # self.gui.pidGUI.spinD.valueChanged.connect(lambda d, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, d))
-        # self.gui.pidGUI.spinDt.valueChanged.connect(lambda dt, _dacPort=dacPort: self.wavemeter.set_pid_dt(_dacPort, dt))
-        # self.gui.pidGUI.useDTBox.stateChanged.connect(lambda state, _dacPort=dacPort: self.wavemeter.set_const_dt(dacPort, state))
-        # self.gui.pidGUI.spinFactor.valueChanged.connect(lambda factor, _dacPort=dacPort, exp=self.gui.pidGUI.spinExp.value():
-        #                                              self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
-        # self.gui.pidGUI.spinExp.valueChanged.connect(lambda exp, _dacPort=dacPort, factor=self.gui.pidGUI.spinFactor.value():
-        #                                           self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
-        #self.gui.pidGUI.polarityBox.currentIndexChanged.connect(lambda index, _dacPort=dacPort: self.changePolarity(index, _dacPort))
+        self.gui.pidGUI.spinP.valueChanged.connect(lambda p, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, p))
+        self.gui.pidGUI.spinI.valueChanged.connect(lambda i, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, i))
+        self.gui.pidGUI.spinD.valueChanged.connect(lambda d, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, d))
+        self.gui.pidGUI.spinDt.valueChanged.connect(lambda dt, _dacPort=dacPort: self.wavemeter.set_pid_dt(_dacPort, dt))
+        self.gui.pidGUI.useDTBox.stateChanged.connect(lambda state, _dacPort=dacPort: self.wavemeter.set_const_dt(dacPort, state))
+        self.gui.pidGUI.spinFactor.valueChanged.connect(lambda factor, _dacPort=dacPort, exp=self.gui.pidGUI.spinExp.value():
+                                                     self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
+        self.gui.pidGUI.spinExp.valueChanged.connect(lambda exp, _dacPort=dacPort, factor=self.gui.pidGUI.spinFactor.value():
+                                                  self.wavemeter.set_pid_sensitivity(dacPort, factor, int(exp)))
+        self.gui.pidGUI.polarityBox.currentIndexChanged.connect(lambda index, _dacPort=dacPort: self.changePolarity(index, _dacPort))
 
 
     # SLOTS
@@ -231,11 +230,11 @@ class multiplexer_client(GUIClient):
             self.gui.pattern[chan].setData(x=linspace(0, 2000, num_points), y=trace)
 
     def toggleTrace(self, status, chan):
-        pi = self.gui.pattern[chan]
+        trace = self.gui.pattern[chan]
         if status:
-            self.gui.trace_display.addItem(pi)
+            self.gui.trace_display.addItem(trace)
         else:
-            self.gui.trace_display.removeItem(pi)
+            self.gui.trace_display.removeItem(trace)
 
     def toggleMeas(self, c, signal):
         chan, state = signal

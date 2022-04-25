@@ -68,7 +68,7 @@ def createTrunk(name):
     Arguments:
         name    (str)   : the name of the client.
     Returns:
-                (*str)  : the trunk for *** in data_vault.
+                (*str)  : the trunk to create in data_vault.
     """
 
     from datetime import datetime
