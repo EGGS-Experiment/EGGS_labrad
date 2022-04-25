@@ -93,11 +93,14 @@ class niops03_client(GUIClient):
     def updateIPPower(self, c, power):
         # set IP power
         self.gui.ip_voltage.setEnabled(power)
+        self.gui.ip_power.setEnabled(False)
         self.gui.ip_power.setChecked(power)
+        self.gui.ip_power.setEnabled(True)
 
     def updateNPPower(self, c, power):
-        # set NP power
+        self.gui.np_power.setEnabled(False)
         self.gui.np_power.setChecked(power)
+        self.gui.np_power.setEnabled(True)
 
     @inlineCallbacks
     def record_pressure(self, status):
