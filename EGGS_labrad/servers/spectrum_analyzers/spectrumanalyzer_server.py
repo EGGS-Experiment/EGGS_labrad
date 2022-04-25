@@ -68,17 +68,16 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).preamplifier(status)
 
-    @setting(22, "Attenuation", status='b', returns='b')
-    def preamplifier(self, c, status):
+    @setting(22, "Attenuation", att='v', returns='v')
+    def attenuation(self, c, att):
         """
-        Enable/disable the preamplifier.
+        Get/set the attenuation of the RF attenuator.
         Arguments:
-            status  (bool): the status of the preamplifier.
+            att     (float): the channel attenuation (in dB) from the RF attenuator.
         Returns:
-                    (bool): the status of the preamplifier.
+                    (float): the channel attenuation (in dB) from the RF attenuator.
         """
-        # todo
-        return self.selectedDevice(c).preamplifier(status)
+        return self.selectedDevice(c).attenuation(att)
 
 
     # FREQUENCY RANGE
@@ -195,8 +194,8 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).markerMode(channel, mode)
 
-    @setting(314, "Marker Readout", channel='i', mode='i', returns='v')
-    def markerReadout(self, c, channel, mode=None):
+    @setting(314, "Marker Readout Mode", channel='i', mode='i', returns='v')
+    def markerReadoutMode(self, c, channel, mode=None):
         """
         Get/set the readout mode of a marker channel.
             0: Frequency
@@ -209,34 +208,51 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         Returns:
                     (int): the readout mode of the channel.
         """
-        return self.selectedDevice(c).markerRead(channel, mode)
+        return self.selectedDevice(c).markerReadoutMode(channel, mode)
 
-    @setting(315, "Marker Position", channel='i', pos='b', returns='b')
-    def markerPosition(self, c, channel, pos=None):
+    @setting(315, "Marker Track", channel='i', status=['b', 'i'], returns='b')
+    def markerTrack(self, c, channel, status):
         """
-        Get/set the x-position of a normal mode marker.
+        Get/set the status of signal tracking.
+        If a marker is already active, signal tracking will
+        use that marker to set the center frequency.
+        If a marker does not already exist, signal tracking
+        will create a marker and use it to set the center frequency.
         Arguments:
-            channel (int): the marker channel to get/set.
-            status  (bool): whether the marker is on/off.
+            status  (bool): the status of signal tracking.
         Returns:
-                    (bool): whether the marker is on/off.
+                    (bool): the status of signal tracking.
         """
-        return self.selectedDevice(c).markerPosition(channel, pos)
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+        return self.selectedDevice(c).markerTrack(channel, status)
 
-    @setting(316, "Marker Value", channel='i', returns='v')
-    def markerValue(self, c, channel):
+
+    # MARKER READOUT
+    @setting(321, "Marker Amplitude", channel='i', returns='v')
+    def markerAmplitude(self, c, channel):
         """
         Get the value of a marker channel.
         Arguments:
             channel (int): the marker channel to get/set.
         Returns:
-                    (float): the y-position of the marker (in dBm).
+                    (float): the amplitude of the marker (in dBm).
         """
-        return self.selectedDevice(c).markerValue(channel)
+        return self.selectedDevice(c).markerAmplitude(channel)
 
+    @setting(321, "Marker Frequency", channel='i', freq='v', returns='v')
+    def markerFrequency(self, c, channel, freq=None):
+        """
+        Get/set the x-position of a normal mode marker.
+        Arguments:
+            channel (int): the marker channel to get/set.
+            freq    (float): the frequency of the marker.
+        Returns:
+                    (float): the frequency of the marker.
+        """
+        return self.selectedDevice(c).markerFrequency(channel, freq)
 
-    # MARKER FUNCTIONS
-    # todo
 
     # PEAK
     @setting(411, "Peak Search", status='v', returns='b')
@@ -252,28 +268,29 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         Returns:
                     (bool): the status of signal tracking.
         """
+        # todo
         return self.selectedDevice(c).peakSearch(status)
 
     @setting(412, "Peak Set", status='v', returns='b')
     def peakSet(self, c, status):
         """
-        todo
         Arguments:
             status  (bool): the status of signal tracking.
         Returns:
                     (bool): the status of signal tracking.
         """
+        # todo
         return self.selectedDevice(c).peakSet(status)
 
     @setting(421, "Peak Next", status='v', returns='b')
     def peakNext(self, c, status):
         """
-        todo
         Arguments:
             status  (bool): the status of signal tracking.
         Returns:
                     (bool): the status of signal tracking.
         """
+        # todo
         return self.selectedDevice(c).peakNext(status)
 
 
@@ -312,27 +329,6 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
                     (int): the video bandwidth (in Hz).
         """
         return self.selectedDevice(c).bandwidthVideo(bw)
-
-
-    # frequency counter?
-    # SIGNAL
-    @setting(611, "Signal Track", channel='i', status=['b', 'i'], returns='b')
-    def signalTrack(self, c, channel, status):
-        """
-        Get/set the status of signal tracking.
-        If a marker is already active, signal tracking will
-        use that marker to set the center frequency.
-        If a marker does not already exist, signal tracking
-        will create a marker and use it to set the center frequency.
-        Arguments:
-            status  (bool): the status of signal tracking.
-        Returns:
-                    (bool): the status of signal tracking.
-        """
-        if type(status) == int:
-            if status not in (0, 1):
-                raise Exception('Error: input must be a boolean, 0, or 1.')
-        return self.selectedDevice(c).signalTrack(channel, status)
 
 
     # TRACE

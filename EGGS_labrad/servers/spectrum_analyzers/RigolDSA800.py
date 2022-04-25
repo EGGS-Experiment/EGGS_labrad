@@ -22,12 +22,21 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
         resp = yield self.query(':SENS:POW:RF:GAIN:STAT?')
         returnValue(bool(resp))
 
+    def attenuation(self, c, att):
+        if att is not None:
+            if (att > 0) and (att < 30):
+                yield self.write(':SENS:POW:RF:ATT {:f}'.format(att))
+            else:
+                raise Exception('Error: RF attenuation must be in range: [0, 30].')
+        resp = yield self.query(':SENS:POW:RF:ATT?')
+        returnValue(float(resp))
+
 
     # FREQUENCY RANGE
     def frequencyStart(self, freq):
         if freq is not None:
             if (freq > 0) and (freq < 7.5e9):
-                yield self.write(':SENS:FREQ:STAR{:f}'.format(freq))
+                yield self.write(':SENS:FREQ:STAR {:f}'.format(freq))
             else:
                 raise Exception('Error: start frequency must be in range: [0, 7.5e9].')
         resp = yield self.query(':SENS:FREQ:STAR?')
@@ -36,7 +45,7 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
     def frequencyStop(self, freq):
         if freq is not None:
             if (freq > 0) and (freq < 7.5e9):
-                yield self.write(':SENS:FREQ:STOP{:f}'.format(freq))
+                yield self.write(':SENS:FREQ:STOP {:f}'.format(freq))
             else:
                 raise Exception('Error: stop frequency must be in range: [0, 7.5e9].')
         resp = yield self.query(':SENS:FREQ:STOP?')
@@ -45,7 +54,7 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
     def frequencyCenter(self, freq):
         if freq is not None:
             if (freq > 0) and (freq < 7.5e9):
-                yield self.write(':SENS:FREQ:CENT{:f}'.format(freq))
+                yield self.write(':SENS:FREQ:CENT {:f}'.format(freq))
             else:
                 raise Exception('Error: center frequency must be in range: [0, 7.5e9].')
         resp = yield self.query(':SENS:FREQ:CENT?')
@@ -103,7 +112,7 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
         resp = yield self.query(':CALC:MARK{:d}:MODE?'.format(channel))
         returnValue(modeInvert[resp])
 
-    def markerReadout(self, channel, mode):
+    def markerReadoutMode(self, channel, mode):
         modeConvert = {0: 'POS', 1: 'DELT', 2: 'BAND', 3: 'SPAN'}
         modeInvert = {key: val for key, val in modeConvert.items()}
         if mode is not None:
@@ -112,17 +121,25 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
         resp = yield self.query(':CALC:MARK{:d}:READ?'.format(channel))
         returnValue(modeInvert[resp])
 
-    def markerPosition(self, channel, pos):
-        if pos is not None:
-            if (pos > 0) and (pos < 600):
-                yield self.write(':CALC:MARK{:d}:X:POS {:d}'.format(channel, pos))
-            else:
-                raise Exception('Error: marker x-position must be in range: [0, 600].')
-        resp = yield self.query(':CALC:MARK{:d}:X:POS?'.format(channel))
-        returnValue(int(resp))
+    def markerTrack(self, channel, status):
+        if status is not None:
+            yield self.write(':CALC:MARK{:d}:TRAC:STAT {:d}'.format(channel, status))
+        resp = yield self.query(':CALC:MARK{:d}:TRAC:STAT?'.format(channel))
+        returnValue(bool(resp))
 
-    def markerValue(self, channel):
+
+    # MARKER READOUT
+    def markerAmplitude(self, channel):
         resp = yield self.query(':CALC:MARK{:d}:Y?'.format(channel))
+        returnValue(float(resp))
+
+    def markerFrequency(self, channel, freq):
+        if freq is not None:
+            if (freq > 0) and (freq < 1.5e9):
+                yield self.write(':CALC:MARK{:d}:X {:d}'.format(channel, freq))
+            else:
+                raise Exception('Error: marker frequency must be in range: [0, 1.5e9].')
+        resp = yield self.query(':CALC:MARK{:d}:X?'.format(channel))
         returnValue(float(resp))
 
 
@@ -170,12 +187,6 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
         resp = yield self.query(':SENS:BAND:VID?')
         returnValue(float(resp))
 
-    # SIGNAL
-    def signalTrack(self, channel, status):
-        if status is not None:
-            yield self.write(':CALC:MARK{:d}:TRACK:STAT {:d}'.format(channel, status))
-        resp = yield self.query(':CALC:MARK{:d}:TRACK:STAT?'.format(channel))
-        returnValue(bool(resp))
 
     # TRACE
     @inlineCallbacks
