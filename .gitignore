@@ -14,4 +14,4 @@
 **/*.pyon
 
 # stuff we produce
-**/*.txt
+#**/*.txt

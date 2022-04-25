@@ -1,0 +1,29 @@
+numpy>=1.20.3
+pylabrad>=0.98.1
+pyserial>=3.5
+pyOpenSSL>=18.0.*
+pyparsing>=2.1.*
+pyOpenSSL >= 18.0.*
+pyparsing >= 2.1.*
+Twisted>=21.7.0
+
+h5py>=3.2.1
+mock>=4.0.3
+pytest>=7.0.1
+pywin32>=228
+PyVISA>=1.11.3
+
+artiq>=6.*.*
+artiq-comtools>=1.1
+sipyco>=1.2
+matplotlib>=3.4.2
+
+PyQt5>=5.15.6
+pyqtgraph>=0.11.0
+qt5reactor>=0.6.3
+
+treedict>=0.22
+
+mpmath>=1.2.1
+qutip>=4.6.3
+scipy==1.7.1
