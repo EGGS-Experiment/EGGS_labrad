@@ -79,7 +79,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         self.ser.release()
         returnValue(resp)
 
-# todo: {:2e}
+
     # ON/OFF
     @setting(111, 'IP Toggle', power='b', returns='s')
     def toggle_ip(self, c, power):
@@ -208,6 +208,24 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         resp = [ip_time, np_time]
         returnValue(resp)
 
+    @setting(241, 'Temperature', returns='(vv)')
+    def temperature(self, c):
+        """
+        Get ion pump and getter temperature in C.
+        Returns:
+            (vv): ion pump and getter temperature in C
+        """
+        # getter
+        yield self.ser.acquire()
+        yield self.ser.write('TC\r\n')
+        resp = yield self.ser.read_line('\r')
+        self.ser.release()
+        # update values
+        temp = resp.split()
+        temp_list = (float(temp[1]), float(temp[3]))
+        self.temperature_update(temp_list)
+        returnValue(temp_list)
+
 
     # INTERLOCK
     @setting(311, 'Interlock', status='b', press='v', returns='(bv)')
@@ -303,7 +321,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                 press_tmp = yield tt.pressure()
                 if press_tmp >= self.interlock_pressure:
                     print('Error: Twistorr74 pressure reads {:.2e} mbar,'.format(press_tmp))
-                    print('\tAbove current threshold value of {:.2e} mbar for Ion Pump to be active.'.format(self.interlock_pressure))
+                    print('\tAbove threshold of {:.2e} mbar for Ion Pump to be on.'.format(self.interlock_pressure))
                     print('\tSending shutoff signal to ion pump and getter.')
                     try:
                         # send shutoff signals; don't use ser.acquire() since
@@ -315,10 +333,14 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                         # update listeners on power status
                         self.ip_power_update(False)
                         self.np_power_update(False)
+                        # disable interlock 2 to minimize overhead once activated
+                        self.interlock2_active = False
+                        # ensure interlock active
+                        self.interlock_active = True
                     except Exception as e:
                         print('Error: unable to shut off ion pump and/or getter.')
                 elif (press_tmp <= self.interlock2_pressure) and (self.interlock2_active):
-                    print('Below activation pressure for getter to turn on.')
+                    print('Below pressure for getter activation.')
                     print('\tSending activation signal to getter.')
                     try:
                         # set NP activation mode
@@ -329,6 +351,10 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                         yield self.ser.read_line('\r')
                         # update listeners on power status
                         self.np_power_update(True)
+                        # disable interlock 2 to minimize overhead once activated
+                        self.interlock2_active = False
+                        # ensure interlock active
+                        self.interlock_active = True
                     except Exception as e:
                         print('Error: unable to activate getter.')
             except KeyError:
@@ -339,13 +365,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         # query
         yield self.pressure_ip(None)
         yield self.voltage_ip(None, None)
-        yield self.ser.acquire()
-        yield self.ser.write('TC\r\n')
-        temp_resp = yield self.ser.read_line('\r')
-        self.ser.release()
-        # update values
-        temp = temp_resp.split()
-        self.temperature_update((float(temp[1]), float(temp[3])))
+        yield self.temperature(None)
 
 
 if __name__ == '__main__':
