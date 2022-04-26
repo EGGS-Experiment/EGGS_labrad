@@ -9,6 +9,7 @@ from EGGS_labrad.clients.cryovac_clients.niops03_gui import niops03_gui
 class niops03_client(GUIClient):
 
     name = 'NIOPS03 Client'
+
     PRESSUREID = 878352
     VOLTAGEID = 878353
     TEMPERATUREID = 878354
@@ -98,6 +99,7 @@ class niops03_client(GUIClient):
         self.gui.ip_power.setEnabled(True)
 
     def updateNPPower(self, c, power):
+        # set NP power
         self.gui.np_power.setEnabled(False)
         self.gui.np_power.setChecked(power)
         self.gui.np_power.setEnabled(True)

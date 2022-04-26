@@ -290,11 +290,11 @@ class ARTIQ_Server(LabradServer):
         """
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
-        if freq > 4e8 or freq < 0:
+        elif (freq > 4e8) or (freq < 0):
             raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
         ftw = self.dds_frequency_to_ftw(freq)
-        self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
         yield self.api.setDDS(dds_name, 0, ftw)
+        self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
 
     @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='')
     def setDDSAmpl(self, c, dds_name, ampl):
@@ -309,8 +309,8 @@ class ARTIQ_Server(LabradServer):
         if ampl > 1 or ampl < 0:
             raise Exception('Error: amplitude must be within [0, 1].')
         asf = self.dds_amplitude_to_asf(ampl)
-        self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
         yield self.api.setDDS(dds_name, 1, asf)
+        self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
 
     @setting(325, "DDS Phase", dds_name='s', phase='v', returns='')
     def setDDSPhase(self, c, dds_name, phase):
