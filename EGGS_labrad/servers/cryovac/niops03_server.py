@@ -244,7 +244,6 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         # empty call returns getter
         if (status is None) and (press is None):
             return (self.interlock_active, self.interlock_pressure)
-
         # ensure pressure is valid
         if press is None:
             pass
@@ -252,15 +251,6 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
             raise Exception('Error: invalid pressure interlock range. Must be between (1e-11, 1e-4) mbar.')
         else:
             self.interlock_pressure = press
-
-        # create connection to twistorr pump as needed
-        if (status is True) and (self.interlock_active is False):
-            try:
-                yield self.client.refresh()
-                tt = yield self.client.twistorr74_server
-            except KeyError:
-                print('Warning: Twistorr74 server not currently available for interlock.')
-
         # set interlock parameters
         self.interlock_active = status
         return (self.interlock_active, self.interlock_pressure)
@@ -283,7 +273,6 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         # empty call returns getter
         if (status is None) and (press is None):
             return (self.interlock2_active, self.interlock2_pressure)
-
         # ensure pressure is valid
         if press is None:
             pass
@@ -291,15 +280,6 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
             raise Exception('Error: invalid pressure interlock range. Must be between (1e-11, 1e-4) mbar.')
         else:
             self.interlock2_pressure = press
-
-        # create connection to twistorr pump as needed
-        if (status is True) and (self.interlock2_active is False):
-            try:
-                yield self.client.refresh()
-                tt = yield self.client.twistorr74_server
-            except KeyError:
-                print('Warning: Twistorr74 server not currently available for interlock.')
-
         # set interlock parameters
         self.interlock2_active = status
         return (self.interlock2_active, self.interlock2_pressure)
