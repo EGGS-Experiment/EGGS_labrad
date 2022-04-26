@@ -191,17 +191,21 @@ class DCServer(SerialDeviceServer, PollingServer):
         Ramps the voltage of a channel at a given rate.
         Args:
             channel (int)   : the channel to read/write
-            voltage (float) : the ramp endpoint
-            rate    (float) : the rate to ramp at (in volts/ms)
+            voltage (float) : the ramp endpoint (in Volts).
+            rate    (float) : the rate to ramp at (in Volts/s)
         Returns:
-                    (str)   : success state of ramp
+                    (str)   : success string of ramp
         """
         msg = 'ramp.w {:d} {:f} {:f}\r\n'.format(channel, voltage, rate)
         yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read_line('\n')
         self.ser.release()
-        returnValue(resp)
+        resp = resp.strip().split(': ')
+        if resp[0] == "ramp.w":
+            returnValue(resp[1])
+        else:
+            raise Exception('Error: ramp failed.')
 
 
     # HELPER
