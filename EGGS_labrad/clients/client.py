@@ -60,7 +60,7 @@ class GUIClient(ABC):
         # set self.servers as class attributes
         print(strftime(self.logPreamble, localtime()), "Getting required servers...")
         self.servers['registry'] = 'registry'
-        self.servers['dv'] = 'data_vault'
+        self.servers['dv'] = 'Data Vault'
         for var_name, server_name in self.servers.items():
             try:
                 setattr(self, var_name, self.cxn[server_name])
@@ -77,7 +77,6 @@ class GUIClient(ABC):
     @inlineCallbacks
     def _initClient(self, cxn):
         # disable GUI until initialization finishes
-        #self.gui.setEnabled(False) # tmp original
         print(strftime(self.logPreamble, localtime()), "Initializing client...")
         try:
             yield self.initClient()
