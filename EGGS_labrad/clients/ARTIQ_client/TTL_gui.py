@@ -2,8 +2,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame, QSizePolicy
 
-from twisted.internet.defer import inlineCallbacks
-
 from EGGS_labrad.config.device_db import device_db
 from EGGS_labrad.clients.Widgets import TextChangingButton
 
@@ -29,21 +27,20 @@ class TTL_channel(QFrame):
         title.setAlignment(Qt.AlignCenter)
         title.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         # buttons
-        self.toggle = TextChangingButton(("ON", "OFF"))
+        self.toggleswitch = TextChangingButton(("ON", "OFF"))
         self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
         self.lockswitch.setFont(QFont('MS Shell Dlg 2', pointSize=8))
         self.lockswitch.setChecked(True)
         # set layout
         layout.addWidget(title, 0, 0, 1, 2)
-        layout.addWidget(self.toggle, 1, 0, 1, 1)
+        layout.addWidget(self.toggleswitch, 1, 0, 1, 1)
         layout.addWidget(self.lockswitch, 1, 1, 1, 1)
 
         # connect signal to slot
-        self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
+        self.lockswitch.toggled.connect(lambda status: self.lock(status))
 
-    @inlineCallbacks
     def lock(self, status):
-        yield self.toggle.setEnabled(status)
+        self.toggleswitch.setEnabled(status)
 
 
 class TTL_gui(QWidget):
@@ -54,6 +51,7 @@ class TTL_gui(QWidget):
     name = "ARTIQ TTL GUI"
     row_length = 5
     # todo: qgroupbox for organization
+
     def __init__(self, parent=None):
         super(TTL_gui, self).__init__()
         # device dictionary

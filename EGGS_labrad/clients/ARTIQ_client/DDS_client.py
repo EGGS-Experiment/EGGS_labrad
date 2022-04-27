@@ -11,8 +11,8 @@ class DDS_client(GUIClient):
     """
     Client for all Urukuls.
     """
+
     name = "Urukuls Client"
-    row_length = 6
     servers = {'aq': 'ARTIQ Server'}
 
     def getgui(self):

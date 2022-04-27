@@ -13,7 +13,6 @@ class DAC_client(GUIClient):
     """
     
     name = "Fastino Client"
-    row_length = 6
     servers = {'aq': 'ARTIQ Server'}
 
     def getgui(self):
