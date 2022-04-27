@@ -30,7 +30,7 @@ class GUIClient(ABC):
         self.reactor = reactor
         self.cxn = cxn
         self.parent = parent
-        self.guiEnable = False
+        self.guiEnable = True
         self.logPreamble = "%H:%M:%S [{:s}]".format(self.name)
         #todo: move getgui to after initclient
         self.getgui()
@@ -83,8 +83,8 @@ class GUIClient(ABC):
         try:
             yield self.initClient()
         except Exception as e:
-            self.gui.setEnabled(False)
             print(strftime(self.logPreamble, localtime()), 'Error in initClient:', e)
+            self.guiEnable = False
         else:
             print(strftime(self.logPreamble, localtime()), "Successfully initialized client.")
         return cxn
@@ -95,8 +95,7 @@ class GUIClient(ABC):
         try:
             yield self.initData()
         except Exception as e:
-            self.gui.setEnabled(False)
-            self.gui.setEnabled(True)
+            self.guiEnable = False
             print(strftime(self.logPreamble, localtime()), 'Error in initData:', e)
         else:
             print(strftime(self.logPreamble, localtime()), "Successfully retrieved default values.")
@@ -108,11 +107,14 @@ class GUIClient(ABC):
         try:
             yield self.initGUI()
         except Exception as e:
-            self.gui.setEnabled(False)
+            self.guiEnable = False
             print(strftime(self.logPreamble, localtime()), 'Error in initGUI:', e)
         # reenable GUI upon completion of initialization
         if self.guiEnable:
             print(strftime(self.logPreamble, localtime()), "GUI initialization successful.")
+            self.gui.setEnabled(True)
+        else:
+            self.gui.setEnabled(False)
         return cxn
 
     #@inlineCallbacks
