@@ -346,7 +346,7 @@ class ARTIQ_Server(LabradServer):
         yield self.api.setDDSAtt(dds_name, int(att_mu))
         self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
 
-    @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns='ww')
+    @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns=['i', '(ii)'])
     def DDSread(self, c, dds_name, addr, length):
         """
         Read the value of a DDS register.
@@ -362,7 +362,15 @@ class ARTIQ_Server(LabradServer):
         elif length not in (16, 32, 64):
             raise Exception('Error: invalid read length. Must be one of (16, 32, 64).')
         reg_val = yield self.api.readDDS(dds_name, addr, length)
-        returnValue(reg_val)
+        if length != 64:
+            returnValue(reg_val)
+        else:
+            # have to break it into two 32-bit words, since
+            # labrad can only send 32-bit data at most
+            print(reg_val)
+            #resp = ((reg_val & 0xffffffff), ((reg_val >> 32) & 0xffffffff))
+            resp = reg_val
+            returnValue(resp)
 
         # todo: allow RAM programming
 
