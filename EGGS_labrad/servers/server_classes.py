@@ -18,6 +18,7 @@ class PollingServer(LabradServer):
 
     # tells server whether to start polling upon startup
     POLL_ON_STARTUP = False
+    POLL_INTERVAL_ON_STARTUP = 5
 
     # STARTUP
     def initServer(self):
@@ -28,7 +29,7 @@ class PollingServer(LabradServer):
         # create refresher for polling
         self.refresher = LoopingCall(self._poll)
         # set startup polling
-        self.refresher.start(5, now=False)
+        self.refresher.start(self.POLL_INTERVAL_ON_STARTUP, now=False)
         if not self.POLL_ON_STARTUP:
             self.refresher.stop()
 
