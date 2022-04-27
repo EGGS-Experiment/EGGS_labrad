@@ -1,11 +1,10 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame
-
 from twisted.internet.defer import inlineCallbacks
+
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.config.device_db import device_db
 from EGGS_labrad.clients.ARTIQ_client.DDS_gui import DDS_gui
+
+DDSID = 659313
 
 
 class DDS_client(GUIClient):
@@ -23,38 +22,33 @@ class DDS_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
-        # assign ad9910 channels to urukuls
-        self.urukul_list = {}
-        for device_name in ad9910_list:
-            urukul_name = device_name.split('_')[0]
-            if urukul_name not in self.urukul_list:
-                self.urukul_list[urukul_name] = []
-            self.urukul_list[urukul_name].append(device_name)
+        # connect to signal
+        yield self.aq.signal__dds_changed(DDSID)
+        yield self.aq.addListener(listener=self.updateDDS, source=None, ID=DDSID)
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def initData(self):
-        # todo: get values from server
+        # todo: get switch, att, freq, amp, phase values from server
         pass
 
     def initGUI(self):
-        keys_tmp = list(self.urukul_list.keys())
-        for i in range(len(keys_tmp)):
-            urukul_name = keys_tmp[i]
-            ad9910_list = self.urukul_list[urukul_name]
-            urukul_group = self._makeUrukulGroup(urukul_name, ad9910_list)
-            layout.addWidget(urukul_group, 2 + i, 0, 1, self.row_length)
-            for i in range(len(ad9910_list)):
-                # initialize GUIs for each channel
-                channel_name = ad9910_list[i]
-                channel_gui = AD9910_channel(channel_name)
-                channel_gui.freq.valueChanged.connect(
-                    lambda freq, chan=channel_name: self.artiq.dds_frequency(chan, freq * 1e6))
-                channel_gui.ampl.valueChanged.connect(
-                    lambda ampl, chan=channel_name: self.artiq.dds_amplitude(chan, ampl))
-                channel_gui.att.valueChanged.connect(
-                    lambda att, chan=channel_name: self.artiq.dds_attenuation(chan, att, 'v'))
-                channel_gui.rfswitch.toggled.connect(
-                    lambda status, chan=channel_name: self.artiq.dds_toggle(chan, status))
+        # initialize and urukul group
+        for urukul_name, ad9910_list in self.gui.urukul_list.items():
+            for ad9910_name, ad9910_widget in ad9910_list.items():
+                # initialize the ad9910 GUIs within an urukul group
+                ad9910_widget.freq.valueChanged.connect(lambda freq, _channel_name=ad9910_name:
+                                                        self.artiq.dds_frequency(_channel_name, freq * 1e6))
+                ad9910_widget.ampl.valueChanged.connect(lambda ampl, _channel_name=ad9910_name:
+                                                        self.artiq.dds_amplitude(_channel_name, ampl))
+                ad9910_widget.att.valueChanged.connect(lambda att, _channel_name=ad9910_name:
+                                                       self.artiq.dds_attenuation(_channel_name, att, 'v'))
+                ad9910_widget.rfswitch.toggled.connect(lambda status, _channel_name=ad9910_name:
+                                                       self.artiq.dds_toggle(_channel_name, status))
+
+
+    def updateDDS(self, c, signal):
+        ad9910_name, param, val = signal
+        pass
 
 
 if __name__ == "__main__":

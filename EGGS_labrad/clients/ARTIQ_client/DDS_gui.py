@@ -100,7 +100,7 @@ class DDS_gui(QFrame):
                 self.urukul_list[name] = {}
             elif params['class'] == 'AD9910':
                 # assign ad9910 channels to urukuls
-                urukul_name = name.split('_')[0]
+                urukul_name = params["arguments"]["cpld_device"]
                 if urukul_name not in self.urukul_list:
                     self.urukul_list[urukul_name] = {}
                 self.urukul_list[urukul_name][name] = None
@@ -115,14 +115,13 @@ class DDS_gui(QFrame):
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, self.row_length)
         # layout urukuls
-        urukuls = list(self.urukul_list.keys())
-        for i in range(len(urukuls)):
-            # get urukul information
-            urukul_name = urukuls[i]
-            ad9910_list = self.urukul_list[urukul_name]
+        urukul_iter = iter(range(len(self.urukul_list)))
+        print(self.urukul_list.keys())
+        for urukul_name, ad9910_list in self.urukul_list.items():
+            urukul_num = next(urukul_iter)
             # create urukul widget
             urukul_group = self._makeUrukulGroup(urukul_name, ad9910_list)
-            layout.addWidget(urukul_group, 2 + i, 0, 1, self.row_length)
+            layout.addWidget(urukul_group, 2 + urukul_num, 0, 1, self.row_length)
 
     def _makeUrukulGroup(self, urukul_name, ad9910_list):
         """
@@ -138,16 +137,18 @@ class DDS_gui(QFrame):
         title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, self.row_length)
+        # iterator so we don't have to do a for-range loop
+        channel_iter = iter([0, 1, 2, 3])
         # layout individual ad9910 channels
-        for i in range(len(ad9910_list)):
+        for ad9910_name in ad9910_list.keys():
             # initialize GUIs for each channel
-            channel_name = ad9910_list[i]
-            channel_gui = AD9910_channel(channel_name)
+            channel_num = next(channel_iter)
+            channel_gui = AD9910_channel(ad9910_name)
             # layout channel GUI
-            row = int(i / self.row_length) + 2
-            column = i % self.row_length
+            row = int(channel_num / self.row_length) + 2
+            column = channel_num % self.row_length
             # add widget to client list and layout
-            self.urukul_list[urukul_name][channel_name] = channel_gui
+            self.urukul_list[urukul_name][ad9910_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
             # print(name + ' - row:' + str(row) + ', column: ' + str(column))
         return urukul_group
