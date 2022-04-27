@@ -207,6 +207,10 @@ class SerialDeviceServer(LabradServer):
             self.comm_lock = DeferredLock()
             self.acquire = lambda: self.comm_lock.acquire()
             self.release = lambda: self.comm_lock.release()
+            # buffer
+            self.buffer_size = lambda size: ser.set_buffer_size(size)
+            self.buffer_input_waiting = lambda: ser.in_waiting
+            self.buffer_output_waiting = lambda: ser.out_waiting
 
 
     # SETUP
@@ -299,7 +303,6 @@ class SerialDeviceServer(LabradServer):
         print('\tserver:\t%s' % serStr)
         print('\tport:\t%s' % port)
         print('\ttimeout:\t%s\n\n' % (str(self.timeout) if kwargs.get('timeout') is not None else 'No timeout'))
-
         # find relevant serial server
         cli = self.client
         try:

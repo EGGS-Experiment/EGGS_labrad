@@ -47,6 +47,7 @@ SerialDevice = collections.namedtuple('SerialDevice', ['name', 'devicepath'])
 
 PORTSIGNAL = 539410
 
+
 class SerialServer(PollingServer):
     """
     Provides access to a computer's serial (COM) ports.
@@ -138,6 +139,8 @@ class SerialServer(PollingServer):
         port_list = [x.name for x in self.SerialPorts]
         return port_list
 
+
+    # CONNECT
     @setting(10, 'Open', port=[': Open the first available port', 's: Port to open, e.g. COM4'],
              returns=['s: Opened port'])
     def open(self, c, port=''):
@@ -183,15 +186,21 @@ class SerialServer(PollingServer):
 
     @setting(11, 'Close', returns=[''])
     def close(self, c):
-        """Closes the current serial port."""
+        """
+        Closes the current serial port.
+        """
         if 'PortObject' in c:
             c['PortObject'].close()
             del c['PortObject']
 
+
+    # CONNECTION PARAMETERS
     @setting(20, 'Baudrate', data=[': List baudrates', 'w: Set baudrate (0: query current)'],
              returns=['w: Selected baudrate', '*w: Available baudrates'])
     def baudrate(self, c, data=None):
-        """Sets the baudrate."""
+        """
+        Sets the baudrate.
+        """
         ser = self.getPort(c)
         baudrates = list(ser.BAUDRATES)
         #allow non-standard baud rates
@@ -205,7 +214,9 @@ class SerialServer(PollingServer):
 
     @setting(21, 'Bytesize', data=[': List bytesizes', 'w: Set bytesize (0: query current)'], returns=['*w: Available bytesizes', 'w: Selected bytesize'])
     def bytesize(self, c, data=None):
-        """Sets the bytesize."""
+        """
+        Sets the bytesize.
+        """
         ser = self.getPort(c)
         bytesizes = ser.BYTESIZES
         if data is None:
@@ -217,7 +228,9 @@ class SerialServer(PollingServer):
 
     @setting(22, 'Parity', data=[': List parities', 's: Set parity (empty: query current)'], returns=['*s: Available parities', 's: Selected parity'])
     def parity(self, c, data=None):
-        """Sets the parity."""
+        """
+        Sets the parity.
+        """
         ser = self.getPort(c)
         parities = ser.PARITIES
         if data is None:
@@ -231,7 +244,9 @@ class SerialServer(PollingServer):
     @setting(23, 'Stopbits', data=[': List stopbits', 'w: Set stopbits (0: query current)'],
              returns=['*w: Available stopbits', 'w: Selected stopbits'])
     def stopbits(self, c, data=None):
-        """Sets the number of stop bits."""
+        """
+        Sets the number of stop bits.
+        """
         ser = self.getPort(c)
         stopbits = ser.STOPBITS
         if data is None:
@@ -244,35 +259,49 @@ class SerialServer(PollingServer):
     @setting(25, 'Timeout', data=[': Return immediately', 'v[s]: Timeout to use (max: 5min)'],
              returns=['v[s]: Timeout being used (0 for immediate return)'])
     def timeout(self, c, data=Value(0, 's')):
-        """Sets a timeout for read operations."""
+        """
+        Sets a timeout for read operations.
+        """
         c['Timeout'] = min(data['s'], 300)
         return Value(c['Timeout'], 's')
 
     @setting(26, 'Serial Debug', status='b', returns='b')
     def serialDebug(self, c, status=None):
-        """Sets/gets the debug setting."""
+        """
+        Sets/gets the debug setting.
+        """
         if status is not None:
             c['Debug'] = status
         return c['Debug']
 
+
+    # FLOW CONTROL
     @setting(30, 'RTS', data=['b'], returns=['b'])
     def RTS(self, c, data):
-        """Sets the state of the RTS line."""
+        """
+        Sets the state of the RTS line.
+        """
         ser = self.getPort(c)
         ser.rts = int(data)
         return data
 
     @setting(31, 'DTR', data=['b'], returns=['b'])
     def DTR(self, c, data):
-        """Sets the state of the DTR line."""
+        """
+        Sets the state of the DTR line.
+        """
         ser = self.getPort(c)
         ser.dtr = int(data)
         return data
 
+
+    # WRITE
     @setting(40, 'Write', data=['s: Data to send', '*w: Byte-data to send'],
              returns=['w: Bytes sent'])
     def write(self, c, data):
-        """Sends data over the port."""
+        """
+        Sends data over the port.
+        """
         ser = self.getPort(c)
         # encode as needed
         if type(data) == str:
@@ -285,7 +314,9 @@ class SerialServer(PollingServer):
 
     @setting(41, 'Write Line', data=['s: Data to send'], returns=['w: Bytes sent'])
     def write_line(self, c, data):
-        """Sends data over the port appending CR LF."""
+        """
+        Sends data over the port appending <CR><LF>.
+        """
         ser = self.getPort(c)
         # encode as needed
         if type(data) == str:
@@ -302,16 +333,20 @@ class SerialServer(PollingServer):
         _ = yield deferLater(reactor, duration['s'], lambda: None)
         return
 
+
+    # READ
     @inlineCallbacks
     def deferredRead(self, ser, timeout, count=1):
         """
-
+        todo: document
         """
         # killit stops the read
         killit = False
 
         def doRead(count):
-            """Waits until it reads <count> characters or is told to stop."""
+            """
+            Waits until it reads <count> characters or is told to stop.
+            """
             d = b''
             while not killit:
                 d = ser.read(count)
@@ -367,10 +402,10 @@ class SerialServer(PollingServer):
     def read(self, c, count=0):
         """
         Read data from the port.
-        Args:
-            count:   bytes to read.
-        If count=0, reads the contents of the buffer (non-blocking). Otherwise,
+        If count = 0, reads the contents of the buffer (non-blocking). Otherwise,
         reads for up to <count> characters or the timeout, whichever is first
+        Arguments:
+            count:   bytes to read.
         """
         ans = yield self.readSome(c, count)
         # debug output
@@ -382,7 +417,9 @@ class SerialServer(PollingServer):
     @setting(51, 'Read as Words', data=[': Read all bytes in buffer', 'w: Read this many bytes'],
              returns=['*w: Received data'])
     def read_as_words(self, c, data=0):
-        """Read data from the port."""
+        """
+        Read data from the port.
+        """
         ans = yield self.readSome(c, data)
         ans = [int(ord(x)) for x in ans]
         # debug output
@@ -394,7 +431,9 @@ class SerialServer(PollingServer):
     @setting(52, 'Read Line', data=[': Read until LF, ignoring CRs', 's: Other delimiter to use'],
              returns=['s: Received data'])
     def read_line(self, c, data=''):
-        """Read data from the port, up to but not including the specified delimiter."""
+        """
+        Read data from the port, up to but not including the specified delimiter.
+        """
         ser = self.getPort(c)
         timeout = c['Timeout']
         # set default end character if not specified
@@ -421,18 +460,51 @@ class SerialServer(PollingServer):
             print(ser.name, ' READ:\t', recd)
         returnValue(recd)
 
+
+    # BUFFER
     @setting(61, 'Flush Input', returns='')
     def flush_input(self, c):
-        """Flush the input buffer."""
-        ser = self.getPort(c)
-        yield ser.reset_input_buffer()
+        """
+        Flush the input buffer.
+        """
+        yield self.getPort(c).reset_input_buffer()
 
     @setting(62, 'Flush Output', returns='')
     def flush_output(self, c):
-        """Flush the output buffer."""
+        """
+        Flush the output buffer.
+        """
         ser = self.getPort(c)
         yield ser.reset_output_buffer()
 
+    @setting(63, 'Buffer Size', size='i', returns='')
+    def flush_output(self, c, size):
+        """
+        Set the serial buffer size.
+        Arguments:
+            size    (int)   : the serial buffer size.
+        Returns:
+
+        """
+        yield self.getPort(c).set_buffer_size(size)
+
+    @setting(64, 'Buffer Waiting Input', returns='i')
+    def flush_output(self, c, size):
+        """
+        Get the number of bytes waiting at the input port.
+        Returns:
+            (int)   : the number of bytes waiting at the input port.
+        """
+        yield self.getPort(c).input_waiting
+
+    @setting(65, 'Buffer Waiting Output', returns='i')
+    def flush_output(self, c, size):
+        """
+        Get the number of bytes waiting at the output port.
+        Returns:
+            (int)   : the number of bytes waiting at the output port.
+        """
+        yield self.getPort(c).output_waiting
 
 
 __server__ = SerialServer()
