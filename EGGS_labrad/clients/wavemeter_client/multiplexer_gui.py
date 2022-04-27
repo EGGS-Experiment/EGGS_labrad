@@ -353,7 +353,7 @@ class multiplexer_gui(QFrame):
         pg.setConfigOption('background', 'k')
         self.trace_display = pg.PlotWidget(name='Interferometer Trace', border=True)
         self.trace_display.showGrid(x=True, y=True, alpha=0.5)
-        self.trace_display.setRange(yRange=[0, 2e8])
+        self.trace_display.setLimits(xMin=0, xMax=2000, yMin=0, yMax=3e8)
         self.trace_display.setMinimumHeight(400)
         self.trace_display.setMaximumWidth(1000)
         qBox_intTrace_layout.addWidget(self.trace_display)

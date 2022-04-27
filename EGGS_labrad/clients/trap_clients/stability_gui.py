@@ -76,6 +76,7 @@ class stability_gui(QFrame):
         self.stability_display = pg.PlotWidget(name='Mathieu Stability Display', border=True)
         self.stability_display.showGrid(x=True, y=True, alpha=0.5)
         self.stability_display.setRange(xRange=[0, 1], yRange=[0, 0.1])
+        self.stability_display.setLimits(xMin=-0.1, xMax=1, yMin=-0.1, yMax=0.1)
         self.stability_display.setMaximumSize(400, 400)
         self.stability_display.setMinimumSize(300, 300)
         self.stability_display.setLabel('left', 'a')
