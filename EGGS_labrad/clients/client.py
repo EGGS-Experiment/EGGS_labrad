@@ -45,7 +45,7 @@ class GUIClient(ABC):
         Creates an asynchronous connection to core labrad servers
         and sets up server connection signals.
         """
-        print("Connecting to LabRAD...")
+        print(self.name + ":", "Connecting to LabRAD...")
         # only create connection if we aren't instantiated with one
         if not self.cxn:
             if self.LABRADHOST is None:
@@ -54,9 +54,9 @@ class GUIClient(ABC):
                 self.LABRADPASSWORD = environ['LABRADPASSWORD']
             from labrad.wrappers import connectAsync
             self.cxn = yield connectAsync(self.LABRADHOST, name=self.name, password=self.LABRADPASSWORD)
-        print("Connection successful.")
+        print(self.name + ":", "Connection successful.")
         # set self.servers as class attributes
-        print("Getting required servers...")
+        print(self.name + ":", "Getting required servers...")
         self.servers['registry'] = 'registry'
         self.servers['dv'] = 'data_vault'
         for var_name, server_name in self.servers.items():
@@ -64,7 +64,7 @@ class GUIClient(ABC):
                 setattr(self, var_name, self.cxn[server_name])
             except Exception as e:
                 setattr(self, var_name, None)
-                print('Server unavailable:', server_name)
+                print(self.name + ":", 'Server unavailable:', server_name)
         # server connections
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
@@ -76,40 +76,40 @@ class GUIClient(ABC):
     def _initClient(self, cxn):
         # disable GUI until initialization finishes
         self.gui.setEnabled(False)
-        print("Initializing client...")
+        print(self.name + ":", "Initializing client...")
         try:
             yield self.initClient()
         except Exception as e:
             self.gui.setEnabled(False)
-            print('Error in initClient:', e)
+            print(self.name + ":", 'Error in initClient:', e)
         else:
-            print("Successfully initialized client.")
+            print(self.name + ":", "Successfully initialized client.")
         return cxn
 
     @inlineCallbacks
     def _initData(self, cxn):
-        print("Getting default values...")
+        print(self.name + ":", "Getting default values...")
         try:
             yield self.initData()
         except Exception as e:
             self.gui.setEnabled(False)
-            print('Error in initData:', e)
+            print(self.name + ":", 'Error in initData:', e)
         else:
-            print("Successfully retrieved default values.")
+            print(self.name + ":", "Successfully retrieved default values.")
         return cxn
 
     @inlineCallbacks
     def _initGUI(self, cxn):
-        print("Initializing GUI...")
+        print(self.name + ":", "Initializing GUI...")
         try:
             yield self.initGUI()
             # reenable GUI upon completion of initialization
             self.gui.setEnabled(True)
         except Exception as e:
             self.gui.setEnabled(False)
-            print('Error in initGUI:', e)
+            print(self.name + ":", 'Error in initGUI:', e)
         else:
-            print("GUI initialization successful.")
+            print(self.name + ":", "GUI initialization successful.")
         return cxn
 
     #@inlineCallbacks
@@ -117,23 +117,23 @@ class GUIClient(ABC):
         """
         Reinitializes the GUI Client.
         """
-        print('Restarting client ...')
+        print(self.name + ":", 'Restarting client ...')
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._initData)
         d.addCallback(self._initGUI)
-        print('Finished restart.')
+        print(self.name + ":", 'Finished restart.')
 
     def _thre(self):
         """
         Reinitializes the GUI Client.
         """
-        print('Restarting client ...')
+        print(self.name + ":", 'Restarting client ...')
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._initData)
         d.addCallback(self._initGUI)
-        print('Finished restart.')
+        print(self.name + ":", 'Finished restart.')
 
 
     # SHUTDOWN
@@ -144,7 +144,7 @@ class GUIClient(ABC):
                 self.reactor.stop()
             _exit(0)
         except Exception as e:
-            print(e)
+            print(self.name + ":", e)
             _exit(0)
 
 
@@ -155,15 +155,15 @@ class GUIClient(ABC):
         yield self.cxn.refresh()
         try:
             server_ind = list(self.servers.values()).index(server_name)
-            print(server_name + ' reconnected.')
+            print(self.name + ":", server_name + ' reconnected.')
             # set server if connecting for first time
             server_nickname = list(self.servers.keys())[server_ind]
             if getattr(self, server_nickname) is None:
                 setattr(self, server_nickname, self.cxn[server_name])
-                print('Connecting for first time:', server_name)
+                print(self.name + ":", 'Connecting for first time:', server_name)
             # check if all required servers exist
             if all(server_names.lower().replace(' ', '_') in self.cxn.servers for server_names in self.servers.values()):
-                print('Enabling client.')
+                print(self.name + ":", 'Enabling client.')
                 # redo initClient to reconnect to signals
                 yield self._initClient(self.cxn)
                 # redo initData to get new state of server
@@ -172,12 +172,12 @@ class GUIClient(ABC):
         except ValueError as e:
             pass
         except Exception as e:
-            print(e)
+            print(self.name + ":", e)
 
     def on_disconnect(self, c, message):
         server_name = message[1]
         if server_name in self.servers.values():
-            print(server_name + ' disconnected, disabling client.')
+            print(self.name + ":", server_name + ' disconnected, disabling client.')
             self.gui.setEnabled(False)
 
 
