@@ -57,6 +57,13 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         self.interlock_active = True
         self.interlock_pressure = _SRS_MAX_PRESSURE
 
+    @inlineCallbacks
+    def initSerial(self, serStr, port, **kwargs):
+        super().initSerial(serStr, port, **kwargs)
+        # expand serial buffer size on connect
+        if self.ser is not None:
+            yield self.ser.buffer_size(100000)
+
 
     # STATUS
     @setting(111, 'Initialize', level='i', returns='')
@@ -257,6 +264,12 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     def scanStart(self, c, mode, num_scans):
         """
         Start a given number of scans in either analog or histogram mode.
+        Arguments:
+            mode        (str)   :   the scan mode. Can be 'a' or 'analog' for analog mode,
+                                    and 'h' or 'histogram for histogram mode.
+            num_scans   (int)   :   the number of scans to conduct.
+        Returns:
+                        (*2v)   :   [[scan amu values], [scan 1 results], [scan 2 results], ...]
         """
         # check input
         if (num_scans < 0) or (num_scans > 255):
@@ -291,6 +304,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
             self.ser.release()
             # process
             num_points = int(num_points)
+            # additional 1 is for total pressure measurement, which is returned with each scan
             bytes_to_read = num_scans * 4 * (num_points + 1)
             msg = 'HS' + str(num_scans) + _SRS_EOL
         else:
@@ -300,12 +314,19 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         yield self.ser.write(msg)
         resp = yield self.ser.read(bytes_to_read)
         self.ser.release()
-        # process scan
+        # parse response as 32-bit little endian signed floating point values
         current_arr = np.array([int.from_bytes(resp[i: i+4], 'little', signed=True)
                                 for i in range(0, bytes_to_read, 4)])
-        # create axis
-        amu_arr = np.linspace(mass_initial, mass_final, num_points)
-        returnValue([amu_arr, sp * current_arr[:-1]])
+        # multiply values by current to pressure conversion factor
+        current_arr = current_arr.astype(np.float32) * sp
+        # split up response into desired numebr of scans
+        current_arr = np.array_split(current_arr, num_scans)
+        current_arr = [array[:-1] for array in current_arr]
+        # create x-axis; remove total pressure value
+        amu_arr = [np.linspace(mass_initial, mass_final, num_points)]
+        # combine x-axis and y-axes values into a single return
+        returnArr = np.concatenate((amu_arr, current_arr), axis=0)
+        returnValue(returnArr)
 
 
     # SINGLE MASS MEASUREMENT
