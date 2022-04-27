@@ -40,8 +40,8 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     timeout = WithUnit(8.0, 's')
     baudrate = 28800
 
-    POLL_ON_STARTUP = False
-    POLL_INTERVAL_ON_STARTUP = 10
+    POLL_ON_STARTUP = True
+    POLL_INTERVAL_ON_STARTUP = 2
 
     # SIGNALS
     buffer_update = Signal(999999, 'signal: buffer_update', '(ss)')
@@ -430,6 +430,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         self.buffer_update((chString, resp.strip()))
         returnValue(resp)
 
+    @inlineCallbacks
     def _poll(self):
         """
         Polls the Twistorr for pressure readout and checks the interlock.
