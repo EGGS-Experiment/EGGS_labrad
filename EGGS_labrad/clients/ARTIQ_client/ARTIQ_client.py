@@ -39,6 +39,7 @@ class ARTIQ_client(QMainWindow):
         centralWidget = QWidget()
         layout = QHBoxLayout(centralWidget)
         self.tabWidget = QTabWidget()
+        self.tabWidget.setMovable(True)
 
         # create subwidgets
         ttl_widget = yield self.makeTTLWidget()

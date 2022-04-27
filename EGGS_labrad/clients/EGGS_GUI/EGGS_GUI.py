@@ -36,6 +36,7 @@ class EGGS_gui(QMainWindow):
         centralWidget = QWidget()
         layout = QHBoxLayout(centralWidget)
         self.tabWidget = QTabWidget()
+        self.tabWidget.setMovable(True)
         # create subwidgets
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac = self.makeCryovacWidget(self.reactor, cxn)
