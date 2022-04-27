@@ -92,10 +92,9 @@ class ARTIQ_Server(LabradServer):
         self.ps_rid = None
         # conversions
             # dds
-        dds_tmp = list(self.api.dds_list.values())[0]
-        self.dds_amplitude_to_asf = dds_tmp.amplitude_to_asf
-        self.dds_frequency_to_ftw = dds_tmp.frequency_to_ftw
-        self.dds_turns_to_pow = dds_tmp.turns_to_pow
+        self.dds_frequency_to_ftw = lambda freq: int(freq * 10.7374182) # 0xffffffff/4e8
+        self.dds_amplitude_to_asf = lambda ampl: int(ampl * 0x3fff)
+        self.dds_turns_to_pow = lambda phase: int(phase * 10430.2192) # 0xffff/2pi
         self.dds_att_to_mu = lambda dbm: 10**(float(dbm/10))
             # dac
         from artiq.coredevice.ad53xx import voltage_to_mu
@@ -225,8 +224,8 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         if (type(state) == int) and (state not in (0, 1)):
             raise Exception('Error: invalid state.')
-        self.notifyOtherListeners(c, (ttl_name, state), self.ttlChanged)
         yield self.api.setTTL(ttl_name, state)
+        self.notifyOtherListeners(c, (ttl_name, state), self.ttlChanged)
 
     @setting(222, "TTL Get", ttl_name='s', returns='b')
     def getTTL(self, c, ttl_name):
@@ -245,7 +244,7 @@ class ARTIQ_Server(LabradServer):
 
     # DDS
     @setting(311, "DDS List", returns='*s')
-    def listDDS(self, c):
+    def DDSlist(self, c):
         """
         Get the list of available DDS (AD5372) channels.
         Returns:
@@ -255,7 +254,7 @@ class ARTIQ_Server(LabradServer):
         returnValue(list(dds_list))
 
     @setting(321, "DDS Initialize", dds_name='s', returns='')
-    def initializeDDS(self, c, dds_name):
+    def DDSinitialize(self, c, dds_name):
         """
         Resets/initializes the DDSs.
         Arguments:
@@ -266,7 +265,7 @@ class ARTIQ_Server(LabradServer):
         yield self.api.initializeDDS(dds_name)
 
     @setting(322, "DDS Toggle", dds_name='s', state=['b', 'i'], returns='')
-    def toggleDDS(self, c, dds_name, state):
+    def DDStoggle(self, c, dds_name, state):
         """
         Manually toggle a DDS via the RF switch.
         Arguments:
@@ -277,11 +276,11 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         if (type(state) == int) and (state not in (0, 1)):
             raise Exception('Error: invalid input. Value must be a boolean, 0, or 1.')
-        self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
         yield self.api.toggleDDS(dds_name, state)
+        self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
 
     @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='')
-    def setDDSFreq(self, c, dds_name, freq):
+    def DDSfreq(self, c, dds_name, freq):
         """
         Manually set the frequency of a DDS.
         Arguments:
@@ -293,11 +292,11 @@ class ARTIQ_Server(LabradServer):
         elif (freq > 4e8) or (freq < 0):
             raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
         ftw = self.dds_frequency_to_ftw(freq)
-        yield self.api.setDDS(dds_name, 0, ftw)
+        yield self.api.setDDS(dds_name, 'ftw', ftw)
         self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
 
     @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='')
-    def setDDSAmpl(self, c, dds_name, ampl):
+    def DDSampl(self, c, dds_name, ampl):
         """
         Manually set the amplitude of a DDS.
         Arguments:
@@ -309,11 +308,11 @@ class ARTIQ_Server(LabradServer):
         if ampl > 1 or ampl < 0:
             raise Exception('Error: amplitude must be within [0, 1].')
         asf = self.dds_amplitude_to_asf(ampl)
-        yield self.api.setDDS(dds_name, 1, asf)
+        yield self.api.setDDS(dds_name, 'asf', asf)
         self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
 
     @setting(325, "DDS Phase", dds_name='s', phase='v', returns='')
-    def setDDSPhase(self, c, dds_name, phase):
+    def DDSphase(self, c, dds_name, phase):
         """
         Manually set the phase of a DDS.
         Arguments:
@@ -325,11 +324,11 @@ class ARTIQ_Server(LabradServer):
         if phase >= 1 or pow < 0:
             raise Exception('Error: phase must be within [0, 1).')
         pow = self.dds_turns_to_pow(phase)
+        yield self.api.setDDS(dds_name, 'pow', pow)
         self.notifyOtherListeners(c, (dds_name, 'pow', pow), self.ddsChanged)
-        yield self.api.setDDS(dds_name, 2, pow)
 
     @setting(326, "DDS Attenuation", dds_name='s', att='v', units='s', returns='')
-    def setDDSAtt(self, c, dds_name, att, units='mu'):
+    def DDSatt(self, c, dds_name, att, units='mu'):
         """
         Manually set a DDS to the given parameters.
         Arguments:
@@ -344,38 +343,40 @@ class ARTIQ_Server(LabradServer):
             att_mu = self.dds_att_to_mu(att)
         elif units.lower() != 'mu':
             raise Exception('Error: invalid units.')
-        self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
         yield self.api.setDDSAtt(dds_name, int(att_mu))
+        self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
 
-    @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns='w')
-    def readDDS(self, c, dds_name, addr, length):
+    @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns='ww')
+    def DDSread(self, c, dds_name, addr, length):
         """
         Read the value of a DDS register.
         Arguments:
             dds_name    (str)   : the name of the dds
             addr        (int)   : the address to read from
-            length      (int)   : how many bits to read
+            length      (int)   : how many bits to read. Must be one of (16, 32, 64).
         Returns:
             (word)  : the register value
         """
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
-        elif length not in (16, 32):
-            raise Exception('Error: invalid read length. Must be one of (16, 32).')
+        elif length not in (16, 32, 64):
+            raise Exception('Error: invalid read length. Must be one of (16, 32, 64).')
         reg_val = yield self.api.readDDS(dds_name, addr, length)
         returnValue(reg_val)
+
+        # todo: allow RAM programming
 
 
     # DAC
     @setting(411, "DAC Initialize", returns='')
-    def initializeDAC(self, c):
+    def DACinitialize(self, c):
         """
         Manually initialize the DAC.
         """
         yield self.api.initializeDAC()
 
     @setting(421, "DAC Set", dac_num='i', value='v', units='s', returns='')
-    def setDAC(self, c, dac_num, value, units='mu'):
+    def DACset(self, c, dac_num, value, units='mu'):
         """
         Manually set the voltage of a DAC channel.
         Arguments:
@@ -396,15 +397,15 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = int(value)
         else:
             raise Exception('Error: invalid units.')
-        self.notifyOtherListeners(c, (dac_num, 'dac', voltage_mu), self.dacChanged)
         # send to correct device
         if self.dacType == 'Zotino':
             yield self.api.setZotino(dac_num, voltage_mu)
         elif self.dacType == 'Fastino':
             yield self.api.setFastino(dac_num, voltage_mu)
+        self.notifyOtherListeners(c, (dac_num, 'dac', voltage_mu), self.dacChanged)
 
     @setting(422, "DAC Gain", dac_num='i', gain='v', units='s', returns='')
-    def setDACGain(self, c, dac_num, gain, units='mu'):
+    def DACgain(self, c, dac_num, gain, units='mu'):
         """
         Manually set the gain of a DAC channel.
         Arguments:
@@ -427,11 +428,11 @@ class ARTIQ_Server(LabradServer):
         # check that gain is valid
         if gain < 0 or gain > 0xffff:
             raise Exception('Error: gain outside bounds of [0,1]')
-        self.notifyOtherListeners(c, (dac_num, 'gain', gain_mu), self.dacChanged)
         yield self.api.setZotinoGain(dac_num, gain_mu)
+        self.notifyOtherListeners(c, (dac_num, 'gain', gain_mu), self.dacChanged)
 
     @setting(423, "DAC Offset", dac_num='i', value='v', units='s', returns='')
-    def setDACOffset(self, c, dac_num, value, units='mu'):
+    def DACoffset(self, c, dac_num, value, units='mu'):
         """
         Manually set the offset voltage of a DAC channel.
         Arguments:
@@ -453,11 +454,11 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = int(value)
         else:
             raise Exception('Error: invalid units.')
-        self.notifyOtherListeners(c, (dac_num, 'off', voltage_mu), self.dacChanged)
         yield self.api.setZotinoOffset(dac_num, voltage_mu)
+        self.notifyOtherListeners(c, (dac_num, 'off', voltage_mu), self.dacChanged)
 
     @setting(424, "DAC OFS", value='v', units='s', returns='')
-    def setDACGlobal(self, c, value, units='mu'):
+    def DACofs(self, c, value, units='mu'):
         """
         Write to the global OFSx registers of the DAC.
         Arguments:
@@ -476,11 +477,11 @@ class ARTIQ_Server(LabradServer):
             voltage_mu = int(value)
         else:
             raise Exception('Error: invalid units.')
-        self.notifyOtherListeners(c, (-1, 'ofs', voltage_mu), self.dacChanged)
         yield self.api.setZotinoGlobal(voltage_mu)
+        self.notifyOtherListeners(c, (-1, 'ofs', voltage_mu), self.dacChanged)
 
     @setting(431, "DAC Read", dac_num='i', reg='s', returns='i')
-    def readDAC(self, c, dac_num, reg):
+    def DACread(self, c, dac_num, reg):
         """
         Read the value of a DAC register.
         Arguments:
@@ -501,14 +502,14 @@ class ARTIQ_Server(LabradServer):
 
     # SAMPLER
     @setting(511, "Sampler Initialize", returns='')
-    def initializeSampler(self, c):
+    def samplerInitialize(self, c):
         """
         Initialize the Sampler.
         """
         yield self.api.initializeSampler()
 
     @setting(512, "Sampler Gain", channel='i', gain='i', returns='')
-    def setSamplerGain(self, c, channel, gain):
+    def samplerGain(self, c, channel, gain):
         """
         Set the gain of a sampler channel.
         Arguments:
@@ -520,7 +521,7 @@ class ARTIQ_Server(LabradServer):
         yield self.api.setSamplerGain(channel, int(np.log10(gain)))
 
     @setting(521, "Sampler Read", samples='i', returns='*v')
-    def readSampler(self, c, samples=None):
+    def samplerRead(self, c, samples=None):
         """
         Acquire samples.
         Arguments:
@@ -543,6 +544,8 @@ class ARTIQ_Server(LabradServer):
             self.adc_mu_to_volt(sampleArr[i], gains[i % 8])
         self.adcUpdated(sampleArr)
         returnValue(sampleArr)
+
+    # todo: phaser
 
 
     # CONTEXT

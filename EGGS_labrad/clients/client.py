@@ -238,7 +238,12 @@ class RecordingGUIClient(GUIClient):
         self.recording = False
         self.starttime = None
         # start device polling only if not already started
+
+    @inlineCallbacks
+    def _initClient(self, cxn):
+        super()._initClient(cxn)
         # todo: polling on each server
+        # makes any polling servers start polling
         for server_nickname in self.servers.keys():
             # todo: check if server is pollingserver type
             server = getattr(self, server_nickname)
@@ -246,7 +251,16 @@ class RecordingGUIClient(GUIClient):
                 poll_params = yield server.polling()
                 if not poll_params[0]:
                     yield self.tt.polling(True, 5.0)
+        return cxn
 
+    @inlineCallbacks
+    def _record(self):
+        """
+
+        """
+        yield self._createDataset()
+
+    @inlineCallbacks
     def _createDataset(self, *args, **kwargs):
         """
 

@@ -198,30 +198,30 @@ class ARTIQ_api(object):
 
     def setDDS(self, dds_name, param, val):
         """
-        Manually set the state of a DDS.
+        Manually set the frequency, amplitude, or phase of a DDS.
         """
         dev = self.dds_list[dds_name]
-        if param == 0:
-            self._setDDSFreq(dev, val)
-        elif param == 1:
-            self._setDDSAmpl(dev, val)
-        elif param == 2:
-            self._setDDSPhase(dev, val)
+        # get parameters
+        ftw, asf, pow = (0, 0, 0)
+        profiledata = self._readDDS64(dev, 0x0e)
+        if param == 'ftw':
+            ftw = val
+            pow = ((profiledata >> 32) & 0xffff)
+            asf = ((profiledata >> 48) & 0xffff)
+        elif param == 'asf':
+            asf = val
+            ftw = profiledata & 0xffff
+            asf = ((profiledata >> 48) & 0xffff)
+        elif param == 'pow':
+            pow = val
+            ftw = profiledata & 0xffff
+            pow = ((profiledata >> 32) & 0xffff)
+        self._setDDSFreq(dev, ftw, asf, pow)
 
     @kernel
-    def _setDDSFreq(self, dev, ftw):
+    def _setDDS(self, dev, ftw, asf, pow):
         self.core.reset()
-        dev.set_ftw(ftw)
-
-    @kernel
-    def _setDDSAmpl(self, dev, asf):
-        self.core.reset()
-        dev.set_asf(asf)
-
-    @kernel
-    def _setDDSPhase(self, dev, pow):
-        self.core.reset()
-        dev.set_pow(pow)
+        dev.set_mu(ftw, pow, asf)
 
     def setDDSAtt(self, dds_name, att_mu):
         """
