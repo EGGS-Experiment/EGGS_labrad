@@ -1,5 +1,11 @@
+"""
+Automatically take and store a given number of RGA traces.
+"""
+name_tmp = 'RGA Single Trace'
+(mass_initial, mass_final, mass_steps) = (1, 100, 10)
+num_traces = 2
+
 try:
-    name_tmp = 'RGA Single Trace'
     # connect to labrad
     import labrad
     cxn = labrad.connect()
@@ -14,13 +20,11 @@ try:
     cr = cxn.context()
 
     # parameters
-    (mass_initial, mass_final, mass_steps) = (1, 100, 10)
     dv_dep_var = [('Partial Pressures', 'Pressure', 'Torr')]
 
     # create dataset
     trunk_tmp = createTrunk(name_tmp)
     dv.cd(trunk_tmp, True, context=cr)
-    dv.new(name_tmp, [('Atomic Mass', 'amu')], dv_dep_var, context=cr)
 
     # set up rga scan
     rga.scan_mass_initial(mass_initial)
@@ -30,11 +34,14 @@ try:
     # turn on rga
     rga.ionizer_filament('*')
 
-    # take rga data
-    res = rga.scan_start('a', 1)
-    res_t = transpose(res)
-    # print(res)
-    dv.add(res_t, context=cr)
+    for i in range(num_traces):
+        # create dataset
+        dv.new(name_tmp, [('Atomic Mass', 'amu')], dv_dep_var, context=cr)
+        # take rga data
+        res = rga.scan_start('a', 1)
+        res_t = transpose(res)
+        # print(res)
+        dv.add(res_t, context=cr)
 
 except Exception as e:
     print('Error:', e)
