@@ -1,8 +1,8 @@
-from numpy import array
+from numpy import array, transpose
 from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.clients import GUIClient
+from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.clients.cryovac_clients.RGA_gui import RGA_gui
 
 _RGA_ERRORS = {0: 'Communication Error', 1: 'Filament Error', 3: 'Multiplier Error',
@@ -13,7 +13,7 @@ class RGA_client(GUIClient):
 
     name = 'RGA Client'
     BUFFERID = 289961
-    servers = {'rga': 'RGA Server'}
+    servers = {'rga': 'RGA Server', 'dv': 'Data Vault'}
 
     def getgui(self):
         if self.gui is None:
@@ -122,7 +122,7 @@ class RGA_client(GUIClient):
         Creates a new dataset to record pressure and
         tells polling loop to add data to data vault.
         """
-        # disable
+        # disable GUI
         self.gui.setEnabled(False)
         # set up datavault
         date = datetime.now()
@@ -131,8 +131,6 @@ class RGA_client(GUIClient):
         trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
         trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
         yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
-        yield self.dv.new('SRS RGA Scan', [('Mass', 'amu')],
-                          [('Scan', 'Current', '1e-16 A')], context=self.c_record)
         # get scan parameters from widgets
         mass_initial = int(self.gui.scan_mi.value())
         mass_final = int(self.gui.scan_mf.value())
@@ -145,10 +143,14 @@ class RGA_client(GUIClient):
         yield self.rga.scan_mass_steps(mass_step)
         # do scan
         self.gui.buffer_readout.appendPlainText('Starting scan...')
-        x, y = yield self.rga.scan_start(type, num_scans)
-        data_tmp = array([x, y]).transpose()
-        yield self.dv.add_ex(data_tmp, context=self.c_record)
+        res = yield self.rga.scan_start(type, num_scans)
+        x = res[0]
+        y_list = res[1:]
+        for y_arr in y_list:
+            yield self.dv.new('SRS RGA Scan', [('Mass', 'amu')], [('Scan', 'Pressure', 'mbar')], context=self.c_record)
+            yield self.dv.add(array([x, y_arr]).transpose(), context=self.c_record)
         self.gui.buffer_readout.appendPlainText('Scan finished.')
+        # reenable GUI
         self.gui.setEnabled(True)
 
 
