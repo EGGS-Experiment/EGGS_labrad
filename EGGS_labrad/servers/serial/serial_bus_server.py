@@ -478,33 +478,35 @@ class SerialServer(PollingServer):
         yield ser.reset_output_buffer()
 
     @setting(63, 'Buffer Size', size='i', returns='')
-    def flush_output(self, c, size):
+    def buffer_size(self, c, size):
         """
         Set the serial buffer size.
         Arguments:
             size    (int)   : the serial buffer size.
-        Returns:
-
         """
         yield self.getPort(c).set_buffer_size(size)
 
     @setting(64, 'Buffer Waiting Input', returns='i')
-    def flush_output(self, c, size):
+    def input_waiting(self, c):
         """
         Get the number of bytes waiting at the input port.
         Returns:
             (int)   : the number of bytes waiting at the input port.
         """
-        yield self.getPort(c).input_waiting
+        ser = self.getPort(c)
+        val = ser.in_waiting
+        return val
 
     @setting(65, 'Buffer Waiting Output', returns='i')
-    def flush_output(self, c, size):
+    def output_waiting(self, c):
         """
         Get the number of bytes waiting at the output port.
         Returns:
             (int)   : the number of bytes waiting at the output port.
         """
-        yield self.getPort(c).output_waiting
+        ser = self.getPort(c)
+        val = ser.out_waiting
+        return val
 
 
 __server__ = SerialServer()
