@@ -115,10 +115,12 @@ class DDS_gui(QFrame):
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, self.row_length)
         # layout urukuls
-        keys_tmp = list(self.urukul_list.keys())
-        for i in range(len(keys_tmp)):
-            urukul_name = keys_tmp[i]
+        urukuls = list(self.urukul_list.keys())
+        for i in range(len(urukuls)):
+            # get urukul information
+            urukul_name = urukuls[i]
             ad9910_list = self.urukul_list[urukul_name]
+            # create urukul widget
             urukul_group = self._makeUrukulGroup(urukul_name, ad9910_list)
             layout.addWidget(urukul_group, 2 + i, 0, 1, self.row_length)
 
@@ -145,7 +147,7 @@ class DDS_gui(QFrame):
             row = int(i / self.row_length) + 2
             column = i % self.row_length
             # add widget to client list and layout
-            self.ad9910_clients[channel_name] = channel_gui
+            self.urukul_list[urukul_name][channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
             # print(name + ' - row:' + str(row) + ', column: ' + str(column))
         return urukul_group
