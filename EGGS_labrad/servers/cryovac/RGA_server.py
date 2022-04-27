@@ -434,7 +434,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         # convert status response to binary
         if status != '':
             status = format(int(status), '08b')
-            self.notifyOtherListeners(c, (chString, resp.strip()), self.buffer_update)
+            #self.notifyOtherListeners(c, (chString, resp.strip()), self.buffer_update)
             #self.buffer_update(('status', status))
 
     @inlineCallbacks
@@ -449,7 +449,8 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read_line(_SRS_EOL)
         self.ser.release()
         # send out buffer response to clients
-        self.notifyOtherListeners(c, (chString, resp.strip()), self.buffer_update)
+        #self.notifyOtherListeners(c, (chString, resp.strip()), self.buffer_update)
+        self.buffer_update(chString, resp.strip())
         returnValue(resp)
 
     @inlineCallbacks
