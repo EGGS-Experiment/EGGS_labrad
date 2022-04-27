@@ -2,18 +2,21 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
+from EGGS_labrad.config.device_db import device_db
 from EGGS_labrad.clients.Widgets import TextChangingButton
 
 
 class AD5372_channel(QFrame):
     """
-    GUI for a single AD5372 DAC channel.
+    GUI for a single AD5372 DAC channel (Zotino).
     """
 
     def __init__(self, name=None, parent=None):
         QWidget.__init__(self, parent)
         self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
+        self.setMinimumSize(300, 125)
+        self.setMaximumSize(400, 175)
         self.makeLayout(name)
 
     def makeLayout(self, title):
@@ -77,17 +80,66 @@ class AD5372_channel(QFrame):
         self.gain.setEnabled(status)
 
 
+class AD5542_channel(QFrame):
+    """
+    GUI for a single AD5542 DAC channel (Fastino).
+    """
+
+    def __init__(self, name=None, parent=None):
+        QWidget.__init__(self, parent)
+        self.name = name
+        self.setFrameStyle(0x0001 | 0x0030)
+        self.setMinimumSize(200, 125)
+        self.setMaximumSize(300, 200)
+        self.makeLayout(name)
+
+    def makeLayout(self, title):
+        layout = QGridLayout(self)
+        # labels
+        title = QLabel(title)
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        title.setAlignment(Qt.AlignCenter)
+        dac_label = QLabel('DAC Register')
+
+        # editable fields
+        self.dac = QDoubleSpinBox()
+        self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.dac.setDecimals(0)
+        self.dac.setSingleStep(1)
+        self.dac.setRange(0, 0xffff)
+        self.dac.setKeyboardTracking(False)
+        self.dac.setAlignment(Qt.AlignRight)
+
+        # buttons
+        self.resetswitch = QPushButton('Reset')
+        self.resetswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
+        self.lockswitch.toggled.connect(lambda status: self.lock(status))
+
+        # add widgets to layout
+        layout.addWidget(title,             0, 0, 1, 4)
+        layout.addWidget(dac_label,         1, 0, 1, 4)
+        layout.addWidget(self.dac,          2, 0, 1, 4)
+        layout.addWidget(self.lockswitch,   3, 0, 1, 2)
+        layout.addWidget(self.resetswitch,  3, 2, 1, 2)
+
+    def lock(self, status):
+        self.resetswitch.setEnabled(status)
+        self.dac.setEnabled(status)
+
+
 class DAC_gui(QFrame):
     """
     GUI for all DAC channels (i.e. a Fastino or Zotino).
     """
 
     name = "Fastino/Zotino GUI"
-    row_length = 6
+    row_length = 5
 
-    def __init__(self, ddb):
+    def __init__(self, ddb=device_db, name=None):
         super().__init__()
         self.ddb = ddb
+        self.name = name
         # set GUI layout
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle(self.name)
@@ -95,14 +147,17 @@ class DAC_gui(QFrame):
 
     def makeLayout(self):
         # get devices
-        self.zotino_list = []
-        self.ad5372_clients = {}
+        self.channel_widgets = {}
         for name, params in self.ddb.items():
-            # only get devices with named class
             if 'class' not in params:
                 continue
-            elif params['class'] in ('Zotino', 'Fastino'):
-                self.zotino_list.append(name)
+            elif params['class'] == 'Zotino':
+                self.name = name
+                self.channel_gui = AD5372_channel
+            elif params['class'] == 'Fastino':
+                self.name = name
+                self.channel_gui = AD5542_channel
+                self.row_length = 8
         # create layout
         layout = QGridLayout(self)
         # set title
@@ -111,10 +166,8 @@ class DAC_gui(QFrame):
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 4)
         # layout widgets
-        for i in range(len(self.zotino_list)):
-            name = self.zotino_list[i]
-            zotino_group = self._makeZotinoGroup(name)
-            layout.addWidget(zotino_group, 2 + i, 0)
+        zotino_group = self._makeZotinoGroup(self.name)
+        layout.addWidget(zotino_group)
 
     def _makeZotinoGroup(self, name):
         """
@@ -147,22 +200,23 @@ class DAC_gui(QFrame):
         for i in range(32):
             # initialize GUIs for each channel
             channel_name = name + '_' + str(i)
-            channel_gui = AD5372_channel(channel_name)
+            channel_widget = self.channel_gui(channel_name)
             # layout channel GUI
             row = int(i / self.row_length) + 2
             column = i % self.row_length
             # add widget to client list and layout
-            self.ad5372_clients[channel_name] = channel_gui
-            layout.addWidget(channel_gui, row, column)
+            self.channel_widgets[i] = channel_widget
+            layout.addWidget(channel_widget, row, column)
             # print(name + ' - row:' + str(row) + ', column: ' + str(column))
         return zotino_group
 
 
 if __name__ == "__main__":
-    # run channel GUI
-    # from EGGS_labrad.clients import runGUI
+    from EGGS_labrad.clients import runGUI
+    # run AD5372 GUI
     # runGUI(AD5372_channel, name='AD5372 Channel')
+    # run AD5542 GUI
+    # runGUI(AD5542_channel, name='AD5542 Channel')
 
     # run DAC GUI
-    from EGGS_labrad.clients import runClient
-    runClient(DAC_gui)
+    runGUI(DAC_gui)
