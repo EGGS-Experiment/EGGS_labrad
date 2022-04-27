@@ -84,18 +84,29 @@ class DDS_gui(QFrame):
         self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle(self.name)
+        # device dictionaries
+        self.urukul_list = {}
         self.ad9910_clients = {}
         # start GUI
+        self.getDevices()
         self.makeLayout()
 
+    def getDevices(self):
+        # get devices
+        for name, params in self.ddb.items():
+            if 'class' not in params:
+                continue
+            elif params['class'] == 'CPLD':
+                self.urukul_list[name] = {}
+            elif params['class'] == 'AD9910':
+                # assign ad9910 channels to urukuls
+                urukul_name = name.split('_')[0]
+                if urukul_name not in self.urukul_list:
+                    self.urukul_list[urukul_name] = {}
+                self.urukul_list[urukul_name][name] = None
+                self.ad9910_clients[name] = None
+
     def makeLayout(self):
-        # assign ad9910 channels to urukuls
-        self.urukul_list = {}
-        for device_name in ad9910_list:
-            urukul_name = device_name.split('_')[0]
-            if urukul_name not in self.urukul_list:
-                self.urukul_list[urukul_name] = []
-            self.urukul_list[urukul_name].append(device_name)
         # create layout
         layout = QGridLayout(self)
         # set title
@@ -103,7 +114,7 @@ class DDS_gui(QFrame):
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, self.row_length)
-        # layout widgets
+        # layout urukuls
         keys_tmp = list(self.urukul_list.keys())
         for i in range(len(keys_tmp)):
             urukul_name = keys_tmp[i]

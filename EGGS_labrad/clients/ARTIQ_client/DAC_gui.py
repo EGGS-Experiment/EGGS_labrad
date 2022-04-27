@@ -140,14 +140,17 @@ class DAC_gui(QFrame):
         super().__init__()
         self.ddb = ddb
         self.name = name
+        # device dictionary
+        self.channel_widgets = {}
         # set GUI layout
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle(self.name)
+        # start GUI
+        self.getDevices()
         self.makeLayout()
 
-    def makeLayout(self):
+    def getDevices(self):
         # get devices
-        self.channel_widgets = {}
         for name, params in self.ddb.items():
             if 'class' not in params:
                 continue
@@ -158,6 +161,8 @@ class DAC_gui(QFrame):
                 self.name = name
                 self.channel_gui = AD5542_channel
                 self.row_length = 8
+
+    def makeLayout(self):
         # create layout
         layout = QGridLayout(self)
         # set title
