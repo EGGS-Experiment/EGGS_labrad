@@ -22,9 +22,11 @@ class RGA_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
-        self.gui_elements = {'EE': self.gui.ionizer_ee, 'IE': self.gui.ionizer_ie, 'FL': self.gui.ionizer_fl,
-                             'VF': self.gui.ionizer_vf, 'HV': self.gui.detector_hv, 'NF': self.gui.detector_nf,
-                             'SA': self.gui.scan_sa, 'MI': self.gui.scan_mi, 'MF': self.gui.scan_mf}
+        self.gui_elements = {
+            'EE': self.gui.ionizer_ee, 'IE': self.gui.ionizer_ie, 'FL': self.gui.ionizer_fl,
+            'VF': self.gui.ionizer_vf, 'HV': self.gui.detector_hv, 'NF': self.gui.detector_nf,
+            'SA': self.gui.scan_sa, 'MI': self.gui.scan_mi, 'MF': self.gui.scan_mf
+        }
         # connect to device signals
         yield self.rga.signal__buffer_update(self.BUFFERID)
         yield self.rga.addListener(listener=self.updateValues, source=None, ID=self.BUFFERID)
@@ -96,6 +98,7 @@ class RGA_client(GUIClient):
         """
         Updates GUI when values are received from server.
         """
+        print('yzde')
         param, value = data
         if param != 'status':
             try:

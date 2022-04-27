@@ -435,7 +435,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         if status != '':
             status = format(int(status), '08b')
             #self.notifyOtherListeners(c, (chString, resp.strip()), self.buffer_update)
-            #self.buffer_update(('status', status))
+            self.buffer_update(('status', status))
 
     @inlineCallbacks
     def _getter(self, chString, c):
