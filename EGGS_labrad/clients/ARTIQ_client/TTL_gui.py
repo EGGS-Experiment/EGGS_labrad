@@ -52,17 +52,16 @@ class TTL_gui(QWidget):
     """
 
     name = "ARTIQ TTL GUI"
-    row_length = 10
-
-
+    row_length = 5
+    # todo: qgroupbox for organization
     def __init__(self, parent=None):
         super(TTL_gui, self).__init__()
         # device dictionary
         self.ttl_list = {
-            "ttlin_list": {},
-            "ttlout_list": {},
-            "ttlurukul_list": {},
-            "ttlother_list": {}
+            "Input": {},
+            "Output": {},
+            "Urukul": {},
+            "Other": {}
         }
         # start connections
         self.getDevices()
@@ -76,15 +75,15 @@ class TTL_gui(QWidget):
             # set device as attribute
             devicetype = params['class']
             if devicetype == 'TTLInOut':
-                self.ttl_list["ttlin_list"][name] = None
+                self.ttl_list["Input"][name] = None
             elif devicetype == 'TTLOut':
                 other_names = ('zotino', 'led', 'sampler')
                 if 'urukul' in name:
-                    self.ttl_list["ttlurukul_list"][name] = None
+                    self.ttl_list["Urukul"][name] = None
                 elif any(string in name for string in other_names):
-                    self.ttl_list["ttlother_list"][name] = None
+                    self.ttl_list["Other"][name] = None
                 else:
-                    self.ttl_list["ttlout_list"][name] = None
+                    self.ttl_list["Output"][name] = None
 
     def makeLayout(self):
         layout = QGridLayout(self)
@@ -93,19 +92,19 @@ class TTL_gui(QWidget):
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(Qt.AlignCenter)
         title.setMargin(4)
+        layout.addWidget(title, 0, 0, 1, 10)
         # layout widgets
-        in_ttls = self._makeTTLGroup(self.ttlin_list, "Input")
-        out_ttls = self._makeTTLGroup(self.ttlout_list, "Output")
-        urukul_ttls = self._makeTTLGroup(self.ttlurukul_list, "Urukul")
-        other_ttls = self._makeTTLGroup(self.ttlother_list, "Other")
-        # lay out widgets
-        layout.addWidget(title,             0, 0, 1, 10)
-        layout.addWidget(in_ttls,           2, 0, 2, 4)
-        layout.addWidget(out_ttls,          5, 0, 3, 10)
-        layout.addWidget(urukul_ttls,       9, 0, 3, 10)
-        layout.addWidget(other_ttls,        13, 0, 2, 5)
+        total_height = 2
+        for ttl_category_name, ttl_category_list in self.ttl_list.items():
+            # automatically adjust for larger TTL groups
+            num_TTLs = len(ttl_category_list.keys())
+            group_height = 2 * int(num_TTLs / self.row_length + 1)
+            # create TTL category group
+            ttl_category_group = self._makeTTLGroup(ttl_category_list, ttl_category_name)
+            layout.addWidget(ttl_category_group, total_height, 0, group_height, self.row_length)
+            total_height += group_height
 
-    def _makeTTLGroup(self, ttl_list, name):
+    def _makeTTLGroup(self, ttlgroup_list, ttlgroup_name):
         """
         Creates a group of TTLs as a widget.
         """
@@ -115,13 +114,13 @@ class TTL_gui(QWidget):
         ttl_group.setLineWidth(2)
         layout = QGridLayout(ttl_group)
         # set title
-        title = QLabel(name)
+        title = QLabel(ttlgroup_name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0)
         # layout individual ttls on group
-        ttl_iter = iter(range(len(ttl_list.keys())))
-        for channel_name in ttl_list.keys():
+        ttl_iter = iter(range(len(ttlgroup_list.keys())))
+        for channel_name in ttlgroup_list.keys():
             channel_num = next(ttl_iter)
             # initialize GUI
             channel_gui = TTL_channel(channel_name)
@@ -129,7 +128,7 @@ class TTL_gui(QWidget):
             row = int(channel_num / self.row_length) + 2
             column = channel_num % self.row_length
             # add widget to client list and layout
-            self.ttl_clients[channel_name] = channel_gui
+            self.ttl_list[ttlgroup_name][channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
         return ttl_group
 
