@@ -202,10 +202,42 @@ class DCServer(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         resp = resp.strip().split(': ')
+        # todo: fix for better responses
         if resp[0] == "ramp.w":
             returnValue(resp[1])
         else:
             raise Exception('Error: ramp failed.')
+
+    @setting(311, 'Ramp Multiple', channels='*i', voltages='*v', rates='*v', returns='*s')
+    def ramp(self, c, channels, voltages, rates):
+        """
+        Simultaneously ramps the voltage of multiple channels.
+        Arguments:
+            channel (*int)  : the channels to read/write
+            voltage (*float): the ramp endpoints (in Volts)
+            rate    (*float): the rates to ramp at (in Volts/s)
+        Returns:
+                    (str)   : success strings of the ramps
+        """
+        # check parameters are specified for all channels
+        if (len(channels) != len(voltages)) and (len(voltages) != len(rates)):
+            raise Exception('Error: all parameters must be specified for all channels.')
+        # reformat the input parameters
+        param_list = zip(channels, voltages, rates)
+        # send commands to device
+        resp = []
+        yield self.ser.acquire()
+        for channel, voltage, rate in param_list:
+            msg = 'ramp.w {:d} {:f} {:f}\r\n'.format(channel, voltage, rate)
+            yield self.ser.write(msg)
+            resp_tmp = yield self.ser.read_line('\n')
+            resp.append(resp_tmp)
+        self.ser.release()
+        # todo: fix for better responses
+        #resp_processing_func = lambda resp_tmp: resp_tmp.strip().split(': ')
+        #resp = list((resp_processing_func, resp))
+        #resp = [resp[0] for strings in resp]
+        returnValue(resp)
 
 
     # HELPER
