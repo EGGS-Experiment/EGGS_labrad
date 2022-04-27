@@ -36,11 +36,6 @@ class RGA_client(GUIClient):
     @inlineCallbacks
     def initData(self):
         self.gui.buffer_readout.appendPlainText('Initializing client...')
-        # lockswitches
-        self.gui.general_lockswitch.setChecked(True)
-        self.gui.ionizer_lockswitch.setChecked(True)
-        self.gui.detector_lockswitch.setChecked(True)
-        self.gui.scan_lockswitch.setChecked(True)
         # ionizer
         ee_val = yield self.rga.ionizer_electron_energy()
         ie_val = yield self.rga.ionizer_ion_energy()
@@ -83,6 +78,13 @@ class RGA_client(GUIClient):
         self.gui.scan_start.clicked.connect(lambda: self.startScan())
         # buffer
         self.gui.buffer_clear.clicked.connect(lambda: self.gui.buffer_readout.clear())
+        # lockswitches
+        self.gui.general_lockswitch.setChecked(False)
+        self.gui.ionizer_lockswitch.setChecked(False)
+        self.gui.detector_lockswitch.setChecked(False)
+        self.gui.scan_lockswitch.setChecked(False)
+        # todo: join lockswitch to group
+        # todo: qgroupbox
 
 
     # SIGNALS
@@ -98,7 +100,6 @@ class RGA_client(GUIClient):
         """
         Updates GUI when values are received from server.
         """
-        print('yzde')
         param, value = data
         if param != 'status':
             try:
@@ -111,7 +112,10 @@ class RGA_client(GUIClient):
                 print(e)
                 self.gui.buffer_readout.appendPlainText('{}: {}'.format(param, value))
             finally:
-                self.gui_elements[param].setEnabled(True)
+                try:
+                    self.gui_elements[param].setEnabled(True)
+                except KeyError:
+                    pass
         else:
             # print out RGA errors
             for i in range(len(value)):
