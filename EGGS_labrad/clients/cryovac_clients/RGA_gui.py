@@ -223,6 +223,7 @@ class RGA_gui(QFrame):
         self.buffer_layout.addWidget(self.buffer_label, 0, 0, 1, 1)
         self.buffer_readout = QtWidgets.QPlainTextEdit(self.layoutWidget2)
         self.buffer_readout.setObjectName("buffer_readout")
+        self.buffer_readout.setReadOnly(True)
         self.buffer_layout.addWidget(self.buffer_readout, 1, 0, 1, 1)
         self.buffer_clear = QtWidgets.QPushButton(self.layoutWidget2)
         self.buffer_clear.setObjectName("buffer_clear")
