@@ -2,8 +2,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
-from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.config.device_db import device_db
 from EGGS_labrad.clients.Widgets import TextChangingButton
 
 
@@ -79,56 +77,33 @@ class AD5372_channel(QFrame):
         self.gain.setEnabled(status)
 
 
-class DAC_client(QWidget):
+class DAC_gui(QFrame):
     """
-    Client for all DAC channels.
+    GUI for all DAC channels (i.e. a Fastino or Zotino).
     """
-    name = "ARTIQ DAC Client"
+
+    name = "Fastino/Zotino GUI"
     row_length = 6
 
-    def __init__(self, reactor, cxn=None, parent=None):
-        super(DAC_client, self).__init__()
-        self.reactor = reactor
-        self.cxn = cxn
-        # start connections
-        d = self.connect()
-        d.addCallback(self.getDevices)
-        d.addCallback(self.initializeGUI)
-        d.addCallback(self.startupData)
+    def __init__(self, ddb):
+        super().__init__()
+        self.ddb = ddb
+        # set GUI layout
+        self.setFrameStyle(0x0001 | 0x0030)
+        self.setWindowTitle(self.name)
+        self.makeLayout()
 
-    @inlineCallbacks
-    def connect(self):
-        if not self.cxn:
-            import os
-            LABRADHOST = os.environ['LABRADHOST']
-            from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync(LABRADHOST, name=self.name)
-        return self.cxn
-
-    @inlineCallbacks
-    def getDevices(self, cxn):
-        """
-        Get devices from ARTIQ server and organize them.
-        """
-        # get artiq server and dac list
-        try:
-            self.artiq = yield self.cxn.artiq_server
-        except Exception as e:
-            print(e)
-            raise
-
-        # create holding lists
+    def makeLayout(self):
+        # get devices
         self.zotino_list = []
         self.ad5372_clients = {}
-        for name, params in device_db.items():
+        for name, params in self.ddb.items():
             # only get devices with named class
             if 'class' not in params:
                 continue
-            if params['class'] in ('Zotino', 'Fastino'):
+            elif params['class'] in ('Zotino', 'Fastino'):
                 self.zotino_list.append(name)
-        return self.cxn
-
-    def initializeGUI(self, cxn):
+        # create layout
         layout = QGridLayout(self)
         # set title
         title = QLabel(self.name)
@@ -157,17 +132,16 @@ class DAC_client(QWidget):
         zotino_title.setAlignment(Qt.AlignCenter)
         zotino_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         zotino_global_ofs_title = QLabel('Global Offset Register', zotino_header)
-        zotino_global_ofs = QDoubleSpinBox(zotino_header)
-        zotino_global_ofs.setMaximum(0x2fff)
-        zotino_global_ofs.setMinimum(0)
-        zotino_global_ofs.setDecimals(0)
-        zotino_global_ofs.setSingleStep(1)
-        zotino_global_ofs.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        zotino_global_ofs.setAlignment(Qt.AlignCenter)
-        zotino_global_ofs.valueChanged.connect(lambda voltage_mu: self.artiq.dac_ofs(voltage_mu, 'mu'))
+        self.zotino_global_ofs = QDoubleSpinBox(zotino_header)
+        self.zotino_global_ofs.setMaximum(0x2fff)
+        self.zotino_global_ofs.setMinimum(0)
+        self.zotino_global_ofs.setDecimals(0)
+        self.zotino_global_ofs.setSingleStep(1)
+        self.zotino_global_ofs.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.zotino_global_ofs.setAlignment(Qt.AlignCenter)
         zotino_header_layout.addWidget(zotino_title)
         zotino_header_layout.addWidget(zotino_global_ofs_title)
-        zotino_header_layout.addWidget(zotino_global_ofs)
+        zotino_header_layout.addWidget(self.zotino_global_ofs)
         layout.addWidget(zotino_header, 0, 2, 1, 2)
         # layout individual channels (32 per zotino)
         for i in range(32):
@@ -177,39 +151,11 @@ class DAC_client(QWidget):
             # layout channel GUI
             row = int(i / self.row_length) + 2
             column = i % self.row_length
-            # connect signals to slots
-            channel_gui.dac.valueChanged.connect(lambda voltage_mu, channel_num=i: self.artiq.dac_set(channel_num, voltage_mu, 'mu'))
-            channel_gui.off.valueChanged.connect(lambda voltage_mu, channel_num=i: self.artiq.dac_offset(channel_num, voltage_mu, 'mu'))
-            channel_gui.gain.valueChanged.connect(lambda gain_mu, channel_num=i: self.artiq.dac_offset(channel_num, gain_mu, 'mu'))
-            channel_gui.calibrateswitch.clicked.connect(lambda: self.calibrate)
-            channel_gui.resetswitch.clicked.connect(lambda: self.reset)
             # add widget to client list and layout
             self.ad5372_clients[channel_name] = channel_gui
             layout.addWidget(channel_gui, row, column)
             # print(name + ' - row:' + str(row) + ', column: ' + str(column))
         return zotino_group
-
-    def startupData(self, cxn):
-        for channel in self.ad5372_clients.values():
-            channel.lock(False)
-            # todo: finish
-
-
-    # SLOTS
-    @inlineCallbacks
-    def calibrate(self):
-        pass
-
-    @inlineCallbacks
-    def reset(self, channel_num):
-        yield self.artiq.dac_set(channel_num, 0, 'mu')
-        yield self.artiq.dac_offset(channel_num, 0, 'mu')
-        yield self.artiq.dac_set(channel_num, 0, 'mu')
-
-    def closeEvent(self, x):
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
 
 
 if __name__ == "__main__":
@@ -219,4 +165,4 @@ if __name__ == "__main__":
 
     # run DAC GUI
     from EGGS_labrad.clients import runClient
-    runClient(DAC_client)
+    runClient(DAC_gui)
