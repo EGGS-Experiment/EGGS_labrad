@@ -25,8 +25,8 @@ from EGGS_labrad.servers import PollingServer, SerialDeviceServer
 TERMINATOR = '\r\n'
 _NI03_QUERY_msg = '\x05'
 _NI03_ACK_msg = '\x06'
-_NI03_MAX_PRESSURE = 1e-5
-_NI03_MIN_PRESSURE = 1e-8
+_NI03_MAX_PRESSURE = 1e-4
+_NI03_MIN_PRESSURE = 1e-10
 
 
 class NIOPS03Server(SerialDeviceServer, PollingServer):
