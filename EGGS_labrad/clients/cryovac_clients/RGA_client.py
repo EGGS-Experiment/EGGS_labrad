@@ -21,11 +21,6 @@ class RGA_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
-        self.gui_elements = {
-            'EE': self.gui.ionizer_ee, 'IE': self.gui.ionizer_ie, 'FL': self.gui.ionizer_fl,
-            'VF': self.gui.ionizer_vf, 'HV': self.gui.detector_hv, 'NF': self.gui.detector_nf,
-            'SA': self.gui.scan_sa, 'MI': self.gui.scan_mi, 'MF': self.gui.scan_mf
-        }
         # connect to device signals
         yield self.rga.signal__buffer_update(self.BUFFERID)
         yield self.rga.addListener(listener=self.updateValues, source=None, ID=self.BUFFERID)
@@ -34,6 +29,11 @@ class RGA_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
+        self.gui_elements = {
+            'EE': self.gui.ionizer_ee, 'IE': self.gui.ionizer_ie, 'FL': self.gui.ionizer_fl,
+            'VF': self.gui.ionizer_vf, 'HV': self.gui.detector_hv, 'NF': self.gui.detector_nf,
+            'SA': self.gui.scan_sa, 'MI': self.gui.scan_mi, 'MF': self.gui.scan_mf
+        }
         self.gui.buffer_readout.appendPlainText('Initializing client...')
         # ionizer
         ee_val = yield self.rga.ionizer_electron_energy()
@@ -108,7 +108,7 @@ class RGA_client(GUIClient):
                 elif class_type == 'QComboBox':
                     self.gui_elements[param].setCurrentIndex(int(value))
             except Exception as e:
-                print(e)
+                # print(e)
                 self.gui.buffer_readout.appendPlainText('{}: {}'.format(param, value))
             finally:
                 try:

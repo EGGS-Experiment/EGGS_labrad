@@ -32,12 +32,12 @@ class GUIClient(ABC):
         self.parent = parent
         self.guiEnable = True
         self.logPreamble = "%H:%M:%S [{:s}]".format(self.name)
-        #todo: move getgui to after initclient
-        self.getgui()
         # initialization sequence
         print(strftime(self.logPreamble, localtime()), "Starting up client...")
+        #self.getgui() # tmp original
         d = self._connectLabrad()
         d.addCallback(self._initClient)
+        d.addCallback(self._getgui)
         # initData has to be before initGUI otherwise signals will be active
         d.addCallback(self._initData)
         d.addCallback(self._initGUI)
@@ -78,7 +78,7 @@ class GUIClient(ABC):
     @inlineCallbacks
     def _initClient(self, cxn):
         # disable GUI until initialization finishes
-        self.gui.setEnabled(False)
+        #self.gui.setEnabled(False) # tmp original
         print(strftime(self.logPreamble, localtime()), "Initializing client...")
         try:
             yield self.initClient()
@@ -87,6 +87,21 @@ class GUIClient(ABC):
             self.guiEnable = False
         else:
             print(strftime(self.logPreamble, localtime()), "Successfully initialized client.")
+        return cxn
+
+    @inlineCallbacks
+    def _getgui(self, cxn):
+        try:
+            # get GUI after initClient so we can call any config
+            # or initialization variables we need
+            yield self.getgui()
+            self.gui.show()
+        except Exception as e:
+            print(e)
+            # exit if we can't get GUI otherwise
+            # we freeze since we don't have a reactor
+            # to work with
+            _exit(0)
         return cxn
 
     @inlineCallbacks
@@ -187,7 +202,7 @@ class GUIClient(ABC):
 
 
     # SUBCLASSED FUNCTIONS
-    @property
+    #@property
     @abstractmethod
     def getgui(self):
         """
