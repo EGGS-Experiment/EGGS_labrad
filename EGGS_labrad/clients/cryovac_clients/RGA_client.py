@@ -20,6 +20,7 @@ class RGA_client(GUIClient):
             self.gui = RGA_gui()
         return self.gui
 
+    @inlineCallbacks
     def initClient(self):
         self.gui_elements = {'EE': self.gui.ionizer_ee, 'IE': self.gui.ionizer_ie, 'FL': self.gui.ionizer_fl,
                              'VF': self.gui.ionizer_vf, 'HV': self.gui.detector_hv, 'NF': self.gui.detector_nf,
@@ -122,27 +123,23 @@ class RGA_client(GUIClient):
         Creates a new dataset to record pressure and
         tells polling loop to add data to data vault.
         """
-        # disable GUI
-        self.gui.setEnabled(False)
-        # set up datavault
-        date = datetime.now()
-        year = str(date.year)
-        month = '{:02d}'.format(date.month)
-        trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
-        trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
-        yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
+        self.gui.buffer_readout.appendPlainText('Starting scan...')
         # get scan parameters from widgets
         mass_initial = int(self.gui.scan_mi.value())
         mass_final = int(self.gui.scan_mf.value())
         mass_step = int(self.gui.scan_sa.value())
         type = self.gui.scan_type.currentText()
         num_scans = int(self.gui.scan_num.value())
-        # send scan parameters to RGA
+        # disable GUI
+        self.gui.setEnabled(False)
+        # set up datavault
+        trunk = createTrunk(self.name)
+        yield self.dv.cd(trunk, True, context=self.c_record)
+        # send scan parameters  to RGA
         yield self.rga.scan_mass_initial(mass_initial)
         yield self.rga.scan_mass_final(mass_final)
         yield self.rga.scan_mass_steps(mass_step)
         # do scan
-        self.gui.buffer_readout.appendPlainText('Starting scan...')
         res = yield self.rga.scan_start(type, num_scans)
         x = res[0]
         y_list = res[1:]
