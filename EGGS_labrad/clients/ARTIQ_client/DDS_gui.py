@@ -116,7 +116,6 @@ class DDS_gui(QFrame):
         layout.addWidget(title, 0, 0, 1, self.row_length)
         # layout urukuls
         urukul_iter = iter(range(len(self.urukul_list)))
-        print(self.urukul_list.keys())
         for urukul_name, ad9910_list in self.urukul_list.items():
             urukul_num = next(urukul_iter)
             # create urukul widget

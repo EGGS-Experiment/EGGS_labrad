@@ -1,49 +1,7 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame, QSizePolicy
-
 from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.clients.Widgets import TextChangingButton
 from EGGS_labrad.config.device_db import device_db
-
-
-class TTL_channel(QFrame):
-    """
-    GUI for a single TTL channel.
-    """
-
-    def __init__(self, name=None, parent=None):
-        QWidget.__init__(self, parent)
-        self.name = name
-        self.setFrameStyle(0x0001 | 0x0010)
-        # self.setLineWidth(2)
-        self.makeLayout(name)
-        self.setFixedSize(150, 75)
-
-    def makeLayout(self, title):
-        layout = QGridLayout(self)
-        # labels
-        title = QLabel(title)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=10))
-        title.setAlignment(Qt.AlignCenter)
-        title.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
-        # buttons
-        self.toggle = TextChangingButton(("ON", "OFF"))
-        self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
-        self.lockswitch.setFont(QFont('MS Shell Dlg 2', pointSize=8))
-        self.lockswitch.setChecked(True)
-        # set layout
-        layout.addWidget(title, 0, 0, 1, 2)
-        layout.addWidget(self.toggle, 1, 0, 1, 1)
-        layout.addWidget(self.lockswitch, 1, 1, 1, 1)
-
-        # connect signal to slot
-        self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
-
-    @inlineCallbacks
-    def lock(self, status):
-        yield self.toggle.setEnabled(status)
+from EGGS_labrad.clients.Widgets import TextChangingButton
 
 
 class TTL_client(QWidget):
@@ -173,17 +131,6 @@ class TTL_client(QWidget):
             layout.addWidget(channel_gui, row, column)
         return ttl_group
 
-    def closeEvent(self, x):
-        self.cxn.disconnect()
-        if self.reactor.running:
-            self.reactor.stop()
-
-
 if __name__ == "__main__":
-    # run channel GUI
-    # from EGGS_labrad.clients import runGUI
-    # runGUI(TTL_channel, name='TTL Channel')
-
-    # run TTL GUI
     from EGGS_labrad.clients import runClient
     runClient(TTL_client)
