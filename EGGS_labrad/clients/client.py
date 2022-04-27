@@ -251,17 +251,17 @@ class RecordingGUIClient(GUIClient):
         """
 
         """
-        # set up datavault
+        # create trunk for dataset
         createTrunk(self.name)
-
-
-    # SHUTDOWN
-    @inlineCallbacks
-    def close(self):
-        polling, _ = yield self.server.polling()
-        if polling:
-            yield self.server.polling(False)
-        super().close()
+        # set up datavault
+        self.recording = status
+        if self.recording:
+            self.starttime = time()
+            trunk = createTrunk(self.name)
+            yield self.dv.cd(trunk, True, context=self.c_record)
+            yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')],
+                                       [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'),
+                                        ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_record)
 
 
     # SUBCLASSED FUNCTIONS

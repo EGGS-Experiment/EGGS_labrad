@@ -4,7 +4,7 @@ from datetime import datetime
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.clients import GUIClient
+from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.clients.trap_clients.stability_gui import stability_gui
 
 _PICKOFF_FACTOR = 300
@@ -60,12 +60,8 @@ class stability_client(GUIClient):
         self.recording = status
         if self.recording:
             self.starttime = time()
-            date = datetime.now()
-            year = str(date.year)
-            month = '{:02d}'.format(date.month)
-            trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
-            trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
-            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
+            trunk = createTrunk(self.name)
+            yield self.dv.cd(trunk, True, context=self.c_record)
             yield self.dv.new('Helical Resonator Pickoff', [('Elapsed time', 't')],
                               [('Pickoff', 'Peak-Peak Voltage', 'V')], context=self.c_record)
 

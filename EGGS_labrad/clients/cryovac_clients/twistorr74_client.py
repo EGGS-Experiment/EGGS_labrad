@@ -2,7 +2,7 @@ from time import time
 from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.clients import GUIClient
+from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.clients.cryovac_clients.twistorr74_gui import twistorr74_gui
 
 
@@ -94,13 +94,8 @@ class twistorr74_client(GUIClient):
         self.recording = status
         if status:
             self.starttime = time()
-            date = datetime.now()
-            year = str(date.year)
-            month = '{:02d}'.format(date.month)
-
-            trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
-            trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
-            yield self.dv.cd(['', year, month, trunk1, trunk2], True, context=self.c_record)
+            trunk = createTrunk(self.name)
+            yield self.dv.cd(trunk, True, context=self.c_record)
             yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')],
                               [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_record)
 
