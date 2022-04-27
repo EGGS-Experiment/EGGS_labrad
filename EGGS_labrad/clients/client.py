@@ -6,8 +6,9 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 from time import localtime, strftime
 from twisted.internet.defer import inlineCallbacks
+from EGGS_labrad.clients.utils import createTrunk
 
-__all__ = ["GUIClient", "PollingClient"]
+__all__ = ["GUIClient", "RecordingGUIClient"]
 
 
 class GUIClient(ABC):
@@ -223,35 +224,35 @@ class GUIClient(ABC):
         pass
 
 
-class PollingClient(GUIClient):
+class RecordingGUIClient(GUIClient):
     """
     Supports client polling and data taking.
     """
 
     def __init__(self, reactor, cxn=None, parent=None):
-        super().__init__()
-        # set recording stuff
+        # add data vault as a necessary server first
+        self.servers['dv'] = 'Data Vault'
+        super().__init__(reactor, cxn, parent)
+        # set recording variables
         self.c_record = self.cxn.context()
         self.recording = False
         self.starttime = None
         # start device polling only if not already started
         # todo: polling on each server
         for server_nickname in self.servers.keys():
+            # todo: check if server is pollingserver type
             server = getattr(self, server_nickname)
             if hasattr(server, 'polling'):
                 poll_params = yield server.polling()
                 if not poll_params[0]:
                     yield self.tt.polling(True, 5.0)
 
-    def _createDatasetTitle(self, *args, **kwargs):
+    def _createDataset(self, *args, **kwargs):
         """
 
         """
         # set up datavault
-        date = datetime.now()
-        trunk1 = '{0:d}_{1:02d}_{2:02d}'.format(date.year, date.month, date.day)
-        trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(self.name, date.hour, date.minute)
-        return ['', year, month, trunk1, trunk2]
+        createTrunk(self.name)
 
 
     # SHUTDOWN
