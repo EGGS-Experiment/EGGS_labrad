@@ -216,7 +216,7 @@ class ARTIQ_api(object):
             pow = val
             ftw = profiledata & 0xffff
             pow = ((profiledata >> 32) & 0xffff)
-        self._setDDSFreq(dev, ftw, asf, pow)
+        self._setDDS(dev, ftw, asf, pow)
 
     @kernel
     def _setDDS(self, dev, ftw, asf, pow):
