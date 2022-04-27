@@ -5,14 +5,14 @@ name_tmp = 'RGA Single Trace'
 (mass_initial, mass_final, mass_steps) = (1, 100, 10)
 num_traces = 5
 
+import labrad
+from numpy import transpose
+from EGGS_labrad.clients import createTrunk
+
 try:
     # connect to labrad
-    import labrad
     cxn = labrad.connect()
     print('Connection successful.')
-    # general import
-    from numpy import arange, transpose
-    from EGGS_labrad.clients import createTrunk
 
     # get servers
     rga = cxn.rga_server
@@ -32,7 +32,6 @@ try:
     trunk_tmp = createTrunk(name_tmp)
     dv.cd(trunk_tmp, True, context=cr)
     print('Dataset successfully created')
-
 
     for i in range(num_traces):
         # create dataset
