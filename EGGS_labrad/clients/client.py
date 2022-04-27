@@ -2,7 +2,6 @@
 Base class for building PyQt5 GUI clients for LabRAD.
 """
 from os import _exit, environ
-from datetime import datetime
 from abc import ABC, abstractmethod
 from time import localtime, strftime
 from twisted.internet.defer import inlineCallbacks

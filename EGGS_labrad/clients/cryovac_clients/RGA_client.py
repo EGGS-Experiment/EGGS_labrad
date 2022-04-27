@@ -1,5 +1,4 @@
-from numpy import array, transpose
-from datetime import datetime
+from numpy import array
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient, createTrunk
