@@ -11,10 +11,6 @@ class AD9910_client(GUIClient):
     servers = {'aq': 'ARTIQ Server'}
     dds_name = 'urukul0_ch0'
 
-    # def __init__(self, dds_name):
-    #     self.dds_name = dds_name
-    #     super().__init__()
-
     def getgui(self):
         if self.gui is None:
             self.gui = AD9910_channel(self.dds_name)
@@ -26,6 +22,7 @@ class AD9910_client(GUIClient):
 
     #@inlineCallbacks
     def initData(self):
+        #todo: read register values from artiq
         pass
 
     def initGUI(self):
