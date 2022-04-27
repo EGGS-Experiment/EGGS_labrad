@@ -10,7 +10,7 @@ class lakeshore336_client(GUIClient):
 
     name = 'Lakeshore336 Client'
     TEMPERATUREID = 194538
-    servers = {'ls': 'Lakeshore336 Server'}
+    servers = {'ls': 'Lakeshore336 Server', 'dv': 'Data Vault'}
 
     def getgui(self):
         if self.gui is None:
