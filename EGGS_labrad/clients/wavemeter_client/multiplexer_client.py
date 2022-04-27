@@ -26,7 +26,7 @@ class multiplexer_client(GUIClient):
 
     def getgui(self):
         if self.gui is None:
-            self.gui = multiplexer_gui(multiplexer_config.channels)
+            self.gui = multiplexer_gui(self.chaninfo) # todo switch
         return self.gui
 
     @inlineCallbacks
@@ -41,16 +41,7 @@ class multiplexer_client(GUIClient):
         LABRADHOST_EGGS = environ['LABRADHOST']
         LABRADPASSWORD_EGGS = environ['LABRADPASSWORD']
         self.cxn_eggs = yield connectAsync(LABRADHOST_EGGS, name=self.name, password=LABRADPASSWORD_EGGS)
-        self.dv = self.cxn_eggs['data_vault']
-        # create parameters for recording
-        for chan in self.gui.channels.keys():
-            cntx_chan = self.cxn.context()
-            name_tmp = 'tbh'
-            for chan_name, chan_params in self.chaninfo.items():
-                if chan == chan_params[0]:
-                    name_tmp = chan_name
-            self.record_dict[chan] = {'status': False, 'context': cntx_chan, 'starttime': None, 'name': name_tmp}
-
+        self.dv = self.cxn_eggs['Data Vault']
         # connect to device signals
         yield self.wavemeter.signal__frequency_changed(FREQ_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.updateFrequency, source=None, ID=FREQ_CHANGED_ID)
@@ -73,6 +64,14 @@ class multiplexer_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
+        # create parameters for recording
+        for chan in self.gui.channels.keys():
+            cntx_chan = self.cxn.context()
+            name_tmp = 'tbh'
+            for chan_name, chan_params in self.chaninfo.items():
+                if chan == chan_params[0]:
+                    name_tmp = chan_name
+            self.record_dict[chan] = {'status': False, 'context': cntx_chan, 'starttime': None, 'name': name_tmp}
         # wavemeter status
         initstartvalue = yield self.wavemeter.get_wlm_output()
         initlockvalue = yield self.wavemeter.get_lock_state()

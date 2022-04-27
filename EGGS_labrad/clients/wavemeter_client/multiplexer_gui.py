@@ -317,7 +317,7 @@ class multiplexer_gui(QFrame):
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle('Multiplexed Wavemeter')
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-        self._check_window_size()
+        #self._check_window_size()
         self.makeLayout()
 
     def makeLayout(self):

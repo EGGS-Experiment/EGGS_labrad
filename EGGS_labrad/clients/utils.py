@@ -43,6 +43,7 @@ def runClient(client, *args, **kwargs):
     from twisted.internet import reactor
     client_tmp = client(reactor, *args, **kwargs)
     # show client
+    # todo: maybe remove, since it does nothing anyways and we already show gui in GUIClient?
     if hasattr(client_tmp, 'show'):
         client_tmp.show()
     elif hasattr(client_tmp, 'gui'):

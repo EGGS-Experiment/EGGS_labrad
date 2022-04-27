@@ -34,7 +34,6 @@ class GUIClient(ABC):
         self.logPreamble = "%H:%M:%S [{:s}]".format(self.name)
         # initialization sequence
         print(strftime(self.logPreamble, localtime()), "Starting up client...")
-        #self.getgui() # tmp original
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._getgui)
@@ -98,9 +97,7 @@ class GUIClient(ABC):
             self.gui.show()
         except Exception as e:
             print(e)
-            # exit if we can't get GUI otherwise
-            # we freeze since we don't have a reactor
-            # to work with
+            # exit if we can't get GUI otherwise we freeze since we don't have a reactor to work with
             _exit(0)
         return cxn
 
@@ -134,17 +131,6 @@ class GUIClient(ABC):
 
     #@inlineCallbacks
     def _restart(self):
-        """
-        Reinitializes the GUI Client.
-        """
-        print(strftime(self.logPreamble, localtime()), 'Restarting client ...')
-        d = self._connectLabrad()
-        d.addCallback(self._initClient)
-        d.addCallback(self._initData)
-        d.addCallback(self._initGUI)
-        print(strftime(self.logPreamble, localtime()), 'Finished restart.')
-
-    def _thre(self):
         """
         Reinitializes the GUI Client.
         """
