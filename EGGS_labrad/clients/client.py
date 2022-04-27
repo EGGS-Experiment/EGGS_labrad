@@ -36,7 +36,7 @@ class GUIClient(ABC):
         #todo: move getgui to after initclient
         self.getgui()
         # initialization sequence
-        print("Starting up client...")
+        print(strftime(self.logPreamble, localtime()), "Starting up client...")
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         # initData has to be before initGUI otherwise signals will be active

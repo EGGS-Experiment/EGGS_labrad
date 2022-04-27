@@ -73,7 +73,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         if level not in (0, 1, 2):
             raise Exception('Error: Invalid Input.')
-        yield self._setter('IN', level)
+        yield self._setter('IN', level, c)
 
 
     # IONIZER
@@ -89,8 +89,8 @@ class RGA_Server(SerialDeviceServer, PollingServer):
             elif type(energy) is str:
                 if energy != '*':
                     raise Exception('Error: invalid input.')
-            yield self._setter('EE', energy)
-        resp = yield self._getter('EE')
+            yield self._setter('EE', energy, c)
+        resp = yield self._getter('EE', c)
         returnValue(int(resp))
 
     @setting(212, 'Ionizer Ion Energy', energy=['', 'i', 's'], returns='i')
@@ -105,8 +105,8 @@ class RGA_Server(SerialDeviceServer, PollingServer):
             elif type(energy) is str:
                 if energy != '*':
                     raise Exception('Error: invalid input.')
-            yield self._setter('IE', energy)
-        resp = yield self._getter('IE')
+            yield self._setter('IE', energy, c)
+        resp = yield self._getter('IE', c)
         returnValue(int(resp))
 
     @setting(221, 'Ionizer Filament', current=['', 'v', 's'], returns='v')
@@ -121,8 +121,8 @@ class RGA_Server(SerialDeviceServer, PollingServer):
             elif type(current) is str:
                 if current != '*':
                     raise Exception('Error: invalid input.')
-            yield self._setter('FL', current)
-        resp = yield self._getter('FL')
+            yield self._setter('FL', current, c)
+        resp = yield self._getter('FL', c)
         returnValue(float(resp))
 
     @setting(222, 'Ionizer Focus Voltage', voltage=['', 'i', 's'], returns='i')
@@ -137,8 +137,8 @@ class RGA_Server(SerialDeviceServer, PollingServer):
             elif type(voltage) is str:
                 if voltage != '*':
                     raise Exception('Error: invalid input.')
-            yield self._setter('VF', voltage)
-        resp = yield self._getter('VF')
+            yield self._setter('VF', voltage, c)
+        resp = yield self._getter('VF', c)
         returnValue(int(resp))
 
 
@@ -148,7 +148,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         Calibrate the detector.
         """
-        yield self._setter('CA', '')
+        yield self._setter('CA', '', c)
 
     @setting(312, 'Detector Noise Floor', level=['', 'i', 's'], returns='i')
     def noiseFloor(self, c, level=None):
@@ -162,8 +162,8 @@ class RGA_Server(SerialDeviceServer, PollingServer):
             elif type(level) is str:
                 if level != '*':
                     raise Exception('Error: invalid input.')
-            yield self._setter('NF', level, False)
-        resp = yield self._getter('NF')
+            yield self._setter('NF', level, c, False)
+        resp = yield self._getter('NF', c)
         returnValue(int(resp))
 
     @setting(313, 'Detector CDEM', returns='i')
@@ -171,7 +171,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         Check whether the electron multiplier is available.
         """
-        resp = yield self._getter('MO')
+        resp = yield self._getter('MO', c)
         returnValue(int(resp))
 
     @setting(321, 'Detector CDEM Voltage', voltage=['', 'i', 's'], returns='i')
@@ -186,8 +186,8 @@ class RGA_Server(SerialDeviceServer, PollingServer):
             elif type(voltage) is str:
                 if voltage != '*':
                     raise Exception('Error: invalid input.')
-            yield self._setter('HV', voltage)
-        resp = yield self._getter('HV')
+            yield self._setter('HV', voltage, c)
+        resp = yield self._getter('HV', c)
         returnValue(int(resp))
 
 
@@ -205,9 +205,9 @@ class RGA_Server(SerialDeviceServer, PollingServer):
                 if mass != '*':
                     raise Exception('Error: invalid input.')
             # set value
-            yield self._setter('MI', mass, False)
+            yield self._setter('MI', mass, c, False)
         # query
-        resp = yield self._getter('MI')
+        resp = yield self._getter('MI', c)
         returnValue(int(resp))
 
     @setting(412, 'Scan Mass Final', mass=['', 'i', 's'], returns='i')
@@ -223,9 +223,9 @@ class RGA_Server(SerialDeviceServer, PollingServer):
                 if mass != '*':
                     raise Exception('Error: invalid input.')
             # set value
-            yield self._setter('MF', mass, False)
+            yield self._setter('MF', mass, c, False)
         # query
-        resp = yield self._getter('MF')
+        resp = yield self._getter('MF', c)
         returnValue(int(resp))
 
     @setting(413, 'Scan Mass Steps', steps=['', 'i', 's'], returns='i')
@@ -241,9 +241,9 @@ class RGA_Server(SerialDeviceServer, PollingServer):
                 if steps != '*':
                     raise Exception('Error: invalid input.')
             # set value
-            yield self._setter('SA', steps, False)
+            yield self._setter('SA', steps, c, False)
         # query
-        resp = yield self._getter('SA')
+        resp = yield self._getter('SA', c)
         returnValue(int(resp))
 
     @setting(414, 'Scan Points', mode='s', returns='i')
@@ -253,9 +253,9 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         resp = None
         if mode.lower() in ('a', 'analog'):
-            resp = yield self._getter('AP')
+            resp = yield self._getter('AP', c)
         elif mode.lower() in ('h', 'histogram'):
-            resp = yield self._getter('HP')
+            resp = yield self._getter('HP', c)
         else:
             raise Exception('Error: invalid input.')
         returnValue(int(resp))
@@ -275,12 +275,12 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         if (num_scans < 0) or (num_scans > 255):
             raise Exception('Error: invalid input.')
         # get pressure conversion factor
-        sp = yield self._getter('SP')
+        sp = yield self._getter('SP', c)
         sp = 1e-13 / float(sp)
         # get initial and final masses
-        mass_initial = yield self._getter('MI')
+        mass_initial = yield self._getter('MI', c)
         mass_initial = int(mass_initial)
-        mass_final = yield self._getter('MF')
+        mass_final = yield self._getter('MF', c)
         mass_final = int(mass_final)
         # create scan message
         msg = None
@@ -343,7 +343,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         if (mass < 0) or (mass > self.m_max):
             raise Exception('Error: invalid input.')
         # get partial pressure conversion
-        st = yield self._getter('ST')
+        st = yield self._getter('ST', c)
         st = 1e-13 / float(st)
         # start a single mass measurement
         msg = 'MR' + str(mass) + _SRS_EOL
@@ -371,9 +371,9 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         # set the electron multiplier voltage to zero which
         # automatically enables total pressure measurement
-        yield self._setter('HV', 0)
+        yield self._setter('HV', 0, c)
         # get total pressure conversion factor
-        sp = yield self._getter('SP')
+        sp = yield self._getter('SP', c, c)
         sp = 1e-13 / float(sp)
         # start a total pressure measurement
         msg = 'TP?' + _SRS_EOL
@@ -419,7 +419,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
 
     # HELPER
     @inlineCallbacks
-    def _setter(self, chString, param, resp=True):
+    def _setter(self, chString, param, c, resp=True):
         """
         Change device parameters.
         """
@@ -434,10 +434,11 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         # convert status response to binary
         if status != '':
             status = format(int(status), '08b')
-            self.buffer_update(('status', status))
+            self.notifyOtherListeners(c, (chString, resp.strip()), self.buffer_update)
+            #self.buffer_update(('status', status))
 
     @inlineCallbacks
-    def _getter(self, chString):
+    def _getter(self, chString, c):
         """
         Get data from the device.
         """
@@ -448,7 +449,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read_line(_SRS_EOL)
         self.ser.release()
         # send out buffer response to clients
-        self.buffer_update((chString, resp.strip()))
+        self.notifyOtherListeners(c, (chString, resp.strip()), self.buffer_update)
         returnValue(resp)
 
     @inlineCallbacks
@@ -478,6 +479,39 @@ class RGA_Server(SerialDeviceServer, PollingServer):
             except Exception as e:
                 print('Warning: unable to read pressure from Twistorr74 server.')
                 print('\tSkipping this loop.')
+
+
+    # CONTEXT
+    def initContext(self, c):
+        """
+        Initialize a new context object.
+        """
+        self.listeners.add(c.ID)
+
+    def expireContext(self, c):
+        """
+        Remove a context object and stop polling if there are no more listeners.
+        """
+        self.listeners.remove(c.ID)
+        if len(self.listeners) == 0:
+            self.refresher.stop()
+            print('Stopped polling due to lack of listeners.')
+
+    def getOtherListeners(self, c):
+        """
+        Get all listeners except for the context owner.
+        """
+        notified = self.listeners.copy()
+        notified.remove(c.ID)
+        return notified
+
+    def notifyOtherListeners(self, context, message, f):
+        """
+        Notifies all listeners except the one in the given context, executing function f
+        """
+        notified = self.listeners.copy()
+        notified.remove(context.ID)
+        f(message, notified)
 
 
 if __name__ == "__main__":
