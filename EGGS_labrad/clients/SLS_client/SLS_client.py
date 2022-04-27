@@ -30,11 +30,6 @@ class SLS_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
-        # lockswitches
-        self.gui.autolock_lockswitch.setChecked(True)
-        self.gui.off_lockswitch.setChecked(True)
-        self.gui.PDH_lockswitch.setChecked(True)
-        self.gui.servo_lockswitch.setChecked(True)
         # get all values
         values_tmp = yield self.sls.get_values()
         init_values = dict(zip(values_tmp[0], values_tmp[1]))
@@ -77,7 +72,12 @@ class SLS_client(GUIClient):
         self.gui.servo_p.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'p', value))
         self.gui.servo_i.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'i', value))
         self.gui.servo_d.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'd', value))
-
+        # lock everything on startup
+        # todo: connect switches to a slot
+        self.gui.autolock_lockswitch.setChecked(False)
+        self.gui.off_lockswitch.setChecked(False)
+        self.gui.PDH_lockswitch.setChecked(False)
+        self.gui.servo_lockswitch.setChecked(False)
 
     # SIGNALS
     def updateAutolock(self, c, lockstatus):
