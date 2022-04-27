@@ -20,12 +20,14 @@ from labrad.units import WithUnit
 from labrad.server import Signal, setting
 
 from twisted.internet.defer import returnValue, inlineCallbacks
-from EGGS_labrad.servers import SerialDeviceServer
+from EGGS_labrad.servers import SerialDeviceServer, PollingServer
 
 _SRS_EOL = '\r'
+_SRS_MAX_PRESSURE = 1e-5
 
 
-class RGA_Server(SerialDeviceServer):
+
+class RGA_Server(SerialDeviceServer, PollingServer):
     """
     Talks to the SRS RGAx00 residual gas analyzer.
     """
@@ -38,6 +40,9 @@ class RGA_Server(SerialDeviceServer):
     timeout = WithUnit(8.0, 's')
     baudrate = 28800
 
+    POLL_ON_STARTUP = False
+    POLL_INTERVAL_ON_STARTUP = 10
+
     # SIGNALS
     buffer_update = Signal(999999, 'signal: buffer_update', '(ss)')
 
@@ -48,6 +53,9 @@ class RGA_Server(SerialDeviceServer):
         # RGA type
         self.m_max = 200
         self.current_to_pressure = None
+        # Interlock
+        self.interlock_active = True
+        self.interlock_pressure = _SRS_MAX_PRESSURE
 
 
     # STATUS
@@ -359,6 +367,35 @@ class RGA_Server(SerialDeviceServer):
         returnValue(current * sp)
 
 
+    # INTERLOCK
+    @setting(811, 'Interlock', status='b', press='v', returns='(bv)')
+    def interlock(self, c, status=None, press=None):
+        """
+        Activates an interlock, switching off the ion pump
+        and getter if pressure exceeds a given value.
+        Pressure is taken from the Twistorr74 turbo pump server.
+        Arguments:
+            status  (bool)  : the interlock status.
+            press   (float) : the maximum pressure (in mbar).
+        Returns:
+                    (bool)  : the interlock status.
+                    (float) :  the maximum pressure (in mbar).
+        """
+        # empty call returns getter
+        if (status is None) and (press is None):
+            return (self.interlock_active, self.interlock_pressure)
+        # ensure pressure is valid
+        if press is None:
+            pass
+        elif (press < 1e-11) or (press > 1e-4):
+            raise Exception('Error: invalid pressure interlock range. Must be between (1e-11, 1e-4) mbar.')
+        else:
+            self.interlock_pressure = press
+        # set interlock parameters
+        self.interlock_active = status
+        return (self.interlock_active, self.interlock_pressure)
+
+
     # HELPER
     @inlineCallbacks
     def _setter(self, chString, param, resp=True):
@@ -392,6 +429,33 @@ class RGA_Server(SerialDeviceServer):
         # send out buffer response to clients
         self.buffer_update((chString, resp.strip()))
         returnValue(resp)
+
+    def _poll(self):
+        """
+        Polls the Twistorr for pressure readout and checks the interlock.
+        """
+        # check interlock
+        if self.interlock_active:
+            try:
+                # try to get twistorr74 server
+                yield self.client.refresh()
+                tt = yield self.client.twistorr74_server
+                # switch off ion pump if pressure is above a certain value
+                press_tmp = yield tt.pressure()
+                if press_tmp >= self.interlock_pressure:
+                    print('Error: Twistorr74 pressure reads {:.2e} mbar.'.format(press_tmp))
+                    print('\tAbove threshold of {:.2e} mbar for RGA filament to be on.'.format(self.interlock_pressure))
+                    print('\tShutting off the filament.')
+                    try:
+                        # send shutoff signal
+                        yield self.filament(None, 0)
+                    except Exception as e:
+                        print('Error: unable to shut off filament.')
+            except KeyError:
+                print('Warning: Twistorr74 server not available for interlock.')
+            except Exception as e:
+                print('Warning: unable to read pressure from Twistorr74 server.')
+                print('\tSkipping this loop.')
 
 
 if __name__ == "__main__":
