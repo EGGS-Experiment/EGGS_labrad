@@ -7,7 +7,8 @@ from EGGS_labrad.clients.cryovac_clients.RGA_gui import RGA_gui
 _RGA_ERRORS = {0: 'Communication Error', 1: 'Filament Error', 3: 'Multiplier Error',
                4: 'Quadrupole Filter Error', 5: 'Electrometer Error', 6: 'Power Supply Error'}
 
-
+from twisted.python import log
+import sys
 class RGA_client(GUIClient):
 
     name = 'RGA Client'
@@ -159,4 +160,5 @@ class RGA_client(GUIClient):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
+    log.startLogging(sys.stdout)
     runClient(RGA_client)
