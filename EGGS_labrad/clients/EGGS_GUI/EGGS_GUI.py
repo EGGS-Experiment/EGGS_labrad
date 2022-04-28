@@ -36,7 +36,7 @@ class EGGS_gui(QMainWindow):
         centralWidget = QWidget()
         layout = QHBoxLayout(centralWidget)
         self.tabWidget = QTabWidget()
-        self.tabWidget.setMovable(True)
+        #self.tabWidget.setMovable(True)
         # create subwidgets
         cxn_actual = cxn.cxn
         # use connection class for scriptscanner only
@@ -105,10 +105,8 @@ class EGGS_gui(QMainWindow):
 
     def makeWavemeterWidget(self, reactor, cxn):
         from EGGS_labrad.clients.wavemeter_client.multiplexer_client import multiplexer_client
-        from EGGS_labrad.clients.toptica_client.toptica_client import toptica_client
         clients = {
-            multiplexer_client:             (0, 0),
-            toptica_client:                 (1, 0)
+            multiplexer_client:             (0, 0)
         }
         return self._createTabLayout(clients, reactor)
 

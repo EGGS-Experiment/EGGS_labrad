@@ -26,7 +26,7 @@ class multiplexer_client(GUIClient):
 
     def getgui(self):
         if self.gui is None:
-            self.gui = multiplexer_gui(self.chaninfo)
+            self.gui = multiplexer_gui(multiplexer_config.channels)
         return self.gui
 
     @inlineCallbacks

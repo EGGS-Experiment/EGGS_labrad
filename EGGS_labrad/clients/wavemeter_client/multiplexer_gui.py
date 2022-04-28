@@ -357,7 +357,6 @@ class multiplexer_gui(QFrame):
         self.trace_display.setMinimumHeight(400)
         self.trace_display.setMaximumWidth(1000)
         qBox_intTrace_layout.addWidget(self.trace_display)
-
         # create channel widgets
         for chan_name, chan_params in self.chaninfo.items():
             wmChannel = chan_params[0]
@@ -386,16 +385,13 @@ class multiplexer_gui(QFrame):
         wmChannel, frequency, _, displayPID, dacPort, rails = params
         widget = multiplexer_channel(name, wmChannel, dacPort, frequency, displayPID)
         widget.spinFreq.setValue(float(frequency))
-
         # get color of frequency
         color = wav2RGB(2.998e8 / (float(frequency) * 1e3))
         widget.currentfrequency.setStyleSheet('color: rgb' + str(color))
         self.pattern[wmChannel] = self.trace_display.plot(pen=pg.mkPen(color=color))
-
         # dacPort
         if dacPort != 0:
             self.dacPorts[dacPort] = wmChannel
-
         return widget
 
     def _check_window_size(self):
