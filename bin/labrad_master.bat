@@ -29,13 +29,13 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 REM: ARTIQ
 START /min CMD /c %EGGS_LABRAD_ROOT%\bin\artiq_start.bat
 
-REM: Temporary solution: need to have device
-START "GPIB Device Manager" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\gpib\gpib_device_manager.py"
-
 REM: Run all device servers as specified, then open a python shell to begin
 IF %server_flag%==1 (
     TIMEOUT 8 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_servers.bat
 )
+
+REM: Temporary solution: need to have device
+TIMEOUT 5 > NUL && START "GPIB Device Manager" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\gpib\gpib_device_manager.py"
 
 REM: Clients
 START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat

@@ -7,7 +7,7 @@ from EGGS_labrad.clients.trap_clients.RF_gui import RF_gui
 class RF_client(GUIClient):
 
     name = 'RF Client'
-    servers = {'rf': 'RF Server', 'os': 'Oscilloscope Server'}
+    servers = {'rf': 'RF Server'}
 
     def getgui(self):
         if self.gui is None:

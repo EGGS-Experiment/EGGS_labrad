@@ -38,12 +38,14 @@ class EGGS_gui(QMainWindow):
         self.tabWidget = QTabWidget()
         self.tabWidget.setMovable(True)
         # create subwidgets
+        cxn_actual = cxn.cxn
+        # use connection class for scriptscanner only
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
-        cryovac = self.makeCryovacWidget(self.reactor, cxn)
-        trap = self.makeTrapWidget(self.reactor, cxn)
-        lasers = self.makeLaserWidget(self.reactor, cxn)
-        wavemeter = self.makeWavemeterWidget(self.reactor, cxn)
-        imaging = self.makeImagingWidget(self.reactor, cxn)
+        cryovac = self.makeCryovacWidget(self.reactor, cxn_actual)
+        trap = self.makeTrapWidget(self.reactor, cxn_actual)
+        lasers = self.makeLaserWidget(self.reactor, cxn_actual)
+        wavemeter = self.makeWavemeterWidget(self.reactor, cxn_actual)
+        imaging = self.makeImagingWidget(self.reactor, cxn_actual)
         # create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryovac, '&Cryovac')
@@ -82,12 +84,12 @@ class EGGS_gui(QMainWindow):
         from EGGS_labrad.clients.trap_clients.RF_client import RF_client
         from EGGS_labrad.clients.trap_clients.DC_client import DC_client
         from EGGS_labrad.clients.trap_clients.stability_client import stability_client
-        from EGGS_labrad.clients.ARTIQ_client.AD9910_client import AD9910_client
+        from EGGS_labrad.clients.functiongenerator_client.functiongenerator_client import functiongenerator_client
         clients = {
-            RF_client:          (1, 1),
-            DC_client:          (0, 1),
-            stability_client:   (0, 0),
-            AD9910_client:      (1, 0)
+            RF_client:                      (1, 1),
+            DC_client:                      (0, 1),
+            stability_client:               (0, 0),
+            functiongenerator_client:       (1, 0)
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -103,11 +105,12 @@ class EGGS_gui(QMainWindow):
 
     def makeWavemeterWidget(self, reactor, cxn):
         from EGGS_labrad.clients.wavemeter_client.multiplexer_client import multiplexer_client
-        holder_widget = QWidget()
-        holder_layout = QGridLayout(holder_widget)
-        client_tmp = multiplexer_client(reactor)
-        holder_layout.addWidget(client_tmp.gui, 0, 0)
-        return holder_widget
+        from EGGS_labrad.clients.toptica_client.toptica_client import toptica_client
+        clients = {
+            multiplexer_client:             (0, 0),
+            toptica_client:                 (1, 0)
+        }
+        return self._createTabLayout(clients, reactor)
 
     def makeImagingWidget(self, reactor, cxn):
         from EGGS_labrad.clients.PMT_client.PMT_client import PMT_client
@@ -126,7 +129,7 @@ class EGGS_gui(QMainWindow):
             print(e)
             _exit(0)
 
-    def _createTabLayout(self, clientDict, reactor, cxn):
+    def _createTabLayout(self, clientDict, reactor, cxn=None):
         """
         Creates a tab widget from constituent widgets stored in a dictionary.
         """
@@ -134,11 +137,12 @@ class EGGS_gui(QMainWindow):
         holder_layout = QGridLayout(holder_widget)
         for client, position in clientDict.items():
             try:
-                client_tmp = client(reactor, cxn=cxn.cxn)
+                client_tmp = client(reactor, cxn=cxn)
             except Exception as e:
                 print(client, e)
             try:
                 if hasattr(client_tmp, 'getgui'):
+
                     holder_layout.addWidget(client_tmp.getgui(), *position)
                 elif hasattr(client_tmp, 'gui'):
                     holder_layout.addWidget(client_tmp.gui, *position)
@@ -159,7 +163,7 @@ if __name__ == "__main__":
     # instantiate client with a reactor
     from twisted.internet import reactor
     client_tmp = EGGS_gui(reactor)
-    # show client
+    # show gui
     if hasattr(client_tmp, 'show'):
         client_tmp.show()
     elif hasattr(client_tmp, 'gui'):
