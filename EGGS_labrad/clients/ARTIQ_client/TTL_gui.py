@@ -2,8 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame, QSizePolicy
 
-from EGGS_labrad.config.device_db import device_db
-from EGGS_labrad.clients.Widgets import TextChangingButton
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
 
 
 class TTL_channel(QFrame):
@@ -14,7 +13,9 @@ class TTL_channel(QFrame):
     def __init__(self, name=None, parent=None):
         QWidget.__init__(self, parent)
         self.name = name
-        self.setFrameStyle(0x0001 | 0x0010)
+        self.setFrameStyle(0x0001 | 0x0003)
+        #self.setFrameStyle(QFrame.WinPanel)
+        self.setFrameShadow(QFrame.Raised)
         # self.setLineWidth(2)
         self.makeLayout(name)
         self.setFixedSize(150, 75)
@@ -82,15 +83,8 @@ class TTL_gui(QWidget):
         Creates a group of TTLs as a widget.
         """
         # create widget
-        ttl_group = QFrame()
-        ttl_group.setFrameStyle(0x0001 | 0x0010)
-        ttl_group.setLineWidth(2)
-        layout = QGridLayout(ttl_group)
-        # set title
-        title = QLabel(ttlgroup_name)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title, 0, 0)
+        ttl_group = QWidget()
+        ttl_group_layout = QGridLayout(ttl_group)
         # layout individual ttls on group
         ttl_iter = iter(range(len(ttlgroup_list.keys())))
         for channel_name in ttlgroup_list.keys():
@@ -102,8 +96,10 @@ class TTL_gui(QWidget):
             column = channel_num % self.row_length
             # add widget to client list and layout
             self.ttl_list[ttlgroup_name][channel_name] = channel_gui
-            layout.addWidget(channel_gui, row, column)
-        return ttl_group
+            ttl_group_layout.addWidget(channel_gui, row, column)
+        # wrap TTLs in a QGroupBox
+        ttl_wrapped = QCustomGroupBox(ttl_group, ttlgroup_name)
+        return ttl_wrapped
 
 
 if __name__ == "__main__":
@@ -112,4 +108,6 @@ if __name__ == "__main__":
     # runGUI(TTL_channel, name='TTL Channel')
 
     # run TTL GUI
-    runGUI(TTL_gui)
+    # todo: fix, come up with some tmp config so we can try it out
+    ttl_list_tmp = {"Input": {"ttl_0": None}, "Output": {"ttl_1": None}}
+    runGUI(TTL_gui, ttl_list_tmp)
