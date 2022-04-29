@@ -52,7 +52,9 @@ class GPIBDeviceManager(LabradServer):
     
     @inlineCallbacks
     def initServer(self):
-        """Initialize the server after connecting to LabRAD."""
+        """
+        Initialize the server after connecting to LabRAD.
+        """
         self.knownDevices = {} # maps (server, channel) to (name, idn)
         self.deviceServers = {} # maps device name to list of interested servers.
                                 # each interested server is {'target':<>,'context':<>,'messageID':<>}
@@ -68,13 +70,14 @@ class GPIBDeviceManager(LabradServer):
         self._cxn.addListener(disconnect_func, source=mgr.ID, ID=11)
         yield mgr.subscribe_to_named_message('GPIB Device Connect', 10, True)
         yield mgr.subscribe_to_named_message('GPIB Device Disconnect', 11, True)
-
         # do an initial scan of the available GPIB devices
         yield self.refreshDeviceLists()
         
     @inlineCallbacks
     def refreshDeviceLists(self):
-        """Ask all GPIB bus servers for their available GPIB devices."""
+        """
+        Ask all GPIB bus servers for their available GPIB devices.
+        """
         servers = [s for n, s in self.client.servers.items()
                      if (('GPIB Bus' in n) or ('gpib_bus' in n)) and \
                         (('List Devices' in s.settings) or \
@@ -92,7 +95,9 @@ class GPIBDeviceManager(LabradServer):
 
     @inlineCallbacks
     def gpib_device_connect(self, gpibBusServer, channel):
-        """Handle messages when devices connect."""
+        """
+        Handle messages when devices connect.
+        """
         print('Device Connect:', gpibBusServer, channel)
         if (gpibBusServer, channel) in self.knownDevices:
             return
@@ -105,7 +110,9 @@ class GPIBDeviceManager(LabradServer):
             self.notifyServers(device, gpibBusServer, channel, True)
     
     def gpib_device_disconnect(self, server, channel):
-        """Handle messages when devices connect."""
+        """
+        Handle messages when devices disconnect.
+        """
         print('Device Disconnect:', server, channel)
         if (server, channel) not in self.knownDevices:
             return
@@ -152,7 +159,9 @@ class GPIBDeviceManager(LabradServer):
         return self.identLock.run(_doIdentifyDevice)
 
     def identifyDevicesWithServer(self, identifier):
-        """Try to identify all unknown devices with a new server."""
+        """
+        Try to identify all unknown devices with a new server.
+        """
         @inlineCallbacks
         def _doServerIdentify():
             #yield self.client.refresh()

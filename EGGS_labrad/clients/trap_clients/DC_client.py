@@ -23,6 +23,8 @@ class DC_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
+        # get config from registry
+        # connect to signals
         yield self.amo8.signal__toggle_update(TOGGLEID)
         yield self.amo8.addListener(listener=self.updateToggle, source=None, ID=TOGGLEID)
         yield self.amo8.signal__voltage_update(VOLTAGEID)
