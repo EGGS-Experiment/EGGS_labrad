@@ -1,3 +1,4 @@
+from twisted.internet.reactor import callLater
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
@@ -63,7 +64,7 @@ class DC_client(GUIClient):
         for channel in self.gui.amo8_channels.values():
             channel.dac.valueChanged.connect(lambda value, _channel_num=channel.number: self.amo8.voltage(_channel_num, value))
             channel.ramp_start.clicked.connect(lambda voltage=channel.ramp_target.value(), rate=channel.ramp_rate.value(),
-                                               _channel_num=channel.number: self.updateRamp(_channel_num, voltage, rate))
+                                               _channel_num=channel.number: self.startRamp(_channel_num, voltage, rate))
             channel.toggleswitch.clicked.connect(lambda status=channel.lockswitch.isChecked(), _channel_num=channel.number:
                                                  self.amo8.toggle(_channel_num, status))
             channel.resetswitch.clicked.connect(lambda: self.reset(channel.number))
@@ -101,13 +102,17 @@ class DC_client(GUIClient):
         self.gui.device_hv_v1.setText(str(hv[0]))
         self.gui.device_hv_i1.setText(str(hv[1]))
 
-    # todo: yield? how are we actually calling this? can we call things without yielding them?
-    def updateRamp(self, chan_num, end_voltage, rate):
-        self.amo8.ramp(chan_num, end_voltage, rate)
-        widget_dac = self.gui.amo8_channels[chan_num].dac
-        widget_dac.setEnabled(False)
-        widget_dac.setValue(end_voltage)
-        widget_dac.setEnabled(True)
+    @inlineCallbacks
+    def startRamp(self, chan_num, end_voltage, rate):
+        yield self.amo8.ramp(chan_num, end_voltage, rate)
+        callLater(5, self.finishRamp, chan_num)
+        self.gui.amo8_channels[chan_num].dac.setEnabled(False)
+
+    @inlineCallbacks
+    def finishRamp(self, chan_num):
+        voltage_res = yield self.amo8.voltage(chan_num)
+        self.gui.amo8_channels[chan_num].dac.setValue(voltage_res)
+        self.gui.amo8_channels[chan_num].dac.setEnabled(True)
 
 
 if __name__ == "__main__":
