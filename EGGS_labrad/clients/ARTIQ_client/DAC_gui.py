@@ -133,33 +133,14 @@ class DAC_gui(QFrame):
     """
 
     name = "Fastino/Zotino GUI"
-    row_length = 5
 
-    def __init__(self, ddb=device_db, name=None):
-        super().__init__()
-        self.ddb = ddb
-        self.name = name
-        # device dictionary
-        self.channel_widgets = {}
+    def __init__(self, dac_list, parent=None):
+        super().__init__(parent)
+        self.dac_list = dac_list
         # set GUI layout
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle(self.name)
-        # start GUI
-        self.getDevices()
         self.makeLayout()
-
-    def getDevices(self):
-        # get devices
-        for name, params in self.ddb.items():
-            if 'class' not in params:
-                continue
-            elif params['class'] == 'Zotino':
-                self.name = name
-                self.channel_gui = AD5372_channel
-            elif params['class'] == 'Fastino':
-                self.name = name
-                self.channel_gui = AD5542_channel
-                self.row_length = 8
 
     def makeLayout(self):
         # create layout
@@ -170,24 +151,27 @@ class DAC_gui(QFrame):
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, 4)
         # layout widgets
-        zotino_group = self._makeZotinoGroup(self.name)
-        layout.addWidget(zotino_group)
+        for dac_name in self.dac_list.keys():
+            dac_group = self._makeDACGroup(dac_name)
+            layout.addWidget(dac_group)
 
-    def _makeZotinoGroup(self, name):
+    def _makeDACGroup(self, dac_name):
         """
-        Creates a group of zotino channels as a widget.
+        Creates a group of DAC channels as a widget.
         """
+        # default gui is zotino
+        channel_gui = AD5372_channel
+        row_length = 5
+        # get ad5372 or 5542
+        if "FASTINO" in dac_name.upper():
+            channel_gui = AD5542_channel
+            row_length = 7
         # create widget
-        zotino_group = QFrame()
-        zotino_group.setFrameStyle(0x0001 | 0x0010)
-        zotino_group.setLineWidth(2)
-        layout = QGridLayout(zotino_group)
-        # set global
+        zotino_group = QWidget()
+        zotino_group_layout = QGridLayout(zotino_group)
+        # set global elements
         zotino_header = QWidget(self)
         zotino_header_layout = QGridLayout(zotino_header)
-        zotino_title = QLabel(name, zotino_header)
-        zotino_title.setAlignment(Qt.AlignCenter)
-        zotino_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         zotino_global_ofs_title = QLabel('Global Offset Register', zotino_header)
         self.zotino_global_ofs = QDoubleSpinBox(zotino_header)
         self.zotino_global_ofs.setMaximum(0x2fff)
@@ -196,23 +180,22 @@ class DAC_gui(QFrame):
         self.zotino_global_ofs.setSingleStep(1)
         self.zotino_global_ofs.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.zotino_global_ofs.setAlignment(Qt.AlignCenter)
-        zotino_header_layout.addWidget(zotino_title)
+        # lay out
         zotino_header_layout.addWidget(zotino_global_ofs_title)
         zotino_header_layout.addWidget(self.zotino_global_ofs)
-        layout.addWidget(zotino_header, 0, 2, 1, 2)
-        # layout individual channels (32 per zotino)
+        zotino_group_layout.addWidget(zotino_header, 0, 2, 1, 2)
         for i in range(32):
             # initialize GUIs for each channel
-            channel_name = name + '_' + str(i)
-            channel_widget = self.channel_gui(channel_name)
+            channel_name = dac_name + '_' + str(i)
+            channel_widget = channel_gui(channel_name)
             # layout channel GUI
-            row = int(i / self.row_length) + 2
-            column = i % self.row_length
+            row = int(i / row_length) + 2
+            column = i % row_length
             # add widget to client list and layout
-            self.channel_widgets[i] = channel_widget
-            layout.addWidget(channel_widget, row, column)
-            # print(name + ' - row:' + str(row) + ', column: ' + str(column))
-        return zotino_group
+            self.dac_list[dac_name][i] = channel_widget
+            zotino_group_layout.addWidget(channel_widget, row, column)
+        zotino_wrapped = QCustomGroupBox(zotino_group, dac_name)
+        return zotino_wrapped
 
 
 if __name__ == "__main__":
@@ -221,6 +204,6 @@ if __name__ == "__main__":
     # runGUI(AD5372_channel, name='AD5372 Channel')
     # run AD5542 GUI
     # runGUI(AD5542_channel, name='AD5542 Channel')
-
     # run DAC GUI
+    # todo: create some tmp config
     runGUI(DAC_gui)

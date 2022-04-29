@@ -131,4 +131,7 @@ if __name__ == "__main__":
     #runGUI(DDS_gui)
 
     # run DDS GUI
-    runGUI(DDS_gui)
+    urukul_list_tmp = {"urukul0_cpld": {
+        "urukul0_ch0": None, "urukul0_ch1": None, "urukul0_ch2": None, "urukul0_ch3": None
+    }}
+    runGUI(DDS_gui, urukul_list_tmp)

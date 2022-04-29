@@ -24,7 +24,6 @@ class DDS_client(GUIClient):
     def initClient(self):
         # device dictionaries
         self.urukul_list = {}
-        self.ad9910_clients = {}
         # parse device_db for TTLs
         self._getDevices(device_db)
         yield self.aq.signal__dds_changed(DDSID)
@@ -43,7 +42,6 @@ class DDS_client(GUIClient):
                 if urukul_name not in self.urukul_list:
                     self.urukul_list[urukul_name] = {}
                 self.urukul_list[urukul_name][name] = None
-                self.ad9910_clients[name] = None
 
     #@inlineCallbacks
     def initData(self):

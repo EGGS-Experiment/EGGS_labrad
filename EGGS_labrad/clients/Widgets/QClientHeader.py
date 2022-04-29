@@ -8,8 +8,11 @@ from twisted.internet.defer import inlineCallbacks
 
 
 class QClientHeader(QFrame):
+    """
+    todo
+    """
 
-    def __init__(self, parent=None):
+    def __init__(self, name, parent):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeWidgets()
