@@ -66,7 +66,8 @@ class RF_client(GUIClient):
         self.gui.mod_ampl_toggle.clicked.connect(lambda status: self.rf.toggle_am(status))
         self.gui.mod_phase_toggle.clicked.connect(lambda status: self.rf.toggle_pm(status))
         # set lockswitch to locked
-        self.gui.wav_lockswitch.clicked(False)
+        self.gui.wav_lockswitch.setChecked(False)
+        self.gui.wav_lockswitch.click()
 
 
     # SLOTS

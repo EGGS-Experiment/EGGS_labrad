@@ -131,7 +131,7 @@ class GUIClient(ABC):
             yield self.initGUI()
         except Exception as e:
             self.guiEnable = False
-            print('Error in initGUI:', e)
+            print('\tError in initGUI:', e)
         # make GUI visible at end so user can at least see that we have a problem
         self.gui.show()
         # reenable GUI upon completion of initialization
