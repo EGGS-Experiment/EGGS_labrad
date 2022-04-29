@@ -3,7 +3,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox, QClientHeader
 
 
 class AMO8_channel(QFrame):
@@ -118,17 +118,18 @@ class DC_gui(QFrame):
             channel_holder_layout.addWidget(channel_gui, channel_params['row'], channel_params['col'])
         th1 = QCustomGroupBox(channel_holder, "channels")
         # lay out device
-        amo8_layout.addWidget(channel_holder,           1, 0, 2, 3)
         amo8_layout.addWidget(self.device_header,       *self.headerLayout)
+        amo8_layout.addWidget(channel_holder,           1, 0, 2, 3)
 
     def _createHeader(self):
         # create header layout
         device_header = QWidget(self)
         device_header_layout = QGridLayout(device_header)
         # create header title
-        device_header_title = QLabel(self.name, device_header)
-        device_header_title.setAlignment(Qt.AlignCenter)
-        device_header_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        device_header_title = QClientHeader(self.name)
+        #device_header_title = QLabel(self.name, device_header)
+        #device_header_title.setAlignment(Qt.AlignCenter)
+        #device_header_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         # create HV monitor widget
         self.device_hv_monitor = QFrame(device_header)
         self.device_hv_monitor.setFrameStyle(0x0001 | 0x0030)

@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout
 
-from EGGS_labrad.clients.Widgets import TextChangingButton
+from EGGS_labrad.clients.Widgets import TextChangingButton, QClientHeader
 
 
 class twistorr74_gui(QFrame):
@@ -15,11 +15,13 @@ class twistorr74_gui(QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        self.setFixedSize(225, 325)
-        #twistorr 74
-        self.twistorr_label = QLabel('Twistorr 74 Pump')
-        self.twistorr_label.setFont(QFont(shell_font, pointSize= 18))
-        self.twistorr_label.setAlignment(Qt.AlignCenter)
+        #self.setMinimumSize(230, 325)
+        #self.setMaximumSize(260, 380)
+        # twistorr 74
+        self.twistorr_label = QClientHeader("Twistorr 74 Pump")
+        # self.twistorr_label = QLabel('Twistorr 74 Pump')
+        # self.twistorr_label.setFont(QFont(shell_font, pointSize= 18))
+        # self.twistorr_label.setAlignment(Qt.AlignCenter)
             # pressure readout
         self.pressure_display_label = QLabel('Pressure (mbar)')
         self.pressure_display = QLabel('Pressure')

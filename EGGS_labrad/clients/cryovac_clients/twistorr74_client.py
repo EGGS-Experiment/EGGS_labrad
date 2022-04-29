@@ -17,9 +17,7 @@ class twistorr74_client(GUIClient):
     servers = {'tt': 'TwisTorr74 Server'}
 
     def getgui(self):
-        if self.gui is None:
-            self.gui = twistorr74_gui()
-        return self.gui
+        self.gui = twistorr74_gui()
 
     @inlineCallbacks
     def initClient(self):
