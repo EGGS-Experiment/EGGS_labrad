@@ -6,11 +6,11 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox,\
                             QDesktopWidget, QPushButton, QDoubleSpinBox, QComboBox,\
-                            QCheckBox, QScrollArea, QWidget, QVBoxLayout
+                            QCheckBox, QScrollArea, QWidget
 
 from EGGS_labrad.clients.Widgets.wav2RGB import wav2RGB
 from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomProgressBar, QCustomSlideIndicator
-
+# todo use lockswitch
 
 class multiplexer_pid(QFrame):
     """
@@ -182,7 +182,6 @@ class multiplexer_pid(QFrame):
         layout.addWidget(self.PIDindicator,     4, 6, 1, 2)
 
         # connect slots
-        # PID
         self.useDTBox.stateChanged.connect(lambda status: self.spinDt.setEnabled(status))
         self.useDTBox.click()
         self.useDTBox.click()
@@ -309,20 +308,19 @@ class multiplexer_gui(QFrame):
 
     def __init__(self, chaninfo):
         super().__init__()
+        # holder dicts
         self.chaninfo = chaninfo
         self.channels = {}
         self.dacPorts = {}
         self.pattern = {}
-
+        # configure GUI
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle('Multiplexed Wavemeter')
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-        #self._check_window_size()
         self.makeLayout()
 
     def makeLayout(self):
         layout = QGridLayout(self)
-
         # wavemeter channels
         qBox_wm = QGroupBox('Wavemeter Channels')
         qBox_wm_layout = QGridLayout(qBox_wm)
@@ -351,11 +349,19 @@ class multiplexer_gui(QFrame):
         qBox_intTrace = QGroupBox('Interferometer')
         qBox_intTrace_layout = QGridLayout(qBox_intTrace)
         pg.setConfigOption('background', 'k')
+        # configure pyqtgraph
+        pg.setConfigOption('antialias', False)
+        from importlib.util import find_spec
+        if find_spec('OpenGL'):
+            pg.setConfigOption('useOpenGL', True)
+            pg.setConfigOption('enableExperimental', True)
+        # configure interferometer display
         self.trace_display = pg.PlotWidget(name='Interferometer Trace', border=True)
         self.trace_display.showGrid(x=True, y=True, alpha=0.5)
         self.trace_display.setLimits(xMin=0, xMax=2000, yMin=0, yMax=3e8)
         self.trace_display.setMinimumHeight(400)
         self.trace_display.setMaximumWidth(1000)
+        self.trace_display_legend = self.trace_display.addLegend(size=(200, 200))
         qBox_intTrace_layout.addWidget(self.trace_display)
         # create channel widgets
         for chan_name, chan_params in self.chaninfo.items():
@@ -366,7 +372,6 @@ class multiplexer_gui(QFrame):
             # add to holders
             self.channels[wmChannel] = widget
             wmChan_layout.addWidget(self.channels[wmChannel], position[1], position[0], 1, 3)
-
         # add wavemeter channel holder to qBox
         wm_scroll.setWidget(wmChan_widget)
         wm_scroll.setMinimumWidth(wmChan_widget.sizeHint().width())
@@ -386,9 +391,13 @@ class multiplexer_gui(QFrame):
         widget = multiplexer_channel(name, wmChannel, dacPort, frequency, displayPID)
         widget.spinFreq.setValue(float(frequency))
         # get color of frequency
-        color = wav2RGB(2.998e8 / (float(frequency) * 1e3))
+        wavelength = 2.998e8 / (float(frequency) * 1e3)
+        color = wav2RGB(wavelength)
         widget.currentfrequency.setStyleSheet('color: rgb' + str(color))
-        self.pattern[wmChannel] = self.trace_display.plot(pen=pg.mkPen(color=color))
+        # create PlotDataItem (i.e. a trace) and add it to the legend
+        self.pattern[wmChannel] = self.trace_display.plot(pen=pg.mkPen(color=color, width=3),
+                                                          name="{:.0f}nm".format(wavelength),
+                                                          skipFiniteCheck=True)
         # dacPort
         if dacPort != 0:
             self.dacPorts[dacPort] = wmChannel
@@ -404,8 +413,12 @@ class multiplexer_gui(QFrame):
         height = screensize.height()
         min_pixel_size = 1080
         if (width <= min_pixel_size) or (height <= min_pixel_size):
-            #self.showMaximized()
+            self.showMaximized()
             pass
+
+    def show(self):
+        # make us showmaximized instead of normal show
+        self.showMaximized()
 
 
 if __name__ == "__main__":

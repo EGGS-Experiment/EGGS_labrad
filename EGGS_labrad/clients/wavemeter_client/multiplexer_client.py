@@ -1,6 +1,7 @@
 from time import time
 from numpy import linspace
 from socket import gethostname
+from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient, createTrunk
@@ -17,6 +18,10 @@ CHAN_LOCK_CHANGED_ID = 148323
 AMPLITUDE_CHANGED_ID = 238883
 PATTERN_CHANGED_ID = 462917
 
+# this variable controls how often we
+# get the trace from the wavemeter
+_TRACE_POLLING_RATE = 5
+
 
 class multiplexer_client(GUIClient):
 
@@ -29,6 +34,8 @@ class multiplexer_client(GUIClient):
             self.gui = multiplexer_gui(multiplexer_config.channels)
         return self.gui
 
+
+    # SETUP
     @inlineCallbacks
     def initClient(self):
         # get config
@@ -59,8 +66,11 @@ class multiplexer_client(GUIClient):
         yield self.wavemeter.addListener(listener=self.toggleChannelLock, source=None, ID=CHAN_LOCK_CHANGED_ID)
         yield self.wavemeter.signal__amplitude_changed(AMPLITUDE_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.updateAmplitude, source=None, ID=AMPLITUDE_CHANGED_ID)
-        yield self.wavemeter.signal__pattern_changed(PATTERN_CHANGED_ID)
-        yield self.wavemeter.addListener(listener=self.updatePattern, source=None, ID=PATTERN_CHANGED_ID)
+        # don't use signals for wavemeter trace since those update too frequently
+        #yield self.wavemeter.signal__pattern_changed(PATTERN_CHANGED_ID)
+        #yield self.wavemeter.addListener(listener=self.updatePattern, source=None, ID=PATTERN_CHANGED_ID)
+        # instead, we use a loopingcall so we can control the update frequency
+        self.refresher = LoopingCall(self.pollPattern)
 
     @inlineCallbacks
     def initData(self):
@@ -119,6 +129,8 @@ class multiplexer_client(GUIClient):
             widget.lockswitch.setChecked(False)
             # frequency recording
             widget.record_button.toggled.connect(lambda status, _wmChannel=wmChannel: self.record_freq(status, _wmChannel))
+        # finally after everything has been set up, we can start polling wavemeter values
+        self.refresher.start(_TRACE_POLLING_RATE, now=True)
 
     @inlineCallbacks
     def setupPID(self, channel, dacPort):
@@ -223,10 +235,22 @@ class multiplexer_client(GUIClient):
             self.gui.channels[chan].powermeter_display.setText('{:4d}'.format(value))
 
     def updatePattern(self, c, signal):
+        """
+        This is not currently in use since patterns
+        are received too frequently from the wavemeter server,
+        creating considerable overhead (about 1Mbps per channel).
+        """
         chan, trace = signal
         num_points = 512
         if chan in self.gui.pattern.keys():
             self.gui.pattern[chan].setData(x=linspace(0, 2000, num_points), y=trace)
+
+    @inlineCallbacks
+    def pollPattern(self):
+        num_points = 512
+        for chan in self.gui.pattern.keys():
+            trace = yield self.wavemeter.get_wavemeter_pattern(chan)
+            self.gui.pattern[chan].setData(x=linspace(0, 2000, num_points), y=trace[0])
 
     def toggleTrace(self, status, chan):
         trace = self.gui.pattern[chan]
