@@ -52,36 +52,11 @@ class TTL_gui(QWidget):
     row_length = 5
     # todo: qgroupbox for organization
 
-    def __init__(self, parent=None):
-        super(TTL_gui, self).__init__()
-        # device dictionary
-        self.ttl_list = {
-            "Input": {},
-            "Output": {},
-            "Urukul": {},
-            "Other": {}
-        }
+    def __init__(self, ttl_list, parent=None):
+        super(TTL_gui, self).__init__(parent)
+        self.ttl_list = ttl_list
         # start connections
-        self.getDevices()
         self.makeLayout()
-
-    def getDevices(self):
-        for name, params in device_db.items():
-            # only get devices with named class
-            if 'class' not in params:
-                continue
-            # set device as attribute
-            devicetype = params['class']
-            if devicetype == 'TTLInOut':
-                self.ttl_list["Input"][name] = None
-            elif devicetype == 'TTLOut':
-                other_names = ('zotino', 'led', 'sampler')
-                if 'urukul' in name:
-                    self.ttl_list["Urukul"][name] = None
-                elif any(string in name for string in other_names):
-                    self.ttl_list["Other"][name] = None
-                else:
-                    self.ttl_list["Output"][name] = None
 
     def makeLayout(self):
         layout = QGridLayout(self)
