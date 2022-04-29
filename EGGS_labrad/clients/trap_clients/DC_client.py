@@ -96,7 +96,7 @@ class DC_client(GUIClient):
         self.gui.device_hv_v1.setText(str(hv[0]))
         self.gui.device_hv_i1.setText(str(hv[1]))
 
-
+    # todo: yield? how are we actually calling this? can we call things without yielding them?
     def updateRamp(self, chan_num, end_voltage, rate):
         self.amo8.ramp(chan_num, end_voltage, rate)
         widget_dac = self.gui.amo8_channels[chan_num].dac

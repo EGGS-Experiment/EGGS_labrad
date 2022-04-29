@@ -9,8 +9,8 @@ from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox,
                             QCheckBox, QScrollArea, QWidget
 
 from EGGS_labrad.clients.Widgets.wav2RGB import wav2RGB
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomProgressBar, QCustomSlideIndicator
-# todo use lockswitch
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomProgressBar, QCustomSlideIndicator
+
 
 class multiplexer_pid(QFrame):
     """

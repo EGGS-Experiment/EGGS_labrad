@@ -76,8 +76,8 @@ class GUIClient(ABC):
 
     @inlineCallbacks
     def _initClient(self, cxn):
-        # disable GUI until initialization finishes
-        # self.gui.setEnabled(False)
+        # hide GUI until initialization finishes
+        #self.gui.setVisible(False)
         print("Initializing client...")
         try:
             yield self.initClient()
@@ -121,6 +121,8 @@ class GUIClient(ABC):
         except Exception as e:
             self.guiEnable = False
             print('Error in initGUI:', e)
+        # make GUI visible at end so user can at least see that we have a problem
+        #self.gui.setVisible(True)
         # reenable GUI upon completion of initialization
         if self.guiEnable:
             print("GUI initialization successful.")
@@ -135,6 +137,8 @@ class GUIClient(ABC):
         Reinitializes the GUI Client.
         """
         print('Restarting client ...')
+        # todo: maybe move this to a permanent startup sequence?
+        self.gui.setVisible(False)
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._initData)

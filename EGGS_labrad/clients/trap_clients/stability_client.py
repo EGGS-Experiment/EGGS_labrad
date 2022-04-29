@@ -1,6 +1,5 @@
 from time import time
 from numpy import pi, sqrt, nan
-from datetime import datetime
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
