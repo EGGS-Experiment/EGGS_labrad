@@ -444,10 +444,10 @@ class SerialDeviceServer(LabradServer):
         if self.ser:
             return (self.serNode, self.port)
         else:
-            raise Exception('No device selected.')
+            return ("", "")
 
 
-        # DIRECT SERIAL COMMUNICATION
+    # DIRECT SERIAL COMMUNICATION
     @setting(222223, 'Serial Query', data='s', stop=['i: read a given number of characters',
                                                      's: read until the given character'], returns='s')
     def serial_query(self, c, data, stop=None):
