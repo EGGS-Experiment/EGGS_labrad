@@ -86,10 +86,10 @@ class EGGS_gui(QMainWindow):
         from EGGS_labrad.clients.trap_clients.stability_client import stability_client
         from EGGS_labrad.clients.functiongenerator_client.functiongenerator_client import functiongenerator_client
         clients = {
-            RF_client:                      (1, 1),
             DC_client:                      (0, 1),
             stability_client:               (0, 0),
-            functiongenerator_client:       (1, 0)
+            functiongenerator_client:       (1, 1),
+            RF_client:                      (1, 0)
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -140,7 +140,6 @@ class EGGS_gui(QMainWindow):
                 print(client, e)
             try:
                 if hasattr(client_tmp, 'getgui'):
-
                     holder_layout.addWidget(client_tmp.getgui(), *position)
                 elif hasattr(client_tmp, 'gui'):
                     holder_layout.addWidget(client_tmp.gui, *position)
