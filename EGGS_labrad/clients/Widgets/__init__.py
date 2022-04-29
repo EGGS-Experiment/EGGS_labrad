@@ -1,5 +1,7 @@
 __all__ = ["DetachableTabWidget", "TextChangingButton", 'Lockswitch', 'SerialConnection_Client',
-           'QSerialConnection', 'QCustomProgressBar', 'QCustomSlideIndicator', 'QCustomGroupBox']
+           'QSerialConnection', 'QCustomProgressBar', 'QCustomSlideIndicator', 'QCustomGroupBox',
+           'QClientHeader'
+           ]
 
 
 from .QDetachableTab import DetachableTabWidget
@@ -8,3 +10,4 @@ from .QSerialConnection import QSerialConnection, SerialConnection_Client
 from .QCustomProgressBar import QCustomProgressBar
 from .QCustomSlideIndicator import QCustomSlideIndicator
 from .QCustomGroupBox import QCustomGroupBox
+from .QClientHeader import QClientHeader

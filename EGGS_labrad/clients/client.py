@@ -3,9 +3,9 @@ Base class for building PyQt5 GUI clients for LabRAD.
 """
 from os import _exit, environ
 from abc import ABC, abstractmethod
-from time import localtime, strftime
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients.utils import createTrunk
+
 
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
@@ -23,7 +23,7 @@ class GUIClient(ABC):
     LABRADHOST = None
     LABRADPASSWORD = None
 
-    # STARTUP
+    # INITIALIZATION
     def __init__(self, reactor, cxn=None, parent=None):
         super().__init__()
         # core attributes
@@ -31,23 +31,30 @@ class GUIClient(ABC):
         self.cxn = cxn
         self.parent = parent
         self.guiEnable = True
-        self.logPreamble = "%H:%M:%S [{:s}]".format(self.name)
+        # get core servers in addition to whichever servers are specified
+        core_servers = {'registry': 'Registry', 'dv': 'Data Vault'}
+        self.servers.update(core_servers)
         # initialization sequence
-        print("Starting up client...")
+        print("Starting client...")
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._getgui)
         # initData has to be before initGUI otherwise signals will be active
+        # while we set initial values, causing the slots to trigger
         d.addCallback(self._initData)
         d.addCallback(self._initGUI)
+        d.addCallback(self._connectHeader)
 
+
+
+    # STARTUP DISPATCHERS
     @inlineCallbacks
     def _connectLabrad(self):
         """
         Creates an asynchronous connection to core labrad servers
         and sets up server connection signals.
         """
-        print("Connecting to LabRAD...")
+        print("\tConnecting to LabRAD..")
         # only create connection if we aren't instantiated with one
         if not self.cxn:
             if self.LABRADHOST is None:
@@ -55,67 +62,73 @@ class GUIClient(ABC):
             if self.LABRADPASSWORD is None:
                 self.LABRADPASSWORD = environ['LABRADPASSWORD']
             from labrad.wrappers import connectAsync
+            print("\t\tEstablishing connection to LabRAD manager @{:s}...".format(self.LABRADHOST))
             self.cxn = yield connectAsync(self.LABRADHOST, name=self.name, password=self.LABRADPASSWORD)
-        print("Connection successful.")
+        else:
+            print("\t\tLabRAD connection already provided.")
         # set self.servers as class attributes
-        print("Getting required servers...")
-        self.servers['registry'] = 'registry'
-        self.servers['dv'] = 'Data Vault'
+        print("\t\tGetting required servers...")
         for var_name, server_name in self.servers.items():
             try:
                 setattr(self, var_name, self.cxn[server_name])
             except Exception as e:
                 setattr(self, var_name, None)
-                print('Server unavailable:', server_name)
+                print('\t\tServer unavailable:', server_name)
         # server connections
+        print("\t\tConnecting to LabRAD manager signals...")
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
-        yield self.cxn.manager.addListener(listener=self.on_connect, source=None, ID=9898989)
+        yield self.cxn.manager.addListener(listener=self._serverConnect, source=None, ID=9898989)
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
-        yield self.cxn.manager.addListener(listener=self.on_disconnect, source=None, ID=9898989 + 1)
+        yield self.cxn.manager.addListener(listener=self._serverDisconnect, source=None, ID=9898989 + 1)
+        print("\tFinished connecting to LabRAD.")
         return self.cxn
 
     @inlineCallbacks
     def _initClient(self, cxn):
         # hide GUI until initialization finishes
         #self.gui.setVisible(False)
-        print("Initializing client...")
+        print("\tInitializing client...")
         try:
             yield self.initClient()
         except Exception as e:
-            print('Error in initClient:', e)
+            print('\tError in initClient:', e)
             self.guiEnable = False
         else:
-            print("Successfully initialized client.")
+            print("\tSuccessfully initialized client.")
         return cxn
 
     @inlineCallbacks
     def _getgui(self, cxn):
+        print("\tStarting up GUI...")
         try:
             # get GUI after initClient so we can call any config
             # or initialization variables we need
             yield self.getgui()
             self.gui.show()
+            print("\tSuccessfully started up GUI.")
         except Exception as e:
+            # just quit if we can't get GUI otherwise we freeze since we don't have a reactor to work with
+            print("\tFatal error: unable to start up GUI.")
             print(e)
-            # exit if we can't get GUI otherwise we freeze since we don't have a reactor to work with
+            print("Exiting...")
             _exit(0)
         return cxn
 
     @inlineCallbacks
     def _initData(self, cxn):
-        print("Getting default values...")
+        print("\tGetting default values...")
         try:
             yield self.initData()
         except Exception as e:
             self.guiEnable = False
-            print('Error in initData:', e)
+            print('\tError in initData:', e)
         else:
-            print("Successfully retrieved default values.")
+            print("\tSuccessfully retrieved default values.")
         return cxn
 
     @inlineCallbacks
     def _initGUI(self, cxn):
-        print("Initializing GUI...")
+        print("\tInitializing GUI...")
         try:
             yield self.initGUI()
         except Exception as e:
@@ -125,43 +138,57 @@ class GUIClient(ABC):
         #self.gui.setVisible(True)
         # reenable GUI upon completion of initialization
         if self.guiEnable:
-            print("GUI initialization successful.")
+            print("\tGUI initialization successful.")
             self.gui.setEnabled(True)
         else:
             self.gui.setEnabled(False)
         return cxn
 
-    #@inlineCallbacks
-    def _restart(self):
+    def _connectHeader(self, cxn):
         """
-        Reinitializes the GUI Client.
+        Check if a client has a QClientHeader and attempt to connect to it.
+        This allows us to break out special client-related functions onto
+        the GUI and thus allowing users access.
+
+        For example, this allows users to restart the client in the event of
+        errors.
         """
-        print('Restarting client ...')
-        # todo: maybe move this to a permanent startup sequence?
-        self.gui.setVisible(False)
-        d = self._connectLabrad()
-        d.addCallback(self._initClient)
-        d.addCallback(self._initData)
-        d.addCallback(self._initGUI)
-        print('Finished restart.')
+        try:
+            from inspect import getmembers
+            from EGGS_labrad.clients.Widgets import QClientHeader
+            # check if any members of the GUI are QClientHeaders
+            isQClientHeader = lambda obj: isinstance(obj, QClientHeader)
+            QClientHeader_list = getmembers(self.gui, isQClientHeader)
+            # connect restart button in header to _restart
+            for header_name, header_object in QClientHeader_list:
+                print("\tQClientHeader detected in GUI. Connecting...")
+                header_object.restartbutton.clicked.connect(lambda: self._restart())
+                print("\tConnection to QClientHeader successful.")
+        except Exception as e:
+            print("\t", e)
+            print("Error connecting to QClientHeader in GUI.")
+        return cxn
 
 
     # SHUTDOWN
     def close(self):
+        print("Shutting down...")
         try:
+            print("\tClosing connection to LabRAD...")
             self.cxn.disconnect()
+            print("\tStopping reactor...")
             if self.reactor.running:
                 self.reactor.stop()
-            _exit(0)
         except Exception as e:
             print(e)
-            _exit(0)
+        _exit(0)
 
 
     # SIGNALS
     @inlineCallbacks
-    def on_connect(self, c, message):
+    def _serverConnect(self, c, message):
         server_name = message[1]
+        # refresh so we can check if all necessary servers are there
         yield self.cxn.refresh()
         try:
             server_ind = list(self.servers.values()).index(server_name)
@@ -179,35 +206,52 @@ class GUIClient(ABC):
                 # redo initData to get new state of server
                 yield self._initData(self.cxn)
                 self.gui.setEnabled(True)
-        except ValueError as e:
+        except ValueError:
             pass
         except Exception as e:
             print(e)
 
-    def on_disconnect(self, c, message):
+    def _serverDisconnect(self, c, message):
         server_name = message[1]
         if server_name in self.servers.values():
             print(server_name + ' disconnected, disabling client.')
             self.gui.setEnabled(False)
 
 
-    # SUBCLASSED FUNCTIONS
-    #@property
-    @abstractmethod
-    def getgui(self):
+    # HELPER
+    def _restart(self):
         """
-        To be subclassed.
-        Called during __init__.
-        Used to return an instantiated GUI class so it can be used by GUIClient.
+        Reinitializes the GUI Client.
         """
-        pass
+        print('Restarting client ...')
+        # todo: maybe move this to a permanent startup sequence?
+        self.gui.setVisible(False)
+        d = self._connectLabrad()
+        d.addCallback(self._initClient)
+        d.addCallback(self._getgui)
+        d.addCallback(self._initData)
+        d.addCallback(self._initGUI)
+        d.addCallback(self._connectHeader)
+        print('Finished restart.')
 
+
+    # SUBCLASSED FUNCTIONS
     def initClient(self):
         """
         To be subclassed.
         Called after _connectLabrad.
         Should be used to get necessary servers, setup listeners,
         do polling, and other labrad stuff.
+        """
+        pass
+
+    @abstractmethod
+    def getgui(self):
+        """
+        To be subclassed.
+        Called after initClient.
+        Used to instantiate a GUI class with arbitrary configuration settings.
+        This function is called here to
         """
         pass
 
