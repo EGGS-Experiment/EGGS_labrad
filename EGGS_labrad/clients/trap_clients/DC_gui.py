@@ -126,10 +126,10 @@ class DC_gui(QFrame):
         device_header = QWidget(self)
         device_header_layout = QGridLayout(device_header)
         # create header title
-        device_header_title = QClientHeader(self.name)
-        #device_header_title = QLabel(self.name, device_header)
-        #device_header_title.setAlignment(Qt.AlignCenter)
-        #device_header_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        self.device_header_title = QClientHeader(self.name)
+        #self.device_header_title = QLabel(self.name, device_header)
+        #self.device_header_title.setAlignment(Qt.AlignCenter)
+        #self.device_header_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         # create HV monitor widget
         self.device_hv_monitor = QFrame(device_header)
         self.device_hv_monitor.setFrameStyle(0x0001 | 0x0030)
@@ -160,7 +160,7 @@ class DC_gui(QFrame):
         device_hv_monitor_layout.addWidget(device_hv_i1_label, 3, 0)
         device_hv_monitor_layout.addWidget(self.device_hv_i1, 4, 0)
         # lay out header
-        device_header_layout.addWidget(device_header_title, 0, 0, 1, 2)
+        device_header_layout.addWidget(self.device_header_title, 0, 0, 1, 2)
         device_header_layout.addWidget(self.device_global_onswitch, 1, 0, 1, 1)
         device_header_layout.addWidget(self.device_global_offswitch, 2, 0, 1, 1)
         device_header_layout.addWidget(self.device_global_clear, 3, 0, 1, 1)
