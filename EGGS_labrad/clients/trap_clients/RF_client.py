@@ -22,8 +22,6 @@ class RF_client(GUIClient):
             dev_name = dev_id[1]
             if 'GPIB0::1::INSTR' in dev_name:
                 yield self.rf.select_device(dev_name)
-        # set lockswitch to unlocked
-        self.gui.wav_lockswitch.setChecked(False)
 
     @inlineCallbacks
     def initData(self):
@@ -67,6 +65,8 @@ class RF_client(GUIClient):
         self.gui.mod_freq_toggle.clicked.connect(lambda status: self.rf.toggle_fm(status))
         self.gui.mod_ampl_toggle.clicked.connect(lambda status: self.rf.toggle_am(status))
         self.gui.mod_phase_toggle.clicked.connect(lambda status: self.rf.toggle_pm(status))
+        # set lockswitch to locked
+        self.gui.wav_lockswitch.setChecked(True)
 
 
     # SLOTS
