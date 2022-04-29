@@ -85,8 +85,6 @@ class GUIClient(ABC):
 
     @inlineCallbacks
     def _initClient(self, cxn):
-        # hide GUI until initialization finishes
-        #self.gui.setVisible(False)
         print("\tInitializing client...")
         try:
             yield self.initClient()
@@ -104,7 +102,7 @@ class GUIClient(ABC):
             # get GUI after initClient so we can call any config
             # or initialization variables we need
             yield self.getgui()
-            self.gui.show()
+            #self.gui.show()
             print("\tSuccessfully started up GUI.")
         except Exception as e:
             # just quit if we can't get GUI otherwise we freeze since we don't have a reactor to work with
@@ -135,7 +133,7 @@ class GUIClient(ABC):
             self.guiEnable = False
             print('Error in initGUI:', e)
         # make GUI visible at end so user can at least see that we have a problem
-        #self.gui.setVisible(True)
+        self.gui.show()
         # reenable GUI upon completion of initialization
         if self.guiEnable:
             print("\tGUI initialization successful.")
