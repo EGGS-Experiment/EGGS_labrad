@@ -1,4 +1,3 @@
-from twisted.internet.reactor import callLater
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
@@ -63,11 +62,10 @@ class DC_client(GUIClient):
         # connect each channel
         for channel in self.gui.amo8_channels.values():
             channel.dac.valueChanged.connect(lambda value, _channel_num=channel.number: self.amo8.voltage(_channel_num, value))
-            channel.ramp_start.clicked.connect(lambda voltage=channel.ramp_target.value(), rate=channel.ramp_rate.value(),
-                                               _channel_num=channel.number: self.startRamp(_channel_num, voltage, rate))
-            channel.toggleswitch.clicked.connect(lambda status=channel.lockswitch.isChecked(), _channel_num=channel.number:
+            channel.ramp_start.clicked.connect(lambda blank, _channel_num=channel.number: self.startRamp(_channel_num))
+            channel.toggleswitch.clicked.connect(lambda status, _channel_num=channel.number:
                                                  self.amo8.toggle(_channel_num, status))
-            channel.resetswitch.clicked.connect(lambda: self.reset(channel.number))
+            channel.resetswitch.clicked.connect(lambda blank, _channel_num=channel.number: self.reset(_channel_num))
 
 
     # SLOTS
@@ -103,16 +101,19 @@ class DC_client(GUIClient):
         self.gui.device_hv_i1.setText(str(hv[1]))
 
     @inlineCallbacks
-    def startRamp(self, chan_num, end_voltage, rate):
+    def startRamp(self, chan_num):
+        channel = self.gui.amo8_channels[chan_num]
+        end_voltage = channel.ramp_target.value()
+        rate = channel.ramp_rate.value()
+        yield self.gui.amo8_channels[chan_num].dac.setEnabled(False)
         yield self.amo8.ramp(chan_num, end_voltage, rate)
-        callLater(5, self.finishRamp, chan_num)
-        self.gui.amo8_channels[chan_num].dac.setEnabled(False)
+        self.reactor.callLater(3, self.finishRamp, chan_num)
 
     @inlineCallbacks
     def finishRamp(self, chan_num):
         voltage_res = yield self.amo8.voltage(chan_num)
-        self.gui.amo8_channels[chan_num].dac.setValue(voltage_res)
         self.gui.amo8_channels[chan_num].dac.setEnabled(True)
+        self.gui.amo8_channels[chan_num].dac.setValue(voltage_res)
 
 
 if __name__ == "__main__":

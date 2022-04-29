@@ -36,7 +36,7 @@ class DCServer(SerialDeviceServer, PollingServer):
     serNode = 'MongKok'
     port = 'COM3'
 
-    timeout = WithUnit(3.0, 's')
+    timeout = WithUnit(5.0, 's')
     baudrate = 38400
 
 
@@ -69,6 +69,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         """
         yield self.ser.acquire()
         yield self.ser.write('HVin.r\r\n')
+        sleep(0.2)
         v1 = yield self.ser.read_line('\n')
         i1 = yield self.ser.read_line('\n')
         self.ser.release()
@@ -185,7 +186,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         returnValue(resp)
 
     # RAMP
-    @setting(311, 'Ramp', channel='i', voltage='v', rate='v', returns='s')
+    @setting(311, 'Ramp', channel='i', voltage='v', rate='v', returns='*s')
     def ramp(self, c, channel, voltage, rate):
         """
         Ramps the voltage of a channel at a given rate.
@@ -199,17 +200,14 @@ class DCServer(SerialDeviceServer, PollingServer):
         msg = 'ramp.w {:d} {:f} {:f}\r\n'.format(channel, voltage, rate)
         yield self.ser.acquire()
         yield self.ser.write(msg)
+        sleep(0.2)
         resp = yield self.ser.read_line('\n')
         self.ser.release()
-        resp = resp.strip().split(': ')
-        # todo: fix for better responses
-        if resp[0] == "ramp.w":
-            returnValue(resp[1])
-        else:
-            raise Exception('Error: ramp failed.')
+        resp = resp.strip().split(', ')
+        returnValue(resp)
 
-    @setting(311, 'Ramp Multiple', channels='*i', voltages='*v', rates='*v', returns='*s')
-    def ramp(self, c, channels, voltages, rates):
+    @setting(312, 'Ramp Multiple', channels='*i', voltages='*v', rates='*v', returns='*s')
+    def rampMultiple(self, c, channels, voltages, rates):
         """
         Simultaneously ramps the voltage of multiple channels.
         Arguments:

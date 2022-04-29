@@ -48,7 +48,7 @@ class AMO8_channel(QFrame):
         self.ramp_rate.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.ramp_rate.setDecimals(2)
         self.ramp_rate.setSingleStep(0.01)
-        self.ramp_rate.setRange(0, 10)
+        self.ramp_rate.setRange(0, 1000)
         self.ramp_rate.setKeyboardTracking(False)
         # buttons
         self.toggleswitch = TextChangingButton(("On", "Off"))
