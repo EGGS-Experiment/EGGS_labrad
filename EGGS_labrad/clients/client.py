@@ -77,6 +77,7 @@ class GUIClient(ABC):
     @inlineCallbacks
     def _initClient(self, cxn):
         # disable GUI until initialization finishes
+        # self.gui.setEnabled(False)
         print("Initializing client...")
         try:
             yield self.initClient()

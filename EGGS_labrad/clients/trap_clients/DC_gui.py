@@ -88,7 +88,7 @@ class DC_gui(QFrame):
         self.amo8_channels = {}
         self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
-        self.setFixedSize(575, 675)
+        #self.setFixedSize(575, 675)
         # config
         try:
             from EGGS_labrad.config.dc_config import dc_config
