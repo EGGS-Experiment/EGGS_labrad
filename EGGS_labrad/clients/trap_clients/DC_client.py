@@ -28,7 +28,7 @@ class DC_client(GUIClient):
             yield self.amo8.serial_flush()
         except Exception as e:
             pass
-        # get config from registry
+        # todo: get config from registry
         # connect to signals
         yield self.amo8.signal__toggle_update(TOGGLEID)
         yield self.amo8.addListener(listener=self.updateToggle, source=None, ID=TOGGLEID)
