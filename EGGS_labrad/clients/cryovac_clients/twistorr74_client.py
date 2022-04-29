@@ -18,9 +18,7 @@ class twistorr74_client(GUIClient):
 
     def getgui(self):
         if self.gui is None:
-            print('start gui')
             self.gui = twistorr74_gui()
-            print('return gui')
         return self.gui
 
     @inlineCallbacks

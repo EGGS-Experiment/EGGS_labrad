@@ -14,6 +14,7 @@ class EGGS_gui(QMainWindow):
         super(EGGS_gui, self).__init__(parent)
         self.clipboard = clipboard
         self.reactor = reactor
+        self.cxn = None
         #self.setStyleSheet("background-color:black; color:white; border: 1px solid white")
         self.setWindowTitle('EGGS GUI')
         # set window icon
@@ -26,13 +27,12 @@ class EGGS_gui(QMainWindow):
 
     @inlineCallbacks
     def connect(self):
-        if not self.cxn:
-            if self.LABRADHOST is None:
-                self.LABRADHOST = environ['LABRADHOST']
-            if self.LABRADPASSWORD is None:
-                self.LABRADPASSWORD = environ['LABRADPASSWORD']
-            from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync(self.LABRADHOST, name=self.name, password=self.LABRADPASSWORD)
+        LABRADHOST = environ['LABRADHOST']
+        LABRADPASSWORD = environ['LABRADPASSWORD']
+        from labrad.wrappers import connectAsync
+        self.cxn = yield connectAsync(LABRADHOST, name=self.name, password=LABRADPASSWORD)
+        print(self.cxn)
+        print('1')
         return self.cxn
 
     def makeLayout(self, cxn):
