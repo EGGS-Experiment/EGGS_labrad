@@ -59,11 +59,6 @@ class DC_client(GUIClient):
         self.gui.device_global_onswitch.clicked.connect(lambda: self.amo8.toggle_all(True))
         self.gui.device_global_offswitch.clicked.connect(lambda: self.amo8.toggle_all(False))
         self.gui.device_global_clear.clicked.connect(lambda: self.amo8.clear())
-        self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.doubleramp(1, 2))
-        #self.gui.doublechange_endcaps.clicked.connect(lambda blank: self.doublechange(1, 2))
-        self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.doubleramp(5, 6))
-        #self.gui.doublechange_aramp.clicked.connect(lambda blank: self.doublechange(5, 6))
-        # todo: stop using self.gui.amo8_channels and move config to client side
         # connect each channel
         for channel in self.gui.amo8_channels.values():
             channel.dac.valueChanged.connect(lambda value, _channel_num=channel.number: self.amo8.voltage(_channel_num, value))
@@ -110,33 +105,15 @@ class DC_client(GUIClient):
         channel = self.gui.amo8_channels[chan_num]
         end_voltage = channel.ramp_target.value()
         rate = channel.ramp_rate.value()
-        channel.dac.setEnabled(False)
+        yield self.gui.amo8_channels[chan_num].dac.setEnabled(False)
         yield self.amo8.ramp(chan_num, end_voltage, rate)
-        self.reactor.callLater(3, self.finishRamp, [chan_num])
+        self.reactor.callLater(3, self.finishRamp, chan_num)
 
     @inlineCallbacks
-    def finishRamp(self, chan_nums):
-        for chan_num in chan_nums:
-            voltage_res = yield self.amo8.voltage(chan_num)
-            self.gui.amo8_channels[chan_num].dac.setEnabled(True)
-            self.gui.amo8_channels[chan_num].dac.setValue(voltage_res)
-
-
-    # todo: tmp remove
-    @inlineCallbacks
-    def doubleramp(self, chan1, chan2):
-        # get current values
-        channel1 = self.gui.amo8_channels[chan1]
-        channel2 = self.gui.amo8_channels[chan2]
-        end_voltage1 = channel1.ramp_target.value()
-        rate1 = channel1.ramp_rate.value()
-        end_voltage2 = channel2.ramp_target.value()
-        rate2 = channel2.ramp_rate.value()
-        channel1.dac.setEnabled(False)
-        channel2.dac.setEnabled(False)
-        print([chan1, chan2], [end_voltage1, end_voltage2], [rate1, rate2])
-        yield self.amo8.ramp_multiple([chan1, chan2], [end_voltage1, end_voltage2], [rate1, rate2])
-        self.reactor.callLater(3, self.finishRamp, [chan1, chan2])
+    def finishRamp(self, chan_num):
+        voltage_res = yield self.amo8.voltage(chan_num)
+        self.gui.amo8_channels[chan_num].dac.setEnabled(True)
+        self.gui.amo8_channels[chan_num].dac.setValue(voltage_res)
 
 
 if __name__ == "__main__":

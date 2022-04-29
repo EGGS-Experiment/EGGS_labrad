@@ -118,17 +118,8 @@ class DC_gui(QFrame):
             channel_holder_layout.addWidget(channel_gui, channel_params['row'], channel_params['col'])
         th1 = QCustomGroupBox(channel_holder, "channels")
         # lay out device
-        amo8_layout.addWidget(self.device_header,           *self.headerLayout)
-        amo8_layout.addWidget(channel_holder,               1, 0, 2, 3)
-        #todo: tmp remove
-        self.doubleramp_endcaps = QPushButton("Ramp Both Endcaps")
-        self.doublechange_endcaps = QPushButton("Adjust Both Endcaps")
-        self.doubleramp_aramp = QPushButton("Ramp Both Trap Rods")
-        self.doublechange_aramp = QPushButton("Ramp Both Trap Rods")
-        amo8_layout.addWidget(self.doubleramp_endcaps,      3, 0, 2, 3)
-        amo8_layout.addWidget(self.doublechange_endcaps,    4, 0, 2, 3)
-        amo8_layout.addWidget(self.doubleramp_aramp,        3, 0, 2, 3)
-        amo8_layout.addWidget(self.doublechange_aramp,      4, 0, 2, 3)
+        amo8_layout.addWidget(self.device_header,       *self.headerLayout)
+        amo8_layout.addWidget(channel_holder,           1, 0, 2, 3)
 
     def _createHeader(self):
         # create header layout
