@@ -54,7 +54,7 @@ class TTL_gui(QWidget):
     # todo: qgroupbox for organization
 
     def __init__(self, ttl_list, parent=None):
-        super(TTL_gui, self).__init__(parent)
+        super().__init__(parent)
         self.ttl_list = ttl_list
         # start connections
         self.makeLayout()

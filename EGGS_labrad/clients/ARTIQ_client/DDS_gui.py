@@ -2,8 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
-from EGGS_labrad.config.device_db import device_db
-from EGGS_labrad.clients.Widgets import TextChangingButton
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
 
 
 class AD9910_channel(QFrame):
@@ -53,16 +52,16 @@ class AD9910_channel(QFrame):
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
         # add widgets to layout
-        layout.addWidget(title, 0, 0, 1, 3)
-        layout.addWidget(freqlabel, 1, 0, 1, 1)
-        layout.addWidget(powerlabel, 1, 1, 1, 1)
-        layout.addWidget(attlabel, 1, 2, 1, 1)
-        layout.addWidget(self.freq, 2, 0)
-        layout.addWidget(self.ampl, 2, 1)
-        layout.addWidget(self.att, 2, 2)
-        layout.addWidget(self.resetswitch, 3, 0)
-        layout.addWidget(self.rfswitch, 3, 1)
-        layout.addWidget(self.lockswitch, 3, 2)
+        layout.addWidget(title,                 0, 0, 1, 3)
+        layout.addWidget(freqlabel,             1, 0, 1, 1)
+        layout.addWidget(powerlabel,            1, 1, 1, 1)
+        layout.addWidget(attlabel,              1, 2, 1, 1)
+        layout.addWidget(self.freq,             2, 0)
+        layout.addWidget(self.ampl,             2, 1)
+        layout.addWidget(self.att,              2, 2)
+        layout.addWidget(self.resetswitch,      3, 0)
+        layout.addWidget(self.rfswitch,         3, 1)
+        layout.addWidget(self.lockswitch,       3, 2)
 
     def lock(self, status):
         self.freq.setEnabled(status)
@@ -78,33 +77,12 @@ class DDS_gui(QFrame):
     name = "ARTIQ DDS Client"
     row_length = 4
 
-    def __init__(self, ddb=device_db, name=None, parent=None):
-        super().__init__()
-        self.ddb = ddb
-        self.name = name
+    def __init__(self, urukul_list, parent=None):
+        super().__init__(parent)
+        self.urukul_list = urukul_list
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle(self.name)
-        # device dictionaries
-        self.urukul_list = {}
-        self.ad9910_clients = {}
-        # start GUI
-        self.getDevices()
         self.makeLayout()
-
-    def getDevices(self):
-        # get devices
-        for name, params in self.ddb.items():
-            if 'class' not in params:
-                continue
-            elif params['class'] == 'CPLD':
-                self.urukul_list[name] = {}
-            elif params['class'] == 'AD9910':
-                # assign ad9910 channels to urukuls
-                urukul_name = params["arguments"]["cpld_device"]
-                if urukul_name not in self.urukul_list:
-                    self.urukul_list[urukul_name] = {}
-                self.urukul_list[urukul_name][name] = None
-                self.ad9910_clients[name] = None
 
     def makeLayout(self):
         # create layout
@@ -127,15 +105,8 @@ class DDS_gui(QFrame):
         Creates a group of Urukul channels as a widget.
         """
         # create widget
-        urukul_group = QFrame()
-        urukul_group.setFrameStyle(0x0001 | 0x0010)
-        urukul_group.setLineWidth(2)
-        layout = QGridLayout(urukul_group)
-        # set title
-        title = QLabel(urukul_name)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title, 0, 0, 1, self.row_length)
+        urukul_group = QWidget()
+        urukul_group_layout = QGridLayout(urukul_group)
         # iterator so we don't have to do a for-range loop
         channel_iter = iter([0, 1, 2, 3])
         # layout individual ad9910 channels
@@ -148,9 +119,10 @@ class DDS_gui(QFrame):
             column = channel_num % self.row_length
             # add widget to client list and layout
             self.urukul_list[urukul_name][ad9910_name] = channel_gui
-            layout.addWidget(channel_gui, row, column)
-            # print(name + ' - row:' + str(row) + ', column: ' + str(column))
-        return urukul_group
+            urukul_group_layout.addWidget(channel_gui, row, column)
+        # wrap channels in QGroupBox
+        urukul_wrapped = QCustomGroupBox(urukul_group, urukul_name)
+        return urukul_wrapped
 
 
 if __name__ == "__main__":

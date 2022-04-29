@@ -2,8 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
-from EGGS_labrad.config.device_db import device_db
-from EGGS_labrad.clients.Widgets import TextChangingButton
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
 
 
 class AD5372_channel(QFrame):
