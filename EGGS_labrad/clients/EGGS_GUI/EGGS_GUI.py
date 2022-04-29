@@ -44,11 +44,11 @@ class EGGS_gui(QMainWindow):
         # create subwidgets
         # use connection class for scriptscanner only
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
-        cryovac = self.makeCryovacWidget(self.reactor, cxn_actual)
-        trap = self.makeTrapWidget(self.reactor, cxn_actual)
-        lasers = self.makeLaserWidget(self.reactor, cxn_actual)
-        wavemeter = self.makeWavemeterWidget(self.reactor, cxn_actual)
-        imaging = self.makeImagingWidget(self.reactor, cxn_actual)
+        cryovac = self.makeCryovacWidget(self.reactor, cxn)
+        trap = self.makeTrapWidget(self.reactor, cxn)
+        lasers = self.makeLaserWidget(self.reactor, cxn)
+        wavemeter = self.makeWavemeterWidget(self.reactor, cxn)
+        imaging = self.makeImagingWidget(self.reactor, cxn)
         # create tabs for each subwidget
         self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryovac, '&Cryovac')
