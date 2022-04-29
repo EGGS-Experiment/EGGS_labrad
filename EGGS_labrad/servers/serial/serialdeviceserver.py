@@ -499,7 +499,9 @@ class SerialDeviceServer(LabradServer):
         self.ser.release()
         returnValue(resp)
 
-    @setting(222226, 'Serial Flush', returns='')
+
+    # HELPER
+    @setting(222231, 'Serial Flush', returns='')
     def serial_flush(self, c):
         """
         Flush the serial input and output buffers.
@@ -509,9 +511,17 @@ class SerialDeviceServer(LabradServer):
         yield self.ser.flush_output()
         self.ser.release()
 
+    @setting(222232, 'Serial Release', returns='')
+    def serial_release(self, c):
+        """
+        Try to release the serial comm lock in case
+        we have a problem.
+        """
+        self.ser.release()
+
 
     # DEBUGGING
-    @setting(222247, 'Serial Debug', status='b', returns='b')
+    @setting(222241, 'Serial Debug', status='b', returns='b')
     def serialDebug(self, c, status=None):
         """
         Tells the serial bus server to print input/output.
