@@ -23,6 +23,11 @@ class DC_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
+        # try to clear serial buffers upon connection
+        try:
+            yield self.amo8.serial_flush()
+        except Exception as e:
+            pass
         # get config from registry
         # connect to signals
         yield self.amo8.signal__toggle_update(TOGGLEID)
