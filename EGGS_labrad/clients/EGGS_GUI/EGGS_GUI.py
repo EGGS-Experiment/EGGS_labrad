@@ -26,9 +26,13 @@ class EGGS_gui(QMainWindow):
 
     @inlineCallbacks
     def connect(self):
-        from EGGS_labrad.clients.connect import connection
-        self.cxn = connection(name=self.name)
-        yield self.cxn.connect()
+        if not self.cxn:
+            if self.LABRADHOST is None:
+                self.LABRADHOST = environ['LABRADHOST']
+            if self.LABRADPASSWORD is None:
+                self.LABRADPASSWORD = environ['LABRADPASSWORD']
+            from labrad.wrappers import connectAsync
+            self.cxn = yield connectAsync(self.LABRADHOST, name=self.name, password=self.LABRADPASSWORD)
         return self.cxn
 
     def makeLayout(self, cxn):
@@ -38,7 +42,6 @@ class EGGS_gui(QMainWindow):
         self.tabWidget = QTabWidget()
         #self.tabWidget.setMovable(True)
         # create subwidgets
-        cxn_actual = cxn.cxn
         # use connection class for scriptscanner only
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac = self.makeCryovacWidget(self.reactor, cxn_actual)
