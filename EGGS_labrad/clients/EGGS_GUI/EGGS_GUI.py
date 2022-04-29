@@ -162,12 +162,7 @@ if __name__ == "__main__":
     from twisted.internet import reactor
     client_tmp = EGGS_gui(reactor)
     # show gui
-    if hasattr(client_tmp, 'show'):
-        client_tmp.show()
-    elif hasattr(client_tmp, 'gui'):
-        gui_tmp = client_tmp.gui
-        if hasattr(gui_tmp, 'show'):
-            client_tmp.gui.show()
+    client_tmp.showMaximized()
     # start reactor
     reactor.callWhenRunning(app.exec)
     reactor.addSystemEventTrigger('after', 'shutdown', client_tmp.close)
