@@ -6,14 +6,19 @@ class dc_config(object):
 
     Attributes
     ----------
-    row_length: int
+    headerLayout: (int, int)
+        Specifies the layout of the header as [row, column].
+        Starts from 0.
 
-    info: dict
+    channel_dict: dict
     {
         channel_name: (num, row, col)
     }
+        Specifies the channels we want to be displayed
+        on the client GUI and their location.
+
     """
-    row_length = 2
+    headerLayout = (0, 1)
 
     channeldict = {
         'E Endcap':     {'num': 1, 'row': 1, 'col': 0},

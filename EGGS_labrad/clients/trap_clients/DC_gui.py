@@ -3,7 +3,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox
 
 
 class AMO8_channel(QFrame):
@@ -92,11 +92,10 @@ class DC_gui(QFrame):
         # config
         try:
             from EGGS_labrad.config.dc_config import dc_config
-            self.row_length = dc_config.row_length
+            self.headerLayout = dc_config.headerLayout
             self.active_channels = dc_config.channeldict
         except Exception as e:
             print(e)
-            print('kk1')
         # create GUI
         self.createGUI()
 
@@ -107,16 +106,20 @@ class DC_gui(QFrame):
         amo8_layout = QGridLayout(self)
         # create header
         self.device_header = self._createHeader()
-        # layout individual channels (chosen via class variable)
+        # layout individual channels (chosen via config)
+        channel_holder = QWidget()
+        channel_holder_layout = QGridLayout(channel_holder)
         for channel_name, channel_params in self.active_channels.items():
             channel_num = channel_params['num']
             # initialize GUIs for each channel
             channel_gui = AMO8_channel(channel_name, channel_num)
             # add widget to client list and layout
             self.amo8_channels[channel_num] = channel_gui
-            amo8_layout.addWidget(channel_gui, channel_params['row'], channel_params['col'])
-        # layout rest of device
-        amo8_layout.addWidget(self.device_header, 0, 0, 1, 1)
+            channel_holder_layout.addWidget(channel_gui, channel_params['row'], channel_params['col'])
+        th1 = QCustomGroupBox(channel_holder, "channels")
+        # lay out device
+        amo8_layout.addWidget(channel_holder,           1, 0, 2, 3)
+        amo8_layout.addWidget(self.device_header,       *self.headerLayout)
 
     def _createHeader(self):
         # create header layout
