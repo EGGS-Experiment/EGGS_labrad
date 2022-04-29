@@ -18,8 +18,6 @@ class dc_config(object):
         on the client GUI and their location.
 
     """
-    row_length = 2
-
     headerLayout = (0, 1)
 
     channeldict = {
