@@ -10,7 +10,7 @@ try:
 except:
     from .scripting import scripting_widget
     from .tree_view import ParametersEditor
-
+# todo: modernize script scanner
 
 class script_scanner_gui(QWidget):
     SIGNALID = 319245

@@ -63,7 +63,7 @@ class EGGS_gui(QMainWindow):
 
     def makeScriptScannerWidget(self, reactor, cxn):
         from EGGS_labrad.clients.script_scanner_gui import script_scanner_gui
-        scriptscanner = script_scanner_gui(reactor, cxn=cxn)
+        scriptscanner = script_scanner_gui(reactor)
         return scriptscanner
 
     def makeCryovacWidget(self, reactor, cxn):
@@ -152,8 +152,11 @@ class EGGS_gui(QMainWindow):
 
 
 if __name__ == "__main__":
-    # from EGGS_labrad.clients import runClient
-    # runClient(EGGS_gui)
+    # set up logging
+    from sys import stdout
+    from twisted.python import log
+    log.startLogging(stdout)
+    # set up qapplication
     app = QApplication([])
     try:
         import qt5reactor

@@ -46,7 +46,6 @@ class GUIClient(ABC):
         d.addCallback(self._connectHeader)
 
 
-
     # STARTUP DISPATCHERS
     @inlineCallbacks
     def _connectLabrad(self):
