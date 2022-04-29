@@ -92,11 +92,10 @@ class DC_gui(QFrame):
         # config
         try:
             from EGGS_labrad.config.dc_config import dc_config
-            self.row_length = dc_config.row_length
+            self.headerLayout = dc_config.headerLayout
             self.active_channels = dc_config.channeldict
         except Exception as e:
             print(e)
-            print('kk1')
         # create GUI
         self.createGUI()
 
@@ -107,7 +106,7 @@ class DC_gui(QFrame):
         amo8_layout = QGridLayout(self)
         # create header
         self.device_header = self._createHeader()
-        # layout individual channels (chosen via class variable)
+        # layout individual channels (chosen via config)
         for channel_name, channel_params in self.active_channels.items():
             channel_num = channel_params['num']
             # initialize GUIs for each channel
@@ -116,7 +115,7 @@ class DC_gui(QFrame):
             self.amo8_channels[channel_num] = channel_gui
             amo8_layout.addWidget(channel_gui, channel_params['row'], channel_params['col'])
         # layout rest of device
-        amo8_layout.addWidget(self.device_header, 0, 0, 1, 1)
+        amo8_layout.addWidget(self.device_header, *self.headerLayout)
 
     def _createHeader(self):
         # create header layout
