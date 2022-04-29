@@ -39,7 +39,7 @@ class QClientHeader(QFrame):
         layout.addWidget(self.title)
         layout.addWidget(self.restartbutton)
         # set fixed size
-        self.setFixedSize(1.8 * self.title.sizeHint())
+        self.setMinimumSize(1.8 * self.title.sizeHint())
 
     def _makeSerial(self):
         pass

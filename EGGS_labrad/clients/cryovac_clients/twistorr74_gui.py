@@ -15,8 +15,9 @@ class twistorr74_gui(QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        #self.setMinimumSize(230, 325)
-        #self.setMaximumSize(260, 380)
+        #self.setMinimumSize(240, 325)
+        self.setMinimumSize(280, 370)
+        self.setMaximumSize(300, 400)
         # twistorr 74
         self.twistorr_label = QClientHeader("Twistorr 74 Pump")
         # self.twistorr_label = QLabel('Twistorr 74 Pump')

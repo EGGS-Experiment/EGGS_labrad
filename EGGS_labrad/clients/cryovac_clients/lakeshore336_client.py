@@ -1,5 +1,4 @@
 from time import time
-from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient, createTrunk

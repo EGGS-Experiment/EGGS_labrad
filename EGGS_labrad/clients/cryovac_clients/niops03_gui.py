@@ -1,8 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QDoubleSpinBox, QComboBox, QGridLayout
+from PyQt5.QtWidgets import QFrame, QLabel, QDoubleSpinBox, QComboBox, QGridLayout
 
-from EGGS_labrad.clients.Widgets import TextChangingButton as _TextChangingButton
+from EGGS_labrad.clients.Widgets import TextChangingButton as _TextChangingButton, QClientHeader
 
 
 class TextChangingButton(_TextChangingButton):
@@ -21,10 +21,10 @@ class niops03_gui(QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        self.setFixedSize(350, 400)
-        self.all_label = QLabel('NIOPS03 Pump')
-        self.all_label.setFont(QFont(shell_font, pointSize=20))
-        self.all_label.setAlignment(Qt.AlignCenter)
+        self.setFixedSize(350, 445)
+        self.all_label = QClientHeader('NIOPS03 Pump')
+        #self.all_label.setFont(QFont(shell_font, pointSize=20))
+        #self.all_label.setAlignment(Qt.AlignCenter)
         # niops03
         self.ip_label = QLabel('Ion Pump')
         self.ip_label.setFont(QFont(shell_font, pointSize=15))
