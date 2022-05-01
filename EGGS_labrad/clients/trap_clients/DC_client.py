@@ -115,6 +115,7 @@ class DC_client(GUIClient):
         self.reactor.callLater(3, self.finishRamp, [chan_num])
 
     @inlineCallbacks
+<<<<<<< HEAD
     def finishRamp(self, chan_nums):
         for chan_num in chan_nums:
             voltage_res = yield self.amo8.voltage(chan_num)
@@ -133,9 +134,15 @@ class DC_client(GUIClient):
             end_voltage_list.append(channel_gui.ramp_target.value())
             rate_list.append(channel_gui.ramp_rate.value())
             channel_gui.dac.setEnabled(False)
-        print(channel_list, end_voltage_list, rate_list)
         yield self.amo8.ramp_multiple(channel_list, end_voltage_list, rate_list)
         self.reactor.callLater(3, self.finishRamp, channel_list)
+
+    @inlineCallbacks
+    def finishRamp(self, chan_nums):
+        for chan_num in chan_nums:
+            voltage_res = yield self.amo8.voltage(chan_num)
+            self.gui.amo8_channels[chan_num].dac.setValue(voltage_res)
+            self.gui.amo8_channels[chan_num].dac.setEnabled(True)
 
 
 if __name__ == "__main__":

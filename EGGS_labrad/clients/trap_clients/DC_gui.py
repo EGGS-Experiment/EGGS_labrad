@@ -16,38 +16,38 @@ class AMO8_channel(QFrame):
         self.name = name
         self.number = num
         self.setFrameStyle(0x0001 | 0x0030)
-        self.setFixedSize(275, 225)
+        self.setFixedSize(270, 200)
         self.makeLayout(name)
 
     def makeLayout(self, title):
         layout = QGridLayout(self)
         # title
         self.title = QLabel(title)
-        self.title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         self.title.setAlignment(Qt.AlignCenter)
         # dac
         self.dac_label = QLabel('Output Voltage (V)')
         self.dac = QDoubleSpinBox()
-        self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=14))
         self.dac.setDecimals(2)
         self.dac.setSingleStep(0.01)
         self.dac.setRange(0, 850)
         self.dac.setKeyboardTracking(False)
         # ramp
         self.ramp_start = QPushButton('Ramp')
-        self.ramp_start.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        self.ramp_start.setFont(QFont('MS Shell Dlg 2', pointSize=11))
         self.ramp_target_label = QLabel('End Voltage (V)')
         self.ramp_target = QDoubleSpinBox()
-        self.ramp_target.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        self.ramp_target.setDecimals(2)
-        self.ramp_target.setSingleStep(0.01)
+        self.ramp_target.setFont(QFont('MS Shell Dlg 2', pointSize=14))
+        self.ramp_target.setDecimals(1)
+        self.ramp_target.setSingleStep(0.1)
         self.ramp_target.setRange(0, 850)
         self.ramp_target.setKeyboardTracking(False)
         self.ramp_rate_label = QLabel('Ramp Rate (V/s)')
         self.ramp_rate = QDoubleSpinBox()
-        self.ramp_rate.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        self.ramp_rate.setDecimals(2)
-        self.ramp_rate.setSingleStep(0.01)
+        self.ramp_rate.setFont(QFont('MS Shell Dlg 2', pointSize=14))
+        self.ramp_rate.setDecimals(1)
+        self.ramp_rate.setSingleStep(0.1)
         self.ramp_rate.setRange(0, 1000)
         self.ramp_rate.setKeyboardTracking(False)
         # buttons
@@ -106,16 +106,25 @@ class DC_gui(QFrame):
         amo8_layout = QGridLayout(self)
         # create header
         self.device_header = self._createHeader()
-        # layout individual channels (chosen via config)
+        # create holder widget for the channels
         channel_holder = QWidget()
         channel_holder_layout = QGridLayout(channel_holder)
+        # add channel buttons to channel_holder
+        self.doubleramp_endcaps = QPushButton("Ramp Both Endcaps")
+        self.doubleramp_aramp = QPushButton("Ramp Both Trap Rods")
+        channel_holder_layout.addWidget(self.doubleramp_endcaps,      0, 0)
+        channel_holder_layout.addWidget(self.doubleramp_aramp,        0, 2)
+        # self.doublechange_endcaps = QPushButton("Adjust Both Endcaps")
+        # self.doublechange_aramp = QPushButton("Adjust Both Trap Rods")
+        # amo8_layout.addWidget(self.doublechange_endcaps,    4, 0)
+        # amo8_layout.addWidget(self.doublechange_aramp,      4, 1)
         for channel_name, channel_params in self.active_channels.items():
             channel_num = channel_params['num']
             # initialize GUIs for each channel
             channel_gui = AMO8_channel(channel_name, channel_num)
             # add widget to client list and layout
             self.amo8_channels[channel_num] = channel_gui
-            channel_holder_layout.addWidget(channel_gui, channel_params['row'], channel_params['col'])
+            channel_holder_layout.addWidget(channel_gui, channel_params['row'] + 1, channel_params['col'])
         channel_holder_wrapped = QCustomGroupBox(channel_holder, "DC Channels")
         # lay out device
         amo8_layout.addWidget(self.device_header,           *self.headerLayout)
