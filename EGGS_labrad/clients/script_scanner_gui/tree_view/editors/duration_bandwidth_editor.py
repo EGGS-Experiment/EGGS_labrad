@@ -1,12 +1,18 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-import numpy as np
-import os
+from os import path
+from numpy import pi
+from PyQt5 import uic
+from PyQt5.QtWidgets import QAbstractItemDelegate, QLineEdit, QWidget, QDataWidgetMapper
 
-basepath =  os.path.dirname(__file__)
-path = os.path.join(basepath,"..","..","Views", "DurationBandwidthEditor.ui")
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "..", "Views", "DurationBandwidthEditor.ui")
 base, form = uic.loadUiType(path)
 
-class parameter_delegate(QtWidgets.QAbstractItemDelegate):
+
+class parameter_delegate(QAbstractItemDelegate):
+    """
+    todo: document
+    """
+
     def __init__(self, parent):
         super(parameter_delegate, self).__init__()
         self.parent = parent
@@ -46,13 +52,17 @@ class parameter_delegate(QtWidgets.QAbstractItemDelegate):
     def setModelData(self, editor, model, index):
         if index.column() == 6:
             return
-        elif isinstance(editor, QtWidgets.QLineEdit):
+        elif isinstance(editor, QLineEdit):
             value = editor.text()
         else:
             value = editor.value()
         model.setData(index, value)
 
+
 class DurationBandwidthEditor(base, form):
+    """
+    todo: document
+    """
     
     max_columns = 10
     
@@ -62,7 +72,7 @@ class DurationBandwidthEditor(base, form):
         self.WithUnit = WithUnit
         
         self.setupUi(self)
-        self._dataMapper = QtWidgets.QDataWidgetMapper(self)
+        self._dataMapper = QDataWidgetMapper(self)
         self._dataMapper.setItemDelegate(parameter_delegate(self))
         self.connect_signals()
     
@@ -74,13 +84,12 @@ class DurationBandwidthEditor(base, form):
         try:
             duration = self.uiValue.value()
             duration = self.WithUnit(duration, str(self.uiValue.suffix()))
-            bandwidth = 1.0 / ( 2.0 * np.pi * duration)
+            bandwidth = 1.0 / (2.0 * pi * duration)
         except ZeroDivisionError:
             pass
         else:
             self.uiBandwidth.setValue(bandwidth[str(self.uiBandwidth.suffix())])
 
-    
     def on_new_decimals(self, decimals):
         for widget in [self.uiMin, self.uiMax, self.uiValue, self.uiBandwidth]:
             widget.setSingleStep(10**-decimals)
@@ -94,7 +103,7 @@ class DurationBandwidthEditor(base, form):
         self._dataMapper.addMapping(self.uiMin, 3)
         self._dataMapper.addMapping(self.uiMax, 4)
         self._dataMapper.addMapping(self.uiValue, 5)
-        self._dataMapper.addMapping(QtWidgets.QWidget(self), 6)
+        self._dataMapper.addMapping(QWidget(self), 6)
      
     def setSelection(self, current):
         parent = current.parent()

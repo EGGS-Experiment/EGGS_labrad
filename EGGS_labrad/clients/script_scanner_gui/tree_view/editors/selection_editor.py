@@ -1,11 +1,18 @@
-from PyQt5 import QtWidgets, QtCore, uic
-import os
+from os import path
+from PyQt5 import uic
+from PyQt5.QtCore import QVariant
+from PyQt5.QtWidgets import QDataWidgetMapper, QAbstractItemDelegate
 
-basepath =  os.path.dirname(__file__)
-path = os.path.join(basepath,"..","..","Views", "SelectionEditor.ui")
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "..", "Views", "SelectionEditor.ui")
 base, form = uic.loadUiType(path)
 
-class simple_selection_delegate(QtWidgets.QAbstractItemDelegate):
+
+class simple_selection_delegate(QAbstractItemDelegate):
+    """
+    Todo: document
+    """
+
     def __init__(self, parent):
         super(simple_selection_delegate, self).__init__()
         self.parent = parent
@@ -27,13 +34,18 @@ class simple_selection_delegate(QtWidgets.QAbstractItemDelegate):
     
     def setModelData(self, editor, model, index):
         if index.column() == 3:
-            model.setData(index, QtCore.QVariant(self.parent.uiValue.currentText()))
+            model.setData(index, QVariant(self.parent.uiValue.currentText()))
+
 
 class SelectionSimpleEditor(base, form):
+    """
+    todo: document
+    """
+
     def __init__(self, parent=None):
         super(SelectionSimpleEditor, self).__init__(parent)
         self.setupUi(self)
-        self._dataMapper = QtWidgets.QDataWidgetMapper(self)
+        self._dataMapper = QDataWidgetMapper(self)
         self._dataMapper.setItemDelegate(simple_selection_delegate(self))
 
     def setModel(self, proxyModel):

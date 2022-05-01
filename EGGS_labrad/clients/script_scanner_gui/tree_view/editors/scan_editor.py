@@ -1,12 +1,18 @@
-from PyQt5 import QtCore, QtWidgets, uic
-from numpy import linspace
-import os
+from os import path
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QWidget, QLineEdit, QAbstractItemDelegate, QDataWidgetMapper
 
-basepath =  os.path.dirname(__file__)
-path = os.path.join(basepath,"..","..","Views", "ScanEditor.ui")
-scanBase, scanForm = uic.loadUiType(path)
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "..", "Views", "ScanEditor.ui")
+base, form = uic.loadUiType(path)
 
-class scan_delegate(QtWidgets.QAbstractItemDelegate):
+
+class scan_delegate(QAbstractItemDelegate):
+    """
+    Todo: document
+    """
+
     def __init__(self, parent):
         super(scan_delegate, self).__init__()
         self.parent = parent
@@ -47,14 +53,18 @@ class scan_delegate(QtWidgets.QAbstractItemDelegate):
     def setModelData(self, editor, model, index):
         if index.column() == 8:
             return
-        elif isinstance(editor, QtWidgets.QLineEdit):
+        elif isinstance(editor, QLineEdit):
             value = editor.text()
         else:
             value = editor.value()
         model.setData(index, value)
 
+
 class ScanWidget(scanBase, scanForm):
-    on_new_scan = QtCore.pyqtSignal(float,float,int)
+    """
+    todo: document
+    """
+    on_new_scan = pyqtSignal(float,float,int)
     
     def __init__(self, parent=None):
         super(ScanWidget, self).__init__(parent)
@@ -155,10 +165,14 @@ class ScanWidget(scanBase, scanForm):
         steps = 1 +  max(0, steps) #make sure at least 1
         return steps
 
+
 class ScanEditor(ScanWidget):
+    """
+    Todo: document
+    """
     def __init__(self, parent=None):
         super(ScanEditor, self).__init__(parent)
-        self._dataMapper = QtWidgets.QDataWidgetMapper(self)
+        self._dataMapper = QDataWidgetMapper(self)
         self._dataMapper.setItemDelegate(scan_delegate(self))
 
     def setModel(self, proxyModel):
@@ -171,7 +185,7 @@ class ScanEditor(ScanWidget):
         self._dataMapper.addMapping(self.uiStart, 5)
         self._dataMapper.addMapping(self.uiStop, 6)
         self._dataMapper.addMapping(self.uiSteps, 7)
-        self._dataMapper.addMapping(QtWidgets.QWidget(self), 8)
+        self._dataMapper.addMapping(QWidget(self), 8)
      
     def setSelection(self, current):
         parent = current.parent()

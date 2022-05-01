@@ -1,5 +1,13 @@
+"""
+todo: document
+"""
+__all__ = ["Node", "CollectionNode", "ParameterNode", "BoolNode", "EventNode",
+           "StringNode", "ScanNode", "SelectionSimpleNode", "LineSelectionNode",
+           "SidebandElectorNode", "DurationBandwidthNode", "SpectrumSensitivityNode"]
+
+
 class Node(object):
-    def __init__(self, name, parent=None): 
+    def __init__(self, name, parent=None):
         super(Node, self).__init__()
         from labrad.units import WithUnit
         self.WithUnit = WithUnit
@@ -30,7 +38,7 @@ class Node(object):
 
     def name(self):
         return self._name
-    
+
     def filter_text(self):
         return self.name()
 
@@ -39,42 +47,43 @@ class Node(object):
             return self._children[row]
         except IndexError:
             return None
-    
+
     def childCount(self):
         return len(self._children)
 
     def parent(self):
         return self._parent
-    
+
     def row(self):
         if self._parent is not None:
             return self._parent._children.index(self)
 
     def data(self, column):
         if column == 0: return self.name()
-    
+
     def setData(self, column, value):
         pass
-    
+
     def clear_data(self):
         del self._children[:]
 
+
 class CollectionNode(Node):
-    def __init__(self, name, parent = None):
+    def __init__(self, name, parent=None):
         super(CollectionNode, self).__init__(name, parent)
-    
+
     def filter_text(self):
         return ''.join([child.filter_text() for child in self._children])
-    
+
+
 class ParameterNode(Node):
-    
     columns = 6
-    
+
     def __init__(self, name, info, parent=None):
         super(ParameterNode, self).__init__(name, parent)
         self._collection = parent.name()
         self.set_full_info(info)
-        
+
     def set_full_info(self, info):
         try:
             self._units = info[2].units
@@ -82,22 +91,23 @@ class ParameterNode(Node):
             self._max = info[1][self._units]
             self._value = info[2][self._units]
         except AttributeError:
-            #unitless
+            # unitless
             self._units = ''
             self._min = info[0]
             self._max = info[1]
             self._value = info[2]
-    
+
     def path(self):
         return (self._collection, self.name())
 
     def full_parameter(self):
         if self._units:
             WithUnit = self.WithUnit
-            return ('parameter', [WithUnit(self._min, self._units), WithUnit(self._max, self._units), WithUnit(self._value, self._units)])
+            return ('parameter', [WithUnit(self._min, self._units), WithUnit(self._max, self._units),
+                                  WithUnit(self._value, self._units)])
         else:
             return ('parameter', [self._min, self._max, self._value])
-        
+
     def data(self, column):
         if column < 1:
             return super(ParameterNode, self).data(column)
@@ -113,13 +123,13 @@ class ParameterNode(Node):
             return self._value
         elif column == 6:
             return self._units
-    
+
     def filter_text(self):
         return self.parent().name() + self.name()
-    
+
     def string_format(self):
         return '{0} {1}'.format(self._value, self._units)
-        
+
     def setData(self, column, value):
         if column == 3:
             self._min = value
@@ -130,30 +140,30 @@ class ParameterNode(Node):
         elif column == 6:
             self._units = value
 
+
 class BoolNode(Node):
-    
     columns = 3
-    
+
     def __init__(self, name, info, parent=None):
         super(BoolNode, self).__init__(name, parent)
         self._collection = parent.name()
         self.set_full_info(info)
-        
+
     def set_full_info(self, info):
         self._value = info
-    
+
     def filter_text(self):
         return self.parent().name() + self.name()
-    
+
     def string_format(self):
         return '{0}'.format(self._value)
-    
+
     def path(self):
         return (self._collection, self.name())
-    
+
     def full_parameter(self):
         return ('bool', self._value)
-    
+
     def data(self, column):
         if column < 1:
             return super(BoolNode, self).data(column)
@@ -163,20 +173,20 @@ class BoolNode(Node):
             return self._collection
         elif column == 3:
             return self._value
-    
+
     def setData(self, column, value):
         if column == 3:
             self._value = value
 
+
 class EventNode(Node):
-    
     columns = 7
-    
+
     def __init__(self, name, info, parent=None):
         super(EventNode, self).__init__(name, parent)
         self._collection = parent.name()
         self.set_full_info(info)
-        
+
     def set_full_info(self, info):
         state, chan, time, chan_info, limit_info = info
         self._units = limit_info[0].units
@@ -186,13 +196,13 @@ class EventNode(Node):
         self._bool = state
         self._chan = chan
         self._options = chan_info
-        
+
     def filter_text(self):
         return self.parent().name() + self.name()
-    
+
     def string_format(self):
         return 'Channel {2} is {1} at {0} '.format(self._time, self._bool, self._chan)
-    
+
     def path(self):
         return (self._collection, self.name())
 
@@ -200,8 +210,8 @@ class EventNode(Node):
         WithUnit = self.WithUnit
         return ('event', (self._bool, self._chan, self._time, self._options,
                           [WithUnit(self._min, self._units), WithUnit(self._max, self._units)]
-                         ))
-    
+                          ))
+
     def data(self, column):
         if column < 1:
             return super(EventNode, self).data(column)
@@ -211,7 +221,7 @@ class EventNode(Node):
             return self._collection
         elif column == 3:
             return self._bool
-        elif  column == 4:
+        elif column == 4:
             return self._chan
         elif column == 5:
             return self._time
@@ -219,12 +229,11 @@ class EventNode(Node):
             return self._options
         elif column == 7:
             return self._min
-        elif column ==8:
+        elif column == 8:
             return self._max
         elif column == 9:
             return self._units
 
-    
     def setData(self, column, value):
         print('shortcuts' + str(value))
         raise ZeroDivisionError
@@ -235,30 +244,30 @@ class EventNode(Node):
         elif column == 5:
             self._time = value
 
+
 class StringNode(Node):
-    
     columns = 3
-    
+
     def __init__(self, name, info, parent=None):
         super(StringNode, self).__init__(name, parent)
         self._collection = parent.name()
         self.set_full_info(info)
-        
+
     def set_full_info(self, info):
         self._value = info
-    
+
     def filter_text(self):
         return self.parent().name() + self.name()
-    
+
     def string_format(self):
         return '{0}'.format(self._value)
-    
+
     def full_parameter(self):
         return ('string', str(self._value))
-    
+
     def path(self):
         return (self._collection, self.name())
-    
+
     def data(self, column):
         if column < 1:
             return super(StringNode, self).data(column)
@@ -268,15 +277,15 @@ class StringNode(Node):
             return self._collection
         elif column == 3:
             return self._value
-    
+
     def setData(self, column, value):
         print('shortcuts' + str(value))
         raise ZeroDivisionError
         if column == 3:
             self._value = value
 
-class ScanNode(Node):
 
+class ScanNode(Node):
     columns = 8
 
     def __init__(self, name, info, parent=None):
@@ -309,12 +318,13 @@ class ScanNode(Node):
         WithUnit = self.WithUnit
         if self._units:
             return ('scan', ([WithUnit(self._min, self._units), WithUnit(self._max, self._units)],
-                    (WithUnit(self._scan_start, self._units), WithUnit(self._scan_stop, self._units), self._scan_points)
-                    ))
+                             (WithUnit(self._scan_start, self._units), WithUnit(self._scan_stop, self._units),
+                              self._scan_points)
+                             ))
         else:
             return ('scan', ([self._min, self._max],
-                    (self._scan_start, self._scan_stop, self._scan_points)
-                         ))
+                             (self._scan_start, self._scan_stop, self._scan_points)
+                             ))
 
     def data(self, column):
         if column < 1:
@@ -365,32 +375,32 @@ class ScanNode(Node):
             self._scan_points = value
         elif column == 8:
             self._units = value
-            
+
+
 class SelectionSimpleNode(Node):
-    
     columns = 4
-    
+
     def __init__(self, name, info, parent=None):
         super(SelectionSimpleNode, self).__init__(name, parent)
         self._collection = parent.name()
         self.set_full_info(info)
-        
+
     def set_full_info(self, info):
         self._value = info[0]
         self._options = info[1]
-    
+
     def filter_text(self):
         return self.parent().name() + self.name()
-    
+
     def string_format(self):
         return '{0}'.format(self._value)
-    
+
     def full_parameter(self):
         return ('selection_simple', ('{0}'.format(self._value), self._options))
-    
+
     def path(self):
         return (self._collection, self.name())
-    
+
     def data(self, column):
         if column < 1:
             return super(SelectionSimpleNode, self).data(column)
@@ -402,7 +412,7 @@ class SelectionSimpleNode(Node):
             return self._value
         elif column == 4:
             return self._options
-    
+
     def setData(self, column, value):
         print('shortcuts' + str(value))
         raise ZeroDivisionError
@@ -411,32 +421,32 @@ class SelectionSimpleNode(Node):
         elif column == 4:
             self._options = value
 
+
 class LineSelectionNode(Node):
-    
     columns = 4
-    
+
     def __init__(self, name, info, parent=None):
         super(LineSelectionNode, self).__init__(name, parent)
         self._collection = parent.name()
         self.set_full_info(info)
-        
+
     def set_full_info(self, info):
         self._value = info[0]
         self._dict = dict(info[1])
-    
+
     def filter_text(self):
         return self.parent().name() + self.name()
-    
+
     def string_format(self):
         show = self._dict[str(self._value)]
         return '{0}   ( {1} )'.format(show, self._value)
-    
+
     def full_parameter(self):
-        return ('line_selection', (str(self._value), list(self._dict.items() ) ) )
-    
+        return ('line_selection', (str(self._value), list(self._dict.items())))
+
     def path(self):
         return (self._collection, self.name())
-    
+
     def data(self, column):
         if column < 1:
             return super(LineSelectionNode, self).data(column)
@@ -448,7 +458,7 @@ class LineSelectionNode(Node):
             return self._value
         elif column == 4:
             return self._dict
-    
+
     def setData(self, column, value):
         print('shortcuts' + str(value))
         raise ZeroDivisionError
@@ -457,21 +467,21 @@ class LineSelectionNode(Node):
         elif column == 4:
             self._dict = value
 
+
 class SidebandElectorNode(Node):
-    
     columns = 6
-    
+
     def __init__(self, name, info, parent=None):
         super(SidebandElectorNode, self).__init__(name, parent)
         self._collection = parent.name()
         self.set_full_info(info)
-        
+
     def set_full_info(self, info):
         self._radial1, self._radial2, self._axial, self._micromotion = info
-    
+
     def filter_text(self):
         return self.parent().name() + self.name()
-    
+
     def string_format(self):
         s = ''
         labels = ['radial 1 : ', 'radial 2 : ', 'axial : ', 'micormotion : ']
@@ -480,13 +490,13 @@ class SidebandElectorNode(Node):
             if sideband:
                 s += '{0} {1:+d}'.format(name, sideband)
         return s
-    
+
     def full_parameter(self):
         return ('sideband_selection', [self._radial1, self._radial2, self._axial, self._micromotion])
-    
+
     def path(self):
         return (self._collection, self.name())
-    
+
     def data(self, column):
         if column < 1:
             return super(SidebandElectorNode, self).data(column)
@@ -502,7 +512,7 @@ class SidebandElectorNode(Node):
             return self._axial
         elif column == 6:
             return self._micromotion
-    
+
     def setData(self, column, value):
         print('shortcuts' + str(value))
         raise ZeroDivisionError
@@ -515,15 +525,15 @@ class SidebandElectorNode(Node):
         if column == 6:
             self._micromotion = value
 
+
 class DurationBandwidthNode(Node):
-    
     columns = 6
-    
+
     def __init__(self, name, info, parent=None):
         super(DurationBandwidthNode, self).__init__(name, parent)
         self._collection = parent.name()
         self.set_full_info(info)
-        
+
     def set_full_info(self, info):
         try:
             self._units = info[2].units
@@ -531,22 +541,23 @@ class DurationBandwidthNode(Node):
             self._max = info[1][self._units]
             self._value = info[2][self._units]
         except AttributeError:
-            #unitless
+            # unitless
             self._units = ''
             self._min = info[0]
             self._max = info[1]
             self._value = info[2]
-    
+
     def path(self):
         return (self._collection, self.name())
 
     def full_parameter(self):
         if self._units:
             WithUnit = self.WithUnit
-            return ('duration_bandwidth', [WithUnit(self._min, self._units), WithUnit(self._max, self._units), WithUnit(self._value, self._units)])
+            return ('duration_bandwidth', [WithUnit(self._min, self._units), WithUnit(self._max, self._units),
+                                           WithUnit(self._value, self._units)])
         else:
             return ('duration_bandwidth', [self._min, self._max, self._value])
-        
+
     def data(self, column):
         if column < 1:
             return super(DurationBandwidthNode, self).data(column)
@@ -562,13 +573,13 @@ class DurationBandwidthNode(Node):
             return self._value
         elif column == 6:
             return self._units
-    
+
     def filter_text(self):
         return self.parent().name() + self.name()
-    
+
     def string_format(self):
         return '{0} {1}'.format(self._value, self._units)
-        
+
     def setData(self, column, value):
         print('shortcuts' + str(value))
         raise ZeroDivisionError
@@ -581,38 +592,38 @@ class DurationBandwidthNode(Node):
         elif column == 6:
             self._units = value
 
+
 class SpectrumSensitivityNode(Node):
-    
     columns = 6
-    
+
     def __init__(self, name, info, parent=None):
         super(SpectrumSensitivityNode, self).__init__(name, parent)
         from labrad.units import WithUnit
         self.WithUnit = WithUnit
         self._collection = parent.name()
         self.set_full_info(info)
-        
+
     def set_full_info(self, info):
         self._span = info[0]['kHz']
         self._resolution = info[1]['kHz']
         self._duration = info[2]['us']
         self._amplitude = info[3]['dBm']
-    
+
     def filter_text(self):
         return self.parent().name() + self.name()
-    
+
     def string_format(self):
         label = 'Span: {0} kHz, Res.: {1} kHz, Duration: {2} us, Ampl. {3} dBm'.format(
-                        self._span, self._resolution, self._duration, self._amplitude)
+            self._span, self._resolution, self._duration, self._amplitude)
         return label
-    
+
     def full_parameter(self):
         return ('spectrum_sensitivity', (self.WithUnit(self._span, 'kHz'), self.WithUnit(self._resolution, 'kHz'),
-                                         self.WithUnit(self._duration, 'us'),self.WithUnit(self._amplitude, 'dBm')) )
-    
+                                         self.WithUnit(self._duration, 'us'), self.WithUnit(self._amplitude, 'dBm')))
+
     def path(self):
         return (self._collection, self.name())
-    
+
     def data(self, column):
         if column < 1:
             return super(SpectrumSensitivityNode, self).data(column)
@@ -628,7 +639,7 @@ class SpectrumSensitivityNode(Node):
             return self._duration
         elif column == 6:
             return self._amplitude
-    
+
     def setData(self, column, value):
         print('shortcuts' + str(value))
         raise ZeroDivisionError

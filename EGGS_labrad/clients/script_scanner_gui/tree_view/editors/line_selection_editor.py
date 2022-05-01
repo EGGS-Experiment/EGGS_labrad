@@ -1,11 +1,18 @@
-from PyQt5 import QtWidgets, QtGui, QtCore, uic
-import os
+from os import path
+from PyQt5 import uic
+from PyQt5.QtCore import QVariant
+from PyQt5.QtWidgets import QAbstractItemDelegate, QDataWidgetMapper
 
-basepath =  os.path.dirname(__file__)
-path = os.path.join(basepath,"..","..","Views", "SelectionEditor.ui")
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "..", "Views", "SelectionEditor.ui")
 base, form = uic.loadUiType(path)
 
-class line_selection_delegate(QtWidgets.QAbstractItemDelegate):
+
+class line_selection_delegate(QAbstractItemDelegate):
+    """
+    Todo: document
+    """
+
     def __init__(self, parent):
         super(line_selection_delegate, self).__init__()
         self.parent = parent
@@ -28,13 +35,18 @@ class line_selection_delegate(QtWidgets.QAbstractItemDelegate):
     def setModelData(self, editor, model, index):
         if index.column() == 3:
             data = self.parent.uiValue.itemData(self.parent.uiValue.currentIndex() )
-            model.setData(index, QtCore.QVariant(data.toString()))
+            model.setData(index, QVariant(data.toString()))
+
 
 class line_selection_editor(base, form):
+    """
+    todo: document
+    """
+
     def __init__(self, parent=None):
         super(line_selection_editor, self).__init__(parent)
         self.setupUi(self)
-        self._dataMapper = QtWidgets.QDataWidgetMapper(self)
+        self._dataMapper = QDataWidgetMapper(self)
         self._dataMapper.setItemDelegate(line_selection_delegate(self))
 
     def setModel(self, proxyModel):
@@ -49,3 +61,4 @@ class line_selection_editor(base, form):
         parent = current.parent()
         self._dataMapper.setRootIndex(parent)
         self._dataMapper.setCurrentModelIndex(current)
+        

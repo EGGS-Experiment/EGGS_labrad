@@ -1,15 +1,21 @@
-from PyQt5 import QtWidgets, uic
-import os
+from os import path
+from PyQt5 import uic
+from PyQt5.QtWidgets import QDataWidgetMapper
 
-basepath =  os.path.dirname(__file__)
-path = os.path.join(basepath,"..","..","Views", "StringEditor.ui")
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "..", "Views", "StringEditor.ui")
 base, form = uic.loadUiType(path)
 
+
 class StringEditor(base, form):
+    """
+    Todo: document
+    """
+
     def __init__(self, parent=None):
         super(StringEditor, self).__init__(parent)
         self.setupUi(self)
-        self._dataMapper = QtWidgets.QDataWidgetMapper(self)
+        self._dataMapper = QDataWidgetMapper(self)
         self.connect_layout()
         
     def connect_layout(self):

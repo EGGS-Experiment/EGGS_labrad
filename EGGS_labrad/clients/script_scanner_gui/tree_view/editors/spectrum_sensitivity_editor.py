@@ -1,15 +1,21 @@
-from PyQt5 import QtWidgets, uic
-import os
+from os import path
+from PyQt5 import uic
+from PyQt5.QtWidgets import QDataWidgetMapper
 
-basepath =  os.path.dirname(__file__)
-path = os.path.join(basepath,"..","..","Views", "ScanSensitivity.ui")
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "..", "Views", "ScanSensitivity.ui")
 base, form = uic.loadUiType(path)
 
+
 class spectrum_sensitivity_editor(base, form):
+    """
+    Todo: document
+    """
+
     def __init__(self, parent=None):
         super(spectrum_sensitivity_editor, self).__init__(parent)
         self.setupUi(self)
-        self._dataMapper = QtWidgets.QDataWidgetMapper(self)
+        self._dataMapper = QDataWidgetMapper(self)
 
     def setModel(self, proxyModel):
         self._proxyModel = proxyModel

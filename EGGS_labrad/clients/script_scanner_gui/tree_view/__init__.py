@@ -1,1 +1,1 @@
-from .Controllers import ParametersEditor
+from .ParametersEditor import ParametersEditor

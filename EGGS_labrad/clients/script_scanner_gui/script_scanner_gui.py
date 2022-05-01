@@ -7,10 +7,11 @@ from EGGS_labrad.clients.script_scanner_gui.connect import connection
 try:
     from scripting import scripting_widget
     from tree_view import ParametersEditor
-except:
+except Exception as e:
     from .scripting import scripting_widget
     from .tree_view import ParametersEditor
 # todo: modernize script scanner
+
 
 class script_scanner_gui(QWidget):
     SIGNALID = 319245
@@ -193,6 +194,8 @@ class script_scanner_gui(QWidget):
     def get_scannable_parameters(self):
         return self.ParametersEditor.get_scannable_parameters()
 
+
+    # SIGNALS
     def on_running_script_finished_error(self, signal, info):
         ident, message = info
         self.scripting_widget.runningScriptFinished(ident)

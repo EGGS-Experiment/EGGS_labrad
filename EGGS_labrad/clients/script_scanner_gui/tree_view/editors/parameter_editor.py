@@ -1,11 +1,17 @@
-from PyQt5 import QtWidgets, QtCore, uic
-import os
+from os import path
+from PyQt5 import uic
+from PyQt5.QtWidgets import QWidget, QAbstractItemDelegate, QDataWidgetMapper
 
-basepath =  os.path.dirname(__file__)
-path = os.path.join(basepath,"..","..","Views", "ParameterEditor.ui")
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "..", "Views", "ParameterEditor.ui")
 paramBase, paramForm = uic.loadUiType(path)
 
-class parameter_delegate(QtWidgets.QAbstractItemDelegate):
+
+class parameter_delegate(QAbstractItemDelegate):
+    """
+    Todo: document
+    """
+
     def __init__(self, parent):
         super(parameter_delegate, self).__init__()
         self.parent = parent
@@ -49,14 +55,18 @@ class parameter_delegate(QtWidgets.QAbstractItemDelegate):
             value = editor.value()
         model.setData(index, value)
 
+
 class ParameterEditor(paramBase, paramForm):
+    """
+    todo: document
+    """
     
     max_columns = 10
     
     def __init__(self, parent=None):
         super(ParameterEditor, self).__init__(parent)
         self.setupUi(self)
-        self._dataMapper = QtWidgets.QDataWidgetMapper(self)
+        self._dataMapper = QDataWidgetMapper(self)
         self._dataMapper.setItemDelegate(parameter_delegate(self))
         self.connect_signals()
     
@@ -76,7 +86,7 @@ class ParameterEditor(paramBase, paramForm):
         self._dataMapper.addMapping(self.uiMin, 3)
         self._dataMapper.addMapping(self.uiMax, 4)
         self._dataMapper.addMapping(self.uiValue, 5)
-        self._dataMapper.addMapping(QtWidgets.QWidget(self), 6)
+        self._dataMapper.addMapping(QWidget(self), 6)
      
     def setSelection(self, current):
         parent = current.parent()

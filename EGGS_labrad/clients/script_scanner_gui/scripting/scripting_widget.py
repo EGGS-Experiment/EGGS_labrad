@@ -1,7 +1,6 @@
 """
 Final GUI. Puts everything together.
 """
-
 from PyQt5 import QtCore, QtWidgets
 from .scheduled_widget import scheduled_combined
 from .running_scans_widget import running_combined

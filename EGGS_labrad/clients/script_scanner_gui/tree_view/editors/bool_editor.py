@@ -1,15 +1,21 @@
-from PyQt5 import QtWidgets, uic
-import os
+from os import path
+from PyQt5 import uic
+from PyQt5.QtWidgets import QDataWidgetMapper
 
-basepath =  os.path.dirname(__file__)
-path = os.path.join(basepath,"..","..","Views", "BooleanEditor.ui")
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "..", "Views", "BooleanEditor.ui")
 base, form = uic.loadUiType(path)
 
+
 class BoolEditor(base, form):
+    """
+    Todo: document
+    """
+
     def __init__(self, parent=None):
         super(BoolEditor, self).__init__(parent)
         self.setupUi(self)
-        self._dataMapper = QtWidgets.QDataWidgetMapper(self)
+        self._dataMapper = QDataWidgetMapper(self)
         self.connect_layout()
         
     def connect_layout(self):

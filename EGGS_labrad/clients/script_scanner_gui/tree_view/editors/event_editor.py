@@ -1,15 +1,21 @@
-from PyQt5 import QtWidgets, uic
-import os
+from os import path
+from PyQt5 import uic
+from PyQt5.QtWidgets import QWidget, QDataWidgetMapper
 
-basepath =  os.path.dirname(__file__)
-path = os.path.join(basepath,"..","..","Views", "EventEditor.ui")
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "..", "Views", "EventEditor.ui")
 base, form = uic.loadUiType(path)
 
+
 class EventEditor(base, form):
+    """
+    Todo: document
+    """
+
     def __init__(self, parent=None):
         super(EventEditor, self).__init__(parent)
         self.setupUi(self)
-        self._dataMapper = QtWidgets.QDataWidgetMapper(self)
+        self._dataMapper = QDataWidgetMapper(self)
         self.connect_layout()
         
     def connect_layout(self):
@@ -52,7 +58,7 @@ class EventEditor(base, form):
         self._dataMapper.addMapping(self.uiBool, 3)
         self._dataMapper.addMapping(self.uiChan, 4)
         self._dataMapper.addMapping(self.uiTime, 5)
-        self._dataMapper.addMapping(QtWidgets.QWidget(self), 8)
+        self._dataMapper.addMapping(QWidget(self), 8)
 
     def setSelection(self, current):
         parent = current.parent()

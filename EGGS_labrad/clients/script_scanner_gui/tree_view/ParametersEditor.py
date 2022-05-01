@@ -1,16 +1,18 @@
 from PyQt5 import QtCore, uic
-from .Data import Node
-from .FilterModel import FilterModel
-from .Models import ParametersTreeModel
+from .Nodes import Node
+from .Models import *
 from .PropertiesEditor import PropertiesEditor
-import os
+from os import path
 
-basepath = os.path.dirname(__file__)
-path = os.path.join(basepath, "..", "Views", "ParametersEditor.ui")
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "Views", "ParametersEditor.ui")
 base, form = uic.loadUiType(path)
 
 
 class ParametersEditor(base, form):
+    """
+    todo: document
+    """
 
     on_parameter_change = QtCore.pyqtSignal(tuple, tuple)
 

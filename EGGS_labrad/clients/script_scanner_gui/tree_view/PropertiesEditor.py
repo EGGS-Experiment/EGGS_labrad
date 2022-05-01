@@ -1,29 +1,24 @@
 from PyQt5 import uic
-from .Data import ParameterNode, ScanNode, BoolNode, StringNode, SelectionSimpleNode, LineSelectionNode, EventNode
-from .Data import SidebandElectorNode, DurationBandwidthNode, SpectrumSensitivityNode
-from .editors.parameter_editor import ParameterEditor
-from .editors.scan_editor import ScanEditor
-from .editors.bool_editor import BoolEditor
-from .editors.string_editor import StringEditor
-from .editors.selection_editor import SelectionSimpleEditor
-from .editors.line_selection_editor import line_selection_editor
-from .editors.sideband_selection_editor import sideband_selection_editor
-from .editors.duration_bandwidth_editor import DurationBandwidthEditor
-from .editors.spectrum_sensitivity_editor import spectrum_sensitivity_editor
-from .editors.event_editor import EventEditor
+from .Nodes import SidebandElectorNode, DurationBandwidthNode, SpectrumSensitivityNode
+from .Nodes import ParameterNode, ScanNode, BoolNode, StringNode, SelectionSimpleNode, LineSelectionNode, EventNode
+from .editors import *
 
-import os
-basepath =  os.path.dirname(__file__)
-path = os.path.join(basepath,"..","Views", "Editors.ui")
+from os import path
+basepath = path.dirname(__file__)
+path = path.join(basepath, "..", "Views", "Editors.ui")
 propBase, propForm = uic.loadUiType(path)
 
+
 class PropertiesEditor(propBase, propForm):
+    """
+    todo: document
+    """
     
     def __init__(self, parent = None):
         super(propBase, self).__init__(parent)
         self.setupUi(self)
         self._proxyModel = None
-        #create the edtiors
+        # create editors
         self._parametersEditor = ParameterEditor(self)
         self._scanEditor = ScanEditor(self)
         self._boolEditor = BoolEditor(self)
@@ -34,14 +29,14 @@ class PropertiesEditor(propBase, propForm):
         self._DurationBandwidthEditor = DurationBandwidthEditor(self)
         self._spectrum_sensitivity_editor = spectrum_sensitivity_editor(self)
         self._eventEditor = EventEditor(self)
-        self._editors = [self._parametersEditor, self._scanEditor, self._stringEditor, 
-                         self._boolEditor, self._selectionSimpleEditor, self._lineSelectionEdtior,
-                         self._sideband_selection_editor, self._DurationBandwidthEditor, self._spectrum_sensitivity_editor,
-                         self._eventEditor]
-                         
-        #add editors to layout
+        self._editors = [
+            self._parametersEditor, self._scanEditor, self._stringEditor, self._boolEditor,
+            self._selectionSimpleEditor, self._lineSelectionEdtior, self._sideband_selection_editor,
+            self._DurationBandwidthEditor, self._spectrum_sensitivity_editor, self._eventEditor
+        ]
+        # add editors to layout
         self.layoutSpecs.addWidget(self._parametersEditor)
-        #hide the edtiors
+        # hide the edtiors
         for edit in self._editors:
             edit.setVisible(False)
                
@@ -81,9 +76,9 @@ class PropertiesEditor(propBase, propForm):
                 edit.setVisible(False) 
         
     def setModel(self, proxyModel):
-        '''
-        sets the model for all the editors
-        '''
+        """
+        Sets the model for all the editors.
+        """
         self._proxyModel = proxyModel
         for edit in self._editors:
             edit.setModel(proxyModel)
