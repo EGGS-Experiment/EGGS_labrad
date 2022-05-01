@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from EGGS_labrad.clients.Widgets import TextChangingButton as _TextChangingButton
+from EGGS_labrad.clients.Widgets import QCustomGroupBox
 
 
 class TextChangingButton(_TextChangingButton):

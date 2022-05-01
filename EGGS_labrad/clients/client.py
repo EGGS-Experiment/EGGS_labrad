@@ -5,6 +5,7 @@ from os import _exit, environ
 from abc import ABC, abstractmethod
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients.utils import createTrunk
+from EGGS_labrad.clients.Widgets.QInitializePlaceholder import QInitializePlaceholder
 
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
@@ -33,6 +34,9 @@ class GUIClient(ABC):
         # get core servers in addition to whichever servers are specified
         core_servers = {'registry': 'Registry', 'dv': 'Data Vault'}
         self.servers.update(core_servers)
+        # show placeholder GUI while we initialize
+        #self.gui = QInitializePlaceholder()
+        #self.gui.show()
         # initialization sequence
         print("Starting client...")
         d = self._connectLabrad()
@@ -97,6 +101,9 @@ class GUIClient(ABC):
     def _getgui(self, cxn):
         print("\tStarting up GUI...")
         try:
+            # close placeholder GUI
+            #self.gui.hide()
+            #self.gui = None
             # get GUI after initClient so we can call any config
             # or initialization variables we need
             yield self.getgui()
