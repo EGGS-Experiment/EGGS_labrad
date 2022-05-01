@@ -43,7 +43,9 @@ class scripting_widget(QtWidgets.QWidget):
         return self.parent.get_scannable_parameters()
 
     def clear_all(self):
-        '''clears all information'''
+        """
+        Clears all information.
+        """
         self.selector.clear_all()
         self.running.clear_all()
         self.scheduled.clear_all()

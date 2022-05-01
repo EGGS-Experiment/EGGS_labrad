@@ -6,6 +6,9 @@ from .shared_widgets import fixed_width_button
 
 
 class scheduled_widget(QtWidgets.QWidget):
+    """
+    todo: document
+    """
 
     def __init__(self, reactor, ident, name, duration, font=None, parent=None):
         super(scheduled_widget, self).__init__(parent)
@@ -51,6 +54,9 @@ class scheduled_widget(QtWidgets.QWidget):
 
 
 class scheduled_list(QtWidgets.QTableWidget):
+    """
+    todo: document
+    """
     on_cancel = QtCore.pyqtSignal(int)
     on_new_duration = QtCore.pyqtSignal(int, float)
 
@@ -133,6 +139,10 @@ class scheduled_list(QtWidgets.QTableWidget):
 
 
 class scheduled_combined(QtWidgets.QWidget):
+    """
+    todo: document
+    """
+
     def __init__(self, reactor, font=None, parent=None):
         super(scheduled_combined, self).__init__(parent)
         self.reactor = reactor

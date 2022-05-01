@@ -1,14 +1,21 @@
 """
 Displays currently running experiments.
 """
-from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt, QSignalMapper, QSize, pyqtSignal
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QSizePolicy, QLabel,\
+    QAbstractItemView, QTableWidget, QHeaderView, QGridLayout
+
 from .shared_widgets import fixed_width_button, progress_bar
 
 
-class script_status_widget(QtWidgets.QWidget):
-    on_pause = QtCore.pyqtSignal()
-    on_continue = QtCore.pyqtSignal()
-    on_stop = QtCore.pyqtSignal()
+class script_status_widget(QWidget):
+    """
+    todo: document
+    """
+    on_pause = pyqtSignal()
+    on_continue = pyqtSignal()
+    on_stop = pyqtSignal()
 
     def __init__(self, reactor, ident, name, font=None, parent=None):
         super(script_status_widget, self).__init__(parent)
@@ -16,25 +23,25 @@ class script_status_widget(QtWidgets.QWidget):
         self.ident = ident
         self.name = name
         self.parent = parent
-        self.font = QtGui.QFont(self.font().family(), pointSize=10)
+        self.font = QFont(self.font().family(), pointSize=10)
         if self.font is None:
-            self.font = QtGui.QFont()
+            self.font = QFont()
         self.setup_layout()
         self.connect_layout()
         self.finished = False
 
     def setup_layout(self):
-        layout = QtWidgets.QHBoxLayout(self)
-        self.id_label = QtWidgets.QLabel('{0}'.format(self.ident))
+        layout = QHBoxLayout(self)
+        self.id_label = QLabel('{0}'.format(self.ident))
         self.id_label.setFont(self.font)
         self.id_label.setMinimumWidth(30)
         self.id_label.setMinimumHeight(15)
-        self.id_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.id_label.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        self.name_label = QtWidgets.QLabel(self.name)
+        self.id_label.setAlignment(Qt.AlignCenter)
+        self.id_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.name_label = QLabel(self.name)
         self.name_label.setFont(self.font)
-        self.name_label.setAlignment(QtCore.Qt.AlignLeft)
-        self.name_label.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
+        self.name_label.setAlignment(Qt.AlignLeft)
+        self.name_label.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
         self.name_label.setMinimumWidth(150)
         self.name_label.setMinimumHeight(15)
         self.progress_bar = progress_bar(self.reactor, self.parent)
@@ -72,9 +79,9 @@ class script_status_widget(QtWidgets.QWidget):
         self.reactor.stop()
 
 
-class running_scans_list(QtWidgets.QTableWidget):
-    on_pause = QtCore.pyqtSignal(int, bool)
-    on_stop = QtCore.pyqtSignal(int)
+class running_scans_list(QTableWidget):
+    on_pause = pyqtSignal(int, bool)
+    on_stop = pyqtSignal(int)
 
     def __init__(self, reactor, font=None, parent=None):
         super(running_scans_list, self).__init__(parent)
@@ -82,15 +89,15 @@ class running_scans_list(QtWidgets.QTableWidget):
         self.parent = parent
         self.font = font
         if self.font is None:
-            self.font = QtGui.QFont('MS Shell Dlg 2', pointSize=12)
+            self.font = QFont('MS Shell Dlg 2', pointSize=12)
         self.setupLayout()
         self.d = {}
-        self.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
-        self.mapper_pause = QtCore.QSignalMapper()
+        self.setSelectionMode(QAbstractItemView.NoSelection)
+        self.mapper_pause = QSignalMapper()
         self.mapper_pause.mapped.connect(self.emit_pause)
-        self.mapper_continue = QtCore.QSignalMapper()
+        self.mapper_continue = QSignalMapper()
         self.mapper_continue.mapped.connect(self.emit_continue)
-        self.mapper_stop = QtCore.QSignalMapper()
+        self.mapper_stop = QSignalMapper()
         self.mapper_stop.mapped.connect(self.on_stop.emit)
 
     def emit_pause(self, ident):
@@ -100,13 +107,13 @@ class running_scans_list(QtWidgets.QTableWidget):
         self.on_pause.emit(ident, False)
 
     def setupLayout(self):
-        self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.setColumnCount(1)
         self.horizontalHeader().hide()
         self.verticalHeader().hide()
         self.setShowGrid(False)
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
-                           QtWidgets.QSizePolicy.MinimumExpanding)
+        self.setSizePolicy(QSizePolicy.MinimumExpanding,
+                           QSizePolicy.MinimumExpanding)
 
     def add(self, ident, name):
         ident = int(ident)
@@ -157,7 +164,7 @@ class running_scans_list(QtWidgets.QTableWidget):
         height = 0
         for i in range(self.rowCount()):
             height += self.rowHeight(i)
-        return QtCore.QSize(width, height)
+        return QSize(width, height)
 
     def finish(self, ident):
         try:
@@ -169,7 +176,7 @@ class running_scans_list(QtWidgets.QTableWidget):
         self.reactor.stop()
 
 
-class running_combined(QtWidgets.QWidget):
+class running_combined(QWidget):
     """
     Brings a title together with the list of running experiments.
     Basically does nothing new, just a convenience class.
@@ -181,17 +188,17 @@ class running_combined(QtWidgets.QWidget):
         self.parent = parent
         self.font = font
         if self.font is None:
-            self.font = QtGui.QFont('MS Shell Dlg 2', pointSize=12)
+            self.font = QFont('MS Shell Dlg 2', pointSize=12)
         self.setupLayout()
 
     def clear_all(self):
         self.scans_list.clear()
 
     def setupLayout(self):
-        layout = QtWidgets.QGridLayout()
-        title = QtWidgets.QLabel("Running", font=self.font)
-        title.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        title.setAlignment(QtCore.Qt.AlignLeft)
+        layout = QGridLayout()
+        title = QLabel("Running", font=self.font)
+        title.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        title.setAlignment(Qt.AlignLeft)
         self.scans_list = running_scans_list(self.reactor, self.parent)
         layout.addWidget(title, 0, 0, 1, 3)
         layout.addWidget(self.scans_list, 1, 0, 3, 3)

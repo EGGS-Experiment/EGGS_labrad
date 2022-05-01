@@ -4,12 +4,8 @@ from EGGS_labrad.clients.script_scanner_gui.connect import connection
 
 # import constituent widgets
 # need to use try/except since relative imports don't work when called externally
-try:
-    from scripting import scripting_widget
-    from tree_view import ParametersEditor
-except Exception as e:
-    from .scripting import scripting_widget
-    from .tree_view import ParametersEditor
+from .scripting import scripting_widget
+from .tree_view import ParametersEditor
 
 
 class script_scanner_gui(QWidget):
