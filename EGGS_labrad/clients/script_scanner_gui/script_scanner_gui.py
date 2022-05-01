@@ -415,6 +415,5 @@ class script_scanner_gui(QWidget):
 
 
 if __name__ == "__main__":
-    from EGGS_labrad.clients import runGUI
-
-    runGUI(script_scanner_gui)
+    from EGGS_labrad.clients import runClient
+    runClient(script_scanner_gui)

@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QLineEdit, QAbstractItemDelegate, QDataWidg
 
 basepath = path.dirname(__file__)
 path = path.join(basepath, "..", "..", "Views", "ScanEditor.ui")
-base, form = uic.loadUiType(path)
+scanBase, scanForm = uic.loadUiType(path)
 
 
 class scan_delegate(QAbstractItemDelegate):

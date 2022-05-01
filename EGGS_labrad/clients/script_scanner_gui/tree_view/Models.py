@@ -24,7 +24,7 @@ class ParametersTreeModel(QAbstractItemModel):
         Returns the count.
         """
         if not parent.isValid():
-            return self._rootNode.childCount
+            return self._rootNode.childCount()
         else:
             return parent.internalPointer().childCount()
 

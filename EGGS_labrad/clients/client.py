@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients.utils import createTrunk
 
-
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
 
