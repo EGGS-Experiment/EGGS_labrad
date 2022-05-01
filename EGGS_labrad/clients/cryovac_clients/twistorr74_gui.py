@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, QClientHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton, QClientHeader, QClientMenuHeader
 
 
 class twistorr74_gui(QFrame):
@@ -15,7 +15,6 @@ class twistorr74_gui(QFrame):
 
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
-        #self.setMinimumSize(240, 325)
         self.setMinimumSize(280, 370)
         self.setMaximumSize(300, 400)
         # twistorr 74
@@ -51,23 +50,20 @@ class twistorr74_gui(QFrame):
     def makeLayout(self):
         layout = QGridLayout(self)
         shell_font = 'MS Shell Dlg 2'
+        self.th1 = QClientMenuHeader(serial=True)
 
-        col1 = 0
-        col2 = 1
-
-        layout.addWidget(self.twistorr_label, 0, col1, 1, 1)
-
-        layout.addWidget(self.pressure_display_label, 1, col1)
-        layout.addWidget(self.pressure_display, 2, col1)
-        layout.addWidget(self.power_display_label, 3, col1)
-        layout.addWidget(self.power_display, 4, col1)
-        layout.addWidget(self.speed_display_label, 5, col1)
-        layout.addWidget(self.speed_display, 6, col1)
-
-        layout.addWidget(self.twistorr_toggle, 7, col1)
-        layout.addWidget(self.twistorr_lockswitch, 8, col1)
-        layout.addWidget(self.twistorr_record, 9, col1)
-
+        row1, col1 = (1, 0)
+        layout.addWidget(self.th1,           0, 0)
+        layout.addWidget(self.twistorr_label,           0 + row1, col1, 1, 1)
+        layout.addWidget(self.pressure_display_label,   1 + row1, col1)
+        layout.addWidget(self.pressure_display,         2 + row1, col1)
+        layout.addWidget(self.power_display_label,      3 + row1, col1)
+        layout.addWidget(self.power_display,            4 + row1, col1)
+        layout.addWidget(self.speed_display_label,      5 + row1, col1)
+        layout.addWidget(self.speed_display,            6 + row1, col1)
+        layout.addWidget(self.twistorr_toggle,          7 + row1, col1)
+        layout.addWidget(self.twistorr_lockswitch,      8 + row1, col1)
+        layout.addWidget(self.twistorr_record,          9 + row1, col1)
         # layout.minimumSize()
 
 
