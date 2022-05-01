@@ -31,8 +31,6 @@ class EGGS_gui(QMainWindow):
         LABRADPASSWORD = environ['LABRADPASSWORD']
         from labrad.wrappers import connectAsync
         self.cxn = yield connectAsync(LABRADHOST, name=self.name, password=LABRADPASSWORD)
-        print(self.cxn)
-        print('1')
         return self.cxn
 
     def makeLayout(self, cxn):
