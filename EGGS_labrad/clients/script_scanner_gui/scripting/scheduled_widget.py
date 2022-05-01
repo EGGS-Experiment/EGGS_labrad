@@ -2,16 +2,7 @@
 Shows all scheduled experiments.
 """
 from PyQt5 import QtGui, QtCore, QtWidgets
-
-
-class fixed_width_button(QtWidgets.QPushButton):
-    def __init__(self, text, size):
-        super(fixed_width_button, self).__init__(text)
-        self.size = size
-        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-
-    def sizeHint(self):
-        return QtCore.QSize(*self.size)
+from .shared_widgets import fixed_width_button
 
 
 class scheduled_widget(QtWidgets.QWidget):

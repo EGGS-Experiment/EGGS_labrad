@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QMessageBox
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.clients.script_scanner_gui.connect import connection
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QMessageBox
+from .connect import connection
 
 # import constituent widgets
 # need to use try/except since relative imports don't work when called externally
@@ -10,10 +10,13 @@ try:
 except Exception as e:
     from .scripting import scripting_widget
     from .tree_view import ParametersEditor
-# todo: modernize script scanner
 
 
 class script_scanner_gui(QWidget):
+    """
+    todo: document
+    """
+
     SIGNALID = 319245
     name = 'Script Scanner Client'
 

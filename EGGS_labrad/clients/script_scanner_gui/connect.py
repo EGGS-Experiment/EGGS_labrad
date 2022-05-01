@@ -8,20 +8,21 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 
 class connection(object):
-    '''
-    The shared connection object allows multiple asynchronous clients to share a single connection to the manager
+    """
+    The shared connection object allows multiple asynchronous
+    clients to share a single connection to the manager.
+
     version = 1.0.1
-    '''
+    """
 
     def __init__(self, **kwargs):
-        #holds servers that we need
+        # holds servers that we need
         self._servers = {}
-        #holds startup actions for each server
+        # holds startup actions for each server
         self._on_connect = {}
         # holds disconnect actions for each server
         self._on_disconnect = {}
-
-        #set name from kwargs
+        # set name from kwargs
         if 'name' not in kwargs:
             kwargs['name'] = ''
         self.name = kwargs['name']
@@ -74,12 +75,12 @@ class connection(object):
             server_name     (str)   : the connected server
             action          (func)  : the function to run when the server connects
         """
-        #check if server is connected; do nothing if not
+        # check if server is connected; do nothing if not
         connected = yield self._confirm_connected(server_name)
         if not connected:
             print('{} not available.'.format(server_name))
             return
-        #add action to list of server disconnect actions
+        # add action to list of server disconnect actions
         try:
             self._on_connect[server_name].append(action)
         except KeyError:
@@ -93,19 +94,19 @@ class connection(object):
             server_name     (str)   : the connected server
             action          (func)  : the function to run when the server disconnects
         """
-        #check if server is connected; do nothing if not
+        # check if server is connected; do nothing if not
         connected = yield self._confirm_connected(server_name)
         if not connected:
             print('{} not available.'.format(server_name))
             return
-        #add action to list of server disconnect actions
+        # add action to list of server disconnect actions
         try:
             self._on_disconnect[server_name].append(action)
         except KeyError:
             self._on_disconnect[server_name] = [action]
 
 
-    #Signal functions
+    # SIGNALS
     @inlineCallbacks
     def setupListeners(self):
         """
@@ -156,7 +157,8 @@ class connection(object):
             for action in actions:
                 yield action()
 
-    #Helper functions
+
+    # HELPER
     @inlineCallbacks
     def _confirm_connected(self, server_name):
         """

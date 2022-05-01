@@ -4,16 +4,6 @@ Shows all queued experiments.
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 
-class fixed_width_button(QtWidgets.QPushButton):
-    def __init__(self, text, size):
-        super(fixed_width_button, self).__init__(text)
-        self.size = size
-        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-
-    def sizeHint(self):
-        return QtCore.QSize(*self.size)
-
-
 class queued_widget(QtWidgets.QWidget):
     def __init__(self, reactor, ident, name, font=None, parent=None):
         super(queued_widget, self).__init__(parent)
@@ -159,5 +149,5 @@ class queued_combined(QtWidgets.QWidget):
 
 
 if __name__ == "__main__":
-    from EGGS_labrad.clients import runGUI
-    runGUI(queued_combined)
+    from EGGS_labrad.clients import runClient
+    runClient(queued_combined)

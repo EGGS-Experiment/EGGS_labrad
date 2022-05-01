@@ -11,7 +11,7 @@ base, form = uic.loadUiType(path)
 
 class ParametersEditor(base, form):
     """
-    todo: document
+    The final GUI for TreeView. Puts all of its constituent widgets together.
     """
 
     on_parameter_change = QtCore.pyqtSignal(tuple, tuple)
