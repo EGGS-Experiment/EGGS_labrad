@@ -73,11 +73,11 @@ class EGGS_gui(QMainWindow):
         from EGGS_labrad.clients.cryovac_clients.fma1700a_client import fma1700a_client
         #from EGGS_labrad.clients.cryovac_clients.f70_client import f70_client
         clients = {
-            lakeshore336_client:    (0, 0),
-            RGA_client:             (0, 1),
-            twistorr74_client:      (0, 2),
-            niops03_client:         (1, 1),
-            fma1700a_client:        (1, 2)
+            lakeshore336_client:            {"pos": (0, 0)},
+            RGA_client:                     {"pos": (0, 1)},
+            twistorr74_client:              {"pos": (0, 2)},
+            niops03_client:                 {"pos": (1, 1)},
+            fma1700a_client:                {"pos": (1, 2)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -87,10 +87,10 @@ class EGGS_gui(QMainWindow):
         from EGGS_labrad.clients.trap_clients.stability_client import stability_client
         from EGGS_labrad.clients.functiongenerator_client.functiongenerator_client import functiongenerator_client
         clients = {
-            DC_client:                      (0, 1),
-            stability_client:               (0, 0),
-            functiongenerator_client:       (1, 1),
-            RF_client:                      (1, 0)
+            DC_client:                      {"pos": (0, 1)},
+            stability_client:               {"pos": (0, 0)},
+            functiongenerator_client:       {"pos": (1, 1)},
+            RF_client:                      {"pos": (1, 0)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -99,22 +99,22 @@ class EGGS_gui(QMainWindow):
         from EGGS_labrad.clients.toptica_client.toptica_client import toptica_client
         #from EGGS_labrad.clients.shutter_client import shutter_client
         clients = {
-            SLS_client:             (0, 0),
-            toptica_client:         (0, 1)
+            SLS_client:                     {"pos": (0, 0)},
+            toptica_client:                 {"pos": (0, 1)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
     def makeWavemeterWidget(self, reactor, cxn):
         from EGGS_labrad.clients.wavemeter_client.multiplexer_client import multiplexer_client
         clients = {
-            multiplexer_client:             (0, 0)
+            multiplexer_client:             {"pos": (0, 0)}
         }
         return self._createTabLayout(clients, reactor)
 
     def makeImagingWidget(self, reactor, cxn):
         from EGGS_labrad.clients.PMT_client.PMT_client import PMT_client
         clients = {
-            PMT_client: (0, 0)
+            PMT_client:                     {"pos": (0, 0)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -134,9 +134,21 @@ class EGGS_gui(QMainWindow):
         """
         holder_widget = QWidget()
         holder_layout = QGridLayout(holder_widget)
-        for client, position in clientDict.items():
+        for client, config in clientDict.items():
+            # get configuration settings for each client
+            position = config["pos"]
+            args, kwargs = ((), {})
             try:
-                client_tmp = client(reactor, cxn=cxn)
+                args = config["args"]
+            except KeyError:
+                pass
+            try:
+                kwargs = config["kwargs"]
+            except KeyError:
+                pass
+            # start up client
+            try:
+                client_tmp = client(reactor, cxn=cxn, *args, **kwargs)
             except Exception as e:
                 print(client, e)
             try:
