@@ -1,3 +1,4 @@
+from socket import gethostname
 from os import environ, _exit, path
 from twisted.internet.defer import inlineCallbacks
 
@@ -7,7 +8,7 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGrid
 
 class EGGS_gui(QMainWindow):
 
-    name = 'EGGS GUI'
+    name = gethostname() + ' EGGS GUI'
     LABRADPASSWORD = environ['LABRADPASSWORD']
 
     def __init__(self, reactor, clipboard=None, parent=None):
