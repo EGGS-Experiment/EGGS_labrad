@@ -68,7 +68,7 @@ class PMT_client(GUIClient):
         self.gui.program_button.clicked.connect(lambda: self.pmt.start())
         self.gui.lockswitch.toggled.connect(lambda status: self.lock(status))
         # start up locked
-        self.gui.lockswitch.setChecked(True)
+        self.gui.lockswitch.setChecked(False)
 
 
     # SLOTS
