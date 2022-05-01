@@ -49,7 +49,6 @@ class PMT_client(GUIClient):
         ind = self.gui.edge_method.findText(edge_method)
         self.gui.edge_method.setCurrentIndex(ind)
 
-
     def initGUI(self):
         """
         Connect signals to slots.
@@ -68,6 +67,8 @@ class PMT_client(GUIClient):
         self.gui.program_button.clicked.connect(lambda: self.pmt.program())
         self.gui.program_button.clicked.connect(lambda: self.pmt.start())
         self.gui.lockswitch.toggled.connect(lambda status: self.lock(status))
+        # start up locked
+        self.gui.lockswitch.setChecked(True)
 
 
     # SLOTS

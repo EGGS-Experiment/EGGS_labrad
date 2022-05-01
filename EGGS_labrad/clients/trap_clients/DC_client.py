@@ -71,6 +71,7 @@ class DC_client(GUIClient):
             channel.toggleswitch.clicked.connect(lambda status, _channel_num=channel.number:
                                                  self.amo8.toggle(_channel_num, status))
             channel.resetswitch.clicked.connect(lambda blank, _channel_num=channel.number: self.reset(_channel_num))
+            channel.lockswitch.setChecked(True)
 
 
     # SLOTS
