@@ -124,7 +124,7 @@ class DC_gui(QFrame):
             # add widget to client list and layout
             self.amo8_channels[channel_num] = channel_gui
             channel_holder_layout.addWidget(channel_gui, channel_params['row'] + 1, channel_params['col'])
-        channel_holder_wrapped = QCustomGroupBox(channel_holder, "DC Channels")
+        channel_holder_wrapped = QCustomGroupBox(channel_holder, "DC Channels", scrollable=True)
         # lay out device
         amo8_layout.addWidget(self.device_header,           *self.headerLayout)
         amo8_layout.addWidget(channel_holder_wrapped,       1, 0, 2, 3)

@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame, QSizePolicy
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox, QChannelHolder
 
 
 class TTL_channel(QFrame):
@@ -87,6 +87,7 @@ class TTL_gui(QWidget):
         ttl_group_layout = QGridLayout(ttl_group)
         # layout individual ttls on group
         ttl_iter = iter(range(len(ttlgroup_list.keys())))
+        #dict_dj = {}
         for channel_name in ttlgroup_list.keys():
             channel_num = next(ttl_iter)
             # initialize GUI
@@ -96,8 +97,10 @@ class TTL_gui(QWidget):
             column = channel_num % self.row_length
             # add widget to client list and layout
             self.ttl_list[ttlgroup_name][channel_name] = channel_gui
+            #dict_dj[channel_name] = ((row, column), channel_gui)
             ttl_group_layout.addWidget(channel_gui, row, column)
         # wrap TTLs in a QGroupBox
+        # ttl_wrapped = QChannelHolder(dict_dj, ttlgroup_name, scrollable=False) # for QChannelHolder
         ttl_wrapped = QCustomGroupBox(ttl_group, ttlgroup_name)
         return ttl_wrapped
 
