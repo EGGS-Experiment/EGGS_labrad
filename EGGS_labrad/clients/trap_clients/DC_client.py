@@ -115,7 +115,6 @@ class DC_client(GUIClient):
         self.reactor.callLater(3, self.finishRamp, [chan_num])
 
     @inlineCallbacks
-<<<<<<< HEAD
     def finishRamp(self, chan_nums):
         for chan_num in chan_nums:
             voltage_res = yield self.amo8.voltage(chan_num)
