@@ -8,8 +8,6 @@ __all__ = ["PollingServer", "ARTIQServer"]
 """
 Polling Server
 """
-
-
 class PollingServer(LabradServer):
     """
     Holds all the functionality needed to run polling loops on the server.
@@ -125,7 +123,6 @@ class PollingServer(LabradServer):
 """
 ARTIQ Server
 """
-
 from sipyco.pc_rpc import Client
 
 

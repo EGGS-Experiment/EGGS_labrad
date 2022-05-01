@@ -20,6 +20,7 @@ server_dict = {
         'pmt': 'pmt_server', 'dc': 'dc_server', 'fma': 'fma1700a_server', 'to': 'toptica_server',
         'os': 'oscilloscope_server', 'fg': 'function_generator_server', 'sa': 'spectrum_analyzer_server',
         'gpib': 'gpib_device_manager', 'mk_gpib': 'mongkok_gpib_bus', 'hf_gpib': 'hengfachuen_gpib_bus'
+        'mk': 'node_mongkok', 'cw': 'node_causewaybay', 'hf': 'node_hengfachuen'
         }
 
 for servers in server_dict.items():
