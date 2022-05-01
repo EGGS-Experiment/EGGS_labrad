@@ -56,7 +56,6 @@ class AMO8_channel(QFrame):
         self.resetswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.lockswitch = Lockswitch()
         self.lockswitch.setChecked(True)
-
         # add widgets to layout
         layout.addWidget(self.title, 0, 0, 1, 3)
         layout.addWidget(self.dac_label, 1, 0, 1, 2)
@@ -129,15 +128,6 @@ class DC_gui(QFrame):
         # lay out device
         amo8_layout.addWidget(self.device_header,           *self.headerLayout)
         amo8_layout.addWidget(channel_holder_wrapped,       1, 0, 2, 3)
-        #todo: tmp remove
-        self.doubleramp_endcaps = QPushButton("Ramp Both Endcaps")
-        self.doublechange_endcaps = QPushButton("Adjust Both Endcaps")
-        self.doubleramp_aramp = QPushButton("Ramp Both Trap Rods")
-        self.doublechange_aramp = QPushButton("Adjust Both Trap Rods")
-        amo8_layout.addWidget(self.doubleramp_endcaps,      3, 0)
-        amo8_layout.addWidget(self.doublechange_endcaps,    4, 0)
-        amo8_layout.addWidget(self.doubleramp_aramp,        3, 1)
-        amo8_layout.addWidget(self.doublechange_aramp,      4, 1)
 
     def _createHeader(self):
         # create header layout

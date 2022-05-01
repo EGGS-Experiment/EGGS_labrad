@@ -59,15 +59,15 @@ class DC_client(GUIClient):
         self.gui.device_global_onswitch.clicked.connect(lambda: self.amo8.toggle_all(True))
         self.gui.device_global_offswitch.clicked.connect(lambda: self.amo8.toggle_all(False))
         self.gui.device_global_clear.clicked.connect(lambda: self.amo8.clear())
-        self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.multiRamp([1, 2]))
+        self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.startRamp([1, 2]))
+        self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.startRamp([5, 6]))
         #self.gui.doublechange_endcaps.clicked.connect(lambda blank: self.doublechange(1, 2))
-        self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.multiRamp([5, 6]))
         #self.gui.doublechange_aramp.clicked.connect(lambda blank: self.doublechange(5, 6))
         # todo: stop using self.gui.amo8_channels and move config to client side
         # connect each channel
         for channel in self.gui.amo8_channels.values():
             channel.dac.valueChanged.connect(lambda value, _channel_num=channel.number: self.amo8.voltage(_channel_num, value))
-            channel.ramp_start.clicked.connect(lambda blank, _channel_num=channel.number: self.startRamp(_channel_num))
+            channel.ramp_start.clicked.connect(lambda blank, _channel_num=channel.number: self.startRamp([_channel_num]))
             channel.toggleswitch.clicked.connect(lambda status, _channel_num=channel.number:
                                                  self.amo8.toggle(_channel_num, status))
             channel.resetswitch.clicked.connect(lambda blank, _channel_num=channel.number: self.reset(_channel_num))
@@ -76,8 +76,15 @@ class DC_client(GUIClient):
     # SLOTS
     @inlineCallbacks
     def reset(self, channel_num):
+        channel_gui = self.gui.amo8_channels[channel_num]
+        channel_gui.setEnabled(False)
         yield self.amo8.voltage(channel_num, 0)
         yield self.amo8.toggle(channel_num, 0)
+        channel_gui.dac.setValue(0)
+        channel_gui.toggleswitch.setChecked(False)
+        channel_gui.ramp_target.setValue(0)
+        channel_gui.ramp_rate.setValue(0)
+        channel_gui.setEnabled(True)
 
     def updateToggle(self, c, signal):
         chan_num, status = signal
@@ -106,25 +113,7 @@ class DC_client(GUIClient):
         self.gui.device_hv_i1.setText(str(hv[1]))
 
     @inlineCallbacks
-    def startRamp(self, chan_num):
-        channel = self.gui.amo8_channels[chan_num]
-        end_voltage = channel.ramp_target.value()
-        rate = channel.ramp_rate.value()
-        channel.dac.setEnabled(False)
-        yield self.amo8.ramp(chan_num, end_voltage, rate)
-        self.reactor.callLater(3, self.finishRamp, [chan_num])
-
-    @inlineCallbacks
-    def finishRamp(self, chan_nums):
-        for chan_num in chan_nums:
-            voltage_res = yield self.amo8.voltage(chan_num)
-            self.gui.amo8_channels[chan_num].dac.setValue(voltage_res)
-            self.gui.amo8_channels[chan_num].dac.setEnabled(True)
-
-
-    # todo: tmp remove
-    @inlineCallbacks
-    def multiRamp(self, channel_list):
+    def startRamp(self, channel_list):
         # get current values
         end_voltage_list = []
         rate_list = []
