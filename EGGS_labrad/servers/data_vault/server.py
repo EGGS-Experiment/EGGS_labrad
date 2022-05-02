@@ -13,18 +13,15 @@ class DataVault(LabradServer):
 
     name = 'Data Vault'
 
-
     # SETUP
     def __init__(self, session_store):
         LabradServer.__init__(self)
-
         self.session_store = session_store
 
         # session signals
         self.onNewDir = Signal(543617, 'signal: new dir', 's')
         self.onNewDataset = Signal(543618, 'signal: new dataset', 's')
         self.onTagsUpdated = Signal(543622, 'signal: tags updated', '*(s*s)*(s*s)')
-
         # dataset signals
         self.onDataAvailable = Signal(543619, 'signal: data available', '')
         self.onNewParameter = Signal(543620, 'signal: new parameter', '')
@@ -140,7 +137,9 @@ class DataVault(LabradServer):
              returns=['*s{subdirs}, *s{datasets}',
                       '*(s*s){subdirs}, *(s*s){datasets}'])
     def dir(self, c, tagFilters=['-trash'], includeTags=False):
-        """Get subdirectories and datasets in the current directory."""
+        """
+        Get subdirectories and datasets in the current directory.
+        """
         if isinstance(tagFilters, str):
             tagFilters = [tagFilters]
         sess = self.getSession(c)
@@ -156,7 +155,8 @@ class DataVault(LabradServer):
              create='b',
              returns='*s')
     def cd(self, c, path=None, create=False):
-        """Change the current directory.
+        """
+        Change the current directory.
 
         The empty string '' refers to the root directory. If the 'create' flag
         is set to true, new directories will be created as needed.
@@ -194,7 +194,8 @@ class DataVault(LabradServer):
 
     @setting(8, name='s', returns='*s')
     def mkdir(self, c, name):
-        """Make a new sub-directory in the current directory.
+        """
+        Make a new sub-directory in the current directory.
 
         The current directory remains selected.  You must use the
         'cd' command to select the newly-created directory.
@@ -214,7 +215,8 @@ class DataVault(LabradServer):
              dependents=['*s', '*(sss)'],
              returns='(*s{path}, s{name})')
     def new(self, c, name, independents, dependents):
-        """Create a new Dataset.
+        """
+        Create a new Dataset.
 
         Independent and dependent variables can be specified either
         as clusters of strings, or as single strings.  Independent
@@ -239,7 +241,8 @@ class DataVault(LabradServer):
              dependents='*(ss*iss)',
              returns=['*ss'])
     def new_ex(self, c, name, independents, dependents):
-        """Create a new extended dataset
+        """
+        Create a new extended dataset
 
         Independents are specified as: (label, shape, type, unit)
         Dependents are specified as: (label, legend, shape, type, unit)
@@ -276,7 +279,8 @@ class DataVault(LabradServer):
 
     @setting(10, name=['s', 'w'], append='b', returns='(*s{path}, s{name})')
     def open(self, c, name, append=False):
-        """Open a Dataset for reading.
+        """
+        Open a Dataset for reading.
 
         You can specify the dataset by name or number.
         Returns the path and name for this dataset.
@@ -295,7 +299,8 @@ class DataVault(LabradServer):
 
     @setting(1010, returns='s')
     def get_version(self, c):
-        """Get version of current dataset
+        """
+        Get version of current dataset
 
         1.x:   CSV dataset
         2.x:   Simple HDF5 dataset
@@ -308,7 +313,8 @@ class DataVault(LabradServer):
                        '*2v: add multiple rows of data'],
              returns='')
     def add(self, c, data):
-        """Add data to the current dataset.
+        """
+        Add data to the current dataset.
 
         The number of elements in each row of data must be equal
         to the total number of variables in the data set
@@ -325,7 +331,8 @@ class DataVault(LabradServer):
 
     @setting(1020, data='?', returns='')
     def add_ex(self, c, data):
-        """Add data to the current dataset in the extended format.
+        """
+        Add data to the current dataset in the extended format.
 
         Data should be a list of clusters suitable for the current
         dataset.  For instance, for a dataset with a timestamp, an
@@ -342,7 +349,8 @@ class DataVault(LabradServer):
 
     @setting(2020, data='?', returns='')
     def add_ex_t(self, c, data):
-        """Add data to the current dataset in the extended format.
+        """
+        Add data to the current dataset in the extended format.
 
         Data should be a cluster of List/array types, one per column.
         This is a transposed version of add_ex, and will have better
@@ -355,7 +363,8 @@ class DataVault(LabradServer):
 
     @setting(21, limit='w', startOver='b', returns='*2v')
     def get(self, c, limit=None, startOver=False):
-        """Get data from the current dataset.
+        """
+        Get data from the current dataset.
 
         Limit is the maximum number of rows of data to return, with
         the default being to return the whole dataset.  Setting the
@@ -372,7 +381,8 @@ class DataVault(LabradServer):
 
     @setting(1021, limit='w', startOver='b', returns='?')
     def get_ex(self, c, limit=None, startOver=False):
-        """Get data from the current dataset in the extended format.
+        """
+        Get data from the current dataset in the extended format.
 
         Data is returned as *(...).  That is, a list of clusters, one per
         row.  Because of the inefficiency of python flattening and
@@ -388,7 +398,8 @@ class DataVault(LabradServer):
 
     @setting(2021, limit='w', startOver='b', returns='?')
     def get_ex_t(self, c, limit=None, startOver=False):
-        """Get data from the current dataset in the extended format.
+        """
+        Get data from the current dataset in the extended format.
 
         Data is returned as (*c1*c2*c3): that is, a cluster of lists,
         one per row.  Each column list is N+1 dimensional, where N is
@@ -406,7 +417,8 @@ class DataVault(LabradServer):
 
     @setting(100, returns='(*(ss){independents}, *(sss){dependents})')
     def variables(self, c):
-        """Get the independent and dependent variables for the current dataset.
+        """
+        Get the independent and dependent variables for the current dataset.
 
         Each independent variable is a cluster of (label, units).
         Each dependent variable is a cluster of (label, legend, units).
@@ -420,7 +432,8 @@ class DataVault(LabradServer):
 
     @setting(101, returns=('*(s*iss), *(ss*iss)'))
     def variables_ex(self, c):
-        """Get the independent and dependent variables for the current dataset in the extended format
+        """
+        Get the independent and dependent variables for the current dataset in the extended format
 
         Returns (*indep, *dep)
 
@@ -470,32 +483,41 @@ class DataVault(LabradServer):
 
     @setting(121, 'add parameter', name='s', returns='')
     def add_parameter(self, c, name, data):
-        """Add a new parameter to the current dataset."""
+        """
+        Add a new parameter to the current dataset.
+        """
         dataset = self.getDataset(c)
         dataset.addParameter(name, data)
 
     @setting(124, 'add parameters', params='?{((s?)(s?)...)}', returns='')
     def add_parameters(self, c, params):
-        """Add a new parameter to the current dataset."""
+        """
+        Add a new parameter to the current dataset.
+        """
         dataset = self.getDataset(c)
         dataset.addParameters(params)
 
     @setting(126, 'get name', returns='s')
     def get_name(self, c):
-        """Get the name of the current dataset."""
+        """
+        Get the name of the current dataset.
+        """
         dataset = self.getDataset(c)
         name = dataset.name
         return name
 
     @setting(122, 'get parameter', name='s')
     def get_parameter(self, c, name, case_sensitive=True):
-        """Get the value of a parameter."""
+        """
+        Get the value of a parameter.
+        """
         dataset = self.getDataset(c)
         return dataset.getParameter(name, case_sensitive)
 
     @setting(123, 'get parameters')
     def get_parameters(self, c):
-        """Get all parameters.
+        """
+        Get all parameters.
 
         Returns a cluster of (name, value) clusters, one for each parameter.
         If the set has no parameters, nothing is returned (since empty clusters
@@ -511,14 +533,18 @@ class DataVault(LabradServer):
 
     @setting(200, 'add comment', comment=['s'], user=['s'], returns=[''])
     def add_comment(self, c, comment, user='anonymous'):
-        """Add a comment to the current dataset."""
+        """
+        Add a comment to the current dataset.
+        """
         dataset = self.getDataset(c)
         return dataset.addComment(user, comment)
 
     @setting(201, 'get comments', limit=['w'], startOver=['b'],
              returns=['*(t, s{user}, s{comment})'])
     def get_comments(self, c, limit=None, startOver=False):
-        """Get comments for the current dataset."""
+        """
+        Get comments for the current dataset.
+        """
         dataset = self.getDataset(c)
         c['commentpos'] = 0 if startOver else c['commentpos']
         comments, c['commentpos'] = dataset.getComments(limit, c['commentpos'])
@@ -530,7 +556,8 @@ class DataVault(LabradServer):
              dirs=['s', '*s'], datasets=['s', '*s'],
              returns='')
     def update_tags(self, c, tags, dirs, datasets=None):
-        """Update the tags for the specified directories and datasets.
+        """
+        Update the tags for the specified directories and datasets.
 
         If a tag begins with a minus sign '-' then the tag (everything
         after the minus sign) will be removed.  If a tag begins with '^'
@@ -554,7 +581,9 @@ class DataVault(LabradServer):
              dirs=['s', '*s'], datasets=['s', '*s'],
              returns='*(s*s)*(s*s)')
     def get_tags(self, c, dirs, datasets):
-        """Get tags for directories and datasets in the current dir."""
+        """
+        Get tags for directories and datasets in the current dir.
+        """
         sess = self.getSession(c)
         if isinstance(dirs, str):
             dirs = [dirs]
@@ -607,7 +636,7 @@ class DataVaultMultiHead(DataVault):
     @setting(401, 'get servers', returns='*(swb)')
     def get_servers(self, c):
         """
-        Returns the list of running servers as tuples of (host, port, connected?)
+        Returns the list of running servers as tuples of (host, port, connected?).
         """
         rv = []
         for s in self.hub:
@@ -645,11 +674,11 @@ class DataVaultMultiHead(DataVault):
 
 
 class ExtendedContext(object):
-    '''
+    """
     This is an extended context that contains the manager.  This prevents
     multiple contexts with the same client ID from conflicting if they are
     connected to different managers.
-    '''
+    """
 
     def __init__(self, server, ctx):
         self.__server = server

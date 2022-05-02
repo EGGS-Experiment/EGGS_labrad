@@ -29,13 +29,10 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-
 from __future__ import absolute_import
 
 import os
 import sys
-
-
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 import labrad.util
@@ -88,7 +85,8 @@ def main(argv=sys.argv):
     def start():
         opts = labrad.util.parseServerOptions(name=DataVault.name)
         cxn = yield labrad.wrappers.connectAsync(
-            host=opts['host'], port=int(opts['port']), password=opts['password'])
+            host=opts['host'], port=int(opts['port']), password=opts['password']
+        )
         datadir = yield load_settings(cxn, opts['name'])
         yield cxn.disconnect()
         session_store = SessionStore(datadir, hub=None)

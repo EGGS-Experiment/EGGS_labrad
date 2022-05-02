@@ -1,7 +1,6 @@
 """
 Contains all data file objects used by the server and utilities used to create/open them.
 """
-
 import os
 import h5py
 import base64

@@ -1,7 +1,6 @@
 """
 Contains the class structures needed for creating data files and directories.
 """
-
 import os
 import re
 import weakref
@@ -10,7 +9,6 @@ from datetime import datetime
 from . import backend, errors, util
 
 ## Filename translation.
-
 _encodings = [
     ('%', '%p'),  # this one MUST be first for encode/decode to work properly
     ('/', '%f'),
@@ -44,7 +42,6 @@ def filedir(datadir, path):
 
 
 ## time formatting
-
 TIME_FORMAT = '%Y-%m-%d, %H:%M:%S'
 
 
@@ -57,7 +54,6 @@ def time_from_str(s):
 
 
 ## variable parsing
-
 _re_label = re.compile(r'^([^\[(]*)')  # matches up to the first [ or (
 _re_legend = re.compile(r'\((.*)\)')  # matches anything inside ( )
 _re_units = re.compile(r'\[(.*)\]')  # matches anything inside [ ]
@@ -86,11 +82,15 @@ def parse_dependent(s):
 
 
 ## data-url support for storing parameters
-
 DATA_URL_PREFIX = 'data:application/labrad;base64,'
 
 
 class SessionStore(object):
+    """
+    Handles session objects.
+    Acts as main interface between server and files.
+    """
+
     def __init__(self, datadir, hub):
         self._sessions = weakref.WeakValueDictionary()
         self.datadir = datadir
@@ -100,7 +100,8 @@ class SessionStore(object):
         return self._sessions.values()
 
     def exists(self, path):
-        """Check whether a session exists on disk for a given path.
+        """
+        Check whether a session exists on disk for a given path.
 
         This does not tell us whether a session object has been
         created for that path.
@@ -108,7 +109,8 @@ class SessionStore(object):
         return os.path.exists(filedir(self.datadir, path))
 
     def get(self, path):
-        """Get a Session object.
+        """
+        Get a Session object.
 
         If a session already exists for the given path, return it.
         Otherwise, create a new session instance.
@@ -131,7 +133,9 @@ class Session(object):
     """
 
     def __init__(self, datadir, path, hub, session_store):
-        """Initialization that happens once when session object is created."""
+        """
+        Initialization that happens once when session object is created.
+        """
         self.path = path
         self.hub = hub
         self.dir = filedir(datadir, path)
@@ -157,7 +161,9 @@ class Session(object):
         self.listeners = set()
 
     def load(self):
-        """Load info from the session.ini file."""
+        """
+        Load info from the session.ini file.
+        """
         S = util.DVSafeConfigParser()
         S.read(self.infofile)
 
@@ -178,7 +184,9 @@ class Session(object):
             self.dataset_tags = {}
 
     def save(self):
-        """Save info to the session.ini file."""
+        """
+        Save info to the session.ini file.
+        """
         S = util.DVSafeConfigParser()
 
         sec = 'File System'
@@ -200,12 +208,16 @@ class Session(object):
             S.write(f)
 
     def access(self):
-        """Update last access time and save."""
+        """
+        Update last access time and save.
+        """
         self.accessed = datetime.now()
         self.save()
 
     def listContents(self, tagFilters):
-        """Get a list of directory names in this directory."""
+        """
+        Get a list of directory names in this directory.
+        """
         files = os.listdir(self.dir)
         dirs = [filename_decode(s[:-4]) for s in files if s.endswith('.dir')]
         csv_datasets = [filename_decode(s[:-4]) for s in files if s.endswith('.ini') and s.lower() != 'session.ini']
@@ -214,12 +226,16 @@ class Session(object):
 
         # apply tag filters
         def include(entries, tag, tags):
-            """Include only entries that have the specified tag."""
+            """
+            Include only entries that have the specified tag.
+            """
             return [e for e in entries
                     if e in tags and tag in tags[e]]
 
         def exclude(entries, tag, tags):
-            """Exclude all entries that have the specified tag."""
+            """
+            Exclude all entries that have the specified tag.
+            """
             return [e for e in entries
                     if e not in tags or tag not in tags[e]]
 
@@ -234,7 +250,9 @@ class Session(object):
         return sorted(dirs), sorted(datasets)
 
     def listDatasets(self):
-        """Get a list of dataset names in this directory."""
+        """
+        Get a list of dataset names in this directory.
+        """
         files = os.listdir(self.dir)
         filenames = []
         for s in files:
@@ -371,12 +389,16 @@ class Dataset(object):
         return '.'.join(str(x) for x in v)
 
     def access(self):
-        """Update time of last access for this dataset."""
+        """
+        Update time of last access for this dataset.
+        """
         self.data.access()
         self.save()
 
     def makeIndependent(self, label, extended):
-        """Add an independent variable to this dataset."""
+        """
+        Add an independent variable to this dataset.
+        """
         if extended:
             return backend.Independent(*label)
         if isinstance(label, tuple):
@@ -386,7 +408,9 @@ class Dataset(object):
         return backend.Independent(label=label, shape=(1,), datatype='v', unit=units)
 
     def makeDependent(self, label, extended):
-        """Add a dependent variable to this dataset."""
+        """
+        Add a dependent variable to this dataset.
+        """
         if extended:
             return backend.Dependent(*label)
         if isinstance(label, tuple):

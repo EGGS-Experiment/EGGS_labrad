@@ -1,7 +1,6 @@
 """
 Contains utilities used by the data vault server.
 """
-
 import numpy as np
 import configparser as cp
 
