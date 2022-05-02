@@ -2,7 +2,6 @@
 Contains the GUI used to interact with the Andor Server.
 (Andor Video is sort of a misnomer I guess, maybe Andor GUI?)
 """
-
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QDoubleSpinBox, QSpinBox,\
