@@ -3,7 +3,7 @@
 [info]
 name =  Andor Server
 version = 1.1.0
-description =
+description = Server for the Andor iXon3.
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -14,7 +14,6 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-
 from AndorVideo import AndorVideo
 from PyQt5.QtWidgets import QApplication
 

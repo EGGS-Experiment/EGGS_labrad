@@ -1,6 +1,6 @@
 """
 API for Andor Cameras.
-Updated for Andor's SDK3.
+Uses Andor's SDK2.
 """
 import os
 import ctypes as c
