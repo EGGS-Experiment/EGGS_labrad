@@ -14,12 +14,10 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-from AndorVideo import AndorVideo
+# install qt5reactor
 from PyQt5.QtWidgets import QApplication
-
 app = QApplication([])
 import qt5reactor
-
 qt5reactor.install()
 
 # import server libraries
@@ -28,16 +26,18 @@ from twisted.internet.task import LoopingCall
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import returnValue, DeferredLock, Deferred, inlineCallbacks
 
-from labrad.server import LabradServer, setting, Signal
-from AndorCamera import AndorCamera
-from labrad.units import WithUnit
 import numpy as np
+from labrad.units import WithUnit
+from labrad.server import LabradServer, setting, Signal
+
+from AndorGUI import AndorGUI
+from AndorAPI import AndorAPI
 
 IMAGE_UPDATED_SIGNAL = 142312
 
+
 #todo: strip units
 #todo: clean up imports
-
 class AndorServer(LabradServer):
     """
     Contains methods that interact with the Andor CCD Cameras.
@@ -48,12 +48,14 @@ class AndorServer(LabradServer):
 
     def initServer(self):
         self.listeners = set()
-        self.camera = AndorCamera()
         self.lock = DeferredLock()
-        self.gui = AndorVideo(self)
+        self.camera = AndorAPI()
+        self.gui = AndorGUI(self)
 
     def initContext(self, c):
-        """Initialize a new context object."""
+        """
+        Initialize a new context object.
+        """
         self.listeners.add(c.ID)
 
     def expireContext(self, c):
@@ -475,9 +477,9 @@ class AndorServer(LabradServer):
     # UPDATED THE TIMEOUT. FIX IT LATER
     @setting(28, "Wait For Kinetic", timeout='v[s]', returns='b')
     def waitForKinetic(self, c, timeout=WithUnit(1, 's')):
-        '''
+        """
         Waits until the given number of kinetic images are completed.
-        '''
+        """
         requestCalls = int(timeout['s'] / 0.050)  # number of request calls
         for i in range(requestCalls):
             print('acquiring: {}'.format(self.waitForKinetic.__name__))

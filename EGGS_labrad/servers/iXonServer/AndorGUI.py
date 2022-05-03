@@ -16,9 +16,11 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.config.andor_config import AndorConfig as config
 
 
-class AndorVideo(QWidget):
+# todo: break into client
+# todo: document
+class AndorGUI(QWidget):
     def __init__(self, server):
-        super(AndorVideo, self).__init__()
+        super(AndorGUI, self).__init__()
         from labrad.units import WithUnit
         self.WithUnit = WithUnit
         self.server = server
@@ -421,4 +423,4 @@ class image_region_selection_dialog(QDialog):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
-    runClient(AndorVideo)
+    runClient(AndorGUI)

@@ -36,7 +36,7 @@ class AndorInfo(object):
         self.shutter_mode = None
 
 
-class AndorCamera(object):
+class AndorAPI(object):
     """
     Andor class which is meant to provide the Python version of the same
     functions that are defined in the Andor's SDK. Since Python does not
@@ -74,6 +74,11 @@ class AndorCamera(object):
         except Exception as e:
             print('Error Initializing Camera:', e)
             raise Exception(e)
+
+
+    '''
+    General
+    '''
 
     def print_get_software_version(self):
         """
@@ -134,19 +139,40 @@ class AndorCamera(object):
         """
         Gets the dimensions of the detector.
         """
-        detector_width = c.c_int()
-        detector_height = c.c_int()
+        detector_width, detector_height = c.c_int(), c.c_int()
         self.dll.GetDetector(c.byref(detector_width), c.byref(detector_height))
         self.info.width = detector_width.value
         self.info.height = detector_height.value
         return [self.info.width, self.info.height]
 
+    def acquire_camera_serial_number(self):
+        serial_number = c.c_int()
+        error = self.dll.GetCameraSerialNumber(c.byref(serial_number))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.serial_number = serial_number.value
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_camera_serial_number(self):
+        return self.info.serial_number
+
+    def get_status(self):
+        status = c.c_int()
+        error = self.dll.GetStatus(c.byref(status))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            return ERROR_CODE[status.value]
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    '''
+    Temperature-Related Settings
+    '''
+
     def get_temperature_range(self):
         """
         Gets the range of available temperatures.
         """
-        min_temp = c.c_int()
-        max_temp = c.c_int()
+        min_temp, max_temp = c.c_int(), c.c_int()
         self.dll.GetTemperatureRange(c.byref(min_temp), c.byref(max_temp))
         self.info.min_temp = min_temp.value
         self.info.max_temp = max_temp.value
@@ -183,8 +209,7 @@ class AndorCamera(object):
     def get_temperature(self):
         temperature = c.c_int()
         error = self.dll.GetTemperature(c.byref(temperature))
-        if ERROR_CODE[error] in (
-        'DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
+        if ERROR_CODE[error] in ('DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
             self.info.temperature = temperature.value
             return temperature.value
         else:
@@ -198,16 +223,9 @@ class AndorCamera(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    def acquire_camera_serial_number(self):
-        serial_number = c.c_int()
-        error = self.dll.GetCameraSerialNumber(c.byref(serial_number))
-        if ERROR_CODE[error] == 'DRV_SUCCESS':
-            self.info.serial_number = serial_number.value
-        else:
-            raise Exception(ERROR_CODE[error])
-
-    def get_camera_serial_number(self):
-        return self.info.serial_number
+    '''
+    EMCCD Gain Settings
+    '''
 
     def get_camera_em_gain_range(self):
         min_gain = c.c_int()
@@ -236,6 +254,10 @@ class AndorCamera(object):
         else:
             raise Exception(ERROR_CODE[error])
 
+    '''
+    Read Mode
+    '''
+
     def set_read_mode(self, mode):
         try:
             mode_number = READ_MODE[mode]
@@ -249,6 +271,10 @@ class AndorCamera(object):
 
     def get_read_mode(self):
         return self.info.read_mode
+
+    '''
+    Shutter Mode
+    '''
 
     def set_shutter_mode(self, mode):
         try:
@@ -264,6 +290,10 @@ class AndorCamera(object):
     def get_shutter_mode(self):
         return self.info.shutter_mode
 
+    '''
+    Acquisition Mode
+    '''
+
     def set_acquisition_mode(self, mode):
         try:
             mode_number = AcquisitionMode[mode]
@@ -278,6 +308,11 @@ class AndorCamera(object):
     def get_acquisition_mode(self):
         return self.info.acquisition_mode
 
+
+    '''
+    Trigger Mode
+    '''
+
     def set_trigger_mode(self, mode):
         try:
             mode_number = TriggerMode[mode]
@@ -291,6 +326,10 @@ class AndorCamera(object):
 
     def get_trigger_mode(self):
         return self.info.trigger_mode
+
+    '''
+    Exposure Time
+    '''
 
     def set_exposure_time(self, time):
         error = self.dll.SetExposureTime(c.c_float(time))
@@ -314,22 +353,32 @@ class AndorCamera(object):
         else:
             raise Exception(ERROR_CODE[error])
 
+    '''
+    Image Region
+    '''
+
+    def get_image(self):
+        return self.info.image_region
+
     def set_image(self, hbin, vbin, hstart, hend, vstart, vend):
-        hbin = int(hbin);
-        vbin = int(vbin);
-        hstart = int(hstart);
-        hend = int(hend);
-        vstart = int(vstart);
-        vend = int(vend)
-        error = self.dll.SetImage(c.c_int(hbin), c.c_int(vbin), c.c_int(hstart), c.c_int(hend), c.c_int(vstart),
-                                  c.c_int(vend))
+        hbin, vbin, hstart, hend, vstart, vend = map(int, (hbin, vbin, hstart, hend, vstart, vend))
+        error = self.dll.SetImage(c.c_int(hbin), c.c_int(vbin), c.c_int(hstart),
+                                  c.c_int(hend), c.c_int(vstart), c.c_int(vend))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.image_region = [hbin, vbin, hstart, hend, vstart, vend]
         else:
             raise Exception(ERROR_CODE[error])
 
-    def get_image(self):
-        return self.info.image_region
+    '''
+    Acquisition
+    '''
+
+    def prepare_acqusition(self):
+        error = self.dll.PrepareAcquisition()
+        if ERROR_CODE[error] == "DRV_SUCCESS":
+            return
+        else:
+            raise Exception(ERROR_CODE[error])
 
     def start_acquisition(self):
         error = self.dll.StartAcquisition()
@@ -351,6 +400,10 @@ class AndorCamera(object):
             return
         else:
             raise Exception(ERROR_CODE[error])
+
+    '''
+    Images
+    '''
 
     def get_acquired_data(self, num_images):
         hbin, vbin, hstart, hend, vstart, vend = self.info.image_region
@@ -388,27 +441,12 @@ class AndorCamera(object):
     def get_number_kinetics(self):
         return self.info.number_kinetics
 
-    def get_status(self):
-        status = c.c_int()
-        error = self.dll.GetStatus(c.byref(status))
-        if ERROR_CODE[error] == 'DRV_SUCCESS':
-            return ERROR_CODE[status.value]
-        else:
-            raise Exception(ERROR_CODE[error])
-
     def get_series_progress(self):
         acc = c.c_long()
         series = c.c_long()
         error = self.dll.GetAcquisitionProgress(c.byref(acc), c.byref(series))
         if ERROR_CODE[error] == "DRV_SUCCESS":
             return acc.value, series.value
-        else:
-            raise Exception(ERROR_CODE[error])
-
-    def prepare_acqusition(self):
-        error = self.dll.PrepareAcquisition()
-        if ERROR_CODE[error] == "DRV_SUCCESS":
-            return
         else:
             raise Exception(ERROR_CODE[error])
 
@@ -492,4 +530,4 @@ ShutterMode = {
 
 
 if __name__ == '__main__':
-    camera = AndorCamera()
+    camera = AndorAPI()
