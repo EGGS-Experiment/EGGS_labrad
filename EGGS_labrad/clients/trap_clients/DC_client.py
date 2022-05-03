@@ -61,6 +61,7 @@ class DC_client(GUIClient):
         self.gui.device_global_clear.clicked.connect(lambda: self.amo8.clear())
         self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.startRamp([1, 2]))
         self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.startRamp([5, 6]))
+        self.gui.triangleramp_aramp.clicked.connect(lambda blank: self.startTriangleRamp([5, 6]))
         #self.gui.doublechange_endcaps.clicked.connect(lambda blank: self.doublechange(1, 2))
         #self.gui.doublechange_aramp.clicked.connect(lambda blank: self.doublechange(5, 6))
         # todo: stop using self.gui.amo8_channels and move config to client side
@@ -114,6 +115,37 @@ class DC_client(GUIClient):
         self.gui.device_hv_i1.setText(str(hv[1]))
 
     @inlineCallbacks
+    def startTriangleRamp(self, channel_list):
+        # get current values
+        end_voltage_list = []
+        rate_list = []
+        initial_vals = []
+        for channel_num in channel_list:
+            channel_gui = self.gui.amo8_channels[channel_num]
+            end_voltage_list.append(channel_gui.ramp_target.value())
+            rate_list.append(channel_gui.ramp_rate.value())
+            initial_vals.append(channel_gui.dac.value())
+            channel_gui.dac.setEnabled(False)
+            channel_gui.ramp_rate.setEnabled(False)
+            channel_gui.ramp_target.setEnabled(False)
+        yield self.amo8.ramp_multiple(channel_list, end_voltage_list, rate_list)
+        self.reactor.callLater(3, self.finishRamp, channel_list, initial_vals)
+
+    @inlineCallbacks
+    def finishTriangleRamp(self, channel_list, initial_vals):
+        # get value
+        for i, channel_num in enumerate(channel_list):
+            voltage_res = yield self.amo8.voltage(channel_list)
+            channel_gui = self.gui.amo8_channels[channel_num]
+            channel_gui.dac.setValue(voltage_res)
+            channel_gui.dac.setEnabled(True)
+            channel_gui.ramp_rate.setEnabled(True)
+            channel_gui.ramp_target.setEnabled(True)
+            channel_gui.ramp_target.setValue(initial_vals[i])
+        # do a startRamp back down
+        yield self.startRamp(channel_list)
+
+    @inlineCallbacks
     def startRamp(self, channel_list):
         # get current values
         end_voltage_list = []
@@ -127,11 +159,11 @@ class DC_client(GUIClient):
         self.reactor.callLater(3, self.finishRamp, channel_list)
 
     @inlineCallbacks
-    def finishRamp(self, chan_nums):
-        for chan_num in chan_nums:
-            voltage_res = yield self.amo8.voltage(chan_num)
-            self.gui.amo8_channels[chan_num].dac.setValue(voltage_res)
-            self.gui.amo8_channels[chan_num].dac.setEnabled(True)
+    def finishRamp(self, channel_list):
+        for channel_num in channel_list:
+            voltage_res = yield self.amo8.voltage(channel_num)
+            self.gui.amo8_channels[channel_num].dac.setValue(voltage_res)
+            self.gui.amo8_channels[channel_num].dac.setEnabled(True)
 
 
 if __name__ == "__main__":

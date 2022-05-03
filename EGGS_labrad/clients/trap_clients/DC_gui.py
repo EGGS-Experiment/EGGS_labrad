@@ -111,19 +111,22 @@ class DC_gui(QFrame):
         # add channel buttons to channel_holder
         self.doubleramp_endcaps = QPushButton("Ramp Both Endcaps")
         self.doubleramp_aramp = QPushButton("Ramp Both Trap Rods")
-        channel_holder_layout.addWidget(self.doubleramp_endcaps,      0, 0)
-        channel_holder_layout.addWidget(self.doubleramp_aramp,        0, 2)
+        self.triangleramp_aramp = QPushButton("Triangle Ramp Both Trap Rods")
+        channel_holder_layout.addWidget(self.doubleramp_endcaps,        0, 0)
+        channel_holder_layout.addWidget(self.doubleramp_aramp,          0, 2)
+        channel_holder_layout.addWidget(self.triangleramp_aramp,            1, 2)
         # self.doublechange_endcaps = QPushButton("Adjust Both Endcaps")
         # self.doublechange_aramp = QPushButton("Adjust Both Trap Rods")
         # amo8_layout.addWidget(self.doublechange_endcaps,    4, 0)
         # amo8_layout.addWidget(self.doublechange_aramp,      4, 1)
+        shift_rows = 2# tmp remove todo
         for channel_name, channel_params in self.active_channels.items():
             channel_num = channel_params['num']
             # initialize GUIs for each channel
             channel_gui = AMO8_channel(channel_name, channel_num)
             # add widget to client list and layout
             self.amo8_channels[channel_num] = channel_gui
-            channel_holder_layout.addWidget(channel_gui, channel_params['row'] + 1, channel_params['col'])
+            channel_holder_layout.addWidget(channel_gui, channel_params['row'] + shift_rows, channel_params['col'])
         channel_holder_wrapped = QCustomGroupBox(channel_holder, "DC Channels", scrollable=True)
         # lay out device
         amo8_layout.addWidget(self.device_header,           *self.headerLayout)
