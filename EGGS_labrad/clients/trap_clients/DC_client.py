@@ -104,11 +104,13 @@ class DC_client(GUIClient):
         if chan_num in self.gui.amo8_channels.keys():
             # set element disable
             widget = self.gui.amo8_channels[chan_num]
+            # store lock state
+            lockstate = widget.lockswitch.isChecked()
             widget.dac.setEnabled(False)
             # update value
             widget.dac.setValue(voltage)
-            # enable element
-            widget.dac.setEnabled(True)
+            # restore previous lockstate
+            widget.dac.setEnabled(lockstate)
 
     def updateHV(self, c, hv):
         self.gui.device_hv_v1.setText(str(hv[0]))
@@ -128,8 +130,9 @@ class DC_client(GUIClient):
             channel_gui.dac.setEnabled(False)
             channel_gui.ramp_rate.setEnabled(False)
             channel_gui.ramp_target.setEnabled(False)
+        print('initial vals:', initial_vals)
         yield self.amo8.ramp_multiple(channel_list, end_voltage_list, rate_list)
-        self.reactor.callLater(3, self.finishRamp, channel_list, initial_vals)
+        self.reactor.callLater(3, self.finishTriangleRamp, channel_list, initial_vals)
 
     @inlineCallbacks
     def finishTriangleRamp(self, channel_list, initial_vals):
