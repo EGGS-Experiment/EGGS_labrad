@@ -138,18 +138,17 @@ class DC_gui(QFrame):
         device_header_layout = QGridLayout(device_header)
         # create header title
         self.device_header_title = QClientHeader(self.name)
-        #self.device_header_title = QLabel(self.name, device_header)
-        #self.device_header_title.setAlignment(Qt.AlignCenter)
-        #self.device_header_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         # create HV monitor displays
         device_hv_v1_label = QLabel('HV Input V1 (V)')
         self.device_hv_v1 = QLabel('V1')
         self.device_hv_v1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.device_hv_v1.setStyleSheet('color: red')
+        self.device_hv_v1.setAlignment(Qt.AlignRight)
         device_hv_i1_label = QLabel('HV Input I1 (mA)')
         self.device_hv_i1 = QLabel('I1')
         self.device_hv_i1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.device_hv_i1.setStyleSheet('color: red')
+        self.device_hv_i1.setAlignment(Qt.AlignRight)
         # create global buttons
         self.device_global_onswitch = QPushButton('ALL ON')
         self.device_global_onswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
@@ -162,10 +161,10 @@ class DC_gui(QFrame):
         device_header_layout.addWidget(self.device_global_onswitch,         1, 0, 1, 1)
         device_header_layout.addWidget(self.device_global_offswitch,        1, 1, 1, 1)
         device_header_layout.addWidget(self.device_global_clear,            1, 2, 1, 1)
-        device_header_layout.addWidget(device_hv_v1_label,                  2, 0, 1, 1)
-        device_header_layout.addWidget(self.device_hv_v1,                   3, 0, 1, 1)
-        device_header_layout.addWidget(device_hv_i1_label,                  2, 1, 1, 1)
-        device_header_layout.addWidget(self.device_hv_i1,                   3, 1, 1, 1)
+        device_header_layout.addWidget(device_hv_v1_label,                  2, 1, 1, 1)
+        device_header_layout.addWidget(self.device_hv_v1,                   3, 1, 1, 1)
+        device_header_layout.addWidget(device_hv_i1_label,                  2, 2, 1, 1)
+        device_header_layout.addWidget(self.device_hv_i1,                   3, 2, 1, 1)
         return device_header
 
 
