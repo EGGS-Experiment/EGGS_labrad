@@ -102,6 +102,7 @@ class stability_client(GUIClient):
         # recording
         if self.recording:
             elapsedtime = time.time() - self.starttime
+            print(elapsedtime, v_rf)
             yield self.dv.add(elapsedtime, v_rf, context=self.c_record)
 
 
