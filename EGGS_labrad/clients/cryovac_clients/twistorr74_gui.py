@@ -44,7 +44,6 @@ class twistorr74_gui(QFrame):
         self.twistorr_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             # power
         self.twistorr_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
-        self.twistorr_lockswitch.setChecked(True)
         self.twistorr_toggle = TextChangingButton(('On', 'Off'))
 
     def makeLayout(self):

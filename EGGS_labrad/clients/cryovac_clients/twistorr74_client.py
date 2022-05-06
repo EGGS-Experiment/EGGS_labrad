@@ -50,6 +50,7 @@ class twistorr74_client(GUIClient):
         self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.gui.twistorr_toggle.setEnabled(status))
         self.gui.twistorr_toggle.clicked.connect(lambda status: self.tt.toggle(status))
         self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
+        self.gui.twistorr_lockswitch.toggled.connect(lambda status: self._lock(status))
 
 
     # SIGNALS
@@ -97,6 +98,12 @@ class twistorr74_client(GUIClient):
             yield self.dv.cd(trunk, True, context=self.c_record)
             yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')],
                               [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_record)
+
+    def _lock(self, status):
+        """
+        Lock everything except the Lockswitch.
+        """
+        self.gui.twistorr_toggle.setEnabled(status)
 
 
 if __name__ == "__main__":

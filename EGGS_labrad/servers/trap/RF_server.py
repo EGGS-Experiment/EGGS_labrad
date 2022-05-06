@@ -170,6 +170,34 @@ class RFServer(GPIBManagedServer):
         return self.selectedDevice(c).pm_dev(dev)
 
 
+    # FEEDBACK
+    @setting(411, 'Toggle Feedback Amplitude', status=['b', 'i'], returns='b')
+    def feedback_toggle(self, c, status=None):
+        """
+        Toggle amplitude feedback.
+        Uses an external DC signal to adjust the output signal amplitude.
+        """
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).feedback_amplitude_toggle(status)
+
+    @setting(411, 'Feedback Amplitude Depth', depth='v', returns='v')
+    def feedback_amplitude_depth(self, c, depth=None):
+        """
+        Get/set amplitude feedback depth.
+        Changes the amount to which a DC feedback signal
+        adjusts the amplitude (i.e. 0-100%).
+        Arguments:
+            depth   (float) : the feedback depth (in %).
+        Returns:
+                    (float) : the feedback depth (in %).
+        """
+        return self.selectedDevice(c).feedback_amplitude_depth(depth)
+
+
 if __name__ == '__main__':
     from labrad import util
     util.runServer(RFServer())
