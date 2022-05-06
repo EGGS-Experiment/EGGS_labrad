@@ -131,8 +131,8 @@ class DC_gui(QFrame):
             channel_holder_layout.addWidget(channel_gui, channel_params['row'] + shift_rows, channel_params['col'])
         channel_holder_wrapped = QCustomGroupBox(channel_holder, "DC Channels", scrollable=True)
         # lay out device
-        amo8_layout.addWidget(self.device_title,            0, 1, 1, 1)
-        amo8_layout.addWidget(self.device_header,           *self.headerLayout)
+        amo8_layout.addWidget(self.device_title,            0, 0, 1, 1)
+        amo8_layout.addWidget(self.device_header,           0, 1, 1, 1)
         amo8_layout.addWidget(channel_holder_wrapped,       2, 0, 2, 3)
 
     def _createHeader(self):
