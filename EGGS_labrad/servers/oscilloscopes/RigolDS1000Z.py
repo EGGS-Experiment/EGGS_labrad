@@ -16,6 +16,10 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
     def clear_buffers(self):
         yield self.write('*CLS')
 
+    @inlineCallbacks
+    def autoscale(self):
+        yield self.write('AUT')
+
     # CHANNEL
     @inlineCallbacks
     def channel_info(self, channel):

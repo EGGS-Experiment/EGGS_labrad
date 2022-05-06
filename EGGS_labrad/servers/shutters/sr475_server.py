@@ -15,11 +15,9 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 from labrad.units import WithUnit
-from labrad.server import setting, Signal
-
-from twisted.internet.defer import inlineCallbacks, returnValue
+from labrad.server import setting
+from twisted.internet.defer import returnValue
 
 from EGGS_labrad.servers import SerialDeviceServer
 
@@ -38,10 +36,6 @@ class SR475Server(SerialDeviceServer):
 
     timeout = WithUnit(5.0, 's')
     baudrate = 19200
-
-
-    # SIGNALS
-    flow_update = Signal(999999, 'signal: flow update', 'v')
 
 
     # CORE
@@ -131,7 +125,6 @@ class SR475Server(SerialDeviceServer):
             print('Error: shutter position is indeterminate.')
 
 
-
     # SPEED
     @setting(311, 'speed', speed='i', returns='v')
     def speed(self, c, speed=None):
@@ -177,15 +170,6 @@ class SR475Server(SerialDeviceServer):
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         returnValue(int(resp))
-
-    # POLLING
-    @inlineCallbacks
-    def _poll(self):
-        """
-        Polls the device for flow readout.
-        """
-        # query
-        yield self.flow(None)
 
 
 if __name__ == '__main__':

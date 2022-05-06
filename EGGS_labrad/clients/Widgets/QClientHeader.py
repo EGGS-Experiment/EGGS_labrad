@@ -56,7 +56,7 @@ class QClientMenuHeader(QMenuBar):
     Designed to be called by a GUIClient class for
     """
 
-    def __init__(self, serial=False, polling=False, parent=None):
+    def __init__(self, parent=None, serial=False, polling=False):
         super().__init__(parent)
         self.makeMenu()
         if serial: self.addSerial()

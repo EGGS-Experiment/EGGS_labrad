@@ -3,7 +3,7 @@ import pyqtgraph as pg
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox
+from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QPushButton
 
 from EGGS_labrad.clients.Widgets import TextChangingButton
 
@@ -68,6 +68,7 @@ class stability_gui(QFrame):
         qBox_parameters_layout.addWidget(self.wsecr_display,           4, 1, 1, 1)
         qBox_parameters_layout.addWidget(wsecz_display_label,          3, 2, 1, 1)
         qBox_parameters_layout.addWidget(self.wsecz_display,           4, 2, 1, 1)
+        qBox_parameters_layout.addWidget(self.record_button,           4, 0, 1, 1)
 
         # stability plot display
         self.qBox_stability = QGroupBox('Mathieu Stability')
@@ -96,8 +97,12 @@ class stability_gui(QFrame):
         self.beta_setting.setRange(0, 1)
         self.beta_setting.setKeyboardTracking(False)
         self.beta_setting.setAlignment(Qt.AlignRight)
+        # autoscale button
+        self.autoscale = QPushButton("Autoscale")
+        # lay out
         qBox_stability_display.addWidget(beta_setting_display,          0, 0, 1, 1)
         qBox_stability_display.addWidget(self.beta_setting,             1, 0, 1, 1)
+        qBox_stability_display.addWidget(self.autoscale,                1, 1, 1, 1)
         qBox_stability_display.addWidget(self.stability_display,        2, 0, 3, 3)
 
     def makeLayout(self):

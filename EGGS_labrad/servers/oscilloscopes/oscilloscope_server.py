@@ -56,6 +56,16 @@ class OscilloscopeServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         yield dev.clear_buffers()
 
+    @setting(12, "Autoscale", returns='')
+    def clear_buffers(self, c):
+        """
+        Autoscales the waveform.
+        Equivalent to pressing the "AUTO" button
+        on the device front panel.
+        """
+        dev = self.selectedDevice(c)
+        yield dev.autoscale()
+
 
     # CHANNEL
     @setting(100, "Channel Info", channel='i', returns='(bvvvsb)')
