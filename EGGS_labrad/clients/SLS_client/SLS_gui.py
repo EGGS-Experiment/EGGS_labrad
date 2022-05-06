@@ -23,18 +23,17 @@ class SLS_gui(QFrame):
         # AUTOLOCK
         self.autolock_widget = QWidget(self)
         self.autolock_layout = QVBoxLayout(self.autolock_widget)
-        autolock_param_label = QLabel("Sweep Parameter", self.autolock_widget)
-        autolock_time_label = QLabel("Lock Time (d:h:m)", self.autolock_widget)
-        autolock_toggle_label = QLabel("Autolock", self.autolock_widget)
-        autolock_attempts_label = QLabel("Lock Attempts", self.autolock_widget)
-        self.autolock_time = QLabel("Time", self.autolock_widget)
+        autolock_param_label = QLabel("Sweep Parameter")
+        autolock_time_label = QLabel("Lock Time (d:h:m)")
+        autolock_toggle_label = QLabel("Autolock")
+        autolock_attempts_label = QLabel("Lock Attempts")
+        self.autolock_time = QLabel("Time")
         self.autolock_time.setAlignment(Qt.AlignCenter)
         self.autolock_time.setFont(QFont(_SHELL_FONT, pointSize=18))
         self.autolock_time.setStyleSheet('color: blue')
         self.autolock_param = QComboBox(self.autolock_widget)
-        self.autolock_param.addItem("Off")
-        self.autolock_param.addItem("PZT")
-        self.autolock_param.addItem("Current")
+        for item_text in ("Off", "PZT", "Current"):
+            self.autolock_param.addItem(item_text)
         self.autolock_attempts = QLabel("NULL", self.autolock_widget)
         self.autolock_attempts.setAlignment(Qt.AlignCenter)
         self.autolock_attempts.setFont(QFont(_SHELL_FONT, pointSize=18))
@@ -63,8 +62,8 @@ class SLS_gui(QFrame):
         self.PDH_widget = QWidget(self)
         self.PDH_layout = QVBoxLayout(self.PDH_widget)
         PDH_filter_label = QLabel("Filter Index")
-        PDH_phasemodulation_label = QLabel("Phase modulation (rad)", self.PDH_widget)
-        PDH_phaseoffset_label = QLabel("Reference phase (deg)", self.PDH_widget)
+        PDH_phasemodulation_label = QLabel("Phase modulation (rad)")
+        PDH_phaseoffset_label = QLabel("Reference phase (deg)")
         PDH_freq_label = QLabel("Frequency (MHz)")
         self.PDH_freq = QDoubleSpinBox(self.PDH_widget)
         self.PDH_freq.setRange(10.0, 35.0)
@@ -124,9 +123,10 @@ class SLS_gui(QFrame):
         # widget holder
         layout_h_widget = QWidget()
         layout_h = QHBoxLayout(layout_h_widget)
-        widget_titles = ["Autolock", "Offset Lock", "PDH", "PID"]
-        for i, widget in enumerate(self.autolock_widget, self.off_widget, self.PDH_widget, self.servo_widget):
-            wrapped_widget = QCustomGroupBox(widget, widget_titles[i])
+        main_widgets = {"Autolock": self.autolock_widget, "Offset Lock": self.off_widget,
+                         "PDH": self.PDH_widget, "PID": self.servo_widget}
+        for widget_titles, widget in main_widgets.items():
+            wrapped_widget = QCustomGroupBox(widget, widget_titles)
             layout_h.addWidget(wrapped_widget)
         # TITLE
         sls_label = QLabel("SLS Client", self)
