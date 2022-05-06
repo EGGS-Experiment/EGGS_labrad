@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout
 
 from twisted.internet.defer import inlineCallbacks
 
@@ -40,39 +40,72 @@ class ARTIQ_client(QMainWindow):
         layout = QHBoxLayout(centralWidget)
         self.tabWidget = QTabWidget()
         self.tabWidget.setMovable(True)
-
         # create subwidgets
         ttl_widget = yield self.makeTTLWidget()
         dds_widget = yield self.makeDDSWidget()
         dac_widget = yield self.makeDACWidget()
         adc_widget = yield self.makeADCWidget()
-
         # create tabs for each subwidget
         self.tabWidget.addTab(ttl_widget, '&TTL')
         self.tabWidget.addTab(dds_widget, '&DDS')
         self.tabWidget.addTab(dac_widget, '&DAC')
         self.tabWidget.addTab(adc_widget, '&ADC')
-
         # put it all together
         layout.addWidget(self.tabWidget)
         self.setCentralWidget(centralWidget)
         self.setWindowTitle(self.name)
 
-    def makeTTLWidget(self):
+    def makeTTLWidget(self, reactor, cxn):
         from EGGS_labrad.clients.ARTIQ_client.TTL_client import TTL_client
-        return TTL_client(self.reactor, self.cxn)
+        clients = {TTL_client: {"pos": (0, 0)}}
+        return self._createTabLayout(clients, reactor, cxn)
 
-    def makeDDSWidget(self):
+    def makeDDSWidget(self, reactor, cxn):
         from EGGS_labrad.clients.ARTIQ_client.DDS_client import DDS_client
-        return DDS_client(self.reactor, self.cxn)
+        clients = {DDS_client: {"pos": (0, 0)}}
+        return self._createTabLayout(clients, reactor, cxn)
 
-    def makeDACWidget(self):
+    def makeDACWidget(self, reactor, cxn):
         from EGGS_labrad.clients.ARTIQ_client.DAC_client import DAC_client
-        return DAC_client(self.reactor, self.cxn)
+        clients = {DAC_client: {"pos": (0, 0)}}
+        return self._createTabLayout(clients, reactor, cxn)
 
-    def makeADCWidget(self):
+    def makeADCWidget(self, reactor, cxn):
         from EGGS_labrad.clients.ARTIQ_client.ADC_client import ADC_client
-        return ADC_client(self.reactor, self.cxn)
+        clients = {ADC_client: {"pos": (0, 0)}}
+        return self._createTabLayout(clients, reactor, cxn)
+
+    def _createTabLayout(self, clientDict, reactor, cxn=None):
+        """
+        Creates a tab widget from constituent widgets stored in a dictionary.
+        """
+        holder_widget = QWidget()
+        holder_layout = QGridLayout(holder_widget)
+        for client, config in clientDict.items():
+            # get configuration settings for each client
+            position = config["pos"]
+            args, kwargs = ((), {})
+            try:
+                args = config["args"]
+            except KeyError:
+                pass
+            try:
+                kwargs = config["kwargs"]
+            except KeyError:
+                pass
+            # start up client
+            try:
+                client_tmp = client(reactor, cxn=cxn, *args, **kwargs)
+            except Exception as e:
+                print(client, e)
+            try:
+                if hasattr(client_tmp, 'getgui'):
+                    holder_layout.addWidget(client_tmp.getgui(), *position)
+                elif hasattr(client_tmp, 'gui'):
+                    holder_layout.addWidget(client_tmp.gui, *position)
+            except Exception as e:
+                print(e)
+        return holder_widget
 
     def closeEvent(self, x):
         self.cxn.disconnect()
