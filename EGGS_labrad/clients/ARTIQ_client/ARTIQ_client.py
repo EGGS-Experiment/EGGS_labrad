@@ -41,10 +41,10 @@ class ARTIQ_client(QMainWindow):
         self.tabWidget = QTabWidget()
         self.tabWidget.setMovable(True)
         # create subwidgets
-        ttl_widget = yield self.makeTTLWidget()
-        dds_widget = yield self.makeDDSWidget()
-        dac_widget = yield self.makeDACWidget()
-        adc_widget = yield self.makeADCWidget()
+        ttl_widget = yield self.makeTTLWidget(self.reactor, cxn)
+        dds_widget = yield self.makeDDSWidget(self.reactor, cxn)
+        dac_widget = yield self.makeDACWidget(self.reactor, cxn)
+        adc_widget = yield self.makeADCWidget(self.reactor, cxn)
         # create tabs for each subwidget
         self.tabWidget.addTab(ttl_widget, '&TTL')
         self.tabWidget.addTab(dds_widget, '&DDS')
@@ -102,6 +102,7 @@ class ARTIQ_client(QMainWindow):
                 if hasattr(client_tmp, 'getgui'):
                     holder_layout.addWidget(client_tmp.getgui(), *position)
                 elif hasattr(client_tmp, 'gui'):
+                    print('hsagui')
                     holder_layout.addWidget(client_tmp.gui, *position)
             except Exception as e:
                 print(e)
