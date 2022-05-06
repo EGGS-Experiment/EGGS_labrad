@@ -116,14 +116,15 @@ class SLS_gui(QFrame):
         # widget holder
         layout_h_widget = QWidget()
         layout_h = QHBoxLayout(layout_h_widget)
-        self.autolock_widget.setFixedHeight(257)
-        self.off_widget.setFixedHeight(151)
-        self.PDH_widget.setFixedHeight(236)
-        self.servo_widget.setFixedHeight(326)
+        self.autolock_widget.setFixedSize(131, 257)
+        self.off_widget.setFixedSize(131, 151)
+        self.PDH_widget.setFixedSize(131, 236)
+        self.servo_widget.setFixedSize(131, 326)
         main_widgets = {"Autolock": self.autolock_widget, "Offset Lock": self.off_widget,
                          "PDH": self.PDH_widget, "PID": self.servo_widget}
         for widget_titles, widget in main_widgets.items():
             wrapped_widget = QCustomGroupBox(widget, widget_titles)
+            wrapped_widget.setFixedSize(131, 151)
             layout_h.addWidget(wrapped_widget)
         # title
         sls_label = QLabel("SLS Client", self)
