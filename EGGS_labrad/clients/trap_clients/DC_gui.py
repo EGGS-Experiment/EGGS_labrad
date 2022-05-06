@@ -141,16 +141,12 @@ class DC_gui(QFrame):
         #self.device_header_title = QLabel(self.name, device_header)
         #self.device_header_title.setAlignment(Qt.AlignCenter)
         #self.device_header_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
-        # create HV monitor widget
-        self.device_hv_monitor = QFrame(device_header)
-        self.device_hv_monitor.setFrameStyle(0x0001 | 0x0030)
-        device_hv_monitor_layout = QGridLayout(self.device_hv_monitor)
         # create HV monitor displays
-        device_hv_v1_label = QLabel('V1 (V)')
+        device_hv_v1_label = QLabel('HV Input V1 (V)')
         self.device_hv_v1 = QLabel('V1')
         self.device_hv_v1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.device_hv_v1.setStyleSheet('color: red')
-        device_hv_i1_label = QLabel('I1 (mA)')
+        device_hv_i1_label = QLabel('HV Input I1 (mA)')
         self.device_hv_i1 = QLabel('I1')
         self.device_hv_i1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.device_hv_i1.setStyleSheet('color: red')
@@ -161,21 +157,15 @@ class DC_gui(QFrame):
         self.device_global_offswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.device_global_clear = QPushButton('ALL CLEAR')
         self.device_global_clear.setFont(QFont('MS Shell Dlg 2', pointSize=10))
-        # lay out HV monitor
-        device_hv_title = QLabel('HV Input')
-        device_hv_title.setFont(QFont('MS Shell Dlg 2', pointSize=14))
-        device_hv_title.setAlignment(Qt.AlignCenter)
-        device_hv_monitor_layout.addWidget(device_hv_title, 0, 0, 1, 2)
-        device_hv_monitor_layout.addWidget(device_hv_v1_label, 1, 0)
-        device_hv_monitor_layout.addWidget(self.device_hv_v1, 2, 0)
-        device_hv_monitor_layout.addWidget(device_hv_i1_label, 3, 0)
-        device_hv_monitor_layout.addWidget(self.device_hv_i1, 4, 0)
         # lay out header
-        device_header_layout.addWidget(self.device_header_title, 0, 0, 1, 2)
-        device_header_layout.addWidget(self.device_global_onswitch, 1, 0, 1, 1)
-        device_header_layout.addWidget(self.device_global_offswitch, 2, 0, 1, 1)
-        device_header_layout.addWidget(self.device_global_clear, 3, 0, 1, 1)
-        device_header_layout.addWidget(self.device_hv_monitor, 1, 1, 3, 1)
+        device_header_layout.addWidget(self.device_header_title,            0, 0, 1, 3)
+        device_header_layout.addWidget(self.device_global_onswitch,         1, 0, 1, 1)
+        device_header_layout.addWidget(self.device_global_offswitch,        1, 1, 1, 1)
+        device_header_layout.addWidget(self.device_global_clear,            1, 2, 1, 1)
+        device_header_layout.addWidget(device_hv_v1_label,                  2, 0, 1, 1)
+        device_header_layout.addWidget(self.device_hv_v1,                   3, 0, 1, 1)
+        device_header_layout.addWidget(device_hv_i1_label,                  2, 1, 1, 1)
+        device_header_layout.addWidget(self.device_hv_i1,                   3, 1, 1, 1)
         return device_header
 
 
