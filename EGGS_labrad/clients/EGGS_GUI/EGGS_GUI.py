@@ -152,6 +152,7 @@ class EGGS_gui(QMainWindow):
                 client_tmp = client(reactor, cxn=cxn, *args, **kwargs)
             except Exception as e:
                 print(client, e)
+            # try to add GUI to tabwidget
             try:
                 if hasattr(client_tmp, 'getgui'):
                     holder_layout.addWidget(client_tmp.getgui(), *position)

@@ -113,27 +113,21 @@ class SLS_gui(QFrame):
             servo_layout.addWidget(widget)
 
     def makeLayout(self):
-        # widget holder
-        layout_h_widget = QWidget()
-        layout_h = QHBoxLayout(layout_h_widget)
-        self.autolock_widget.setFixedSize(131, 257)
-        self.off_widget.setFixedSize(131, 151)
-        self.PDH_widget.setFixedSize(131, 236)
-        self.servo_widget.setFixedSize(131, 326)
-        main_widgets = {"Autolock": self.autolock_widget, "Offset Lock": self.off_widget,
-                         "PDH": self.PDH_widget, "PID": self.servo_widget}
-        for widget_titles, widget in main_widgets.items():
-            wrapped_widget = QCustomGroupBox(widget, widget_titles)
-            wrapped_widget.setFixedSize(131, 151)
-            layout_h.addWidget(wrapped_widget)
+        autolock_widget_wrapped = QCustomGroupBox(self.autolock_widget, "Autolock")
+        off_widget_wrapped = QCustomGroupBox(self.off_widget, "Offset Lock")
+        PDH_widget_wrapped = QCustomGroupBox(self.PDH_widget, "PDH")
+        servo_widget_wrapped = QCustomGroupBox(self.servo_widget, "PID")
         # title
         sls_label = QLabel("SLS Client", self)
         sls_label.setFont(QFont(_SHELL_FONT, pointSize=20))
         sls_label.setAlignment(Qt.AlignCenter)
         # lay out
-        layout_v = QVBoxLayout(self)
-        layout_v.addWidget(sls_label)
-        layout_v.addWidget(layout_h_widget)
+        layout = QGridLayout(self)
+        layout.addWidget(sls_label,                     0, 0, 1, 4)
+        layout.addWidget(autolock_widget_wrapped,       1, 0, 1, 7)
+        layout.addWidget(off_widget_wrapped,            1, 1, 1, 4)
+        layout.addWidget(PDH_widget_wrapped,            1, 2, 1, 6)
+        layout.addWidget(servo_widget_wrapped,          1, 3, 1, 9)
         pass
 
     def _lock(self, status):
