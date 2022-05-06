@@ -19,9 +19,9 @@ class SLS_gui(QFrame):
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
         # TITLE
-        self.sls_label = QLabel(SLS_gui)
+        self.sls_label = QLabel("thkim", self)
         # AUTOLOCK
-        self.autolock_widget = QWidget(SLS_gui)
+        self.autolock_widget = QWidget(self)
         self.autolock_layout = QVBoxLayout(self.autolock_widget)
         self.autolock_param_label = QLabel("Sweep Parameter", self.autolock_widget)
         self.autolock_time = QLabel(self.autolock_widget)
@@ -46,7 +46,7 @@ class SLS_gui(QFrame):
                        self.autolock_toggle, self.autolock_param_label, self.autolock_param):
             self.autolock_layout.addWidget(widget)
         # OFFSET LOCK
-        self.off_widget = QWidget(SLS_gui)
+        self.off_widget = QWidget(self)
         self.off_layout = QVBoxLayout(self.off_widget)
         self.off_lockpoint_label = QLabel("Lockpoint", self.off_widget)
         self.off_freq_label = QLabel("Offset Frequency (MHz)", self.off_widget)
@@ -65,7 +65,7 @@ class SLS_gui(QFrame):
                        self.off_lockpoint_label, self.off_lockpoint):
             self.off_layout.addWidget(widget)
         # PDH
-        self.PDH_widget = QWidget(SLS_gui)
+        self.PDH_widget = QWidget(self)
         self.PDH_layout = QVBoxLayout(self.PDH_widget)
         self.PDH_freq = QDoubleSpinBox("Frequency (MHz)", self.PDH_widget)
         self.PDH_freq.setMinimum(10.0)
@@ -91,7 +91,7 @@ class SLS_gui(QFrame):
                        self.PDH_phaseoffset, self.PDH_filter_label, self.PDH_filter):
             self.PDH_layout.addWidget(widget)
         # PID
-        self.servo_widget = QWidget(SLS_gui)
+        self.servo_widget = QWidget(self)
         self.servo_layout = QVBoxLayout(self.servo_widget)
         self.servo_filter = QComboBox(self.servo_widget)
         self.servo_filter.addItem("None")
@@ -123,8 +123,8 @@ class SLS_gui(QFrame):
                        self.servo_i_label, self.servo_i, self.servo_d_label, self.servo_d,
                        self.servo_filter_label, self.servo_filter):
             self.servo_layout.addWidget(widget)
-        #self.autolock_time.setText(_translate("SLS_gui", "<html><head/><body><p align=\"center\"><span style=\" font-size:18pt; color:#0055ff;\">Time</span></p></body></html>"))
-        #self.sls_label.setText(_translate("SLS_gui", "<html><head/><body><p align=\"center\"><span style=\" font-size:20pt;\">SLS Laser Client</span></p></body></html>"))
+        #self.autolock_time.setText(_translate("self", "<html><head/><body><p align=\"center\"><span style=\" font-size:18pt; color:#0055ff;\">Time</span></p></body></html>"))
+        #self.sls_label.setText(_translate("self", "<html><head/><body><p align=\"center\"><span style=\" font-size:20pt;\">SLS Laser Client</span></p></body></html>"))
         #self.servo_widget.setGeometry(QRect(440, 70, 131, 326))
         #self.PDH_widget.setGeometry(QRect(300, 70, 131, 236))
         #self.autolock_widget.setGeometry(QRect(20, 70, 131, 257))
