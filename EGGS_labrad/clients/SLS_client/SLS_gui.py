@@ -1,6 +1,7 @@
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtWidgets import QFrame, QSizePolicy, QWidget, QLabel, QGridLayout, QDoubleSpinBox, QComboBox, QVBoxLayout
+from PyQt5.QtWidgets import QFrame, QSizePolicy, QWidget, QLabel,\
+    QGridLayout, QDoubleSpinBox, QComboBox, QHBoxLayout, QVBoxLayout
 
 from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
 
@@ -19,12 +20,14 @@ class SLS_gui(QFrame):
     def makeWidgets(self):
         shell_font = 'MS Shell Dlg 2'
         # TITLE
-        self.sls_label = QLabel("thkim", self)
+        self.sls_label = QLabel("SLS Client", self)
+        self.sls_label.setFont(QFont(shell_font, pointSize=20))
+        self.sls_label.setAlignment(Qt.AlignCenter)
         # AUTOLOCK
         self.autolock_widget = QWidget(self)
         self.autolock_layout = QVBoxLayout(self.autolock_widget)
         self.autolock_param_label = QLabel("Sweep Parameter", self.autolock_widget)
-        self.autolock_time = QLabel(self.autolock_widget)
+        self.autolock_time = QLabel("Time", self.autolock_widget)
         self.autolock_time.setAlignment(Qt.AlignCenter)
         self.autolock_time.setFont(QFont(shell_font, pointSize=18))
         self.autolock_time.setStyleSheet('color: blue')
@@ -34,7 +37,7 @@ class SLS_gui(QFrame):
         self.autolock_param.addItem("Current")
         self.autolock_time_label = QLabel("Lock Time (d:h:m)", self.autolock_widget)
         self.autolock_toggle_label = QLabel("Autolock", self.autolock_widget)
-        self.autolock_attempts = QLabel(self.autolock_widget)
+        self.autolock_attempts = QLabel("Lock Attempts", self.autolock_widget)
         self.autolock_attempts.setAlignment(Qt.AlignCenter)
         self.autolock_attempts.setFont(QFont(shell_font, pointSize=18))
         self.autolock_attempts.setStyleSheet('color: blue')
@@ -102,7 +105,7 @@ class SLS_gui(QFrame):
         self.servo_set.setMaximum(1000000.0)
         self.servo_p = QDoubleSpinBox(self.servo_widget)
         self.servo_p.setMaximum(1000.0)
-        self.servo_param = QComboBox("Parameter", self.servo_widget)
+        self.servo_param = QComboBox(self.servo_widget)
         self.servo_param.addItem("Current")
         self.servo_param.addItem("PZT")
         self.servo_param.addItem("TX")
@@ -111,8 +114,8 @@ class SLS_gui(QFrame):
         self.servo_i.setMaximum(1.0)
         self.servo_i.setSingleStep(0.01)
         self.servo_i_label = QLabel("Integral", self.servo_widget)
-        self.servo_param_label = QLabel("Filter Index", self.servo_widget)
-        self.servo_filter_label = QLabel(self.servo_widget)
+        self.servo_param_label = QLabel("Parameter", self.servo_widget)
+        self.servo_filter_label = QLabel("Filter Index", self.servo_widget)
         self.servo_d_label = QLabel("Differential", self.servo_widget)
         self.servo_set_label = QLabel("Setpoint", self.servo_widget)
         self.servo_d = QDoubleSpinBox(self.servo_widget)
@@ -123,8 +126,6 @@ class SLS_gui(QFrame):
                        self.servo_i_label, self.servo_i, self.servo_d_label, self.servo_d,
                        self.servo_filter_label, self.servo_filter):
             self.servo_layout.addWidget(widget)
-        #self.autolock_time.setText(_translate("self", "<html><head/><body><p align=\"center\"><span style=\" font-size:18pt; color:#0055ff;\">Time</span></p></body></html>"))
-        #self.sls_label.setText(_translate("self", "<html><head/><body><p align=\"center\"><span style=\" font-size:20pt;\">SLS Laser Client</span></p></body></html>"))
         #self.servo_widget.setGeometry(QRect(440, 70, 131, 326))
         #self.PDH_widget.setGeometry(QRect(300, 70, 131, 236))
         #self.autolock_widget.setGeometry(QRect(20, 70, 131, 257))
@@ -132,6 +133,14 @@ class SLS_gui(QFrame):
         #self.sls_label.setGeometry(QRect(160, 10, 271, 41))
 
     def makeLayout(self):
+        layout_h_widget = QWidget()
+        layout_h = QHBoxLayout(layout_h_widget)
+        for widget in (self.autolock_widget, self.off_widget, self.PDH_widget, self.servo_widget):
+            wrapped_widget = QCustomGroupBox(widget, "tmp")
+            layout_h.addWidget(wrapped_widget)
+        layout_v = QVBoxLayout(self)
+        layout_v.addWidget(self.sls_label)
+        layout_v.addWidget(layout_h_widget)
         pass
 
     def _lock(self, status):
