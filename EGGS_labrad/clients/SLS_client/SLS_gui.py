@@ -67,11 +67,11 @@ class SLS_gui(QFrame):
         # PDH
         self.PDH_widget = QWidget(self)
         self.PDH_layout = QVBoxLayout(self.PDH_widget)
-        self.PDH_freq = QDoubleSpinBox("Frequency (MHz)", self.PDH_widget)
+        self.PDH_freq = QDoubleSpinBox(self.PDH_widget)
         self.PDH_freq.setMinimum(10.0)
         self.PDH_freq.setMaximum(35.0)
         self.PDH_freq.setSingleStep(0.1)
-        self.PDH_freq_label = QLabel(self.PDH_widget)
+        self.PDH_freq_label = QLabel("Frequency (MHz)", self.PDH_widget)
         self.PDH_filter = QComboBox(self.PDH_widget)
         self.PDH_filter.addItem("None")
         for i in range(1, 16):
