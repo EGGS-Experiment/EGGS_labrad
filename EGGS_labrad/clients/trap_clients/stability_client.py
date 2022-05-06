@@ -101,7 +101,7 @@ class stability_client(GUIClient):
         self.gui.stability_point.setData(x=[q_param], y=[a_param])
         # recording
         if self.recording:
-            elapsedtime = time.time() - self.starttime
+            elapsedtime = time() - self.starttime
             print(elapsedtime, v_rf)
             yield self.dv.add(elapsedtime, v_rf, context=self.c_record)
 
