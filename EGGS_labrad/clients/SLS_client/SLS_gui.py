@@ -22,7 +22,8 @@ class SLS_gui(QFrame):
     def makeWidgets(self):
         # AUTOLOCK
         self.autolock_widget = QWidget(self)
-        self.autolock_layout = QVBoxLayout(self.autolock_widget)
+        autolock_layout = QVBoxLayout(self.autolock_widget)
+        self.autolock_widget
         autolock_param_label = QLabel("Sweep Parameter")
         autolock_time_label = QLabel("Lock Time (d:h:m)")
         autolock_toggle_label = QLabel("Autolock")
@@ -42,12 +43,12 @@ class SLS_gui(QFrame):
         self.autolock_lockswitch = TextChangingButton(('Unlocked', 'Locked'), self.autolock_widget)
         for widget in (self.autolock_lockswitch, autolock_time_label, self.autolock_time, autolock_attempts_label,
                        self.autolock_attempts, autolock_toggle_label, self.autolock_toggle, autolock_param_label, self.autolock_param):
-            self.autolock_layout.addWidget(widget)
+            autolock_layout.addWidget(widget)
         # OFFSET LOCK
         off_lockpoint_label = QLabel("Lockpoint")
         off_freq_label = QLabel("Offset Frequency (MHz)")
         self.off_widget = QWidget(self)
-        self.off_layout = QVBoxLayout(self.off_widget)
+        off_layout = QVBoxLayout(self.off_widget)
         self.off_freq = QDoubleSpinBox(self.off_widget)
         self.off_freq.setRange(10.0, 35.0)
         self.off_freq.setSingleStep(0.1)
@@ -55,9 +56,8 @@ class SLS_gui(QFrame):
         self.off_lockpoint = QComboBox(self.off_widget)
         for item_text in ("J(+2)", "J(+1)", "Resonance", "J(-1)", "J(-2)"):
             self.off_lockpoint.addItem(item_text)
-        for widget in (self.off_lockswitch, off_freq_label, self.off_freq,
-                       off_lockpoint_label, self.off_lockpoint):
-            self.off_layout.addWidget(widget)
+        for widget in (self.off_lockswitch, off_freq_label, self.off_freq, off_lockpoint_label, self.off_lockpoint):
+            off_layout.addWidget(widget)
         # PDH
         self.PDH_widget = QWidget(self)
         self.PDH_layout = QVBoxLayout(self.PDH_widget)
@@ -84,13 +84,13 @@ class SLS_gui(QFrame):
             self.PDH_layout.addWidget(widget)
         # PID
         self.servo_widget = QWidget(self)
-        self.servo_layout = QVBoxLayout(self.servo_widget)
-        servo_param_label = QLabel("Parameter", self.servo_widget)
-        servo_set_label = QLabel("Setpoint", self.servo_widget)
-        servo_p_label = QLabel("Proportional", self.servo_widget)
-        servo_i_label = QLabel("Integral", self.servo_widget)
-        servo_d_label = QLabel("Differential", self.servo_widget)
-        servo_filter_label = QLabel("Filter Index", self.servo_widget)
+        servo_layout = QVBoxLayout(self.servo_widget)
+        servo_param_label = QLabel("Parameter")
+        servo_set_label = QLabel("Setpoint")
+        servo_p_label = QLabel("Proportional")
+        servo_i_label = QLabel("Integral")
+        servo_d_label = QLabel("Differential")
+        servo_filter_label = QLabel("Filter Index")
         self.servo_filter = QComboBox(self.servo_widget)
         self.servo_filter.addItem("None")
         for i in range(1, 16):
@@ -108,27 +108,24 @@ class SLS_gui(QFrame):
         self.servo_d = QDoubleSpinBox(self.servo_widget)
         self.servo_d.setMaximum(10000.0)
         self.servo_lockswitch = TextChangingButton(('Unlocked', 'Locked'), self.servo_widget)
-        for widget in (self.servo_lockswitch, servo_param_label, self.servo_param,
-                       servo_set_label, self.servo_set, servo_p_label, self.servo_p,
-                       servo_i_label, self.servo_i, servo_d_label, self.servo_d,
-                       servo_filter_label, self.servo_filter):
-            self.servo_layout.addWidget(widget)
-        #self.servo_widget.setGeometry(QRect(440, 70, 131, 326))
-        #self.PDH_widget.setGeometry(QRect(300, 70, 131, 236))
-        #self.autolock_widget.setGeometry(QRect(20, 70, 131, 257))
-        #self.off_widget.setGeometry(QRect(160, 70, 131, 151))
-        #self.sls_label.setGeometry(QRect(160, 10, 271, 41))
+        for widget in (self.servo_lockswitch, servo_param_label, self.servo_param, servo_set_label, self.servo_set, servo_p_label,
+                       self.servo_p, servo_i_label, self.servo_i, servo_d_label, self.servo_d, servo_filter_label, self.servo_filter):
+            servo_layout.addWidget(widget)
 
     def makeLayout(self):
         # widget holder
         layout_h_widget = QWidget()
         layout_h = QHBoxLayout(layout_h_widget)
+        self.autolock_widget.setFixedHeight(257)
+        self.off_widget.setFixedHeight(151)
+        self.PDH_widget.setFixedHeight(236)
+        self.servo_widget.setFixedHeight(326)
         main_widgets = {"Autolock": self.autolock_widget, "Offset Lock": self.off_widget,
                          "PDH": self.PDH_widget, "PID": self.servo_widget}
         for widget_titles, widget in main_widgets.items():
             wrapped_widget = QCustomGroupBox(widget, widget_titles)
             layout_h.addWidget(wrapped_widget)
-        # TITLE
+        # title
         sls_label = QLabel("SLS Client", self)
         sls_label.setFont(QFont(_SHELL_FONT, pointSize=20))
         sls_label.setAlignment(Qt.AlignCenter)
