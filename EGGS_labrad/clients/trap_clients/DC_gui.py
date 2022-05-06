@@ -165,6 +165,8 @@ class DC_gui(QFrame):
         device_header_layout.addWidget(self.device_hv_v1,                   3, 1, 1, 1)
         device_header_layout.addWidget(device_hv_i1_label,                  2, 2, 1, 1)
         device_header_layout.addWidget(self.device_hv_i1,                   3, 2, 1, 1)
+        # wrap device header
+        wrapped_device_header = QCustomGroupBox(device_header, "Global Settings")
         return device_header
 
 
