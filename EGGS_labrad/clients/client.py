@@ -22,6 +22,9 @@ class GUIClient(ABC):
     # LabRAD connection parameters
     LABRADHOST = None
     LABRADPASSWORD = None
+    # menu header parameters
+    serial_header = False
+    polling_header = False
 
     # INITIALIZATION
     def __init__(self, reactor, cxn=None, parent=None):
@@ -158,18 +161,25 @@ class GUIClient(ABC):
         """
         try:
             from inspect import getmembers
-            from EGGS_labrad.clients.Widgets import QClientHeader
-            # check if any members of the GUI are QClientHeaders
-            isQClientHeader = lambda obj: isinstance(obj, QClientHeader)
-            QClientHeader_list = getmembers(self.gui, isQClientHeader)
+            from EGGS_labrad.clients.Widgets import QClientMenuHeader
+            # check if any members of the GUI are QClientMenuHeaders
+            isQClientMenuHeader = lambda obj: isinstance(obj, QClientMenuHeader)
+            QClientMenuHeader_list = getmembers(self.gui, isQClientMenuHeader)
             # connect restart button in header to _restart
-            for header_name, header_object in QClientHeader_list:
-                print("\tQClientHeader detected in GUI. Connecting...")
-                header_object.restartbutton.clicked.connect(lambda: self._restart())
-                print("\tConnection to QClientHeader successful.")
+            if len(QClientMenuHeader_list) > 0:
+                menuHeader_name, menuHeader_object = QClientMenuHeader_list[0]
+                menuHeader_object.addFile(self)
+                if self.serial_header:
+                    print(self.servers.keys())
+                    # todo: pass serial server; see if any servers are serialserver
+                    #menuHeader_object.addSerial(self)
+                if self.polling_header:
+                    print(self.servers.keys())
+                    # todo: pass polling server; see if any servers are pollingserver
+                    # menuHeader_object.addPolling(self)
         except Exception as e:
             print("\t", e)
-            print("Error connecting to QClientHeader in GUI.")
+            print("Error connecting to QClientMenuHeader in GUI.")
         return cxn
 
 

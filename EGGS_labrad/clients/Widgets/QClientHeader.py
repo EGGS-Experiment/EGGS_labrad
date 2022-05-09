@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QComboBox,\
     QHBoxLayout, QVBoxLayout, QPushButton, QMenuBar, QMenuBar, QMenu,\
     QToolBar, QMessageBox, QAction
 
-# todo: join the two
+
 class QClientHeader(QFrame):
     """
     A basic client header that shows the client name and has
@@ -56,20 +56,43 @@ class QClientMenuHeader(QMenuBar):
     Designed to be called by a GUIClient class for
     """
 
-    def __init__(self, parent=None, serial=False, polling=False):
-        super().__init__(parent)
-        self.makeMenu()
-        if serial: self.addSerial()
-        if polling: self.addPolling()
+    def __init__(self):
+        super().__init__()
+        self._makeMenu()
 
-    def makeMenu(self):
+    def _makeMenu(self):
+        """
+        Creates the QClientMenuHeader with only a File menu.
+        Does not associate the File menu with any slots.
+        """
         self.fileMenu = QMenu("&File")
         self.addMenu(self.fileMenu)
         self.restart_action = QAction('Restart')
-        #self.restart_action.triggered.connect(lambda: self.restart())
+        self.lockGUI_action = QAction('Lock GUI')
+        self.unlockGUI_action = QAction('Unlock GUI')
+        self.saveConfig_action = QAction('Save Configuration')
+        self.loadConfig_action = QAction('Load Configuration')
         self.fileMenu.addAction(self.restart_action)
+        self.fileMenu.addAction(self.lockGUI_action)
+        self.fileMenu.addAction(self.unlockGUI_action)
+        self.fileMenu.addAction(self.saveConfig_action)
+        self.fileMenu.addAction(self.loadConfig_action)
 
-    def addSerial(self):
+    def addFile(self, client):
+        """
+        Associates the File menu with its corresponding slots.
+        To be called by the client.
+        """
+        #self.restart_action.triggered.connect(lambda: client._restart())
+        #self.lockGUI_action.triggered.connect(lambda: client._restart())
+        #self.unlockGUI_action.triggered.connect(lambda: self.restart())
+        pass
+
+    def addSerial(self, server):
+        """
+        Creates the Serial menu and associates actions
+        with their corresponding slots.
+        """
         # serial: device info, node, port, connect/disconnect
         self.serialMenu = QMenu("&Serial")
         self.addMenu(self.serialMenu)
@@ -77,17 +100,50 @@ class QClientMenuHeader(QMenuBar):
         self.port_action = QAction('Port')
         self.connect_action = QAction('Connect')
         self.disconnect_action = QAction('Disconnect')
-        #self.restart_action.triggered.connect(lambda: self.restart())
+        self.clear_action = QAction('Clear Buffers')
         self.serialMenu.addAction(self.node_action)
         self.serialMenu.addAction(self.port_action)
         self.serialMenu.addAction(self.connect_action)
         self.serialMenu.addAction(self.disconnect_action)
+        self.serialMenu.addAction(self.clear_action)
+        #self.restart_action.triggered.connect(lambda: client._restart())
+        #self.restart_action.triggered.connect(lambda: client._restart())
+        #self.restart_action.triggered.connect(lambda: client._restart())
+        #self.restart_action.triggered.connect(lambda: client._restart())
+        # todo: can't change node/port if currently connected
+        # todo: baud rate, stop bits
+        # todo: status?
 
-    def addPolling(self):
+    def addGPIB(self, server):
+        """
+        Creates the GPIB menu and associates actions
+        with their corresponding slots.
+        """
+        # serial: device info, node, port, connect/disconnect
+        self.serialMenu = QMenu("&GPIB")
+        self.addMenu(self.serialMenu)
+        self.select_action = QAction('Select Device')
+        self.release_action = QAction('Release Device')
+        self.lock_action = QAction('Lock Device')
+        self.query_action = QAction('Query')
+        self.write_action = QAction('Write')
+        self.read_action = QAction('Read')
+        self.serialMenu.addAction(self.select_action)
+        self.serialMenu.addAction(self.release_action)
+        self.serialMenu.addAction(self.lock_action)
+        self.serialMenu.addAction(self.query_action)
+        self.serialMenu.addAction(self.write_action)
+        self.serialMenu.addAction(self.read_action)
+
+    def addPolling(self, server):
+        """
+        Creates the Polling menu and associates actions
+        with their corresponding slots.
+        """
         # polling: poll time, poll status
-        self.pollingMenu = QMenu("&Serial")
+        self.pollingMenu = QMenu("&Polling")
         self.addMenu(self.pollingMenu)
-        self.pollstatus_action = QAction('Polling Status')
-        self.pollrate_action = QAction('Polling Rate')
+        self.pollstatus_action = QAction('Status')
+        self.pollrate_action = QAction('Rate')
         self.serialMenu.addAction(self.pollstatus_action)
         self.serialMenu.addAction(self.pollrate_action)

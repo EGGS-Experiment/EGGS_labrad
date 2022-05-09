@@ -2,7 +2,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import QRect, Qt, QMetaObject, QCoreApplication
 from PyQt5.QtWidgets import QFrame, QLabel, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QDoubleSpinBox
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, QClientHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton
 
 
 class lakeshore336_gui(QFrame):

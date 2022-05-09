@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QApplication
 # run functions
 def runGUI(client, *args, **kwargs):
     """
-    Runs a LabRAD GUI file written using PyQt5
+    Runs a LabRAD GUI file written using PyQt5.
     """
     from os import _exit
     # widgets require a QApplication to run
@@ -29,7 +29,7 @@ def runGUI(client, *args, **kwargs):
 
 def runClient(client, *args, **kwargs):
     """
-    Runs a LabRAD client written using PyQt5
+    Runs a LabRAD client written using PyQt5.
     """
     # set up logging
     from sys import stdout
