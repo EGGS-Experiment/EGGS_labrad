@@ -133,7 +133,7 @@ class DC_gui(QFrame):
         # lay out device
         amo8_layout.addWidget(self.device_title,            0, 0, 1, 1)
         amo8_layout.addWidget(self.device_header,           0, 1, 1, 1)
-        amo8_layout.addWidget(channel_holder_wrapped,       2, 0, 2, 3)
+        amo8_layout.addWidget(channel_holder_wrapped,       2, 0, 5, 3)
 
     def _createHeader(self):
         # create header layout
