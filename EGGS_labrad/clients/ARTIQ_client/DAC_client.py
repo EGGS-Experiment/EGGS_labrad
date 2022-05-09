@@ -19,8 +19,7 @@ class DAC_client(GUIClient):
 
     def getgui(self):
         if self.gui is None:
-            dac_list_tmp = deepcopy(self.dac_list)
-            self.gui = DAC_gui(dac_list_tmp)
+            self.gui = DAC_gui(self.dac_list)
         return self.gui
     
     @inlineCallbacks

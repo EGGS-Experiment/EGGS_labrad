@@ -63,6 +63,7 @@ class TTL_client(GUIClient):
         ttl_all = {**self.ttl_list['Input'], **self.ttl_list['Output'], **self.ttl_list['Urukul'], **self.ttl_list['Other']}
         for channel_name, channel_gui in ttl_all.items():
             channel_gui.toggleswitch.toggled.connect(lambda status, chan=channel_name: self.aq.ttl_set(chan, status))
+            channel_gui.lock(False)
 
     def updateTTLDisplay(self, c, signal):
         pass

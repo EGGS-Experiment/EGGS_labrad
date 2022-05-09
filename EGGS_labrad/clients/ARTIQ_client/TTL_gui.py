@@ -31,14 +31,14 @@ class TTL_channel(QFrame):
         self.toggleswitch = TextChangingButton(("ON", "OFF"))
         self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
         self.lockswitch.setFont(QFont('MS Shell Dlg 2', pointSize=8))
-        self.lockswitch.setChecked(True)
+        self.lockswitch.toggled.connect(lambda status: self.lock(status))
+        self.lockswitch.setChecked(False)
         # set layout
         layout.addWidget(title, 0, 0, 1, 2)
         layout.addWidget(self.toggleswitch, 1, 0, 1, 1)
         layout.addWidget(self.lockswitch, 1, 1, 1, 1)
 
         # connect signal to slot
-        self.lockswitch.toggled.connect(lambda status: self.lock(status))
 
     def lock(self, status):
         self.toggleswitch.setEnabled(status)

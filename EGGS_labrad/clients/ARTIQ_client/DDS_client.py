@@ -62,6 +62,7 @@ class DDS_client(GUIClient):
                                                        self.artiq.dds_attenuation(_channel_name, att, 'v'))
                 ad9910_widget.rfswitch.toggled.connect(lambda status, _channel_name=ad9910_name:
                                                        self.artiq.dds_toggle(_channel_name, status))
+                ad9910_widget.lock(False)
 
 
     def updateDDS(self, c, signal):

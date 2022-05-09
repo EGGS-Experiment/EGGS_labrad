@@ -15,7 +15,7 @@ class ARTIQ_api(object):
         self.device_manager = DeviceManager(devices)
         self.device_db = devices.get_device_db()
         self._getDevices()
-        self._initializeDevices()
+        #self._initializeDevices()
 
 
     def stopAPI(self):
