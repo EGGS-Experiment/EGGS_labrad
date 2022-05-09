@@ -97,7 +97,6 @@ class SMY01Wrapper(GPIBDeviceWrapper):
                 yield self.write('AF ' + str(freq))
         resp = yield self.query('AF?')
         resp = resp.split('AF')[1]
-        print('yzde:', resp)
         if resp == ':OFF':
             returnValue(False)
         else:
