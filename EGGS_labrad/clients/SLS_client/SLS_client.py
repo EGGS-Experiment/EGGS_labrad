@@ -73,11 +73,10 @@ class SLS_client(GUIClient):
         self.gui.servo_i.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'i', value))
         self.gui.servo_d.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'd', value))
         # lock everything on startup
-        # todo: connect switches to a slot
-        self.gui.autolock_lockswitch.setChecked(False)
-        self.gui.off_lockswitch.setChecked(False)
-        self.gui.PDH_lockswitch.setChecked(False)
-        self.gui.servo_lockswitch.setChecked(False)
+        self.gui._lock(False, self.gui.autolock_widget)
+        self.gui._lock(False, self.gui.off_widget)
+        self.gui._lock(False, self.gui.PDH_widget)
+        self.gui._lock(False, self.PID_widget)
 
     # SIGNALS
     def updateAutolock(self, c, lockstatus):

@@ -18,7 +18,7 @@ class dc_config(object):
         on the client GUI and their location.
 
     """
-    headerLayout = (0, 1)
+    headerLayout = (1, 1)
 
     channeldict = {
         'E Endcap':     {'num': 1, 'row': 1, 'col': 0},

@@ -50,6 +50,9 @@ class twistorr74_client(GUIClient):
         self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.gui.twistorr_toggle.setEnabled(status))
         self.gui.twistorr_toggle.clicked.connect(lambda status: self.tt.toggle(status))
         self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
+        # start up locked
+        self.gui.twistorr_lockswitch.setChecked(False)
+        self.gui._lock(False)
 
 
     # SIGNALS

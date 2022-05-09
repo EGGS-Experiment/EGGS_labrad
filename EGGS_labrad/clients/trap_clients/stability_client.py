@@ -18,7 +18,11 @@ _ELECTRON_CHARGE = 1.60217e-19
 class stability_client(GUIClient):
 
     name = 'Stability Client'
-    servers = {'os': 'Oscilloscope Server', 'rf': 'RF Server', 'dc': 'DC Server'}
+    servers = {
+        'os': 'Oscilloscope Server',
+        'rf': 'RF Server',
+        'dc': 'DC Server'
+    }
 
     def getgui(self):
         if self.gui is None:
@@ -43,16 +47,17 @@ class stability_client(GUIClient):
         self.refresher.start(3, now=False)
 
     def initGUI(self):
-        self.gui.record_button.toggled.connect(lambda status: self.record_flow(status))
+        self.gui.record_button.toggled.connect(lambda status: self.record_start(status))
         self.gui.beta_setting.valueChanged.connect(lambda value: self.gui.drawStability(value))
+        self.gui.autoscale.clicked.connect(lambda blank: self.os.autoscale())
         # set initial value for stability
         self.gui.beta_setting.setValue(0.4)
 
     # SLOTS
     @inlineCallbacks
-    def record_flow(self, status):
+    def record_start(self, status):
         """
-        Creates a new dataset to record flow and
+        Creates a new dataset to record values and
         tells polling loop to add data to data vault.
         """
         # set up datavault
@@ -100,7 +105,8 @@ class stability_client(GUIClient):
         self.gui.stability_point.setData(x=[q_param], y=[a_param_x])
         # recording
         if self.recording:
-            elapsedtime = time.time() - self.starttime
+            elapsedtime = time() - self.starttime
+            print(elapsedtime, v_rf)
             yield self.dv.add(elapsedtime, v_rf, context=self.c_record)
 
 

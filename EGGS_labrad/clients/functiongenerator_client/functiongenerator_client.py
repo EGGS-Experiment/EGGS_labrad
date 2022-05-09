@@ -38,7 +38,7 @@ class functiongenerator_client(GUIClient):
 
     def initGUI(self):
         # frequency is in kHz
-        self.gui.freq.valueChanged.connect(lambda freq: self.fg.frequency(freq / 1000))
+        self.gui.freq.valueChanged.connect(lambda freq: self.fg.frequency(freq * 1000))
         self.gui.ampl.valueChanged.connect(lambda ampl: self.fg.amplitude(ampl))
         self.gui.rfswitch.toggled.connect(lambda status: self.fg.toggle(status))
         self.gui.lock(False)

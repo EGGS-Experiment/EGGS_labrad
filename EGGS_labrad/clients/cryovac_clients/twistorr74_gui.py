@@ -44,7 +44,7 @@ class twistorr74_gui(QFrame):
         self.twistorr_record = TextChangingButton(('Stop Recording', 'Start Recording'))
             # power
         self.twistorr_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
-        self.twistorr_lockswitch.setChecked(True)
+        self.twistorr_lockswitch.toggled.connect(lambda status: self._lock(status))
         self.twistorr_toggle = TextChangingButton(('On', 'Off'))
 
     def makeLayout(self):
@@ -65,6 +65,12 @@ class twistorr74_gui(QFrame):
         layout.addWidget(self.twistorr_lockswitch,      8 + row1, col1)
         layout.addWidget(self.twistorr_record,          9 + row1, col1)
         # layout.minimumSize()
+
+    def _lock(self, status):
+        """
+        Lock everything except the Lockswitch.
+        """
+        self.twistorr_toggle.setEnabled(status)
 
 
 if __name__ == "__main__":

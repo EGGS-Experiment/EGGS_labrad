@@ -195,3 +195,26 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         resp = yield self.query('PHM?')
         resp = self._parse(resp, 'PHM:INT')
         returnValue(float(resp))
+
+
+    # FEEDBACK
+    def feedback_toggle(self, onoff=None):
+        # setter
+        if onoff is not None:
+            if onoff is True:
+                yield self.write('AM:E:D')
+            elif onoff is False:
+                yield self.write('AM:OFF')
+        # getter
+        resp = yield self.query('AM?')
+        if resp == 'AM:OFF':
+            returnValue(False)
+        else:
+            returnValue(True)
+
+    def feedback_amplitude_depth(self, depth=None):
+        if depth:
+            yield self.write('AM:E:D ' + str(depth))
+        resp = yield self.query('AM?')
+        resp = self._parse(resp, 'AM:E:D')
+        returnValue(float(resp))

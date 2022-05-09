@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = SR475 Server
+name = Slider Server
 version = 1.0.0
-description = Controls the SR475 Shutter.
-instancename = SR475 Server
+description = Controls the ELL9K Slider from ThorLabs.
+instancename = Slider Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -16,27 +16,42 @@ timeout = 20
 ### END NODE INFO
 """
 from labrad.units import WithUnit
-from labrad.server import setting
-from twisted.internet.defer import returnValue
+from labrad.server import setting, Signal
+from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.servers import SerialDeviceServer
 
-TERMINATOR = ''
+TERMINATOR = '\r'
 
 
-class SR475Server(SerialDeviceServer):
+class SliderServer(SerialDeviceServer):
     """
-    Controls the SR475 Shutter.
+    Controls the ELL9K Slider from ThorLabs.
     """
 
-    name = 'SR475 Server'
-    regKey = 'SR475Server'
-    serNode = None
+    name = 'Slider Server'
+    regKey = 'SliderServer'
+    serNode = 'mongkok'
     port = None
 
     timeout = WithUnit(5.0, 's')
-    baudrate = 19200
+    baudrate = 9600
 
+
+    # SIGNALS
+    flow_update = Signal(999999, 'signal: flow update', 'v')
+
+    # device info
+    # status
+    # motor 1
+    # move home
+    # home offset
+    # move absolute position (steps)
+    # move relative position
+    # get position
+    # get/set velocity compensation (fractional value)
+    # jog
+    # set jog step
 
     # CORE
     @setting(11, 'Reset', returns='')
@@ -172,6 +187,43 @@ class SR475Server(SerialDeviceServer):
         returnValue(int(resp))
 
 
+    # HELPER
+    def _create_message(self, CMD_msg, DIR_msg, DATA_msg=b''):
+        """
+        Creates a message according to the ELL9K serial protocol.
+        """
+        # create message as bytearray
+        msg = _TT74_STX_msg + _TT74_ADDR_msg + CMD_msg + DIR_msg + DATA_msg + _TT74_ETX_msg
+        msg = bytearray(msg)
+        # calculate checksum
+        CRC_msg = 0x00
+        for byte in msg[1:]:
+            CRC_msg ^= byte
+        # convert checksum to hex value and add to end
+        CRC_msg = hex(CRC_msg)[2:]
+        msg.extend(bytearray(CRC_msg, encoding='utf-8'))
+        return bytes(msg)
+
+    def _parse(self, ans):
+        """
+        Parses the ELL9K response.
+        """
+        if ans == b'':
+            raise Exception('No response from device')
+        # remove STX and ADDR
+        ans = ans[2:]
+        # check if we have CMD and DIR and remove them if so
+        if len(ans) > 1:
+            ans = ans[4:]
+            ans = ans.decode()
+        elif ans in _TT74_ERRORS_msg:
+            raise Exception(_TT74_ERRORS_msg[ans])
+        elif ans == b'\x06':
+            ans = 'Acknowledged'
+        # if none of these cases, just return it anyways
+        return ans
+
+
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(SR475Server())
+    util.runServer(SliderServer())

@@ -4,6 +4,8 @@ from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.config.device_db import device_db
 from EGGS_labrad.clients.ARTIQ_client.DAC_gui import DAC_gui
 
+from copy import deepcopy
+
 DACID = 659312
 
 
@@ -17,7 +19,8 @@ class DAC_client(GUIClient):
 
     def getgui(self):
         if self.gui is None:
-            self.gui = DAC_gui(self.dac_list)
+            dac_list_tmp = deepcopy(self.dac_list)
+            self.gui = DAC_gui(dac_list_tmp)
         return self.gui
     
     @inlineCallbacks

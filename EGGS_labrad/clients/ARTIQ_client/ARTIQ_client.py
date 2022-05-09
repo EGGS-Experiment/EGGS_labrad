@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout
 
 from twisted.internet.defer import inlineCallbacks
 
@@ -24,55 +24,48 @@ class ARTIQ_client(QMainWindow):
         LABRADHOST = os.environ['LABRADHOST']
         from labrad.wrappers import connectAsync
         self.cxn = yield connectAsync(LABRADHOST, name=self.name)
-        # check that required servers are online
-        try:
-            self.dv = yield self.cxn.data_vault
-            self.reg = yield self.cxn.registry
-        except Exception as e:
-            print(e)
-            raise
         return self.cxn
 
-    @inlineCallbacks
     def makeLayout(self, cxn):
         # central layout
         centralWidget = QWidget()
         layout = QHBoxLayout(centralWidget)
         self.tabWidget = QTabWidget()
         self.tabWidget.setMovable(True)
-
         # create subwidgets
-        ttl_widget = yield self.makeTTLWidget()
-        dds_widget = yield self.makeDDSWidget()
-        dac_widget = yield self.makeDACWidget()
-        adc_widget = yield self.makeADCWidget()
-
+        ttl_widget = self.makeTTLWidget(self.reactor, cxn)
+        dds_widget = self.makeDDSWidget(self.reactor, cxn)
+        dac_widget = self.makeDACWidget(self.reactor, cxn)
+        adc_widget = self.makeADCWidget(self.reactor, cxn)
         # create tabs for each subwidget
         self.tabWidget.addTab(ttl_widget, '&TTL')
         self.tabWidget.addTab(dds_widget, '&DDS')
         self.tabWidget.addTab(dac_widget, '&DAC')
         self.tabWidget.addTab(adc_widget, '&ADC')
-
         # put it all together
         layout.addWidget(self.tabWidget)
         self.setCentralWidget(centralWidget)
         self.setWindowTitle(self.name)
 
-    def makeTTLWidget(self):
+    def makeTTLWidget(self, reactor, cxn):
         from EGGS_labrad.clients.ARTIQ_client.TTL_client import TTL_client
-        return TTL_client(self.reactor, self.cxn)
+        client_tmp = TTL_client(reactor, cxn)
+        return client_tmp
 
-    def makeDDSWidget(self):
+    def makeDDSWidget(self, reactor, cxn):
         from EGGS_labrad.clients.ARTIQ_client.DDS_client import DDS_client
-        return DDS_client(self.reactor, self.cxn)
+        client_tmp = DDS_client(reactor, cxn)
+        return client_tmp
 
-    def makeDACWidget(self):
+    def makeDACWidget(self, reactor, cxn):
         from EGGS_labrad.clients.ARTIQ_client.DAC_client import DAC_client
-        return DAC_client(self.reactor, self.cxn)
+        client_tmp = DAC_client(reactor, cxn)
+        return client_tmp
 
-    def makeADCWidget(self):
+    def makeADCWidget(self, reactor, cxn):
         from EGGS_labrad.clients.ARTIQ_client.ADC_client import ADC_client
-        return ADC_client(self.reactor, self.cxn)
+        client_tmp = ADC_client(reactor, cxn)
+        return client_tmp
 
     def closeEvent(self, x):
         self.cxn.disconnect()
@@ -81,6 +74,29 @@ class ARTIQ_client(QMainWindow):
 
 
 if __name__ == "__main__":
-    from EGGS_labrad.clients import runClient
-    runClient(ARTIQ_client)
+    # set up logging
+    from sys import stdout
+    from twisted.python import log
+    log.startLogging(stdout)
+    # set up qapplication
+    app = QApplication([])
+    try:
+        import qt5reactor
+        qt5reactor.install()
+    except Exception as e:
+        print(e)
+    # instantiate client with a reactor
+    from twisted.internet import reactor
+    client_tmp = ARTIQ_client(reactor)
+    # show gui
+    client_tmp.showMaximized()
+    # start reactor
+    reactor.callWhenRunning(app.exec)
+    reactor.addSystemEventTrigger('after', 'shutdown', client_tmp.close)
+    reactor.runReturn()
+    # close client on exit
+    try:
+        client_tmp.close()
+    except Exception as e:
+        print(e)
 
