@@ -123,6 +123,7 @@ class lakeshore336_client(GUIClient):
         self.gui.heat1_set.setEnabled(status)
         self.gui.heat1_mode.setEnabled(status)
         # heater 2
+        self.gui.heat2_mode.setEnabled(status)
         self.gui.heat2_in.setEnabled(status)
         self.gui.heat2_res.setEnabled(status)
         self.gui.heat2_curr.setEnabled(status)

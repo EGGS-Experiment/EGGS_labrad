@@ -78,7 +78,7 @@ class PMT_client(GUIClient):
         self.gui.trigger_active.setEnabled(status)
         self.gui.time_record.setEnabled(status)
         self.gui.time_delay.setEnabled(status)
-        self.gui.time_record.setEnabled(status)
+        self.gui.time_length.setEnabled(status)
         self.gui.edge_method.setEnabled(status)
         self.gui.program_button.setEnabled(status)
         self.gui.program_button.setEnabled(status)
