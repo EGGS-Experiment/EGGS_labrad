@@ -80,13 +80,16 @@ class RGA_client(GUIClient):
         # lockswitches
         self.gui.general_lockswitch.setChecked(False)
         self.gui.general_lockswitch.toggled.connect(lambda status: self.general_lock(status))
+        self.general_lock(False)
         self.gui.ionizer_lockswitch.setChecked(False)
         self.gui.ionizer_lockswitch.toggled.connect(lambda status: self.ionizer_lock(status))
+        self.ionizer_lock(False)
         self.gui.detector_lockswitch.setChecked(False)
         self.gui.detector_lockswitch.toggled.connect(lambda status: self.detector_lock(status))
+        self.detector_lock(False)
         self.gui.scan_lockswitch.setChecked(False)
         self.gui.scan_lockswitch.toggled.connect(lambda status: self.scan_lock(status))
-        # todo: join lockswitch to group
+        self.scan_lock(False)
         # todo: qgroupbox
 
 
