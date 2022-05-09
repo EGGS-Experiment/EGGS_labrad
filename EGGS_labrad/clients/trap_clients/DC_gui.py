@@ -3,7 +3,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox, QClientHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox, QClientHeader, QClientMenuHeader
 
 
 class AMO8_channel(QFrame):
@@ -103,10 +103,11 @@ class DC_gui(QFrame):
         # set client title
         self.setWindowTitle('DC Client')
         amo8_layout = QGridLayout(self)
-        # create header title
-        self.device_title = QClientHeader(self.name)
         # create header
-        self.device_header = self._createHeader()
+        self.header = QClientMenuHeader()
+        self.device_title = QClientHeader(self.name)
+        self.global_buttons = self._createGlobalButtons()
+        self.hv_monitor = self._createHVmonitor()
         # create holder widget for the channels
         channel_holder = QWidget()
         channel_holder_layout = QGridLayout(channel_holder)
@@ -117,10 +118,6 @@ class DC_gui(QFrame):
         channel_holder_layout.addWidget(self.doubleramp_endcaps,        0, 0)
         channel_holder_layout.addWidget(self.doubleramp_aramp,          0, 2)
         channel_holder_layout.addWidget(self.triangleramp_aramp,        1, 2)
-        # self.doublechange_endcaps = QPushButton("Adjust Both Endcaps")
-        # self.doublechange_aramp = QPushButton("Adjust Both Trap Rods")
-        # amo8_layout.addWidget(self.doublechange_endcaps,    4, 0)
-        # amo8_layout.addWidget(self.doublechange_aramp,      4, 1)
         shift_rows = 2# tmp remove todo
         for channel_name, channel_params in self.active_channels.items():
             channel_num = channel_params['num']
@@ -131,14 +128,35 @@ class DC_gui(QFrame):
             channel_holder_layout.addWidget(channel_gui, channel_params['row'] + shift_rows, channel_params['col'])
         channel_holder_wrapped = QCustomGroupBox(channel_holder, "DC Channels", scrollable=True)
         # lay out device
-        amo8_layout.addWidget(self.device_title,            0, 0, 1, 1)
-        amo8_layout.addWidget(self.device_header,           0, 1, 1, 1)
+        amo8_layout.addWidget(self.header,                  0, 0, 1, 3)
+        amo8_layout.addWidget(self.device_title,            1, 0, 1, 1)
+        amo8_layout.addWidget(self.global_buttons,          1, 1, 1, 1)
+        amo8_layout.addWidget(self.hv_monitor,              1, 2, 1, 1)
         amo8_layout.addWidget(channel_holder_wrapped,       2, 0, 5, 3)
 
-    def _createHeader(self):
+    def _createGlobalButtons(self):
         # create header layout
-        device_header = QWidget(self)
-        device_header_layout = QGridLayout(device_header)
+        global_widget = QWidget()
+        global_widget_layout = QGridLayout(global_widget)
+        # create global buttons
+        self.device_global_onswitch = QPushButton('ALL ON')
+        self.device_global_onswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.device_global_offswitch = QPushButton('ALL OFF')
+        self.device_global_offswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.device_global_clear = QPushButton('ALL CLEAR')
+        self.device_global_clear.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        # lay out header
+        global_widget_layout.addWidget(self.device_global_onswitch,         0, 0, 1, 1)
+        global_widget_layout.addWidget(self.device_global_offswitch,        0, 1, 1, 1)
+        global_widget_layout.addWidget(self.device_global_clear,            0, 2, 1, 1)
+        # wrap device header
+        wrapped_device_header = QCustomGroupBox(global_widget, "Global Settings")
+        return wrapped_device_header
+
+    def _createHVmonitor(self):
+        # create header layout
+        hv_widget = QWidget()
+        hv_widget_layout = QGridLayout(hv_widget)
         # create HV monitor displays
         device_hv_v1_label = QLabel('HV Input V1 (V)')
         self.device_hv_v1 = QLabel('V1')
@@ -150,23 +168,13 @@ class DC_gui(QFrame):
         self.device_hv_i1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         self.device_hv_i1.setStyleSheet('color: red')
         self.device_hv_i1.setAlignment(Qt.AlignRight)
-        # create global buttons
-        self.device_global_onswitch = QPushButton('ALL ON')
-        self.device_global_onswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
-        self.device_global_offswitch = QPushButton('ALL OFF')
-        self.device_global_offswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
-        self.device_global_clear = QPushButton('ALL CLEAR')
-        self.device_global_clear.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         # lay out header
-        device_header_layout.addWidget(self.device_global_onswitch,         0, 0, 1, 1)
-        device_header_layout.addWidget(self.device_global_offswitch,        0, 1, 1, 1)
-        device_header_layout.addWidget(self.device_global_clear,            0, 2, 1, 1)
-        device_header_layout.addWidget(device_hv_v1_label,                  1, 1, 1, 1)
-        device_header_layout.addWidget(self.device_hv_v1,                   2, 1, 1, 1)
-        device_header_layout.addWidget(device_hv_i1_label,                  1, 2, 1, 1)
-        device_header_layout.addWidget(self.device_hv_i1,                   2, 2, 1, 1)
+        hv_widget_layout.addWidget(device_hv_v1_label,                  0, 0, 1, 1)
+        hv_widget_layout.addWidget(self.device_hv_v1,                   1, 0, 1, 1)
+        hv_widget_layout.addWidget(device_hv_i1_label,                  0, 1, 1, 1)
+        hv_widget_layout.addWidget(self.device_hv_i1,                   1, 1, 1, 1)
         # wrap device header
-        wrapped_device_header = QCustomGroupBox(device_header, "Global Settings")
+        wrapped_device_header = QCustomGroupBox(hv_widget, "HV Monitor")
         return wrapped_device_header
 
 

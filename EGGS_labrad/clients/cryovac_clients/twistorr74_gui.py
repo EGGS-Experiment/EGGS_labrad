@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, QClientHeader, QClientMenuHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton, QClientMenuHeader
 
 
 class twistorr74_gui(QFrame):
@@ -17,32 +17,31 @@ class twistorr74_gui(QFrame):
         shell_font = 'MS Shell Dlg 2'
         self.setMinimumSize(280, 370)
         self.setMaximumSize(300, 400)
-        # twistorr 74
-        self.twistorr_label = QClientHeader("Twistorr 74 Pump")
-        # self.twistorr_label = QLabel('Twistorr 74 Pump')
-        # self.twistorr_label.setFont(QFont(shell_font, pointSize= 18))
-        # self.twistorr_label.setAlignment(Qt.AlignCenter)
-            # pressure readout
+        # label
+        self.twistorr_label = QLabel('Twistorr 74 Pump')
+        self.twistorr_label.setFont(QFont(shell_font, pointSize=18))
+        self.twistorr_label.setAlignment(Qt.AlignCenter)
+        # pressure readout
         self.pressure_display_label = QLabel('Pressure (mbar)')
         self.pressure_display = QLabel('Pressure')
         self.pressure_display.setFont(QFont(shell_font, pointSize=20))
         self.pressure_display.setAlignment(Qt.AlignCenter)
         self.pressure_display.setStyleSheet('color: blue')
-            # power readout
+        # power readout
         self.power_display_label = QLabel('Power (W)')
         self.power_display = QLabel('Power')
         self.power_display.setFont(QFont(shell_font, pointSize=20))
         self.power_display.setAlignment(Qt.AlignCenter)
         self.power_display.setStyleSheet('color: blue')
-            # speed readout
+        # speed readout
         self.speed_display_label = QLabel('Speed (Hz)')
         self.speed_display = QLabel('Speed')
         self.speed_display.setFont(QFont(shell_font, pointSize=20))
         self.speed_display.setAlignment(Qt.AlignCenter)
         self.speed_display.setStyleSheet('color: blue')
-            # record button
+        # record button
         self.twistorr_record = TextChangingButton(('Stop Recording', 'Start Recording'))
-            # power
+        # power
         self.twistorr_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
         self.twistorr_lockswitch.toggled.connect(lambda status: self._lock(status))
         self.twistorr_toggle = TextChangingButton(('On', 'Off'))
