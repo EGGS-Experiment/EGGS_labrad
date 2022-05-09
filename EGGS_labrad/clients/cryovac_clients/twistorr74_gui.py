@@ -50,10 +50,10 @@ class twistorr74_gui(QFrame):
     def makeLayout(self):
         layout = QGridLayout(self)
         shell_font = 'MS Shell Dlg 2'
-        self.th1 = QClientMenuHeader(serial=True)
+        self.header = QClientMenuHeader()
 
         row1, col1 = (1, 0)
-        layout.addWidget(self.th1,           0, 0)
+        layout.addWidget(self.header,           0, 0)
         layout.addWidget(self.twistorr_label,           0 + row1, col1, 1, 1)
         layout.addWidget(self.pressure_display_label,   1 + row1, col1)
         layout.addWidget(self.pressure_display,         2 + row1, col1)

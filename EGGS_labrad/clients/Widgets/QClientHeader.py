@@ -6,6 +6,9 @@ from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QComboBox,\
     QToolBar, QMessageBox, QAction
 
 
+from twisted.internet.defer import inlineCallbacks
+
+
 class QClientHeader(QFrame):
     """
     A basic client header that shows the client name and has
@@ -83,19 +86,22 @@ class QClientMenuHeader(QMenuBar):
         Associates the File menu with its corresponding slots.
         To be called by the client.
         """
-        #self.restart_action.triggered.connect(lambda: client._restart())
+        self.restart_action.triggered.connect(lambda: client._restart())
         #self.lockGUI_action.triggered.connect(lambda: client._restart())
         #self.unlockGUI_action.triggered.connect(lambda: self.restart())
         pass
 
+    #@inlineCallbacks
     def addSerial(self, server):
         """
         Creates the Serial menu and associates actions
         with their corresponding slots.
         """
         # serial: device info, node, port, connect/disconnect
+        # create and add serial sub-menu to main menu
         self.serialMenu = QMenu("&Serial")
         self.addMenu(self.serialMenu)
+        # create and add serial menu actions
         self.node_action = QAction('Node')
         self.port_action = QAction('Port')
         self.connect_action = QAction('Connect')
@@ -106,13 +112,30 @@ class QClientMenuHeader(QMenuBar):
         self.serialMenu.addAction(self.connect_action)
         self.serialMenu.addAction(self.disconnect_action)
         self.serialMenu.addAction(self.clear_action)
-        #self.restart_action.triggered.connect(lambda: client._restart())
+        # connect actions to slots
+        self.connect_action.triggered.connect(lambda status, _server=server: self._deviceselect(_server))
+        self.disconnect_action.triggered.connect(lambda status, _server=server: self._deviceclose(_server))
         #self.restart_action.triggered.connect(lambda: client._restart())
         #self.restart_action.triggered.connect(lambda: client._restart())
         #self.restart_action.triggered.connect(lambda: client._restart())
         # todo: can't change node/port if currently connected
         # todo: baud rate, stop bits
         # todo: status?
+
+    @inlineCallbacks
+    def _deviceselect(self, server):
+        try:
+            node, port = yield server.device_select()
+            # todo: assign to self
+        except Exception as e:
+            print(e)
+
+    @inlineCallbacks
+    def _deviceclose(self, server):
+        try:
+            yield server.device_close()
+        except Exception as e:
+            print(e)
 
     def addGPIB(self, server):
         """
@@ -141,9 +164,13 @@ class QClientMenuHeader(QMenuBar):
         with their corresponding slots.
         """
         # polling: poll time, poll status
+        # create and add polling sub-menu to main menu
         self.pollingMenu = QMenu("&Polling")
         self.addMenu(self.pollingMenu)
+        # create and add serial menu actions
         self.pollstatus_action = QAction('Status')
         self.pollrate_action = QAction('Rate')
         self.serialMenu.addAction(self.pollstatus_action)
         self.serialMenu.addAction(self.pollrate_action)
+        # connect actions to slots
+        self.connect_action.triggered.connect(lambda status, _server=server: self._deviceselect(_server))

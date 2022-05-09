@@ -2,10 +2,12 @@
 Base class for building PyQt5 GUI clients for LabRAD.
 """
 from os import _exit, environ
+from inspect import getmembers
 from abc import ABC, abstractmethod
 from twisted.internet.defer import inlineCallbacks
+
 from EGGS_labrad.clients.utils import createTrunk
-from EGGS_labrad.clients.Widgets.QInitializePlaceholder import QInitializePlaceholder
+from EGGS_labrad.clients.Widgets import QInitializePlaceholder, QClientMenuHeader
 
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
@@ -22,9 +24,7 @@ class GUIClient(ABC):
     # LabRAD connection parameters
     LABRADHOST = None
     LABRADPASSWORD = None
-    # menu header parameters
-    serial_header = False
-    polling_header = False
+
 
     # INITIALIZATION
     def __init__(self, reactor, cxn=None, parent=None):
@@ -101,26 +101,6 @@ class GUIClient(ABC):
         return cxn
 
     @inlineCallbacks
-    def _getgui(self, cxn):
-        print("\tStarting up GUI...")
-        try:
-            # close placeholder GUI
-            #self.gui.hide()
-            #self.gui = None
-            # get GUI after initClient so we can call any config
-            # or initialization variables we need
-            yield self.getgui()
-            #self.gui.show()
-            print("\tSuccessfully started up GUI.")
-        except Exception as e:
-            # just quit if we can't get GUI otherwise we freeze since we don't have a reactor to work with
-            print("\tFatal error: unable to start up GUI.")
-            print(e)
-            print("Exiting...")
-            _exit(0)
-        return cxn
-
-    @inlineCallbacks
     def _initData(self, cxn):
         print("\tGetting default values...")
         try:
@@ -130,6 +110,29 @@ class GUIClient(ABC):
             print('\tError in initData:', e)
         else:
             print("\tSuccessfully retrieved default values.")
+        return cxn
+
+    @inlineCallbacks
+    def _getgui(self, cxn):
+        print("\tStarting up GUI...")
+        # run after initClient so we can get configs or variables from labrad
+        try:
+            # close placeholder GUI
+            #self.gui.hide()
+            #self.gui = None
+            yield self.getgui()
+            #self.gui.show()
+            print("\tSuccessfully started up GUI.")
+        except Exception as e:
+            # just quit if we can't get GUI otherwise we freeze since we don't have a reactor to work with
+            print("\tFatal error: unable to start up GUI.")
+            print(e)
+            print("Exiting...")
+            _exit(0)
+        # get all widgets that aren't QClientMenuHeaders so we can lock them
+        from PyQt5.QtWidgets import QWidget
+        isWidgetNotHeader = lambda obj: isinstance(obj, QWidget) and (not isinstance(obj, QClientMenuHeader))
+        self._all_widgets = dict(getmembers(self.gui, isWidgetNotHeader))
         return cxn
 
     @inlineCallbacks
@@ -145,14 +148,14 @@ class GUIClient(ABC):
         # reenable GUI upon completion of initialization
         if self.guiEnable:
             print("\tGUI initialization successful.")
-            self.gui.setEnabled(True)
+            # we don't need to enable here since we start up already enabled
         else:
-            self.gui.setEnabled(False)
+            self._enableAllExceptHeader(False)
         return cxn
 
     def _connectHeader(self, cxn):
         """
-        Check if a client has a QClientHeader and attempt to connect to it.
+        Check if a client has a QClientMenuHeader and attempt to connect to it.
         This allows us to break out special client-related functions onto
         the GUI and thus allowing users access.
 
@@ -160,23 +163,25 @@ class GUIClient(ABC):
         errors.
         """
         try:
-            from inspect import getmembers
-            from EGGS_labrad.clients.Widgets import QClientMenuHeader
+            # todo: don't connect serial and polling if not a device server (e.g. stability client)
             # check if any members of the GUI are QClientMenuHeaders
             isQClientMenuHeader = lambda obj: isinstance(obj, QClientMenuHeader)
             QClientMenuHeader_list = getmembers(self.gui, isQClientMenuHeader)
-            # connect restart button in header to _restart
+            # check that the GUI has a QClientMenuHeader
             if len(QClientMenuHeader_list) > 0:
+                # initialize the QClientMenuHeader
                 menuHeader_name, menuHeader_object = QClientMenuHeader_list[0]
                 menuHeader_object.addFile(self)
-                if self.serial_header:
-                    print(self.servers.keys())
-                    # todo: pass serial server; see if any servers are serialserver
-                    #menuHeader_object.addSerial(self)
-                if self.polling_header:
-                    print(self.servers.keys())
-                    # todo: pass polling server; see if any servers are pollingserver
-                    # menuHeader_object.addPolling(self)
+                # search client servers for SerialDeviceServers, PollingServers, and GPIBManagedDeviceServers
+                for server_nickname in self.servers.keys():
+                    server_object = getattr(self, server_nickname)
+                    # create appropriate submenu
+                    if "Serial Query" in server_object.settings.keys():
+                        menuHeader_object.addSerial(server_object)
+                    if "Polling" in server_object.settings.keys():
+                        menuHeader_object.addPolling(server_object)
+                    if "GPIB Query" in server_object.settings.keys():
+                        menuHeader_object.addGPIB(server_object)
         except Exception as e:
             print("\t", e)
             print("Error connecting to QClientMenuHeader in GUI.")
@@ -197,7 +202,7 @@ class GUIClient(ABC):
         _exit(0)
 
 
-    # SIGNALS
+    # SLOTS
     @inlineCallbacks
     def _serverConnect(self, c, message):
         server_name = message[1]
@@ -218,7 +223,7 @@ class GUIClient(ABC):
                 yield self._initClient(self.cxn)
                 # redo initData to get new state of server
                 yield self._initData(self.cxn)
-                self.gui.setEnabled(True)
+                self._enableAllExceptHeader(True)
         except ValueError:
             pass
         except Exception as e:
@@ -228,13 +233,13 @@ class GUIClient(ABC):
         server_name = message[1]
         if server_name in self.servers.values():
             print(server_name + ' disconnected, disabling client.')
-            self.gui.setEnabled(False)
+            self._enableAllExceptHeader(False)
 
 
     # HELPER
     def _restart(self):
         """
-        Reinitializes the GUI Client.
+        Restarts the GUI client.
         """
         print('Restarting client ...')
         # todo: maybe move this to a permanent startup sequence?
@@ -246,6 +251,15 @@ class GUIClient(ABC):
         d.addCallback(self._initGUI)
         d.addCallback(self._connectHeader)
         print('Finished restart.')
+
+    def _enableAllExceptHeader(self, status):
+        """
+        Locks/unlocks all widgets in the GUI that aren't QClientMenuHeaders.
+        Arguments:
+            status  (bool)  : whether to enable or disable the widgets.
+        """
+        for widget_object in self._all_widgets.values():
+            widget_object.setEnabled(status)
 
 
     # SUBCLASSED FUNCTIONS
