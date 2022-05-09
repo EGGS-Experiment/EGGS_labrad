@@ -79,9 +79,13 @@ class RGA_client(GUIClient):
         self.gui.buffer_clear.clicked.connect(lambda: self.gui.buffer_readout.clear())
         # lockswitches
         self.gui.general_lockswitch.setChecked(False)
+        self.gui.general_lockswitch.toggled.connect(lambda status: self.general_lock(status))
         self.gui.ionizer_lockswitch.setChecked(False)
+        self.gui.ionizer_lockswitch.toggled.connect(lambda status: self.ionizer_lock(status))
         self.gui.detector_lockswitch.setChecked(False)
+        self.gui.detector_lockswitch.toggled.connect(lambda status: self.detector_lock(status))
         self.gui.scan_lockswitch.setChecked(False)
+        self.gui.scan_lockswitch.toggled.connect(lambda status: self.scan_lock(status))
         # todo: join lockswitch to group
         # todo: qgroupbox
 
@@ -155,6 +159,31 @@ class RGA_client(GUIClient):
         self.gui.buffer_readout.appendPlainText('Scan finished.')
         # reenable GUI
         self.gui.setEnabled(True)
+
+    def general_lock(self, status):
+        self.gui.initialize.setEnabled(status)
+        self.gui.calibrate_electrometer.setEnabled(status)
+        self.gui.calibrate_detector.setEnabled(status)
+        self.gui.degas.setEnabled(status)
+        self.gui.general_tp.setEnabled(status)
+
+    def ionizer_lock(self, status):
+        self.gui.ionizer_ee.setEnabled(status)
+        self.gui.ionizer_fl.setEnabled(status)
+        self.gui.ionizer_vf.setEnabled(status)
+        self.gui.ionizer_ie.setEnabled(status)
+
+    def detector_lock(self, status):
+        self.gui.detector_hv.setEnabled(status)
+        self.gui.detector_nf.setEnabled(status)
+
+    def scan_lock(self, status):
+        self.gui.scan_sa.setEnabled(status)
+        self.gui.scan_mi.setEnabled(status)
+        self.gui.scan_mf.setEnabled(status)
+        self.gui.scan_type.setEnabled(status)
+        self.gui.scan_num.setEnabled(status)
+        self.gui.scan_start.setEnabled(status)
 
 
 if __name__ == "__main__":

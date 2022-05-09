@@ -70,6 +70,9 @@ class niops03_client(GUIClient):
         self.gui.np_lockswitch.toggled.connect(lambda status: self.gui.np_power.setEnabled(status))
         self.gui.np_mode.currentIndexChanged.connect(lambda index: self.niops.np_mode(index + 1))
         self.gui.np_power.clicked.connect(lambda status: self.niops.np_toggle(status))
+        # lock on startup
+        self.gui.ip_lockswitch.setChecked(False)
+        self.gui.np_lockswitch.setChecked(False)
 
 
     # SLOTS
