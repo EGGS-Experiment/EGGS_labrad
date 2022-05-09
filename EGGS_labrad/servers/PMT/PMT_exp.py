@@ -6,10 +6,9 @@ _DMA_HANDLE = 'PMT_exp'
 _DATASET_NAME = 'pmt_test_dataset'
 
 
-class PMT_experiment2(EnvExperiment):
+class PMT_experiment(EnvExperiment):
     """
     Programs a PMT recording sequence onto ARTIQ.
-    Draft 2.
     """
 
     def build(self):
