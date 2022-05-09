@@ -69,6 +69,7 @@ class PMT_gui(QFrame):
     def makeLayout(self):
         # todo: add power TTL
         layout = QGridLayout(self)
+        self.header = QClientMenuHeader()
         layout.addWidget(self.header,                   0, 0, 1, 3)
         layout.addWidget(self.title,                    1, 0, 1, 3)
         # devices

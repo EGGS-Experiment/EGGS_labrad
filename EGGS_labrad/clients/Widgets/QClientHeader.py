@@ -66,18 +66,22 @@ class QClientMenuHeader(QMenuBar):
         Creates the QClientMenuHeader with only a File menu.
         Does not associate the File menu with any slots.
         """
+        # file menu
         self.fileMenu = QMenu("&File")
         self.addMenu(self.fileMenu)
-        self.restart_action = QAction('Restart')
-        self.lockGUI_action = QAction('Lock GUI')
-        self.unlockGUI_action = QAction('Unlock GUI')
-        self.saveConfig_action = QAction('Save Configuration')
-        self.loadConfig_action = QAction('Load Configuration')
+        self.restart_action = QAction('&Restart')
+        self.lockGUI_action = QAction('&Lock GUI')
+        self.unlockGUI_action = QAction('&Unlock GUI')
         self.fileMenu.addAction(self.restart_action)
         self.fileMenu.addAction(self.lockGUI_action)
         self.fileMenu.addAction(self.unlockGUI_action)
-        self.fileMenu.addAction(self.saveConfig_action)
-        self.fileMenu.addAction(self.loadConfig_action)
+        # config menu
+        self.configMenu = QMenu("&Configuration")
+        self.addMenu(self.configMenu)
+        self.saveConfig_action = QAction('Save Configuration')
+        self.loadConfig_action = QAction('Load Configuration')
+        self.configMenu.addAction(self.saveConfig_action)
+        self.configMenu.addAction(self.loadConfig_action)
 
     def addFile(self, client):
         """
