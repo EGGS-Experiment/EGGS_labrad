@@ -1,8 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QComboBox, QLabel, QGridLayout, QFrame, QPushButton
+from PyQt5.QtWidgets import QDoubleSpinBox, QComboBox, QLabel, QGridLayout, QFrame, QPushButton
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QClientMenuHeader
 
 
 class PMT_gui(QFrame):
@@ -67,26 +67,28 @@ class PMT_gui(QFrame):
         self.lockswitch = Lockswitch()
 
     def makeLayout(self):
+        # todo: add power TTL
         layout = QGridLayout(self)
-        layout.addWidget(self.title, 0, 0, 1, 3)
+        layout.addWidget(self.header,                   0, 0, 1, 3)
+        layout.addWidget(self.title,                    1, 0, 1, 3)
         # devices
-        layout.addWidget(self.ttl_pmt_label, 1, 0)
-        layout.addWidget(self.ttl_trigger_label, 1, 1)
-        layout.addWidget(self.trigger_active_label, 1, 2)
-        layout.addWidget(self.ttl_pmt, 2, 0)
-        layout.addWidget(self.ttl_trigger, 2, 1)
-        layout.addWidget(self.trigger_active, 2, 2)
+        layout.addWidget(self.ttl_pmt_label,            2, 0)
+        layout.addWidget(self.ttl_trigger_label,        2, 1)
+        layout.addWidget(self.trigger_active_label,     2, 2)
+        layout.addWidget(self.ttl_pmt,                  3, 0)
+        layout.addWidget(self.ttl_trigger,              3, 1)
+        layout.addWidget(self.trigger_active,           3, 2)
         # timing
-        layout.addWidget(self.time_record_label, 3, 0)
-        layout.addWidget(self.time_delay_label, 3, 1)
-        layout.addWidget(self.time_length_label, 3, 2)
-        layout.addWidget(self.time_record, 4, 0)
-        layout.addWidget(self.time_delay, 4, 1)
-        layout.addWidget(self.time_length, 4, 2)
+        layout.addWidget(self.time_record_label,        4, 0)
+        layout.addWidget(self.time_delay_label,         4, 1)
+        layout.addWidget(self.time_length_label,        4, 2)
+        layout.addWidget(self.time_record,              5, 0)
+        layout.addWidget(self.time_delay,               5, 1)
+        layout.addWidget(self.time_length,              5, 2)
         # running
-        layout.addWidget(self.start_button, 5, 0)
-        layout.addWidget(self.program_button, 5, 1)
-        layout.addWidget(self.lockswitch, 5, 2)
+        layout.addWidget(self.start_button,             6, 0)
+        layout.addWidget(self.program_button,           6, 1)
+        layout.addWidget(self.lockswitch,               6, 2)
 
     def closeEvent(self, event):
         if self.parent is not None:

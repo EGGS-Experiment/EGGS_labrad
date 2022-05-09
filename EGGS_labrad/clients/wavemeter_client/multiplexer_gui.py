@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox,
                             QCheckBox, QScrollArea, QWidget
 
 from EGGS_labrad.clients.Widgets.wav2RGB import wav2RGB
-from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomProgressBar, QCustomSlideIndicator, QClientHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomProgressBar, QCustomSlideIndicator, QClientMenuHeader
 
 
 class multiplexer_pid(QFrame):
@@ -375,15 +375,18 @@ class multiplexer_gui(QFrame):
         # add wavemeter channel holder to qBox
         wm_scroll.setWidget(wmChan_widget)
         wm_scroll.setMinimumWidth(wmChan_widget.sizeHint().width())
-        # add title header
+        # add title
         title = QLabel('Wavemeter Client')
         title.setFont(QFont('MS Shell Dlg 2', pointSize=18))
         title.setMaximumHeight(40)
+        # create header
+        self.header = QClientMenuHeader()
         # final layout
-        layout.addWidget(title,             0, 0, 1, 2)
-        layout.addWidget(qBox_wm,           1, 0, 4, 1)
-        layout.addWidget(qBox_intTrace,     1, 1, 3, 1)
-        layout.addWidget(qBox_PID,          4, 1, 1, 1)
+        layout.addWidget(self.header,       0, 0, 1, 2)
+        layout.addWidget(title,             1, 0, 1, 2)
+        layout.addWidget(qBox_wm,           2, 0, 4, 1)
+        layout.addWidget(qBox_intTrace,     2, 1, 3, 1)
+        layout.addWidget(qBox_PID,          5, 1, 1, 1)
 
     def _createChannel(self, name, params):
         # initialize widget

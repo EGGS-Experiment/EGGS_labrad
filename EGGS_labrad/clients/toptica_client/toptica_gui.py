@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QComboBox, QScrollArea, QWidget, QSizePolicy
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QClientMenuHeader
 
 SHELL_FONT = 'MS Shell Dlg 2'
 LABEL_FONT = QFont(SHELL_FONT, pointSize=8)
@@ -253,13 +253,15 @@ class toptica_gui(QFrame):
         # add wavemeter channel holder to qBox
         wm_scroll.setWidget(wmChan_widget)
         wm_scroll.setFixedWidth(wmChan_widget.sizeHint().width())
-        # add title header
+        # add title
         title = QLabel('Toptica Client')
         title.setFont(QFont('MS Shell Dlg 2', pointSize=18))
         title.setMaximumHeight(40)
         # final layout
-        layout.addWidget(title,         0, 0, 1, 1)
-        layout.addWidget(wm_scroll,     1, 0, 1, 1)
+        self.header = QClientMenuHeader()
+        layout.addWidget(self.header,   0, 0, 1, 1)
+        layout.addWidget(title,         1, 0, 1, 1)
+        layout.addWidget(wm_scroll,     2, 0, 1, 1)
 
 
 if __name__ == "__main__":

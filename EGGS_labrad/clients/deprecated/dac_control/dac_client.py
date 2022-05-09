@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QSizePolicy, QGridLayout, QGroupBox
 
 #from config.dac_ad660_config import hardwareConfiguration as hc
 from EGGS_labrad.clients.Widgets.QCustomSpinBox import QCustomSpinBox
-from EGGS_labrad.clients.trap_clients.dac_control.electrodewidget import ElectrodeIndicator
+from EGGS_labrad.clients.deprecated.dac_control.electrodewidget import ElectrodeIndicator
 
 
 class Electrode(object):
@@ -44,7 +44,6 @@ class DAC_client(QWidget):
     @inlineCallbacks
     def connect(self):
         from labrad.wrappers import connectAsync
-        from labrad.units import WithUnit as U
         #self.elec_dict = hc.elec_dict
         class yz1:
             self.dacChannelNumber = 1

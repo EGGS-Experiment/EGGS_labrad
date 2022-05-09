@@ -2,13 +2,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import QRect, QCoreApplication, QMetaObject
 from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QSizePolicy, QGridLayout, QPushButton, QDoubleSpinBox, QHBoxLayout
 
-from EGGS_labrad.clients.Widgets import TextChangingButton as _TextChangingButton
-
-
-class TextChangingButton(_TextChangingButton):
-    def __init__(self, button_text=None, parent=None):
-        super(TextChangingButton, self).__init__(button_text, parent)
-        self.setMaximumHeight(30)
+from EGGS_labrad.clients.Widgets import TextChangingButton, QClientMenuHeader
 
 
 class RF_gui(QFrame):

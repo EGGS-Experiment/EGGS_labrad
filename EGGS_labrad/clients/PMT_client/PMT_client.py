@@ -15,16 +15,10 @@ class PMT_client(GUIClient):
         return self.gui
 
     def initClient(self):
-        """
-        Initialize the Client.
-        """
         pass
 
     @inlineCallbacks
     def initData(self):
-        """
-        Get startup data from servers and show on GUI.
-        """
         # get available TTLInOuts
         ttl_list = yield self.pmt.ttl_available()
         for ttl_name in ttl_list:
@@ -50,9 +44,7 @@ class PMT_client(GUIClient):
         self.gui.edge_method.setCurrentIndex(ind)
 
     def initGUI(self):
-        """
-        Connect signals to slots.
-        """
+        # todo: save data to datavault
         # device
         self.gui.ttl_pmt.currentTextChanged.connect(lambda text: self.pmt.ttl_pmt(int(text)))
         self.gui.ttl_trigger.currentTextChanged.connect(lambda text: self.pmt.ttl_trigger(int(text)))
