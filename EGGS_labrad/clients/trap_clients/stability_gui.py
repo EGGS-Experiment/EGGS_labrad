@@ -42,10 +42,10 @@ class stability_gui(QFrame):
         self.qparam_display = QLabel('0.000')
         # wsecr - radial
         wsecr_display_label = QLabel('\u03C9 radial (x2\u03C0 MHz)')
-        self.wsecr_display = QLabel('00.00')
+        self.wsecr_display = QLabel('0.000')
         # wsecz - radial
         wsecz_display_label = QLabel('\u03C9 Axial (x2\u03C0 MHz)')
-        self.wsecz_display = QLabel('00.00')
+        self.wsecz_display = QLabel('0.000')
 
         # configure display elements
         for display in (self.pickoff_display, self.aparam_display, self.qparam_display, self.wsecr_display, self.wsecz_display):

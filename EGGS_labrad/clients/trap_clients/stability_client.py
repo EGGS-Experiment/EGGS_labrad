@@ -6,9 +6,9 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.clients.trap_clients.stability_gui import stability_gui
 
-_PICKOFF_FACTOR = 300
+_PICKOFF_FACTOR = 301
 _GEOMETRIC_FACTOR_RADIAL = 1
-_GEOMETRIC_FACTOR_AXIAL = 0.06
+_GEOMETRIC_FACTOR_AXIAL = 0.029
 _ELECTRODE_DISTANCE_RADIAL = 5.5e-4
 _ELECTRODE_DISTANCE_AXIAL = 2.2e-3
 _ION_MASS = 40 * 1.66053907e-27
@@ -80,20 +80,24 @@ class stability_client(GUIClient):
         freq = yield self.rf.frequency()
         Omega = freq / 2e6 # convert to Mathieu Omega
         # get endcap parameters
-        v_dc = yield self.dc.voltage(1)
+        v_dc1 = yield self.dc.voltage(1)
+        v_dc2 = yield self.dc.voltage(2)
+        v_dc=(v_dc1+v_dc2)/2
         # calculate a parameter
-        a_param = _ELECTRON_CHARGE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
-        self.gui.aparam_display.setText('{:.5f}'.format(a_param))
+        a_param_x = -4 * _ELECTRON_CHARGE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
+        a_param_z = 8 * _ELECTRON_CHARGE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (
+                    2 * pi * freq) ** 2 / _ION_MASS
+        self.gui.aparam_display.setText('{:.5f}'.format(a_param_z))
         # calculate q parameter
         q_param = 2 * _ELECTRON_CHARGE * (v_rf * _GEOMETRIC_FACTOR_RADIAL) / (_ELECTRODE_DISTANCE_RADIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
         self.gui.qparam_display.setText('{:.3f}'.format(q_param))
         # calculate secular frequencies
-        wsecr = Omega * sqrt(0.5 * q_param ** 2 + a_param)
-        wsecz = Omega * sqrt(2 * a_param)
-        self.gui.wsecr_display.setText('{:.2f}'.format(wsecr))
-        self.gui.wsecz_display.setText('{:.2f}'.format(wsecz))
+        wsecr = Omega * sqrt(0.5 * q_param ** 2 + a_param_x)
+        wsecz = Omega * sqrt( a_param_z)
+        self.gui.wsecr_display.setText('{:.3f}'.format(wsecr))
+        self.gui.wsecz_display.setText('{:.3f}'.format(wsecz))
         # display on stability diagram
-        self.gui.stability_point.setData(x=[q_param], y=[a_param])
+        self.gui.stability_point.setData(x=[q_param], y=[a_param_x])
         # recording
         if self.recording:
             elapsedtime = time.time() - self.starttime
