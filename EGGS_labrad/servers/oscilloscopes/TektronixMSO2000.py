@@ -102,7 +102,6 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def trigger_slope(self, slope=None):
-        print('yzde')
         chString = 'TRIG:A:EDGE:SLOP'
         if slope is not None:
             slope = slope.upper()

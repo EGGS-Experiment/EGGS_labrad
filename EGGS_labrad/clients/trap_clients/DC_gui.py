@@ -3,7 +3,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox, QClientHeader, QClientMenuHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox, QClientMenuHeader
 
 
 class AMO8_channel(QFrame):
@@ -105,9 +105,11 @@ class DC_gui(QFrame):
         amo8_layout = QGridLayout(self)
         # create header
         self.header = QClientMenuHeader()
-        self.device_title = QClientHeader(self.name)
         self.global_buttons = self._createGlobalButtons()
         self.hv_monitor = self._createHVmonitor()
+        self.device_title = QLabel(self.name)
+        self.device_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        self.device_title.setAlignment(Qt.AlignCenter)
         # create holder widget for the channels
         channel_holder = QWidget()
         channel_holder_layout = QGridLayout(channel_holder)

@@ -13,7 +13,6 @@ class QClientHeader(QFrame):
     """
     A basic client header that shows the client name and has
     a restart button to allow restarts.
-    Designed to be called by a GUIClient class for
     """
 
     def __init__(self, name, serial=False, polling=False):
@@ -54,9 +53,8 @@ class QClientHeader(QFrame):
 
 class QClientMenuHeader(QMenuBar):
     """
-    A basic client header that shows the client name and has
-    a restart button to allow restarts.
-    Designed to be called by a GUIClient class for
+    A client menu header that breaks out core server functions.
+    Designed to be initialized by a GUIClient.
     """
 
     def __init__(self):
@@ -170,7 +168,7 @@ class QClientMenuHeader(QMenuBar):
         # create and add serial menu actions
         self.pollstatus_action = QAction('Status')
         self.pollrate_action = QAction('Rate')
-        self.serialMenu.addAction(self.pollstatus_action)
-        self.serialMenu.addAction(self.pollrate_action)
+        self.pollingMenu.addAction(self.pollstatus_action)
+        self.pollingMenu.addAction(self.pollrate_action)
         # connect actions to slots
-        self.connect_action.triggered.connect(lambda status, _server=server: self._deviceselect(_server))
+        #self.connect_action.triggered.connect(lambda status, _server=server: self._deviceselect(_server))
