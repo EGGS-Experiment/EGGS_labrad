@@ -6,7 +6,7 @@ _DMA_HANDLE = 'PMT_exp'
 _DATASET_NAME = 'pmt_test_dataset'
 
 
-class PMT_experiment(EnvExperiment):
+class PMT_experiment2(EnvExperiment):
     """
     Programs a PMT recording sequence onto ARTIQ.
     """
@@ -19,14 +19,17 @@ class PMT_experiment(EnvExperiment):
         self.setattr_argument('trigger_ttl', NumberValue(default=1, ndecimals=0, step=1, min=-1, max=23))
         self.setattr_argument('trigger_status', BooleanValue(default=False))
         # timing
-        self.setattr_argument('time_bin_us', NumberValue(default=0.1, ndecimals=3, step=1, min=0.01, max=100))
-        self.setattr_argument('time_reset_us', NumberValue(default=0.1, ndecimals=3, step=1, min=0, max=100))
-        self.setattr_argument('time_total_us', NumberValue(default=1, ndecimals=3, step=1, min=0.01, max=1000))
+        self.setattr_argument('time_bin_us', NumberValue(default=1, ndecimals=3, step=1, min=0.01, max=100))
+        self.setattr_argument('time_reset_us', NumberValue(default=10, ndecimals=3, step=1, min=0, max=100))
+        self.setattr_argument('time_total_us', NumberValue(default=100, ndecimals=3, step=1, min=0.01, max=1000))
         # edge method
         self.setattr_argument('edge_method', StringValue(default='rising'))
         # get core devices
         self.setattr_device('core')
         self.setattr_device('core_dma')
+        # set values
+        self.pmt_switchon_time_mu = self.core.seconds_to_mu(600 * us)
+
 
     def prepare(self):
         # get TTLs
@@ -62,7 +65,7 @@ class PMT_experiment(EnvExperiment):
         self.dataset_name = _DATASET_NAME
         self.num_bins = int(self.time_total_us / (self.time_bin_us + self.time_reset_us))
         self.set_dataset(self.dataset_name, zeros(self.num_bins), broadcast=True)
-        self.setattr_dataset(self.dataset_name)
+
 
     @kernel
     def run(self):
@@ -71,30 +74,28 @@ class PMT_experiment(EnvExperiment):
         self.ttl_signal.input()
         self.ttl_trigger.input()
         self.core.break_realtime()
-
         # turn on power to PMT
         self.ttl_power.on()
-        delay(600 * us)
-
-        # record DMA sequence
-        with self.core_dma.record(_DMA_HANDLE):
-            # todo: implement overlight
-            # read overlight
-            # stop if overlight
-            # todo: implement linetrigger
-            # wait for linetrigger if active
-            #     if self.ttl_trigger != -1:
-            #         while True:
-            #             trigger_active = self.trigger_input.gate_rising(10 * us)
-            #             if (self.trigger_input.count(trigger_active) > 0):
-            #                 break
-            self.core.break_realtime()
-            for i in range(self.num_bins):
-                self.core.break_realtime()
-                self.mutate_dataset(self.dataset_name, i, self.ttl_signal.count(self.gate_edge(self.time_bin_mu)))
-                delay_mu(self.time_reset_mu)
+        delay_mu(self.pmt_switchon_time_mu)
+        self.core.break_realtime()
+        for i in range(self.num_bins):
+            #self.core.break_realtime()
+            delay_mu(self.time_reset_mu)
+            self.mutate_dataset(self.dataset_name, i, self.ttl_signal.count(self.gate_edge(self.time_bin_mu)))
         self.core.break_realtime()
 
+
     def analyze(self):
-        th1 = self.get_dataset(self.dataset_name)
-        print(th1)
+        print(self.get_dataset(self.dataset_name))
+        pass
+
+# todo: implement overlight
+# read overlight
+# stop if overlight
+# todo: implement linetrigger
+# wait for linetrigger if active
+#     if self.ttl_trigger != -1:
+#         while True:
+#             trigger_active = self.trigger_input.gate_rising(10 * us)
+#             if (self.trigger_input.count(trigger_active) > 0):
+#                 break
