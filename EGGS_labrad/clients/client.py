@@ -9,6 +9,8 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients.utils import createTrunk
 from EGGS_labrad.clients.Widgets import QInitializePlaceholder, QClientMenuHeader
 
+from twisted.python import log
+
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
 
@@ -41,7 +43,7 @@ class GUIClient(ABC):
         #self.gui = QInitializePlaceholder()
         #self.gui.show()
         # initialization sequence
-        print("Starting client...")
+        log.msg("Starting client...")
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._getgui)

@@ -184,7 +184,7 @@ class RFServer(GPIBManagedServer):
                 status = bool(status)
         return self.selectedDevice(c).feedback_amplitude_toggle(status)
 
-    @setting(411, 'Feedback Amplitude Depth', depth='v', returns='v')
+    @setting(412, 'Feedback Amplitude Depth', depth='v', returns='v')
     def feedback_amplitude_depth(self, c, depth=None):
         """
         Get/set amplitude feedback depth.
