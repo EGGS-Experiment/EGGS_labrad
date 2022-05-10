@@ -31,10 +31,6 @@ def runClient(client, *args, **kwargs):
     """
     Runs a LabRAD client written using PyQt5.
     """
-    # set up logging
-    from sys import stdout
-    from twisted.python import log
-    log.startLogging(stdout)
     # widgets require a QApplication to run
     app = QApplication([])
     # reactor may already be installed

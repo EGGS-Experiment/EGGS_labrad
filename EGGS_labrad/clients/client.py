@@ -1,15 +1,17 @@
 """
-Base class for building PyQt5 GUI clients for LabRAD.
+Base classes for building PyQt5 GUI clients for LabRAD.
 """
+from sys import stdout
 from os import _exit, environ
 from inspect import getmembers
 from abc import ABC, abstractmethod
+
+from twisted.python import log
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients.utils import createTrunk
 from EGGS_labrad.clients.Widgets import QInitializePlaceholder, QClientMenuHeader
 
-from twisted.python import log
 
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
@@ -39,11 +41,20 @@ class GUIClient(ABC):
         # get core servers in addition to whichever servers are specified
         core_servers = {'registry': 'Registry', 'dv': 'Data Vault'}
         self.servers.update(core_servers)
+        # set up logging
+        name_tmp = self.name
+        class loggerWithPrefx(log.FileLogObserver):
+            def emit(self, eventDict):
+                eventDict["system"] = name_tmp
+                super().emit(eventDict)
+        # start logging
+        client_logger = loggerWithPrefx(stdout)
+        log.startLoggingWithObserver(client_logger.emit, 1)
         # show placeholder GUI while we initialize
         #self.gui = QInitializePlaceholder()
         #self.gui.show()
         # initialization sequence
-        log.msg("Starting client...")
+        print("Starting client...")
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._getgui)
