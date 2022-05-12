@@ -1,7 +1,8 @@
 from twisted.internet.defer import inlineCallbacks
-from PyQt5.QtWidgets import QMenuBar, QMenu, QAction
+from PyQt5.QtWidgets import QMenuBar, QMenu, QAction, QWidgetAction, QDoubleSpinBox
 
 # todo: do menu and actions programmatically
+# todo: make prettier
 class QClientMenuHeader(QMenuBar):
     """
     A client menu header that breaks out core server functions.
@@ -73,8 +74,6 @@ class QClientMenuHeader(QMenuBar):
         self.disconnect_action.triggered.connect(lambda action, _server=server: self._deviceClose(_server))
         self.clear_action.triggered.connect(lambda action, _server=server: self._deviceClear(_server))
         #self.restart_action.triggered.connect(lambda: client._restart())
-        #self.restart_action.triggered.connect(lambda: client._restart())
-        #self.restart_action.triggered.connect(lambda: client._restart())
         # todo: submenu for node, port, connection status
         # todo: can't change node/port if currently connected, grey out
         # todo: baud rate, stop bits
@@ -115,12 +114,21 @@ class QClientMenuHeader(QMenuBar):
         # create and add polling menu actions
         self.pollstatus_action = QAction('Polling Active')
         self.pollstatus_action.setCheckable(True)
-        self.pollrate_action = QAction('Rate')
+        self.pollrate_spinbox = QDoubleSpinBox()
+        # poll rate
+        self.pollrate_action = QWidgetAction()
+        self.pollrate_spinbox.setMinimum(0.1)
+        self.pollrate_spinbox.setMaximum(10)
+        self.pollrate_spinbox.setSingleStep(0.1)
+        self.pollrate_spinbox.setDecimals(1)
+        self.pollrate_action.setDefaultWidget(self.pollrate_spinbox)
+        # add actions
         self.pollingMenu.addAction(self.pollstatus_action)
         self.pollingMenu.addAction(self.pollrate_action)
         # connect actions to slots
         self.pollingMenu.triggered.connect(lambda action, _server=server: self._getPolling(_server))
-        self.pollstatus_action.triggered.connect(lambda status, _server=server: self._setPolling(_server, status))
+        self.pollstatus_action.triggered.connect(lambda status, _server=server: self._setPollingStatus(_server, status))
+        self.pollrate_spinbox.valueChanged.connect(lambda value, status=self.pollstatus_action.isChecked(), _server=server: print('yzde:', status, ',ll:', value))
 
     def addCommunication(self, server):
         """
@@ -136,7 +144,7 @@ class QClientMenuHeader(QMenuBar):
         # self.pollstatus_action = QAction('Polling Active')
         # self.pollingMenu.addAction(self.pollstatus_action)
         # connect actions to slots
-        # self.pollingMenu.triggered.connect(lambda action, _server=server: self._getPolling(_server))
+        # self.pollingMenu.triggered.connect(lambda action, _server=server: self._getPollingStatus(_server))
 
 
     # FUNCTIONS
@@ -171,7 +179,7 @@ class QClientMenuHeader(QMenuBar):
             print(e)
 
     @inlineCallbacks
-    def _setPolling(self, server, status):
+    def _setPollingStatus(self, server, status):
         try:
             polling_status, polling_interval = yield server.polling(status)
             self.pollstatus_action.setChecked(polling_status)
