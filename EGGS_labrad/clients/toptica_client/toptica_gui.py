@@ -259,7 +259,7 @@ class toptica_gui(QFrame):
         title.setMaximumHeight(40)
         # final layout
         self.header = QClientMenuHeader()
-        layout.addWidget(self.header,   0, 0, 1, 1)
+        layout.setMenuBar(self.header)
         layout.addWidget(title,         1, 0, 1, 1)
         layout.addWidget(wm_scroll,     2, 0, 1, 1)
 

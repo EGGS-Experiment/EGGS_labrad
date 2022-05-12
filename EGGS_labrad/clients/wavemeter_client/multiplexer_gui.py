@@ -382,11 +382,11 @@ class multiplexer_gui(QFrame):
         # create header
         self.header = QClientMenuHeader()
         # final layout
-        layout.addWidget(self.header,       0, 0, 1, 2)
-        layout.addWidget(title,             1, 0, 1, 2)
-        layout.addWidget(qBox_wm,           2, 0, 4, 1)
-        layout.addWidget(qBox_intTrace,     2, 1, 3, 1)
-        layout.addWidget(qBox_PID,          5, 1, 1, 1)
+        layout.setMenuBar(self.header)
+        layout.addWidget(title,             0, 0, 1, 2)
+        layout.addWidget(qBox_wm,           1, 0, 4, 1)
+        layout.addWidget(qBox_intTrace,     1, 1, 3, 1)
+        layout.addWidget(qBox_PID,          4, 1, 1, 1)
 
     def _createChannel(self, name, params):
         # initialize widget

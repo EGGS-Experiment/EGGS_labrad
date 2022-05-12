@@ -89,15 +89,9 @@ class QClientMenuHeader(QMenuBar):
         self.select_action = QAction('Select Device')
         self.release_action = QAction('Release Device')
         self.lock_action = QAction('Lock Device')
-        self.query_action = QAction('Query')
-        self.write_action = QAction('Write')
-        self.read_action = QAction('Read')
         self.gpibMenu.addAction(self.select_action)
         self.gpibMenu.addAction(self.release_action)
         self.gpibMenu.addAction(self.lock_action)
-        self.gpibMenu.addAction(self.query_action)
-        self.gpibMenu.addAction(self.write_action)
-        self.gpibMenu.addAction(self.read_action)
         # todo: implement
 
     def addPolling(self, server):
@@ -139,19 +133,24 @@ class QClientMenuHeader(QMenuBar):
 
     def addCommunication(self, server):
         """
-        Creates the Communicate menu and associates actions
+        Creates the Communication menu and associates actions
         with their corresponding slots.
         Arguments:
             server: the LabradServer object that we want to use.
         """
-        # create and add Communicate sub-menu to main menu
-        self.commMenu = QMenu("&Communicate")
+        # create and add communication sub-menu to main menu
+        self.commMenu = QMenu("&Communication")
         self.addMenu(self.commMenu)
-        # create and add polling menu actions
-        # self.pollstatus_action = QAction('Polling Active')
-        # self.pollingMenu.addAction(self.pollstatus_action)
+        # create and add communication menu actions
+        self.query_action = QAction('Query')
+        self.write_action = QAction('Write')
+        self.read_action = QAction('Read')
+        self.commMenu.addAction(self.query_action)# dialog box with input and buffer
+        self.commMenu.addAction(self.write_action) #dialog box with input
+        self.commMenu.addAction(self.read_action) # dialog box
         # connect actions to slots
         # self.pollingMenu.triggered.connect(lambda action, _server=server: self._getPollingStatus(_server))
+        # todo: open up dialog box that works these functions
 
 
     # FUNCTIONS

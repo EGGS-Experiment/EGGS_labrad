@@ -70,7 +70,7 @@ class PMT_gui(QFrame):
         # todo: add power TTL
         layout = QGridLayout(self)
         self.header = QClientMenuHeader()
-        layout.addWidget(self.header,                   0, 0, 1, 3)
+        layout.setMenuBar(self.header)
         layout.addWidget(self.title,                    1, 0, 1, 3)
         # devices
         layout.addWidget(self.ttl_pmt_label,            2, 0)

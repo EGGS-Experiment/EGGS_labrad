@@ -93,7 +93,7 @@ class niops03_gui(QFrame):
         row_offset, pump1_col, pump2_col = 1, 0, 1
         self.header = QClientMenuHeader()
         # lay out header
-        layout.addWidget(self.header,                       0, 0, 1, 2)
+        layout.setMenuBar(self.header)
         layout.addWidget(self.all_label,                    0 + row_offset, 0, 1, 2)
         # lay out ion pump
         layout.addWidget(self.ip_label,                     1 + row_offset, pump1_col)
