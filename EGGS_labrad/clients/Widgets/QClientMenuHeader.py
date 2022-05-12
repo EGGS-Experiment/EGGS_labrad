@@ -1,5 +1,5 @@
 from twisted.internet.defer import inlineCallbacks
-from PyQt5.QtWidgets import QMenuBar, QMenu, QAction, QWidgetAction, QDoubleSpinBox
+from PyQt5.QtWidgets import QMenuBar, QMenu, QAction, QWidgetAction, QDoubleSpinBox, QLabel, QWidget, QVBoxLayout, QFrame
 
 # todo: do menu and actions programmatically
 # todo: make prettier
@@ -115,19 +115,27 @@ class QClientMenuHeader(QMenuBar):
         self.pollstatus_action.setCheckable(True)
         self.pollrate_spinbox = QDoubleSpinBox()
         # poll rate
-        self.pollrate_action = QWidgetAction()
-        self.pollrate_spinbox.setMinimum(0.1)
-        self.pollrate_spinbox.setMaximum(10)
+        self.pollrate_action = QWidgetAction(self.pollingMenu)
+        pollrate_widget = QFrame()
+        pollrate_widget.setFrameStyle(0x0001 | 0x0010)
+        pollrate_widget_layout = QVBoxLayout(pollrate_widget)
+        pollrate_label = QLabel("Polling Interval (s)")
+        self.pollrate_spinbox.setRange(0.1, 10)
         self.pollrate_spinbox.setSingleStep(0.1)
         self.pollrate_spinbox.setDecimals(1)
-        self.pollrate_action.setDefaultWidget(self.pollrate_spinbox)
+        self.pollrate_spinbox.setKeyboardTracking(False)
+        pollrate_widget_layout.addWidget(pollrate_label)
+        pollrate_widget_layout.addWidget(self.pollrate_spinbox)
+        self.pollrate_action.setDefaultWidget(pollrate_widget)
         # add actions
         self.pollingMenu.addAction(self.pollstatus_action)
         self.pollingMenu.addAction(self.pollrate_action)
         # connect actions to slots
         self.pollingMenu.triggered.connect(lambda action, _server=server: self._getPolling(_server))
         self.pollstatus_action.triggered.connect(lambda status, _server=server: self._setPollingStatus(_server, status))
-        self.pollrate_spinbox.valueChanged.connect(lambda value, status=self.pollstatus_action.isChecked(), _server=server: print('yzde:', status, ',ll:', value))
+        self.pollrate_spinbox.valueChanged.connect(lambda value, _server=server: self._setPollingInterval(_server, value))
+        # get initial state
+        self._getPolling(server)
 
     def addCommunication(self, server):
         """
@@ -176,13 +184,23 @@ class QClientMenuHeader(QMenuBar):
         try:
             polling_status, polling_interval = yield server.polling()
             self.pollstatus_action.setChecked(polling_status)
+            self.pollrate_spinbox.setValue(polling_interval)
         except Exception as e:
             print(e)
 
     @inlineCallbacks
     def _setPollingStatus(self, server, status):
         try:
-            polling_status, polling_interval = yield server.polling(status)
+            interval = self.pollrate_spinbox.value()
+            polling_status, polling_interval = yield server.polling(status, interval)
             self.pollstatus_action.setChecked(polling_status)
+        except Exception as e:
+            print(e)
+
+    @inlineCallbacks
+    def _setPollingInterval(self, server, interval):
+        try:
+            status_tmp = self.pollstatus_action.isChecked()
+            polling_status, polling_interval = yield server.polling(status_tmp, interval)
         except Exception as e:
             print(e)

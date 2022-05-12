@@ -43,12 +43,12 @@ class GUIClient(ABC):
         self.servers.update(core_servers)
         # set up logging
         name_tmp = self.name
-        class loggerWithPrefx(log.FileLogObserver):
+        class loggerWithPrefix(log.FileLogObserver):
             def emit(self, eventDict):
                 eventDict["system"] = name_tmp
                 super().emit(eventDict)
         # start logging
-        client_logger = loggerWithPrefx(stdout)
+        client_logger = loggerWithPrefix(stdout)
         log.startLoggingWithObserver(client_logger.emit, 1)
         # show placeholder GUI while we initialize
         #self.gui = QInitializePlaceholder()
@@ -197,6 +197,7 @@ class GUIClient(ABC):
                     if "Polling" in server_object.settings.keys():
                         menuHeader_object.addPolling(server_object)
                     # todo: add communicate menu
+                print("\tSuccessfully connected to QClientMenuHeader.")
         except Exception as e:
             print("\tError connecting to QClientMenuHeader:", e)
         return cxn
