@@ -1,5 +1,5 @@
 __all__ = [
-    "DetachableTabWidget", "TextChangingButton", 'Lockswitch', 'SerialConnection_Client',
+    "QDetachableTabWidget", "TextChangingButton", 'Lockswitch', 'SerialConnection_Client',
     'QSerialConnection', 'QCustomProgressBar', 'QCustomSlideIndicator', 'QCustomGroupBox',
     'QClientHeader', 'QClientMenuHeader', 'QChannelHolder', 'QInitializePlaceholder'
 ]
