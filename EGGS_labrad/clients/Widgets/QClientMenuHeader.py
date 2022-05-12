@@ -76,8 +76,6 @@ class QClientMenuHeader(QMenuBar):
         #self.restart_action.triggered.connect(lambda: client._restart())
         # todo: submenu for node, port, connection status
         # todo: can't change node/port if currently connected, grey out
-        # todo: baud rate, stop bits
-        # todo: direct serial communication
 
     def addGPIB(self, server):
         """
@@ -100,6 +98,7 @@ class QClientMenuHeader(QMenuBar):
         self.gpibMenu.addAction(self.query_action)
         self.gpibMenu.addAction(self.write_action)
         self.gpibMenu.addAction(self.read_action)
+        # todo: implement
 
     def addPolling(self, server):
         """
@@ -153,6 +152,7 @@ class QClientMenuHeader(QMenuBar):
         try:
             node, port = yield server.device_select()
             # todo: assign to self
+            # todo: check if we have a device; if not, set node and port enabled
         except Exception as e:
             print(e)
 
@@ -160,6 +160,7 @@ class QClientMenuHeader(QMenuBar):
     def _deviceClose(self, server):
         try:
             yield server.device_close()
+            # todo: check if we have a device; if not, set node and port enabled
         except Exception as e:
             print(e)
 
