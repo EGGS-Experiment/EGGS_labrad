@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QPoint, QEvent, QMimeData
 from PyQt5.QtWidgets import QTabBar, QTabWidget, QWidget, QDialog, QVBoxLayout, QApplication, QMainWindow, QLabel
 
 
-class DetachableTabWidget(QTabWidget):
+class QDetachableTabWidget(QTabWidget):
     """
     The DetachableTabWidget adds additional functionality to
     Qt's QTabWidget that allows it to detach and re-attach tabs.
@@ -106,6 +106,7 @@ class DetachableTabWidget(QTabWidget):
             self.setCurrentIndex(index)
 
 
+    # INTERNAL CLASSES
     class DetachedTab(QDialog):
         """
         When a tab is detached, the contents are placed into this QDialog.

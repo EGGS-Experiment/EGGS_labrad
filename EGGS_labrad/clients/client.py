@@ -20,7 +20,7 @@ class GUIClient(ABC):
     """
     Creates a client from a single GUI file.
     """
-
+    # todo: co-opt recording into GUIClient and create record function dependent on class variable
     # client parameters
     name = None
     servers = {}
@@ -172,8 +172,7 @@ class GUIClient(ABC):
         This allows us to break out special client-related functions onto
         the GUI and thus allowing users access.
 
-        For example, this allows users to restart the client in the event of
-        errors.
+        For example, this allows users to restart the client in the event of errors.
         """
         try:
             # todo: don't connect serial and polling if not a device server (e.g. stability client)
@@ -182,6 +181,7 @@ class GUIClient(ABC):
             QClientMenuHeader_list = getmembers(self.gui, isQClientMenuHeader)
             # check that the GUI has a QClientMenuHeader
             if len(QClientMenuHeader_list) > 0:
+                print("\tQClientMenuHeader exists. Attempting to connect...")
                 # initialize the QClientMenuHeader
                 menuHeader_name, menuHeader_object = QClientMenuHeader_list[0]
                 menuHeader_object.addFile(self)
@@ -191,13 +191,14 @@ class GUIClient(ABC):
                     # create appropriate submenu
                     if "Serial Query" in server_object.settings.keys():
                         menuHeader_object.addSerial(server_object)
+                        menuHeader_object.addSerial(server_object)
+                    elif "GPIB Query" in server_object.settings.keys():
+                        menuHeader_object.addGPIB(server_object)
                     if "Polling" in server_object.settings.keys():
                         menuHeader_object.addPolling(server_object)
-                    if "GPIB Query" in server_object.settings.keys():
-                        menuHeader_object.addGPIB(server_object)
+                    # todo: add communicate menu
         except Exception as e:
-            print("\t", e)
-            print("Error connecting to QClientMenuHeader in GUI.")
+            print("\tError connecting to QClientMenuHeader:", e)
         return cxn
 
 

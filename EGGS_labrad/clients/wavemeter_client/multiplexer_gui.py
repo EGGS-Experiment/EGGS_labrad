@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox,
                             QDesktopWidget, QPushButton, QDoubleSpinBox, QComboBox,\
                             QCheckBox, QScrollArea, QWidget
 
-from EGGS_labrad.clients.Widgets.wav2RGB import wav2RGB
+from EGGS_labrad.clients import wav2RGB
 from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomProgressBar, QCustomSlideIndicator, QClientMenuHeader
 
 

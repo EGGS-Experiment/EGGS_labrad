@@ -87,18 +87,17 @@ class stability_client(GUIClient):
         # get endcap parameters
         v_dc1 = yield self.dc.voltage(1)
         v_dc2 = yield self.dc.voltage(2)
-        v_dc=(v_dc1+v_dc2)/2
+        v_dc = (v_dc1 + v_dc2)/2
         # calculate a parameter
         a_param_x = -4 * _ELECTRON_CHARGE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
-        a_param_z = 8 * _ELECTRON_CHARGE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (
-                    2 * pi * freq) ** 2 / _ION_MASS
+        a_param_z = 8 * _ELECTRON_CHARGE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
         self.gui.aparam_display.setText('{:.5f}'.format(a_param_z))
         # calculate q parameter
         q_param = 2 * _ELECTRON_CHARGE * (v_rf * _GEOMETRIC_FACTOR_RADIAL) / (_ELECTRODE_DISTANCE_RADIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
         self.gui.qparam_display.setText('{:.3f}'.format(q_param))
         # calculate secular frequencies
         wsecr = Omega * sqrt(0.5 * q_param ** 2 + a_param_x)
-        wsecz = Omega * sqrt( a_param_z)
+        wsecz = Omega * sqrt(a_param_z)
         self.gui.wsecr_display.setText('{:.3f}'.format(wsecr))
         self.gui.wsecz_display.setText('{:.3f}'.format(wsecz))
         # display on stability diagram

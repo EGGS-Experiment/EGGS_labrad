@@ -5,11 +5,12 @@ __all__ = [
 ]
 
 
-from .QDetachableTab import DetachableTabWidget
+from .QDetachableTab import QDetachableTabWidget
 from .QCustomTextChangingButton import TextChangingButton, Lockswitch
 from .QSerialConnection import QSerialConnection, SerialConnection_Client
 from .QCustomProgressBar import QCustomProgressBar
 from .QCustomSlideIndicator import QCustomSlideIndicator
 from .QCustomGroupBox import QCustomGroupBox, QChannelHolder
-from .QClientHeader import QClientHeader, QClientMenuHeader
+from .QClientHeader import QClientHeader
+from .QClientMenuHeader import QClientMenuHeader
 from .QInitializePlaceholder import QInitializePlaceholder
