@@ -62,7 +62,7 @@ GOTO LOOPSTART
 REM: todo: still need to finish
 @ECHO usage: labrad_watchdog [IP_ADDRESS] [-h] [--devices] [-t] [-p] [-n]
 @ECHO:
-@ECHO LabRAD Node
+@ECHO LabRAD Watchdog
 @ECHO Optional Arguments:
 @ECHO    -h, --help          show this message and exit
 @ECHO    --devices           start the labrad core as well as GPIB and serial bus servers

@@ -18,7 +18,10 @@ FOR %%x IN (%*) DO (
 )
 
 REM: Set up syslog daemon
-START "Labrad SysLog" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\bin\labrad_syslog.py
+START "Labrad SysLog" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\bin\labrad_syslog.py"
+
+REM: Set up autosaver
+START "Labrad Autosaver" /min %EGGS_LABRAD_ROOT%\bin\labrad_autosaver.bat
 
 REM: Core Servers
 START "Labrad Manager" /min %HOME%\Code\scalabrad-0.8.3\bin\labrad.bat --tls-required false

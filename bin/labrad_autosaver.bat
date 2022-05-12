@@ -1,84 +1,78 @@
-:: LabRAD Watchdog
-:: Pings the LabRAD manager regularly, and sends an email if it fails
+:: LabRAD Autosaver
+:: Automatically pushes the datavault contents to
+::  the remote repository on the hudsongroup server
 
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
 
-REM: Set default arguments
-SET ip_addr=
-SET /A fail_flag=0
-SET /A timeout_period=20
-SET /A fail_counter=0
-SET /A fail_pings=5
 
-REM: Parse arguments
-SET /A argCount=0
-FOR %%x IN (%*) DO (
-    SET /A argCount+=1
-    IF "%%x"=="-h" (GOTO HELP)
-    IF "%%x"=="--help"(GOTO HELP)
-    REM: todo: still need to finish
-    IF "%%x"=="-t" (ECHO t arg)
-    IF "%%x"=="-p" (ECHO p arg)
-    IF "%%x"=="-n" (ECHO n arg)
+REM: Change directory to .labard
+CD "%HOME%\.labrad"
+
+
+REM: Set default arguments
+SET drive_location=""
+SET /A backup_interval=600
+
+
+REM: See if hudsongroup server is already mounted
+FOR /f "tokens=2" %%i IN ('NET USE ^| FIND "\\eric.physics.ucla.edu"') DO (
+    SET "drive_location=%%i\motion\.labrad_remote"
 )
 
-REM: IP address must be specified, stop otherwise
-IF %argCount% == 0 (
-    ECHO Error: target IP address must be specified.
-    GOTO EOF
-) ELSE (
-    SET ip_addr=%1
+
+REM: Process arguments
+:PROCESSARGS
+IF NOT '%1'=='' (
+    IF "%1"=="-d" (
+        IF %drive_location%=="" (
+            SET drive_location=%2
+        )
+    )
+    IF "%1"=="-t" (SET backup_interval=%2)
+    SHIFT
+    GOTO PROCESSARGS
 )
 
 
 REM: Begin messages
-ECHO %DATE% %TIME%: Watchdog started.
-ECHO %DATE% %TIME%: Watching %ip_addr%.
+ECHO %DATE% %TIME%: Autosaver started.
+ECHO %DATE% %TIME%: Drive location set at %drive_location%.
 
 
 :LOOPSTART
-REM: Ping target IP address
-ECHO %DATE% %TIME%: Pinging %ip_addr%
-PING -n 1 -w 1000 -l 1 %ip_addr% | FIND /i " bytes=" >NUL 2>&1
+REM: Add all files and commit
+ECHO %DATE% %TIME%: Saving data...
+CALL git add -A > NUL
+CALL git commit -m "%COMPUTERNAME%: Saving data." > NUL
+CALL git push origin master > NUL
 
-REM: Process ping response
-IF %ERRORLEVEL% == 1 (
-    SET /A fail_counter+= 1
-    REM ECHO %DATE% %TIME%: Pinging failed. ECHO %fail_pings% - %fail_counter% loops left to establish connection.
-    IF %fail_counter% == %fail_pings% (
-        SET /A fail_flag=1
-        GOTO EOF
-    )
+
+REM: Process response
+IF %ERRORLEVEL%==1 (
+    ECHO %DATE% %TIME%: Minor error.
 ) ELSE (
-    ECHO %DATE% %TIME%: Pinging successful.
+    ECHO %DATE% %TIME%: Save successful.
 )
 
 REM: Wait for next cycle
-@TIMEOUT %timeout_period% /nobreak > NUL
+@TIMEOUT %backup_interval% /nobreak > NUL
 GOTO LOOPSTART
+
 
 :HELP
 REM: todo: still need to finish
-@ECHO usage: labrad_watchdog [IP_ADDRESS] [-h] [--devices] [-t] [-p] [-n]
+@ECHO usage: labrad_autosaver [-h] [--devices] [-t] [-p] [-n]
 @ECHO:
-@ECHO LabRAD Node
+@ECHO LabRAD Autosaver
 @ECHO Optional Arguments:
-@ECHO    -h, --help          show this message and exit
-@ECHO    --devices           start the labrad core as well as GPIB and serial bus servers
-@ECHO    --ip                connect to the labrad manager at the given IP address (default: %LABRADHOST%)
+@ECHO    -h, --help             show this message and exit
+@ECHO    -d                     set the location to back up to (default: \\eric.physics.ucla.edu\groups\motion\.labrad_remote)
+@ECHO    -t                     set the time between backups    (default: 10 minutes)
 @ECHO:
 
 
 :EOF
-REM: Send an email if we have failed
-If %fail_flag% == 1 (
-    ECHO todo: send email placeholder
-)
-
 REM: Unset variables
-SET "ip_addr="
-SET "success_wait="
-SET "fail_wait="
-SET "fail_counter="
-SET "fail_pings="
+SET "drive_location="
+SET "backup_interval="
