@@ -53,7 +53,7 @@ class functiongenerator_gui(QFrame):
         # create header
         self.header = QClientMenuHeader()
         # add widgets to layout
-        layout.addWidget(self.header,       0, 0, 1, 3)
+        layout.setMenuBar(self.header)
         layout.addWidget(title,             1, 0, 1, 3)
         layout.addWidget(freqlabel,         2, 0, 1, 1)
         layout.addWidget(powerlabel,        2, 1, 1, 1)

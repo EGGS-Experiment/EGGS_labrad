@@ -130,11 +130,11 @@ class DC_gui(QFrame):
             channel_holder_layout.addWidget(channel_gui, channel_params['row'] + shift_rows, channel_params['col'])
         channel_holder_wrapped = QCustomGroupBox(channel_holder, "DC Channels", scrollable=True)
         # lay out device
-        amo8_layout.addWidget(self.header,                  0, 0, 1, 3)
-        amo8_layout.addWidget(self.device_title,            1, 0, 1, 1)
-        amo8_layout.addWidget(self.global_buttons,          1, 1, 1, 1)
-        amo8_layout.addWidget(self.hv_monitor,              1, 2, 1, 1)
-        amo8_layout.addWidget(channel_holder_wrapped,       2, 0, 5, 3)
+        amo8_layout.setMenuBar(self.header)
+        amo8_layout.addWidget(self.device_title,            0, 0, 1, 1)
+        amo8_layout.addWidget(self.global_buttons,          0, 1, 1, 1)
+        amo8_layout.addWidget(self.hv_monitor,              0, 2, 1, 1)
+        amo8_layout.addWidget(channel_holder_wrapped,       1, 0, 5, 3)
 
     def _createGlobalButtons(self):
         # create header layout
