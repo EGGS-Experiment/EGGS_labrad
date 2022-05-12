@@ -1,8 +1,7 @@
 from twisted.internet.defer import inlineCallbacks
 from PyQt5.QtWidgets import QMenuBar, QMenu, QAction, QWidgetAction, QDoubleSpinBox, QLabel, QWidget, QVBoxLayout, QFrame
 
-# todo: do menu and actions programmatically
-# todo: make prettier
+
 class QClientMenuHeader(QMenuBar):
     """
     A client menu header that breaks out core server functions.

@@ -5,6 +5,8 @@ from twisted.internet.defer import inlineCallbacks
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout, QApplication
 
+from EGGS_labrad.clients import QDetachableTabWidget
+
 
 class EGGS_gui(QMainWindow):
 
@@ -38,7 +40,7 @@ class EGGS_gui(QMainWindow):
         # central layout
         centralWidget = QWidget()
         layout = QHBoxLayout(centralWidget)
-        self.tabWidget = QTabWidget()
+        self.tabWidget = QDetachableTabWidget()
         #self.tabWidget.setMovable(True)
         # create subwidgets
         # use connection class for scriptscanner only
