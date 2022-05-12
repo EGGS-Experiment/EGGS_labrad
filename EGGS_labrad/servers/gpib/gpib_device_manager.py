@@ -5,7 +5,7 @@
 #     function because this setting could not be properly accessed through the
 #     LabRAD manager at the time of execution.
 # 1.4.0: Updated for Python 3
-
+# 1.4.1: Case is ignored when matching device names.
 """
 ### BEGIN NODE INFO
 [info]
@@ -28,13 +28,17 @@ from twisted.internet.defer import DeferredList, DeferredLock
 from labrad.units import Value
 from labrad.server import LabradServer, setting, inlineCallbacks, returnValue
 
-
 UNKNOWN = '<unknown>'
 
+
 def parseIDNResponse(s):
-    """Parse the response from *IDN? to get mfr and model info."""
+    """
+    Parse the response from *IDN? to get mfr and model info.
+    """
     mfr, model, ver, rev = s.split(',')
-    return mfr.strip() + ' ' + model.strip()
+    # convert response to uppercase
+    return mfr.strip().upper() + ' ' + model.strip().upper()
+
 
 class GPIBDeviceManager(LabradServer):
     """
@@ -212,6 +216,7 @@ class GPIBDeviceManager(LabradServer):
         Returns a list with information about all matching devices that
         have been connected up to this point:
         [(device name, gpib server name, gpib channel, bool)]
+
         After registering, messages will be sent to the registered
         message ID whenever a matching device connects or disconnects.
         The clusters sent in response to this setting and those sent as
@@ -224,16 +229,20 @@ class GPIBDeviceManager(LabradServer):
         query.  To handle devices that don't support *IDN? correctly, use
         the 'Register Ident Function' in addition.
         """
-        # Managed device servers can specify device names as string or a list of strings
+        # managed device servers can specify device names as string or a list of strings
         if isinstance(devices, str):
             devices = [devices]
         found = []
+        # search through
         for device in devices:
+            # convert to uppercase
+            device = device.upper()
+            # store GPIB managed device server details
             servers = self.deviceServers.setdefault(device, [])
             servers.append({'target': c.source,
                             'context': c.ID,
                             'messageID': messageID})
-            # gather info about matching servers already connected
+            # check the new device against all known devices
             for (server, channel), (known_device, idnResult) in self.knownDevices.items():
                 if device != known_device:
                     continue
@@ -272,7 +281,9 @@ class GPIBDeviceManager(LabradServer):
                 str(self.identFunctions))
     
     def notifyServers(self, device, server, channel, isConnected):
-        """Notify all registered servers about a device status change."""
+        """
+        Notify all registered servers about a device status change.
+        """
         for s in self.deviceServers[device]:
             rec = s['messageID'], (device, server, channel, isConnected)
             print('Sending message:', s['target'], s['context'], [rec])
@@ -295,13 +306,16 @@ class GPIBDeviceManager(LabradServer):
         
     def serverDisconnected(self, ID, name):
         """
-        Disconnect devices when a bus server disconnects."""
+        Disconnect devices when a bus server disconnects.
+        """
         for (server, channel) in list(self.knownDevices.keys()):
             if server == name:
                 self.gpib_device_disconnect(server, channel)
     
     def expireContext(self, c):
-        """Stop sending notifications when a context expires."""
+        """
+        Stop sending notifications when a context expires.
+        """
         print('Expiring context:', c.ID)
         # device servers
         deletions = []
