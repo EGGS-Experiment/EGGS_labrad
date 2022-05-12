@@ -164,10 +164,6 @@ class EGGS_gui(QMainWindow):
 
 
 if __name__ == "__main__":
-    # set up logging
-    from sys import stdout
-    from twisted.python import log
-    log.startLogging(stdout)
     # set up qapplication
     app = QApplication([])
     try:
