@@ -22,7 +22,7 @@ from labrad.server import Signal, setting
 from twisted.internet.defer import returnValue, inlineCallbacks
 from EGGS_labrad.servers import SerialDeviceServer, PollingServer
 
-from .RGA_errors import _SRS_RGA_STATUS_QUERIES
+from RGA_errors import _SRS_RGA_STATUS_QUERIES
 
 _SRS_EOL = '\r'
 _SRS_MAX_PRESSURE = 1e-5
