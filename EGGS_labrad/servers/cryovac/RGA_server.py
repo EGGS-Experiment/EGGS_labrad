@@ -22,14 +22,17 @@ from labrad.server import Signal, setting
 from twisted.internet.defer import returnValue, inlineCallbacks
 from EGGS_labrad.servers import SerialDeviceServer, PollingServer
 
+from .RGA_errors import _SRS_RGA_STATUS_QUERIES
+
 _SRS_EOL = '\r'
 _SRS_MAX_PRESSURE = 1e-5
-
 
 
 class RGA_Server(SerialDeviceServer, PollingServer):
     """
     Talks to the SRS RGAx00 residual gas analyzer.
+    All core device functions which take a numerical parameter can also accept
+    "*" as input, which sets the component/function to its default value.
     """
 
     name = 'RGA Server'
@@ -70,10 +73,49 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     def initialize(self, c, level=0):
         """
         Initialize the RGA.
+            Level 0 initialization sets up serial communications
+                and checks the ECU.
+            Level 1 initialization resets the RGA to its factory settings.
+            Level 2 initialization activates standby mode.
+        Arguments:
+            level   (int)   : the level of initialization. Must be one of (0, 1, 2).
         """
         if level not in (0, 1, 2):
             raise Exception('Error: Invalid Input.')
         yield self._setter('IN', level, c)
+
+    @setting(121, 'Errors', returns='*s')
+    def errors(self, c):
+        """
+        Get all errors from the RGA.
+        Returns:
+            (*str)    : a list of active errors.
+        """
+        # getter
+        yield self.ser.acquire()
+        yield self.ser.write('ER?\r')
+        error_status = yield self.ser.read_line(_SRS_EOL)
+        self.ser.release()
+        error_status = error_status.strip()
+        # convert status response to binary
+        error_status = format(int(error_status), '08b')
+        # parse the STATUS byte for error flags
+        error_list = []
+        for bit_number, query_parameters in _SRS_RGA_STATUS_QUERIES.items():
+            if error_status[bit_number] == '1':
+                query_msg, dict_tmp = query_parameters
+                # query the component-specific status register for flags
+                yield self.ser.acquire()
+                yield self.ser.write('{:s}?\r'.format(query_msg))
+                component_register = yield self.ser.read_line(_SRS_EOL)
+                self.ser.release()
+                # convert component response to binary
+                component_register = format(int(error_status.strip()), '08b')
+                # parse response
+                error_list_tmp = [error_msg for bit_number, error_msg in dict_tmp.items()
+                                  if component_register[bit_number] == '1']
+                error_list.extend(error_list_tmp)
+        returnValue(error_list)
 
 
     # IONIZER

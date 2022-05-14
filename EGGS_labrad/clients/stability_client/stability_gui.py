@@ -72,10 +72,17 @@ class stability_gui(QFrame):
         parameters_layout.addWidget(self.wsecz_display,           4, 2, 1, 1)
         parameters_layout.addWidget(self.record_button,           4, 0, 1, 1)
 
-    def _makeChainTab(self):
+    def _makeIonTab(self):
         """
         This tab allows configuration of ion chain data to retrieve
         mode values (i.e. eigenvector components and mode frequencies).
+        """
+        pass
+
+
+    def _makeTrapTab(self):
+        """
+        This tab allows configuration of trap parameters.
         """
         pass
 
