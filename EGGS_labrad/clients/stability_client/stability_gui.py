@@ -16,7 +16,6 @@ class stability_gui(QFrame):
         QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
         self.setFixedSize(400, 600)
-        self.makeWidgets()
         self.makeLayout()
         self.setWindowTitle("Stability Client")
 
@@ -52,12 +51,13 @@ class stability_gui(QFrame):
         self.anharmonic_limit = QLabel("00.00")
 
         # configure display elements
-        for display in (self.pickoff_display, self.aparam_display, self.qparam_display, self.wsecr_display, self.wsecz_display):
+        for display in (self.pickoff_display, self.aparam_display, self.qparam_display, self.wsecr_display,
+                        self.wsecz_display, self.anharmonic_limit):
             display.setFont(QFont(_SHELL_FONT, pointSize=22))
             display.setAlignment(Qt.AlignRight)
             display.setStyleSheet('color: blue')
         for display_label in (pickoff_display_label, aparam_display_label, qparam_display_label,
-                              wsecr_display_label, wsecz_display_label):
+                              wsecr_display_label, wsecz_display_label, anharmonic_limit_label):
             display_label.setAlignment(Qt.AlignRight)
         # layout parameter box elements
         stability_widget_layout.addWidget(pickoff_display_label,          1, 0, 1, 1)
@@ -70,6 +70,8 @@ class stability_gui(QFrame):
         stability_widget_layout.addWidget(self.wsecr_display,             4, 1, 1, 1)
         stability_widget_layout.addWidget(wsecz_display_label,            3, 2, 1, 1)
         stability_widget_layout.addWidget(self.wsecz_display,             4, 2, 1, 1)
+        stability_widget_layout.addWidget(anharmonic_limit_label,         3, 0, 1, 1)
+        stability_widget_layout.addWidget(self.anharmonic_limit,          4, 0, 1, 1)
         #stability_widget_layout.addWidget(self.record_button,           4, 0, 1, 1)
         return stability_widget
 
@@ -99,17 +101,29 @@ class stability_gui(QFrame):
         # l0_distance
         l0_distance_label = QLabel("Equilibrium Distance (\u03BCm)")
         self.l0_distance = QLabel("00.00")
+        self.l0_distance.setStyleSheet('color: blue')
+
+        # configure display elements
+        for display in (self.total_ions, self.ion_list, self.ion_mass, self.l0_distance):
+            try:
+                display.setFont(QFont(_SHELL_FONT, pointSize=22))
+                display.setAlignment(Qt.AlignRight)
+            except AttributeError:
+                pass
+        for display_label in (total_ion_label, ion_list_label, ion_mass_label, l0_distance_label):
+            display_label.setAlignment(Qt.AlignRight)
 
         # lay out
-        iontab_widget_layout.addWidget(total_ion_label)
-        iontab_widget_layout.addWidget(self.total_ions)
-        iontab_widget_layout.addWidget(ion_list_label)
-        iontab_widget_layout.addWidget(self.ion_list)
-        iontab_widget_layout.addWidget(ion_mass_label)
-        iontab_widget_layout.addWidget(self.ion_mass)
-        iontab_widget_layout.addWidget(l0_distance_label)
-        iontab_widget_layout.addWidget(self.l0_distance)
+        iontab_widget_layout.addWidget(total_ion_label,             0, 0, 1, 1)
+        iontab_widget_layout.addWidget(self.total_ions,             1, 0, 1, 1)
+        iontab_widget_layout.addWidget(ion_list_label,              0, 1, 1, 1)
+        iontab_widget_layout.addWidget(self.ion_list,               1, 1, 1, 1)
+        iontab_widget_layout.addWidget(ion_mass_label,              0, 2, 1, 1)
+        iontab_widget_layout.addWidget(self.ion_mass,               1, 2, 1, 1)
+        iontab_widget_layout.addWidget(l0_distance_label,           2, 2, 1, 1)
+        iontab_widget_layout.addWidget(self.l0_distance,            3, 2, 1, 1)
         # todo: integrate with andor
+        return iontab_widget
 
     def _makeTrapTab(self):
         """
@@ -165,14 +179,20 @@ class stability_gui(QFrame):
         mathieu_widget_display.addWidget(self.beta_setting,             1, 0, 1, 1)
         mathieu_widget_display.addWidget(self.autoscale,                1, 1, 1, 1)
         mathieu_widget_display.addWidget(self.stability_display,        2, 0, 3, 3)
-        return 
+        return mathieu_widget
 
     def _makeEigenTab(self):
         """
         This tab displays the ion chain mode data.
         Part of the Display QTabWidget.
         """
-        pass
+        # create holders
+        eigen_widget = QWidget()
+        eigen_widget_layout = QGridLayout(eigen_widget)
+        #
+        # lay out
+        #eigen_widget_layout.addWidget(, )
+        return eigen_widget
 
     def makeLayout(self):
         # create tabwidget to store the Parameters and Chain tabs
