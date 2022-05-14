@@ -85,9 +85,10 @@ class SelfClosingFile(object):
         Runs when an instance is called without arguments
         (e.g. e = Example, e())
         """
-        # begin the countdown if are called after exceeding the timeout
+        # open the file if we don't already have one
         if not hasattr(self, '_file'):
             self._file = self.opener(*self.open_args, **self.open_kw)
+            # begin the countdown if called after exceeding the timeout
             self._fileTimeoutCall = self.reactor.callLater(self.timeout, self._fileTimeout)
         # otherwise, reset the timer
         else:
@@ -96,8 +97,7 @@ class SelfClosingFile(object):
 
     def _fileTimeout(self):
         """
-        Run all cleanup callbacks, close the file,
-        and delete timeout functions.
+        Run all cleanup callbacks, close the file, and delete timeout functions.
         """
         for callback in self.callbacks:
             callback(self)
@@ -109,7 +109,9 @@ class SelfClosingFile(object):
         return os.fstat(self().fileno()).st_size
 
     def onClose(self, callback):
-        """Calls callback *before* the file is closed."""
+        """
+        Calls callback *before* the file is closed.
+        """
         self.callbacks.append(callback)
 
 
@@ -409,7 +411,8 @@ class CsvNumpyData(CsvListData):
     def _get_data(self):
         """
         Read data from file on demand.
-        The data is scheduled to be cleared from memory unless accessed."""
+        The data is scheduled to be cleared from memory unless accessed.
+        """
         if not hasattr(self, '_data'):
             try:
                 # if the file is empty, this line can barf in certain versions
@@ -492,7 +495,8 @@ class CsvNumpyData(CsvListData):
 
 # HDF DATA FILES
 class HDF5MetaData(object):
-    """Class to store metadata inside the file itself.
+    """
+    Class to store metadata inside the file itself.
 
     Like IniData, use this by subclassing.  I anticipate simply moving
     this code into the HDF5Dataset class once it is working, since we
@@ -507,11 +511,15 @@ class HDF5MetaData(object):
     ]
 
     def load(self):
-        """Load and save do nothing because HDF5 metadata is accessed live"""
+        """
+        Load and save do nothing because HDF5 metadata is accessed live.
+        """
         pass
 
     def save(self):
-        """Load and save do nothing because HDF5 metadata is accessed live"""
+        """
+        Load and save do nothing because HDF5 metadata is accessed live.
+        """
         pass
 
     @property
@@ -519,7 +527,9 @@ class HDF5MetaData(object):
         return self.dataset.dtype
 
     def initialize_info(self, title, indep, dep):
-        """Initializes the metadata for a newly created dataset."""
+        """
+        Initializes the metadata for a newly created dataset.
+        """
         t = time()
 
         attrs = self.dataset.attrs
@@ -628,7 +638,9 @@ class HDF5MetaData(object):
         self.dataset.attrs[keyname] = value
 
     def getParameter(self, name, case_sensitive=True):
-        """Get a parameter from the dataset."""
+        """
+        Get a parameter from the dataset.
+        """
         keyname = 'Param.{}'.format(name)
         if case_sensitive:
             if keyname in self.dataset.attrs:
@@ -640,7 +652,8 @@ class HDF5MetaData(object):
         raise errors.BadParameterError(name)
 
     def getParamNames(self):
-        """Get the names of all dataset parameters.
+        """
+        Get the names of all dataset parameters.
 
         Parameter names in the HDF5 file are prefixed with 'Param.' to avoid
         conflicts with the other metadata.
@@ -649,7 +662,9 @@ class HDF5MetaData(object):
         return names
 
     def addComment(self, user, comment):
-        """Add a comment to the dataset."""
+        """
+        Add a comment to the dataset.
+        """
         t = time()
         new_comment = np.array([(t, user, comment)], dtype=self.comment_type)
         old_comments = self.dataset.attrs['Comments']
@@ -657,7 +672,9 @@ class HDF5MetaData(object):
         self.dataset.attrs.create('Comments', data, dtype=self.comment_type)
 
     def getComments(self, limit, start):
-        """Get comments in [(datetime, username, comment), ...] format."""
+        """
+        Get comments in [(datetime, username, comment), ...] format.
+        """
         if limit is None:
             raw_comments = self.dataset.attrs['Comments'][start:]
         else:
@@ -684,7 +701,9 @@ class ExtendedHDF5Data(HDF5MetaData):
         self.version = np.asarray(self.file.attrs['Version'], np.int32)
 
     def initialize_info(self, title, indep, dep):
-        """Initialize the columns when creating a new dataset"""
+        """
+        Initialize the columns when creating a new dataset.
+        """
         dtype = []
         for idx, col in enumerate(indep + dep):
             shape = col.shape
@@ -724,14 +743,18 @@ class ExtendedHDF5Data(HDF5MetaData):
         return self.file["DataVault"]
 
     def addData(self, data):
-        """Adds one or more rows or data from a numpy struct array."""
+        """
+        Adds one or more rows or data from a numpy struct array.
+        """
         new_rows = len(data)
         old_rows = self.dataset.shape[0]
         self.dataset.resize((old_rows + new_rows,))
         self.dataset[old_rows:(old_rows + new_rows)] = data
 
     def getData(self, limit, start, transpose, simpleOnly):
-        """Get up to limit rows from a dataset."""
+        """
+        Get up to limit rows from a dataset.
+        """
         if simpleOnly:
             datatype = self.dataset.dtype
             for idx in range(len(datatype)):
@@ -796,8 +819,8 @@ class SimpleHDF5Data(HDF5MetaData):
     a filesystem-like tree of datasets within one file.  Here, the single dataset
     is stored in /DataVault within the HDF5 file.
     """
-
     def __init__(self, fh):
+
         self._file = fh
         if 'Version' not in self.file.attrs:
             self.file.attrs['Version'] = np.asarray([2, 0, 0], dtype=np.int32)
@@ -819,7 +842,9 @@ class SimpleHDF5Data(HDF5MetaData):
         return self.file["DataVault"]
 
     def addData(self, data):
-        """Adds one or more rows or data from a 2D array of floats."""
+        """
+        Adds one or more rows or data from a 2D array of floats.
+        """
         new_rows = data.shape[0]
         old_rows = self.dataset.shape[0]
         # if data.shape[1] != len(self.dataset.dtype):
@@ -833,7 +858,9 @@ class SimpleHDF5Data(HDF5MetaData):
         self.dataset[old_rows:(old_rows + new_rows)] = data
 
     def getData(self, limit, start, transpose, simpleOnly):
-        """Get up to limit rows from a dataset."""
+        """
+        Get up to <limit> rows from a dataset.
+        """
         if transpose:
             raise RuntimeError("Transpose specified for simple data format: not supported")
         if limit is None:

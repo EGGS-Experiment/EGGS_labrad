@@ -39,54 +39,33 @@ class SliderServer(SerialDeviceServer):
 
 
     # SIGNALS
-    flow_update = Signal(999999, 'signal: flow update', 'v')
+    #flow_update = Signal(999999, 'signal: flow update', 'v')
 
-    # device info
-    # status
-    # motor 1
-    # move home
-    # home offset
-    # move absolute position (steps)
-    # move relative position
-    # get position
-    # get/set velocity compensation (fractional value)
-    # jog
-    # set jog step
 
     # CORE
-    @setting(11, 'Reset', returns='')
-    def reset(self, c):
+    @setting(11, 'Device Info', returns='')
+    def deviceInfo(self, c):
         """
-        Reset laser shutter. All values are set to default.
+        Get slider info.
         """
         yield self.ser.acquire()
         yield self.ser.write('C')
         self.ser.release()
 
-    @setting(12, 'Standby', returns='')
-    def standby(self, c):
+    @setting(12, 'Status', returns='')
+    def status(self, c):
         """
-        Turns off laser shutter. Puts shutter into indeterminate state.
-        Reactivate shutter by doing a reset.
-        """
-        yield self.ser.acquire()
-        yield self.ser.write('K')
-        self.ser.release()
-
-    @setting(13, 'Errors', returns='*s')
-    def standby(self, c):
-        """
-        Get errors.
-        Returns:
+        Get slider status.
         """
         yield self.ser.acquire()
-        yield self.ser.write('W')
-        err = yield self.ser.read_line('\n')
+        yield self.ser.write('C')
         self.ser.release()
-        # todo: finish
 
 
-    # SHUTTER
+    # MOTOR
+    # motor info
+    # motor freq
+    # motor current curve
     @setting(211, 'Shutter Set', state='b', returns='i')
     def shutterSet(self, c, state=None):
         """
@@ -140,7 +119,12 @@ class SliderServer(SerialDeviceServer):
             print('Error: shutter position is indeterminate.')
 
 
-    # SPEED
+    # MOVE
+    # move home
+    # home offset
+    # move absolute position (steps)
+    # move relative position
+    # get position
     @setting(311, 'speed', speed='i', returns='v')
     def speed(self, c, speed=None):
         """
@@ -172,7 +156,10 @@ class SliderServer(SerialDeviceServer):
             returnValue(3)
 
 
-    # MISC
+    # SPEED
+    # get/set velocity compensation (fractional value)
+    # jog
+    # set jog step
     @setting(411, 'Temperature', returns='i')
     def temperature(self, c):
         """

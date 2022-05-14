@@ -3,7 +3,7 @@ from os import environ, _exit, path
 from twisted.internet.defer import inlineCallbacks
 
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout, QApplication
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QGridLayout, QApplication
 
 from EGGS_labrad.clients import QDetachableTabWidget
 
@@ -18,8 +18,8 @@ class EGGS_gui(QMainWindow):
         self.clipboard = clipboard
         self.reactor = reactor
         self.cxn = None
+        self.setWindowTitle(self.name)
         #self.setStyleSheet("background-color:black; color:white; border: 1px solid white")
-        self.setWindowTitle('EGGS GUI')
         # set window icon
         path_root = environ['EGGS_LABRAD_ROOT']
         icon_path = path.join(path_root, 'eggs.png')
@@ -60,7 +60,6 @@ class EGGS_gui(QMainWindow):
         # put it all together
         layout.addWidget(self.tabWidget)
         self.setCentralWidget(centralWidget)
-        self.setWindowTitle(self.name)
 
     def makeScriptScannerWidget(self, reactor, cxn):
         from EGGS_labrad.clients.script_scanner_gui import script_scanner_gui
@@ -116,8 +115,10 @@ class EGGS_gui(QMainWindow):
 
     def makeImagingWidget(self, reactor, cxn):
         from EGGS_labrad.clients.PMT_client.PMT_client import PMT_client
+        #from EGGS_labrad.clients.slider_client.slider_client import slider_client
         clients = {
             PMT_client:                     {"pos": (0, 0)}
+            #slider_client:                  {"pos": (0, 1)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -166,7 +167,7 @@ class EGGS_gui(QMainWindow):
 
 
 if __name__ == "__main__":
-    # set up qapplication
+    # set up QApplication
     app = QApplication([])
     try:
         import qt5reactor

@@ -57,8 +57,8 @@ class stability_client(GUIClient):
     @inlineCallbacks
     def record_start(self, status):
         """
-        Creates a new dataset to record values and
-        tells polling loop to add data to data vault.
+        Creates a new dataset to record values and tells the polling loop
+        to add data to the data vault.
         """
         # set up datavault
         self.recording = status

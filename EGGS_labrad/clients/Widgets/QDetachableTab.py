@@ -2,7 +2,8 @@ from PyQt5.QtGui import QIcon, QCursor, QPainter, QMouseEvent, QDrag, QPixmap
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QPoint, QEvent, QMimeData
 from PyQt5.QtWidgets import QTabBar, QTabWidget, QWidget, QDialog, QVBoxLayout, QApplication, QMainWindow, QLabel
 
-
+# todo: remove ampersand in front of name when removing
+# todo: fix moving within qtabbar
 class QDetachableTabWidget(QTabWidget):
     """
     The DetachableTabWidget adds additional functionality to
@@ -147,8 +148,7 @@ class QDetachableTabWidget(QTabWidget):
 
     class TabBar(QTabBar):
         """
-        The TabBar class re-implements some
-        functionality of the QTabBar widget.
+        The TabBar class re-implements some functionality of the QTabBar widget.
         """
 
         onDetachTabSignal = pyqtSignal(int, QPoint)
@@ -254,7 +254,7 @@ if __name__ == '__main__':
     import sys
     app = QApplication(sys.argv)
     mainWindow = QMainWindow()
-    tabWidget = DetachableTabWidget(mainWindow)
+    tabWidget = QDetachableTabWidget(mainWindow)
 
     tab1 = QLabel('Test Widget 1')
     tabWidget.addTab(tab1, 'Tab1')

@@ -3,9 +3,11 @@ import pyqtgraph as pg
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QPushButton
+from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QPushButton, QTabWidget
 
 from EGGS_labrad.clients.Widgets import TextChangingButton
+
+_SHELL_FONT = 'MS Shell Dlg 2'
 
 
 class stability_gui(QFrame):
@@ -18,15 +20,17 @@ class stability_gui(QFrame):
         self.makeLayout()
         self.setWindowTitle("Stability Client")
 
-    def makeWidgets(self):
-        shell_font = 'MS Shell Dlg 2'
-
+    def _makeParametersTab(self):
+        """
+        This tab displays the trap parameters and the resultant secular frequencies.
+        This is independent of ion number.
+        """
         # parameter box
-        self.qBox_parameters = QGroupBox('Parameters')
-        qBox_parameters_layout = QGridLayout(self.qBox_parameters)
+        parameters = QWidget('Parameters')
+        parameters_layout = QGridLayout(parameters)
         # title
         self.all_label = QLabel('Stability Client')
-        self.all_label.setFont(QFont(shell_font, pointSize=18))
+        self.all_label.setFont(QFont(_SHELL_FONT, pointSize=18))
         self.all_label.setAlignment(Qt.AlignCenter)
         # readout
         pickoff_display_label = QLabel('VPP (V)')
@@ -41,7 +45,7 @@ class stability_gui(QFrame):
         qparam_display_label = QLabel('q-parameter')
         self.qparam_display = QLabel('0.000')
         # wsecr - radial
-        wsecr_display_label = QLabel('\u03C9 radial (x2\u03C0 MHz)')
+        wsecr_display_label = QLabel('\u03C9 Radial (x2\u03C0 MHz)')
         self.wsecr_display = QLabel('0.000')
         # wsecz - radial
         wsecz_display_label = QLabel('\u03C9 Axial (x2\u03C0 MHz)')
@@ -49,28 +53,36 @@ class stability_gui(QFrame):
 
         # configure display elements
         for display in (self.pickoff_display, self.aparam_display, self.qparam_display, self.wsecr_display, self.wsecz_display):
-            display.setFont(QFont(shell_font, pointSize=22))
+            display.setFont(QFont(_SHELL_FONT, pointSize=22))
             display.setAlignment(Qt.AlignRight)
             display.setStyleSheet('color: blue')
-
         for display_label in (pickoff_display_label, aparam_display_label, qparam_display_label,
                               wsecr_display_label, wsecz_display_label):
             display_label.setAlignment(Qt.AlignRight)
-
         # layout parameter box elements
-        qBox_parameters_layout.addWidget(pickoff_display_label,        1, 0, 1, 1)
-        qBox_parameters_layout.addWidget(self.pickoff_display,         2, 0, 1, 1)
-        qBox_parameters_layout.addWidget(aparam_display_label,         1, 1, 1, 1)
-        qBox_parameters_layout.addWidget(self.aparam_display,          2, 1, 1, 1)
-        qBox_parameters_layout.addWidget(qparam_display_label,         1, 2, 1, 1)
-        qBox_parameters_layout.addWidget(self.qparam_display,          2, 2, 1, 1)
-        qBox_parameters_layout.addWidget(wsecr_display_label,          3, 1, 1, 1)
-        qBox_parameters_layout.addWidget(self.wsecr_display,           4, 1, 1, 1)
-        qBox_parameters_layout.addWidget(wsecz_display_label,          3, 2, 1, 1)
-        qBox_parameters_layout.addWidget(self.wsecz_display,           4, 2, 1, 1)
-        qBox_parameters_layout.addWidget(self.record_button,           4, 0, 1, 1)
+        parameters_layout.addWidget(pickoff_display_label,        1, 0, 1, 1)
+        parameters_layout.addWidget(self.pickoff_display,         2, 0, 1, 1)
+        parameters_layout.addWidget(aparam_display_label,         1, 1, 1, 1)
+        parameters_layout.addWidget(self.aparam_display,          2, 1, 1, 1)
+        parameters_layout.addWidget(qparam_display_label,         1, 2, 1, 1)
+        parameters_layout.addWidget(self.qparam_display,          2, 2, 1, 1)
+        parameters_layout.addWidget(wsecr_display_label,          3, 1, 1, 1)
+        parameters_layout.addWidget(self.wsecr_display,           4, 1, 1, 1)
+        parameters_layout.addWidget(wsecz_display_label,          3, 2, 1, 1)
+        parameters_layout.addWidget(self.wsecz_display,           4, 2, 1, 1)
+        parameters_layout.addWidget(self.record_button,           4, 0, 1, 1)
 
-        # stability plot display
+    def _makeChainTab(self):
+        """
+        This tab allows configuration of ion chain data to retrieve
+        mode values (i.e. eigenvector components and mode frequencies).
+        """
+        pass
+
+    def _makeStabilityDisplayTab(self):
+        """
+        This tab draws the stability plot display.
+        """
         self.qBox_stability = QGroupBox('Mathieu Stability')
         qBox_stability_display = QGridLayout(self.qBox_stability)
         pg.setConfigOption('background', 'k')
@@ -100,15 +112,27 @@ class stability_gui(QFrame):
         # autoscale button
         self.autoscale = QPushButton("Autoscale")
         # lay out
-        qBox_stability_display.addWidget(beta_setting_display,          0, 0, 1, 1)
-        qBox_stability_display.addWidget(self.beta_setting,             1, 0, 1, 1)
-        qBox_stability_display.addWidget(self.autoscale,                1, 1, 1, 1)
-        qBox_stability_display.addWidget(self.stability_display,        2, 0, 3, 3)
+        qBox_stability_display.addWidget(beta_setting_display, 0, 0, 1, 1)
+        qBox_stability_display.addWidget(self.beta_setting, 1, 0, 1, 1)
+        qBox_stability_display.addWidget(self.autoscale, 1, 1, 1, 1)
+        qBox_stability_display.addWidget(self.stability_display, 2, 0, 3, 3)
+
+    def _makeEigenTab(self):
+        """
+        This
+        """
+        pass
+
+    def makeWidgets(self):
+        # create tabwidget to store the Parameters and Chain tabs
+        self.configBox = QTabWidget()
+        self.displayBox = QTabWidget()
+        # todo: create widgets from helper functions
 
     def makeLayout(self):
         layout = QGridLayout(self)
         layout.addWidget(self.all_label,                    0, 0, 1, 4)
-        layout.addWidget(self.qBox_parameters,              1, 0, 2, 4)
+        layout.addWidget(parameters,              1, 0, 2, 4)
         layout.addWidget(self.qBox_stability,               4, 0, 3, 4)
 
     def drawStability(self, beta=0.4):

@@ -7,6 +7,7 @@ from labrad.server import LabradServer, Signal, setting
 import win32api
 import numpy as np
 from . import errors
+from os import remove
 
 
 class DataVault(LabradServer):
@@ -50,10 +51,11 @@ class DataVault(LabradServer):
         # flush (i.e. save) all file data
         for container in all_containers:
             try:
-                # container is e.g. SimpleHDF5Data
+                # container is Data object (e.g. SimpleHDF5Data)
                 # container._file is SelfClosingFile
                 # container._file._file is actual data file object
-                container._file._file.flush()
+                if hasattr(container._file, '_file'):
+                    container._file._file.flush()
             except Exception as e:
                 print(e)
 
@@ -68,6 +70,7 @@ class DataVault(LabradServer):
         # flatten list of datasets
         all_containers = set([dataset.data for session_datasets in all_datasets for dataset in session_datasets])
 
+        # todo: log instead
         # log errors in a file
         shutdownlog = open('datavaultshutdown.txt', 'w')
         # close all the files
@@ -85,9 +88,7 @@ class DataVault(LabradServer):
                 shutdownlog.write('\n')
             else:
                 shutdownlog.write('no problems')
-
         shutdownlog.close()
-        # todo: log instead
 
     # CONTEXT MANAGEMENT
     def contextKey(self, c):
@@ -102,7 +103,9 @@ class DataVault(LabradServer):
         c['session'].listeners.add(self.contextKey(c))
 
     def expireContext(self, c):
-        """Stop sending any signals to this context."""
+        """
+        Stop sending any signals to this context.
+        """
         key = self.contextKey(c)
 
         def removeFromList(ls):
@@ -116,23 +119,31 @@ class DataVault(LabradServer):
                 removeFromList(dataset.param_listeners)
                 removeFromList(dataset.comment_listeners)
 
+
     # GETTING CONTEXT OBJECTS
     def getSession(self, c):
-        """Get a session object for the current path."""
+        """
+        Get a session object for the current path.
+        """
         return c['session']
 
     def getDataset(self, c):
-        """Get a dataset object for the current dataset."""
+        """
+        Get a dataset object for the current dataset.
+        """
         if 'dataset' not in c:
             raise errors.NoDatasetError()
         return c['datasetObj']
 
-    # SETTINGS
+
+    # GENERAL
     @setting(5, returns=['*s'])
     def dump_existing_sessions(self, c):
         return ['/'.join(session.path)
                 for session in self.session_store.get_all()]
 
+
+    # DIRECTORY NAVIGATION
     @setting(6, tagFilters=['s', '*s'], includeTags='b',
              returns=['*s{subdirs}, *s{datasets}',
                       '*(s*s){subdirs}, *(s*s){datasets}'])
@@ -192,6 +203,8 @@ class DataVault(LabradServer):
             c['path'] = temp
         return c['path']
 
+
+    # CREATING DATASETS/DIRECTORIES
     @setting(8, name='s', returns='*s')
     def mkdir(self, c, name):
         """
@@ -297,6 +310,42 @@ class DataVault(LabradServer):
         dataset.keepStreamingComments(key, 0)
         return c['path'], c['dataset']
 
+    @setting(11, name=['s', 'w'], returns='b')
+    def delete_dataset(self, c, name):
+        """
+        Delete a Dataset.
+
+        You can specify the dataset by name or number.
+        Returns the success status of the dataset deletion operation
+        """
+        # todo: check if dataset exists
+        # todo: check if dataset is currently being used
+        # todo: delete file
+        # todo: modify session/sessionstore
+        session = self.getSession(c)
+        dataset = session.openDataset(name)
+
+        # todo tmp remove
+        # get all datasets across all sessions
+        all_sessions = list(self.session_store.get_all())
+        all_datasets = [session.datasets.values() for session in all_sessions]
+        # flatten list of datasets
+        all_containers = set([dataset.data for session_datasets in all_datasets for dataset in session_datasets])
+
+        # flush (i.e. save) all file data
+        for container in all_containers:
+            try:
+                # container is Data object (e.g. SimpleHDF5Data)
+                # container._file is SelfClosingFile
+                # container._file._file is actual data file object
+                if hasattr(container._file, '_file'):
+                    container._file._file.flush()
+            except Exception as e:
+                print(e)
+        return False
+
+
+    # GET DATA
     @setting(1010, returns='s')
     def get_version(self, c):
         """
@@ -415,6 +464,8 @@ class DataVault(LabradServer):
         dataset.keepStreaming(ctx, c['filepos'])
         return data
 
+
+    # VARIABLES
     @setting(100, returns='(*(ss){independents}, *(sss){dependents})')
     def variables(self, c):
         """
@@ -473,6 +524,8 @@ class DataVault(LabradServer):
         ds = self.getDataset(c)
         return ds.shape()
 
+
+    # METADATA
     @setting(120, returns='*s')
     def parameters(self, c):
         """Get a list of parameter names."""

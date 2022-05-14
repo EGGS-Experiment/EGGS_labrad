@@ -1,7 +1,8 @@
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget, QGridLayout
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget
 
 from twisted.internet.defer import inlineCallbacks
+from EGGS_labrad.clients.Widgets import QDetachableTabWidget
 
 
 class ARTIQ_client(QMainWindow):
@@ -30,8 +31,8 @@ class ARTIQ_client(QMainWindow):
         # central layout
         centralWidget = QWidget()
         layout = QHBoxLayout(centralWidget)
-        self.tabWidget = QTabWidget()
-        self.tabWidget.setMovable(True)
+        self.tabWidget = QDetachableTabWidget()
+        #self.tabWidget.setMovable(True)
         # create subwidgets
         ttl_widget = self.makeTTLWidget(self.reactor, cxn)
         dds_widget = self.makeDDSWidget(self.reactor, cxn)
