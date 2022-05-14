@@ -4,7 +4,7 @@ from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient, createTrunk
-from EGGS_labrad.clients.trap_clients.stability_gui import stability_gui
+from EGGS_labrad.clients.stability_client.stability_gui import stability_gui
 
 _PICKOFF_FACTOR = 301
 _GEOMETRIC_FACTOR_RADIAL = 1

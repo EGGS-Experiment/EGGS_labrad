@@ -86,7 +86,7 @@ class EGGS_gui(QMainWindow):
     def makeTrapWidget(self, reactor, cxn):
         from EGGS_labrad.clients.trap_clients.RF_client import RF_client
         from EGGS_labrad.clients.trap_clients.DC_client import DC_client
-        from EGGS_labrad.clients.trap_clients.stability_client import stability_client
+        from EGGS_labrad.clients.stability_client.stability_client import stability_client
         from EGGS_labrad.clients.functiongenerator_client.functiongenerator_client import functiongenerator_client
         clients = {
             DC_client:                      {"pos": (0, 1)},

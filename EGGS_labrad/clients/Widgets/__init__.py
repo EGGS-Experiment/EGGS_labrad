@@ -14,3 +14,4 @@ from .QCustomGroupBox import QCustomGroupBox, QChannelHolder
 from .QClientHeader import QClientHeader
 from .QClientMenuHeader import QClientMenuHeader
 from .QInitializePlaceholder import QInitializePlaceholder
+# todo: create record button widget
