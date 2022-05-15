@@ -9,7 +9,7 @@ class RF_gui(QFrame):
 
     def __init__(self):
         super().__init__()
-        self.setFixedSize(650, 340)
+        self.setFixedSize(610, 310)
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle("RF Client")
         self.makeLayout()
@@ -22,10 +22,11 @@ class RF_gui(QFrame):
         wav_ampl_label = QLabel("Amplitude (dBm)")
         wav_freq_label = QLabel("Frequency (MHz)")
 
-        self.wav_toggle = TextChangingButton(('On', 'Off'))
+        self.wav_toggle = TextChangingButton(('On', 'Off'), fontsize=8)
         self.wav_reset = QPushButton("Reset")
-        self.wav_reset.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.wav_reset.setFont(QFont('MS Shell Dlg 2', pointSize=8))
         self.wav_lockswitch = Lockswitch()
+        self.wav_lockswitch.setFont(QFont('MS Shell Dlg 2', pointSize=8))
 
         self.wav_ampl = QDoubleSpinBox()
         self.wav_ampl.setDecimals(1)
@@ -60,6 +61,7 @@ class RF_gui(QFrame):
         self.mod_freq.setRange(1, 500.0)
         self.mod_freq.setSingleStep(1.0)
         self.mod_freq.setKeyboardTracking(False)
+        self.mod_freq.setFont(QFont('MS Shell Dlg 2', pointSize=10))
 
         # create modulation subwidgets
         mod_ampl_depth_label = QLabel("Ampl. Depth (%)")
@@ -68,10 +70,10 @@ class RF_gui(QFrame):
         self.mod_ampl_depth.setRange(0, 100.0)
         self.mod_ampl_depth.setSingleStep(0.1)
         self.mod_ampl_depth.setKeyboardTracking(False)
-        self.mod_ampl_toggle = TextChangingButton(('On', 'Off'))
+        self.mod_ampl_toggle = TextChangingButton(('On', 'Off'), fontsize=8)
 
         mod_freq_dev_label = QLabel("Freq. Dev. (kHz)")
-        self.mod_freq_toggle = TextChangingButton(('On', 'Off'))
+        self.mod_freq_toggle = TextChangingButton(('On', 'Off'), fontsize=8)
         self.mod_freq_dev = QDoubleSpinBox()
         self.mod_freq_dev.setDecimals(2)
         self.mod_freq_dev.setMaximum(2000.0)
@@ -79,7 +81,7 @@ class RF_gui(QFrame):
         self.mod_freq_dev.setKeyboardTracking(False)
 
         mod_phase_dev_label = QLabel("Phase Dev. (rad)")
-        self.mod_phase_toggle = TextChangingButton(('On', 'Off'))
+        self.mod_phase_toggle = TextChangingButton(('On', 'Off'), fontsize=8)
         self.mod_phase_dev = QDoubleSpinBox()
         self.mod_phase_dev.setDecimals(3)
         self.mod_phase_dev.setRange(0.0, 400.0)
@@ -100,9 +102,9 @@ class RF_gui(QFrame):
 
         modulation_layout.addWidget(mod_freq_label,             0, 1, 1, 4)
         modulation_layout.addWidget(self.mod_freq,              1, 1, 1, 4)
-        modulation_layout.addWidget(am_widget,                  2, 0, 3, 2)
-        modulation_layout.addWidget(fm_widget,                  2, 2, 3, 2)
-        modulation_layout.addWidget(pm_widget,                  2, 4, 3, 2)
+        modulation_layout.addWidget(am_widget,                  3, 0, 3, 2)
+        modulation_layout.addWidget(fm_widget,                  3, 2, 3, 2)
+        modulation_layout.addWidget(pm_widget,                  3, 4, 3, 2)
         return QCustomGroupBox(modulation_widget, "Modulation")
 
     def makeLayout(self):
@@ -117,8 +119,8 @@ class RF_gui(QFrame):
         # make widgets
         waveform_widget_wrapped = self._makeWaveformWidget()
         modulation_widget_wrapped = self._makeModulationWidget()
-        waveform_widget_wrapped.setFixedWidth(150)
-        modulation_widget_wrapped.setFixedWidth(450)
+        waveform_widget_wrapped.setFixedWidth(140)
+        modulation_widget_wrapped.setFixedWidth(440)
 
         # lay out
         layout.addWidget(title,                             0, 0, 1, 4)
