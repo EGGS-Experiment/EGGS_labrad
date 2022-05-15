@@ -9,7 +9,7 @@ class RF_gui(QFrame):
 
     def __init__(self):
         super().__init__()
-        self.setFixedSize(470, 250)
+        self.setFixedSize(650, 340)
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle("RF Client")
         self.makeLayout()
@@ -62,7 +62,7 @@ class RF_gui(QFrame):
         self.mod_freq.setKeyboardTracking(False)
 
         # create modulation subwidgets
-        mod_ampl_depth_label = QLabel("Amplitude Depth (%)")
+        mod_ampl_depth_label = QLabel("Ampl. Depth (%)")
         self.mod_ampl_depth = QDoubleSpinBox()
         self.mod_ampl_depth.setDecimals(1)
         self.mod_ampl_depth.setRange(0, 100.0)
@@ -70,7 +70,7 @@ class RF_gui(QFrame):
         self.mod_ampl_depth.setKeyboardTracking(False)
         self.mod_ampl_toggle = TextChangingButton(('On', 'Off'))
 
-        mod_freq_dev_label = QLabel("Frequency Dev. (kHz)")
+        mod_freq_dev_label = QLabel("Freq. Dev. (kHz)")
         self.mod_freq_toggle = TextChangingButton(('On', 'Off'))
         self.mod_freq_dev = QDoubleSpinBox()
         self.mod_freq_dev.setDecimals(2)
@@ -103,7 +103,6 @@ class RF_gui(QFrame):
         modulation_layout.addWidget(am_widget,                  2, 0, 3, 2)
         modulation_layout.addWidget(fm_widget,                  2, 2, 3, 2)
         modulation_layout.addWidget(pm_widget,                  2, 4, 3, 2)
-
         return QCustomGroupBox(modulation_widget, "Modulation")
 
     def makeLayout(self):
@@ -118,11 +117,13 @@ class RF_gui(QFrame):
         # make widgets
         waveform_widget_wrapped = self._makeWaveformWidget()
         modulation_widget_wrapped = self._makeModulationWidget()
+        waveform_widget_wrapped.setFixedWidth(150)
+        modulation_widget_wrapped.setFixedWidth(450)
 
         # lay out
         layout.addWidget(title,                             0, 0, 1, 4)
         layout.addWidget(waveform_widget_wrapped,           1, 0, 6, 1)
-        layout.addWidget(modulation_widget_wrapped,         1, 1, 5, 3)
+        layout.addWidget(modulation_widget_wrapped,         1, 1, 6, 3)
 
 
 if __name__ == "__main__":
