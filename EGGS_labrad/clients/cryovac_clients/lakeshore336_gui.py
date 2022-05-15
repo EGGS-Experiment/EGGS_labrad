@@ -11,7 +11,7 @@ class lakeshore336_gui(QFrame):
 
     def __init__(self):
         super().__init__()
-        self.setFixedSize(517, 500)
+        self.setFixedSize(540, 520)
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle("Lakeshore 336 Client")
         self.makeLayout()
@@ -105,10 +105,10 @@ class lakeshore336_gui(QFrame):
         self.heatAll_lockswitch = TextChangingButton(('Locked', 'Unlocked'))
 
         heaterAll_widget = QWidget()
-        heaterAll_widget = QGridLayout(heaterAll_widget)
-        heaterAll_widget.addWidget(self.heatAll_lockswitch,             0, 1, 1, 2)
-        heaterAll_widget.addWidget(heater1_widget_wrapped,              1, 0, 4, 2)
-        heaterAll_widget.addWidget(heater2_widget_wrapped,              1, 2, 4, 2)
+        heaterAll_layout = QGridLayout(heaterAll_widget)
+        heaterAll_layout.addWidget(self.heatAll_lockswitch,             0, 1, 1, 2)
+        heaterAll_layout.addWidget(heater1_widget_wrapped,              1, 0, 4, 2)
+        heaterAll_layout.addWidget(heater2_widget_wrapped,              1, 2, 4, 2)
         return QCustomGroupBox(heaterAll_widget, "Heater Control")
 
     def makeLayout(self):
@@ -124,9 +124,9 @@ class lakeshore336_gui(QFrame):
         heater_widget_wrapped = self._makeHeaterWidget()
 
         # lay out
-        layout.addWidget(title,                         0, 0, 1, 7)
-        layout.addWidget(temperature_widget,            1, 0, 9, 3)
-        layout.addWidget(heater_widget_wrapped,         1, 3, 9, 4)
+        layout.addWidget(title,                         0, 0, 1, 8)
+        layout.addWidget(temperature_widget,            1, 0, 9, 4)
+        layout.addWidget(heater_widget_wrapped,         1, 4, 9, 4)
 
 
 if __name__ == "__main__":
