@@ -51,9 +51,9 @@ class functiongenerator_gui(QFrame):
         self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
         # create header
-        self.header = QClientMenuHeader()
+        #self.header = QClientMenuHeader()
         # add widgets to layout
-        layout.setMenuBar(self.header)
+        #layout.setMenuBar(self.header)
         layout.addWidget(title,             1, 0, 1, 3)
         layout.addWidget(freqlabel,         2, 0, 1, 1)
         layout.addWidget(powerlabel,        2, 1, 1, 1)

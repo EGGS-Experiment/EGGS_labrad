@@ -10,12 +10,16 @@ __all__ = ["runGUI", "runClient", "createTrunk", "wav2RGB"]
 def runGUI(client, *args, **kwargs):
     """
     Runs a LabRAD GUI file written using PyQt5.
+    Passes any constructor arguments to the client class.
     """
     from os import _exit
+
     # widgets require a QApplication to run
     app = QApplication([])
+
     # instantiate gui
     gui = client(*args, **kwargs)
+
     # set up UI if needed
     try:
         gui.setupUi()
@@ -29,18 +33,33 @@ def runGUI(client, *args, **kwargs):
 def runClient(client, *args, **kwargs):
     """
     Runs a LabRAD client written using PyQt5.
+    Passes any constructor arguments to the client class.
+    # todo: accept arguments that change logging behavior a la labrad node
     """
     # widgets require a QApplication to run
     app = QApplication([])
+
     # reactor may already be installed
     try:
         import qt5reactor
         qt5reactor.install()
     except Exception as e:
         print(e)
+
+    # # set up logging
+    #     # from sys import stdout
+    #     # from twisted.logger import globalLogBeginner, textFileLogObserver
+    #     # # start logging
+    #     # observers = [textFileLogObserver(stdout, 1)]
+    #     # globalLogBeginner.beginLoggingTo(observers, True, 1)
+    #     # # todo: somehow redirect output here to stdout, as well as take in stdout input
+    #     # # client_logger = loggerWithPrefix(stdout)
+    #     # # log.startLoggingWithObserver(client_logger.emit, 1)
+
     # instantiate client with a reactor
     from twisted.internet import reactor
     client_tmp = client(reactor, *args, **kwargs)
+
     # show client
     if hasattr(client_tmp, 'show'):
         client_tmp.show()
@@ -48,10 +67,13 @@ def runClient(client, *args, **kwargs):
         gui_tmp = client_tmp.gui
         if hasattr(gui_tmp, 'show'):
             client_tmp.gui.show()
+
     # start reactor
     reactor.callWhenRunning(app.exec)
     reactor.addSystemEventTrigger('after', 'shutdown', client_tmp.close)
+    # todo: alsoa dd a ctrl+c event
     reactor.runReturn()
+
     # close client on exit
     try:
         client_tmp.close()
@@ -62,14 +84,14 @@ def runClient(client, *args, **kwargs):
 # recording functions
 def createTrunk(name):
     """
-    Creates a trunk name for data in data_vault
-    corresponding to the current date.
+    Creates a trunk name for data in data_vault corresponding
+    to the current date.
+
     Arguments:
         name    (str)   : the name of the client.
     Returns:
                 (*str)  : the trunk to create in data_vault.
     """
-
     from datetime import datetime
     date = datetime.now()
 
@@ -82,6 +104,13 @@ def createTrunk(name):
 # wav2RGB
 # adapted from: http://codingmess.blogspot.com/2009/05/conversion-of-wavelength-in-nanometers.html
 def wav2RGB(wavelength):
+    """
+    Converts a wavelength to RGB.
+    Args:
+        wavelength  (float)  : the wavelength (in nm).
+    Returns:
+                    (tuple of int, int, int): the converted RGB values.
+    """
 
     wavelength = int(wavelength)
     R, G, B = 0, 0, 0
