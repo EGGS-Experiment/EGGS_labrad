@@ -11,6 +11,7 @@ class ionChain(object):
 
     ions = []
     # create chain
+    # @property
     #fd
     ionChia
 

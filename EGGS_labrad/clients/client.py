@@ -6,7 +6,7 @@ from os import _exit, environ
 from inspect import getmembers
 from abc import ABC, abstractmethod
 
-from twisted.logger import Logger, globalLogPublisher, textFileLogObserver
+from twisted.logger import Logger, textFileLogObserver
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients.utils import createTrunk
@@ -17,6 +17,7 @@ __all__ = ["GUIClient", "RecordingGUIClient"]
 # todo: maybe give each client a unique identifier so we don't get confused between similar copies
 # todo: co-opt recording into GUIClient and create record function dependent on class variable
 # todo: maybe move restart to a permanent startup sequence?
+# todo: redirect print to logging
 
 
 class GUIClient(ABC):
