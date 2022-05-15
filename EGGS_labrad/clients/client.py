@@ -62,7 +62,6 @@ class GUIClient(ABC):
         self.cxn = cxn
         self.parent = parent
         self.guiEnable = True
-        self.log.debug('thkim')
 
         # get core servers in addition to whichever servers are specified
         core_servers = {'registry': 'Registry', 'dv': 'Data Vault'}

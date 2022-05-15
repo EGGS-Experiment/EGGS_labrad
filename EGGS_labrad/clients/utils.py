@@ -46,16 +46,6 @@ def runClient(client, *args, **kwargs):
     except Exception as e:
         print(e)
 
-    # # set up logging
-    #     # from sys import stdout
-    #     # from twisted.logger import globalLogBeginner, textFileLogObserver
-    #     # # start logging
-    #     # observers = [textFileLogObserver(stdout, 1)]
-    #     # globalLogBeginner.beginLoggingTo(observers, True, 1)
-    #     # # todo: somehow redirect output here to stdout, as well as take in stdout input
-    #     # # client_logger = loggerWithPrefix(stdout)
-    #     # # log.startLoggingWithObserver(client_logger.emit, 1)
-
     # instantiate client with a reactor
     from twisted.internet import reactor
     client_tmp = client(reactor, *args, **kwargs)
