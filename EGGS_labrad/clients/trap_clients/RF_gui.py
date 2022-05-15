@@ -2,7 +2,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import QRect, QCoreApplication, QMetaObject
 from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QSizePolicy, QGridLayout, QPushButton, QDoubleSpinBox, QHBoxLayout
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, QClientMenuHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton
 
 
 class RF_gui(QFrame):
@@ -150,7 +150,6 @@ class RF_gui(QFrame):
         self.mod_freq_dev_label.setText(_translate("RF_gui", "Frequency Dev. (kHz)"))
         self.mod_phase_toggle_label.setText(_translate("RF_gui", "Phase Mod."))
         self.mod_phase_dev_label.setText(_translate("RF_gui", "Phase Dev. (rad)"))
-
 
 
 if __name__ == "__main__":
