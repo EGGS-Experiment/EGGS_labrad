@@ -16,7 +16,6 @@ class RGA_gui(QFrame):
 
     def _makeGeneralWidget(self):
         general_widget = QWidget()
-        general_widget.setGeometry(QRect(20, 60, 131, 201))
         general_widget_layout = QGridLayout(general_widget)
         general_widget_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -37,7 +36,6 @@ class RGA_gui(QFrame):
 
     def _makeScanWidget(self):
         scan_widget = QWidget()
-        scan_widget.setGeometry(QRect(300, 60, 141, 371))
         scan_widget_layout = QGridLayout(scan_widget)
         scan_widget_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -95,7 +93,6 @@ class RGA_gui(QFrame):
     def _makeDetectorWidget(self):
         detector_widget = QWidget()
         detector_widget_layout = QGridLayout(detector_widget)
-        detector_widget.setGeometry(QRect(20, 270, 131, 161))
         detector_widget_layout.setContentsMargins(0, 0, 0, 0)
         self.detector_lockswitch = Lockswitch()
 
@@ -122,7 +119,6 @@ class RGA_gui(QFrame):
     def _makeIonizerWidget(self):
         ionizer_widget = QWidget()
         ionizer_widget_layout = QGridLayout(ionizer_widget)
-        ionizer_widget.setGeometry(QRect(160, 60, 131, 251))
         ionizer_widget_layout.setContentsMargins(0, 0, 0, 0)
         self.ionizer_lockswitch = Lockswitch()
 
@@ -153,29 +149,26 @@ class RGA_gui(QFrame):
         self.ionizer_vf.setRange(0, 150)
         self.ionizer_vf.setSingleStep(1)
         
-        self.ionizer_layout.addWidget(self.ionizer_lockswitch,      2, 0, 1, 1)
-        self.ionizer_layout.addWidget(ionizer_fl_label,             3, 0, 1, 1)
-        self.ionizer_layout.addWidget(self.ionizer_fl,              4, 0, 1, 1)
-        self.ionizer_layout.addWidget(ionizer_vf_label,             5, 0, 1, 1)
-        self.ionizer_layout.addWidget(self.ionizer_vf,              6, 0, 1, 1)
-        self.ionizer_layout.addWidget(ionizer_ee_label,             7, 0, 1, 1)
-        self.ionizer_layout.addWidget(self.ionizer_ee,              8, 0, 1, 1)
-        self.ionizer_layout.addWidget(ionizer_ie_label,             9, 0, 1, 1)
-        self.ionizer_layout.addWidget(self.ionizer_ie,              10, 0, 2, 1)
+        ionizer_widget_layout.addWidget(self.ionizer_lockswitch,      2, 0, 1, 1)
+        ionizer_widget_layout.addWidget(ionizer_fl_label,             3, 0, 1, 1)
+        ionizer_widget_layout.addWidget(self.ionizer_fl,              4, 0, 1, 1)
+        ionizer_widget_layout.addWidget(ionizer_vf_label,             5, 0, 1, 1)
+        ionizer_widget_layout.addWidget(self.ionizer_vf,              6, 0, 1, 1)
+        ionizer_widget_layout.addWidget(ionizer_ee_label,             7, 0, 1, 1)
+        ionizer_widget_layout.addWidget(self.ionizer_ee,              8, 0, 1, 1)
+        ionizer_widget_layout.addWidget(ionizer_ie_label,             9, 0, 1, 1)
+        ionizer_widget_layout.addWidget(self.ionizer_ie,              10, 0, 2, 1)
         return QCustomGroupBox(ionizer_widget, "Ionizer")
 
     def _makeBufferWidget(self):
         buffer_widget = QWidget()
-        buffer_widget.setGeometry(QRect(450, 60, 181, 371))
         buffer_widget_layout = QGridLayout(buffer_widget)
         buffer_widget_layout.setContentsMargins(0, 0, 0, 0)
-        buffer_label = QLabel("Buffer")
-        
+
         self.buffer_readout = QPlainTextEdit()
         self.buffer_readout.setReadOnly(True)
         self.buffer_clear = QPushButton("Clear")
         
-        buffer_widget_layout.addWidget(buffer_label,            0, 0, 1, 1)
         buffer_widget_layout.addWidget(self.buffer_readout,     1, 0, 1, 1)
         buffer_widget_layout.addWidget(self.buffer_clear,       2, 0, 1, 1)
         return QCustomGroupBox(buffer_widget, "Buffer")
@@ -195,6 +188,8 @@ class RGA_gui(QFrame):
         ionizer_widget_wrapped = self._makeIonizerWidget()
         scan_widget_wrapped = self._makeScanWidget()
         buffer_widget_wrapped = self._makeBufferWidget()
+        for widget in (general_widget_wrapped, detector_widget_wrapped, ionizer_widget_wrapped, scan_widget_wrapped, buffer_widget_wrapped):
+            widget.setFixedWidth(150)
 
         # lay out
         layout.addWidget(title,                         0, 0, 1, 4)

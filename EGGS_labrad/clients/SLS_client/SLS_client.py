@@ -76,7 +76,7 @@ class SLS_client(GUIClient):
         self.gui._lock(False, self.gui.autolock_widget)
         self.gui._lock(False, self.gui.off_widget)
         self.gui._lock(False, self.gui.PDH_widget)
-        self.gui._lock(False, self.PID_widget)
+        self.gui._lock(False, self.gui.servo_widget)
 
     # SIGNALS
     def updateAutolock(self, c, lockstatus):

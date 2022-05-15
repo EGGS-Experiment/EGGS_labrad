@@ -187,6 +187,7 @@ class RGA_client(GUIClient):
         self.gui.scan_type.setEnabled(status)
         self.gui.scan_num.setEnabled(status)
         self.gui.scan_start.setEnabled(status)
+        self.gui.mass_lock.setEnabled(status)
 
 
 if __name__ == "__main__":
