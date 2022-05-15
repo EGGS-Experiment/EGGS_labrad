@@ -49,7 +49,7 @@ class GUIClient(ABC):
     createMenu = True
 
     # Logger
-    log = Logger(observer=textFileLogObserver(stdout))
+    log = Logger(source=name, observer=textFileLogObserver(stdout))
 
     # INITIALIZATION
     def __init__(self, reactor, cxn=None, parent=None):
