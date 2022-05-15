@@ -43,9 +43,6 @@ class SLS_gui(QFrame):
         self.autolock_attempts.setStyleSheet('color: blue')
         self.autolock_toggle = TextChangingButton(('On', 'Off'))
 
-        self.autolock_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
-        self.autolock_lockswitch.toggled.connect(lambda status, widget=autolock_widget: self._lock(status, widget))
-
         for widget in (autolock_time_label, self.autolock_time, autolock_attempts_label, self.autolock_attempts,
                        autolock_toggle_label, self.autolock_toggle, autolock_param_label, self.autolock_param):
             autolock_layout.addWidget(widget)
@@ -62,8 +59,6 @@ class SLS_gui(QFrame):
         self.off_freq.setRange(10.0, 35.0)
         self.off_freq.setSingleStep(0.1)
         self.off_lockpoint = QComboBox()
-        self.off_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
-        self.off_lockswitch.toggled.connect(lambda status, widget=off_widget: self._lock(status, widget))
 
         for item_text in ("J(+2)", "J(+1)", "Resonance", "J(-1)", "J(-2)"):
             self.off_lockpoint.addItem(item_text)
@@ -94,9 +89,6 @@ class SLS_gui(QFrame):
         self.PDH_phasemodulation = QDoubleSpinBox()
         self.PDH_phasemodulation.setMaximum(3.0)
         self.PDH_phasemodulation.setSingleStep(0.1)
-
-        self.PDH_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
-        self.PDH_lockswitch.toggled.connect(lambda status, widget=PDH_widget: self._lock(status, widget))
 
         for widget in (PDH_freq_label, self.PDH_freq, PDH_phasemodulation_label, self.PDH_phasemodulation,
                        PDH_phaseoffset_label, self.PDH_phaseoffset, PDH_filter_label, self.PDH_filter):
@@ -132,9 +124,6 @@ class SLS_gui(QFrame):
         for item_text in ("Current", "PZT", "TX"):
             self.servo_param.addItem(item_text)
 
-        self.servo_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
-        self.servo_lockswitch.toggled.connect(lambda status, widget=servo_widget: self._lock(status, widget))
-
         for widget in (servo_param_label, self.servo_param, servo_set_label, self.servo_set, servo_p_label, self.servo_p,
                        servo_i_label, self.servo_i, servo_d_label, self.servo_d, servo_filter_label, self.servo_filter):
             servo_layout.addWidget(widget)
@@ -147,8 +136,18 @@ class SLS_gui(QFrame):
         self.servo_widget = self._makeServoWidget()
         self.autolock_widget = self._makeAutolockWidget()
 
-        for widget in (autolock_widget_wrapped, off_widget_wrapped, PDH_widget_wrapped, servo_widget_wrapped):
+        for widget in (self.autolock_widget, self.off_widget, self.PDH_widget, self.servo_widget):
             widget.setFixedWidth(161)
+
+        # lockswitches
+        self.PDH_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
+        self.PDH_lockswitch.toggled.connect(lambda status, widget=self.PDH_widget: self._lock(status, widget))
+        self.servo_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
+        self.servo_lockswitch.toggled.connect(lambda status, widget=self.servo_widget: self._lock(status, widget))
+        self.autolock_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
+        self.autolock_lockswitch.toggled.connect(lambda status, widget=self.autolock_widget: self._lock(status, widget))
+        self.off_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
+        self.off_lockswitch.toggled.connect(lambda status, widget=self.off_widget: self._lock(status, widget))
 
         # title
         sls_label = QLabel("SLS Client", self)
@@ -159,13 +158,13 @@ class SLS_gui(QFrame):
         layout = QGridLayout(self)
         layout.addWidget(sls_label,                             0, 0, 1, 4)
         layout.addWidget(self.autolock_lockswitch,              1, 0, 1, 1)
-        layout.addWidget(self.autolock_widget_wrapped,          2, 0, 7, 1)
+        layout.addWidget(self.autolock_widget,          2, 0, 7, 1)
         layout.addWidget(self.off_lockswitch,                   1, 1, 1, 1)
-        layout.addWidget(self.off_widget_wrapped,               2, 1, 4, 1)
+        layout.addWidget(self.off_widget,               2, 1, 4, 1)
         layout.addWidget(self.PDH_lockswitch,                   1, 2, 1, 1)
-        layout.addWidget(self.PDH_widget_wrapped,               2, 2, 6, 1)
+        layout.addWidget(self.PDH_widget,               2, 2, 6, 1)
         layout.addWidget(self.servo_lockswitch,                 1, 3, 1, 1)
-        layout.addWidget(self.servo_widget_wrapped,             2, 3, 10, 1)
+        layout.addWidget(self.servo_widget,             2, 3, 10, 1)
 
     def _lock(self, status, widget):
         widget.setEnabled(status)
