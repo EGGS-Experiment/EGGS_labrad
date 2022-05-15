@@ -14,7 +14,6 @@ from EGGS_labrad.clients.Widgets import QInitializePlaceholder, QClientMenuHeade
 
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
-# todo: maybe give each client a unique identifier so we don't get confused between similar copies
 # todo: co-opt recording into GUIClient and create record function dependent on class variable
 # todo: maybe move restart to a permanent startup sequence?
 # todo: redirect print to logging
@@ -205,7 +204,7 @@ class GUIClient(ABC):
                 menuHeader_object.addFile(self)
             # otherwise, create and initialize a header here and add it to our gui class
             elif len(QClientMenuHeader_list) == 0:
-                #self.log.debug("No QClientMenuHeader exists in the GUI file. Adding one now...")
+                self.log.debug("No QClientMenuHeader exists in the GUI file. Adding one now...")
                 menuHeader_object = QClientMenuHeader()
                 setattr(self.gui, 'header', menuHeader_object)
                 gui_layout = self.gui.layout()
