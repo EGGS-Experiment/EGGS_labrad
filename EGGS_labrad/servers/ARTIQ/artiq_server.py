@@ -305,7 +305,7 @@ class ARTIQ_Server(LabradServer):
         """
         if dds_name not in self.dds_list:
             raise Exception('Error: device does not exist.')
-        if ampl > 1 or ampl < 0:
+        if (ampl > 1) or (ampl < 0):
             raise Exception('Error: amplitude must be within [0, 1].')
         asf = self.dds_amplitude_to_asf(ampl)
         yield self.api.setDDS(dds_name, 'asf', asf)
