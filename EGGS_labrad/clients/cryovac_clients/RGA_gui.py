@@ -61,7 +61,7 @@ class RGA_gui(QFrame):
         self.scan_sa.setSingleStep(1.0)
 
         self.scan_type = QComboBox()
-        self.scan_type.addItem(["Analog", "Histogram", "Single Mass", "Total Pressure"])
+        self.scan_type.addItems(["Analog", "Histogram", "Single Mass", "Total Pressure"])
 
         self.mass_lock = QDoubleSpinBox()
         self.scan_mi = QDoubleSpinBox()
@@ -131,7 +131,7 @@ class RGA_gui(QFrame):
         self.ionizer_ee.setSingleStep(1.0)
 
         self.ionizer_ie = QComboBox()
-        self.ionizer_ie.addItem(["8", "12"])
+        self.ionizer_ie.addItems(["8", "12"])
 
         self.ionizer_fl = QDoubleSpinBox()
         self.ionizer_fl.setKeyboardTracking(False)
