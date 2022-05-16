@@ -22,6 +22,10 @@ class slider_gui(QFrame):
         self.position2 = TextChangingButton(("2", "2"))
         self.position3 = TextChangingButton(("3", "3"))
         self.position4 = TextChangingButton(("4", "4"))
+        self.position_buttons = {
+            1: self.position1, 2: self.position2,
+            3: self.position3, 4: self.position4
+        }
 
         for widget in (self.position1, self.position2, self.position3, self.position4):
             widget.setFont(QFont('MS Shell Dlg 2', pointSize=20))
@@ -41,9 +45,10 @@ class slider_gui(QFrame):
 
         # make widgets
         self.home_button = QPushButton("HOME")
-        self.lockswitch = Lockswitch()
         self.forward_button = QPushButton("+")
         self.backward_button = QPushButton("-")
+        self.lockswitch = Lockswitch()
+        self.lockswitch.toggled.connect(lambda status: self._lock(status))
         position_widget = self._makePositionWidget()
 
         # set font
@@ -57,6 +62,15 @@ class slider_gui(QFrame):
         layout.addWidget(position_widget,               2, 0, 2, 4)
         layout.addWidget(self.forward_button,           4, 0, 1, 2)
         layout.addWidget(self.backward_button,          4, 2, 1, 2)
+
+    def _lock(self, status):
+        self.position1.setEnabled(status)
+        self.position2.setEnabled(status)
+        self.position3.setEnabled(status)
+        self.position4.setEnabled(status)
+        self.forward_button.setEnabled(status)
+        self.backward_button.setEnabled(status)
+        self.home_button.setEnabled(status)
 
 
 if __name__ == "__main__":
