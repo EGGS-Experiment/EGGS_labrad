@@ -55,15 +55,14 @@ class DDS_client(GUIClient):
             for ad9910_name, ad9910_widget in ad9910_list.items():
                 # initialize the ad9910 GUIs within an urukul group
                 ad9910_widget.freq.valueChanged.connect(lambda freq, _channel_name=ad9910_name:
-                                                        self.artiq.dds_frequency(_channel_name, freq * 1e6))
+                                                        self.aq.dds_frequency(_channel_name, freq * 1e6))
                 ad9910_widget.ampl.valueChanged.connect(lambda ampl, _channel_name=ad9910_name:
-                                                        self.artiq.dds_amplitude(_channel_name, ampl))
+                                                        self.aq.dds_amplitude(_channel_name, ampl))
                 ad9910_widget.att.valueChanged.connect(lambda att, _channel_name=ad9910_name:
-                                                       self.artiq.dds_attenuation(_channel_name, att, 'v'))
+                                                       self.aq.dds_attenuation(_channel_name, att, 'v'))
                 ad9910_widget.rfswitch.toggled.connect(lambda status, _channel_name=ad9910_name:
-                                                       self.artiq.dds_toggle(_channel_name, status))
+                                                       self.aq.dds_toggle(_channel_name, status))
                 ad9910_widget.lock(False)
-
 
     def updateDDS(self, c, signal):
         ad9910_name, param, val = signal
