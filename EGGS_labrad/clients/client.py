@@ -125,7 +125,7 @@ class GUIClient(ABC):
         try:
             yield self.initClient()
         except Exception as e:
-            self.log.error('Error in initClient: {error!r}', error=e)
+            self.log.error('Error in initClient: {error}', error=e)
             self.guiEnable = False
         else:
             self.log.info("Successfully initialized client.")
@@ -138,7 +138,7 @@ class GUIClient(ABC):
             yield self.initData()
         except Exception as e:
             self.guiEnable = False
-            self.log.error('Error in initData: {error!r}', error=e)
+            self.log.error('Error in initData: {error}', error=e)
         else:
             self.log.info("Successfully retrieved default values.")
         return cxn
@@ -156,7 +156,7 @@ class GUIClient(ABC):
             self.log.info("Successfully started up GUI.")
         except Exception as e:
             # just quit if we can't get GUI otherwise we freeze since we don't have a reactor to work with
-            self.log.critical("Fatal error: unable to start up GUI: {error!r}", error=e)
+            self.log.critical("Fatal error: unable to start up GUI: {error}", error=e)
             self.log.critical("Exiting...")
             _exit(0)
         # get all widgets that aren't QClientMenuHeaders so we can lock them
@@ -172,7 +172,7 @@ class GUIClient(ABC):
             yield self.initGUI()
         except Exception as e:
             self.guiEnable = False
-            self.log.error('Error in initGUI: {error!r}', error=e)
+            self.log.error('Error in initGUI: {error}', error=e)
         # make GUI visible at end so user can at least see that we have a problem
         self.gui.show()
         # reenable GUI upon completion of initialization
@@ -225,7 +225,7 @@ class GUIClient(ABC):
                 # todo: add communicate menu
             self.log.debug("Successfully connected to QClientMenuHeader.")
         except Exception as e:
-            self.log.error("Error connecting to QClientMenuHeader: {error!r}", error=e)
+            self.log.error("Error connecting to QClientMenuHeader: {error}", error=e)
         return cxn
 
 
@@ -239,7 +239,7 @@ class GUIClient(ABC):
             if self.reactor.running:
                 self.reactor.stop()
         except Exception as e:
-            self.log.error("Error while shutting down: {error!r}", error=r)
+            self.log.error("Error while shutting down: {error}", error=r)
         _exit(0)
 
 
@@ -268,7 +268,7 @@ class GUIClient(ABC):
         except ValueError:
             pass
         except Exception as e:
-            self.log.error("Error during {server} reconnect: {error!r}", server=server_name, error=e)
+            self.log.error("Error during {server} reconnect: {error}", server=server_name, error=e)
 
     def _serverDisconnect(self, c, message):
         server_name = message[1]
