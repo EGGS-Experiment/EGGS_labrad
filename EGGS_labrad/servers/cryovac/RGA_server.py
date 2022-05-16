@@ -361,10 +361,11 @@ class RGA_Server(SerialDeviceServer, PollingServer):
                                 for i in range(0, bytes_to_read, 4)])
         # multiply values by current to pressure conversion factor
         current_arr = current_arr.astype(np.float32) * sp
-        # split up response into desired numebr of scans
+        # split up response into desired number of scans
         current_arr = np.array_split(current_arr, num_scans)
+        # remove total pressure value
         current_arr = [array[:-1] for array in current_arr]
-        # create x-axis; remove total pressure value
+        # create x-axis
         amu_arr = [np.linspace(mass_initial, mass_final, num_points)]
         # combine x-axis and y-axes values into a single return
         returnArr = np.concatenate((amu_arr, current_arr), axis=0)

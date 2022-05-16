@@ -153,6 +153,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         yield self.ser.acquire()
         yield self.ser.write(message)
         resp = yield self.ser.read_line(_TT74_ETX_msg)
+        # todo: check that this doesn't have latency problems - should it be read(<num>) or read_line?
         yield self.ser.read()
         self.ser.release()
         # parse

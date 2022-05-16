@@ -32,19 +32,21 @@ from serial.serialutil import SerialException
 
 from EGGS_labrad.servers import PollingServer
 
-
 # ERRORS
 class NoPortSelectedError(Error):
-    """Please open a port first."""
+    """
+    Please open a port first.
+    """
     code = 1
 
 class NoPortsAvailableError(Error):
-    """No serial ports are available."""
+    """
+    No serial ports are available.
+    """
     code = 3
 
 
 SerialDevice = collections.namedtuple('SerialDevice', ['name', 'devicepath'])
-
 PORTSIGNAL = 539410
 
 
@@ -444,6 +446,7 @@ class SerialServer(PollingServer):
             delim, skip = data, b''
         else:
             delim, skip = b'\n', b'\r'
+
         recd = b''
         while True:
             r = ser.read(1)

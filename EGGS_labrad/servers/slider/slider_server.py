@@ -3,7 +3,7 @@
 [info]
 name = Slider Server
 version = 1.0.0
-description = Controls the ELL9K Slider from ThorLabs.
+description = Controls the ELL9 Slider from ThorLabs.
 instancename = Slider Server
 
 [startup]
@@ -21,14 +21,17 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from EGGS_labrad.servers import SerialDeviceServer
 
-TERMINATOR = '\r'
-_ELL9K_ADDR_msg = b'\x00'
+_ELL9_EOL = '\r'
+_ELL9_ENCODING = 'ASCII'
 
-_ELL9K_ERRORS_msg = {
+_ELL9_ERRORS_msg = {
+    b'\x00': "OK, no error",
     b'\x01': "Communication time out",
     b'\x02': "Mechanical time out",
     b'\x03': "Command error or not supported",
     b'\x04': "Value out of range",
+    b'\x05': "Module isolated",
+    b'\x06': "Module out of isolation",
     b'\x07': "Initializing error",
     b'\x08': "Thermal error",
     b'\x10': "Sensor error",
@@ -37,16 +40,10 @@ _ELL9K_ERRORS_msg = {
     b'\x13': "Over current error"
 }
 
-_ELL9K_STATUS_msg = {
-    b'\x00': "OK, no error",
-    b'\x05': "Module isolated",
-    b'\x06': "Module out of isolation"
-}
-
 
 class SliderServer(SerialDeviceServer):
     """
-    Controls the ELL9K Slider from ThorLabs.
+    Controls the ELL9 Slider from ThorLabs.
     """
 
     name = 'Slider Server'
@@ -59,286 +56,262 @@ class SliderServer(SerialDeviceServer):
 
 
     # SIGNALS
-    #flow_update = Signal(999999, 'signal: flow update', 'v')
+    status_update = Signal(999999, 'signal: status update', 's')
+    position_update = Signal(999998, 'signal: position update', 'i')
 
 
     # CORE
-    @setting(11, 'Status', returns='*s')
+    @setting(11, 'Status', returns='s')
     def status(self, c):
         """
-        Get status or raise errors.
-        """
-        # create and send message to device
-        message = yield self._create_message(CMD_msg=b'gs')
-        # query
-        yield self.ser.acquire()
-        yield self.ser.write(message)
-        resp = yield self.ser.read_line(TERMINATOR)
-        yield self.ser.read(2)
-        self.ser.release()
-        # parse
-        resp = yield self._parse(resp)
-        returnValue(resp)
-    
-    @setting(12, 'Motor1 Info', returns='(bbvvvvv)')
-    def motor1_info(self, c):
-        """
-        Get motor1 parameters.
+        Get error status of device.
         Returns:
-                (bool): the state of the loop setting
-                (bool): the state of the moter
-                (float): current in amp
-                (float): PWM increase every ms; undefined if the value is -1
-                (float): PWM decrease every ms; undefined if the value is -1
-                (float): forward period in s
-                (float): backward period in s
+            (str): the error message.
         """
-        # create and send message to device
-        message = yield self._create_message(CMD_msg=b'i1')
-        # query
+        # get status
         yield self.ser.acquire()
-        yield self.ser.write(message)
-        resp = yield self.ser.read_line(TERMINATOR)
-        yield self.ser.read(2)
+        yield self.ser.write('0gs\r')
+        resp = yield self.ser.read_line()
         self.ser.release()
-        # parse
-        resp = yield self._parse(resp)
-        loop = bool(int(resp[0], 16))
-        motor = bool(int(resp[1], 16))
-        current = int(resp[2: 6], 16) / 1866 # 1 Amp of current is equal to 1866 points
-        ramp_up = int(resp[6: 10], 16) if resp[6: 10] != 'FFFF' else -1
-        ramp_down = int(resp[10: 14], 16) if resp[10: 14] != 'FFFF' else -1
-        forward_period = int(resp[14: 18], 16)
-        backward_period = int(resp[18: 22], 16)
-        returnValue((loop, motor, current, ramp_up, ramp_down, forward_period, backeward_period))
-    
-    # MOTOR
-    @setting(211, 'Save', returns='')
-    def save(self, c):
+        # parse status for error message
+        err_msg = _ELL9_ERRORS_msg[resp[3:]]
+        returnValue(err_msg)
+
+
+    # MOTORS
+    @setting(111, 'Motor Frequency Forward', motor_num='i', freq='v', returns='')
+    def motor_frequency_forward(self, c, motor_num, freq):
         """
-        Save motor parameter.
-        """
-        # create and send message to device
-        message = yield self._create_message(CMD_msg=b'us')
-        # query
-        yield self.ser.acquire()
-        yield self.ser.write(message)
-        resp = yield self.ser.read_line(TERMINATOR)
-        yield self.ser.read(2)
-        self.ser.release()
-        # parse
-        resp = yield self._parse(resp)
-    
-    @setting(212, 'Set Period', dir='i', period='i', returns='')
-    def set_period(self, c, dir, period):
-        """
-        Set forward / backward period. Must save the new parameter.
+        Set the forward frequency of a motor.
+
         Arguments:
-            dir (int): 0 for forward period, 1 for backward period
-            period (int): new period in s
+            motor_num   (int)   : the motor to set.
+            freq        (float) : the forward frequency to set (in Hz).
         """
-        cmd = 'f1' if dir == 0 else 'b1'
-        digit = len(format(period, 'x'))
-        if digit == 1:
-            data = '800' + format(period, 'x')
-        elif digit == 2:
-            data = '80' + format(period, 'x')
-        elif digit == 3:
-            data = '8' + format(period, 'x')
+        if motor_num not in (1, 2):
+            raise Exception("Error: invalid motor number. Must be one of (1, 2).")
+        # convert to period in machine units
+        period_mu = round(14740000 / freq)
+        # prepare device messages
+        cmd_msg = "f{:d}".format(motor_num)
+        data_msg = "8{:03x}".format(period_mu)
+        yield self._setter(cmd_msg, data_msg=data_msg)
+
+    @setting(112, 'Motor Frequency Backward', motor_num='i', freq='v', returns='')
+    def motor_frequency_backward(self, c, motor_num, freq):
+        """
+        Set the backward frequency of a motor.
+
+        Arguments:
+            motor_num   (int)   : the motor to set.
+            freq        (float) : the forward frequency to set (in Hz).
+        """
+        if motor_num not in (1, 2):
+            raise Exception("Error: invalid motor number. Must be one of (1, 2).")
+        # convert to period in machine units
+        period_mu = round(14740000 / freq)
+        # prepare device messages
+        cmd_msg = "b{:d}".format(motor_num)
+        data_msg = "8{:03x}".format(period_mu)
+        yield self._setter(cmd_msg, data_msg=data_msg)
+
+    @setting(121, 'Motor Frequency Search', motor_num='i', returns='')
+    def motor_frequency_search(self, c, motor_num):
+        """
+        Request a frequency search to find the motor's optimal
+        operating frequency.
+
+        Arguments:
+            motor_num   (int)   : the motor to set.
+        """
+        if motor_num not in (1, 2):
+            raise Exception("Error: invalid motor number. Must be one of (1, 2).")
+        # prepare device messages
+        cmd_msg = "s{:d}".format(motor_num)
+        yield self._setter(cmd_msg, 'status')
+
+
+    # POSITION
+    @setting(211, 'Move Home', returns='')
+    def move_home(self, c):
+        """
+        Moves the slider to the home position.
+        """
+        # prepare device messages
+        cmd_msg = "ho"
+        # note: data_msg is ignored for this type of device
+        data_msg = "1"
+        yield self._setter(cmd_msg, data_msg=data_msg)
+
+    @setting(212, 'Move Absolute', position='i', returns='')
+    def move_absolute(self, c, position):
+        """
+        Moves the slider to a specified absolute position.
+        Arguments:
+            position    (int)   : the position to move to. Must be in [1, 4].
+        """
+        if position not in range(1, 4):
+            raise Exception("Error: invalid position. Must be in [1, 4].")
+        # prepare device messages
+        cmd_msg = "ma"
+        data_msg = "{:08x}".format(position)
+        yield self._setter(cmd_msg, data_msg=data_msg)
+
+    @setting(213, 'Move Relative', position='i', returns='')
+    def move_relative(self, c, position):
+        """
+        Moves the slider relative to the current position.
+        Arguments:
+            position    (int)   : the position to move to. Must be in [1, 4].
+        """
+        # todo: implement
+        return
+
+    @setting(221, 'Move Jog', dir='i', returns='')
+    def move_jog(self, c, dir):
+        """
+        Moves the motor by a "jog" - a discrete number of steps set
+        by the setting "Move Jog Set".
+
+        Arguments:
+            dir (int)   : the direction to move. 0 = backwards, 1 = forwards.
+        """
+        if dir == 0:
+            yield self._setter("bw")
+        elif dir == 1:
+            yield self._setter("fw")
         else:
-            raise ValueError("Input is out of range.")
-        
-        # create and send message to device
-        message = yield self._create_message(CMD_msg=cmd.encode(), DATA_msg=data.encode())
-        # query
-        yield self.ser.acquire()
-        yield self.ser.write(message)
-        resp = yield self.ser.read_line(TERMINATOR)
-        yield self.ser.read(2)
-        self.ser.release()
-        # parse
-        resp = yield self._parse(resp)
-    
-    @setting(213, 'Reset Period', dir='i', returns='')
-    def reset_period(self, c, dir):
+            raise Exception("Error: invalid position. Must be in [1, 4].")
+
+    @setting(222, 'Move Jog Steps', step_size='i', returns='i')
+    def move_jog_steps(self, c, step_size=None):
         """
-        Reset the period to factory setting.
+        Get/set the jog step size. When the setting "Move Jog" is called,
+        the motor will move by the number of steps specified here.
+
         Arguments:
-            dir (int): 0 for forward period, 1 for backward period
+            step_size   (int)   : the number of steps to move. Must be in [1, 3].
+        Returns:
+                        (int)   : the number of steps per jog.
         """
-        cmd = 'f1' if dir == 0 else 'b1'
-        data = '8FFF'
-        # create and send message to device
-        message = yield self._create_message(CMD_msg=cmd.encode(), DATA_msg=data.encode())
-        # query
-        yield self.ser.acquire()
-        yield self.ser.write(message)
-        resp = yield self.ser.read_line(TERMINATOR)
-        yield self.ser.read(2)
-        self.ser.release()
-        # parse
-        resp = yield self._parse(resp)
+        # setter
+        if step_size is not None:
+            if step_size not in range(1, 3):
+                raise Exception("Error: invalid step size. Must be in [1, 3].")
+            # prepare device messages
+            cmd_msg = "sj"
+            data_msg = "{:08x}".format(step_size)
+            yield self._setter(cmd_msg, data_msg=data_msg)
+        # getter
+        cmd_msg = "gj"
+        resp = yield self._setter(cmd_msg)
+        # convert message to int
+        returnValue(resp)
+
+    @setting(231, 'Move Velocity', velocity='i', returns='i')
+    def move_velocity(self, c, velocity):
+        """
+        Get/set the velocity by adjusting the drive power.
+        Warning: drive power less than 25% to 45% may result in stalling.
+
+        Arguments:
+            velocity    (int)   : the velocity as a percentage of max power.
+                                    Must be in (0, 100].
+        Returns:
+                        (int)   : the velocity as a percentage of max power.
+        """
+        # setter
+        if velocity is not None:
+            if (velocity <= 0) or (velocity > 100):
+                raise Exception("Error: invalid step size. Must be in (1, 100].")
+            # prepare device messages
+            cmd_msg = "sv"
+            data_msg = "{:02x}".format(velocity)
+            yield self._setter(cmd_msg, data_msg=data_msg)
+        # getter
+        cmd_msg = "gv"
+        resp = yield self._setter(cmd_msg)
+        # convert message to integer
+        resp = int(resp, 16)
+        returnValue(resp)
 
 
-    # @setting(11, 'Reset', returns='')
-    # def reset(self, c):
-    #     """
-    #     Reset laser shutter. All values are set to default.
-    #     """
-    #     yield self.ser.acquire()
-    #     yield self.ser.write('C')
-    #     self.ser.release()
+    # POSITION
+    @setting(311, 'Position', returns='i')
+    def position(self, c):
+        """
+        Returns the current position of the motor.
+        Returns:
+            (int)   : the current position.
+        """
+        # getter
+        cmd_msg = "gp"
+        resp = yield self._setter(cmd_msg)
+        returnValue(resp)
 
-    # @setting(12, 'Standby', returns='')
-    # def standby(self, c):
-    #     """
-    #     Turns off laser shutter. Puts shutter into indeterminate state.
-    #     Reactivate shutter by doing a reset.
-    #     """
-    #     yield self.ser.acquire()
-    #     yield self.ser.write('K')
-    #     self.ser.release()
+    @setting(312, 'Position Home', position='i', returns='i')
+    def position_home(self, c, position=None):
+        """
+        Get/set the home position of the motor.
+        Warning: the home position is set at the factory.
+            Note the current default home position before adjustment.
 
-    # @setting(13, 'Errors', returns='*s')
-    # def standby(self, c):
-    #     """
-    #     Get errors.
-    #     Returns:
-    #     """
-    #     yield self.ser.acquire()
-    #     yield self.ser.write('W')
-    #     err = yield self.ser.read_line('\n')
-    #     self.ser.release()
-    #     # todo: finish
-
-
-    # # SHUTTER
-    # @setting(211, 'Shutter Set', state='b', returns='i')
-    # def shutterSet(self, c, state=None):
-    #     """
-    #     Set shutter state exactly.
-    #     Arguments:
-    #         state   (bool)  : open/close state of the shutter
-    #     Returns:
-    #                 (bool)  : shutter state
-    #     """
-    #     # set state
-    #     if state is not None:
-    #         yield self.ser.acquire()
-    #         if state:
-    #             yield self.ser.write('@')
-    #         else:
-    #             yield self.ser.write('A')
-    #         self.ser.release()
-    #     # get state
-    #     yield self.ser.acquire()
-    #     yield self.ser.write('S')
-    #     resp = yield self.ser.read_line('\n')
-    #     self.ser.release()
-    #     if resp == '1':
-    #         returnValue(1)
-    #     elif resp == '0':
-    #         returnValue(0)
-    #     else:
-    #         print('Error: shutter position is indeterminate.')
-
-    # @setting(212, 'Shutter Toggle', returns='b')
-    # def shutterToggle(self, c):
-    #     """
-    #     Toggle shutter state.
-    #     Returns:
-    #             (bool)   : shutter state
-    #     """
-    #     # toggle state
-    #     yield self.ser.acquire()
-    #     yield self.ser.write('B')
-    #     self.ser.release()
-    #     # get state
-    #     yield self.ser.acquire()
-    #     yield self.ser.write('S')
-    #     resp = yield self.ser.read_line('\n')
-    #     self.ser.release()
-    #     if resp == '1':
-    #         returnValue(1)
-    #     elif resp == '0':
-    #         returnValue(0)
-    #     else:
-    #         print('Error: shutter position is indeterminate.')
-
-
-    # # SPEED
-    # @setting(311, 'speed', speed='i', returns='v')
-    # def speed(self, c, speed=None):
-    #     """
-    #     Set/get speed of laser shutter.
-    #     Arguments:
-    #         speed   (int)   : speed mode of the shutter
-    #     Returns:
-    #                 (int)   : speed mode of the shutter
-    #     """
-    #     # todo: ensure input in range
-    #     if speed is not None:
-    #         if speed not in (0, 1, 2, 3):
-    #             raise Exception('Error: invalid speed. Must be one of (0, 1, 2, 3).')
-    #         yield self.ser.acquire()
-    #         yield self.ser.write(str(speed))
-    #         self.ser.release()
-    #     yield self.ser.acquire()
-    #     yield self.ser.write('R')
-    #     resp = yield self.ser.read_line('\n')
-    #     self.ser.release()
-    #     resp = float(resp.strip())
-    #     if resp == 100:
-    #         returnValue(0)
-    #     elif resp == 50:
-    #         returnValue(1)
-    #     elif resp == 25:
-    #         returnValue(2)
-    #     elif resp == 12:
-    #         returnValue(3)
-
-
-    # # MISC
-    # @setting(411, 'Temperature', returns='i')
-    # def temperature(self, c):
-    #     """
-    #     Gets the temperature of the laser shutter.
-    #     Arguments:
-    #                 (int)   : the temperature of the shutter.
-    #     """
-    #     yield self.ser.acquire()
-    #     yield self.ser.write('T')
-    #     resp = yield self.ser.read_line('\n')
-    #     self.ser.release()
-    #     returnValue(int(resp))
+        Arguments:
+            position    (int)   : the new home position. Must be in [1, 4].
+        Returns:
+                        (int)   : the home position.
+        """
+        # setter
+        if position is not None:
+            if position not in range(1, 4):
+                raise Exception("Error: invalid position. Must be in [1, 4].")
+            # prepare device messages
+            cmd_msg = "so"
+            data_msg = "{:02x}".format(position)
+            yield self._setter(cmd_msg, data_msg=data_msg)
+        # getter
+        resp = yield self._setter("go")
+        returnValue(resp)
 
 
     # HELPER
-    def _create_message(self, CMD_msg, DATA_msg=b''):
+    @inlineCallbacks
+    def _setter(self, c, cmd_msg, data_msg='', dev_num=0):
         """
-        Creates a message according to the ELL9K serial protocol.
-        """
-        # create message
-        msg = _ELL9K_ADDR_msg + CMD_msg + DATA_msg
-        return msg
+        Creates a message according to the ELL9 communication protocol.
 
-    def _parse(self, ans):
+        Arguments:
+            cmd_msg     (str)   : the command message (bytes 2-3) to send to the device.
+            data_msg    (str)   : parameters for the command.
+        Keyword Args:
+            dev_num     (int)   : the device number. Defaults to 0.
         """
-        Parses the ELL9K response.
-        """
-        if ans == b'':
-            raise Exception('No response from device')
-        # remove ADDR and CMD
-        ans = ans[3:]
-        # check if we have error or status
-        if len(ans) > 1:
-            ans = ans.decode()
-        elif ans in _ELL9K_ERRORS_msg:
-            raise Exception(_ELL9K_ERRORS_msg[ans])
-        elif ans in _ELL9K_STATUS_meg:
-            ans = _ELL9K_STATUS_meg[ans]
-        # if none of these cases, just return it anyways
-        return ans
+        # convert data_msg to empty string if None
+        msg = "{dev:x}{cmd:s}{data}\r".format(dev=dev_num, cmd=cmd_msg, data=data_msg)
+        msg = msg.encode(_ELL9_ENCODING)
+        # write to device and read response
+        yield self.ser.acquire()
+        yield self.ser.write(msg)
+        resp = yield self.ser.read_line(_ELL9_EOL)
+        self.ser.release()
+        # decode and strip response of EOL
+        resp_header, resp_msg = resp[1:3], resp[3:]
+        # ensure resp_header is a stripped string
+        if type(resp_header) == bytes:
+            resp_header = resp_header.decode()
+        resp_header = resp_header.strip()
+        # parse header to handle device response correctly
+        if resp_header == 'GS':
+            err_msg = _ELL9_ERRORS_msg[resp_msg]
+            self.status_update(err_msg)
+            returnValue(None)
+        elif resp_header == 'PO':
+            # convert response to number
+            position = int.from_bytes(resp_msg, 'big', signed=True)
+            self.position_update(position)
+            returnValue(position)
+        else:
+            returnValue(resp_msg)
 
 
 if __name__ == '__main__':

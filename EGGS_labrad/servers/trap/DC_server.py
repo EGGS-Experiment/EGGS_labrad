@@ -246,7 +246,9 @@ class DCServer(SerialDeviceServer, PollingServer):
     @inlineCallbacks
     def _parse(self):
         yield self.ser.acquire()
-        sleep(1) # wait until device has finished writing
+        # wait until device has finished writing
+        sleep(1)
+        # todo: check this is OK and see if we can somehow do a definite read
         resp = yield self.ser.read()
         self.ser.release()
         # separate response for each channel

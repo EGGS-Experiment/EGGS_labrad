@@ -58,9 +58,7 @@ class PMT_gui(QFrame):
         # edge method
         self.edge_method_label = QLabel('Edge Type')
         self.edge_method = QComboBox()
-        self.edge_method.addItem('rising')
-        self.edge_method.addItem('falling')
-        self.edge_method.addItem('both')
+        self.edge_method.addItems(['rising', 'falling', 'both'])
         # program
         self.program_button = QPushButton('Program')
         self.start_button = QPushButton('Start')
