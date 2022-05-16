@@ -57,7 +57,7 @@ class DDS_client(GUIClient):
                 ad9910_widget.freq.valueChanged.connect(lambda freq, _channel_name=ad9910_name:
                                                         self.aq.dds_frequency(_channel_name, freq * 1e6))
                 ad9910_widget.ampl.valueChanged.connect(lambda ampl, _channel_name=ad9910_name:
-                                                        self.aq.dds_amplitude(_channel_name, ampl))
+                                                        self.aq.dds_amplitude(_channel_name, ampl / 100))
                 ad9910_widget.att.valueChanged.connect(lambda att, _channel_name=ad9910_name:
                                                        self.aq.dds_attenuation(_channel_name, att, 'v'))
                 ad9910_widget.rfswitch.toggled.connect(lambda status, _channel_name=ad9910_name:
