@@ -15,7 +15,6 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-# todo: add read functions
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
@@ -368,8 +367,9 @@ class ARTIQ_Server(LabradServer):
             # have to break it into two 32-bit words, since
             # labrad can only send 32-bit data at most
             print(reg_val)
-            #resp = ((reg_val & 0xffffffff), ((reg_val >> 32) & 0xffffffff))
-            resp = reg_val
+            reg_val1 = np.int32(reg_val)
+            reg_val2 = np.int32((reg_val >> 32) & 0xffffffff)
+            resp = (reg_val1, reg_val2)
             returnValue(resp)
 
         # todo: allow RAM programming
