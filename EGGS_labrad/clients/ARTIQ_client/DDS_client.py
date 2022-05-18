@@ -1,3 +1,4 @@
+import numpy as np
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
@@ -43,10 +44,20 @@ class DDS_client(GUIClient):
                     self.urukul_list[urukul_name] = {}
                 self.urukul_list[urukul_name][name] = None
 
-    #@inlineCallbacks
+    @inlineCallbacks
     def initData(self):
-        # todo: get switch, att, freq, amp, phase values from server
-        pass
+        for urukul_name, ad9910_list in self.gui.urukul_list.items():
+            for ad9910_name, ad9910_widget in ad9910_list.items():
+                freq_mu, ampl_mu = yield self.aq.dds_read(ad9910_name, 0x0e, 64)
+                ampl_mu = np.int32((ampl_mu >> 16) & 0x3fff)
+                # convert from machine units to human units
+                freq_mhz = np.int32(freq_mu / 4.2949673)
+                ampl_pct = np.int32(ampl_mu / 0x3fff)
+                # set values
+                ad9910_widget.freq.setValue(freq_mhz / 1e6)
+                ad9910_widget.ampl.setValue(ampl_pct * 1e2)
+                #ad9910_widget.att.setValue()
+                #ad9910_widget.rfswitch.setValue()
 
     def initGUI(self):
         # connect an urukul group

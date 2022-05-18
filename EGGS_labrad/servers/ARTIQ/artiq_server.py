@@ -91,10 +91,10 @@ class ARTIQ_Server(LabradServer):
         self.ps_rid = None
         # conversions
             # dds
-        self.dds_frequency_to_ftw = lambda freq: int(freq * 10.7374182) # 0xffffffff/4e8
+        self.dds_frequency_to_ftw = lambda freq: int(freq * 4.2949673)
         self.dds_amplitude_to_asf = lambda ampl: int(ampl * 0x3fff)
-        self.dds_turns_to_pow = lambda phase: int(phase * 10430.2192) # 0xffff/2pi
-        self.dds_att_to_mu = lambda dbm: 10**(float(dbm/10))
+        self.dds_turns_to_pow = lambda phase: int(phase * 10430.2192)
+        self.dds_att_to_mu = lambda dbm: 10 ** (float(dbm/10)) # 255 = 31.5 dBm
             # dac
         from artiq.coredevice.ad53xx import voltage_to_mu
         self.dac_voltage_to_mu = voltage_to_mu
