@@ -15,15 +15,15 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-# labrad imports
+# todo: add read functions
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
-# server imports
+
 import numpy as np
 from artiq_api import ARTIQ_api
 from EGGS_labrad.config import device_db as device_db_module
-# artiq imports
+
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
                                     AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
                                     AD53XX_READ_AB0, AD53XX_READ_AB1, AD53XX_READ_AB2, AD53XX_READ_AB3

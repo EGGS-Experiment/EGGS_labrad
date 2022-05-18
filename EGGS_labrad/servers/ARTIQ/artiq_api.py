@@ -8,6 +8,7 @@ class ARTIQ_api(object):
     """
     An API for the ARTIQ box.
     Directly accesses the hardware on the box without having to use artiq_master.
+    # todo: set version so we know what we're compatible with
     """
 
     def __init__(self, ddb_filepath):
