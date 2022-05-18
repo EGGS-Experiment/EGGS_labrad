@@ -51,8 +51,8 @@ class DDS_client(GUIClient):
                 freq_mu, ampl_mu = yield self.aq.dds_read(ad9910_name, 0x0e, 64)
                 ampl_mu = np.int32((ampl_mu >> 16) & 0x3fff)
                 # convert from machine units to human units
-                freq_mhz = np.int32(freq_mu / 4.2949673)
-                ampl_pct = np.int32(ampl_mu / 0x3fff)
+                freq_mhz = freq_mu / 4.2949673
+                ampl_pct = ampl_mu / 0x3fff
                 # set values
                 ad9910_widget.freq.setValue(freq_mhz / 1e6)
                 ad9910_widget.ampl.setValue(ampl_pct * 1e2)

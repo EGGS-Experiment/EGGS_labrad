@@ -94,7 +94,7 @@ class ARTIQ_Server(LabradServer):
         self.dds_frequency_to_ftw = lambda freq: int(freq * 4.2949673)
         self.dds_amplitude_to_asf = lambda ampl: int(ampl * 0x3fff)
         self.dds_turns_to_pow = lambda phase: int(phase * 10430.2192)
-        self.dds_att_to_mu = lambda dbm: 10 ** (float(dbm/10)) # 255 = 31.5 dBm
+        self.dds_att_to_mu = lambda dbm: np.int32(255) - np.int32(round(dbm * 8))
             # dac
         from artiq.coredevice.ad53xx import voltage_to_mu
         self.dac_voltage_to_mu = voltage_to_mu
@@ -366,7 +366,6 @@ class ARTIQ_Server(LabradServer):
         else:
             # have to break it into two 32-bit words, since
             # labrad can only send 32-bit data at most
-            print(reg_val)
             reg_val1 = np.int32(reg_val)
             reg_val2 = np.int32((reg_val >> 32) & 0xffffffff)
             resp = (reg_val1, reg_val2)
