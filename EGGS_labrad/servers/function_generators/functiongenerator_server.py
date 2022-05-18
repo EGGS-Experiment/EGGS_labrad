@@ -29,7 +29,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
     name = 'Function Generator Server'
 
     deviceWrappers = {
-        'Agilent Technologies 33210A': Agilent33210AWrapper
+        'AGILENT TECHNOLOGIES 33210A': Agilent33210AWrapper
     }
 
 
