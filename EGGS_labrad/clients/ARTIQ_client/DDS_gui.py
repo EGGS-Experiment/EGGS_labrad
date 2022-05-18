@@ -107,15 +107,16 @@ class DDS_gui(QFrame):
         # create widget
         urukul_group = QWidget()
         urukul_group_layout = QGridLayout(urukul_group)
-        # iterator so we don't have to do a for-range loop
-        channel_iter = iter([0, 1, 2, 3])
+        # add initialize button
+        init_cpld = QPushButton('Initialize Board')
+        urukul_group_layout.addWidget(init_cpld,        0, 0, 1, 1)
+        setattr(self, 'init_{:s}'.format(urukul_name), init_cpld)
         # layout individual ad9910 channels
-        for ad9910_name in ad9910_list.keys():
+        for channel_num, ad9910_name in enumerate(ad9910_list.keys()):
             # initialize GUIs for each channel
-            channel_num = next(channel_iter)
             channel_gui = AD9910_channel(ad9910_name)
             # layout channel GUI
-            row = int(channel_num / self.row_length) + 2
+            row = int(channel_num / self.row_length) + 1
             column = channel_num % self.row_length
             # add widget to client list and layout
             self.urukul_list[urukul_name][ad9910_name] = channel_gui
