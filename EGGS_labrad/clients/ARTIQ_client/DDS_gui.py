@@ -112,6 +112,7 @@ class DDS_gui(QFrame):
         init_cpld = QPushButton('Initialize Board')
         urukul_group_layout.addWidget(init_cpld,        0, 0, 1, 1)
         setattr(self, 'init_{:s}'.format(urukul_name), init_cpld)
+        # todo: set attr more properly
         # layout individual ad9910 channels
         for channel_num, ad9910_name in enumerate(ad9910_list.keys()):
             # initialize GUIs for each channel
@@ -133,7 +134,9 @@ if __name__ == "__main__":
     #runGUI(DDS_gui)
 
     # run DDS GUI
-    urukul_list_tmp = {"urukul0_cpld": {
-        "urukul0_ch0": None, "urukul0_ch1": None, "urukul0_ch2": None, "urukul0_ch3": None
-    }}
+    urukul_list_tmp = {
+        "urukul0_cpld": {
+            "urukul0_ch0": None, "urukul0_ch1": None, "urukul0_ch2": None, "urukul0_ch3": None
+        }
+    }
     runGUI(DDS_gui, urukul_list_tmp)

@@ -233,7 +233,9 @@ class ARTIQ_api(object):
         ftw = profiledata & 0xFFFFFFFF
         pow = ((profiledata >> 32) & 0xFFFF)
         asf = ((profiledata >> 48) & 0x3FFF)
-        print('asf:', asf)
+        #print('asf:', asf)
+        # todo: fix bug where -1 comes up as 2229
+        # todo: if -1, return 0
         return np.int32(ftw), np.int32(asf), np.int32(pow)
 
     def setDDS(self, dds_name, param, val):
