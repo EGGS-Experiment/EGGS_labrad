@@ -48,35 +48,42 @@ class DDS_client(GUIClient):
     def initData(self):
         for urukul_name, ad9910_list in self.gui.urukul_list.items():
             for ad9910_name, ad9910_widget in ad9910_list.items():
-                freq_mu, ampl_mu = yield self.aq.dds_read(ad9910_name, 0x0e, 64)
-                ampl_mu = np.int32((ampl_mu >> 16) & 0x3fff)
+                # get values
+                sw = yield self.aq.dds_toggle(ad9910_name)
+                att_mu = yield self.aq.dds_attenuation(ad9910_name)
+                freq_mu = yield self.aq.dds_frequency(ad9910_name)
+                ampl_mu = yield self.aq.dds_amplitude(ad9910_name)
                 # convert from machine units to human units
                 freq_mhz = freq_mu / 4.2949673
                 ampl_pct = ampl_mu / 0x3fff
                 # set values
+                ad9910_widget.rfswitch.setValue()
+                ad9910_widget.att.setValue(att_mu)
                 ad9910_widget.freq.setValue(freq_mhz / 1e6)
                 ad9910_widget.ampl.setValue(ampl_pct * 1e2)
-                #ad9910_widget.att.setValue()
-                #ad9910_widget.rfswitch.setValue()
 
     def initGUI(self):
         # connect an urukul group
         for urukul_name, ad9910_list in self.gui.urukul_list.items():
-            # connect all DDS channels within an urukul group
+            # todo: connect urukul initialize button
+            # connect DDS channels
             for ad9910_name, ad9910_widget in ad9910_list.items():
-                # initialize the ad9910 GUIs within an urukul group
+                ad9910_widget.initbutton.clicked.connect(lambda status, _channel_name=ad9910_name: self.aq.dds_initialize(_channel_name))
                 ad9910_widget.freq.valueChanged.connect(lambda freq, _channel_name=ad9910_name:
                                                         self.aq.dds_frequency(_channel_name, freq * 1e6))
                 ad9910_widget.ampl.valueChanged.connect(lambda ampl, _channel_name=ad9910_name:
                                                         self.aq.dds_amplitude(_channel_name, ampl / 100))
                 ad9910_widget.att.valueChanged.connect(lambda att, _channel_name=ad9910_name:
-                                                       self.aq.dds_attenuation(_channel_name, att, 'v'))
+                                                       self.aq.dds_attenuation(_channel_name, att))
                 ad9910_widget.rfswitch.toggled.connect(lambda status, _channel_name=ad9910_name:
                                                        self.aq.dds_toggle(_channel_name, status))
                 ad9910_widget.lock(False)
 
     def updateDDS(self, c, signal):
         ad9910_name, param, val = signal
+        # todo: check that ad9910_name exists in the client
+        # todo: lock device gui
+        # todo: update values
         pass
 
 

@@ -46,7 +46,7 @@ class AD9910_channel(QFrame):
         self.att.setSingleStep(1)
         self.att.setRange(0, 31)
         self.att.setKeyboardTracking(False)
-        self.resetswitch = QPushButton('Initialize')
+        self.initbutton = QPushButton('Initialize')
         self.rfswitch = TextChangingButton(("On", "Off"))
         self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
@@ -59,7 +59,7 @@ class AD9910_channel(QFrame):
         layout.addWidget(self.freq,             2, 0)
         layout.addWidget(self.ampl,             2, 1)
         layout.addWidget(self.att,              2, 2)
-        layout.addWidget(self.resetswitch,      3, 0)
+        layout.addWidget(self.initbutton,       3, 0)
         layout.addWidget(self.rfswitch,         3, 1)
         layout.addWidget(self.lockswitch,       3, 2)
 

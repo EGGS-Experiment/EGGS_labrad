@@ -2,6 +2,7 @@
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
+from artiq.coredevice.urukul import urukul_sta_rf_sw
 
 
 class ARTIQ_api(object):
@@ -9,6 +10,8 @@ class ARTIQ_api(object):
     An API for the ARTIQ box.
     Directly accesses the hardware on the box without having to use artiq_master.
     # todo: set version so we know what we're compatible with
+    # todo: maybe return val after, a la SCPI?
+    # todo: experiment with host, kernel invariants, host-only, rpc, fast-math
     """
 
     def __init__(self, ddb_filepath):
@@ -17,7 +20,6 @@ class ARTIQ_api(object):
         self.device_db = devices.get_device_db()
         self._getDevices()
         #self._initializeDevices()
-
 
     def stopAPI(self):
         """
@@ -168,11 +170,10 @@ class ARTIQ_api(object):
         return dev.sample_get_nonrt()
 
 
-    # DDS/URUKUL
+    # DDS
     def initializeDDSAll(self):
         # initialize urukul cplds as well as dds channels
         device_list = list(self.urukul_list.values())
-        #device_list.extend(list(self.dds_list.values()))
         for device in device_list:
             self._initializeDDS(device)
 
@@ -185,25 +186,50 @@ class ARTIQ_api(object):
         self.core.reset()
         dev.init()
 
-    def toggleDDS(self, dds_name, state):
+    def getDDSsw(self, dds_name):
         """
-        Toggle a DDS using the RF switch.
+        Get the RF switch status of a DDS channel.
+        # todo: test
         """
         dev = self.dds_list[dds_name]
-        self._toggleDDS(dev, state)
+        # get channel number of dds
+        channel_num = dev.chip_select - 4
+        # get board status register
+        urukul_cfg = self._getUrukulStatus(dev.cpld)
+        # extract switch register from status register
+        sw_reg = urukul_sta_rf_sw(urukul_cfg)
+        return (sw_reg >> channel_num) & 0x1
+
+    def setDDSsw(self, dds_name, state):
+        """
+        Set the RF switch of a DDS channel.
+        """
+        dev = self.dds_list[dds_name]
+        # get channel number of dds
+        channel_num = dev.chip_select - 4
+        # get board status register
+        urukul_cfg = self._getUrukulStatus(dev.cpld)
+        # extract switch register from status register
+        sw_reg = urukul_sta_rf_sw(urukul_cfg)
+        # insert new switch status
+        sw_reg &= ~(0x1 << channel_num)
+        sw_reg |= (state << channel_num)
+        # set switch status for whole board
+        self._setDDSsw(dev.cpld, sw_reg)
 
     @kernel
-    def _toggleDDS(self, dev, state):
+    def _setDDSsw(self, cpld, state):
         self.core.reset()
-        dev.cfg_sw(state)
+        cpld.cfg_switches(state)
 
     def setDDS(self, dds_name, param, val):
         """
-        Manually set the frequency, amplitude, or phase of a DDS.
+        Manually set the frequency, amplitude, or phase of a DDS channel.
+        # todo: test return
         """
         dev = self.dds_list[dds_name]
-        # get parameters
         ftw, asf, pow = (0, 0, 0)
+        # read in current parameters
         profiledata = self._readDDS64(dev, 0x0e)
         if param == 'ftw':
             ftw = val
@@ -212,11 +238,11 @@ class ARTIQ_api(object):
         elif param == 'asf':
             asf = val
             ftw = profiledata & 0xffff
-            asf = ((profiledata >> 48) & 0xffff)
+            pow = ((profiledata >> 32) & 0xffff)
         elif param == 'pow':
             pow = val
             ftw = profiledata & 0xffff
-            pow = ((profiledata >> 32) & 0xffff)
+            asf = ((profiledata >> 48) & 0xffff)
         self._setDDS(dev, ftw, asf, pow)
 
     @kernel
@@ -224,17 +250,60 @@ class ARTIQ_api(object):
         self.core.reset()
         dev.set_mu(ftw, pow, asf)
 
-    def setDDSAtt(self, dds_name, att_mu):
+    def getDDS(self, dds_name):
         """
-        Set the DDS attenuation.
+        Get the frequency, amplitude, and phase values
+        (in machine units) of a DDS channel.
+        # todo: test
         """
         dev = self.dds_list[dds_name]
-        self._setDDSAtt(dev, att_mu)
+        # read in waveform values
+        profiledata = self._readDDS64(dev, 0x0E)
+        # separate register values into ftw, asf, and pow
+        ftw = profiledata & 0xFFFF
+        pow = ((profiledata >> 32) & 0xFFFF)
+        asf = ((profiledata >> 48) & 0x3FFF)
+        return ftw, pow, asf
+
+    def getDDSatt(self, dds_name):
+        """
+        Set the DDS attenuation.
+        # todo: test
+        """
+        dev = self.dds_list[dds_name]
+        # get channel number of dds
+        channel_num = dev.chip_select - 4
+        att_reg = self._getUrukulAtt(dev.cpld)
+        # get only attenuation of channel
+        return (att_reg >> channel_num) & 0xff
+
+    def setDDSatt(self, dds_name, att_mu):
+        """
+        Set the DDS attenuation.
+        # todo: test
+        """
+        dev = self.dds_list[dds_name]
+        # get channel number of dds
+        channel_num = dev.chip_select - 4
+        att_reg = self._setDDSatt(dev.cpld, channel_num, att_mu)
+        return att_reg
 
     @kernel
-    def _setDDSAtt(self, dev, att_mu):
+    def _setDDSatt(self, cpld, channel_num, att_mu):
         self.core.reset()
-        dev.set_att_mu(att_mu)
+        cpld.bus.set_config_mu(0x0C, 32, 16, 2)
+        # shift in zeros, shift out current value
+        cpld.bus.write(0)
+        cpld.bus.set_config_mu(0x0A, 32, 6, 2)
+        delay_mu(10000)
+        cpld.att_reg = cpld.bus.read()
+        # remove old attenuator value for desired channel
+        cpld.att_reg &= ~(0x00 << channel_num)
+        # add in new attenuator value
+        cpld.att_reg |= (att_mu << channel_num)
+        # shift in adjusted value and latch
+        cpld.bus.write(cpld.att_reg)
+        return cpld.att_reg
 
     def readDDS(self, dds_name, reg, length):
         """
@@ -262,6 +331,35 @@ class ARTIQ_api(object):
     def _readDDS64(self, dev, reg):
         self.core.reset()
         return dev.read64(reg)
+
+
+    # URUKUL
+    def initializeUrukul(self, urukul_name):
+        """
+        Initialize an Urukul board.
+        """
+        dev = self.urukul_list[urukul_name]
+        self._initializeUrukul(dev)
+
+    @kernel
+    def _initializeUrukul(self, dev):
+        self.core.reset()
+        dev.init()
+
+    def _getUrukulStatus(self, cpld):
+        """
+        Get the status register of an Urukul board.
+        # todo: test
+        """
+        self.core.reset()
+        return cpld.sta_read()
+
+    def _getUrukulAtt(self, cpld):
+        """
+        Get the attenuation register of an Urukul board.
+        """
+        self.core.reset()
+        return cpld.get_att_mu()
 
 
     # DAC/ZOTINO

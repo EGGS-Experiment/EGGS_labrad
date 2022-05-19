@@ -26,10 +26,10 @@ from EGGS_labrad.config import device_db as device_db_module
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
                                     AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
                                     AD53XX_READ_AB0, AD53XX_READ_AB1, AD53XX_READ_AB2, AD53XX_READ_AB3
+
 AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53XX_READ_OFFSET,
                     'GAIN': AD53XX_READ_GAIN, 'OFS0': AD53XX_READ_OFS1, 'OFS1': AD53XX_READ_OFS1,
-                    'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2,
-                    'AB3': AD53XX_READ_AB3}
+                    'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2, 'AB3': AD53XX_READ_AB3}
 
 
 TTLSIGNAL_ID = 828176
@@ -37,6 +37,10 @@ DACSIGNAL_ID = 828175
 ADCSIGNAL_ID = 828174
 EXPSIGNAL_ID = 828173
 DDSSIGNAL_ID = 828172
+
+# todo: always reference against self.api.device_list instead of storing it here
+# todo: use incommunication?
+# todo: how to fix  builtins.ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
 
 
 class ARTIQ_Server(LabradServer):
@@ -106,9 +110,6 @@ class ARTIQ_Server(LabradServer):
         """
         Get the list of devices in the ARTIQ box.
         """
-        self.ttlout_list = list(self.api.ttlout_list.keys())
-        self.ttlin_list = list(self.api.ttlin_list.keys())
-        self.dds_list = list(self.api.dds_list.keys())
         self.dacType = self.api.dacType
 
 
@@ -209,7 +210,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
                 (*str)  : a list of all TTL channels.
         """
-        return self.ttlout_list + self.ttlin_list
+        return self.api.ttlout_list + self.api.ttlin_list
 
     @setting(221, "TTL Set", ttl_name='s', state=['b', 'i'], returns='')
     def setTTL(self, c, ttl_name, state):
@@ -219,7 +220,7 @@ class ARTIQ_Server(LabradServer):
             ttl_name    (str)           : name of the ttl
             state       [bool, int]     : ttl power state
         """
-        if ttl_name not in self.ttlout_list:
+        if ttl_name not in self.api.ttlout_list:
             raise Exception('Error: device does not exist.')
         if (type(state) == int) and (state not in (0, 1)):
             raise Exception('Error: invalid state.')
@@ -235,7 +236,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
                         (bool)  : ttl power state
         """
-        if ttl_name not in self.ttlin_list:
+        if ttl_name not in self.api.ttlin_list:
             raise Exception('Error: device does not exist.')
         state = yield self.api.getTTL(ttl_name)
         returnValue(bool(state))
@@ -245,9 +246,9 @@ class ARTIQ_Server(LabradServer):
     @setting(311, "DDS List", returns='*s')
     def DDSlist(self, c):
         """
-        Get the list of available DDS (AD5372) channels.
+        Get the list of available DDS (AD9910 or AD9912) channels.
         Returns:
-            (*str)  : the list of dds names
+            (*str)  : the list of DDS names.
         """
         dds_list = yield self.api.dds_list.keys()
         returnValue(list(dds_list))
@@ -257,93 +258,124 @@ class ARTIQ_Server(LabradServer):
         """
         Resets/initializes the DDSs.
         Arguments:
-            dds_name    (str)   : the name of the dds
+            dds_name    (str)   : the name of the DDS.
         """
-        if dds_name not in self.dds_list:
+        if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
         yield self.api.initializeDDS(dds_name)
 
-    @setting(322, "DDS Toggle", dds_name='s', state=['b', 'i'], returns='')
-    def DDStoggle(self, c, dds_name, state):
+    @setting(322, "DDS Toggle", dds_name='s', state=['b', 'i'], returns='b')
+    def DDStoggle(self, c, dds_name, state=None):
         """
         Manually toggle a DDS via the RF switch.
         Arguments:
-            dds_name    (str)           : the name of the dds
-            state       [bool, int]     : power state
+            dds_name    (str)           : the name of the DDS.
+            state       [bool, int]     : the DDS rf switch state.
+        Returns:
+                        (bool)          :
         """
-        if dds_name not in self.dds_list:
+        if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
-        if (type(state) == int) and (state not in (0, 1)):
-            raise Exception('Error: invalid input. Value must be a boolean, 0, or 1.')
-        yield self.api.toggleDDS(dds_name, state)
-        self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
+        # setter
+        if state is not None:
+            if (type(state) == int) and (state not in (0, 1)):
+                raise Exception('Error: invalid input. Value must be a boolean, 0, or 1.')
+            yield self.api.setDDSsw(dds_name, state)
+            self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
+        # getter
+        state = yield self.api.getDDSsw(dds_name)
+        returnValue(state)
 
-    @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='')
-    def DDSfreq(self, c, dds_name, freq):
+    @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='w')
+    def DDSfreq(self, c, dds_name, freq=None):
         """
         Manually set the frequency of a DDS.
         Arguments:
-            dds_name    (str)   : the name of the dds
-            freq        (float) : the frequency in Hz
+            dds_name    (str)   : the name of the DDS.
+            freq        (float) : the frequency (in Hz).
+        Returns:
+                        (word)  : the 32-bit frequency tuning word.
         """
-        if dds_name not in self.dds_list:
+        if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
-        elif (freq > 4e8) or (freq < 0):
-            raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
-        ftw = self.dds_frequency_to_ftw(freq)
-        yield self.api.setDDS(dds_name, 'ftw', ftw)
-        self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
+        # setter
+        if freq is not None:
+            if (freq > 4e8) or (freq < 0):
+                raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
+            ftw = self.dds_frequency_to_ftw(freq)
+            yield self.api.setDDS(dds_name, 'ftw', ftw)
+            self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
+        # getter
+        ftw, _, _ = yield self.api.getDDS(dds_name)
+        returnValue(np.int32(ftw))
 
-    @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='')
-    def DDSampl(self, c, dds_name, ampl):
+    @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='w')
+    def DDSampl(self, c, dds_name, ampl=None):
         """
         Manually set the amplitude of a DDS.
         Arguments:
-            dds_name    (str)   : the name of the dds
-            ampl        (float) : the fractional amplitude
+            dds_name    (str)   : the name of the DDS.
+            ampl        (float) : the fractional amplitude.
+        Returns:
+                        (word)  : the 14-bit amplitude scaling factor.
         """
-        if dds_name not in self.dds_list:
+        if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
-        if (ampl > 1) or (ampl < 0):
-            raise Exception('Error: amplitude must be within [0, 1].')
-        asf = self.dds_amplitude_to_asf(ampl)
-        yield self.api.setDDS(dds_name, 'asf', asf)
-        self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
+        # setter
+        if ampl is not None:
+            if (ampl > 1) or (ampl < 0):
+                raise Exception('Error: amplitude must be within [0, 1].')
+            asf = self.dds_amplitude_to_asf(ampl)
+            yield self.api.setDDS(dds_name, 'asf', asf)
+            self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
+        # getter
+        _, asf, _ = yield self.api.getDDS(dds_name)
+        returnValue(np.int32(asf))
 
-    @setting(325, "DDS Phase", dds_name='s', phase='v', returns='')
-    def DDSphase(self, c, dds_name, phase):
+    @setting(325, "DDS Phase", dds_name='s', phase='v', returns='w')
+    def DDSphase(self, c, dds_name, phase=None):
         """
         Manually set the phase of a DDS.
         Arguments:
             dds_name    (str)   : the name of the dds
             phase       (float) : the phase in rotations (i.e. x2pi)
+        Returns:
+                        (word)  : the 16-bit phase offset word.
         """
-        if dds_name not in self.dds_list:
+        if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
-        if phase >= 1 or pow < 0:
-            raise Exception('Error: phase must be within [0, 1).')
-        pow = self.dds_turns_to_pow(phase)
-        yield self.api.setDDS(dds_name, 'pow', pow)
-        self.notifyOtherListeners(c, (dds_name, 'pow', pow), self.ddsChanged)
+        if phase is not None:
+            if (phase >= 1) or (pow < 0):
+                raise Exception('Error: phase must be within [0, 1).')
+            pow = self.dds_turns_to_pow(phase)
+            yield self.api.setDDS(dds_name, 'pow', pow)
+            self.notifyOtherListeners(c, (dds_name, 'pow', pow), self.ddsChanged)
+        # getter
+        _, _, pow = yield self.api.getDDS(dds_name)
+        returnValue(np.int32(pow))
 
-    @setting(326, "DDS Attenuation", dds_name='s', att='v', units='s', returns='')
-    def DDSatt(self, c, dds_name, att, units='mu'):
+    @setting(326, "DDS Attenuation", dds_name='s', att='v', returns='')
+    def DDSatt(self, c, dds_name, att=None):
         """
         Manually set a DDS to the given parameters.
         Arguments:
-            dds_name    (str)   : the name of the dds
-            att         (float) : attenuation (in dBm)
-            units       (str)   : the voltage units, either 'mu' or 'v' (default is mu)
+            dds_name    (str)   : the name of the DDS.
+            att         (float) : the channel attenuation (in dBm).
+        Returns:
+                        (word)  : the channel attenuation (in machine units).
         """
-        if dds_name not in self.dds_list:
+        if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
-        att_mu = att
-        if units.lower() == 'dbm':
+        # setter
+        if att is not None:
+            if (att > 0) or (att < 31.5):
+                raise Exception('Error: attenuation must be within [0, 31.5].')
             att_mu = self.dds_att_to_mu(att)
-        elif units.lower() != 'mu':
-            raise Exception('Error: invalid units.')
-        yield self.api.setDDSAtt(dds_name, int(att_mu))
-        self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
+            yield self.api.setDDSatt(dds_name, int(att_mu))
+            self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
+        # getter
+        att_mu = yield self.api.getDDSatt(dds_name)
+        returnValue(att_mu)
 
     @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns=['i', '(ii)'])
     def DDSread(self, c, dds_name, addr, length):
@@ -356,7 +388,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
             (word)  : the register value
         """
-        if dds_name not in self.dds_list:
+        if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
         elif length not in (16, 32, 64):
             raise Exception('Error: invalid read length. Must be one of (16, 32, 64).')
@@ -370,8 +402,30 @@ class ARTIQ_Server(LabradServer):
             reg_val2 = np.int32((reg_val >> 32) & 0xffffffff)
             resp = (reg_val1, reg_val2)
             returnValue(resp)
-
         # todo: allow RAM programming
+
+
+    # URUKUL
+    @setting(341, "Urukul List", returns='*s')
+    def UrukulList(self, c):
+        """
+        Get the list of available Urukul CPLDs.
+        Returns:
+            (*str)  : the list of urukul CPLD names.
+        """
+        urukul_list = yield self.api.urukul_list.keys()
+        returnValue(list(urukul_list))
+
+    @setting(342, "Urukul Initialize", urukul_name='s', returns='')
+    def UrukulInitialize(self, c, urukul_name):
+        """
+        Resets/initializes an Urukul CPLD.
+        Arguments:
+            urukul_name (str)   : the name of the urukul CPLD.
+        """
+        if urukul_name not in self.api.urukul_list:
+            raise Exception('Error: device does not exist.')
+        yield self.api.initializeUrukul(urukul_name)
 
 
     # DAC
