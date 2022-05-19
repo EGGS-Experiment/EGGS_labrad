@@ -272,7 +272,7 @@ class ARTIQ_api(object):
         channel_num = dev.chip_select - 4
         att_reg = self._getUrukulAtt(dev.cpld)
         # get only attenuation of channel
-        return (att_reg >> channel_num) & 0xff
+        return (att_reg >> (8 * channel_num)) & 0xff
 
     def setDDSatt(self, dds_name, att_mu):
         """
@@ -282,7 +282,6 @@ class ARTIQ_api(object):
         # get channel number of dds
         channel_num = dev.chip_select - 4
         att_reg = self._setDDSatt(dev.cpld, channel_num, att_mu)
-        return att_reg
 
     @kernel
     def _setDDSatt(self, cpld, channel_num, att_mu):
@@ -294,12 +293,11 @@ class ARTIQ_api(object):
         delay_mu(10000)
         cpld.att_reg = cpld.bus.read()
         # remove old attenuator value for desired channel
-        cpld.att_reg &= ~(0x00 << channel_num)
+        cpld.att_reg &= ~(0xff << (8 * channel_num))
         # add in new attenuator value
-        cpld.att_reg |= (att_mu << channel_num)
+        cpld.att_reg |= (att_mu << (8 * channel_num))
         # shift in adjusted value and latch
         cpld.bus.write(cpld.att_reg)
-        return cpld.att_reg
 
     def readDDS(self, dds_name, reg, length):
         """

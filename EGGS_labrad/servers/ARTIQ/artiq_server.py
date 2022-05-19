@@ -95,10 +95,14 @@ class ARTIQ_Server(LabradServer):
         self.ps_rid = None
         # conversions
             # dds
-        self.dds_frequency_to_ftw = lambda freq: int(freq * 4.2949673)
-        self.dds_amplitude_to_asf = lambda ampl: int(ampl * 0x3fff)
-        self.dds_turns_to_pow = lambda phase: int(phase * 10430.2192)
+        self.dds_frequency_to_ftw = lambda freq: np.int32(freq * 4.2949673)
+        self.dds_amplitude_to_asf = lambda ampl: np.int32(ampl * 0x3fff)
+        self.dds_turns_to_pow = lambda phase: np.int32(phase * 10430.2192)
         self.dds_att_to_mu = lambda dbm: np.int32(255) - np.int32(round(dbm * 8))
+        self.dds_ftw_to_frequency = lambda freq: np.int32(freq * 4.2949673)
+        self.dds_asf_to_amplitude = lambda ampl: np.int32(ampl * 0x3fff)
+        self.dds_pow_to_turns = lambda phase: np.int32(phase * 10430.2192)
+        self.dds_mu_to_att = lambda dbm: np.int32(255) - np.int32(round(dbm * 8))
             # dac
         from artiq.coredevice.ad53xx import voltage_to_mu
         self.dac_voltage_to_mu = voltage_to_mu
@@ -354,7 +358,7 @@ class ARTIQ_Server(LabradServer):
         _, _, pow = yield self.api.getDDS(dds_name)
         returnValue(np.int32(pow))
 
-    @setting(326, "DDS Attenuation", dds_name='s', att='v', returns='')
+    @setting(326, "DDS Attenuation", dds_name='s', att='v', returns='i')
     def DDSatt(self, c, dds_name, att=None):
         """
         Manually set a DDS to the given parameters.
@@ -362,13 +366,13 @@ class ARTIQ_Server(LabradServer):
             dds_name    (str)   : the name of the DDS.
             att         (float) : the channel attenuation (in dBm).
         Returns:
-                        (word)  : the channel attenuation (in machine units).
+                        (int)   : the channel attenuation (in machine units).
         """
         if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
         # setter
         if att is not None:
-            if (att > 0) or (att < 31.5):
+            if (att < 0) or (att > 31.5):
                 raise Exception('Error: attenuation must be within [0, 31.5].')
             att_mu = self.dds_att_to_mu(att)
             yield self.api.setDDSatt(dds_name, int(att_mu))
