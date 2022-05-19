@@ -64,7 +64,7 @@ class GUIClient(ABC):
         self.guiEnable = True
 
         # get core servers in addition to whichever servers are specified
-        core_servers = {'registry': 'Registry', 'dv': 'Data Vault'}
+        core_servers = {'reg': 'Registry', 'dv': 'Data Vault'}
         self.servers.update(core_servers)
 
         # show placeholder GUI while we initialize
