@@ -87,7 +87,7 @@ class GUIClient(ABC):
     @inlineCallbacks
     def _connectLabrad(self):
         """
-        Creates an asynchronous connection to core labrad servers
+        Creates an asynchronous connection to core LabRAD servers
         and sets up server connection signals.
         """
         self.log.info("Connecting to LabRAD..")
@@ -98,7 +98,7 @@ class GUIClient(ABC):
             if self.LABRADPASSWORD is None:
                 self.LABRADPASSWORD = environ['LABRADPASSWORD']
             from labrad.wrappers import connectAsync
-            self.log.debug("Establishing connection to LabRAD manager @{:s}...".format(self.LABRADHOST))
+            self.log.debug("Establishing connection to LabRAD manager @{ip_address}...", ip_address=self.LABRADHOST)
             self.cxn = yield connectAsync(self.LABRADHOST, name=self.name, password=self.LABRADPASSWORD)
         else:
             self.log.debug("LabRAD connection already provided.")
@@ -109,7 +109,7 @@ class GUIClient(ABC):
                 setattr(self, var_name, self.cxn[server_name])
             except Exception as e:
                 setattr(self, var_name, None)
-                self.log.warning('Server unavailable:', server_name)
+                self.log.warn('Server unavailable: {server_name}', server_name=server_name)
         # server connections
         self.log.debug("Connecting to LabRAD manager signals...")
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
