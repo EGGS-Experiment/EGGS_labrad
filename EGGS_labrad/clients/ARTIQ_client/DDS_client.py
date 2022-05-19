@@ -55,7 +55,7 @@ class DDS_client(GUIClient):
             for ad9910_name, ad9910_widget in ad9910_list.items():
                 # check if this channel has a restricted attenuation range
                 if ad9910_name in min_attenuations:
-                    ad9910_widget.setMinimum(min_attenuations[ad9910_name])
+                    ad9910_widget.att.setMinimum(min_attenuations[ad9910_name])
                 # get values
                 sw_status = yield self.aq.dds_toggle(ad9910_name)
                 att_mu = yield self.aq.dds_attenuation(ad9910_name)
@@ -73,12 +73,9 @@ class DDS_client(GUIClient):
 
     def initGUI(self):
         # connect an urukul group
-        for urukul_name, ad9910_list in self.urukul_list.items():
-            try:
-                button = getattr(self, "{:s}_".format(urukul_name))
-                button.clicked.connect(self.aq.urukul_initialize(urukul_name))
-            except Exception as e:
-                print('urukul init error:', e)
+        for urukul_name, ad9910_list in self.gui.urukul_list.items():
+            button = getattr(self.gui, "{:s}_init".format(urukul_name))
+            button.clicked.connect(lambda _name=urukul_name: self.aq.urukul_initialize(_name))
             # connect DDS channels
             for ad9910_name, ad9910_widget in ad9910_list.items():
                 ad9910_widget.initbutton.clicked.connect(lambda status, _channel_name=ad9910_name: self.aq.dds_initialize(_channel_name))
