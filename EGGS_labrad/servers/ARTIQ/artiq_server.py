@@ -31,16 +31,12 @@ AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53X
                     'GAIN': AD53XX_READ_GAIN, 'OFS0': AD53XX_READ_OFS1, 'OFS1': AD53XX_READ_OFS1,
                     'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2, 'AB3': AD53XX_READ_AB3}
 
-
 TTLSIGNAL_ID = 828176
 DACSIGNAL_ID = 828175
 ADCSIGNAL_ID = 828174
 EXPSIGNAL_ID = 828173
 DDSSIGNAL_ID = 828172
-
-# todo: always reference against self.api.device_list instead of storing it here
-# todo: use incommunication?
-# todo: how to fix  builtins.ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+# todo: how to fix builtins.ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
 
 
 class ARTIQ_Server(LabradServer):
@@ -94,19 +90,20 @@ class ARTIQ_Server(LabradServer):
         # pulse sequencer variables
         self.ps_rid = None
         # conversions
-            # dds
-        self.dds_frequency_to_ftw = lambda freq: np.int32(freq * 4.2949673)
+        # DDS - val to mu
+        self.dds_frequency_to_ftw = lambda freq: np.int32(freq * 4.2949673) # 32 bits / 1GHz
         self.dds_amplitude_to_asf = lambda ampl: np.int32(ampl * 0x3fff)
-        self.dds_turns_to_pow = lambda phase: np.int32(phase * 10430.2192)
-        self.dds_att_to_mu = lambda dbm: np.int32(255) - np.int32(round(dbm * 8))
-        self.dds_ftw_to_frequency = lambda freq: np.int32(freq * 4.2949673)
-        self.dds_asf_to_amplitude = lambda ampl: np.int32(ampl * 0x3fff)
-        self.dds_pow_to_turns = lambda phase: np.int32(phase * 10430.2192)
-        self.dds_mu_to_att = lambda dbm: np.int32(255) - np.int32(round(dbm * 8))
-            # dac
+        self.dds_turns_to_pow = lambda phase: np.int32(phase * 0xffff)
+        self.dds_att_to_mu = lambda dbm: np.int32(0xff) - np.int32(round(dbm * 8))
+        # DDS - mu to val
+        self.dds_ftw_to_frequency = lambda freq: freq / 4.2949673
+        self.dds_asf_to_amplitude = lambda ampl: ampl / 0x3fff
+        self.dds_pow_to_turns = lambda phase: phase / 0xffff
+        self.dds_mu_to_att = lambda mu: (255 - (mu & 0xff)) / 8
+        # DAC
         from artiq.coredevice.ad53xx import voltage_to_mu
         self.dac_voltage_to_mu = voltage_to_mu
-            # sampler
+        # ADC
         from artiq.coredevice.sampler import adc_mu_to_volt
         self.adc_mu_to_volt = adc_mu_to_volt
 
@@ -342,14 +339,14 @@ class ARTIQ_Server(LabradServer):
         Manually set the phase of a DDS.
         Arguments:
             dds_name    (str)   : the name of the dds
-            phase       (float) : the phase in rotations (i.e. x2pi)
+            phase       (float) : the phase in rotations (1 is a full rotation, value must be between [0, 1)).
         Returns:
                         (int)   : the 16-bit phase offset word.
         """
         if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
         if phase is not None:
-            if (phase >= 1) or (pow < 0):
+            if (phase >= 1) or (phase < 0):
                 raise Exception('Error: phase must be within [0, 1).')
             pow = self.dds_turns_to_pow(phase)
             yield self.api.setDDS(dds_name, 'pow', pow)

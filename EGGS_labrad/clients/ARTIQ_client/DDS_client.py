@@ -1,4 +1,3 @@
-import numpy as np
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
@@ -46,26 +45,27 @@ class DDS_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
-        for urukul_name, ad9910_list in self.gui.urukul_list.items():
+        for urukul_name, ad9910_list in self.urukul_list.items():
             for ad9910_name, ad9910_widget in ad9910_list.items():
                 # todo: set range if specified (ch0 att > 1, ch1 att > 10)
                 # get values
-                sw = yield self.aq.dds_toggle(ad9910_name)
+                sw_status = yield self.aq.dds_toggle(ad9910_name)
                 att_mu = yield self.aq.dds_attenuation(ad9910_name)
                 freq_mu = yield self.aq.dds_frequency(ad9910_name)
                 ampl_mu = yield self.aq.dds_amplitude(ad9910_name)
                 # convert from machine units to human units
+                att_dbm = (255 - (att_mu & 0xff)) / 8
                 freq_mhz = freq_mu / 4.2949673
                 ampl_pct = ampl_mu / 0x3fff
                 # set values
-                ad9910_widget.rfswitch.setValue()
-                ad9910_widget.att.setValue(att_mu)
+                ad9910_widget.rfswitch.setChecked(sw_status)
+                ad9910_widget.att.setValue(att_dbm)
                 ad9910_widget.freq.setValue(freq_mhz / 1e6)
                 ad9910_widget.ampl.setValue(ampl_pct * 1e2)
 
     def initGUI(self):
         # connect an urukul group
-        for urukul_name, ad9910_list in self.gui.urukul_list.items():
+        for urukul_name, ad9910_list in self.urukul_list.items():
             # todo: connect urukul initialize button
             # connect DDS channels
             for ad9910_name, ad9910_widget in ad9910_list.items():
@@ -82,10 +82,15 @@ class DDS_client(GUIClient):
 
     def updateDDS(self, c, signal):
         ad9910_name, param, val = signal
-        # todo: check that ad9910_name exists in the client
-        # todo: lock device gui
-        # todo: update values
-        pass
+        ad9910_names = [ad9910_name for ad9910_list in self.urukul_list.values() for ad9910_name in ad9910_list.keys()]
+        if ad9910_name in ad9910_names:
+            # todo: get widget
+            # todo: lock gui
+            # todo: update values
+            # todo: set previous enabled state
+            print('name:', ad9910_name)
+            print('param:', param)
+            print('val:', val)
 
 
 if __name__ == "__main__":
