@@ -111,8 +111,7 @@ class DDS_gui(QFrame):
         # add initialize button
         init_cpld = QPushButton('Initialize Board')
         urukul_group_layout.addWidget(init_cpld,        0, 0, 1, 1)
-        setattr(self, 'init_{:s}'.format(urukul_name), init_cpld)
-        # todo: set attr more properly
+        setattr(self, '{:s}_init'.format(urukul_name), init_cpld)
         # layout individual ad9910 channels
         for channel_num, ad9910_name in enumerate(ad9910_list.keys()):
             # initialize GUIs for each channel

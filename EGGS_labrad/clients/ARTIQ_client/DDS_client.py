@@ -45,9 +45,17 @@ class DDS_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
+        # get minimum attenuations from registry
+        min_attenuations = {}
+        yield self.reg.cd(['', 'Clients', 'ARTIQ', 'Urukul'])
+        _, restricted_dds_channels = yield self.reg.dir()
+        for dds_channel in restricted_dds_channels:
+            min_attenuations[dds_channel] = yield self.reg.get(dds_channel)
         for urukul_name, ad9910_list in self.urukul_list.items():
             for ad9910_name, ad9910_widget in ad9910_list.items():
-                # todo: set range if specified (ch0 att > 1, ch1 att > 10)
+                # check if this channel has a restricted attenuation range
+                if ad9910_name in min_attenuations:
+                    ad9910_widget.setMinimum(min_attenuations[ad9910_name])
                 # get values
                 sw_status = yield self.aq.dds_toggle(ad9910_name)
                 att_mu = yield self.aq.dds_attenuation(ad9910_name)
@@ -66,7 +74,11 @@ class DDS_client(GUIClient):
     def initGUI(self):
         # connect an urukul group
         for urukul_name, ad9910_list in self.urukul_list.items():
-            # todo: connect urukul initialize button
+            try:
+                button = getattr(self, "{:s}_".format(urukul_name))
+                button.clicked.connect(self.aq.urukul_initialize(urukul_name))
+            except Exception as e:
+                print('urukul init error:', e)
             # connect DDS channels
             for ad9910_name, ad9910_widget in ad9910_list.items():
                 ad9910_widget.initbutton.clicked.connect(lambda status, _channel_name=ad9910_name: self.aq.dds_initialize(_channel_name))
@@ -76,7 +88,7 @@ class DDS_client(GUIClient):
                                                         self.aq.dds_amplitude(_channel_name, ampl / 100))
                 ad9910_widget.att.valueChanged.connect(lambda att, _channel_name=ad9910_name:
                                                        self.aq.dds_attenuation(_channel_name, att))
-                ad9910_widget.rfswitch.toggled.connect(lambda status, _channel_name=ad9910_name:
+                ad9910_widget.rfswitch.clicked.connect(lambda status, _channel_name=ad9910_name:
                                                        self.aq.dds_toggle(_channel_name, status))
                 ad9910_widget.lock(False)
 
