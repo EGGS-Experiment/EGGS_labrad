@@ -1,4 +1,4 @@
-# import numpy as np
+import numpy as np
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
@@ -189,7 +189,6 @@ class ARTIQ_api(object):
     def getDDSsw(self, dds_name):
         """
         Get the RF switch status of a DDS channel.
-        # todo: test
         """
         dev = self.dds_list[dds_name]
         # get channel number of dds
@@ -222,53 +221,51 @@ class ARTIQ_api(object):
         self.core.reset()
         cpld.cfg_switches(state)
 
-    def setDDS(self, dds_name, param, val):
-        """
-        Manually set the frequency, amplitude, or phase of a DDS channel.
-        # todo: test return
-        """
-        dev = self.dds_list[dds_name]
-        ftw, asf, pow = (0, 0, 0)
-        # read in current parameters
-        profiledata = self._readDDS64(dev, 0x0e)
-        if param == 'ftw':
-            ftw = val
-            pow = ((profiledata >> 32) & 0xffff)
-            asf = ((profiledata >> 48) & 0xffff)
-        elif param == 'asf':
-            asf = val
-            ftw = profiledata & 0xffff
-            pow = ((profiledata >> 32) & 0xffff)
-        elif param == 'pow':
-            pow = val
-            ftw = profiledata & 0xffff
-            asf = ((profiledata >> 48) & 0xffff)
-        self._setDDS(dev, ftw, asf, pow)
-
-    @kernel
-    def _setDDS(self, dev, ftw, asf, pow):
-        self.core.reset()
-        dev.set_mu(ftw, pow, asf)
-
     def getDDS(self, dds_name):
         """
         Get the frequency, amplitude, and phase values
         (in machine units) of a DDS channel.
-        # todo: test
         """
         dev = self.dds_list[dds_name]
         # read in waveform values
         profiledata = self._readDDS64(dev, 0x0E)
         # separate register values into ftw, asf, and pow
-        ftw = profiledata & 0xFFFF
+        ftw = profiledata & 0xFFFFFFFF
         pow = ((profiledata >> 32) & 0xFFFF)
         asf = ((profiledata >> 48) & 0x3FFF)
-        return ftw, pow, asf
+        print('asf:', asf)
+        return np.int32(ftw), np.int32(asf), np.int32(pow)
+
+    def setDDS(self, dds_name, param, val):
+        """
+        Manually set the frequency, amplitude, or phase of a DDS channel.
+        """
+        dev = self.dds_list[dds_name]
+        ftw, asf, pow = (0, 0, 0)
+        # read in current parameters
+        profiledata = self._readDDS64(dev, 0x0E)
+        if param == 'ftw':
+            ftw = val
+            pow = ((profiledata >> 32) & 0xFFFF)
+            asf = ((profiledata >> 48) & 0xFFFF)
+        elif param == 'asf':
+            asf = val
+            ftw = profiledata & 0xFFFF
+            pow = ((profiledata >> 32) & 0xFFFF)
+        elif param == 'pow':
+            pow = val
+            ftw = profiledata & 0xFFFF
+            asf = ((profiledata >> 48) & 0xFFFF)
+        self._setDDS(dev, np.int32(ftw), np.int32(asf), np.int32(pow))
+
+    @kernel
+    def _setDDS(self, dev, ftw, asf, pow):
+        self.core.reset()
+        dev.set_mu(ftw, pow_=pow, asf=asf)
 
     def getDDSatt(self, dds_name):
         """
         Set the DDS attenuation.
-        # todo: test
         """
         dev = self.dds_list[dds_name]
         # get channel number of dds
@@ -280,7 +277,6 @@ class ARTIQ_api(object):
     def setDDSatt(self, dds_name, att_mu):
         """
         Set the DDS attenuation.
-        # todo: test
         """
         dev = self.dds_list[dds_name]
         # get channel number of dds
@@ -346,14 +342,15 @@ class ARTIQ_api(object):
         self.core.reset()
         dev.init()
 
+    @kernel
     def _getUrukulStatus(self, cpld):
         """
         Get the status register of an Urukul board.
-        # todo: test
         """
         self.core.reset()
         return cpld.sta_read()
 
+    @kernel
     def _getUrukulAtt(self, cpld):
         """
         Get the attenuation register of an Urukul board.

@@ -284,9 +284,9 @@ class ARTIQ_Server(LabradServer):
             self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
         # getter
         state = yield self.api.getDDSsw(dds_name)
-        returnValue(state)
+        returnValue(bool(state))
 
-    @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='w')
+    @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='i')
     def DDSfreq(self, c, dds_name, freq=None):
         """
         Manually set the frequency of a DDS.
@@ -294,7 +294,7 @@ class ARTIQ_Server(LabradServer):
             dds_name    (str)   : the name of the DDS.
             freq        (float) : the frequency (in Hz).
         Returns:
-                        (word)  : the 32-bit frequency tuning word.
+                        (int)   : the 32-bit frequency tuning word.
         """
         if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
@@ -309,7 +309,7 @@ class ARTIQ_Server(LabradServer):
         ftw, _, _ = yield self.api.getDDS(dds_name)
         returnValue(np.int32(ftw))
 
-    @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='w')
+    @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='i')
     def DDSampl(self, c, dds_name, ampl=None):
         """
         Manually set the amplitude of a DDS.
@@ -317,7 +317,7 @@ class ARTIQ_Server(LabradServer):
             dds_name    (str)   : the name of the DDS.
             ampl        (float) : the fractional amplitude.
         Returns:
-                        (word)  : the 14-bit amplitude scaling factor.
+                        (int)   : the 14-bit amplitude scaling factor.
         """
         if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')
@@ -332,7 +332,7 @@ class ARTIQ_Server(LabradServer):
         _, asf, _ = yield self.api.getDDS(dds_name)
         returnValue(np.int32(asf))
 
-    @setting(325, "DDS Phase", dds_name='s', phase='v', returns='w')
+    @setting(325, "DDS Phase", dds_name='s', phase='v', returns='i')
     def DDSphase(self, c, dds_name, phase=None):
         """
         Manually set the phase of a DDS.
@@ -340,7 +340,7 @@ class ARTIQ_Server(LabradServer):
             dds_name    (str)   : the name of the dds
             phase       (float) : the phase in rotations (i.e. x2pi)
         Returns:
-                        (word)  : the 16-bit phase offset word.
+                        (int)   : the 16-bit phase offset word.
         """
         if dds_name not in self.api.dds_list:
             raise Exception('Error: device does not exist.')

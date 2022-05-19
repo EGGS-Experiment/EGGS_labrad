@@ -48,6 +48,7 @@ class DDS_client(GUIClient):
     def initData(self):
         for urukul_name, ad9910_list in self.gui.urukul_list.items():
             for ad9910_name, ad9910_widget in ad9910_list.items():
+                # todo: set range if specified (ch0 att > 1, ch1 att > 10)
                 # get values
                 sw = yield self.aq.dds_toggle(ad9910_name)
                 att_mu = yield self.aq.dds_attenuation(ad9910_name)
