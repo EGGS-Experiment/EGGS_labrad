@@ -282,9 +282,9 @@ class ARTIQ_Server(LabradServer):
             if (type(state) == int) and (state not in (0, 1)):
                 raise Exception('Error: invalid input. Value must be a boolean, 0, or 1.')
             yield self.api.setDDSsw(dds_name, state)
-            self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
         # getter
         state = yield self.api.getDDSsw(dds_name)
+        self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
         returnValue(bool(state))
 
     @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='i')
@@ -305,9 +305,9 @@ class ARTIQ_Server(LabradServer):
                 raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
             ftw = self.dds_frequency_to_ftw(freq)
             yield self.api.setDDS(dds_name, 'ftw', ftw)
-            self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
         # getter
         ftw, _, _ = yield self.api.getDDS(dds_name)
+        self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
         returnValue(np.int32(ftw))
 
     @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='i')
@@ -328,9 +328,9 @@ class ARTIQ_Server(LabradServer):
                 raise Exception('Error: amplitude must be within [0, 1].')
             asf = self.dds_amplitude_to_asf(ampl)
             yield self.api.setDDS(dds_name, 'asf', asf)
-            self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
         # getter
         _, asf, _ = yield self.api.getDDS(dds_name)
+        self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
         returnValue(np.int32(asf))
 
     @setting(325, "DDS Phase", dds_name='s', phase='v', returns='i')
@@ -350,9 +350,9 @@ class ARTIQ_Server(LabradServer):
                 raise Exception('Error: phase must be within [0, 1).')
             pow = self.dds_turns_to_pow(phase)
             yield self.api.setDDS(dds_name, 'pow', pow)
-            self.notifyOtherListeners(c, (dds_name, 'pow', pow), self.ddsChanged)
         # getter
         _, _, pow = yield self.api.getDDS(dds_name)
+        self.notifyOtherListeners(c, (dds_name, 'pow', pow), self.ddsChanged)
         returnValue(np.int32(pow))
 
     @setting(326, "DDS Attenuation", dds_name='s', att='v', returns='i')
@@ -373,9 +373,9 @@ class ARTIQ_Server(LabradServer):
                 raise Exception('Error: attenuation must be within [0, 31.5].')
             att_mu = self.dds_att_to_mu(att)
             yield self.api.setDDSatt(dds_name, int(att_mu))
-            self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
         # getter
         att_mu = yield self.api.getDDSatt(dds_name)
+        self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
         returnValue(att_mu)
 
     @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns=['i', '(ii)'])
@@ -403,7 +403,6 @@ class ARTIQ_Server(LabradServer):
             reg_val2 = np.int32((reg_val >> 32) & 0xffffffff)
             resp = (reg_val1, reg_val2)
             returnValue(resp)
-        # todo: allow RAM programming
 
 
     # URUKUL
@@ -488,7 +487,7 @@ class ARTIQ_Server(LabradServer):
         else:
             raise Exception('Error: invalid units.')
         # check that gain is valid
-        if gain < 0 or gain > 0xffff:
+        if (gain < 0) or (gain > 0xffff):
             raise Exception('Error: gain outside bounds of [0,1]')
         yield self.api.setZotinoGain(dac_num, gain_mu)
         self.notifyOtherListeners(c, (dac_num, 'gain', gain_mu), self.dacChanged)
@@ -607,13 +606,11 @@ class ARTIQ_Server(LabradServer):
         self.adcUpdated(sampleArr)
         returnValue(sampleArr)
 
-    # todo: phaser
-
 
     # CONTEXT
     def notifyOtherListeners(self, context, message, f):
         """
-        Notifies all listeners except the one in the given context, executing function f
+        Notifies all listeners except the one in the given context, executing function f.
         """
         notified = self.listeners.copy()
         notified.remove(context.ID)

@@ -10,8 +10,7 @@ class ARTIQ_api(object):
     An API for the ARTIQ box.
     Directly accesses the hardware on the box without having to use artiq_master.
     # todo: set version so we know what we're compatible with
-    # todo: maybe return val after, a la SCPI?
-    # todo: experiment with host, kernel invariants, host-only, rpc, fast-math
+    # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
     """
 
     def __init__(self, ddb_filepath):
@@ -19,11 +18,10 @@ class ARTIQ_api(object):
         self.device_manager = DeviceManager(devices)
         self.device_db = devices.get_device_db()
         self._getDevices()
-        #self._initializeDevices()
 
     def stopAPI(self):
         """
-        Closes the gotten devices.
+        Closes any opened devices.
         """
         self.device_manager.close_devices()
 
@@ -119,7 +117,7 @@ class ARTIQ_api(object):
         """
         Erase the given pulse sequence from DMA.
         """
-        self.core.reset() # todo: is this necessary
+        self.core.reset()
         self.core_dma.erase(sequencename)
 
 
@@ -490,8 +488,3 @@ class ARTIQ_api(object):
         """
         self.core.reset()
         return self.sampler.sample_mu(sampleArr)
-
-#todo: phaser
-#todo: try and speed up some functions by going more machine level
-#todo: try using break_realtime() instead of reset
-
