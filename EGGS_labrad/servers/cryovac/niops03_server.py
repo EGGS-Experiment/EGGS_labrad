@@ -306,10 +306,12 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                     try:
                         # send shutoff signals; don't use ser.acquire() since
                         # shutoff needs to happen NOW
+                        yield self.ser.acquire() #tmp remove
                         yield self.ser.write('B' + TERMINATOR)
                         yield self.ser.read_line('\r')
                         yield self.ser.write('BN' + TERMINATOR)
                         yield self.ser.read_line('\r')
+                        self.ser.release()
                         # update listeners on power status
                         self.ip_power_update(False)
                         self.np_power_update(False)
@@ -324,11 +326,13 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                     print('\tSending activation signal to getter.')
                     try:
                         # set NP activation mode
+                        yield self.ser.acquire()
                         yield self.ser.write('M1' + TERMINATOR)
                         yield self.ser.read_line('\r')
                         # switch on NP
                         yield self.ser.write('GN' + TERMINATOR)
                         yield self.ser.read_line('\r')
+                        self.ser.release()
                         # update listeners on power status
                         self.np_power_update(True)
                         # disable interlock 2 to minimize overhead once activated
