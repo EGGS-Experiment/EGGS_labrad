@@ -25,20 +25,21 @@ _ELL9_EOL = '\r'
 _ELL9_ENCODING = 'ASCII'
 
 _ELL9_ERRORS_msg = {
-    b'\x00': "OK, no error",
-    b'\x01': "Communication time out",
-    b'\x02': "Mechanical time out",
-    b'\x03': "Command error or not supported",
-    b'\x04': "Value out of range",
-    b'\x05': "Module isolated",
-    b'\x06': "Module out of isolation",
-    b'\x07': "Initializing error",
-    b'\x08': "Thermal error",
-    b'\x10': "Sensor error",
-    b'\x11': "Motor error",
-    b'\x12': "Out of range",
-    b'\x13': "Over current error"
+    '00': "OK, no error",
+    '01': "Communication time out",
+    '02': "Mechanical time out",
+    '03': "Command error or not supported",
+    '04': "Value out of range",
+    '05': "Module isolated",
+    '06': "Module out of isolation",
+    '07': "Initializing error",
+    '08': "Thermal error",
+    '0A': "Sensor error",
+    '0B': "Motor error",
+    '0C': "Out of range",
+    '0D': "Over current error"
 }
+# todo: move_absolute, move_relative, move_jog, and position_home don't work
 
 
 class SliderServer(SerialDeviceServer):
@@ -49,7 +50,7 @@ class SliderServer(SerialDeviceServer):
     name = 'Slider Server'
     regKey = 'SliderServer'
     serNode = 'mongkok'
-    port = None
+    port = 'COM6'
 
     timeout = WithUnit(5.0, 's')
     baudrate = 9600
@@ -71,8 +72,9 @@ class SliderServer(SerialDeviceServer):
         # get status
         yield self.ser.acquire()
         yield self.ser.write('0gs\r')
-        resp = yield self.ser.read_line()
+        resp = yield self.ser.read_line('\n')
         self.ser.release()
+        resp = resp.strip()
         # parse status for error message
         err_msg = _ELL9_ERRORS_msg[resp[3:]]
         returnValue(err_msg)
@@ -95,7 +97,7 @@ class SliderServer(SerialDeviceServer):
         # prepare device messages
         cmd_msg = "f{:d}".format(motor_num)
         data_msg = "8{:03x}".format(period_mu)
-        yield self._setter(cmd_msg, data_msg=data_msg)
+        yield self._setter(c, cmd_msg, data_msg=data_msg)
 
     @setting(112, 'Motor Frequency Backward', motor_num='i', freq='v', returns='')
     def motor_frequency_backward(self, c, motor_num, freq):
@@ -113,7 +115,7 @@ class SliderServer(SerialDeviceServer):
         # prepare device messages
         cmd_msg = "b{:d}".format(motor_num)
         data_msg = "8{:03x}".format(period_mu)
-        yield self._setter(cmd_msg, data_msg=data_msg)
+        yield self._setter(c, cmd_msg, data_msg=data_msg)
 
     @setting(121, 'Motor Frequency Search', motor_num='i', returns='')
     def motor_frequency_search(self, c, motor_num):
@@ -128,7 +130,7 @@ class SliderServer(SerialDeviceServer):
             raise Exception("Error: invalid motor number. Must be one of (1, 2).")
         # prepare device messages
         cmd_msg = "s{:d}".format(motor_num)
-        yield self._setter(cmd_msg, 'status')
+        yield self._setter(c, cmd_msg, 'status')
 
 
     # POSITION
@@ -141,7 +143,7 @@ class SliderServer(SerialDeviceServer):
         cmd_msg = "ho"
         # note: data_msg is ignored for this type of device
         data_msg = "1"
-        yield self._setter(cmd_msg, data_msg=data_msg)
+        yield self._setter(c, cmd_msg, data_msg=data_msg)
 
     @setting(212, 'Move Absolute', position='i', returns='')
     def move_absolute(self, c, position):
@@ -150,12 +152,12 @@ class SliderServer(SerialDeviceServer):
         Arguments:
             position    (int)   : the position to move to. Must be in [1, 4].
         """
-        if position not in range(1, 4):
+        if position not in range(1, 5):
             raise Exception("Error: invalid position. Must be in [1, 4].")
         # prepare device messages
         cmd_msg = "ma"
         data_msg = "{:08x}".format(position)
-        yield self._setter(cmd_msg, data_msg=data_msg)
+        yield self._setter(c, cmd_msg, data_msg=data_msg)
 
     @setting(213, 'Move Relative', position='i', returns='')
     def move_relative(self, c, position):
@@ -177,9 +179,9 @@ class SliderServer(SerialDeviceServer):
             dir (int)   : the direction to move. 0 = backwards, 1 = forwards.
         """
         if dir == 0:
-            yield self._setter("bw")
+            yield self._setter(c, "bw")
         elif dir == 1:
-            yield self._setter("fw")
+            yield self._setter(c, "fw")
         else:
             raise Exception("Error: invalid position. Must be in [1, 4].")
 
@@ -196,15 +198,15 @@ class SliderServer(SerialDeviceServer):
         """
         # setter
         if step_size is not None:
-            if step_size not in range(1, 3):
+            if step_size not in range(1, 4):
                 raise Exception("Error: invalid step size. Must be in [1, 3].")
             # prepare device messages
             cmd_msg = "sj"
             data_msg = "{:08x}".format(step_size)
-            yield self._setter(cmd_msg, data_msg=data_msg)
+            yield self._setter(c, cmd_msg, data_msg=data_msg)
         # getter
         cmd_msg = "gj"
-        resp = yield self._setter(cmd_msg)
+        resp = yield self._setter(c, cmd_msg)
         # convert message to int
         returnValue(resp)
 
@@ -227,10 +229,10 @@ class SliderServer(SerialDeviceServer):
             # prepare device messages
             cmd_msg = "sv"
             data_msg = "{:02x}".format(velocity)
-            yield self._setter(cmd_msg, data_msg=data_msg)
+            yield self._setter(c, cmd_msg, data_msg=data_msg)
         # getter
         cmd_msg = "gv"
-        resp = yield self._setter(cmd_msg)
+        resp = yield self._setter(c, cmd_msg)
         # convert message to integer
         resp = int(resp, 16)
         returnValue(resp)
@@ -246,7 +248,7 @@ class SliderServer(SerialDeviceServer):
         """
         # getter
         cmd_msg = "gp"
-        resp = yield self._setter(cmd_msg)
+        resp = yield self._setter(c, cmd_msg)
         returnValue(resp)
 
     @setting(312, 'Position Home', position='i', returns='i')
@@ -263,14 +265,14 @@ class SliderServer(SerialDeviceServer):
         """
         # setter
         if position is not None:
-            if position not in range(1, 4):
+            if position not in range(1, 5):
                 raise Exception("Error: invalid position. Must be in [1, 4].")
             # prepare device messages
             cmd_msg = "so"
             data_msg = "{:02x}".format(position)
-            yield self._setter(cmd_msg, data_msg=data_msg)
+            yield self._setter(c, cmd_msg, data_msg=data_msg)
         # getter
-        resp = yield self._setter("go")
+        resp = yield self._setter(c, "go")
         returnValue(resp)
 
 
@@ -292,22 +294,24 @@ class SliderServer(SerialDeviceServer):
         # write to device and read response
         yield self.ser.acquire()
         yield self.ser.write(msg)
-        resp = yield self.ser.read_line(_ELL9_EOL)
+        resp = yield self.ser.read_line('\n')
         self.ser.release()
-        # decode and strip response of EOL
-        resp_header, resp_msg = resp[1:3], resp[3:]
-        # ensure resp_header is a stripped string
-        if type(resp_header) == bytes:
-            resp_header = resp_header.decode()
-        resp_header = resp_header.strip()
+        resp = resp.strip()
+        # print('resp: {:s}'.format(resp))
         # parse header to handle device response correctly
+        resp_header, resp_msg = resp[1:3], resp[3:]
         if resp_header == 'GS':
             err_msg = _ELL9_ERRORS_msg[resp_msg]
             self.status_update(err_msg)
+            # todo: return error
             returnValue(None)
         elif resp_header == 'PO':
+            resp_msg = resp_msg.encode()
             # convert response to number
-            position = int.from_bytes(resp_msg, 'big', signed=True)
+            if resp_msg == b'00000000':
+                position = 0
+            else:
+                position = int.from_bytes(resp_msg, 'big', signed=True)
             self.position_update(position)
             returnValue(position)
         else:
