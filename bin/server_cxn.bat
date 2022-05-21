@@ -14,10 +14,12 @@ wm = cxn_wm.multiplexerserver
 
 # list of servers we want and their shorthand names
 server_dict = {
+        'mgr': 'manager', 'reg': 'registry',
         'ss': 'script_scanner', 'pv': 'parameter_vault', 'dv': 'data_vault',
         'ni': 'niops03_server', 'tt': 'twistorr74_server', 'ls': 'lakeshore336_server',
         'rga': 'rga_server', 'rf': 'rf_server', 'sls': 'sls_server', 'aq': 'artiq_server',
         'pmt': 'pmt_server', 'dc': 'dc_server', 'fma': 'fma1700a_server', 'to': 'toptica_server',
+        'sd': 'slider_server',
         'os': 'oscilloscope_server', 'fg': 'function_generator_server', 'sa': 'spectrum_analyzer_server',
         'gpib': 'gpib_device_manager', 'mk_gpib': 'mongkok_gpib_bus', 'hf_gpib': 'hengfachuen_gpib_bus',
         'mk': 'node_mongkok', 'cw': 'node_causewaybay', 'hf': 'node_hengfachuen'
