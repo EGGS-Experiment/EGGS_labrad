@@ -26,8 +26,6 @@ from RGA_errors import _SRS_RGA_STATUS_QUERIES
 
 _SRS_EOL = '\r'
 _SRS_MAX_PRESSURE = 1e-5
-# todo: document all functions
-# todo: test degas function
 
 
 class RGA_Server(SerialDeviceServer, PollingServer):
@@ -126,8 +124,9 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         Degas the filament.
         Args:
-            time:
-        Returns:
+            time    (int)   : the amount of time (in mintues) to degas the filament.
+                                Must be in [0, 20]. Default is 3 minutes.
+        # todo: test degas function
         """
         if time is not None:
             if type(time) is int:
@@ -137,14 +136,18 @@ class RGA_Server(SerialDeviceServer, PollingServer):
                 if time != '*':
                     raise Exception('Error: invalid input.')
             yield self._setter('DG', time, c)
-        # todo: serial write
 
 
     # IONIZER
     @setting(211, 'Ionizer Electron Energy', energy=['', 'i', 's'], returns='i')
     def electronEnergy(self, c, energy=None):
         """
-        Set the electron energy (in eV).
+        Get/set the electron impact ionization energy.
+        Arguments:
+            energy  (int)   : the electron impact ionization energy (in eV).
+                                Must be in [25, 105]. Default is 70.
+        Returns:
+                    (int)   : the electron impact ionization energy (in eV).
         """
         if energy is not None:
             if type(energy) is int:
@@ -160,7 +163,15 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @setting(212, 'Ionizer Ion Energy', energy=['', 'i', 's'], returns='i')
     def ionEnergy(self, c, energy=None):
         """
-        Set the ion energy (in eV).
+        Get/set the ion energy. This is achieved by adjusting the anode grid voltage.
+        Ion energy can be one of two possible levels:
+            low (represented by 0) = 8 eV
+            high (represented by 1) = 12 eV
+        Arguments:
+            energy  (int)   : the ion energy level.
+                                Must be one of (0, 1). Default is 1.
+        Returns:
+                    (int)   : the ion energy level.
         """
         if energy is not None:
             if type(energy) is int:
@@ -176,7 +187,14 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @setting(221, 'Ionizer Filament', current=['', 'v', 's'], returns='v')
     def filament(self, c, current=None):
         """
-        Set the filament current (in mA). Also known as electron emission current.
+        Get/set the ionizer filament current. Also known as electron emission current.
+            The RGA has a firmware protection mode where the filament will shut off
+            if the pressure exceeds a certain value.
+            Note: activating the filament may heat the chamber and degas, increasing pressure.
+        Arguments:
+            current (float) : the ionizer filament current (in mA).
+                                Must be in [0, 3.5]. Default is 1.
+        Returns:
         """
         if current is not None:
             if type(current) is float:
@@ -192,7 +210,12 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @setting(222, 'Ionizer Focus Voltage', voltage=['', 'i', 's'], returns='i')
     def focusVoltage(self, c, voltage=None):
         """
-        Set the focus plate voltage (in V).
+        Get/set the focus plate voltage. This is a biasing voltage which
+            draws ions into the quadrupole mass filter.
+        Arguments:
+            voltage (int)   : the focus plate voltage (in V).
+        Returns:
+                    (int)   : the focus plate voltage (in V).
         """
         if voltage is not None:
             if type(voltage) is int:
@@ -207,7 +230,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
 
 
     # DETECTOR
-    @setting(311, 'Detector Calibrate', returns='s')
+    @setting(311, 'Detector Calibrate', returns='')
     def calibrate(self, c):
         """
         Calibrate the detector.
@@ -217,7 +240,14 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @setting(312, 'Detector Noise Floor', level=['', 'i', 's'], returns='i')
     def noiseFloor(self, c, level=None):
         """
-        Set the detector noise floor.
+        Get/set the detector noise floor. This sets the rate and detection limits
+            for ion current measurements. A lower value reduces bandwidth and increases
+            accuracy, but also increases overhead and scan times.
+        Arguments:
+            level   (int)   :   the noise floor level.
+                                    Must be in [0, 7]. Default is 4.
+        Returns:
+                    (int)   :   the noise floor level.
         """
         if level is not None:
             if type(level) is int:
@@ -230,18 +260,24 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         resp = yield self._getter('NF', c)
         returnValue(int(resp))
 
-    @setting(313, 'Detector CDEM', returns='i')
+    @setting(313, 'Detector CDEM', returns='b')
     def cdem(self, c):
         """
-        Check whether the electron multiplier is available.
+        Check whether the electron multiplier (CDEM) is available.
+        Returns:
+                    (bool)  :   whether a CDEM is available.
         """
         resp = yield self._getter('MO', c)
-        returnValue(int(resp))
+        returnValue(bool(int(resp)))
 
     @setting(321, 'Detector CDEM Voltage', voltage=['', 'i', 's'], returns='i')
     def cdemVoltage(self, c, voltage=None):
         """
-        Set the electron multiplier voltage bias.
+        Get/set the electron multiplier (CDEM) voltage bias.
+        Arguments:
+            voltage (int)   :   the
+        Returns:
+                    (int)   :
         """
         if voltage is not None:
             if type(voltage) is int:
@@ -259,7 +295,12 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @setting(411, 'Scan Mass Initial', mass=['', 'i', 's'], returns='i')
     def massInitial(self, c, mass=None):
         """
-        Set the initial mass for scanning.
+        Get/set the initial mass for scanning.
+        Arguments:
+            mass    (int)   :   the initial mass (in amu).
+                                    Must be in [1, M_MAX]. Default is 1.
+        Returns:
+                    (int)   :   the initial mass (in amu).
         """
         if mass is not None:
             if type(mass) is int:
@@ -277,7 +318,12 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @setting(412, 'Scan Mass Final', mass=['', 'i', 's'], returns='i')
     def massFinal(self, c, mass=None):
         """
-        Set the final mass for scanning.
+        Get/set the final mass for scanning.
+        Arguments:
+            mass    (int)   :   the final mass (in amu).
+                                    Must be in [1, M_MAX]. Default is M_MAX.
+        Returns:
+                    (int)   :   the final mass (in amu).
         """
         if mass is not None:
             if type(mass) is int:
@@ -295,7 +341,12 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @setting(413, 'Scan Mass Steps', steps=['', 'i', 's'], returns='i')
     def massSteps(self, c, steps=None):
         """
-        Set the number of steps per amu during scanning.
+        Get/set the number of steps per amu during scanning.
+        Arguments:
+            steps   (int)   :   the number of steps per amu.
+                                    Must be in range [10, 25]. Default is 10.
+        Returns:
+                    (int)   :   the number of steps per amu.
         """
         if steps is not None:
             if type(steps) is int:
@@ -314,6 +365,11 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     def scanPoints(self, c, mode):
         """
         Get the number of points per scan in either analog or histogram mode.
+        Arguments:
+            mode    (str)   : the scan mode to get points for.
+                                Must be one of ('a', 'analog') or ('h', 'histogram').
+        Returns:
+                    (int)   :   the number of points per scan.
         """
         resp = None
         if mode.lower() in ('a', 'analog'):
@@ -458,8 +514,8 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     def interlock(self, c, status=None, press=None):
         """
         Activates an interlock, switching off the ion pump
-        and getter if pressure exceeds a given value.
-        Pressure is taken from the Twistorr74 turbo pump server.
+            and getter if pressure exceeds a given value.
+            Pressure is taken from the Twistorr74 turbo pump server.
         Arguments:
             status  (bool)  : the interlock status.
             press   (float) : the maximum pressure (in mbar).
@@ -486,7 +542,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @inlineCallbacks
     def _setter(self, chString, param, c, resp=True):
         """
-        Change device parameters.
+        Convenience function to set device parameters.
         """
         msg = chString + str(param) + _SRS_EOL
         status = ''
@@ -505,7 +561,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @inlineCallbacks
     def _getter(self, chString, c):
         """
-        Get data from the device.
+        Convenience function to get data from the device.
         """
         # query device for parameter value
         msg = chString + '?' + _SRS_EOL
@@ -521,7 +577,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @inlineCallbacks
     def _poll(self):
         """
-        Polls the Twistorr for pressure readout and checks the interlock.
+        Polls the Twistorr74 server for pressure readout and checks the interlock.
         """
         # check interlock
         if self.interlock_active:

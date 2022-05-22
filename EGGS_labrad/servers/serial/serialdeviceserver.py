@@ -114,7 +114,6 @@
 # connection of required serial bus server.
 #===============================================================================
 
-# imports
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
 from labrad.types import Error
@@ -125,18 +124,23 @@ __all__ = ["SerialDeviceError", "SerialConnectionError", "SerialDeviceServer"]
 
 # ERROR CLASSES
 class SerialDeviceError(Exception):
+
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
 
 class SerialConnectionError(Exception):
+
     errorDict = {0: 'Could not find serial server in list',
-                 1: 'Serial server not connected',
+                 1: 'Could not connect to a serial device',
                  2: 'Attempting to use serial connection when not connected'}
+
     def __init__(self, code):
         self.code = code
+
     def __str__(self):
         return self.errorDict[self.code]
 
