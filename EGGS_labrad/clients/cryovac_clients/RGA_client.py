@@ -60,11 +60,11 @@ class RGA_client(GUIClient):
 
     def initGUI(self):
         # general
-        # todo: degas, calibrate electrometer, mass lock
+        # todo: calibrate electrometer, mass lock
         self.gui.initialize.clicked.connect(lambda: self.tempDisable('IN', self.rga.initialize))
         self.gui.calibrate_detector.clicked.connect(lambda: self.tempDisable('CA', self.rga.detector_calibrate))
         self.gui.general_tp.clicked.connect(lambda:  self.tempDisable('TP', self.rga.tpm_start))
-        # self.gui.degas.clicked.connect(lambda: self.tempDisable('', self.rga.))
+        self.gui.degas.clicked.connect(lambda: self.rga.degas('*'))
         # ionizer
         self.gui.ionizer_ee.valueChanged.connect(lambda value: self.tempDisable('EE', self.rga.ionizer_electron_energy, int(value)))
         self.gui.ionizer_ie.currentIndexChanged.connect(lambda index: self.tempDisable('IE', self.rga.ionizer_ion_energy, index))
@@ -90,7 +90,6 @@ class RGA_client(GUIClient):
         self.gui.scan_lockswitch.setChecked(False)
         self.gui.scan_lockswitch.toggled.connect(lambda status: self.scan_lock(status))
         self.scan_lock(False)
-        # todo: qgroupbox
 
 
     # SIGNALS
@@ -99,7 +98,7 @@ class RGA_client(GUIClient):
         try:
             self.gui_elements[element].setEnabled(False)
         except Exception as e:
-            print(e)
+            self.log.error("Error when attempting to disable GUI element: {error}", error=e)
         yield func(*args)
 
     def updateValues(self, c, data):
@@ -115,7 +114,7 @@ class RGA_client(GUIClient):
                 elif class_type == 'QComboBox':
                     self.gui_elements[param].setCurrentIndex(int(value))
             except Exception as e:
-                # print(e)
+                self.log.error("Error updating values from signal: {error}", error=e)
                 self.gui.buffer_readout.appendPlainText('{}: {}'.format(param, value))
             finally:
                 try:
