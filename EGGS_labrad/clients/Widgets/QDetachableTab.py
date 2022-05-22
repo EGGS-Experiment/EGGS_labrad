@@ -1,9 +1,11 @@
-from PyQt5.QtGui import QIcon, QCursor, QPainter, QMouseEvent, QDrag, QPixmap
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QPoint, QEvent, QMimeData
+from PyQt5.QtGui import QIcon, QCursor, QPainter, QMouseEvent, QDrag, QPixmap
 from PyQt5.QtWidgets import QTabBar, QTabWidget, QWidget, QDialog, QVBoxLayout, QApplication, QMainWindow, QLabel
 
 # todo: remove ampersand in front of name when removing
 # todo: fix moving within qtabbar
+import random
+
 class QDetachableTabWidget(QTabWidget):
     """
     The DetachableTabWidget adds additional functionality to
@@ -210,7 +212,7 @@ class QDetachableTabWidget(QTabWidget):
                 targetPixmap = QPixmap(pixmap.size())
                 targetPixmap.fill(Qt.transparent)
                 painter = QPainter(targetPixmap)
-                painter.setOpacity(0.85)
+                painter.setOpacity(random.uniform(0.2, 0.9))
                 painter.drawPixmap(0, 0, pixmap)
                 painter.end()
                 drag.setPixmap(targetPixmap)
@@ -247,6 +249,7 @@ class QDetachableTabWidget(QTabWidget):
             @param  event   a drop event
             """
             self.dragDroppedPos = event.pos()
+            event.accept()
             QTabBar.dropEvent(self, event)
 
 
