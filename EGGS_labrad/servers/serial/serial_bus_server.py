@@ -311,7 +311,7 @@ class SerialServer(PollingServer):
         ser.write(data)
         # debug output
         if c['Debug']:
-            print(ser.name, ' WRITE:\t', data)
+            print("{:s}\tWRITE: {:s}".format(ser.name, data))
         return int(len(data))
 
     @setting(41, 'Write Line', data=['s: Data to send'], returns=['w: Bytes sent'])
@@ -327,7 +327,7 @@ class SerialServer(PollingServer):
         ser.write(data)
         # debug output
         if c['Debug']:
-            print(ser.name, ' WRITE:\t', data)
+            print("{:s}\tWRITELINE: {:s}".format(ser.name, data))
         return int(len(data))
 
     @setting(42, 'Pause', duration='v[s]: Time to pause', returns=[])
@@ -413,7 +413,7 @@ class SerialServer(PollingServer):
         # debug output
         ser_name = self.getPort(c).name
         if c['Debug']:
-            print(ser_name, ' READ:\t', ans)
+            print("{:s}\tREAD: {:s}".format(ser_name, ans))
         returnValue(ans)
 
     @setting(51, 'Read as Words', data=[': Read all bytes in buffer', 'w: Read this many bytes'],
@@ -427,7 +427,7 @@ class SerialServer(PollingServer):
         # debug output
         ser_name = self.getPort(c).name
         if c['Debug']:
-            print(ser_name, ' READ:\t', ans)
+            print("{:s}\tREADASWORDS: {:s}".format(ser_name, ans))
         returnValue(ans)
 
     @setting(52, 'Read Line', data=[': Read until LF, ignoring CRs', 's: Other delimiter to use'],
@@ -460,7 +460,7 @@ class SerialServer(PollingServer):
             elif r != skip:
                 recd += r
         if c['Debug']:
-            print(ser.name, ' READ:\t', recd)
+            print("{:s}\tREADLINE: {:s}".format(ser.name, recd))
         returnValue(recd)
 
 
