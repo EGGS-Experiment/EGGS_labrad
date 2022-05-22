@@ -27,18 +27,21 @@ _SRS_RGA_CEM_ERRORS = {
     7: 'Electron Multiplier: No electron multiplier option installed'
 }
 
-_SRS_RGA_DET_ERRORS = {
-    # DETECTOR ERRORS
-    4: 'Quadrupole Filter: Power supply in current-limited mode',
-    6: 'Quadrupole Filter: Primary current exceeds 2.0A',
-    7: 'Quadrupole Filter: RF_CT exceeds (V_EXT- 2V) at M_MAX'
-}
-
 _SRS_RGA_QMF_ERRORS = {
     # QUADRUPOLE ERRORS
     4: 'Quadrupole Filter: Power supply in current-limited mode',
     6: 'Quadrupole Filter: Primary current exceeds 2.0A',
     7: 'Quadrupole Filter: RF_CT exceeds (V_EXT- 2V) at M_MAX'
+}
+
+_SRS_RGA_DET_ERRORS = {
+    # DETECTOR ERRORS
+    1: 'Detector: OP-AMP Input Offset Voltage out of range',
+    3: 'Detector: COMPENSATE fails to read -5nA input current',
+    4: 'Detector: COMPENSATE fails to read +5nA input current',
+    5: 'Detector: DETECT fails to read -5nA input current',
+    6: 'Detector: DETECT fails to read +5nA input current',
+    7: 'Detector: ADC16 Test failure'
 }
 
 _SRS_RGA_PSU_ERRORS = {
@@ -48,10 +51,10 @@ _SRS_RGA_PSU_ERRORS = {
 }
 
 _SRS_RGA_STATUS_QUERIES = {
-    0: ('EC', _SRS_RGA_SER_ERRORS),     # Communication Error
+    0: ('EC', _SRS_RGA_SER_ERRORS),     # Serial Communication Error
     1: ('EF', _SRS_RGA_FIL_ERRORS),     # Filament Error
     3: ('EM', _SRS_RGA_CEM_ERRORS),     # Multiplier Error
     4: ('EQ', _SRS_RGA_QMF_ERRORS),     # Quadrupole Filter Error
-    5: ('ED', _SRS_RGA_DET_ERRORS),     # Electrometer Error
+    5: ('ED', _SRS_RGA_DET_ERRORS),     # Detector Error
     6: ('EP', _SRS_RGA_PSU_ERRORS)      # Power Supply Error
 }

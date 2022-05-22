@@ -26,6 +26,8 @@ from RGA_errors import _SRS_RGA_STATUS_QUERIES
 
 _SRS_EOL = '\r'
 _SRS_MAX_PRESSURE = 1e-5
+# todo: document all functions
+# todo: test degas function
 
 
 class RGA_Server(SerialDeviceServer, PollingServer):
@@ -99,6 +101,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         error_status = error_status.strip()
         # convert status response to binary
         error_status = format(int(error_status), '08b')
+        error_status = error_status[::-1]
         # parse the STATUS byte for error flags
         error_list = []
         for bit_number, query_parameters in _SRS_RGA_STATUS_QUERIES.items():
@@ -110,12 +113,31 @@ class RGA_Server(SerialDeviceServer, PollingServer):
                 component_register = yield self.ser.read_line(_SRS_EOL)
                 self.ser.release()
                 # convert component response to binary
-                component_register = format(int(error_status.strip()), '08b')
+                component_register = format(int(component_register.strip()), '08b')
+                component_register = component_register[::-1]
                 # parse response
                 error_list_tmp = [error_msg for bit_number, error_msg in dict_tmp.items()
                                   if component_register[bit_number] == '1']
                 error_list.extend(error_list_tmp)
         returnValue(error_list)
+
+    @setting(131, 'Degas', time=['', 'i', 's'], returns='')
+    def degas(self, c, time):
+        """
+        Degas the filament.
+        Args:
+            time:
+        Returns:
+        """
+        if time is not None:
+            if type(time) is int:
+                if time not in range(21):
+                    raise Exception('Error: invalid input.')
+            elif type(time) is str:
+                if time != '*':
+                    raise Exception('Error: invalid input.')
+            yield self._setter('DG', time, c)
+        # todo: serial write
 
 
     # IONIZER
