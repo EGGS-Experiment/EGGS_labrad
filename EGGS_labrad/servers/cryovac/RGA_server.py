@@ -188,8 +188,9 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     def filament(self, c, current=None):
         """
         Get/set the ionizer filament current. Also known as electron emission current.
-        *** todo: protection mode
-            Note: this may heat the chamber and degas, increasing pressure.
+            The RGA has a firmware protection mode where the filament will shut off
+            if the pressure exceeds a certain value.
+            Note: activating the filament may heat the chamber and degas, increasing pressure.
         Arguments:
             current (float) : the ionizer filament current (in mA).
                                 Must be in [0, 3.5]. Default is 1.
@@ -209,11 +210,12 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @setting(222, 'Ionizer Focus Voltage', voltage=['', 'i', 's'], returns='i')
     def focusVoltage(self, c, voltage=None):
         """
-        Get/set the focus plate voltage (in V).
+        Get/set the focus plate voltage. This is a biasing voltage which
+            draws ions into the quadrupole mass filter.
         Arguments:
-            voltage (int)   :
+            voltage (int)   : the focus plate voltage (in V).
         Returns:
-                    (int)   :
+                    (int)   : the focus plate voltage (in V).
         """
         if voltage is not None:
             if type(voltage) is int:
@@ -228,7 +230,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
 
 
     # DETECTOR
-    @setting(311, 'Detector Calibrate', returns='s')
+    @setting(311, 'Detector Calibrate', returns='')
     def calibrate(self, c):
         """
         Calibrate the detector.
@@ -238,11 +240,14 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     @setting(312, 'Detector Noise Floor', level=['', 'i', 's'], returns='i')
     def noiseFloor(self, c, level=None):
         """
-        Get/set the detector noise floor.
+        Get/set the detector noise floor. This sets the rate and detection limits
+            for ion current measurements. A lower value reduces bandwidth and increases
+            accuracy, but also increases overhead and scan times.
         Arguments:
-            level   (int)   :
+            level   (int)   :   the noise floor level.
+                                    Must be in [0, 7]. Default is 4.
         Returns:
-                    (int)   :
+                    (int)   :   the noise floor level.
         """
         if level is not None:
             if type(level) is int:
@@ -255,22 +260,22 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         resp = yield self._getter('NF', c)
         returnValue(int(resp))
 
-    @setting(313, 'Detector CDEM', returns='i')
+    @setting(313, 'Detector CDEM', returns='b')
     def cdem(self, c):
         """
-        Check whether the electron multiplier is available.
+        Check whether the electron multiplier (CDEM) is available.
         Returns:
-                    (int)   : ***todo
+                    (bool)  :   whether a CDEM is available.
         """
         resp = yield self._getter('MO', c)
-        returnValue(int(resp))
+        returnValue(bool(int(resp)))
 
     @setting(321, 'Detector CDEM Voltage', voltage=['', 'i', 's'], returns='i')
     def cdemVoltage(self, c, voltage=None):
         """
-        Get/set the electron multiplier voltage bias.
+        Get/set the electron multiplier (CDEM) voltage bias.
         Arguments:
-            voltage (int)   :
+            voltage (int)   :   the
         Returns:
                     (int)   :
         """
@@ -292,9 +297,10 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         Get/set the initial mass for scanning.
         Arguments:
-            mass    (int)   :
+            mass    (int)   :   the initial mass (in amu).
+                                    Must be in [1, M_MAX]. Default is 1.
         Returns:
-                    (int)   :
+                    (int)   :   the initial mass (in amu).
         """
         if mass is not None:
             if type(mass) is int:
@@ -314,9 +320,10 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         Get/set the final mass for scanning.
         Arguments:
-            mass    (int)   :
+            mass    (int)   :   the final mass (in amu).
+                                    Must be in [1, M_MAX]. Default is M_MAX.
         Returns:
-                    (int)   :
+                    (int)   :   the final mass (in amu).
         """
         if mass is not None:
             if type(mass) is int:
@@ -336,9 +343,10 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         Get/set the number of steps per amu during scanning.
         Arguments:
-            steps   (int)   :
+            steps   (int)   :   the number of steps per amu.
+                                    Must be in range [10, 25]. Default is 10.
         Returns:
-                    (int)   :
+                    (int)   :   the number of steps per amu.
         """
         if steps is not None:
             if type(steps) is int:
@@ -358,9 +366,10 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         """
         Get the number of points per scan in either analog or histogram mode.
         Arguments:
-            mode    (str)   :
+            mode    (str)   : the scan mode to get points for.
+                                Must be one of ('a', 'analog') or ('h', 'histogram').
         Returns:
-                    (int)   :
+                    (int)   :   the number of points per scan.
         """
         resp = None
         if mode.lower() in ('a', 'analog'):
