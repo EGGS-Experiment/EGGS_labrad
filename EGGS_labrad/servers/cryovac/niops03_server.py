@@ -185,6 +185,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         self.ser.release()
         # convert from hex to int
         resp = int(resp, 16)
+        self.voltage_update(resp)
         returnValue(resp)
 
     @setting(231, 'Working Time', returns='*2i')
