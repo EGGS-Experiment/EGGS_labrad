@@ -13,18 +13,6 @@ _wmhz = 2 * np.pi * 1e6
 
 
 """
-Helper functions
-"""
-def axial_secular_frequency():
-    """
-    Calculate the axial secular frequency of an ion.
-    Returns:
-
-    """
-    pass
-
-
-"""
 Objects
 """
 class ionObject(object):
@@ -70,6 +58,10 @@ class ionChain(object):
         self.secular_radial = {}
         self.secular_axial = {}
 
+
+    """
+    User Functions
+    """
     def set_ion(self, mass, position):
         """
         Sets the mass of an ion at the given position.
@@ -90,6 +82,10 @@ class ionChain(object):
         self._calculate_secular_axial()
         self._calculate_secular_radial()
 
+
+    """
+    Calculating Mode Data
+    """
     def _calculate_equilibrium_positions(self):
         """
         Recalculates the equilibrium positions of the chain.
@@ -107,3 +103,27 @@ class ionChain(object):
         Recalculates the axial secular frequencies of the chain.
         """
         pass
+
+
+    """
+    Secular Frequencies
+    """
+    def _axial_secular_frequency(self, mass):
+        """
+        Calculate the axial secular frequency of an ion.
+        Arguments:
+            mass    (float) : the ion mass (in amu).
+        Returns:
+                    (float) : the axial secular frequency (in Hz).
+        """
+        return np.sqrt((2 * _QE * self.k_dc * self.v_dc) / (mass * np.pow(self.z0, 2)))
+
+    def _radial_secular_frequency(self, mass):
+        """
+        Calculate the radial secular frequency of an ion.
+        Arguments:
+            mass    (float) : the ion mass (in amu).
+        Returns:
+                    (float) : the axial secular frequency (in Hz).
+        """
+        return np.sqrt((2 * _QE * self.k_dc * self.v_dc) / (mass * np.pow(self.z0, 2)))

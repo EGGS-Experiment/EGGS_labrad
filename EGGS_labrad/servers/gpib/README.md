@@ -1,4 +1,4 @@
-# Serial Bus Server Guide
+# GPIB Guide
 
 ## todo: format
 

@@ -1,4 +1,4 @@
-# Script Scanner Guide
+# Serial Bus Server Guide
 
 ## todo: format
 

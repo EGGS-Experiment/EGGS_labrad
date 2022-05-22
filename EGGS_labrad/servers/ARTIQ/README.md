@@ -1,4 +1,4 @@
-# Serial Bus Server Guide
+# ARTIQ Server Guide
 
 ## todo: format
 
