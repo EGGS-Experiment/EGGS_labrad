@@ -16,21 +16,21 @@
 
 
 
-#define init_msg    0x200000
-#define 1v_msg      0x133333
-#define 1v_msg      0x1FFFFF
+#define msg_init    0x200000
+#define msg_1v      0x133333
+#define msg_5v      0x1FFFFF
 
 
 void setup() {
     // set pin directions (DDR registers)
     OUTPUT_PORT_DDR &= 0x1F;
     // initialize the DAC
-    programDAC(init_msg);
+    programDAC(msg_init);
     // set up serial
     Serial.begin(115200);
     Serial.println("THKIM");
     // set DAC to 1V
-    programDAC(1v_msg);
+    programDAC(msg_1v);
 }
 
 void loop() {
