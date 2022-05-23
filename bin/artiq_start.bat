@@ -24,6 +24,7 @@ FOR %%x IN (%*) DO (
     IF "%%x"=="--help" (GOTO HELP)
 )
 
+
 REM: Set arguments
 IF NOT %ddb_ind%==0 (CALL SET ddb_name=%ARTIQ_ROOT%\%%%ddb_ind%%
 ) ELSE (CALL SET ddb_name=%ARTIQ_DDB%)
@@ -31,9 +32,7 @@ IF NOT %ddb_ind%==0 (CALL SET ddb_name=%ARTIQ_ROOT%\%%%ddb_ind%%
 IF NOT %ip_ind%==0 (CALL SET ip_addr=%%%ip_ind%%
 ) ELSE (CALL SET ip_addr=%ARTIQ_HOST%)
 
-ECHO %ddb_name%
-ECHO %ip_addr%
-TIMEOUT 3
+
 REM: Start ARTIQ interface
 TIMEOUT 3 > NUL && START "ARTIQ Master" /min CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"
 REM: START "ARTIQ Master" CMD "/c artiq_master --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr%"

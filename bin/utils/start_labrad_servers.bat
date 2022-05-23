@@ -22,6 +22,7 @@ START "ARTIQ Server" /min CMD "/k activate labart2 && python %EGGS_LABRAD_ROOT%\
 
 REM: Imaging
 TIMEOUT 5 > NUL && START "PMT Server" /min CMD "/k activate labart2 && TIMEOUT 2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\pmt\pmt_server.py"
+TIMEOUT 5 > NUL && START "Slider Server" /min CMD "/k activate labart2 && TIMEOUT 2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\slider\slider_server.py"
 
 REM: Devices
 START "Oscilloscope Server" /min CMD "/k activate labart && %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\oscilloscopes\oscilloscope_server.py"
