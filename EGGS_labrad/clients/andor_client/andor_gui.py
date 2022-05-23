@@ -15,14 +15,12 @@ class AndorGUI(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Andor Client")
         self.makeLayout()
         self.connectLayout()
 
     def makeLayout(self):
-        self.setWindowTitle("Andor")
-
-        # layout
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         self.plt = plt = pg.PlotItem()
         self.img_view = pg.ImageView(view=self.plt)
         plt.showAxis('top')
@@ -91,7 +89,6 @@ class AndorGUI(QWidget):
         layout.addWidget(self.auto_levels_button, 2, 1)
 
     def connectLayout(self):
-        self.set_image_region_button.clicked.connect(self.on_set_image_region)
         self.plt.scene().sigMouseClicked.connect(self.mouse_clicked)
         self.auto_levels_button.clicked.connect(self.on_auto_levels_button)
         self.view_all_button.clicked.connect(self.on_auto_range_button)
