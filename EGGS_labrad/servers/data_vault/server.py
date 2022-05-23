@@ -70,9 +70,6 @@ class DataVault(LabradServer):
         # flatten list of datasets
         all_containers = set([dataset.data for session_datasets in all_datasets for dataset in session_datasets])
 
-        # todo: log instead
-        # log errors in a file
-        shutdownlog = open('datavaultshutdown.txt', 'w')
         # close all the files
         for container in all_containers:
             datafile = container._file
@@ -84,15 +81,12 @@ class DataVault(LabradServer):
                 datafile._fileTimeout()
             except Exception as e:
                 print(e)
-                shutdownlog.write(e)
-                shutdownlog.write('\n')
-            else:
-                shutdownlog.write('no problems')
-        shutdownlog.close()
 
     # CONTEXT MANAGEMENT
     def contextKey(self, c):
-        """The key used to identify a given context for notifications"""
+        """
+        The key used to identify a given context for notifications.
+        """
         return c.ID
 
     def initContext(self, c):
@@ -255,7 +249,7 @@ class DataVault(LabradServer):
              returns=['*ss'])
     def new_ex(self, c, name, independents, dependents):
         """
-        Create a new extended dataset
+        Create a new extended dataset.
 
         Independents are specified as: (label, shape, type, unit)
         Dependents are specified as: (label, legend, shape, type, unit)
@@ -349,11 +343,12 @@ class DataVault(LabradServer):
     @setting(1010, returns='s')
     def get_version(self, c):
         """
-        Get version of current dataset
-
-        1.x:   CSV dataset
-        2.x:   Simple HDF5 dataset
-        3.x:   Extended dataset
+        Get version of current dataset.
+            1.x:   CSV dataset
+            2.x:   Simple HDF5 dataset
+            3.x:   Extended dataset
+        Returns:
+            (str)   :   dataset version.
         """
         dataset = self.getDataset(c)
         return dataset.version()
@@ -491,7 +486,7 @@ class DataVault(LabradServer):
         The independent variables are a cluster of (label, shape, type, unit)
         The dependent variables are a cluster of (label, legend, shape, type, unit)
 
-        See new_ex for descriptions of these items
+        See new_ex for descriptions of these items.
         """
         ds = self.getDataset(c)
         ind = ds.getIndependents()
@@ -528,7 +523,9 @@ class DataVault(LabradServer):
     # METADATA
     @setting(120, returns='*s')
     def parameters(self, c):
-        """Get a list of parameter names."""
+        """
+        Get a list of parameter names.
+        """
         dataset = self.getDataset(c)
         key = self.contextKey(c)
         dataset.param_listeners.add(key)  # send a message when new parameters are added
