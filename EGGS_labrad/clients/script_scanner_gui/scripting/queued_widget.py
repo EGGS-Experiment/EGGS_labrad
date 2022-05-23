@@ -128,15 +128,14 @@ class queued_combined(QWidget):
         self.ql.clear()
 
     def setupLayout(self):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         title = QLabel("Queued", font=self.font)
         title.setAlignment(Qt.AlignLeft)
         self.ql = queued_list(self.reactor, self.parent)
         self.cancel_all = QPushButton("Cancel All")
-        layout.addWidget(title, 0, 0, 1, 2)
-        layout.addWidget(self.cancel_all, 0, 2, 1, 1)
-        layout.addWidget(self.ql, 1, 0, 3, 3)
-        self.setLayout(layout)
+        layout.addWidget(title,                     0, 0, 1, 2)
+        layout.addWidget(self.cancel_all,           0, 2, 1, 1)
+        layout.addWidget(self.ql,                   1, 0, 3, 3)
 
     def connect_layout(self):
         self.cancel_all.pressed.connect(self.ql.cancel_all)

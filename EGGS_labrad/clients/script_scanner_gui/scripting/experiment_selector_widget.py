@@ -174,7 +174,7 @@ class repeat_dialog(QDialog):
         self.connect_layout()
 
     def setupLayout(self):
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(self)
         rep_label = QLabel("Repetitions")
         self.repeat = QSpinBox()
         self.repeat.setKeyboardTracking(False)
@@ -190,7 +190,6 @@ class repeat_dialog(QDialog):
         layout.addWidget(self.should_save)
         layout.addWidget(self.okay_button)
         layout.addWidget(self.cancel_button)
-        self.setLayout(layout)
 
     def connect_layout(self):
         self.okay_button.pressed.connect(self.accept)
@@ -205,7 +204,7 @@ class schedule_dialog(QDialog):
         self.connect_layout()
 
     def setupLayout(self):
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(self)
         self.duration = QSpinBox()
         self.duration.setSuffix(' sec')
         self.duration.setKeyboardTracking(False)
@@ -218,18 +217,15 @@ class schedule_dialog(QDialog):
         self.start_immediately = QCheckBox()
         self.start_immediately.setCheckable(True)
         self.start_immediately.setChecked(True)
-        label = QLabel("Period")
-        layout.addWidget(label)
+
+        layout.addWidget(QLabel("Period"))
         layout.addWidget(self.duration)
-        label = QLabel("Priority")
-        layout.addWidget(label)
+        layout.addWidget(QLabel("Priority"))
         layout.addWidget(self.priority)
-        label = QLabel("Start Immediately")
-        layout.addWidget(label)
+        layout.addWidget(QLabel("Start Immediately"))
         layout.addWidget(self.start_immediately)
         layout.addWidget(self.okay_button)
         layout.addWidget(self.cancel_button)
-        self.setLayout(layout)
 
     def connect_layout(self):
         self.okay_button.pressed.connect(self.accept)
@@ -257,7 +253,7 @@ class experiment_selector_widget(QWidget):
         self.connect_layout()
 
     def setupLayout(self):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         label = QLabel("Experiment", font=self.font)
         self.dropdown = QComboBox()
         self.dropdown.setMaxVisibleItems(30)
@@ -275,14 +271,13 @@ class experiment_selector_widget(QWidget):
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setIcon(QIcon.fromTheme('view-refresh'))
         # todo: fix qicon.fromtheme
-        layout.addWidget(label, 0, 0, 1, 1)
-        layout.addWidget(self.dropdown, 0, 1, 1, 3)
-        layout.addWidget(self.refresh_button, 0, 4, 1, 1)
-        layout.addWidget(self.run_button, 1, 1, 1, 1)
-        layout.addWidget(self.repeat_button, 1, 2, 1, 1)
-        layout.addWidget(self.scan_button, 1, 3, 1, 1,)
-        layout.addWidget(self.schedule_button, 1, 4, 1, 1)
-        self.setLayout(layout)
+        layout.addWidget(label,                         0, 0, 1, 1)
+        layout.addWidget(self.dropdown,                 0, 1, 1, 3)
+        layout.addWidget(self.refresh_button,           0, 4, 1, 1)
+        layout.addWidget(self.run_button,               1, 1, 1, 1)
+        layout.addWidget(self.repeat_button,            1, 2, 1, 1)
+        layout.addWidget(self.scan_button,              1, 3, 1, 1,)
+        layout.addWidget(self.schedule_button,          1, 4, 1, 1)
         self.setSizePolicy(QSizePolicy.MinimumExpanding,
                            QSizePolicy.Fixed)
         self.check_button_disable(self.dropdown.currentText())

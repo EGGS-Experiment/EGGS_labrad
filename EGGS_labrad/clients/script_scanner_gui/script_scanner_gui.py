@@ -397,10 +397,9 @@ class script_scanner_gui(QWidget):
     def setupWidgets(self):
         self.scripting_widget = scripting_widget(self.reactor, self)
         self.ParametersEditor = ParametersEditor(self.reactor)
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(self)
         layout.addWidget(self.scripting_widget)
         layout.addWidget(self.ParametersEditor)
-        self.setLayout(layout)
         self.setWindowTitle('Script Scanner GUI')
 
     def displayError(self, text):

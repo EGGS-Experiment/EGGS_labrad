@@ -166,15 +166,14 @@ class scheduled_combined(QtWidgets.QWidget):
         self.sl.update_duration(ident, duration)
 
     def setupLayout(self):
-        layout = QtWidgets.QGridLayout()
+        layout = QtWidgets.QGridLayout(self)
         title = QtWidgets.QLabel("Scheduled", font=self.font)
         title.setAlignment(QtCore.Qt.AlignLeft)
         self.sl = scheduled_list(self.reactor, self.parent)
         self.cancel_all = QtWidgets.QPushButton("Cancel All")
-        layout.addWidget(title, 0, 0, 1, 2)
-        layout.addWidget(self.cancel_all, 0, 2, 1, 1)
-        layout.addWidget(self.sl, 1, 0, 3, 3)
-        self.setLayout(layout)
+        layout.addWidget(title,             0, 0, 1, 2)
+        layout.addWidget(self.cancel_all,   0, 2, 1, 1)
+        layout.addWidget(self.sl,           1, 0, 3, 3)
 
     def connect_layout(self):
         self.cancel_all.pressed.connect(self.sl.cancel_all)

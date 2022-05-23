@@ -195,14 +195,13 @@ class running_combined(QWidget):
         self.scans_list.clear()
 
     def setupLayout(self):
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         title = QLabel("Running", font=self.font)
         title.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         title.setAlignment(Qt.AlignLeft)
         self.scans_list = running_scans_list(self.reactor, self.parent)
-        layout.addWidget(title, 0, 0, 1, 3)
-        layout.addWidget(self.scans_list, 1, 0, 3, 3)
-        self.setLayout(layout)
+        layout.addWidget(title,             0, 0, 1, 3)
+        layout.addWidget(self.scans_list,   1, 0, 3, 3)
 
     def add(self, ident, name):
         self.scans_list.add(ident, name)
