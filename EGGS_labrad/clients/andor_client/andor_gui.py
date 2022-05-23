@@ -43,10 +43,6 @@ class AndorGUI(QWidget):
         emccd_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.emccdSpinBox = QSpinBox()
         self.emccdSpinBox.setSingleStep(1)
-        # todo fix
-        # self.emrange = yield self.server.getemrange(None)
-        mingain, maxgain = self.emrange
-        self.emccdSpinBox.setRange(mingain, maxgain)
         self.emccdSpinBox.setKeyboardTracking(False)
         self.live_button = QPushButton("Live Video")
         self.live_button.setCheckable(True)
