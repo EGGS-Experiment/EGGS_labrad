@@ -3,8 +3,7 @@ from PyQt5.QtGui import QIcon, QCursor, QPainter, QMouseEvent, QDrag, QPixmap
 from PyQt5.QtWidgets import QTabBar, QTabWidget, QWidget, QDialog, QVBoxLayout, QApplication, QMainWindow, QLabel
 
 # todo: remove ampersand in front of name when removing
-# todo: fix moving within qtabbar
-import random
+
 
 class QDetachableTabWidget(QTabWidget):
     """
@@ -212,7 +211,7 @@ class QDetachableTabWidget(QTabWidget):
                 targetPixmap = QPixmap(pixmap.size())
                 targetPixmap.fill(Qt.transparent)
                 painter = QPainter(targetPixmap)
-                painter.setOpacity(random.uniform(0.2, 0.9))
+                painter.setOpacity(0.7)
                 painter.drawPixmap(0, 0, pixmap)
                 painter.end()
                 drag.setPixmap(targetPixmap)
