@@ -30,6 +30,8 @@ class lakeshore336_gui(QFrame):
         self.temp4 = QLabel("Temp 4")
 
         self.tempAll_record = TextChangingButton(('Stop Recording', 'Start Recording'))
+        temp_layout.addWidget(self.tempAll_record)
+
         for widget in (self.temp1, self.temp2, self.temp3, self.temp4):
             widget.setAlignment(Qt.AlignRight)
             widget.setFont(QFont(_SHELL_FONT, pointSize=24))

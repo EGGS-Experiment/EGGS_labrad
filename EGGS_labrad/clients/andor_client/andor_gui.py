@@ -1,11 +1,31 @@
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QDoubleSpinBox, QSpinBox,\
-    QPushButton, QCheckBox, QLineEdit, QSizePolicy
-
-from twisted.internet.defer import inlineCallbacks
+from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QDoubleSpinBox, QSpinBox, QPushButton, QCheckBox, QLineEdit, QSizePolicy
 # todo: document
 # todo: make dark mode
+
+# todo: make trigger mode and acquisition mode interface qcombobox
+# todo: move "s" from expsure outside of it
+# todo: add v and h bins
+
+# todo: make save images a button
+# todo: add separate "save single image" button
+# todo: background button
+# todo: continuously autorange button
+
+# todo: bottom qtabwidget for config stuff
+# todo: tab: binning
+# todo: tab: pixel shift/gain/timing
+# todo: tab: acquisition/readout/triggering
+# todo: tab: cooler/temp set/fan
+
+# todo: rhs ROI qtabwidget with each tab as different roi
+# todo: recalculate button
+# todo: live update button
+# todo: stdev, mean, max, total, SNR
+
+# todo: rhs statistics
+
 
 
 class AndorGUI(QWidget):
@@ -27,6 +47,8 @@ class AndorGUI(QWidget):
         plt.hideAxis('bottom')
         plt.setAspectLocked(True)
         self.img_view.getHistogramWidget().setHistogramRange(0, 1000)
+
+        # exposure
         exposure_label = QLabel("Exposure")
         exposure_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.exposureSpinBox = QDoubleSpinBox()
@@ -36,22 +58,22 @@ class AndorGUI(QWidget):
         self.exposureSpinBox.setKeyboardTracking(False)
         self.exposureSpinBox.setSuffix(' s')
 
-        # EMCCD Gain
+        # gain
         emccd_label = QLabel("EMCCD Gain")
         emccd_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.emccdSpinBox = QSpinBox()
         self.emccdSpinBox.setSingleStep(1)
         self.emccdSpinBox.setKeyboardTracking(False)
+
+        # display
         self.live_button = QPushButton("Live Video")
         self.live_button.setCheckable(True)
         self.set_image_region_button = QPushButton("Set Image Region")
         self.save_images = QCheckBox('Save Images')
-
-        # controlling the display buttons
         self.view_all_button = QPushButton("View All")
         self.auto_levels_button = QPushButton("Auto Levels")
 
-        # display mode buttons
+        # acquisition
         self.trigger_mode = QLineEdit()
         self.trigger_mode.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.trigger_mode.setReadOnly(True)
