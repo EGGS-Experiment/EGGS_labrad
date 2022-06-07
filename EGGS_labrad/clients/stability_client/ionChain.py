@@ -1,12 +1,16 @@
 import numpy as np
-# todo: move all wsec calc here
+from scipy.optimize import root
+
+__all__ = ["ionObject", "ionChain"]
+
 
 """
-Constants, fundamental and derived
+Fundamental and derived constants
 """
 _QE = 1.60217e-19
 _AMU = 1.66053904e-27
 _HBAR = 1.05457182e-34
+_LSK = 8.96273592e-4
 _KE2 = 2.30707751e-28
 _wkhz = 2 * np.pi * 1e3
 _wmhz = 2 * np.pi * 1e6
@@ -25,7 +29,6 @@ class ionObject(object):
         Create all chain-related variables here.
         """
         self.mass = mass
-        self.position = 0
         self.secular_axial = 0
         self.secular_radial = 0
 
@@ -37,13 +40,15 @@ class ionChain(object):
 
     def __init__(self,
                  v_rf=0, w_rf=0, k_rf=1, r0=0,
-                 v_dc=0, k_dc=1, z0=0
+                 v_dc=0, k_dc=1, z0=0,
+                 ions=[]
                  ):
         """
-        Create all chain-related variables here.
+        Create all trap-related variables here.
         """
         # ion variables
-        self.ions = {}
+        # todo: check if ions are ionobjects or masses
+        self.ions = ions
         # trap variables
         self.v_rf = v_rf
         self.w_rf = w_rf
@@ -52,58 +57,78 @@ class ionChain(object):
         self.v_dc = v_dc
         self.k_dc = k_dc
         self.z0 = z0
-        # chain variables
+        # chain/mode variables
+        self.lengthscale = self._length_scale()
         self.mathieu_order = 1
         self.equilibrium_positions = {}
-        self.secular_radial = {}
-        self.secular_axial = {}
+        self.mode_axial = {}
+        self.mode_radial = {}
 
 
     """
     User Functions
     """
-    def set_ion(self, mass, position):
+    def insert_ion(self, mass, position=None):
         """
-        Sets the mass of an ion at the given position.
+        Insert an ion to the chain.
+        Ion is inserted at end of chain by default.
         Arguments:
             mass        (float)     : the mass of the ion (in amu).
-            position    (position)  : the position (i.e. index) of the ion.
+            position    (position)  : the position (i.e. index) of the ion. Starts at 0.
         """
-        if position not in self.ions:
-            self.ions[position] = ionObject(mass)
+        # add ion to end of chain by default
+        if position is None:
+            position = len(self.ions)
+        # otherwise check that position exists
+        elif position not in range(len(self.ions)):
+            self.ions[position] = mass * _AMU
         else:
-            self.ions[position].mass = mass
+            raise Exception("Error: ion position exceeds chain length.")
 
-    def recalculate_variables(self):
-        """
-        Recalculates equilibrium positions and mode data.
-        """
+        # create ion and insert into chain
+        ion = ionObject(mass)
+        self.ions.insert(position, ion)
+
+        # recalculate chain values
         self._calculate_equilibrium_positions()
-        self._calculate_secular_axial()
-        self._calculate_secular_radial()
+        self._calculate_modes()
 
+    def set_ion(self, mass, position):
+        """
+        Sets the mass of an ion within the chain.
+        Arguments:
+            mass        (float)     : the mass of the ion (in amu).
+            position    (position)  : the position (i.e. index) of the ion. Starts at 0.
+        """
+        # make sure position is in array
+        if position not in len(self.ions):
+            self.ions[position] = mass * _AMU
+        else:
+            raise Exception("Error: ion position exceeds chain length.")
 
-    """
-    Calculating Mode Data
-    """
-    def _calculate_equilibrium_positions(self):
+        # change ion mass
+        ion = self.ions[position]
+        ion.mass = mass
+
+        # recalculate secular frequencies
+        ion.secular_axial = self._axial_secular_frequency(mass)
+        ion.secular_radial = self._radial_secular_frequency(mass)
+
+        # recalculate chain values
+        self._calculate_equilibrium_positions()
+        self._calculate_modes()
+
+    def set_trap(self, **kwargs):
         """
-        Recalculates the equilibrium positions of the chain.
+        Adjust the value of a trap parameter.
+        Args:
+            **kwargs:
+
+        Returns:
+            ***todo
         """
+        # ***todo if changed, need to recalculate all ion values
         pass
-
-    def _calculate_secular_axial(self):
-        """
-        Recalculates the axial secular frequencies of the chain.
-        """
-        pass
-
-    def _calculate_secular_radial(self):
-        """
-        Recalculates the axial secular frequencies of the chain.
-        """
-        pass
-
 
     """
     Secular Frequencies
@@ -127,3 +152,90 @@ class ionChain(object):
                     (float) : the axial secular frequency (in Hz).
         """
         return np.sqrt((2 * _QE * self.k_dc * self.v_dc) / (mass * np.pow(self.z0, 2)))
+
+    def _length_scale(self):
+        """
+        Calculate the length scale of ion-ion separation.
+        Returns:
+                    (float) : the length scale (in m).
+        """
+        return _LSK * np.power(np.power(self.z0, 2) / self.v_dc, 1 / 3)
+
+
+    """
+    Calculating Mode Data
+    """
+    def _calculate_equilibrium_positions(self):
+        """
+        Recalculates the equilibrium positions of the chain.
+        Returns:
+            dict(float, np.array): the normal mode frequencies and their associated eigenvectors.
+        """
+        num_ions = len(self.ions)
+
+        # create the equilibrium equation for an individual ion
+        def ionEquilibriumEquation(positionArr, i):
+            distances = np.array(np.array(positionArr) - positionArr[i], dtype=float)
+            th21 = np.power(distances[:i], -2)
+            th22 = np.power(distances[i+1:], -2)
+            return positionArr[i] - np.sum(th21) + np.sum(th22)
+
+        # create equilibrium equations for the entire chain
+        def chainEquilibriumEquations(positionArr):
+            return [ionEquilibriumEquation(positionArr, i) for i in range(len(positionArr))]
+
+        # guess the ion equilibrium positions
+        def guessEquilibriumPositions(n):
+            return np.linspace(-1, 1, n) * (1.009 * (n-1) / n**0.559)
+
+        # find scaled equilibrium positions
+        soln = root(chainEquilibriumEquations, guessEquilibriumPositions(num_ions), method='krylov')
+        self.equilibrium_positions = soln['x']
+
+        return soln['x']
+
+    def _calculate_modes(self):
+        """
+        Recalculates the radial and axial normal mode frequencies of the chain.
+        Returns:
+            dict(float, np.array): the normal mode frequencies and their associated eigenvectors.
+        """
+        # get values from  ion chain
+        num_ions = len(self.ions)
+        massArr = np.array([ion.mass for ion in self.ions])
+        wsecArrAxial = np.array([ion.secular_axial for ion in self.ions])
+        wsecArrRadial = np.array([ion.secular_radial for ion in self.ions])
+
+        # create matrix that gives |x_i - x_j|^-3
+        ind = np.triu_indices(num_ions, 1)
+        distMat = np.zeros((num_ions, num_ions))
+        distMat[ind] = np.power(self.equilibrium_positions[ind[1]] - self.equilibrium_positions[ind[0]], -3)
+        distMat += np.transpose(distMat)
+
+        # get sum of |x_i - x_j|^-3 for each ion
+        distSumMat = np.diag(np.sum(distMat, axis=1))
+
+        # create secular frequency matrix mass-scaled into normal-mode picture
+        wzMat = np.sqrt(np.outer(massArr, 1 / massArr))
+        wzMat *= np.outer(wsecArrAxial, np.ones(num_ions)) ** 2
+
+        # get anharmonicities
+        ah = np.diag(np.power(wsecArrRadial / wsecArrAxial), 2)
+
+        # create hessian matrices
+        hessMatAxial = wzMat * (np.identity(num_ions) + 2 * (distSumMat - distMat))
+        hessMatRadial = wzMat * (ah - (distSumMat - distMat))
+
+        # get axial eigenvalues
+        eigenvalsAxial, eigenvecAxial = np.linalg.eig(hessMatAxial)
+        eigenvalsAxial, eigenvecAxial = np.sqrt(eigenvalsAxial), eigenvecAxial.transpose()
+        axialModes = dict(zip(eigenvalsAxial, eigenvecAxial))
+        self.mode_axial = axialModes
+
+        # get radial eigenvalues
+        eigenvalsRadial, eigenvecRadial = np.linalg.eig(hessMatRadial)
+        eigenvalsRadial, eigenvecRadial = np.sqrt(eigenvalsRadial), eigenvecRadial.transpose()
+        radialModes = dict(zip(eigenvalsRadial, eigenvecRadial))
+        self.mode_radial = radialModes
+
+        return axialModes, radialModes
