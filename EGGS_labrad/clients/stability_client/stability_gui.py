@@ -3,7 +3,7 @@ import pyqtgraph as pg
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QPushButton, QTabWidget, QComboBox
+from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QPushButton, QTabWidget, QComboBox, QRadioButton, QHBoxLayout
 
 from EGGS_labrad.clients.Widgets import TextChangingButton
 
@@ -28,9 +28,10 @@ class stability_gui(QFrame):
         # parameter box
         stability_widget = QWidget()
         stability_widget_layout = QGridLayout(stability_widget)
-        # readout
-        pickoff_display_label = QLabel('VPP (V)')
-        self.pickoff_display = QLabel('000.00')
+        # l0_distance
+        l0_distance_label = QLabel("Equilibrium Distance (\u03BCm)")
+        self.l0_distance = QLabel("00.00")
+        self.l0_distance.setStyleSheet('color: blue')
         # # record button
         # self.record_button = TextChangingButton(('Stop Recording', 'Start Recording'))
         # self.record_button.setMaximumHeight(25)
@@ -51,16 +52,16 @@ class stability_gui(QFrame):
         self.anharmonic_limit = QLabel("00.00")
 
         # configure display elements
-        for display in (self.pickoff_display, self.aparam_display, self.qparam_display, self.wsecr_display,
+        for display in (self.l0_distance, self.aparam_display, self.qparam_display, self.wsecr_display,
                         self.wsecz_display, self.anharmonic_limit):
             display.setFont(QFont(_SHELL_FONT, pointSize=22))
             display.setAlignment(Qt.AlignRight)
             display.setStyleSheet('color: blue')
-        for display_label in (pickoff_display_label, aparam_display_label, qparam_display_label,
+        for display_label in (l0_distance_label, aparam_display_label, qparam_display_label,
                               wsecr_display_label, wsecz_display_label, anharmonic_limit_label):
             display_label.setAlignment(Qt.AlignRight)
         # layout parameter box elements
-        stability_widget_layout.addWidget(pickoff_display_label,          1, 0, 1, 1)
+        stability_widget_layout.addWidget(l0_distance_label,              1, 0, 1, 1)
         stability_widget_layout.addWidget(self.pickoff_display,           2, 0, 1, 1)
         stability_widget_layout.addWidget(aparam_display_label,           1, 1, 1, 1)
         stability_widget_layout.addWidget(self.aparam_display,            2, 1, 1, 1)
@@ -98,10 +99,6 @@ class stability_gui(QFrame):
         self.ion_mass.setRange(1, 200)
         self.ion_mass.setDecimals(1)
         self.ion_mass.setSingleStep(1)
-        # l0_distance
-        l0_distance_label = QLabel("Equilibrium Distance (\u03BCm)")
-        self.l0_distance = QLabel("00.00")
-        self.l0_distance.setStyleSheet('color: blue')
 
         # configure display elements
         for display in (self.total_ions, self.ion_list, self.ion_mass, self.l0_distance):
@@ -110,7 +107,7 @@ class stability_gui(QFrame):
                 display.setAlignment(Qt.AlignRight)
             except AttributeError:
                 pass
-        for display_label in (total_ion_label, ion_list_label, ion_mass_label, l0_distance_label):
+        for display_label in (total_ion_label, ion_list_label, ion_mass_label):
             display_label.setAlignment(Qt.AlignRight)
 
         # lay out
@@ -120,22 +117,101 @@ class stability_gui(QFrame):
         iontab_widget_layout.addWidget(self.ion_list,               1, 1, 1, 1)
         iontab_widget_layout.addWidget(ion_mass_label,              0, 2, 1, 1)
         iontab_widget_layout.addWidget(self.ion_mass,               1, 2, 1, 1)
-        iontab_widget_layout.addWidget(l0_distance_label,           2, 2, 1, 1)
-        iontab_widget_layout.addWidget(self.l0_distance,            3, 2, 1, 1)
         # todo: integrate with andor
         return iontab_widget
 
     def _makeTrapTab(self):
         """
-        This tab allows configuration of trap parameters.
+        This tab allows configuration of dynamic trap parameters.
         Part of the Parameters QTabWidget.
         """
         # create holders
         trap_widget = QWidget()
         trap_widget_layout = QGridLayout(trap_widget)
+        # vrf
+        vrf_display_label = QLabel('VRF (Vpp)')
+        self.vrf_display = QLabel('000.00')
+        # vrf - offset
+        v0_display_label = QLabel('V0 (V)')
+        self.v0_display = QLabel('000.00')
+        # wrf
+        wrf_display_label = QLabel('\u03C9 (x2\u03C0 MHz)')
+        self.wrf_display = QLabel('00.000')
+        # vdc
+        vdc_display_label = QLabel('VDC (V)')
+        self.vrf_display = QLabel('000.00')
+
+        # configure display elements
+        for display in (self.vrf_display, self.v0_display, self.wrf_display, self.vrf_display):
+            display.setFont(QFont(_SHELL_FONT, pointSize=22))
+            display.setAlignment(Qt.AlignRight)
+            display.setStyleSheet('color: blue')
+        for display_label in (vrf_display_label, v0_display_label,
+                              wrf_display_label, vrf_display_label):
+            display_label.setAlignment(Qt.AlignRight)
+
+        # create radio buttons
+        radio_widget = QWidget()
+        radio_widget_layout = QHBoxLayout(radio_widget)
+        self.values_get = QRadioButton("Get Values from System")
+        self.values_set = QRadioButton("Manually Set Values")
+        self.values_get.toggled.connect(lambda: self.btnstate(self.values_set))
+        self.values_set.toggled.connect(lambda: self.btnstate(self.values_get))
+        radio_widget_layout.addWidget(self.values_get)
+        radio_widget_layout.addWidget(self.values_set)
+        self.values_get.setChecked(True)
+
+        # lay out
+        # todo: make qcombobox instead
+        trap_widget_layout.addWidget(radio_widget,                  0, 0, 1, 4)
+        trap_widget_layout.addWidget(vrf_display_label,             1, 0, 1, 1)
+        trap_widget_layout.addWidget(self.vrf_display,              2, 0, 1, 1)
+        trap_widget_layout.addWidget(v0_display_label,              1, 1, 1, 1)
+        trap_widget_layout.addWidget(self.v0_display,               2, 1, 1, 1)
+        trap_widget_layout.addWidget(wrf_display_label,             1, 2, 1, 1)
+        trap_widget_layout.addWidget(self.wrf_display,              2, 2, 1, 1)
+        trap_widget_layout.addWidget(vdc_display_label,             1, 3, 1, 1)
+        trap_widget_layout.addWidget(self.vdc_display,              2, 3, 1, 1)
+        return trap_widget
+
+    def _makeGeometryTab(self):
+        """
+        This tab allows configuration of trap geometry parameters.
+        Part of the Parameters QTabWidget.
+        """
+        # r0, kr, z0, kz
+        # create holders
+        geometry_widget = QWidget()
+        geometry_widget_layout = QGridLayout(geometry_widget)
+
+        # a parameter
+        aparam_display_label = QLabel('a-parameter')
+        self.aparam_display = QLabel('0.0000')
+        # q parameter
+        qparam_display_label = QLabel('q-parameter')
+        self.qparam_display = QLabel('0.000')
+        # wsecr - radial
+        wsecr_display_label = QLabel('\u03C9 Radial (x2\u03C0 MHz)')
+        self.wsecr_display = QLabel('0.000')
+        # wsecz - radial
+        wsecz_display_label = QLabel('\u03C9 Axial (x2\u03C0 MHz)')
+        self.wsecz_display = QLabel('0.000')
+        # anharmonic_limit
+        anharmonic_limit_label = QLabel("Anharmonic Limit (%)")
+        self.anharmonic_limit = QLabel("00.00")
+
+        # configure display elements
+        for display in (self.aparam_display, self.qparam_display, self.wsecr_display,
+                        self.wsecz_display, self.anharmonic_limit):
+            display.setFont(QFont(_SHELL_FONT, pointSize=22))
+            display.setAlignment(Qt.AlignRight)
+            display.setStyleSheet('color: blue')
+        for display_label in (aparam_display_label, qparam_display_label,
+                              wsecr_display_label, wsecz_display_label, anharmonic_limit_label):
+            display_label.setAlignment(Qt.AlignRight)
         # todo: think of a better way for this
         # lay out
-        return trap_widget
+        return geometry_widget
 
     def _makeMathieuDisplayTab(self):
         """

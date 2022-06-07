@@ -2,7 +2,9 @@ import numpy as np
 from scipy.optimize import root
 
 __all__ = ["ionObject", "ionChain"]
-
+# todo: account for imaginary modes (i.e. kinking)
+# todo: higher mathieu
+# todo: account for v_offset
 
 """
 Fundamental and derived constants
@@ -46,9 +48,6 @@ class ionChain(object):
         """
         Create all trap-related variables here.
         """
-        # ion variables
-        # todo: check if ions are ionobjects or masses
-        self.ions = ions
         # trap variables
         self.v_rf = v_rf
         self.w_rf = w_rf
@@ -63,6 +62,10 @@ class ionChain(object):
         self.equilibrium_positions = {}
         self.mode_axial = {}
         self.mode_radial = {}
+        # ion variables
+        # todo: check if ions are ionobjects or masses
+        self.ions = ions
+
 
 
     """
@@ -123,14 +126,25 @@ class ionChain(object):
     def set_trap(self, **kwargs):
         """
         Adjust the value of a trap parameter.
-        Args:
-            **kwargs:
-
-        Returns:
-            ***todo
+        Arguments:
+            **kwargs: the trap parameter name and the new value to set it to.
         """
-        # ***todo if changed, need to recalculate all ion values
-        pass
+        # get trap parameters
+        for param in ['v_rf', 'w_rf', 'k_rf', 'r0', 'v_dc', 'k_dc', 'z0']:
+            try:
+                val = kwargs.get(param)
+                setattr(self, param, val)
+            except Exception as e:
+                pass
+
+        # recalculate ALL secular frequencies
+        for ion in self.ions:
+            ion.secular_axial = self._axial_secular_frequency(ion.mass)
+            ion.secular_radial = self._radial_secular_frequency(ion.mass)
+
+        # recalculate chain values
+        self._calculate_equilibrium_positions()
+        self._calculate_modes()
 
     """
     Secular Frequencies
@@ -240,7 +254,7 @@ class ionChain(object):
         eigenvalsRadial, eigenvecRadial = np.sqrt(eigenvalsRadial), eigenvecRadial.transpose()
         radialModes = dict(zip(eigenvalsRadial, eigenvecRadial))
         self.mode_radial = radialModes
-        # todo: sort increasing by mode freq
+
         return axialModes, radialModes
 
 
