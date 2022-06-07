@@ -185,9 +185,9 @@ class stability_gui(QFrame):
 
         # display labels
         r0_display_label = QLabel('r0 (\u03BCm)')
-        kr_display_label = QLabel('\u03BAr')
+        kr_display_label = QLabel('\u03BAr (%)')
         z0_display_label = QLabel('z0 (\u03BCm)')
-        kz_display_label = QLabel('\u03BAz')
+        kz_display_label = QLabel('\u03BAz (%)')
 
         # spin boxes
         self.r0_display = QDoubleSpinBox()
@@ -197,9 +197,19 @@ class stability_gui(QFrame):
 
         # configure display elements
         for spinbox in (self.r0_display, self.kr_display, self.z0_display, self.kz_display):
-            spinbox.setFont(QFont(_SHELL_FONT, pointSize=18))
+            spinbox.setFont(QFont(_SHELL_FONT, pointSize=16))
             spinbox.setAlignment(Qt.AlignRight)
-            # todo: set range, step, decimals
+
+        for spinbox in (self.r0_display, self.z0_display):
+            spinbox.setRange(0, 10000)
+            spinbox.setDecimals(0)
+            spinbox.setSingleStep(1)
+
+        for spinbox in (self.kr_display, self.kz_display):
+            spinbox.setRange(0, 100)
+            spinbox.setDecimals(2)
+            spinbox.setSingleStep(1)
+
         for display_label in (r0_display_label, kr_display_label, z0_display_label, kz_display_label):
             display_label.setAlignment(Qt.AlignRight)
 
