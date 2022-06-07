@@ -134,10 +134,10 @@ class AndorServer(LabradServer):
             print('releasing: {}'.format(self.set_cooler_off.__name__))
             self.lock.release()
 
+
     '''
     EMCCD Gain Settings
     '''
-
     @setting(6, "Get EMCCD Gain", returns='i')
     def getEMCCDGain(self, c):
         """
@@ -198,10 +198,10 @@ class AndorServer(LabradServer):
         if mode is not None:
             returnValue(mode)
 
+
     '''
     Shutter Mode
     '''
-
     @setting(100, "get_shutter_mode", returns='s')
     def get_shutter_mode(self, c):
         """
@@ -226,10 +226,10 @@ class AndorServer(LabradServer):
         if mode is not None:
             returnValue(mode)
 
+
     '''
     Acquisition Mode
     '''
-
     @setting(10, "Get Acquisition Mode", returns='s')
     def getAcquisitionMode(self, c):
         """
@@ -252,10 +252,10 @@ class AndorServer(LabradServer):
             self.lock.release()
         # todo: gui signal
 
+
     '''
     Trigger Mode
     '''
-
     @setting(12, "Get Trigger Mode", returns='s')
     def getTriggerMode(self, c):
         """
@@ -278,10 +278,10 @@ class AndorServer(LabradServer):
             self.lock.release()
         # todo: gui signal
 
+
     '''
     Exposure Time
     '''
-
     @setting(14, "Get Exposure Time", returns='v[s]')
     def getExposureTime(self, c):
         """
@@ -308,10 +308,10 @@ class AndorServer(LabradServer):
         # todo: gui signal
         returnValue(WithUnit(time, 's'))
 
+
     '''
     Image Region
     '''
-
     @setting(16, "Get Image Region", returns='*i')
     def getImageRegion(self, c):
         """
@@ -335,11 +335,9 @@ class AndorServer(LabradServer):
         finally:
             print('releasing: {}'.format(self.setImageRegion.__name__))
             self.lock.release()
-
     '''
     Acquisition
     '''
-
     @setting(18, "Start Acquisition", returns='')
     def startAcquisition(self, c):
         print('acquiring: {}'.format(self.startAcquisition.__name__))
@@ -416,10 +414,10 @@ class AndorServer(LabradServer):
             self.lock.release()
         returnValue(images)
 
+
     '''
     General
     '''
-
     @setting(22, "Get Camera Serial Number", returns='i')
     def getCameraSerialNumber(self, c):
         """
@@ -560,7 +558,7 @@ class AndorServer(LabradServer):
             yield self.image_updated(data)
 
     # HELPER
-    def _lock_tmp(self):
+    def _run(self, function_name):
         """
         Sets the target temperature.
         """

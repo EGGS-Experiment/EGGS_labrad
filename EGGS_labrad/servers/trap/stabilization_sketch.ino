@@ -29,7 +29,6 @@ void setup() {
     // set up serial
     Serial.begin(115200);
     Serial.println("THKIM");
-    // set DAC to 1V
     programDAC(msg_1v);
 }
 
@@ -77,8 +76,10 @@ void programDAC(uint32_t data) {
 
         // set SCLK low to clock data in
         OUTPUT_PORT &= ~(_BV(SCLK_PIN));
+        Serial.print(data & _BV(i), BIN);
     }
     // bring SYNC high to update input shift register
+    Serial.println("");
     OUTPUT_PORT |= _BV(SYNC_PIN);
     return;
 }
