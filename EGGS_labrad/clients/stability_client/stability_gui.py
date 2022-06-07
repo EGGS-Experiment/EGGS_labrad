@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox, QDo
 from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
 
 _SHELL_FONT = 'MS Shell Dlg 2'
+# todo: clean up display pyqtgraph
 
 
 class stability_gui(QFrame):
@@ -182,33 +183,35 @@ class stability_gui(QFrame):
         geometry_widget = QWidget()
         geometry_widget_layout = QGridLayout(geometry_widget)
 
-        # a parameter
-        aparam_display_label = QLabel('a-parameter')
-        self.aparam_display = QLabel('0.0000')
-        # q parameter
-        qparam_display_label = QLabel('q-parameter')
-        self.qparam_display = QLabel('0.000')
-        # wsecr - radial
-        wsecr_display_label = QLabel('\u03C9 Radial (x2\u03C0 MHz)')
-        self.wsecr_display = QLabel('0.000')
-        # wsecz - radial
-        wsecz_display_label = QLabel('\u03C9 Axial (x2\u03C0 MHz)')
-        self.wsecz_display = QLabel('0.000')
-        # anharmonic_limit
-        anharmonic_limit_label = QLabel("Anharmonic Limit (%)")
-        self.anharmonic_limit = QLabel("00.00")
+        # display labels
+        r0_display_label = QLabel('r0 (\u03BCm)')
+        kr_display_label = QLabel('\u03BAr')
+        z0_display_label = QLabel('z0 (\u03BCm)')
+        kz_display_label = QLabel('\u03BAz')
+
+        # spin boxes
+        self.r0_display = QDoubleSpinBox()
+        self.kr_display = QDoubleSpinBox()
+        self.z0_display = QDoubleSpinBox()
+        self.kz_display = QDoubleSpinBox()
 
         # configure display elements
-        for display in (self.aparam_display, self.qparam_display, self.wsecr_display,
-                        self.wsecz_display, self.anharmonic_limit):
-            display.setFont(QFont(_SHELL_FONT, pointSize=22))
-            display.setAlignment(Qt.AlignRight)
-            display.setStyleSheet('color: blue')
-        for display_label in (aparam_display_label, qparam_display_label,
-                              wsecr_display_label, wsecz_display_label, anharmonic_limit_label):
+        for spinbox in (self.r0_display, self.kr_display, self.z0_display, self.kz_display):
+            spinbox.setFont(QFont(_SHELL_FONT, pointSize=18))
+            spinbox.setAlignment(Qt.AlignRight)
+            # todo: set range, step, decimals
+        for display_label in (r0_display_label, kr_display_label, z0_display_label, kz_display_label):
             display_label.setAlignment(Qt.AlignRight)
-        # todo: think of a better way for this
+
         # lay out
+        geometry_widget_layout.addWidget(r0_display_label,              0, 0, 1, 1)
+        geometry_widget_layout.addWidget(self.r0_display,               1, 0, 1, 1)
+        geometry_widget_layout.addWidget(kr_display_label,              0, 1, 1, 1)
+        geometry_widget_layout.addWidget(self.kr_display,               1, 1, 1, 1)
+        geometry_widget_layout.addWidget(z0_display_label,              0, 2, 1, 1)
+        geometry_widget_layout.addWidget(self.z0_display,               1, 2, 1, 1)
+        geometry_widget_layout.addWidget(kz_display_label,              0, 3, 1, 1)
+        geometry_widget_layout.addWidget(self.kz_display,               1, 3, 1, 1)
         return geometry_widget
 
     def _makeMathieuDisplayTab(self):
@@ -272,14 +275,17 @@ class stability_gui(QFrame):
         # create tabwidget to store the Parameters and Chain tabs
         parameterTabWidget = QTabWidget()
         displayTabWidget = QTabWidget()
+
         # create parameter tabs
         parameter_tabs = {
             'Stability': self._makeStabilityTab(),
             'Ion Chain': self._makeIonTab(),
-            'Trap': self._makeTrapTab()
+            'Trap Parameters': self._makeTrapTab(),
+            'Trap Geometry': self._makeGeometryTab()
         }
         for tab_name, tab_widget in parameter_tabs.items():
             parameterTabWidget.addTab(tab_widget, tab_name)
+
         # create display tabs
         display_tabs = {
             'Mathieu': self._makeMathieuDisplayTab(),
@@ -287,6 +293,7 @@ class stability_gui(QFrame):
         }
         for tab_name, tab_widget in display_tabs.items():
             displayTabWidget.addTab(tab_widget, tab_name)
+
         # title
         title = QLabel('Stability Client')
         title.setFont(QFont(_SHELL_FONT, pointSize=18))
