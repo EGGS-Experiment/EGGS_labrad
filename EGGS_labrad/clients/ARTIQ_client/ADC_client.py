@@ -36,7 +36,7 @@ class ADC_channel(QFrame):
         self.gain_title = QLabel('Gain')
         self.gain = QComboBox()
         self.gain.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        self.gain.addItems(['1', '10', '100', '1000')]
+        self.gain.addItems(['1', '10', '100', '1000'])
         # set layout
         layout.addWidget(title, 0, 0, 1, 2)
         layout.addWidget(self.display_label, 1, 0)

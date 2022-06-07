@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QPushButton, QTabWidget, QComboBox, QRadioButton, QHBoxLayout
 
-from EGGS_labrad.clients.Widgets import TextChangingButton
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
 
 _SHELL_FONT = 'MS Shell Dlg 2'
 
@@ -29,7 +29,7 @@ class stability_gui(QFrame):
         stability_widget = QWidget()
         stability_widget_layout = QGridLayout(stability_widget)
         # l0_distance
-        l0_distance_label = QLabel("Equilibrium Distance (\u03BCm)")
+        l0_distance_label = QLabel("Length Scale (\u03BCm)")
         self.l0_distance = QLabel("00.00")
         self.l0_distance.setStyleSheet('color: blue')
         # # record button
@@ -62,7 +62,7 @@ class stability_gui(QFrame):
             display_label.setAlignment(Qt.AlignRight)
         # layout parameter box elements
         stability_widget_layout.addWidget(l0_distance_label,              1, 0, 1, 1)
-        stability_widget_layout.addWidget(self.pickoff_display,           2, 0, 1, 1)
+        stability_widget_layout.addWidget(self.l0_distance,               2, 0, 1, 1)
         stability_widget_layout.addWidget(aparam_display_label,           1, 1, 1, 1)
         stability_widget_layout.addWidget(self.aparam_display,            2, 1, 1, 1)
         stability_widget_layout.addWidget(qparam_display_label,           1, 2, 1, 1)
@@ -133,21 +133,21 @@ class stability_gui(QFrame):
         self.vrf_display = QLabel('000.00')
         # vrf - offset
         v0_display_label = QLabel('V0 (V)')
-        self.v0_display = QLabel('000.00')
+        self.v0_display = QLabel('00.00')
         # wrf
-        wrf_display_label = QLabel('\u03C9 (x2\u03C0 MHz)')
-        self.wrf_display = QLabel('00.000')
+        wrf_display_label = QLabel('\u03C9RF (x2\u03C0 MHz)')
+        self.wrf_display = QLabel('00.00')
         # vdc
         vdc_display_label = QLabel('VDC (V)')
-        self.vrf_display = QLabel('000.00')
+        self.vdc_display = QLabel('00.00')
 
         # configure display elements
-        for display in (self.vrf_display, self.v0_display, self.wrf_display, self.vrf_display):
-            display.setFont(QFont(_SHELL_FONT, pointSize=22))
+        for display in (self.vrf_display, self.v0_display, self.wrf_display, self.vdc_display):
+            display.setFont(QFont(_SHELL_FONT, pointSize=20))
             display.setAlignment(Qt.AlignRight)
             display.setStyleSheet('color: blue')
         for display_label in (vrf_display_label, v0_display_label,
-                              wrf_display_label, vrf_display_label):
+                              wrf_display_label, vdc_display_label):
             display_label.setAlignment(Qt.AlignRight)
 
         # create radio buttons
@@ -155,8 +155,6 @@ class stability_gui(QFrame):
         radio_widget_layout = QHBoxLayout(radio_widget)
         self.values_get = QRadioButton("Get Values from System")
         self.values_set = QRadioButton("Manually Set Values")
-        self.values_get.toggled.connect(lambda: self.btnstate(self.values_set))
-        self.values_set.toggled.connect(lambda: self.btnstate(self.values_get))
         radio_widget_layout.addWidget(self.values_get)
         radio_widget_layout.addWidget(self.values_set)
         self.values_get.setChecked(True)
@@ -166,12 +164,12 @@ class stability_gui(QFrame):
         trap_widget_layout.addWidget(radio_widget,                  0, 0, 1, 4)
         trap_widget_layout.addWidget(vrf_display_label,             1, 0, 1, 1)
         trap_widget_layout.addWidget(self.vrf_display,              2, 0, 1, 1)
-        trap_widget_layout.addWidget(v0_display_label,              1, 1, 1, 1)
-        trap_widget_layout.addWidget(self.v0_display,               2, 1, 1, 1)
-        trap_widget_layout.addWidget(wrf_display_label,             1, 2, 1, 1)
-        trap_widget_layout.addWidget(self.wrf_display,              2, 2, 1, 1)
-        trap_widget_layout.addWidget(vdc_display_label,             1, 3, 1, 1)
-        trap_widget_layout.addWidget(self.vdc_display,              2, 3, 1, 1)
+        trap_widget_layout.addWidget(wrf_display_label,             1, 1, 1, 1)
+        trap_widget_layout.addWidget(self.wrf_display,              2, 1, 1, 1)
+        trap_widget_layout.addWidget(vdc_display_label,             1, 2, 1, 1)
+        trap_widget_layout.addWidget(self.vdc_display,              2, 2, 1, 1)
+        trap_widget_layout.addWidget(v0_display_label,              1, 3, 1, 1)
+        trap_widget_layout.addWidget(self.v0_display,               2, 3, 1, 1)
         return trap_widget
 
     def _makeGeometryTab(self):
@@ -243,9 +241,9 @@ class stability_gui(QFrame):
         beta_setting_display.setAlignment(Qt.AlignRight)
         self.beta_setting = QDoubleSpinBox()
         self.beta_setting.setFont(QFont('MS Shell Dlg 2', pointSize=14))
-        self.beta_setting.setDecimals(1)
-        self.beta_setting.setSingleStep(0.1)
-        self.beta_setting.setRange(0, 1)
+        self.beta_setting.setDecimals(0)
+        self.beta_setting.setSingleStep(1)
+        self.beta_setting.setRange(0, 5)
         self.beta_setting.setKeyboardTracking(False)
         self.beta_setting.setAlignment(Qt.AlignRight)
         # autoscale button
