@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.optimize import root
+from collections import OrderedDict
+
 from EGGS_labrad.clients.ionChain.ion_constants import *
 
 __all__ = ["ionObject", "ionChain"]
@@ -57,8 +59,8 @@ class ionChain(object):
         self.l0 = self._length_scale()
         self.mathieu_order = 1
         self.equilibrium_positions = {}
-        self.mode_axial = {}
-        self.mode_radial = {}
+        self.mode_axial = OrderedDict()
+        self.mode_radial = OrderedDict()
         # ion variables
         # if (all(type(values) in (int, float, ionObject) for values in ions)) or (len(ions) == 0):
         #     self.ions = ions
@@ -128,7 +130,6 @@ class ionChain(object):
         # make sure position is in array
         if position not in range(len(self.ions)):
             raise Exception("Error: ion position exceeds chain length.")
-
         # change ion mass
         mass *= _AMU
         ion = self.ions[position]
@@ -153,10 +154,11 @@ class ionChain(object):
         # get trap parameters
         for param in ('v_rf', 'w_rf', 'k_r', 'r0', 'v_dc', 'k_z', 'z0'):
             try:
-                val = kwargs.get(param)
+                val = kwargs[param]
                 setattr(self, param, val)
             except Exception as e:
-                raise Exception("Error: invalid trap parameter.")
+                pass
+
 
         # recalculate ALL secular frequencies
         for ion in self.ions:
@@ -207,7 +209,7 @@ class ionChain(object):
         Returns:
                     (float) : the radial Mathieu a parameter.
         """
-        return (4 * _QE) * ((self.v_off * self.k_r / self.r0**2) - (self.v_dc * self.k_z / self.z0**2)) / (mass * self.w_rf)**2
+        return (4 * _QE / mass) * ((self.v_off * self.k_r / self.r0**2) - (self.v_dc * self.k_z / self.z0**2)) / self.w_rf**2
 
     def _mathieu_q_radial(self, mass):
         """

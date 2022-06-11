@@ -17,7 +17,7 @@ class stability_gui(QFrame):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
-        self.setFixedSize(400, 850)
+        self.setFixedSize(400, 875)
         self.makeLayout()
         self.setWindowTitle("Stability Client")
 
@@ -150,6 +150,7 @@ class stability_gui(QFrame):
             display.setAlignment(Qt.AlignRight)
             display.setDecimals(3)
             display.setSingleStep(1)
+            display.setRange(-100, 1000)
             display.setKeyboardTracking(False)
         for display_label in (vrf_display_label, voff_display_label,
                               wrf_display_label, vdc_display_label):
@@ -188,9 +189,9 @@ class stability_gui(QFrame):
 
         # display labels
         r0_display_label = QLabel('r0 (\u03BCm)')
-        kr_display_label = QLabel('\u03BAr (%)')
+        kr_display_label = QLabel('\u03BAr')
         z0_display_label = QLabel('z0 (\u03BCm)')
-        kz_display_label = QLabel('\u03BAz (%)')
+        kz_display_label = QLabel('\u03BAz')
 
         # spin boxes
         self.r0_display = QDoubleSpinBox()
@@ -209,8 +210,8 @@ class stability_gui(QFrame):
             spinbox.setSingleStep(1)
 
         for spinbox in (self.kr_display, self.kz_display):
-            spinbox.setRange(0, 100)
-            spinbox.setDecimals(2)
+            spinbox.setRange(0, 1)
+            spinbox.setDecimals(3)
             spinbox.setSingleStep(1)
 
         for display_label in (r0_display_label, kr_display_label, z0_display_label, kz_display_label):
@@ -257,7 +258,7 @@ class stability_gui(QFrame):
         beta_setting_display.setAlignment(Qt.AlignRight)
         self.beta_setting = QDoubleSpinBox()
         self.beta_setting.setFont(QFont('MS Shell Dlg 2', pointSize=14))
-        self.beta_setting.setDecimals(0)
+        self.beta_setting.setDecimals(1)
         self.beta_setting.setSingleStep(1)
         self.beta_setting.setRange(0, 5)
         self.beta_setting.setKeyboardTracking(False)
@@ -281,12 +282,12 @@ class stability_gui(QFrame):
         eigen_widget_layout = QGridLayout(eigen_widget)
         # create widgets
         self.eigenmode_axial_display = QTreeWidget()
-        self.eigenmode_axial_display.setHeaderLabels(["Mode Frequency", "Mode Amplitude"])
+        self.eigenmode_axial_display.setHeaderLabels(["Mode Frequency (x2\u03C0 MHz)", "Ion Number", "Mode Amplitude"])
         self.eigenmode_radial_display = QTreeWidget()
-        self.eigenmode_radial_display.setHeaderLabels(["Mode Frequency", "Mode Amplitude"])
+        self.eigenmode_radial_display.setHeaderLabels(["Mode Frequency (x2\u03C0 MHz)", "Ion Number", "Mode Amplitude"])
         # lay out
-        eigen_widget_layout.addWidget(self.eigenmode_axial_display)
-        eigen_widget_layout.addWidget(self.eigenmode_radial_display)
+        eigen_widget_layout.addWidget(QCustomGroupBox(self.eigenmode_axial_display, "Axial Modes"))
+        eigen_widget_layout.addWidget(QCustomGroupBox(self.eigenmode_radial_display, "Radial Modes"))
         return eigen_widget
 
     def makeLayout(self):

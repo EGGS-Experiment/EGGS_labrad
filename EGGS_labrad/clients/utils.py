@@ -91,8 +91,7 @@ def createTrunk(name):
     return ['', str(date.year), '{:02d}'.format(date.month), trunk1, trunk2]
 
 
-# wav2RGB
-# adapted from: http://codingmess.blogspot.com/2009/05/conversion-of-wavelength-in-nanometers.html
+# wav2RGB: adapted from http://codingmess.blogspot.com/2009/05/conversion-of-wavelength-in-nanometers.html
 def wav2RGB(wavelength):
     """
     Converts a wavelength to RGB.
