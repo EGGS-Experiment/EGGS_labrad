@@ -399,7 +399,6 @@ class RecordingGUIClient(GUIClient):
     # SUBCLASSED FUNCTIONS
     def record(self, *args, **kwargs):
         """
-        Creates a new dataset to record data
-        and sets recording status.
+        Creates a new dataset to record data and sets recording status.
         """
         pass
