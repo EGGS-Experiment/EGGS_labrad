@@ -17,7 +17,7 @@ class stability_gui(QFrame):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
-        self.setFixedSize(400, 600)
+        self.setFixedSize(400, 800)
         self.makeLayout()
         self.setWindowTitle("Stability Client")
 
@@ -104,7 +104,7 @@ class stability_gui(QFrame):
         self.total_ions.setKeyboardTracking(False)
 
         # configure display elements
-        for display in (self.total_ions, self.ion_num, self.ion_mass, self.l0_distance):
+        for display in (self.total_ions, self.ion_num, self.ion_mass):
             try:
                 display.setFont(QFont(_SHELL_FONT, pointSize=22))
                 display.setAlignment(Qt.AlignRight)
@@ -291,13 +291,13 @@ class stability_gui(QFrame):
 
         chain_widget = QWidget()
         chain_widget_layout = QVBoxLayout(chain_widget)
-        chain_widget_layout.add_widget(QCustomGroupBox(self._makeIonTab(), "Ion Chain"))
-        chain_widget_layout.add_widget(QCustomGroupBox(self._makeStabilityTab(), "Ion Stability"))
+        chain_widget_layout.addWidget(QCustomGroupBox(self._makeIonTab(), "Ion Chain"))
+        chain_widget_layout.addWidget(QCustomGroupBox(self._makeStabilityTab(), "Ion Stability"))
 
         trap_widget = QWidget()
         trap_widget_layout = QVBoxLayout(trap_widget)
-        trap_widget_layout.add_widget(QCustomGroupBox(self._makeTrapTab(), "Trap Parameter"))
-        trap_widget_layout.add_widget(QCustomGroupBox(self._makeGeometryTab(), "Trap Geometry"))
+        trap_widget_layout.addWidget(QCustomGroupBox(self._makeTrapTab(), "Trap Parameter"))
+        trap_widget_layout.addWidget(QCustomGroupBox(self._makeGeometryTab(), "Trap Geometry"))
 
 
         parameterTabWidget.addTab(chain_widget, "Ion Chain")
