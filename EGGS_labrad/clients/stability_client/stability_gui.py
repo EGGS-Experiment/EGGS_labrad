@@ -3,7 +3,8 @@ import pyqtgraph as pg
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QPushButton, QTabWidget, QComboBox, QRadioButton, QHBoxLayout
+from PyQt5.QtWidgets import QFrame, QWidget, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QPushButton,\
+    QTabWidget, QComboBox, QRadioButton, QHBoxLayout, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
 from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
 
@@ -62,8 +63,8 @@ class stability_gui(QFrame):
                               wsecr_display_label, wsecz_display_label, anharmonic_limit_label):
             display_label.setAlignment(Qt.AlignRight)
         # layout parameter box elements
-        stability_widget_layout.addWidget(l0_distance_label,              1, 0, 1, 1)
-        stability_widget_layout.addWidget(self.l0_distance,               2, 0, 1, 1)
+        stability_widget_layout.addWidget(anharmonic_limit_label,         1, 0, 1, 1)
+        stability_widget_layout.addWidget(self.anharmonic_limit,          2, 0, 1, 1)
         stability_widget_layout.addWidget(aparam_display_label,           1, 1, 1, 1)
         stability_widget_layout.addWidget(self.aparam_display,            2, 1, 1, 1)
         stability_widget_layout.addWidget(qparam_display_label,           1, 2, 1, 1)
@@ -72,9 +73,8 @@ class stability_gui(QFrame):
         stability_widget_layout.addWidget(self.wsecr_display,             4, 1, 1, 1)
         stability_widget_layout.addWidget(wsecz_display_label,            3, 2, 1, 1)
         stability_widget_layout.addWidget(self.wsecz_display,             4, 2, 1, 1)
-        stability_widget_layout.addWidget(anharmonic_limit_label,         3, 0, 1, 1)
-        stability_widget_layout.addWidget(self.anharmonic_limit,          4, 0, 1, 1)
-        #stability_widget_layout.addWidget(self.record_button,           4, 0, 1, 1)
+        stability_widget_layout.addWidget(l0_distance_label,              3, 0, 1, 1)
+        stability_widget_layout.addWidget(self.l0_distance,               4, 0, 1, 1)
         return stability_widget
 
     def _makeIonTab(self):
@@ -91,31 +91,33 @@ class stability_gui(QFrame):
         self.total_ions.setRange(1, 10)
         self.total_ions.setDecimals(0)
         self.total_ions.setSingleStep(1)
-        # ion_list
-        ion_list_label = QLabel("Ion #")
-        self.ion_list = QComboBox()
+        self.total_ions.setKeyboardTracking(False)
+        # ion_num
+        ion_num_label = QLabel("Ion #")
+        self.ion_num = QComboBox()
         # ion_mass
-        ion_mass_label = QLabel("Mass of Ion #0 (amu)")
+        ion_mass_label = QLabel("Ion Mass (amu)")
         self.ion_mass = QDoubleSpinBox()
         self.ion_mass.setRange(1, 200)
         self.ion_mass.setDecimals(1)
         self.ion_mass.setSingleStep(1)
+        self.total_ions.setKeyboardTracking(False)
 
         # configure display elements
-        for display in (self.total_ions, self.ion_list, self.ion_mass, self.l0_distance):
+        for display in (self.total_ions, self.ion_num, self.ion_mass, self.l0_distance):
             try:
                 display.setFont(QFont(_SHELL_FONT, pointSize=22))
                 display.setAlignment(Qt.AlignRight)
             except AttributeError:
                 pass
-        for display_label in (total_ion_label, ion_list_label, ion_mass_label):
+        for display_label in (total_ion_label, ion_num_label, ion_mass_label):
             display_label.setAlignment(Qt.AlignRight)
 
         # lay out
         iontab_widget_layout.addWidget(total_ion_label,             0, 0, 1, 1)
         iontab_widget_layout.addWidget(self.total_ions,             1, 0, 1, 1)
-        iontab_widget_layout.addWidget(ion_list_label,              0, 1, 1, 1)
-        iontab_widget_layout.addWidget(self.ion_list,               1, 1, 1, 1)
+        iontab_widget_layout.addWidget(ion_num_label,              0, 1, 1, 1)
+        iontab_widget_layout.addWidget(self.ion_num,               1, 1, 1, 1)
         iontab_widget_layout.addWidget(ion_mass_label,              0, 2, 1, 1)
         iontab_widget_layout.addWidget(self.ion_mass,               1, 2, 1, 1)
         # todo: integrate with andor
@@ -276,7 +278,8 @@ class stability_gui(QFrame):
         # create holders
         eigen_widget = QWidget()
         eigen_widget_layout = QGridLayout(eigen_widget)
-        #
+        # create widgets
+        self.eigenmode_display = QTreeWidget()
         # lay out
         #eigen_widget_layout.addWidget(, )
         return eigen_widget
@@ -286,15 +289,36 @@ class stability_gui(QFrame):
         parameterTabWidget = QTabWidget()
         displayTabWidget = QTabWidget()
 
+        chain_widget = QWidget()
+        chain_widget_layout = QVBoxLayout(chain_widget)
+        chain_widget_layout.add_widget(QCustomGroupBox(self._makeIonTab(), "Ion Chain"))
+        chain_widget_layout.add_widget(QCustomGroupBox(self._makeStabilityTab(), "Ion Stability"))
+
+        trap_widget = QWidget()
+        trap_widget_layout = QVBoxLayout(trap_widget)
+        trap_widget_layout.add_widget(QCustomGroupBox(self._makeTrapTab(), "Trap Parameter"))
+        trap_widget_layout.add_widget(QCustomGroupBox(self._makeGeometryTab(), "Trap Geometry"))
+
+
+        parameterTabWidget.addTab(chain_widget, "Ion Chain")
+        parameterTabWidget.addTab(trap_widget, "Trap")
+
         # create parameter tabs
-        parameter_tabs = {
-            'Stability': self._makeStabilityTab(),
-            'Ion Chain': self._makeIonTab(),
-            'Trap Parameters': self._makeTrapTab(),
-            'Trap Geometry': self._makeGeometryTab()
-        }
-        for tab_name, tab_widget in parameter_tabs.items():
-            parameterTabWidget.addTab(tab_widget, tab_name)
+        # parameter_tabs = {
+        #     'Stability': self._makeStabilityTab(),
+        #     'Ion Chain': self._makeIonTab(),
+        #     'Trap Parameters': self._makeTrapTab(),
+        #     'Trap Geometry': self._makeGeometryTab()
+        # }
+        # parameter_tabs = {
+        #     'Stability': self._makeStabilityTab(),
+        #     'Ion Chain': self._makeIonTab(),
+        #     'Trap Parameters': self._makeTrapTab(),
+        #     'Trap Geometry': self._makeGeometryTab()
+        # }
+        # for tab_name, tab_widget in parameter_tabs.items():
+        #     parameterTabWidget.addTab(tab_widget, tab_name)
+
 
         # create display tabs
         display_tabs = {

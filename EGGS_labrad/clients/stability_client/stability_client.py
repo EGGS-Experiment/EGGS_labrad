@@ -3,16 +3,16 @@ from numpy import pi, sqrt, nan
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
+from EGGS_labrad.clients.ionChain import *
 from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.clients.stability_client.stability_gui import stability_gui
 
 _PICKOFF_FACTOR = 301
+_DEFAULT_ION_MASS = 40
 _GEOMETRIC_FACTOR_RADIAL = 1
 _GEOMETRIC_FACTOR_AXIAL = 0.029
 _ELECTRODE_DISTANCE_RADIAL = 5.5e-4
 _ELECTRODE_DISTANCE_AXIAL = 2.2e-3
-_ION_MASS = 40 * 1.66053907e-27
-_ELECTRON_CHARGE = 1.60217e-19
 
 
 class stability_client(GUIClient):
@@ -39,19 +39,30 @@ class stability_client(GUIClient):
                 yield self.os.select_device(dev_name)
         # connect to RF server
         yield self.rf.select_device()
+        # create ionchain object
+        self.chain = ionChain(v_rf=150, w_rf=21.513*_wmhz, r0=_ELECTRODE_DISTANCE_RADIAL,
+                         v_dc=90, k_dc=_GEOMETRIC_FACTOR_AXIAL, z0=_ELECTRODE_DISTANCE_AXIAL)
+        self.chain.add_ion(_DEFAULT_ION_MASS)
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
         # create loopingcall
-        self.refresher = LoopingCall(self.updateValues)
+        self.refresher = LoopingCall(self._updateValues)
         self.refresher.start(3, now=False)
 
     def initGUI(self):
         self.gui.record_button.toggled.connect(lambda status: self.record_start(status))
         self.gui.beta_setting.valueChanged.connect(lambda value: self.gui.drawStability(value))
         self.gui.autoscale.clicked.connect(lambda blank: self.os.autoscale())
+        self.gui.total_ions.valueChanged(lambda val: self._changeNumIons(val))
+        self.gui.ion_mass.valueChanged(lambda val, pos=self.gui.ion_num.currentIndex(): self.chain.set_ion(pos, val))
         # set initial value for stability
         self.gui.beta_setting.setValue(0.4)
+
+        # todo: initialize radio button
+        # todo: replace pickoff with rf
+        # todo: set trap geometry values with constants
+
 
     # SLOTS
     @inlineCallbacks
@@ -60,17 +71,17 @@ class stability_client(GUIClient):
         Creates a new dataset to record values and tells the polling loop
         to add data to the data vault.
         """
-        # set up datavault
         self.recording = status
         if self.recording:
             self.starttime = time()
             trunk = createTrunk(self.name)
+            # set up datavault
             yield self.dv.cd(trunk, True, context=self.c_record)
             yield self.dv.new('Helical Resonator Pickoff', [('Elapsed time', 't')],
                               [('Pickoff', 'Peak-Peak Voltage', 'V')], context=self.c_record)
 
     @inlineCallbacks
-    def updateValues(self):
+    def _updateValues(self):
         """
         Updates GUI when values are received from server.
         """
@@ -89,11 +100,11 @@ class stability_client(GUIClient):
         v_dc2 = yield self.dc.voltage(2)
         v_dc = (v_dc1 + v_dc2)/2
         # calculate a parameter
-        a_param_x = -4 * _ELECTRON_CHARGE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
-        a_param_z = 8 * _ELECTRON_CHARGE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
+        a_param_x = -4 * _QE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
+        a_param_z = 8 * _QE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
         self.gui.aparam_display.setText('{:.5f}'.format(a_param_z))
         # calculate q parameter
-        q_param = 2 * _ELECTRON_CHARGE * (v_rf * _GEOMETRIC_FACTOR_RADIAL) / (_ELECTRODE_DISTANCE_RADIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
+        q_param = 2 * _QE * (v_rf * _GEOMETRIC_FACTOR_RADIAL) / (_ELECTRODE_DISTANCE_RADIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
         self.gui.qparam_display.setText('{:.3f}'.format(q_param))
         # calculate secular frequencies
         wsecr = Omega * sqrt(0.5 * q_param ** 2 + a_param_x)
@@ -107,6 +118,18 @@ class stability_client(GUIClient):
             elapsedtime = time() - self.starttime
             print(elapsedtime, v_rf)
             yield self.dv.add(elapsedtime, v_rf, context=self.c_record)
+
+    def _changeNumIons(self, numIons):
+        currentLength = len(self.chain.ions)
+        # remove ions
+        if numIons < currentLength:
+            self.chain.ions = self.chain.ions[:numIons]
+        # add ions
+        elif numIons > currentLength:
+            numDiff = numIons - currentLength
+            for i in range(numDiff):
+                self.chain.add_ion(_DEFAULT_ION_MASS)
+        # todo: set combobox elements of ion_num
 
 
 if __name__ == "__main__":
