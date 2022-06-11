@@ -58,7 +58,7 @@ class QClientMenuHeader(QMenuBar):
         self.addMenu(self.serialMenu)
         # create and add serial menu actions
         self.node_menu = QMenu('Port')
-        self.connect_action = QAction('Connect')
+        self.connect_action = QAction('Connect Default')
         self.disconnect_action = QAction('Disconnect')
         self.clear_action = QAction('Clear Buffers')
         self.serialconnection_action = QAction('Serial Connection')
@@ -68,8 +68,11 @@ class QClientMenuHeader(QMenuBar):
         self.serialMenu.addAction(self.clear_action)
         self.serialMenu.addAction(self.serialconnection_action)
         # connect actions to slots
-        self.serialMenu.aboutToShow.connect(lambda _server=server: self._getDevice(_server))
-        self.node_menu.aboutToShow.connect(lambda _server=server: self._serialNodes(_server))
+        self.serialMenu.aboutToShow.connect(lambda _server=server: self._getSerialDevice(_server))
+        self.node_menu.aboutToShow.connect(lambda _server=server: self._getNodes(_server))
+        self.connect_action.triggered.connect(lambda action, _server=server: self._deviceSelect(_server))
+        self.disconnect_action.triggered.connect(lambda action, _server=server: self._deviceClose(_server))
+        self.clear_action.triggered.connect(lambda action, _server=server: self._deviceClear(_server))
 
     def addGPIB(self, server):
         """
@@ -84,7 +87,7 @@ class QClientMenuHeader(QMenuBar):
         self.deselect_action = QAction('Deselect Device')
         #self.lock_action = QAction('Lock Device')
         self.gpibMenu.addAction(self.select_action)
-        self.gpibMenu.addAction(self.release_action)
+        self.gpibMenu.addAction(self.deselect_action)
         #self.gpibMenu.addAction(self.lock_action)
         # connect actions to slots
         self.select_action.triggered.connect(lambda action, _server=server: self._gpibSelect(_server))
@@ -156,36 +159,45 @@ class QClientMenuHeader(QMenuBar):
     """
     # SERIAL
     @inlineCallbacks
-    def _getDevice(self, server):
+    def _getSerialDevice(self, server):
         try:
             node, port = yield server.device_info()
             if node == '':
                 self.node_menu.setEnabled(True)
-                self.port_menu.setEnabled(True)
+                self.connect_action.setEnabled(True)
             else:
                 self.node_menu.setEnabled(False)
-                self.port_menu.setEnabled(False)
+                self.connect_action.setEnabled(False)
         except Exception as e:
             print(e)
 
     @inlineCallbacks
-    def _serialNodes(self, server):
+    def _getNodes(self, server):
         try:
-            print(self.cxn.keys())
+            # clear submenu
+            self.node_menu.clear()
             # get serial servers
-            #serial_servers = [i[1] for i in servers if self._matchSerial(serNode, i[1])][0]
-            # list serial servers
-            # todo: show ports
-            # todo: upon click, create connection to device
+            servers = yield self.cxn.manager.servers()
+            serial_servers = [server_name for _, server_name in servers if "serial server" in server_name.lower()]
+            # create holding dictionary of nodes and ports
+            for server_name in serial_servers:
+                # add node submenu
+                node_name = server_name.split(" ")[0]
+                serial_server_menu = self.node_menu.addMenu(node_name)
+                # get ports
+                ports = yield self.cxn.servers[server_name].list_serial_ports()
+                # create port actions
+                for port_name in sorted(ports):
+                    port_connect_action = serial_server_menu.addAction(port_name)
+                    port_connect_action.triggered.connect(lambda action, _server=server, _node=node_name, _port=port_name:
+                                                          _server.device_select(_node, _port))
         except Exception as e:
             print(e)
 
     @inlineCallbacks
     def _deviceSelect(self, server):
         try:
-            node, port = yield server.device_select()
-            # todo: assign to self
-            # todo: check if we have a device; if not, set node and port enabled
+            yield server.device_select()
         except Exception as e:
             print(e)
 
@@ -195,6 +207,7 @@ class QClientMenuHeader(QMenuBar):
             yield server.device_close()
             # todo: check if we have a device; if not, set node and port enabled
         except Exception as e:
+            print('scde')
             print(e)
 
     @inlineCallbacks
@@ -209,6 +222,7 @@ class QClientMenuHeader(QMenuBar):
     @inlineCallbacks
     def _gpibSelect(self, server):
         try:
+            # todo: log
             yield server.select_device()
         except Exception as e:
             print(e)
