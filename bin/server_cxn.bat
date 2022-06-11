@@ -21,8 +21,11 @@ server_dict = {
         'pmt': 'pmt_server', 'dc': 'dc_server', 'fma': 'fma1700a_server', 'to': 'toptica_server',
         'sd': 'slider_server',
         'os': 'oscilloscope_server', 'fg': 'function_generator_server', 'sa': 'spectrum_analyzer_server',
-        'gpib': 'gpib_device_manager', 'mk_gpib': 'mongkok_gpib_bus', 'hf_gpib': 'hengfachuen_gpib_bus',
-        'mk': 'node_mongkok', 'cw': 'node_causewaybay', 'hf': 'node_hengfachuen'
+        'gpib': 'gpib_device_manager', 'mk_gpib': 'mongkok_gpib_bus', 'lh_gpib': 'lahaina_gpib_bus',
+        'hf_gpib': 'hengfachuen_gpib_bus', 'cw_gpib': 'causewaybay_gpib_bus',
+        'mk': 'node_mongkok', 'lh': 'node_lahaina', 'cw': 'node_causewaybay', 'hf': 'node_hengfachuen',
+        'mk_ser': 'mongkok_serial_server', 'lh_ser': 'lahaina_serial_server', 'cw_ser': 'causewaybay_serial_server',
+        'hf_ser': 'hengfachuen_serial_server'
         }
 
 for servers in server_dict.items():

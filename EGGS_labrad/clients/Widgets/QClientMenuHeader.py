@@ -29,8 +29,8 @@ class QClientMenuHeader(QMenuBar):
         # config menu
         self.configMenu = QMenu("&Configuration")
         self.addMenu(self.configMenu)
-        self.saveConfig_action = QAction('Save Configuration')
-        self.loadConfig_action = QAction('Load Configuration')
+        self.saveConfig_action = QAction('&Save Configuration')
+        self.loadConfig_action = QAction('&Load Configuration')
         self.configMenu.addAction(self.saveConfig_action)
         self.configMenu.addAction(self.loadConfig_action)
 
@@ -56,19 +56,21 @@ class QClientMenuHeader(QMenuBar):
         self.serialMenu = QMenu("&Serial")
         self.addMenu(self.serialMenu)
         # create and add serial menu actions
-        self.node_action = QAction('Node')
-        self.port_action = QAction('Port')
+        self.node_menu = QMenu('Node')
+        self.port_menu = QMenu('Port')
         self.connect_action = QAction('Connect')
         self.disconnect_action = QAction('Disconnect')
         self.clear_action = QAction('Clear Buffers')
         self.serialconnection_action = QAction('Serial Connection')
-        self.serialMenu.addAction(self.node_action)
-        self.serialMenu.addAction(self.port_action)
+        self.serialMenu.addMenu(self.node_menu)
+        self.serialMenu.addMenu(self.port_menu)
         self.serialMenu.addAction(self.connect_action)
         self.serialMenu.addAction(self.disconnect_action)
         self.serialMenu.addAction(self.clear_action)
         self.serialMenu.addAction(self.serialconnection_action)
         # connect actions to slots
+        self.serialMenu.triggered.connect(lambda action, _server=server: self._getDevice(_server))
+        self.node_menu.triggered.connect(lambda action, _server=server: self._getPolling(_server))
         self.connect_action.triggered.connect(lambda action, _server=server: self._deviceSelect(_server))
         self.disconnect_action.triggered.connect(lambda action, _server=server: self._deviceClose(_server))
         self.clear_action.triggered.connect(lambda action, _server=server: self._deviceClear(_server))
@@ -86,12 +88,15 @@ class QClientMenuHeader(QMenuBar):
         self.gpibMenu = QMenu("&GPIB")
         self.addMenu(self.gpibMenu)
         self.select_action = QAction('Select Device')
-        self.release_action = QAction('Release Device')
-        self.lock_action = QAction('Lock Device')
+        self.deselect_action = QAction('Deselect Device')
+        #self.lock_action = QAction('Lock Device')
         self.gpibMenu.addAction(self.select_action)
         self.gpibMenu.addAction(self.release_action)
-        self.gpibMenu.addAction(self.lock_action)
-        # todo: implement
+        #self.gpibMenu.addAction(self.lock_action)
+        # connect actions to slots
+        self.select_action.triggered.connect(lambda action, _server=server: self._gpibSelect(_server))
+        self.deselect_action.triggered.connect(lambda action, _server=server: self._gpibDeselect(_server))
+        #self.lock_action.triggered.connect(lambda action, _server=server: self._gpibLock(_server))
 
     def addPolling(self, server):
         """
@@ -152,7 +157,20 @@ class QClientMenuHeader(QMenuBar):
         # todo: open up dialog box that works these functions
 
 
-    # FUNCTIONS
+    """
+    SLOTS
+    """
+    # SERIAL
+    @inlineCallbacks
+    def _getDevice(self, server):
+        try:
+            node, port = yield server.device_info()
+            if node == '':
+                self.node_menu.setEnabled(False)
+                self.port_menu.setEnabled(False)
+        except Exception as e:
+            print(e)
+
     @inlineCallbacks
     def _deviceSelect(self, server):
         try:
@@ -177,6 +195,29 @@ class QClientMenuHeader(QMenuBar):
         except Exception as e:
             print(e)
 
+    @inlineCallbacks
+    def _serialNodes(self, server):
+        try:
+            # todo: get serial server and get all ports
+        except Exception as e:
+            print(e)
+
+    # GPIB
+    @inlineCallbacks
+    def _gpibSelect(self, server):
+        try:
+            yield server.select_device()
+        except Exception as e:
+            print(e)
+
+    @inlineCallbacks
+    def _gpibDeselect(self, server):
+        try:
+            yield server.deselect_device()
+        except Exception as e:
+            print(e)
+
+    # POLLING
     @inlineCallbacks
     def _getPolling(self, server):
         try:
