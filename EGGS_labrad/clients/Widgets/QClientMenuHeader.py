@@ -8,8 +8,8 @@ class QClientMenuHeader(QMenuBar):
     Designed to be initialized by a GUIClient.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super(QClientMenuHeader, self).__init__(parent)
         self._makeMenu()
 
     def _makeMenu(self):
@@ -69,14 +69,13 @@ class QClientMenuHeader(QMenuBar):
         self.serialMenu.addAction(self.clear_action)
         self.serialMenu.addAction(self.serialconnection_action)
         # connect actions to slots
-        self.serialMenu.triggered.connect(lambda action, _server=server: self._getDevice(_server))
-        self.node_menu.triggered.connect(lambda action, _server=server: self._getPolling(_server))
+        self.serialMenu.aboutToShow.connect(lambda _server=server: self._getDevice(_server))
+        self.node_menu.aboutToShow.connect(lambda _server=server: self._serialNodes(_server))
+        self.port_menu.aboutToShow.connect(lambda _server=server: self._serialPorts(_server))
         self.connect_action.triggered.connect(lambda action, _server=server: self._deviceSelect(_server))
         self.disconnect_action.triggered.connect(lambda action, _server=server: self._deviceClose(_server))
         self.clear_action.triggered.connect(lambda action, _server=server: self._deviceClear(_server))
-        #self.restart_action.triggered.connect(lambda: client._restart())
-        # todo: submenu for node, port, connection status
-        # todo: can't change node/port if currently connected, grey out
+        # todo: submenu for connection status (baud rate, timeout)
 
     def addGPIB(self, server):
         """
@@ -129,7 +128,7 @@ class QClientMenuHeader(QMenuBar):
         self.pollingMenu.addAction(self.pollstatus_action)
         self.pollingMenu.addAction(self.pollrate_action)
         # connect actions to slots
-        self.pollingMenu.triggered.connect(lambda action, _server=server: self._getPolling(_server))
+        self.pollingMenu.aboutToShow.connect(lambda _server=server: self._getPolling(_server))
         self.pollstatus_action.triggered.connect(lambda status, _server=server: self._setPollingStatus(_server, status))
         self.pollrate_spinbox.valueChanged.connect(lambda value, _server=server: self._setPollingInterval(_server, value))
         # get initial state
@@ -166,8 +165,29 @@ class QClientMenuHeader(QMenuBar):
         try:
             node, port = yield server.device_info()
             if node == '':
+                self.node_menu.setEnabled(True)
+                self.port_menu.setEnabled(True)
+            else:
                 self.node_menu.setEnabled(False)
                 self.port_menu.setEnabled(False)
+        except Exception as e:
+            print(e)
+
+    @inlineCallbacks
+    def _serialNodes(self, server):
+        try:
+            # todo: get serial server
+            # todo: list all nodes
+            pass
+        except Exception as e:
+            print(e)
+
+    @inlineCallbacks
+    def _serialPorts(self, server):
+        try:
+            # todo: get serial server
+            # todo: list all ports
+            pass
         except Exception as e:
             print(e)
 
@@ -195,12 +215,6 @@ class QClientMenuHeader(QMenuBar):
         except Exception as e:
             print(e)
 
-    @inlineCallbacks
-    def _serialNodes(self, server):
-        try:
-            # todo: get serial server and get all ports
-        except Exception as e:
-            print(e)
 
     # GPIB
     @inlineCallbacks
