@@ -26,8 +26,6 @@ class toptica_client(GUIClient):
     def initClient(self):
         # get config
         self.channelinfo = yield self.toptica.device_list()
-        self.gui.makeLayout(self.channelinfo)
-        self.gui.show()
         # connect to device signals
         yield self.toptica.signal__current_updated(CURRENTUPDATED_ID)
         yield self.toptica.addListener(listener=self.updateCurrent, source=None, ID=CURRENTUPDATED_ID)
@@ -45,6 +43,8 @@ class toptica_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
+        self.gui.makeLayout(self.channelinfo)
+        self.gui.show()
         # set display for each channel
         for chan_num, widget in self.gui.channels.items():
             # status

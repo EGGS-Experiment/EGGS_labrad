@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QComboBox, QScrollArea, QWidget, QSizePolicy
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QClientMenuHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
 
 SHELL_FONT = 'MS Shell Dlg 2'
 LABEL_FONT = QFont(SHELL_FONT, pointSize=8)
@@ -83,7 +83,7 @@ class toptica_channel(QFrame):
         box.feedbackChannel.addItem('Off')
         box.feedbackChannel.addItems(['Fine In 1', 'Fine In 2', 'Fast In 3', 'Fast In 4'])
         box.feedbackMode = QComboBox()
-        box.feedbackMode.addItem(['Current', 'Temperature'])
+        box.feedbackMode.addItems(['Current', 'Temperature'])
         box.feedbackMode.setFont(QFont(SHELL_FONT, pointSize=10))
         # lay out
         box_layout.addWidget(chanLabel,                 0, 0)
@@ -171,7 +171,7 @@ class toptica_channel(QFrame):
         box.modeBox.addItems(['Current', 'Temperature'])
         box.modeBox.addItem('Temperature')
         box.shapeBox = QComboBox()
-        box.shapeBox.addItem(['Triangle', 'Sine'])
+        box.shapeBox.addItems(['Triangle', 'Sine'])
         # create doublespinboxes
         box.freqBox = QDoubleSpinBox()
         box.ampBox = QDoubleSpinBox()
@@ -229,7 +229,7 @@ class toptica_gui(QFrame):
         self.channels = {}
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle('Toptica GUI')
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        #self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         #self.makeLayout(0)
 
     def makeLayout(self, channelinfo):
@@ -240,21 +240,20 @@ class toptica_gui(QFrame):
         wmChan_widget = QWidget()
         wmChan_layout = QGridLayout(wmChan_widget)
         channel_nums = list(zip(*channelinfo))[0]
-        #todo: get whether piezo exists
+        # todo: get whether piezo exists
         for i in channel_nums:
             channel_gui = toptica_channel(piezoControl=True)
             self.channels[i] = channel_gui
             wmChan_layout.addWidget(channel_gui, i, 0, 1, 1)
         # add wavemeter channel holder to qBox
         wm_scroll.setWidget(wmChan_widget)
-        wm_scroll.setFixedWidth(wmChan_widget.sizeHint().width())
+        wm_scroll.setFixedWidth(wmChan_widget.sizeHint().width() - 3)
         # add title
         title = QLabel('Toptica Client')
         title.setFont(QFont('MS Shell Dlg 2', pointSize=18))
+        title.setAlignment(Qt.AlignCenter)
         title.setMaximumHeight(40)
         # final layout
-        self.header = QClientMenuHeader()
-        layout.setMenuBar(self.header)
         layout.addWidget(title,         1, 0, 1, 1)
         layout.addWidget(wm_scroll,     2, 0, 1, 1)
 
