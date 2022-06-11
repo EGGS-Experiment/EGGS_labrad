@@ -1,3 +1,4 @@
+# todo: finish
 from distutils.core import setup
 import sys
 import versioneer
