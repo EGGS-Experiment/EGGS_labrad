@@ -17,7 +17,7 @@ class stability_gui(QFrame):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         self.setFrameStyle(0x0001 | 0x0030)
-        self.setFixedSize(400, 800)
+        self.setFixedSize(400, 850)
         self.makeLayout()
         self.setWindowTitle("Stability Client")
 
@@ -101,12 +101,12 @@ class stability_gui(QFrame):
         self.ion_mass.setRange(1, 200)
         self.ion_mass.setDecimals(1)
         self.ion_mass.setSingleStep(1)
-        self.total_ions.setKeyboardTracking(False)
+        self.ion_mass.setKeyboardTracking(False)
 
         # configure display elements
         for display in (self.total_ions, self.ion_num, self.ion_mass):
             try:
-                display.setFont(QFont(_SHELL_FONT, pointSize=22))
+                display.setFont(QFont(_SHELL_FONT, pointSize=18))
                 display.setAlignment(Qt.AlignRight)
             except AttributeError:
                 pass
@@ -133,21 +133,24 @@ class stability_gui(QFrame):
         trap_widget_layout = QGridLayout(trap_widget)
         # vrf
         vrf_display_label = QLabel('VRF (Vpp)')
-        self.vrf_display = QComboBox()
+        self.vrf_display = QDoubleSpinBox()
         # vrf - offset
         v0_display_label = QLabel('V0 (V)')
-        self.v0_display = QComboBox()
+        self.v0_display = QDoubleSpinBox()
         # wrf
         wrf_display_label = QLabel('\u03C9RF (x2\u03C0 MHz)')
-        self.wrf_display = QComboBox()
+        self.wrf_display = QDoubleSpinBox()
         # vdc
         vdc_display_label = QLabel('VDC (V)')
-        self.vdc_display = QComboBox()
+        self.vdc_display = QDoubleSpinBox()
 
         # configure display elements
         for display in (self.vrf_display, self.v0_display, self.wrf_display, self.vdc_display):
             display.setFont(QFont(_SHELL_FONT, pointSize=12))
             display.setAlignment(Qt.AlignRight)
+            display.setDecimals(3)
+            display.setSingleStep(1)
+            display.setKeyboardTracking(False)
         for display_label in (vrf_display_label, v0_display_label,
                               wrf_display_label, vdc_display_label):
             display_label.setAlignment(Qt.AlignRight)
@@ -197,7 +200,7 @@ class stability_gui(QFrame):
 
         # configure display elements
         for spinbox in (self.r0_display, self.kr_display, self.z0_display, self.kz_display):
-            spinbox.setFont(QFont(_SHELL_FONT, pointSize=16))
+            spinbox.setFont(QFont(_SHELL_FONT, pointSize=12))
             spinbox.setAlignment(Qt.AlignRight)
 
         for spinbox in (self.r0_display, self.z0_display):
@@ -218,10 +221,10 @@ class stability_gui(QFrame):
         geometry_widget_layout.addWidget(self.r0_display,               1, 0, 1, 1)
         geometry_widget_layout.addWidget(kr_display_label,              0, 1, 1, 1)
         geometry_widget_layout.addWidget(self.kr_display,               1, 1, 1, 1)
-        geometry_widget_layout.addWidget(z0_display_label,              0, 2, 1, 1)
-        geometry_widget_layout.addWidget(self.z0_display,               1, 2, 1, 1)
-        geometry_widget_layout.addWidget(kz_display_label,              0, 3, 1, 1)
-        geometry_widget_layout.addWidget(self.kz_display,               1, 3, 1, 1)
+        geometry_widget_layout.addWidget(z0_display_label,              2, 0, 1, 1)
+        geometry_widget_layout.addWidget(self.z0_display,               3, 0, 1, 1)
+        geometry_widget_layout.addWidget(kz_display_label,              2, 1, 1, 1)
+        geometry_widget_layout.addWidget(self.kz_display,               3, 1, 1, 1)
         return geometry_widget
 
     def _makeMathieuDisplayTab(self):
