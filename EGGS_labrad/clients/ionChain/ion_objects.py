@@ -1,21 +1,14 @@
 import numpy as np
 from scipy.optimize import root
+from EGGS_labrad.clients.ionChain.ion_constants import *
 
 __all__ = ["ionObject", "ionChain"]
 # todo: account for imaginary modes (i.e. kinking)
+# todo: move mathieu and secular functions to separate file
 # todo: higher mathieu
-# todo: account for v_offset
-
-"""
-Fundamental and derived constants
-"""
-_QE = 1.60217e-19
-_AMU = 1.66053904e-27
-_HBAR = 1.05457182e-34
-_LSK = 8.96273592e-4
-_KE2 = 2.30707751e-28
-_wkhz = 2 * np.pi * 1e3
-_wmhz = 2 * np.pi * 1e6
+# todo: make print function
+# todo: lamb-dicke
+# todo: write tests
 
 
 """
@@ -33,6 +26,8 @@ class ionObject(object):
         self.mass = mass
         self.secular_axial = 0
         self.secular_radial = 0
+        self.mathieu_a_radial = 0
+        self.mathieu_q_radial = 0
 
 
 class ionChain(object):
@@ -43,6 +38,7 @@ class ionChain(object):
     def __init__(self,
                  v_rf=0, w_rf=0, k_rf=1, r0=0,
                  v_dc=0, k_dc=1, z0=0,
+                 v_off=0,
                  ions=[]
                  ):
         """
@@ -56,6 +52,7 @@ class ionChain(object):
         self.v_dc = v_dc
         self.k_dc = k_dc
         self.z0 = z0
+        self.v_off = v_off
         # chain/mode variables
         self.l0 = self._length_scale()
         self.mathieu_order = 1
@@ -67,13 +64,12 @@ class ionChain(object):
         self.ions = ions
 
 
-
     """
-    User Functions
+    User Functions - Chain
     """
-    def insert_ion(self, mass, position=None):
+    def add_ion(self, mass, position=None):
         """
-        Insert an ion to the chain.
+        Add an ion to the chain.
         Ion is inserted at end of chain by default.
         Arguments:
             mass        (float)     : the mass of the ion (in amu).
@@ -91,20 +87,40 @@ class ionChain(object):
         ion = ionObject(mass)
         self.ions.insert(position, ion)
 
-        # calculate secular frequencies
+        # calculate secular frequencies and mathieu
         ion.secular_axial = self._axial_secular_frequency(mass)
         ion.secular_radial = self._radial_secular_frequency(mass)
+        ion.mathieu_a_radial = self._mathieu_a_radial(mass)
+        ion.mathieu_q_radial = self._mathieu_q_radial(mass)
 
         # recalculate chain values
         self._calculate_equilibrium_positions()
         self._calculate_modes()
 
-    def set_ion(self, mass, position):
+    def remove_ion(self, position=None):
+        """
+        Remove an ion from the chain.
+        Removes an ion from the end of chain by default.
+        Arguments:
+            position    (position)  : the position (i.e. index) of the ion. Starts at 0.
+        """
+        if position < len(self.ions):
+            raise Exception("Error: ion position exceeds chain length.")
+        elif position is None:
+            self.ions.pop()
+        else:
+            self.ions.pop(position)
+
+        # recalculate mode data
+        self._calculate_equilibrium_positions()
+        self._calculate_modes()
+        
+    def set_ion(self, position, mass):
         """
         Changes the mass of an ion within the chain.
         Arguments:
-            mass        (float)     : the mass of the ion (in amu).
             position    (position)  : the position (i.e. index) of the ion. Starts at 0.
+            mass        (float)     : the mass of the ion (in amu).
         """
         # make sure position is in array
         if position not in range(len(self.ions)):
@@ -115,11 +131,13 @@ class ionChain(object):
         ion = self.ions[position]
         ion.mass = mass
 
-        # recalculate secular frequencies
+        # recalculate secular frequencies and mathieu
         ion.secular_axial = self._axial_secular_frequency(mass)
         ion.secular_radial = self._radial_secular_frequency(mass)
+        ion.mathieu_a_radial = self._mathieu_a_radial(mass)
+        ion.mathieu_q_radial = self._mathieu_q_radial(mass)
 
-        # recalculate chain values
+        # recalculate mode data
         self._calculate_equilibrium_positions()
         self._calculate_modes()
 
@@ -130,24 +148,28 @@ class ionChain(object):
             **kwargs: the trap parameter name and the new value to set it to.
         """
         # get trap parameters
-        for param in ['v_rf', 'w_rf', 'k_rf', 'r0', 'v_dc', 'k_dc', 'z0']:
+        for param in ('v_rf', 'w_rf', 'k_rf', 'r0', 'v_dc', 'k_dc', 'z0'):
             try:
                 val = kwargs.get(param)
                 setattr(self, param, val)
             except Exception as e:
-                pass
+                raise Exception("Error: invalid trap parameter.")
 
         # recalculate ALL secular frequencies
         for ion in self.ions:
             ion.secular_axial = self._axial_secular_frequency(ion.mass)
             ion.secular_radial = self._radial_secular_frequency(ion.mass)
+            ion.mathieu_a_radial = self._mathieu_a_radial(ion.mass)
+            ion.mathieu_q_radial = self._mathieu_q_radial(ion.mass)
 
         # recalculate chain values
+        self.l0 = self._length_scale()
         self._calculate_equilibrium_positions()
         self._calculate_modes()
 
+
     """
-    Secular Frequencies
+    Calculating Ion Values
     """
     def _axial_secular_frequency(self, mass):
         """
@@ -157,7 +179,9 @@ class ionChain(object):
         Returns:
                     (float) : the axial secular frequency (in Hz).
         """
-        return np.sqrt((2 * _QE * self.k_dc * self.v_dc) / (mass * self.z0**2))
+        return np.sqrt(
+            (2 * _QE * self.k_dc * self.v_dc) / (mass * self.z0**2)
+        )
 
     def _radial_secular_frequency(self, mass):
         """
@@ -167,9 +191,35 @@ class ionChain(object):
         Returns:
                     (float) : the axial secular frequency (in Hz).
         """
-        return np.sqrt(0.5 * ((_QE * self.v_rf * self.k_rf) / (mass * self.w_rf * self.r0**2))**2 -
-                       ((_QE * self.k_dc * self.v_dc) / (mass * self.z0**2)))
+        return np.sqrt(
+            0.5 * ((_QE * self.v_rf * self.k_rf) / (mass * self.w_rf * self.r0**2))**2 -
+            _QE / mass * (self.k_dc * self.v_dc / self.z0**2 - self.k_rf * self.v_off / self.r0**2)
+        )
 
+    def _mathieu_a_radial(self, mass):
+        """
+        Calculate the radial Mathieu a parameter of an ion.
+        Arguments:
+            mass    (float) : the ion mass (in amu).
+        Returns:
+                    (float) : the radial Mathieu a parameter.
+        """
+        return (4 * _QE) * ((self.v_off * self.k_rf / self.r0**2) - (self.v_dc * self.k_dc / self.z0**2)) / (mass * self.w_rf)**2
+
+    def _mathieu_q_radial(self, mass):
+        """
+        Calculate the radial Mathieu q parameter of an ion.
+        Arguments:
+            mass    (float) : the ion mass (in amu).
+        Returns:
+                    (float) : the radial Mathieu q parameter.
+        """
+        return (2 * _QE * self.v_rf * self.k_rf / mass) / (self.r0 * self.w_rf)**2
+
+
+    """
+    Calculating Chain Values
+    """
     def _length_scale(self):
         """
         Calculate the length scale of ion-ion separation.
@@ -178,10 +228,6 @@ class ionChain(object):
         """
         return _LSK * np.power(np.power(self.z0, 2) / self.v_dc, 1 / 3)
 
-
-    """
-    Calculating Mode Data
-    """
     def _calculate_equilibrium_positions(self):
         """
         Recalculates the equilibrium positions of the chain.
@@ -261,12 +307,12 @@ class ionChain(object):
 if __name__ == "__main__":
     # create ion chain object
     # MOTion trap
-    chain = ionChain(v_rf=270.2, w_rf=1.697*_wmhz, r0=6.8453e-3, v_dc=94.05, k_dc=0.022, z0=10.16e-3)
+    chain = ionChain(v_rf=270.2, w_rf=1.697*_wmhz, r0=6.8453e-3, v_dc=94.05, k_dc=0.022, z0=10.16e-3, v_off=1)
 
     # create ions
     massList = [38, 40, 38, 40, 40]
     for mass_amu in massList:
-        chain.insert_ion(mass_amu)
+        chain.add_ion(mass_amu)
 
     print("Equilibrium Positions:", np.round(chain.equilibrium_positions, 3))
     print("Axial Modes:")
@@ -283,8 +329,8 @@ if __name__ == "__main__":
           "\n"
           "\n")
 
-    chain.set_ion(30, 0)
-    chain.set_ion(30, 2)
+    chain.set_ion(0, 30)
+    chain.set_ion(2, 30)
 
     print("Equilibrium Positions:", np.round(chain.equilibrium_positions, 3))
     print("Axial Modes:")
