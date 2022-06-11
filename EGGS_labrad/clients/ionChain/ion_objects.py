@@ -60,7 +60,10 @@ class ionChain(object):
         self.mode_axial = {}
         self.mode_radial = {}
         # ion variables
-        # todo: check if ions are ionobjects or masses
+        # if (all(type(values) in (int, float, ionObject) for values in ions)) or (len(ions) == 0):
+        #     self.ions = ions
+        # else:
+        #     raise Exception("Error: ion chain is invalid.")
         self.ions = ions
 
 
