@@ -36,8 +36,8 @@ class ionChain(object):
     """
 
     def __init__(self,
-                 v_rf=0, w_rf=0, k_rf=1, r0=0,
-                 v_dc=0, k_dc=1, z0=0,
+                 v_rf=0, w_rf=0, k_r=1, r0=0,
+                 v_dc=0, k_z=1, z0=0,
                  v_off=0,
                  ions=[]
                  ):
@@ -47,10 +47,10 @@ class ionChain(object):
         # trap variables
         self.v_rf = v_rf
         self.w_rf = w_rf
-        self.k_rf = k_rf
+        self.k_r = k_r
         self.r0 = r0
         self.v_dc = v_dc
-        self.k_dc = k_dc
+        self.k_z = k_z
         self.z0 = z0
         self.v_off = v_off
         # chain/mode variables
@@ -151,7 +151,7 @@ class ionChain(object):
             **kwargs: the trap parameter name and the new value to set it to.
         """
         # get trap parameters
-        for param in ('v_rf', 'w_rf', 'k_rf', 'r0', 'v_dc', 'k_dc', 'z0'):
+        for param in ('v_rf', 'w_rf', 'k_r', 'r0', 'v_dc', 'k_z', 'z0'):
             try:
                 val = kwargs.get(param)
                 setattr(self, param, val)
@@ -183,7 +183,7 @@ class ionChain(object):
                     (float) : the axial secular frequency (in Hz).
         """
         return np.sqrt(
-            (2 * _QE * self.k_dc * self.v_dc) / (mass * self.z0**2)
+            (2 * _QE * self.k_z * self.v_dc) / (mass * self.z0**2)
         )
 
     def _radial_secular_frequency(self, mass):
@@ -195,8 +195,8 @@ class ionChain(object):
                     (float) : the axial secular frequency (in Hz).
         """
         return np.sqrt(
-            0.5 * ((_QE * self.v_rf * self.k_rf) / (mass * self.w_rf * self.r0**2))**2 -
-            _QE / mass * (self.k_dc * self.v_dc / self.z0**2 - self.k_rf * self.v_off / self.r0**2)
+            0.5 * ((_QE * self.v_rf * self.k_r) / (mass * self.w_rf * self.r0**2))**2 -
+            _QE / mass * (self.k_z * self.v_dc / self.z0**2 - self.k_r * self.v_off / self.r0**2)
         )
 
     def _mathieu_a_radial(self, mass):
@@ -207,7 +207,7 @@ class ionChain(object):
         Returns:
                     (float) : the radial Mathieu a parameter.
         """
-        return (4 * _QE) * ((self.v_off * self.k_rf / self.r0**2) - (self.v_dc * self.k_dc / self.z0**2)) / (mass * self.w_rf)**2
+        return (4 * _QE) * ((self.v_off * self.k_r / self.r0**2) - (self.v_dc * self.k_z / self.z0**2)) / (mass * self.w_rf)**2
 
     def _mathieu_q_radial(self, mass):
         """
@@ -217,7 +217,7 @@ class ionChain(object):
         Returns:
                     (float) : the radial Mathieu q parameter.
         """
-        return (2 * _QE * self.v_rf * self.k_rf / mass) / (self.r0 * self.w_rf)**2
+        return (2 * _QE * self.v_rf * self.k_r / mass) / (self.r0 * self.w_rf)**2
 
 
     """
@@ -310,7 +310,7 @@ class ionChain(object):
 if __name__ == "__main__":
     # create ion chain object
     # MOTion trap
-    chain = ionChain(v_rf=270.2, w_rf=1.697*_wmhz, r0=6.8453e-3, v_dc=94.05, k_dc=0.022, z0=10.16e-3, v_off=1)
+    chain = ionChain(v_rf=270.2, w_rf=1.697*_wmhz, r0=6.8453e-3, v_dc=94.05, k_z=0.022, z0=10.16e-3, v_off=1)
 
     # create ions
     massList = [38, 40, 38, 40, 40]

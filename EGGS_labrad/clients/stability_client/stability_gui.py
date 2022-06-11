@@ -135,8 +135,8 @@ class stability_gui(QFrame):
         vrf_display_label = QLabel('VRF (Vpp)')
         self.vrf_display = QDoubleSpinBox()
         # vrf - offset
-        v0_display_label = QLabel('V0 (V)')
-        self.v0_display = QDoubleSpinBox()
+        voff_display_label = QLabel('V_off (V)')
+        self.voff_display = QDoubleSpinBox()
         # wrf
         wrf_display_label = QLabel('\u03C9RF (x2\u03C0 MHz)')
         self.wrf_display = QDoubleSpinBox()
@@ -145,13 +145,13 @@ class stability_gui(QFrame):
         self.vdc_display = QDoubleSpinBox()
 
         # configure display elements
-        for display in (self.vrf_display, self.v0_display, self.wrf_display, self.vdc_display):
+        for display in (self.vrf_display, self.voff_display, self.wrf_display, self.vdc_display):
             display.setFont(QFont(_SHELL_FONT, pointSize=12))
             display.setAlignment(Qt.AlignRight)
             display.setDecimals(3)
             display.setSingleStep(1)
             display.setKeyboardTracking(False)
-        for display_label in (vrf_display_label, v0_display_label,
+        for display_label in (vrf_display_label, voff_display_label,
                               wrf_display_label, vdc_display_label):
             display_label.setAlignment(Qt.AlignRight)
 
@@ -162,7 +162,7 @@ class stability_gui(QFrame):
         self.values_set = QRadioButton("Manually Set Values")
         radio_widget_layout.addWidget(self.values_get)
         radio_widget_layout.addWidget(self.values_set)
-        self.values_get.setChecked(True)
+        self.values_set.setChecked(True)
 
         # lay out
         trap_widget_layout.addWidget(radio_widget,                  0, 0, 1, 2)
@@ -172,8 +172,8 @@ class stability_gui(QFrame):
         trap_widget_layout.addWidget(self.wrf_display,              2, 1, 1, 1)
         trap_widget_layout.addWidget(vdc_display_label,             3, 0, 1, 1)
         trap_widget_layout.addWidget(self.vdc_display,              4, 0, 1, 1)
-        trap_widget_layout.addWidget(v0_display_label,              3, 1, 1, 1)
-        trap_widget_layout.addWidget(self.v0_display,               4, 1, 1, 1)
+        trap_widget_layout.addWidget(voff_display_label,              3, 1, 1, 1)
+        trap_widget_layout.addWidget(self.voff_display,               4, 1, 1, 1)
         return trap_widget
 
     def _makeGeometryTab(self):
@@ -280,15 +280,18 @@ class stability_gui(QFrame):
         eigen_widget = QWidget()
         eigen_widget_layout = QGridLayout(eigen_widget)
         # create widgets
-        self.eigenmode_display = QTreeWidget()
+        self.eigenmode_axial_display = QTreeWidget()
+        self.eigenmode_axial_display.setHeaderLabels(["Mode Frequency", "Mode Amplitude"])
+        self.eigenmode_radial_display = QTreeWidget()
+        self.eigenmode_radial_display.setHeaderLabels(["Mode Frequency", "Mode Amplitude"])
         # lay out
-        eigen_widget_layout.addWidget(self.eigenmode_display)
+        eigen_widget_layout.addWidget(self.eigenmode_axial_display)
+        eigen_widget_layout.addWidget(self.eigenmode_radial_display)
         return eigen_widget
 
     def makeLayout(self):
-        # create tabwidget to store the Parameters and Chain tabs
+        # create parameter tab widget
         parameterTabWidget = QTabWidget()
-        displayTabWidget = QTabWidget()
 
         chain_widget = QWidget()
         chain_widget_layout = QVBoxLayout(chain_widget)
@@ -300,15 +303,15 @@ class stability_gui(QFrame):
         trap_widget_layout.addWidget(QCustomGroupBox(self._makeTrapTab(), "Trap Parameter"))
         trap_widget_layout.addWidget(QCustomGroupBox(self._makeGeometryTab(), "Trap Geometry"))
 
-
         parameterTabWidget.addTab(chain_widget, "Ion Chain")
         parameterTabWidget.addTab(trap_widget, "Trap")
 
-        # create display tabs
+        # create display tab widget
         display_tabs = {
             'Mathieu': self._makeMathieuDisplayTab(),
             'Eigenmode Data': self._makeEigenTab(),
         }
+        displayTabWidget = QTabWidget()
         for tab_name, tab_widget in display_tabs.items():
             displayTabWidget.addTab(tab_widget, tab_name)
 
@@ -316,6 +319,7 @@ class stability_gui(QFrame):
         title = QLabel('Stability Client')
         title.setFont(QFont(_SHELL_FONT, pointSize=18))
         title.setAlignment(Qt.AlignCenter)
+
         # lay out
         layout = QGridLayout(self)
         layout.addWidget(title,                             0, 0, 1, 4)
