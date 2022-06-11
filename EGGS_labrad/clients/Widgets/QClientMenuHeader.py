@@ -37,7 +37,7 @@ class QClientMenuHeader(QMenuBar):
     def addFile(self, client):
         """
         Associates the File menu with its corresponding slots.
-        To be called by the client.
+            To be called by the client.
         Arguments:
             client: the GUIClient object that owns this QClientMenuHeader.
         """
@@ -48,7 +48,7 @@ class QClientMenuHeader(QMenuBar):
     def addSerial(self, server):
         """
         Creates the Serial menu and associates actions
-        with their corresponding slots.
+            with their corresponding slots.
         Arguments:
             server: the LabradServer object that we want to use.
         """
@@ -70,7 +70,8 @@ class QClientMenuHeader(QMenuBar):
         self.serialMenu.addAction(self.serialconnection_action)
         # connect actions to slots
         self.serialMenu.triggered.connect(lambda action, _server=server: self._getDevice(_server))
-        self.node_menu.triggered.connect(lambda action, _server=server: self._getPolling(_server))
+        self.node_menu.triggered.connect(lambda action, _server=server: self._(_server))
+        self.port_menu.triggered.connect(lambda action, _server=server: self._getPolling(_server))
         self.connect_action.triggered.connect(lambda action, _server=server: self._deviceSelect(_server))
         self.disconnect_action.triggered.connect(lambda action, _server=server: self._deviceClose(_server))
         self.clear_action.triggered.connect(lambda action, _server=server: self._deviceClear(_server))
@@ -81,7 +82,7 @@ class QClientMenuHeader(QMenuBar):
     def addGPIB(self, server):
         """
         Creates the GPIB menu and associates actions
-        with their corresponding slots.
+            with their corresponding slots.
         Arguments:
             server: the LabradServer object that we want to use.
         """
@@ -101,7 +102,7 @@ class QClientMenuHeader(QMenuBar):
     def addPolling(self, server):
         """
         Creates the Polling menu and associates actions
-        with their corresponding slots.
+            with their corresponding slots.
         Arguments:
             server: the LabradServer object that we want to use.
         """
@@ -146,15 +147,16 @@ class QClientMenuHeader(QMenuBar):
         self.commMenu = QMenu("&Communication")
         self.addMenu(self.commMenu)
         # create and add communication menu actions
-        self.query_action = QAction('Query')
-        self.write_action = QAction('Write')
-        self.read_action = QAction('Read')
+        self.query_action = QAction('&Query')
+        self.write_action = QAction('&Write')
+        self.read_action = QAction('&Read')
         self.commMenu.addAction(self.query_action)# dialog box with input and buffer
         self.commMenu.addAction(self.write_action) #dialog box with input
         self.commMenu.addAction(self.read_action) # dialog box
         # connect actions to slots
-        # self.pollingMenu.triggered.connect(lambda action, _server=server: self._getPollingStatus(_server))
-        # todo: open up dialog box that works these functions
+        self.query_action.triggered.connect(lambda action, _server=server: self._queryDialog(_server))
+        self.write_action.triggered.connect(lambda action, _server=server: self._writeDialog(_server))
+        self.read_action.triggered.connect(lambda action, _server=server: self._readDialog(_server))
 
 
     """
@@ -199,6 +201,7 @@ class QClientMenuHeader(QMenuBar):
     def _serialNodes(self, server):
         try:
             # todo: get serial server and get all ports
+            pass
         except Exception as e:
             print(e)
 
@@ -241,5 +244,30 @@ class QClientMenuHeader(QMenuBar):
         try:
             status_tmp = self.pollstatus_action.isChecked()
             polling_status, polling_interval = yield server.polling(status_tmp, interval)
+        except Exception as e:
+            print(e)
+
+    # COMMUNICATION
+    @inlineCallbacks
+    def _queryDialog(self, server):
+        try:
+            # todo: open dialog box that queries
+            pass
+        except Exception as e:
+            print(e)
+
+    @inlineCallbacks
+    def _writeDialog(self, server):
+        try:
+            # todo: open dialog box that write
+            pass
+        except Exception as e:
+            print(e)
+
+    @inlineCallbacks
+    def _readDialog(self, server):
+        try:
+            # todo: open dialog box that reads
+            pass
         except Exception as e:
             print(e)
