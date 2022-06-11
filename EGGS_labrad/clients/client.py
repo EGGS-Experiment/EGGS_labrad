@@ -208,7 +208,7 @@ class GUIClient(ABC):
             # otherwise, create and initialize a header here and add it to our gui class
             elif len(QClientMenuHeader_list) == 0:
                 self.log.debug("No QClientMenuHeader exists in the GUI file. Adding one now...")
-                menuHeader_object = QClientMenuHeader()
+                menuHeader_object = QClientMenuHeader(cxn=self.cxn, parent=self.gui)
                 setattr(self.gui, 'header', menuHeader_object)
                 gui_layout = self.gui.layout()
                 gui_layout.setMenuBar(menuHeader_object)
