@@ -85,30 +85,24 @@ class stability_client(GUIClient):
         """
         Updates GUI when values are received from server.
         """
-        # get RF parameters
-        v_rf = yield self.os.measure_amplitude(1)
-        # if value is too large (>1e38), oscope is reading a null value
-        if v_rf > 1e20:
-            v_rf = nan
-        else:
-            v_rf = 0.5 * v_rf * _PICKOFF_FACTOR
-        self.gui.pickoff_display.setText('{:.2f}'.format(v_rf))
-        freq = yield self.rf.frequency()
-        Omega = freq / 2e6 # convert to Mathieu Omega
-        # get endcap parameters
-        v_dc1 = yield self.dc.voltage(1)
-        v_dc2 = yield self.dc.voltage(2)
-        v_dc = (v_dc1 + v_dc2)/2
-        # calculate a parameter
-        a_param_x = -4 * _QE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
-        a_param_z = 8 * _QE * (v_dc * _GEOMETRIC_FACTOR_AXIAL) / (_ELECTRODE_DISTANCE_AXIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
+        # todo: check radio button
+        if thkim:
+            # get RF parameters
+            v_rf = yield self.os.measure_amplitude(1)
+            # if value is too large (>1e38), oscope is reading a null value
+            if v_rf > 1e20:
+                v_rf = nan
+            else:
+                v_rf = 0.5 * v_rf * _PICKOFF_FACTOR
+            self.gui.pickoff_display.setText('{:.2f}'.format(v_rf))
+            freq = yield self.rf.frequency()
+            # get endcap parameters
+            v_dc1 = yield self.dc.voltage(1)
+            v_dc2 = yield self.dc.voltage(2)
+            v_dc = (v_dc1 + v_dc2)/2
+        # update values on GUI
         self.gui.aparam_display.setText('{:.5f}'.format(a_param_z))
-        # calculate q parameter
-        q_param = 2 * _QE * (v_rf * _GEOMETRIC_FACTOR_RADIAL) / (_ELECTRODE_DISTANCE_RADIAL ** 2) / (2 * pi * freq) ** 2 / _ION_MASS
         self.gui.qparam_display.setText('{:.3f}'.format(q_param))
-        # calculate secular frequencies
-        wsecr = Omega * sqrt(0.5 * q_param ** 2 + a_param_x)
-        wsecz = Omega * sqrt(a_param_z)
         self.gui.wsecr_display.setText('{:.3f}'.format(wsecr))
         self.gui.wsecz_display.setText('{:.3f}'.format(wsecz))
         # display on stability diagram
@@ -129,7 +123,9 @@ class stability_client(GUIClient):
             numDiff = numIons - currentLength
             for i in range(numDiff):
                 self.chain.add_ion(_DEFAULT_ION_MASS)
-        # todo: set combobox elements of ion_num
+        # change number of ions in ion_num
+        self.gui.ion_num.clear()
+        self.gui.ion_num.addItems(list(map(str, range(1, numIons + 1))))
 
 
 if __name__ == "__main__":

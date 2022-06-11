@@ -133,22 +133,21 @@ class stability_gui(QFrame):
         trap_widget_layout = QGridLayout(trap_widget)
         # vrf
         vrf_display_label = QLabel('VRF (Vpp)')
-        self.vrf_display = QLabel('000.00')
+        self.vrf_display = QComboBox()
         # vrf - offset
         v0_display_label = QLabel('V0 (V)')
-        self.v0_display = QLabel('00.00')
+        self.v0_display = QComboBox()
         # wrf
         wrf_display_label = QLabel('\u03C9RF (x2\u03C0 MHz)')
-        self.wrf_display = QLabel('00.00')
+        self.wrf_display = QComboBox()
         # vdc
         vdc_display_label = QLabel('VDC (V)')
-        self.vdc_display = QLabel('00.00')
+        self.vdc_display = QComboBox()
 
         # configure display elements
         for display in (self.vrf_display, self.v0_display, self.wrf_display, self.vdc_display):
-            display.setFont(QFont(_SHELL_FONT, pointSize=20))
+            display.setFont(QFont(_SHELL_FONT, pointSize=12))
             display.setAlignment(Qt.AlignRight)
-            display.setStyleSheet('color: blue')
         for display_label in (vrf_display_label, v0_display_label,
                               wrf_display_label, vdc_display_label):
             display_label.setAlignment(Qt.AlignRight)
@@ -163,16 +162,15 @@ class stability_gui(QFrame):
         self.values_get.setChecked(True)
 
         # lay out
-        # todo: make qcombobox instead
-        trap_widget_layout.addWidget(radio_widget,                  0, 0, 1, 4)
+        trap_widget_layout.addWidget(radio_widget,                  0, 0, 1, 2)
         trap_widget_layout.addWidget(vrf_display_label,             1, 0, 1, 1)
         trap_widget_layout.addWidget(self.vrf_display,              2, 0, 1, 1)
         trap_widget_layout.addWidget(wrf_display_label,             1, 1, 1, 1)
         trap_widget_layout.addWidget(self.wrf_display,              2, 1, 1, 1)
-        trap_widget_layout.addWidget(vdc_display_label,             1, 2, 1, 1)
-        trap_widget_layout.addWidget(self.vdc_display,              2, 2, 1, 1)
-        trap_widget_layout.addWidget(v0_display_label,              1, 3, 1, 1)
-        trap_widget_layout.addWidget(self.v0_display,               2, 3, 1, 1)
+        trap_widget_layout.addWidget(vdc_display_label,             3, 0, 1, 1)
+        trap_widget_layout.addWidget(self.vdc_display,              4, 0, 1, 1)
+        trap_widget_layout.addWidget(v0_display_label,              3, 1, 1, 1)
+        trap_widget_layout.addWidget(self.v0_display,               4, 1, 1, 1)
         return trap_widget
 
     def _makeGeometryTab(self):
@@ -281,7 +279,7 @@ class stability_gui(QFrame):
         # create widgets
         self.eigenmode_display = QTreeWidget()
         # lay out
-        #eigen_widget_layout.addWidget(, )
+        eigen_widget_layout.addWidget(self.eigenmode_display)
         return eigen_widget
 
     def makeLayout(self):
@@ -302,23 +300,6 @@ class stability_gui(QFrame):
 
         parameterTabWidget.addTab(chain_widget, "Ion Chain")
         parameterTabWidget.addTab(trap_widget, "Trap")
-
-        # create parameter tabs
-        # parameter_tabs = {
-        #     'Stability': self._makeStabilityTab(),
-        #     'Ion Chain': self._makeIonTab(),
-        #     'Trap Parameters': self._makeTrapTab(),
-        #     'Trap Geometry': self._makeGeometryTab()
-        # }
-        # parameter_tabs = {
-        #     'Stability': self._makeStabilityTab(),
-        #     'Ion Chain': self._makeIonTab(),
-        #     'Trap Parameters': self._makeTrapTab(),
-        #     'Trap Geometry': self._makeGeometryTab()
-        # }
-        # for tab_name, tab_widget in parameter_tabs.items():
-        #     parameterTabWidget.addTab(tab_widget, tab_name)
-
 
         # create display tabs
         display_tabs = {
