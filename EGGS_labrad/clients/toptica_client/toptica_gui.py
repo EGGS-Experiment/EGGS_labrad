@@ -229,7 +229,7 @@ class toptica_gui(QFrame):
         self.channels = {}
         self.setFrameStyle(0x0001 | 0x0030)
         self.setWindowTitle('Toptica GUI')
-        #self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         #self.makeLayout(0)
 
     def makeLayout(self, channelinfo):

@@ -192,7 +192,7 @@ class GUIClient(ABC):
         For example, this allows users to restart the client in the event of errors.
         """
         # don't create menu if createMenu = False
-        if not createMenu:
+        if not self.createMenu:
             return cxn
         try:
             # todo: don't connect serial and polling if not a device server (e.g. stability client)
