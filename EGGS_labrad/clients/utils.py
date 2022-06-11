@@ -1,6 +1,7 @@
 """
 Contains functions useful for LabRAD clients.
 """
+from __future__ import print_function
 from PyQt5.QtWidgets import QApplication
 
 __all__ = ["runGUI", "runClient", "createTrunk", "wav2RGB"]
@@ -36,6 +37,11 @@ def runClient(client, *args, **kwargs):
     Passes any constructor arguments to the client class.
     # todo: accept arguments that change logging behavior a la labrad node
     """
+    import builtins as __builtin__
+
+    def print(*args, **kwargs):
+        __builtin__.print('My overridden print() function!')
+        return __builtin__.print(*args, **kwargs)
     # widgets require a QApplication to run
     app = QApplication([])
 
