@@ -8,7 +8,9 @@ from abc import ABC, abstractmethod
 import sys
 import logging
 import logging.config
-from socket import gethostname
+from socket import gethostname, SOCK_STREAM
+from rfc5424logging import Rfc5424SysLogHandler
+
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients.utils import createTrunk
@@ -104,25 +106,23 @@ class GUIClient(ABC):
         formatter2 = "[%-15.15s] [%-25.25s]" % (gethostname(), self.__class__.__name__)
         formatter3 = "[%(levelname)-10.10s]  %(message)s"
         formatter += formatter2 + formatter3
-        format = logging.Formatter(formatter)
+        labradclientFormat = logging.Formatter(formatter)
 
         # create logger
         logging.basicConfig(level=logging.DEBUG, format=formatter)
         self.logger = logging.getLogger("labrad.client")
 
-        # syslog handler
-        # todo: change to RFC5424
-        syslog_socket = "{:s}:{:s}".format(environ['LABRADHOST'], environ['EGGS_LABRAD_SYSLOG_PORT'])
+        # create syslog handler
+        syslog_socket = (environ['LABRADHOST'], int(environ['EGGS_LABRAD_SYSLOG_PORT']))
         syslog_handler = logging.handlers.SysLogHandler(address=syslog_socket)
-        syslog_handler.setFormatter(format)
-        logger.addHandler(syslog_handler)
-        # todo: do we need a stream handler?
-        # labradLogFormat = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s] [%(module)s]  %(message)s")
-        # consoleHandler = logging.StreamHandler(sys.stdout)
-        # consoleHandler.setFormatter(labradLogFormat)
-        # logger.addHandler(consoleHandler)
+        syslog_handler.setFormatter(labradclientFormat)
+        self.logger.addHandler(syslog_handler)
 
-        # redirect print statements
+        # create syslog handler for RFC5424 (i.e. for Grafana/Loki)
+        rfc5424_handler = Rfc5424SysLogHandler(address=('192.168.1.48', 1514), socktype=SOCK_STREAM)
+        self.logger.addHandler(rfc5424_handler)
+
+        # redirect print statements to logger
         sys.stdout = _LoggerWriter(self.logger.info)
 
 
