@@ -7,13 +7,10 @@ from abc import ABC, abstractmethod
 
 import sys
 import logging
-import logging.config
-from socket import gethostname, SOCK_STREAM
-from rfc5424logging import Rfc5424SysLogHandler
 
 from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.clients.utils import createTrunk
+from EGGS_labrad.clients.utils import createTrunk, setupLogging
 from EGGS_labrad.clients.Widgets import QClientMenuHeader
 
 __all__ = ["GUIClient", "RecordingGUIClient"]
@@ -100,31 +97,27 @@ class GUIClient(ABC):
         """
         Set up the client logger.
         """
-        # todo: clean up logger formatting; streamline
-        # set up logger format
-        formatter = "%(asctime)s [%(name)-15.15s] "
-        formatter2 = "[%-15.15s] [%-25.25s]" % (gethostname(), self.__class__.__name__)
-        formatter3 = "[%(levelname)-10.10s]  %(message)s"
-        formatter += formatter2 + formatter3
-        labradclientFormat = logging.Formatter(formatter)
+        from socket import gethostname
 
-        # create logger
-        logging.basicConfig(level=logging.DEBUG, format=formatter)
-        self.logger = logging.getLogger("labrad.client")
+        setupLogging()
+        logger_tmp = logging.getLogger('labrad.client')
 
-        # create syslog handler
-        syslog_socket = (environ['LABRADHOST'], int(environ['EGGS_LABRAD_SYSLOG_PORT']))
-        syslog_handler = logging.handlers.SysLogHandler(address=syslog_socket)
-        syslog_handler.setFormatter(labradclientFormat)
-        self.logger.addHandler(syslog_handler)
+        d = {'host': gethostname(), 'client_name': self.__class__.__name__}
+        class Logger2:
+            def __init__(self, logger):
+                self.logger = logger
+            def debug(self, msg, *args):
+                self.logger.debug(msg, extra=d)
+            def info(self, msg, *args):
+                self.logger.debug(msg, extra=d)
+            def warning(self, msg, *args):
+                self.logger.debug(msg, extra=d)
+            def critical(self, msg, *args):
+                self.logger.debug(msg, extra=d)
+            def error(self, msg, *args):
+                self.logger.debug(msg, extra=d)
 
-        # create syslog handler for RFC5424 (i.e. for Grafana/Loki)
-        rfc5424_handler = Rfc5424SysLogHandler(address=('192.168.1.48', 1514), socktype=SOCK_STREAM)
-        self.logger.addHandler(rfc5424_handler)
-
-        # redirect print statements to logger
-        sys.stdout = _LoggerWriter(self.logger.info)
-
+        self.logger = Logger2(logger_tmp)
 
     # STARTUP DISPATCHERS
     @inlineCallbacks

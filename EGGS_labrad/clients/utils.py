@@ -72,12 +72,14 @@ def runClient(client, *args, **kwargs):
         print(e)
 
 
-def setupLogging(self):
+def setupLogging():
     """
-    Set up the client logger.
+    Sets up the logger for clients.
     """
     from os import environ
-    from socket import gethostname
+    from socket import gethostname, SOCK_STREAM
+    from logging.handlers import SysLogHandler
+    from rfc5424logging import Rfc5424SysLogHandler
 
     # LoggerWriter object redirects stdout to logger
     class _LoggerWriter:
@@ -91,26 +93,30 @@ def setupLogging(self):
         def flush(self):
             self.level(sys.stderr)
 
-    # todo: clean up logger formatting; streamline
     # set up logger format
-    formatter = "%(asctime)s [%(name)-15.15s] "
-    formatter2 = "[%-15.15s] [%-25.25s]" % (gethostname(), self.__class__.__name__)
-    formatter3 = "[%(levelname)-10.10s]  %(message)s"
-    formatter += formatter2 + formatter3
+    formatter = "%(asctime)s [%(name)-15.15s] [%(host)-15.15s] [%(client_name)-25.25s] [%(levelname)-10.10s]  %(message)s"
     labradclientFormat = logging.Formatter(formatter)
 
     # create syslog handler
     syslog_socket = (environ['LABRADHOST'], int(environ['EGGS_LABRAD_SYSLOG_PORT']))
-    syslog_handler = logging.handlers.SysLogHandler(address=syslog_socket)
+    syslog_handler = SysLogHandler(address=syslog_socket)
     syslog_handler.setFormatter(labradclientFormat)
 
+    # create console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(labradclientFormat)
+
+    # todo: create rfc5424 handler
+
     # create logger
-    logging.basicConfig(level=logging.DEBUG, format=formatter)
+    logging.basicConfig(level=logging.DEBUG, handlers=None)
     logger = logging.getLogger("labrad.client")
+    logger.propagate = False
     logger.addHandler(syslog_handler)
+    logger.addHandler(console_handler)
 
     # redirect print statements to logger
-    sys.stdout = _LoggerWriter(logger.info)
+    #sys.stdout = _LoggerWriter(logger.info)
 
 
 # recording functions
@@ -143,7 +149,7 @@ def wav2RGB(wavelength):
                     (tuple of int, int, int): the converted RGB values.
     """
     wavelength = int(wavelength)
-    R, G, B, SSS = 0, 0, 0
+    R, G, B, SSS = 0, 0, 0, 0
 
     # get RGB values
     if wavelength < 380:
