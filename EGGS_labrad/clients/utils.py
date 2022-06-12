@@ -106,7 +106,8 @@ def setupLogging():
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(labradclientFormat)
 
-    # todo: create rfc5424 handler
+    # create rfc5424 handler
+    loki_handler = Rfc5424SysLogHandler(address=('192.168.1.48', 1514), socktype=SOCK_STREAM)
 
     # create logger
     logging.basicConfig(level=logging.DEBUG, handlers=None)
@@ -114,6 +115,7 @@ def setupLogging():
     logger.propagate = False
     logger.addHandler(syslog_handler)
     logger.addHandler(console_handler)
+    logger.addHandler(loki_handler)
 
     # redirect print statements to logger
     #sys.stdout = _LoggerWriter(logger.info)

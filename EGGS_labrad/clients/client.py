@@ -99,11 +99,16 @@ class GUIClient(ABC):
         """
         from socket import gethostname
 
+        # do general logging setup
         setupLogging()
+
+        # get the logger
         logger_tmp = logging.getLogger('labrad.client')
 
+        # create custom loghandler so logging labels are specific to
+        # each client
         d = {'host': gethostname(), 'client_name': self.__class__.__name__}
-        class Logger2:
+        class _LogHandler:
             def __init__(self, logger):
                 self.logger = logger
             def debug(self, msg, *args):
@@ -117,7 +122,8 @@ class GUIClient(ABC):
             def error(self, msg, *args):
                 self.logger.debug(msg, extra=d)
 
-        self.logger = Logger2(logger_tmp)
+        # set logger as instance variable
+        self.logger = _LogHandler(logger_tmp)
 
     # STARTUP DISPATCHERS
     @inlineCallbacks
