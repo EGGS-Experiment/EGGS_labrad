@@ -23,7 +23,3 @@ __all__.extend(connect.__all__)
 from EGGS_labrad.clients import Widgets
 from EGGS_labrad.clients.Widgets import *
 __all__.extend(Widgets.__all__)
-
-
-
-

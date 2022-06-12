@@ -1,23 +1,23 @@
 """
 Base classes for building PyQt5 GUI clients for LabRAD.
 """
-from sys import stdout
 from os import _exit, environ
 from inspect import getmembers
 from abc import ABC, abstractmethod
 
 import logging
-from twisted.logger import Logger, textFileLogObserver
+import logging.config
+from sys import stdout
+from socket import gethostname
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients.utils import createTrunk
-from EGGS_labrad.clients.Widgets import QInitializePlaceholder, QClientMenuHeader
+from EGGS_labrad.clients.Widgets import QClientMenuHeader
 
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
 # todo: co-opt recording into GUIClient and create record function dependent on class variable
 # todo: maybe move restart to a permanent startup sequence?
-# todo: redirect print to logging
 
 
 class GUIClient(ABC):
@@ -49,13 +49,6 @@ class GUIClient(ABC):
     # GUI parameters
     createMenu = True
 
-    # Logger
-    logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
-    log = logging.getLogger('labrad.client')
-    log.addHandler(logging.StreamHandler(sys.stdout))
-    # todo: change logging format, set config better
-    #log = Logger(source=name, observer=textFileLogObserver(stdout))
-
     # INITIALIZATION
     def __init__(self, reactor, cxn=None, parent=None):
         """
@@ -68,6 +61,9 @@ class GUIClient(ABC):
         self.parent = parent
         self.guiEnable = True
 
+        # set up logging
+        self._setupLogging()
+
         # get core servers in addition to whichever servers are specified
         core_servers = {'reg': 'Registry', 'dv': 'Data Vault'}
         self.servers.update(core_servers)
@@ -77,7 +73,7 @@ class GUIClient(ABC):
         #self.gui.show()
 
         # initialization sequence
-        self.log.info("Starting client...")
+        self.logger.info("Starting client...")
         d = self._connectLabrad()
         d.addCallback(self._initClient)
         d.addCallback(self._getgui)
@@ -87,6 +83,25 @@ class GUIClient(ABC):
         d.addCallback(self._initGUI)
         d.addCallback(self._connectHeader)
 
+    def _setupLogging(self):
+        """
+        Set up the client logger.
+        """
+        # set up logger format
+        formatter = "%(asctime)s [%(name)-15.15s] "
+        formatter2 = "[%-15.15s] [%-25.25s]" % (gethostname(), self.__class__.__name__)
+        formatter3 = "[%(levelname)-5.5s]  %(message)s"
+
+        # create logger
+        logging.basicConfig(level=logging.DEBUG, format=formatter + formatter2 + formatter3)
+        self.logger = logging.getLogger("labrad.client")
+
+        # todo: do we need a stream handler?
+        # labradLogFormat = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s] [%(module)s]  %(message)s")
+        # consoleHandler = logging.StreamHandler(stdout)
+        # consoleHandler.setFormatter(labradLogFormat)
+        # logger.addHandler(consoleHandler)
+
 
     # STARTUP DISPATCHERS
     @inlineCallbacks
@@ -95,7 +110,7 @@ class GUIClient(ABC):
         Creates an asynchronous connection to core LabRAD servers
         and sets up server connection signals.
         """
-        self.log.info("Connecting to LabRAD..")
+        self.logger.info("Connecting to LabRAD..")
         # only create connection if we aren't instantiated with one
         if not self.cxn:
             if self.LABRADHOST is None:
@@ -103,54 +118,54 @@ class GUIClient(ABC):
             if self.LABRADPASSWORD is None:
                 self.LABRADPASSWORD = environ['LABRADPASSWORD']
             from labrad.wrappers import connectAsync
-            self.log.debug("Establishing connection to LabRAD manager @{ip_address}...", ip_address=self.LABRADHOST)
+            self.logger.debug("Establishing connection to LabRAD manager @{ip_address:s}...".format(ip_address=self.LABRADHOST))
             self.cxn = yield connectAsync(self.LABRADHOST, name=self.name, password=self.LABRADPASSWORD)
         else:
-            self.log.debug("LabRAD connection already provided.")
+            self.logger.debug("LabRAD connection already provided.")
         # set self.servers as class attributes
-        self.log.debug("Getting required servers...")
+        self.logger.debug("Getting required servers...")
         for var_name, server_name in self.servers.items():
             try:
                 setattr(self, var_name, self.cxn[server_name])
             except Exception as e:
                 setattr(self, var_name, None)
-                self.log.warn('Server unavailable: {server_name}', server_name=server_name)
+                self.logger.warning("Server unavailable: {_server_name:s}".format(_server_name=server_name))
         # server connections
-        self.log.debug("Connecting to LabRAD manager signals...")
+        self.logger.debug("Connecting to LabRAD manager signals...")
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self._serverConnect, source=None, ID=9898989)
         yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
         yield self.cxn.manager.addListener(listener=self._serverDisconnect, source=None, ID=9898989 + 1)
-        self.log.info("Finished connecting to LabRAD.")
+        self.logger.info("Finished connecting to LabRAD.")
         return self.cxn
 
     @inlineCallbacks
     def _initClient(self, cxn):
-        self.log.info("Initializing client...")
+        self.logger.info("Initializing client...")
         try:
             yield self.initClient()
         except Exception as e:
-            self.log.error('Error in initClient: {error}', error=e)
+            self.logger.error("Error in initClient: {error}".format(error=e))
             self.guiEnable = False
         else:
-            self.log.info("Successfully initialized client.")
+            self.logger.info("Successfully initialized client.")
         return cxn
 
     @inlineCallbacks
     def _initData(self, cxn):
-        self.log.info("Getting default values...")
+        self.logger.info("Getting default values...")
         try:
             yield self.initData()
         except Exception as e:
             self.guiEnable = False
-            self.log.error('Error in initData: {error}', error=e)
+            self.logger.error("Error in initData: {error}".format(error=e))
         else:
-            self.log.info("Successfully retrieved default values.")
+            self.logger.info("Successfully retrieved default values.")
         return cxn
 
     @inlineCallbacks
     def _getgui(self, cxn):
-        self.log.info("Starting up GUI...")
+        self.logger.info("Starting up GUI...")
         # run after initClient so we can get configs or variables from labrad
         try:
             # close placeholder GUI
@@ -158,11 +173,11 @@ class GUIClient(ABC):
             #self.gui = None
             yield self.getgui()
             #self.gui.show()
-            self.log.info("Successfully started up GUI.")
+            self.logger.info("Successfully started up GUI.")
         except Exception as e:
             # just quit if we can't get GUI otherwise we freeze since we don't have a reactor to work with
-            self.log.critical("Fatal error: unable to start up GUI: {error}", error=e)
-            self.log.critical("Exiting...")
+            self.logger.critical("Fatal error: unable to start up GUI: {error}".format(error=e))
+            self.logger.critical("Exiting...")
             _exit(0)
         # get all widgets that aren't QClientMenuHeaders so we can lock them
         from PyQt5.QtWidgets import QWidget
@@ -172,20 +187,23 @@ class GUIClient(ABC):
 
     @inlineCallbacks
     def _initGUI(self, cxn):
-        self.log.info("Initializing GUI...")
+        self.logger.info("Initializing GUI...")
         try:
             yield self.initGUI()
         except Exception as e:
             self.guiEnable = False
-            self.log.error('Error in initGUI: {error}', error=e)
+            self.logger.error("Error in initGUI: {error}".format(error=e))
+
         # make GUI visible at end so user can at least see that we have a problem
         self.gui.show()
+
         # reenable GUI upon completion of initialization
         if self.guiEnable:
-            self.log.info("GUI initialization successful.")
+            self.logger.info("GUI initialization successful.")
             # we don't need to enable here since we start up already enabled
         else:
             self._enableAllExceptHeader(False)
+
         return cxn
 
     def _connectHeader(self, cxn):
@@ -206,13 +224,13 @@ class GUIClient(ABC):
             QClientMenuHeader_list = getmembers(self.gui, isQClientMenuHeader)
             # check that the GUI has a QClientMenuHeader
             if len(QClientMenuHeader_list) > 0:
-                self.log.debug("QClientMenuHeader exists. Attempting to connect...")
+                self.logger.debug("QClientMenuHeader exists. Attempting to connect...")
                 # initialize the QClientMenuHeader
                 menuHeader_name, menuHeader_object = QClientMenuHeader_list[0]
                 menuHeader_object.addFile(self)
             # otherwise, create and initialize a header here and add it to our gui class
             elif len(QClientMenuHeader_list) == 0:
-                self.log.debug("No QClientMenuHeader exists in the GUI file. Adding one now...")
+                self.logger.debug("No QClientMenuHeader exists in the GUI file. Adding one now...")
                 menuHeader_object = QClientMenuHeader(cxn=self.cxn, parent=self.gui)
                 setattr(self.gui, 'header', menuHeader_object)
                 gui_layout = self.gui.layout()
@@ -231,23 +249,23 @@ class GUIClient(ABC):
                 if "Polling" in server_object.settings.keys():
                     menuHeader_object.addPolling(server_object)
                 # todo: add communicate menu
-            self.log.debug("Successfully connected to QClientMenuHeader.")
+            self.logger.debug("Successfully connected to QClientMenuHeader.")
         except Exception as e:
-            self.log.error("Error connecting to QClientMenuHeader: {error}", error=e)
+            self.logger.error("Error connecting to QClientMenuHeader: {error}".format(error=e))
         return cxn
 
 
     # SHUTDOWN
     def close(self):
-        self.log.info("Shutting down...")
+        self.logger.info("Shutting down...")
         try:
-            self.log.debug("Closing connection to LabRAD...")
+            self.logger.debug("Closing connection to LabRAD...")
             self.cxn.disconnect()
-            self.log.debug("Stopping reactor...")
+            self.logger.debug("Stopping reactor...")
             if self.reactor.running:
                 self.reactor.stop()
         except Exception as e:
-            self.log.error("Error while shutting down: {error}", error=r)
+            self.logger.error("Error while shutting down: {error}".format(error=e))
         _exit(0)
 
 
@@ -259,15 +277,15 @@ class GUIClient(ABC):
         yield self.cxn.refresh()
         try:
             server_ind = list(self.servers.values()).index(server_name)
-            self.log.debug('{server} reconnected.', server=server_name)
+            self.logger.debug("{_server:s} reconnected.".format(_server=server_name))
             # set server if connecting for first time
             server_nickname = list(self.servers.keys())[server_ind]
             if getattr(self, server_nickname) is None:
                 setattr(self, server_nickname, self.cxn[server_name])
-                self.log.info('Establishing initial connection to: {server}.', server=server_name)
+                self.logger.info("Establishing initial connection to: {_server:s}.".format(_server=server_name))
             # check if all required servers exist
             if all(server_names.lower().replace(' ', '_') in self.cxn.servers for server_names in self.servers.values()):
-                self.log.info('All required servers online. Enabling client.')
+                self.logger.info("All required servers online. Enabling client.")
                 # redo initClient to reconnect to signals
                 yield self._initClient(self.cxn)
                 # redo initData to get new state of server
@@ -276,12 +294,12 @@ class GUIClient(ABC):
         except ValueError:
             pass
         except Exception as e:
-            self.log.error("Error during {server} reconnect: {error}", server=server_name, error=e)
+            self.logger.error("Error during {server:s} reconnect: {error}".format(server=server_name, error=e))
 
     def _serverDisconnect(self, c, message):
         server_name = message[1]
         if server_name in self.servers.values():
-            self.log.info('{server} disconnected. Disabling client.', server=server_name)
+            self.logger.info("{server:s} disconnected. Disabling client.".format(server=server_name))
             self._enableAllExceptHeader(False)
 
 
@@ -290,7 +308,7 @@ class GUIClient(ABC):
         """
         Restarts the GUI client.
         """
-        self.log.info('Restarting client ...')
+        self.logger.info('Restarting client ...')
         self.gui.setVisible(False)
         d = self._connectLabrad()
         d.addCallback(self._initClient)
@@ -298,7 +316,7 @@ class GUIClient(ABC):
         d.addCallback(self._initData)
         d.addCallback(self._initGUI)
         d.addCallback(self._connectHeader)
-        self.log.info('Finished restart.')
+        self.logger.info('Finished restart.')
 
     def _enableAllExceptHeader(self, status):
         """
