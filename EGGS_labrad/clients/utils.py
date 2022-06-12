@@ -1,9 +1,11 @@
 """
 Contains functions useful for LabRAD clients.
 """
+import sys
+import logging
 from PyQt5.QtWidgets import QApplication
 
-__all__ = ["runGUI", "runClient", "createTrunk", "wav2RGB"]
+__all__ = ["runGUI", "runClient", "setupLogging", "createTrunk", "wav2RGB"]
 
 
 # run functions
@@ -68,6 +70,47 @@ def runClient(client, *args, **kwargs):
         client_tmp.close()
     except Exception as e:
         print(e)
+
+
+def setupLogging(self):
+    """
+    Set up the client logger.
+    """
+    from os import environ
+    from socket import gethostname
+
+    # LoggerWriter object redirects stdout to logger
+    class _LoggerWriter:
+        def __init__(self, level):
+            self.level = level
+
+        def write(self, message):
+            if message != '\n':
+                self.level(message)
+
+        def flush(self):
+            self.level(sys.stderr)
+
+    # todo: clean up logger formatting; streamline
+    # set up logger format
+    formatter = "%(asctime)s [%(name)-15.15s] "
+    formatter2 = "[%-15.15s] [%-25.25s]" % (gethostname(), self.__class__.__name__)
+    formatter3 = "[%(levelname)-10.10s]  %(message)s"
+    formatter += formatter2 + formatter3
+    labradclientFormat = logging.Formatter(formatter)
+
+    # create syslog handler
+    syslog_socket = (environ['LABRADHOST'], int(environ['EGGS_LABRAD_SYSLOG_PORT']))
+    syslog_handler = logging.handlers.SysLogHandler(address=syslog_socket)
+    syslog_handler.setFormatter(labradclientFormat)
+
+    # create logger
+    logging.basicConfig(level=logging.DEBUG, format=formatter)
+    logger = logging.getLogger("labrad.client")
+    logger.addHandler(syslog_handler)
+
+    # redirect print statements to logger
+    sys.stdout = _LoggerWriter(logger.info)
 
 
 # recording functions
