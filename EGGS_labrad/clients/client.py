@@ -5,9 +5,9 @@ from os import _exit, environ
 from inspect import getmembers
 from abc import ABC, abstractmethod
 
+import sys
 import logging
 import logging.config
-from sys import stdout
 from socket import gethostname
 from twisted.internet.defer import inlineCallbacks
 
@@ -17,7 +17,18 @@ from EGGS_labrad.clients.Widgets import QClientMenuHeader
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
 # todo: co-opt recording into GUIClient and create record function dependent on class variable
-# todo: maybe move restart to a permanent startup sequence?
+
+
+class _LoggerWriter:
+    def __init__(self, level):
+        self.level = level
+
+    def write(self, message):
+        if message != '\n':
+            self.level(message)
+
+    def flush(self):
+        self.level(sys.stderr)
 
 
 class GUIClient(ABC):
@@ -87,20 +98,25 @@ class GUIClient(ABC):
         """
         Set up the client logger.
         """
+        # todo: clean up logger formatting; streamline
         # set up logger format
         formatter = "%(asctime)s [%(name)-15.15s] "
         formatter2 = "[%-15.15s] [%-25.25s]" % (gethostname(), self.__class__.__name__)
-        formatter3 = "[%(levelname)-5.5s]  %(message)s"
+        formatter3 = "[%(levelname)-10.10s]  %(message)s"
 
         # create logger
         logging.basicConfig(level=logging.DEBUG, format=formatter + formatter2 + formatter3)
         self.logger = logging.getLogger("labrad.client")
 
+        # todo: add syslog handler
         # todo: do we need a stream handler?
         # labradLogFormat = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s] [%(module)s]  %(message)s")
-        # consoleHandler = logging.StreamHandler(stdout)
+        # consoleHandler = logging.StreamHandler(sys.stdout)
         # consoleHandler.setFormatter(labradLogFormat)
         # logger.addHandler(consoleHandler)
+
+        # redirect print statements
+        sys.stdout = _LoggerWriter(self.logger.info)
 
 
     # STARTUP DISPATCHERS
@@ -308,6 +324,7 @@ class GUIClient(ABC):
         """
         Restarts the GUI client.
         """
+        # todo: maybe move restart to a permanent startup sequence?
         self.logger.info('Restarting client ...')
         self.gui.setVisible(False)
         d = self._connectLabrad()

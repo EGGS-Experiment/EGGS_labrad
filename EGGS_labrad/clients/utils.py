@@ -1,29 +1,10 @@
 """
 Contains functions useful for LabRAD clients.
 """
-from __future__ import print_function
-
-import logging
-from sys import stdout
 from PyQt5.QtWidgets import QApplication
 
 __all__ = ["runGUI", "runClient", "createTrunk", "wav2RGB"]
 
-class StdioOnnaStick:
-
-    def __init__(self, logger):
-        self.log = logger
-
-    def write(self, data):
-        d = (self.buf + data).split("\n")
-        self.buf = d[-1]
-        messages = d[0:-1]
-        for message in messages:
-            self.log.info(message)
-
-    def writelines(self, lines):
-        for line in lines:
-            self.log.info(line)
 
 # run functions
 def runGUI(client, *args, **kwargs):
@@ -53,18 +34,7 @@ def runClient(client, *args, **kwargs):
     """
     Runs a LabRAD client written using PyQt5.
     Passes any constructor arguments to the client class.
-    # todo: accept arguments that change logging behavior a la labrad node
     """
-    # import builtins as __builtin__
-    # def print(*args, **kwargs):
-    #     log.msg('My overridden print() function!')
-    #     return __builtin__.print(*args, **kwargs)
-
-    # redirect print to logger
-    log = logging.getLogger('labrad.client')
-    logfile = StdioOnnaStick(log)
-    stdout = logfile
-
     # widgets require a QApplication to run
     app = QApplication([])
 
@@ -124,49 +94,36 @@ def createTrunk(name):
 def wav2RGB(wavelength):
     """
     Converts a wavelength to RGB.
-    Args:
+    Arguments:
         wavelength  (float)  : the wavelength (in nm).
     Returns:
                     (tuple of int, int, int): the converted RGB values.
     """
-
     wavelength = int(wavelength)
-    R, G, B = 0, 0, 0
-    SSS = 0
+    R, G, B, SSS = 0, 0, 0
 
     # get RGB values
     if wavelength < 380:
-        R = 1.0
-        G = 0.0
-        B = 1.0
+        R, G, B = 1.0, 0.0, 1.0
     elif (wavelength >= 380) and (wavelength < 440):
         R = -(wavelength - 440.) / (440. - 350.)
-        G = 0.0
-        B = 1.0
+        G, B = 0.0, 1.0
     elif (wavelength >= 440) and (wavelength < 490):
-        R = 0.0
+        R, B = 0.0, 1.0
         G = (wavelength - 440.) / (490. - 440.)
-        B = 1.0
     elif (wavelength >= 490) and (wavelength < 510):
-        R = 0.0
-        G = 1.0
+        R, G = 0.0, 1.0
         B = -(wavelength - 510.) / (510. - 490.)
     elif (wavelength >= 510) and (wavelength < 580):
         R = (wavelength - 510.) / (580. - 510.)
-        G = 1.0
-        B = 0.0
+        G, B = 1.0, 0.0
     elif (wavelength >= 580) and (wavelength < 645):
-        R = 1.0
+        R, B = 1.0, 0.0
         G = -(wavelength - 645.) / (645. - 580.)
-        B = 0.0
     elif (wavelength >= 645) and (wavelength <= 780):
-        R = 1.0
-        G = 0.0
-        B = 0.0
+        R, G, B = 1.0, 0.0, 0.0
     elif wavelength > 780:
-        R = 1.0
-        G = 0.0
-        B = 0.0
+        R, G, B = 1.0, 0.0, 0.0
 
     # intensity correction
     if wavelength < 380:
@@ -181,4 +138,4 @@ def wav2RGB(wavelength):
         SSS = 0.3
 
     SSS *= 255
-    return (int(SSS * R), int(SSS * G), int(SSS * B))
+    return int(SSS * R), int(SSS * G), int(SSS * B)
