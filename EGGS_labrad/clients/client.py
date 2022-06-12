@@ -6,6 +6,7 @@ from os import _exit, environ
 from inspect import getmembers
 from abc import ABC, abstractmethod
 
+import logging
 from twisted.logger import Logger, textFileLogObserver
 from twisted.internet.defer import inlineCallbacks
 
@@ -49,7 +50,11 @@ class GUIClient(ABC):
     createMenu = True
 
     # Logger
-    log = Logger(source=name, observer=textFileLogObserver(stdout))
+    logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
+    log = logging.getLogger('labrad.client')
+    log.addHandler(logging.StreamHandler(sys.stdout))
+    # todo: change logging format, set config better
+    #log = Logger(source=name, observer=textFileLogObserver(stdout))
 
     # INITIALIZATION
     def __init__(self, reactor, cxn=None, parent=None):

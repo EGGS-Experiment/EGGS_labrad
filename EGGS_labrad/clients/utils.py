@@ -2,10 +2,28 @@
 Contains functions useful for LabRAD clients.
 """
 from __future__ import print_function
+
+import logging
+from sys import stdout
 from PyQt5.QtWidgets import QApplication
 
 __all__ = ["runGUI", "runClient", "createTrunk", "wav2RGB"]
 
+class StdioOnnaStick:
+
+    def __init__(self, logger):
+        self.log = logger
+
+    def write(self, data):
+        d = (self.buf + data).split("\n")
+        self.buf = d[-1]
+        messages = d[0:-1]
+        for message in messages:
+            self.log.info(message)
+
+    def writelines(self, lines):
+        for line in lines:
+            self.log.info(line)
 
 # run functions
 def runGUI(client, *args, **kwargs):
@@ -37,11 +55,16 @@ def runClient(client, *args, **kwargs):
     Passes any constructor arguments to the client class.
     # todo: accept arguments that change logging behavior a la labrad node
     """
-    import builtins as __builtin__
+    # import builtins as __builtin__
+    # def print(*args, **kwargs):
+    #     log.msg('My overridden print() function!')
+    #     return __builtin__.print(*args, **kwargs)
 
-    def print(*args, **kwargs):
-        __builtin__.print('My overridden print() function!')
-        return __builtin__.print(*args, **kwargs)
+    # redirect print to logger
+    log = logging.getLogger('labrad.client')
+    logfile = StdioOnnaStick(log)
+    stdout = logfile
+
     # widgets require a QApplication to run
     app = QApplication([])
 
