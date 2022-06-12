@@ -103,12 +103,19 @@ class GUIClient(ABC):
         formatter = "%(asctime)s [%(name)-15.15s] "
         formatter2 = "[%-15.15s] [%-25.25s]" % (gethostname(), self.__class__.__name__)
         formatter3 = "[%(levelname)-10.10s]  %(message)s"
+        formatter += formatter2 + formatter3
+        format = logging.Formatter(formatter)
 
         # create logger
-        logging.basicConfig(level=logging.DEBUG, format=formatter + formatter2 + formatter3)
+        logging.basicConfig(level=logging.DEBUG, format=formatter)
         self.logger = logging.getLogger("labrad.client")
 
-        # todo: add syslog handler
+        # syslog handler
+        # todo: change to RFC5424
+        syslog_socket = "{:s}:{:s}".format(environ['LABRADHOST'], environ['EGGS_LABRAD_SYSLOG_PORT'])
+        syslog_handler = logging.handlers.SysLogHandler(address=syslog_socket)
+        syslog_handler.setFormatter(format)
+        logger.addHandler(syslog_handler)
         # todo: do we need a stream handler?
         # labradLogFormat = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s] [%(module)s]  %(message)s")
         # consoleHandler = logging.StreamHandler(sys.stdout)
