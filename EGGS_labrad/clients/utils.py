@@ -1,11 +1,9 @@
 """
 Contains functions useful for LabRAD clients.
 """
-import sys
-import logging
 from PyQt5.QtWidgets import QApplication
 
-__all__ = ["runGUI", "runClient", "setupLogging", "createTrunk", "wav2RGB"]
+__all__ = ["runGUI", "runClient", "createTrunk", "wav2RGB"]
 
 
 # run functions
@@ -70,55 +68,6 @@ def runClient(client, *args, **kwargs):
         client_tmp.close()
     except Exception as e:
         print(e)
-
-
-def setupLogging():
-    """
-    Sets up the logger for clients.
-    """
-    from os import environ
-    from socket import gethostname, SOCK_STREAM
-    from logging.handlers import SysLogHandler
-    from rfc5424logging import Rfc5424SysLogHandler
-
-    # LoggerWriter object redirects stdout to logger
-    class _LoggerWriter:
-        def __init__(self, level):
-            self.level = level
-
-        def write(self, message):
-            if message != '\n':
-                self.level(message)
-
-        def flush(self):
-            self.level(sys.stderr)
-
-    # set up logger format
-    formatter = "%(asctime)s [%(name)-15.15s] [%(host)-15.15s] [%(client_name)-25.25s] [%(levelname)-10.10s]  %(message)s"
-    labradclientFormat = logging.Formatter(formatter)
-
-    # create syslog handler
-    syslog_socket = (environ['LABRADHOST'], int(environ['EGGS_LABRAD_SYSLOG_PORT']))
-    syslog_handler = SysLogHandler(address=syslog_socket)
-    syslog_handler.setFormatter(labradclientFormat)
-
-    # create console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(labradclientFormat)
-
-    # create rfc5424 handler
-    loki_handler = Rfc5424SysLogHandler(address=('192.168.1.48', 1514), socktype=SOCK_STREAM)
-
-    # create logger
-    logging.basicConfig(level=logging.DEBUG, handlers=None)
-    logger = logging.getLogger("labrad.client")
-    logger.propagate = False
-    logger.addHandler(syslog_handler)
-    logger.addHandler(console_handler)
-    logger.addHandler(loki_handler)
-
-    # redirect print statements to logger
-    #sys.stdout = _LoggerWriter(logger.info)
 
 
 # recording functions

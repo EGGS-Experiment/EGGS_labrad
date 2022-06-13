@@ -10,7 +10,8 @@ import logging
 
 from twisted.internet.defer import inlineCallbacks
 
-from EGGS_labrad.clients.utils import createTrunk, setupLogging
+from EGGS_labrad.clients.utils import createTrunk
+from EGGS_labrad.clients.logging import setupLogging
 from EGGS_labrad.clients.Widgets import QClientMenuHeader
 
 __all__ = ["GUIClient", "RecordingGUIClient"]
@@ -98,32 +99,26 @@ class GUIClient(ABC):
         Set up the client logger.
         """
         from socket import gethostname
+        from rfc5424logging.adapter import Rfc5424SysLogAdapter
+
+        # create custom loghandler so logging labels are specific to each client
+        extraDict = {
+            'sender_host': gethostname(),
+            'sender_name': self.__class__.__name__,
+        }
+
+        structured_data = {'sender': extraDict.copy()}
+        extraDict.update({'structured_data': structured_data})
 
         # do general logging setup
-        setupLogging()
+        setupLogging(self)
 
         # get the logger
-        logger_tmp = logging.getLogger('labrad.client')
-
-        # create custom loghandler so logging labels are specific to
-        # each client
-        d = {'host': gethostname(), 'client_name': self.__class__.__name__}
-        class _LogHandler:
-            def __init__(self, logger):
-                self.logger = logger
-            def debug(self, msg, *args):
-                self.logger.debug(msg, extra=d)
-            def info(self, msg, *args):
-                self.logger.debug(msg, extra=d)
-            def warning(self, msg, *args):
-                self.logger.debug(msg, extra=d)
-            def critical(self, msg, *args):
-                self.logger.debug(msg, extra=d)
-            def error(self, msg, *args):
-                self.logger.debug(msg, extra=d)
+        logger = logging.getLogger('labrad.client')
 
         # set logger as instance variable
-        self.logger = _LogHandler(logger_tmp)
+        self.logger = Rfc5424SysLogAdapter(logger, extraDict)
+
 
     # STARTUP DISPATCHERS
     @inlineCallbacks
