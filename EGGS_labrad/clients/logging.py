@@ -47,7 +47,7 @@ def setupLogging(sender=None):
 
     # create rfc5424 handler
     loki_handler = Rfc5424SysLogHandler(
-        address=('192.168.1.48', 1514),
+        address=(environ['LABRADHOST'], 1514),
         socktype=SOCK_STREAM,
         enterprise_id=88888
     )
