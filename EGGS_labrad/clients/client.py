@@ -98,26 +98,8 @@ class GUIClient(ABC):
         """
         Set up the client logger.
         """
-        from socket import gethostname
-        from rfc5424logging.adapter import Rfc5424SysLogAdapter
-
-        # create custom loghandler so logging labels are specific to each client
-        extraDict = {
-            'sender_host': gethostname(),
-            'sender_name': self.__class__.__name__,
-        }
-
-        structured_data = {'sender': extraDict.copy()}
-        extraDict.update({'structured_data': structured_data})
-
-        # do general logging setup
-        setupLogging('labrad.client', sender=self)
-
-        # get the logger
-        logger = logging.getLogger('labrad.client')
-
         # set logger as instance variable
-        self.logger = Rfc5424SysLogAdapter(logger, extraDict)
+        self.logger = setupLogging('labrad.client', sender=self)
 
         # redirect stdout
         sys.stdout = _LoggerWriter(self.logger.info)

@@ -33,9 +33,10 @@ def setupLogging(logger_name, sender=None):
         sender      : the sender.
     """
     from os import environ
-    from socket import SOCK_STREAM
+    from socket import SOCK_STREAM, gethostname
     from logging.handlers import SysLogHandler
     from rfc5424logging import Rfc5424SysLogHandler
+    from rfc5424logging.adapter import Rfc5424SysLogAdapter
 
     # create logger
     logging.basicConfig(level=logging.DEBUG, handlers=None)
@@ -73,3 +74,16 @@ def setupLogging(logger_name, sender=None):
         logger.addHandler(syslog_handler)
         logger.addHandler(console_handler)
         logger.addHandler(loki_handler)
+
+    # create custom loghandler so logging labels are specific to each sender
+    extraDict = {
+        'sender_host': gethostname(),
+        'sender_name': sender.__class__.__name__,
+    }
+
+    structured_data = {'sender': extraDict.copy()}
+    extraDict.update({'structured_data': structured_data})
+
+    # set logger as instance variable
+    logger_adapter = Rfc5424SysLogAdapter(logger, extraDict)
+    return logger_adapter
