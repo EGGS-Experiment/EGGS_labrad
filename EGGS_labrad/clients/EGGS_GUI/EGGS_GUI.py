@@ -89,10 +89,10 @@ class EGGS_gui(QMainWindow):
         from EGGS_labrad.clients.stability_client.stability_client import stability_client
         from EGGS_labrad.clients.functiongenerator_client.functiongenerator_client import functiongenerator_client
         clients = {
-            DC_client:                      {"pos": (0, 1)},
-            stability_client:               {"pos": (0, 0)},
-            functiongenerator_client:       {"pos": (1, 1)},
-            RF_client:                      {"pos": (1, 0)}
+            DC_client:                      {"pos": (0, 1, 1, 2)},
+            stability_client:               {"pos": (0, 0, 2, 1)},
+            functiongenerator_client:       {"pos": (1, 2)},
+            RF_client:                      {"pos": (1, 1)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
