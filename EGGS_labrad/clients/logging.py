@@ -25,45 +25,51 @@ class _LoggerWriter:
         self.level(sys.stderr)
 
 
-def setupLogging(sender=None):
+def setupLogging(logger_name, sender=None):
     """
     Sets up the logger.
     Arguments:
-        sender  : the sender.
+        logger_name : the name of the logger to set up.
+        sender      : the sender.
     """
     from os import environ
     from socket import SOCK_STREAM
     from logging.handlers import SysLogHandler
     from rfc5424logging import Rfc5424SysLogHandler
 
-    # create syslog handler
-    syslog_socket = (environ['LABRADHOST'], int(environ['EGGS_LABRAD_SYSLOG_PORT']))
-    syslog_handler = SysLogHandler(address=syslog_socket)
-    syslog_handler.setFormatter(labradLogFormatter)
-
-    # create console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(labradLogFormatter)
-
-    # create rfc5424 handler
-    loki_handler = Rfc5424SysLogHandler(
-        address=(environ['LABRADHOST'], 1514),
-        socktype=SOCK_STREAM,
-        enterprise_id=88888
-    )
-
     # create logger
     logging.basicConfig(level=logging.DEBUG, handlers=None)
-    logger = logging.getLogger("labrad.client")
+    logger = logging.getLogger(logger_name)
 
     # don't propagate log events to root logger
     logger.propagate = False
 
-    # add handlers
-    logger.addHandler(syslog_handler)
-    logger.addHandler(console_handler)
-    logger.addHandler(loki_handler)
+    # check if logger already has handlers
+    handlers = {}
+    for name, logger_class in logging.Logger.manager.loggerDict.items():
+        if isinstance(logger_class, logging.Logger) and (name == logger_name):
+            for log_handler in logger_class.handlers:
+                handlers[logger_name] = log_handler
 
-    # redirect print statements to logger
-    #sys.stdout = _LoggerWriter(logger.info)
-    
+    # only add handlers if we don't already have some
+    if len(handlers) == 0:
+        # create syslog handler
+        syslog_socket = (environ['LABRADHOST'], int(environ['EGGS_LABRAD_SYSLOG_PORT']))
+        syslog_handler = SysLogHandler(address=syslog_socket)
+        syslog_handler.setFormatter(labradLogFormatter)
+
+        # create console handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(labradLogFormatter)
+
+        # create rfc5424 handler
+        loki_handler = Rfc5424SysLogHandler(
+            address=(environ['LABRADHOST'], 1514),
+            socktype=SOCK_STREAM,
+            enterprise_id=88888
+        )
+
+        # add handlers
+        logger.addHandler(syslog_handler)
+        logger.addHandler(console_handler)
+        logger.addHandler(loki_handler)

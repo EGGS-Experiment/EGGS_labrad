@@ -11,7 +11,7 @@ import logging
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients.utils import createTrunk
-from EGGS_labrad.clients.logging import setupLogging
+from EGGS_labrad.clients.logging import setupLogging, _LoggerWriter
 from EGGS_labrad.clients.Widgets import QClientMenuHeader
 
 __all__ = ["GUIClient", "RecordingGUIClient"]
@@ -111,13 +111,16 @@ class GUIClient(ABC):
         extraDict.update({'structured_data': structured_data})
 
         # do general logging setup
-        setupLogging(self)
+        setupLogging('labrad.client', sender=self)
 
         # get the logger
         logger = logging.getLogger('labrad.client')
 
         # set logger as instance variable
         self.logger = Rfc5424SysLogAdapter(logger, extraDict)
+
+        # redirect stdout
+        sys.stdout = _LoggerWriter(self.logger.info)
 
 
     # STARTUP DISPATCHERS
