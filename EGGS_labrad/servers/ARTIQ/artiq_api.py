@@ -1,8 +1,21 @@
+import sys
 import numpy as np
+from builtins import ConnectionAbortedError
+
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
 from artiq.coredevice.urukul import urukul_sta_rf_sw
+
+
+# restart auto ***todo
+def connectionErrorHook(exctype, value, traceback):
+    if exctype == ConnectionAbortedError:
+        print("Handler code goes here")
+    else:
+        sys.__excepthook__(exctype, value, traceback)
+
+sys.excepthook = connectionErrorHook
 
 
 class ARTIQ_api(object):

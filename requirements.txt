@@ -25,3 +25,5 @@ qt5reactor>=0.6.3
 mpmath>=1.2.1
 qutip>=4.6.3
 scipy==1.7.1
+
+rfc5424-logging-handler >= 1.4.3
