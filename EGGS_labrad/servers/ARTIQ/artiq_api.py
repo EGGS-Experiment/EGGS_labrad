@@ -370,6 +370,7 @@ class ARTIQ_api(object):
 
 
     # URUKUL
+    @autoreload
     def initializeUrukul(self, urukul_name):
         """
         Initialize an Urukul board.
@@ -400,16 +401,24 @@ class ARTIQ_api(object):
 
 
     # DAC/ZOTINO
-    @kernel
+    @autoreload
     def initializeDAC(self):
+        self._initializeDAC()
+
+    @kernel
+    def _initializeDAC(self):
         """
         Initialize the DAC.
         """
         self.core.reset()
         self.zotino.init()
 
-    @kernel
+    @autoreload
     def setZotino(self, channel_num, volt_mu):
+        self._setZotino(channel_num, volt_mu)
+
+    @kernel
+    def _setZotino(self, channel_num, volt_mu):
         """
         Set the voltage of a DAC register.
         """
@@ -417,8 +426,12 @@ class ARTIQ_api(object):
         self.zotino.write_dac_mu(channel_num, volt_mu)
         self.zotino.load()
 
-    @kernel
+    @autoreload
     def setZotinoGain(self, channel_num, gain_mu):
+        self._setZotinoGain(channel_num, gain_mu)
+
+    @kernel
+    def _setZotinoGain(self, channel_num, gain_mu):
         """
         Set the gain of a DAC channel.
         """
@@ -426,8 +439,12 @@ class ARTIQ_api(object):
         self.zotino.write_gain_mu(channel_num, gain_mu)
         self.zotino.load()
 
-    @kernel
+    @autoreload
     def setZotinoOffset(self, channel_num, volt_mu):
+        self._setZotinoOffset(channel_num, volt_mu)
+
+    @kernel
+    def _setZotinoOffset(self, channel_num, volt_mu):
         """
         Set the voltage of a DAC offset register.
         """
@@ -435,16 +452,24 @@ class ARTIQ_api(object):
         self.zotino.write_offset_mu(channel_num, volt_mu)
         self.zotino.load()
 
-    @kernel
+    @autoreload
     def setZotinoGlobal(self, word):
+        self._setZotinoGlobal(word)
+
+    @kernel
+    def _setZotinoGlobal(self, word):
         """
         Set the OFSx registers on the AD5372.
         """
         self.core.reset()
         self.zotino.write_offset_dacs_mu(word)
 
-    @kernel
+    @autoreload
     def readZotino(self, channel_num, address):
+        return self._setZotinoGlobal(channel_num, address)
+
+    @kernel
+    def _readZotino(self, channel_num, address):
         """
         Read the value of one of the DAC registers.
         :param channel_num: Channel to read from
@@ -457,16 +482,24 @@ class ARTIQ_api(object):
 
 
     # FASTINO
-    @kernel
+    @autoreload
     def initializeFastino(self):
+        self._initializeFastino()
+
+    @kernel
+    def _initializeFastino(self):
         """
         Initialize the Fastino.
         """
         self.core.break_realtime()
         self.fastino.init()
 
-    @kernel
+    @autoreload
     def setFastino(self, channel_num, volt_mu):
+        self._setFastino(channel_num, volt_mu)
+
+    @kernel
+    def _setFastino(self, channel_num, volt_mu):
         """
         Set the voltage of a Fastino register.
         """
@@ -475,13 +508,21 @@ class ARTIQ_api(object):
         self.fastino.update(1 << channel_num)
         self.core.break_realtime()
 
-    @kernel
+    @autoreload
     def readFastino(self, addr):
+        self._readFastino(addr)
+
+    @kernel
+    def _readFastino(self, addr):
         self.core.break_realtime()
         return self.fastino.read(addr)
 
-    @kernel
+    @autoreload
     def continuousFastino(self, channel_num):
+        self._continuousFastino(channel_num)
+
+    @kernel
+    def _continuousFastino(self, channel_num):
         """
         Allows a Fastino channel to be updated continuously regardless of incoming data.
         """
@@ -492,13 +533,24 @@ class ARTIQ_api(object):
 
 
     # SAMPLER
-    @kernel
+    @autoreload
     def initializeSampler(self):
+        """
+        Initialize the Sampler.
+        """
+        self._initializeSampler()
+
+    @kernel
+    def _initializeSampler(self):
         """
         Initialize the Sampler.
         """
         self.core.reset()
         self.sampler.init()
+
+    @autoreload
+    def setSamplerGain(self, channel_num, gain_mu):
+        return self._setSamplerGain(channel_num, gain_mu)
 
     @kernel
     def setSamplerGain(self, channel_num, gain_mu):
@@ -511,8 +563,12 @@ class ARTIQ_api(object):
         self.core.reset()
         self.sampler.set_gain_mu(channel_num, gain_mu)
 
-    @kernel
+    @autoreload
     def getSamplerGains(self):
+        return self._getSamplerGains()
+
+    @kernel
+    def _getSamplerGains(self):
         """
         Get the gain of all sampler channels.
         :return: the sample channel gains.
@@ -520,8 +576,12 @@ class ARTIQ_api(object):
         self.core.reset()
         return self.sampler.get_gains_mu()
 
-    @kernel
+    @autoreload
     def readSampler(self, sampleArr):
+        return self._readSampler(sampleArr)
+
+    @kernel
+    def _readSampler(self, sampleArr):
         """
         Set the gain of
         :param channel_num: Channel to set
