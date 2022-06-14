@@ -234,12 +234,19 @@ class QClientMenuHeader(QMenuBar):
         except Exception as e:
             print(e)
 
+
     # POLLING
     @inlineCallbacks
     def _getPolling(self, server):
         try:
             polling_status, polling_interval = yield server.polling()
+            # set polling status
             self.pollstatus_action.setChecked(polling_status)
+            if self.pollstatus_action.isChecked():
+                self.pollstatus_action.setText("Polling Active")
+            else:
+                self.pollstatus_action.setText("Polling Inactive")
+            # set polling rate
             self.pollrate_spinbox.setValue(polling_interval)
         except Exception as e:
             print(e)
@@ -260,6 +267,7 @@ class QClientMenuHeader(QMenuBar):
             polling_status, polling_interval = yield server.polling(status_tmp, interval)
         except Exception as e:
             print(e)
+
 
     # COMMUNICATION
     @inlineCallbacks

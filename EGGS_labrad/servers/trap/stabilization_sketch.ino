@@ -14,8 +14,6 @@
 #define VOLTS_TO_MU(VOLTS)      (VOLTS * 1048575 / REF_VOLTAGE)
 #define MU_TO_VOLTS(VOLTS_MU)   (VOLTS_MU * REF_VOLTAGE / 1048575)      // 209715 mu per volt
 
-
-
 #define msg_init    0x200000
 #define msg_1v      0x133333
 #define msg_5v      0x1FFFFF
@@ -23,23 +21,26 @@
 
 void setup() {
     // set pin directions (DDR registers)
-    OUTPUT_PORT_DDR &= 0x1F;
+    OUTPUT_PORT_DDR |= 0xFF;
+
     // initialize the DAC
     programDAC(msg_init);
+    programDAC(msg_1v);
+
     // set up serial
     Serial.begin(115200);
-    Serial.println("THKIM");
-    programDAC(msg_1v);
+    Serial.println("Ready.");
 }
 
 void loop() {
     // wait for serial input
     while (!Serial.available()) {}
     // read serial input & check command is correct
-    if (Serial.readStringUntil("\n") == "F?\r\n") {
+    if (Serial.readStringUntil("\n") == "F?\n") {
         // program DAC with given voltage
         uint32_t dac_msg = createDACMessage(1);
         programDAC(dac_msg);
+        Serial.println("Programmed.");
     }
     else {
         Serial.println("Invalid input.");
@@ -63,12 +64,12 @@ void programDAC(uint32_t data) {
     OUTPUT_PORT &= ~(_BV(SYNC_PIN) | _BV(LDAC_PIN));
 
     // MSB first
-    for (uint32_t i=23; i>=0; --i) {
+    for (int i=23; i>=0; --i) {
         // bring SCLK high since data clocked in on falling edge
         OUTPUT_PORT |= _BV(SCLK_PIN);
 
         // set SDIN to data state
-        if (data & _BV(i)) {
+        if ((data >> i) & _BV(0)) {
             OUTPUT_PORT |= _BV(SDIN_PIN);
         } else {
             OUTPUT_PORT &= ~(_BV(SDIN_PIN));
@@ -76,10 +77,9 @@ void programDAC(uint32_t data) {
 
         // set SCLK low to clock data in
         OUTPUT_PORT &= ~(_BV(SCLK_PIN));
-        Serial.print(data & _BV(i), BIN);
     }
+
     // bring SYNC high to update input shift register
-    Serial.println("");
     OUTPUT_PORT |= _BV(SYNC_PIN);
     return;
 }
