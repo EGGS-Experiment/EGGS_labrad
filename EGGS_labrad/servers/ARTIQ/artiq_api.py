@@ -1,21 +1,11 @@
-import sys
 import numpy as np
-from builtins import ConnectionAbortedError
 
 from artiq.experiment import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
 from artiq.coredevice.urukul import urukul_sta_rf_sw
 
-
-# restart auto ***todo
-def connectionErrorHook(exctype, value, traceback):
-    if exctype == ConnectionAbortedError:
-        print("Handler code goes here")
-    else:
-        sys.__excepthook__(exctype, value, traceback)
-
-sys.excepthook = connectionErrorHook
+from builtins import ConnectionAbortedError, ConnectionResetError
 
 
 class ARTIQ_api(object):
@@ -26,8 +16,26 @@ class ARTIQ_api(object):
     # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
     """
 
+    def autoreload(func):
+        """
+        A decorator for non-kernel functions that attempts to reset
+        the connection to artiq_master if we lost it.
+        """
+        def inner(self, *args, **kwargs):
+            try:
+                func(self, *args, **kwargs)
+            except (ConnectionAbortedError, ConnectionResetError) as e:
+                try:
+                    print('Connection aborted, resetting connection to artiq_master...')
+                    self.reset()
+                    func(self, *args, **kwargs)
+                except Exception as e:
+                    raise e
+        return inner
+
     def __init__(self, ddb_filepath):
         devices = DeviceDB(ddb_filepath)
+        self.ddb_filepath = ddb_filepath
         self.device_manager = DeviceManager(devices)
         self.device_db = devices.get_device_db()
         self._getDevices()
@@ -37,6 +45,15 @@ class ARTIQ_api(object):
         Closes any opened devices.
         """
         self.device_manager.close_devices()
+
+    def reset(self):
+        """
+        Reestablishes a connection to artiq_master.
+        """
+        devices = DeviceDB(self.ddb_filepath)
+        self.device_manager = DeviceManager(devices)
+        self.device_db = devices.get_device_db()
+        self._getDevices()
 
 
     # SETUP
@@ -135,6 +152,7 @@ class ARTIQ_api(object):
 
 
     # DMA
+    @autoreload
     def runDMA(self, handle_name):
         handle = self.core_dma.get_handle(handle_name)
         self._runDMA(handle)
@@ -147,6 +165,7 @@ class ARTIQ_api(object):
 
 
     # TTL
+    @autoreload
     def setTTL(self, ttlname, state):
         """
         Manually set the state of a TTL.
@@ -182,12 +201,14 @@ class ARTIQ_api(object):
 
 
     # DDS
+    @autoreload
     def initializeDDSAll(self):
         # initialize urukul cplds as well as dds channels
         device_list = list(self.urukul_list.values())
         for device in device_list:
             self._initializeDDS(device)
 
+    @autoreload
     def initializeDDS(self, dds_name):
         dev = self.dds_list[dds_name]
         self._initializeDDS(dev)
@@ -197,6 +218,7 @@ class ARTIQ_api(object):
         self.core.reset()
         dev.init()
 
+    @autoreload
     def getDDSsw(self, dds_name):
         """
         Get the RF switch status of a DDS channel.
@@ -210,6 +232,7 @@ class ARTIQ_api(object):
         sw_reg = urukul_sta_rf_sw(urukul_cfg)
         return (sw_reg >> channel_num) & 0x1
 
+    @autoreload
     def setDDSsw(self, dds_name, state):
         """
         Set the RF switch of a DDS channel.
@@ -251,6 +274,7 @@ class ARTIQ_api(object):
             asf &= 0x3FFF
         return np.int32(ftw), np.int32(asf), np.int32(pow)
 
+    @autoreload
     def setDDS(self, dds_name, param, val):
         """
         Manually set the frequency, amplitude, or phase of a DDS channel.
@@ -278,6 +302,7 @@ class ARTIQ_api(object):
         self.core.reset()
         dev.set_mu(ftw, pow_=pow, asf=asf)
 
+    @autoreload
     def getDDSatt(self, dds_name):
         """
         Set the DDS attenuation.
@@ -289,6 +314,7 @@ class ARTIQ_api(object):
         # get only attenuation of channel
         return (att_reg >> (8 * channel_num)) & 0xff
 
+    @autoreload
     def setDDSatt(self, dds_name, att_mu):
         """
         Set the DDS attenuation.
@@ -314,6 +340,7 @@ class ARTIQ_api(object):
         # shift in adjusted value and latch
         cpld.bus.write(cpld.att_reg)
 
+    @autoreload
     def readDDS(self, dds_name, reg, length):
         """
         Read the value of a DDS register.

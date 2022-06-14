@@ -15,6 +15,8 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+import logging
+
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
@@ -36,7 +38,6 @@ DACSIGNAL_ID = 828175
 ADCSIGNAL_ID = 828174
 EXPSIGNAL_ID = 828173
 DDSSIGNAL_ID = 828172
-# todo: how to fix builtins.ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
 
 
 class ARTIQ_Server(LabradServer):
@@ -61,6 +62,15 @@ class ARTIQ_Server(LabradServer):
     # STARTUP
     @inlineCallbacks
     def initServer(self):
+        # remove logger objects from artiq/sipyco
+        # todo: fix
+        logger_dict = {}
+        for logger_name, logger_object in self.logger.manager.loggerDict.items():
+            if ('artiq' not in logger_name) and ('sipyco' not in logger_name):
+                logger_dict[logger_name] = logger_object
+
+        self.logger.manager.loggerDict = logger_dict
+
         self.api = ARTIQ_api(device_db_module.__file__)
         # set up ARTIQ stuff
         yield self._setClients()
@@ -636,4 +646,5 @@ class ARTIQ_Server(LabradServer):
 
 if __name__ == '__main__':
     from labrad import util
+
     util.runServer(ARTIQ_Server())
