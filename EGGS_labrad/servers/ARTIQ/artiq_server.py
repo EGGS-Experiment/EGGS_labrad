@@ -167,13 +167,16 @@ class ARTIQ_Server(LabradServer):
         # set pipeline, priority, and expid
         ps_pipeline = 'PS'
         ps_priority = 1
-        ps_expid = {'log_level': 30,
-                    'file': path,
-                    'class_name': None,
-                    'arguments': {'maxRuns': maxruns,
-                                  'linetrigger_enabled': self.linetrigger_enabled,
-                                  'linetrigger_delay_us': self.linetrigger_delay,
-                                  'linetrigger_ttl_name': self.linetrigger_ttl}}
+        ps_expid = {
+            'log_level': 30,
+            'file': path,
+            'class_name': None,
+            'arguments': {
+                'maxRuns': maxruns,
+                'linetrigger_enabled': self.linetrigger_enabled,
+                'linetrigger_delay_us': self.linetrigger_delay,
+                'linetrigger_ttl_name': self.linetrigger_ttl}
+        }
 
         # run sequence then wait for experiment to submit
         yield self.inCommunication.acquire()

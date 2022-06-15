@@ -60,6 +60,7 @@ class GUIClient(ABC):
     # GUI parameters
     createMenu = True
 
+
     # INITIALIZATION
     def __init__(self, reactor, cxn=None, parent=None):
         """
@@ -124,6 +125,7 @@ class GUIClient(ABC):
             self.cxn = yield connectAsync(self.LABRADHOST, name=self.name, password=self.LABRADPASSWORD)
         else:
             self.logger.debug("LabRAD connection already provided.")
+
         # set self.servers as class attributes
         self.logger.debug("Getting required servers...")
         for var_name, server_name in self.servers.items():
@@ -132,6 +134,7 @@ class GUIClient(ABC):
             except Exception as e:
                 setattr(self, var_name, None)
                 self.logger.warning("Server unavailable: {_server_name:s}".format(_server_name=server_name))
+
         # server connections
         self.logger.debug("Connecting to LabRAD manager signals...")
         yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
@@ -224,12 +227,14 @@ class GUIClient(ABC):
             # check if any members of the GUI are QClientMenuHeaders
             isQClientMenuHeader = lambda obj: isinstance(obj, QClientMenuHeader)
             QClientMenuHeader_list = getmembers(self.gui, isQClientMenuHeader)
+
             # check that the GUI has a QClientMenuHeader
             if len(QClientMenuHeader_list) > 0:
                 self.logger.debug("QClientMenuHeader exists. Attempting to connect...")
                 # initialize the QClientMenuHeader
                 menuHeader_name, menuHeader_object = QClientMenuHeader_list[0]
                 menuHeader_object.addFile(self)
+
             # otherwise, create and initialize a header here and add it to our gui class
             elif len(QClientMenuHeader_list) == 0:
                 self.logger.debug("No QClientMenuHeader exists in the GUI file. Adding one now...")
@@ -239,9 +244,11 @@ class GUIClient(ABC):
                 gui_layout.setMenuBar(menuHeader_object)
                 # initialize the QClientMenuHeader
                 menuHeader_object.addFile(self)
+
             # search client servers for SerialDeviceServers, PollingServers, and GPIBManagedDeviceServers
             for server_nickname in self.servers.keys():
                 server_object = getattr(self, server_nickname)
+
                 # create appropriate submenu
                 if "Serial Query" in server_object.settings.keys():
                     menuHeader_object.addSerial(server_object)
@@ -277,14 +284,17 @@ class GUIClient(ABC):
         server_name = message[1]
         # refresh so we can check if all necessary servers are there
         yield self.cxn.refresh()
+
         try:
             server_ind = list(self.servers.values()).index(server_name)
             self.logger.debug("{_server:s} reconnected.".format(_server=server_name))
+
             # set server if connecting for first time
             server_nickname = list(self.servers.keys())[server_ind]
             if getattr(self, server_nickname) is None:
                 setattr(self, server_nickname, self.cxn[server_name])
                 self.logger.info("Establishing initial connection to: {_server:s}.".format(_server=server_name))
+
             # check if all required servers exist
             if all(server_names.lower().replace(' ', '_') in self.cxn.servers for server_names in self.servers.values()):
                 self.logger.info("All required servers online. Enabling client.")
@@ -310,7 +320,6 @@ class GUIClient(ABC):
         """
         Restarts the GUI client.
         """
-        # todo: maybe move restart to a permanent startup sequence?
         self.logger.info('Restarting client ...')
         self.gui.setVisible(False)
         d = self._connectLabrad()
@@ -336,8 +345,8 @@ class GUIClient(ABC):
         """
         To be subclassed.
         Called after _connectLabrad.
-        Should be used to get necessary servers, setup listeners,
-        do polling, and other labrad stuff.
+        Should be used to get necessary servers, setup listeners, do polling,
+        and other labrad stuff.
         """
         pass
 
@@ -347,7 +356,7 @@ class GUIClient(ABC):
         To be subclassed.
         Called after initClient.
         Used to instantiate a GUI class with arbitrary configuration settings.
-        This function is called here to
+        This function is called here to *** todo
         """
         pass
 
