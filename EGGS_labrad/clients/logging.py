@@ -13,6 +13,7 @@ class _LoggerWriter:
     """
     Redirects stdout to logger.
     """
+    encoding = 'utf-8'
 
     def __init__(self, level):
         self.level = level

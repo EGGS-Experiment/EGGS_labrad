@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 import sys
 
 from twisted.internet.defer import inlineCallbacks
+#from labrad.logging import setupLogging, _LoggerWriter
 from EGGS_labrad.clients.logging import setupLogging, _LoggerWriter
 
 from EGGS_labrad.clients.utils import createTrunk
