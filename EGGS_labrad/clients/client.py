@@ -6,10 +6,9 @@ from inspect import getmembers
 from abc import ABC, abstractmethod
 
 import sys
-import logging
 
 from twisted.internet.defer import inlineCallbacks
-from labrad.logging import setupLogging, _LoggerWriter
+from EGGS_labrad.clients.logging import setupLogging, _LoggerWriter
 
 from EGGS_labrad.clients.utils import createTrunk
 from EGGS_labrad.clients.Widgets import QClientMenuHeader
@@ -17,18 +16,6 @@ from EGGS_labrad.clients.Widgets import QClientMenuHeader
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
 # todo: co-opt recording into GUIClient and create record function dependent on class variable
-
-
-class _LoggerWriter:
-    def __init__(self, level):
-        self.level = level
-
-    def write(self, message):
-        if message != '\n':
-            self.level(message)
-
-    def flush(self):
-        self.level(sys.stderr)
 
 
 class GUIClient(ABC):
