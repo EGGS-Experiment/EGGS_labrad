@@ -9,11 +9,6 @@ from EGGS_labrad.clients import utils
 from EGGS_labrad.clients.utils import *
 __all__.extend(utils.__all__)
 
-# logging
-from EGGS_labrad.clients import logging
-from EGGS_labrad.clients.logging import *
-__all__.extend(logging.__all__)
-
 # client classes
 from EGGS_labrad.clients import client
 from EGGS_labrad.clients.client import *
