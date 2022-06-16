@@ -8,8 +8,8 @@ from abc import ABC, abstractmethod
 import sys
 
 from twisted.internet.defer import inlineCallbacks
-#from labrad.logging import setupLogging, _LoggerWriter
-from EGGS_labrad.clients.logging import setupLogging, _LoggerWriter
+from labrad.logging import setupLogging, _LoggerWriter
+#from EGGS_labrad.clients.logging import setupLogging, _LoggerWriter
 
 from EGGS_labrad.clients.utils import createTrunk
 from EGGS_labrad.clients.Widgets import QClientMenuHeader
@@ -102,6 +102,7 @@ class GUIClient(ABC):
         and sets up server connection signals.
         """
         self.logger.info("Connecting to LabRAD..")
+        print(self.reactor.__class__)
         # only create connection if we aren't instantiated with one
         if not self.cxn:
             if self.LABRADHOST is None:
