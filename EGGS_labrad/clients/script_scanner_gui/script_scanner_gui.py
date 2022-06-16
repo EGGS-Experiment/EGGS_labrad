@@ -29,8 +29,8 @@ class script_scanner_gui(QWidget):
 
     @inlineCallbacks
     def connect(self):
+        from labrad.errors import Error
         from labrad.units import WithUnit
-        from labrad.types import Error
         self.WithUnit = WithUnit
         self.Error = Error
         self.subscribedScriptScanner = False

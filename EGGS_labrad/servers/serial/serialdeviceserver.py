@@ -116,7 +116,7 @@
 
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
-from labrad.types import Error
+from labrad.errors import Error
 from labrad.server import LabradServer, setting
 
 __all__ = ["SerialDeviceError", "SerialConnectionError", "SerialDeviceServer"]
