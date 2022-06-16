@@ -34,7 +34,7 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://%LABRADHOST%:3000
 
 REM: ARTIQ Dashboard *** todo
-START "ARTIQ Dashboard" /min CMD "/c CALL artiq_dashboard -s %LABRADHOST%"
+START "ARTIQ Dashboard" /min CMD "/k activate artiq && CALL artiq_dashboard -s %LABRADHOST%"
 
 REM: Run device busses if device flag is active
 IF %dev_flag%==1 (
