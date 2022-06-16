@@ -19,7 +19,7 @@ import os
 import time
 import collections
 
-from labrad.types import Value
+from labrad.units import Value
 from labrad.errors import Error
 from labrad.server import setting, Signal
 from twisted.internet import reactor, threads

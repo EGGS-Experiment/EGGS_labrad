@@ -21,7 +21,7 @@ timeout = 20
 ### END NODE INFO
 """
 
-from labrad.types import Value
+from labrad.units import Value
 from labrad.devices import DeviceServer, DeviceWrapper
 from labrad.server import setting
 from twisted.internet.defer import inlineCallbacks, returnValue
