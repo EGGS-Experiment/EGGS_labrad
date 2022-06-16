@@ -39,19 +39,12 @@ def runClient(client, *args, **kwargs):
     app = QApplication([])
 
     # reactor may already be installed
-    import sys
-    from twisted.internet.error import ReactorAlreadyInstalledError
     try:
         import qt5reactor
         qt5reactor.install()
-    except ReactorAlreadyInstalledError:
-        print('yzde')
-        raise ReactorAlreadyInstalledError
-        #del sys.modules["twisted.internet.reactor"]
-        #qt5reactor.install()
-        print(sys.modules["twisted.internet.reactor"])
     except Exception as e:
         print(e)
+        raise e
 
     # instantiate client with a reactor
     from twisted.internet import reactor
@@ -68,7 +61,6 @@ def runClient(client, *args, **kwargs):
     # start reactor
     reactor.callWhenRunning(app.exec)
     reactor.addSystemEventTrigger('after', 'shutdown', client_tmp.close)
-    # todo: alsoa dd a ctrl+c event
     reactor.runReturn()
 
     # close client on exit
