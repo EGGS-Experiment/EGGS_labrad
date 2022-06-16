@@ -102,7 +102,6 @@ class GUIClient(ABC):
         and sets up server connection signals.
         """
         self.logger.info("Connecting to LabRAD..")
-        print(self.reactor.__class__)
         # only create connection if we aren't instantiated with one
         if not self.cxn:
             if self.LABRADHOST is None:
