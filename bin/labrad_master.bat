@@ -18,8 +18,8 @@ FOR %%x IN (%*) DO (
 )
 
 REM: Set up syslog for Grafana
-START "Loki Syslog" /min CMD "/k %HOME%\Code\loki\loki-windows-amd64.exe -config.file loki-syslog-config.yaml"
-START "Promtail Syslog" /min CMD "/k %HOME%\Code\loki\promtail-windows-amd64.exe -config.file promtail-syslog-config.yaml"
+START "Loki Syslog" /min CMD "/k %HOME%\Code\loki\loki-windows-amd64.exe -config.file %EGGS_LABRAD_ROOT%\bin\logging\loki-syslog-config.yaml"
+START "Promtail Syslog" /min CMD "/k %HOME%\Code\loki\promtail-windows-amd64.exe -config.file %EGGS_LABRAD_ROOT%\bin\logging\promtail-syslog-config.yaml"
 
 REM: Set up autosaver
 START "LabRAD Autosaver" /min %EGGS_LABRAD_ROOT%\bin\labrad_autosaver.bat

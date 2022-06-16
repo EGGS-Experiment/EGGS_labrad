@@ -15,3 +15,7 @@
 
 # stuff we produce
 #**/*.txt
+
+# loki/promtail
+data/
+wal/
