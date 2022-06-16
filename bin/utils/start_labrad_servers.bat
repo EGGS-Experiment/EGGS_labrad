@@ -25,6 +25,6 @@ TIMEOUT 5 > NUL && START "PMT Server" /min CMD "/k activate labart2 && TIMEOUT 2
 TIMEOUT 5 > NUL && START "Slider Server" /min CMD "/k activate labart2 && TIMEOUT 2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\slider\slider_server.py"
 
 REM: Devices
-START "Oscilloscope Server" /min CMD "/k activate labart && %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\oscilloscopes\oscilloscope_server.py"
-START "Function Generator Server" /min CMD "/k activate labart && %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\function_generators\functiongenerator_server.py"
-START "Spectrum Analyzer Server" /min CMD "/k activate labart && %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\spectrum_analyzer\spectrumanalyzer_server.py"
+START "Oscilloscope Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\oscilloscopes\oscilloscope_server.py"
+START "Function Generator Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\function_generators\functiongenerator_server.py"
+START "Spectrum Analyzer Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\spectrum_analyzer\spectrumanalyzer_server.py"
