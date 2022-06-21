@@ -26,6 +26,7 @@ class AndorClient(GUIClient):
         if self.gui is None:
             self.gui = AndorGUI()
 
+    @inlineCallbacks
     def initClient(self):
         # connect to signals
         yield self.cam.signal__image_updated(self.IMAGE_UPDATED_ID)
@@ -35,7 +36,7 @@ class AndorClient(GUIClient):
         yield self.cam.signal__acquisition_updated(self.ACQUISITION_UPDATED_ID)
         yield self.cam.addListener(listener=self.updateAcquisition, source=None, ID=self.ACQUISITION_UPDATED_ID)
         yield self.cam.signal__temperature_updated(self.TEMPERATURE_UPDATED_ID)
-        yield self.cam.addListener(listener=self.updatetemp, source=None, ID=self.TEMPERATURE_UPDATED_ID)
+        yield self.cam.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATURE_UPDATED_ID)
 
         # get attributes from config
         self.saved_data = None
@@ -81,6 +82,7 @@ class AndorClient(GUIClient):
 
     @inlineCallbacks
     def set_exposure(self, exposure):
+        print('set exposure called')
         acquisition_running = yield self.cam.acquisition_status()
         if acquisition_running:
             yield self.update_start(False)
@@ -90,7 +92,6 @@ class AndorClient(GUIClient):
             yield self.cam.exposure_time(exposure)
 
     def updateMode(self, c, data):
-        print('updatemode')
         parameter_name, parameter_value = data
         if parameter_name == "read":
             pass
@@ -104,21 +105,15 @@ class AndorClient(GUIClient):
             self.gui.trigger_mode.setText(parameter_value)
 
     def updateAcquisition(self, c, data):
-        self.logger.debug('thkimde')
-        print(data)
         parameter_name, parameter_value = data
         if parameter_name == "emccd_gain":
-            self.gui.emccd.setValue(parameter_value)
+            self.gui.emccd.setValue(int(parameter_value))
         elif parameter_name == "exposure_time":
             self.gui.exposure.setValue(parameter_value)
 
     def updateTemperature(self, c, temp):
-        print('tempupdate')
         pass
         # todo
-
-    def updatetemp(self, *args, **kwargs):
-        print('yzdeeeeeeeeeeeeeeeee')
 
 
     # IMAGE UPDATING

@@ -187,9 +187,9 @@ class AndorServer(PollingServer):
         Returns:
                     (float) : the current exposure time in seconds.
         """
-        mode = yield self._run('Exposure Time', 'get_exposure_time', 'set_exposure_time', time)
-        self.notifyOtherListeners(c, ("exposure_time", time), self.acquisition_updated)
-        returnValue(mode)
+        time = yield self._run('Exposure Time', 'get_exposure_time', 'set_exposure_time', time)
+        self.notifyOtherListeners(c, ("exposure_time", float(time)), self.acquisition_updated)
+        returnValue(time)
 
 
     """
