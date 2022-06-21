@@ -15,7 +15,6 @@ timeout = 5
 ### END NODE INFO
 """
 from twisted.internet import reactor
-from twisted.internet.task import LoopingCall
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import returnValue, DeferredLock, Deferred, inlineCallbacks
 
@@ -26,9 +25,9 @@ from EGGS_labrad.servers import PollingServer
 from EGGS_labrad.servers.andor_server.AndorAPI import AndorAPI
 
 IMAGE_UPDATED_SIGNAL = 142312
-# todo: clean up imports
+# todo: stop using reactor.callLater
 # todo: GUI signals
-# todo: make logger instead; remove all prints
+# todo: finish moving all to run
 
 
 class AndorServer(PollingServer):
@@ -268,7 +267,7 @@ class AndorServer(PollingServer):
     """
     Kinetic Series
     """
-    @setting(511, "Kinetic Number", num='i', returns='')
+    @setting(511, "Kinetic Number", num='i', returns='i')
     def kineticNumber(self, c, num=None):
         """
         Get/set number of scans in a kinetic cycle.
@@ -277,18 +276,8 @@ class AndorServer(PollingServer):
         Returns:
                 (int)   : the number of scans.
         """
-        # setter
-        if num is not None:
-            print('acquiring: {}'.format(self.kineticNumber.__name__))
-            yield self.lock.acquire()
-            try:
-                print('acquired : {}'.format(self.kineticNumber.__name__))
-                yield deferToThread(self.camera.set_number_kinetics, numKin)
-            finally:
-                print('releasing: {}'.format(self.kineticNumber.__name__))
-                self.lock.release()
-        # getter
-        return self.camera.get_number_kinetics()
+        num = yield self._run('Kinetic Number', 'get_number_kinetics', 'set_number_kinetics', num)
+        returnValue(num)
 
     @setting(512, "Kinetic Wait", timeout='v', returns='b')
     def kineticWait(self, c, timeout=1):
@@ -449,25 +438,25 @@ class AndorServer(PollingServer):
         """
         # setter
         if setter_val is not None:
-            print('acquiring: {}'.format(function_name))
+            # print('acquiring: {}'.format(function_name))
             yield self.lock.acquire()
             try:
-                print('acquired : {}'.format(function_name))
+                # print('acquired : {}'.format(function_name))
                 setter_func = getattr(self.camera, setter)
                 yield deferToThread(setter_func, setter_val)
             finally:
-                print('releasing: {}'.format(function_name))
+                # print('releasing: {}'.format(function_name))
                 self.lock.release()
         # getter
         resp = None
-        print('acquiring: {}'.format(function_name))
+        # print('acquiring: {}'.format(function_name))
         yield self.lock.acquire()
         try:
-            print('acquired : {}'.format(function_name))
+            # print('acquired : {}'.format(function_name))
             getter_func = getattr(self.camera, getter)
             resp = yield deferToThread(getter_func)
         finally:
-            print('releasing: {}'.format(function_name))
+            # print('releasing: {}'.format(function_name))
             self.lock.release()
         if resp is not None:
             returnValue(resp)
