@@ -19,7 +19,7 @@ from twisted.internet.threads import deferToThread
 from twisted.internet.defer import returnValue, DeferredLock, Deferred, inlineCallbacks
 
 from numpy import reshape, ravel
-from labrad.server import LabradServer, setting, Signal
+from labrad.server import setting, Signal
 
 from EGGS_labrad.servers import PollingServer
 from EGGS_labrad.servers.andor_server.AndorAPI import AndorAPI
@@ -28,6 +28,7 @@ IMAGE_UPDATED_SIGNAL = 142312
 # todo: stop using reactor.callLater
 # todo: GUI signals
 # todo: finish moving all to run
+# todo: add binning
 
 
 class AndorServer(PollingServer):
@@ -404,13 +405,13 @@ class AndorServer(PollingServer):
         """
         Get all data.
         """
-        #         print('acquiring: {}'.format(self.getMostRecentImage.__name__))
+        # print('acquiring: {}'.format(self.getMostRecentImage.__name__))
         yield self.lock.acquire()
         try:
-            #             print('acquired : {}'.format(self.getMostRecentImage.__name__))
+            # print('acquired : {}'.format(self.getMostRecentImage.__name__))
             image = yield deferToThread(self.camera.get_most_recent_image)
         finally:
-            #             print('releasing: {}'.format(self.getMostRecentImage.__name__))
+            # print('releasing: {}'.format(self.getMostRecentImage.__name__))
             self.lock.release()
         returnValue(image)
 

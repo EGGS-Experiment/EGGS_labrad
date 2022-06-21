@@ -1,13 +1,13 @@
 import os
 import numpy as np
 from datetime import datetime
-from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
-from EGGS_labrad.clients.andor_gui import AndorGUI
-from EGGS_labrad.clients.andor_gui.image_region_selection import image_region_selection_dialog
+
 from EGGS_labrad.config.andor_config import AndorConfig as config
+from EGGS_labrad.clients.andor_client.AndorGUI import AndorGUI
+from EGGS_labrad.clients.andor_client.AndorGUI.image_region_selection import image_region_selection_dialog
 # todo: document
 
 
@@ -16,18 +16,14 @@ class AndorClient(GUIClient):
     A client for Andor iXon cameras.
     """
 
+    servers = {'cam': 'Andor Server', 'dv': 'Data Vault'}
+
     def getgui(self):
         if self.gui is None:
             self.gui = AndorGUI()
 
-    def __init__(self, server):
-        super(AndorGUI, self).__init__()
-        self.server = server
-        self.setup_layout()
-        self.live_update_loop = LoopingCall(self.live_update)
-        self.connect_layout()
+    def initClient(self):
         self.saved_data = None
-
         self.save_images_state = False
         self.image_path = config.image_path
 
@@ -36,11 +32,13 @@ class AndorClient(GUIClient):
         except Exception as e:
             self.save_in_sub_dir = False
             print("save_in_sub_dir not found in config")
+
         try:
             self.save_format = config.save_format
         except Exception as e:
             self.save_format = "tsv"
             print("save_format not found in config")
+
         try:
             self.save_header = config.save_header
         except Exception as e:
@@ -48,35 +46,35 @@ class AndorClient(GUIClient):
             print("save_header not found in config")
 
     @inlineCallbacks
-    def connect_layout(self):
-        # self.emrange= yield self.server.getemrange(None)
+    def initData(self):
+        # self.emrange= yield self.cam.emccd_range()
         # mingain, maxgain = self.emrange
         # self.emccdSpinBox.setMinimum(0)
         # self.emccdSpinBox.setMaximum(4096)
+        gain = yield self.cam.getEMCCDGain(None)
+        exposure = yield self.cam.getExposureTime(None)
+        trigger_mode = yield self.cam.getTriggerMode(None)
+        acquisition_mode = yield self.cam.getAcquisitionMode(None)
+        self.emccdSpinBox.setValue(gain)
+        self.exposureSpinBox.setValue(exposure)
+        self.trigger_mode.setText(trigger_mode)
+        self.acquisition_mode.setText(acquisition_mode)
+
+    def initGUI(self):
         self.set_image_region_button.clicked.connect(self.on_set_image_region)
         self.plt.scene().sigMouseClicked.connect(self.mouse_clicked)
-        exposure = yield self.server.getExposureTime(None)
-        self.exposureSpinBox.setValue(exposure['s'])
         self.exposureSpinBox.valueChanged.connect(self.on_new_exposure)
-        gain = yield self.server.getEMCCDGain(None)
-        self.emccdSpinBox.setValue(gain)
-        trigger_mode = yield self.server.getTriggerMode(None)
-        self.trigger_mode.setText(trigger_mode)
-        acquisition_mode = yield self.server.getAcquisitionMode(None)
-        self.acquisition_mode.setText(acquisition_mode)
-        self.emccdSpinBox.valueChanged.connect(self.on_new_gain)
         self.live_button.clicked.connect(self.on_live_button)
-        self.save_images.stateChanged.connect(lambda state= \
-                                                         self.save_images.isChecked(): self.save_image_data(state))
-
-    def save_image_data(self, state):
-        self.save_images_state = bool(state)
+        self.save_images.stateChanged.connect(lambda state = self.save_images.isChecked(): self.save_image_data(state))
+        #     def save_image_data(self, state):
+        #         self.save_images_state = bool(state)
+        self.emccdSpinBox.valueChanged.connect(self.on_new_gain)
 
 
     # SLOTS
     def on_set_image_region(self, checked):
         # displays a non-modal dialog
-        dialog = image_region_selection_dialog(self, self.server)
+        dialog = image_region_selection_dialog(self, self.cam)
         one = dialog.open()
         two = dialog.show()
         three = dialog.raise_()
@@ -85,10 +83,10 @@ class AndorClient(GUIClient):
     def on_new_exposure(self, exposure):
         if self.live_update_loop.running:
             yield self.on_live_button(False)
-            yield self.server.setExposureTime(None, exposure)
+            yield self.cam.setExposureTime(None, exposure)
             yield self.on_live_button(True)
         else:
-            yield self.server.setExposureTime(None, exposure)
+            yield self.cam.setExposureTime(None, exposure)
 
     def set_exposure(self, exposure):
         self.exposureSpinBox.blockSignals(True)
@@ -106,7 +104,7 @@ class AndorClient(GUIClient):
 
     @inlineCallbacks
     def on_new_gain(self, gain):
-        yield self.server.setEMCCDGain(None, gain)
+        yield self.cam.setEMCCDGain(None, gain)
 
     def set_gain(self, gain):
         self.emccdSpinBox.blockSignals(True)
@@ -116,24 +114,24 @@ class AndorClient(GUIClient):
     @inlineCallbacks
     def on_live_button(self, checked):
         if checked:
-            yield self.server.setTriggerMode(None, 'Internal')
-            yield self.server.setAcquisitionMode(None, 'Run till abort')
-            yield self.server.set_shutter_mode(None, 'Open')
-            yield self.server.startAcquisition(None)
-            self.binx, self.biny, self.startx, self.stopx, self.starty, self.stopy = yield self.server.getImageRegion(
+            yield self.cam.setTriggerMode(None, 'Internal')
+            yield self.cam.setAcquisitionMode(None, 'Run till abort')
+            yield self.cam.set_shutter_mode(None, 'Open')
+            yield self.cam.startAcquisition(None)
+            self.binx, self.biny, self.startx, self.stopx, self.starty, self.stopy = yield self.cam.getImageRegion(
                 None)
             self.pixels_x = int((self.stopx - self.startx + 1) / self.binx)
             self.pixels_y = int((self.stopy - self.starty + 1) / self.biny)
-            yield self.server.waitForAcquisition(None)
+            yield self.cam.waitForAcquisition(None)
             self.live_update_loop.start(0)
         else:
             yield self.live_update_loop.stop()
-            yield self.server.abortAcquisition(None)
-            yield self.server.set_shutter_mode(None, 'Close')
+            yield self.cam.abortAcquisition(None)
+            yield self.cam.set_shutter_mode(None, 'Close')
 
     @inlineCallbacks
     def live_update(self):
-        data = yield self.server.getMostRecentImage(None)
+        data = yield self.cam.getMostRecentImage(None)
         image_data = np.reshape(data, (self.pixels_y, self.pixels_x))
         self.img_view.setImage(image_data.transpose(), autoRange=False, autoLevels=False,
                                pos=[self.startx, self.starty], scale=[self.binx, self.biny], autoHistogramRange=False)

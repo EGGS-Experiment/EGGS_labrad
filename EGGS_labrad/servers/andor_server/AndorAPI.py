@@ -6,6 +6,7 @@ import os
 import ctypes as c
 
 from EGGS_labrad.config.andor_config import AndorConfig as config
+# todo: add binning
 
 
 class AndorInfo(object):
@@ -523,7 +524,3 @@ ShutterMode = {
     'Open': 1,
     'Close': 2
 }
-
-
-if __name__ == '__main__':
-    camera = AndorAPI()
