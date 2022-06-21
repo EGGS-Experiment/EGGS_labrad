@@ -30,6 +30,7 @@ IMAGE_UPDATED_SIGNAL = 142312
 # todo: clean up imports
 # todo: make setter/getter in one
 # todo: make logger instead
+# todo: remove all prints
 
 
 class AndorServer(LabradServer):
@@ -59,6 +60,7 @@ class AndorServer(LabradServer):
         notified.remove(c.ID)
         return notified
 
+
     '''
     Temperature Related Settings
     '''
@@ -69,62 +71,53 @@ class AndorServer(LabradServer):
         Arguments:
             temp    (float) : the target temperature (in Celsius).
         Returns:
-                    (float) : the target temperature (in Celsius).
+                    (float) : the current temperature (in Celsius).
         """
-        temperature = None
-        print('acquiring: {}'.format(self.get_temperature.__name__))
-        yield self.lock.acquire()
+        # setter
         if temp is not None:
+            print('acquiring: {}'.format(self.temperature.__name__))
+            yield self.lock.acquire()
+            try:
+                print('acquired : {}'.format(self.temperature.__name__))
+                yield deferToThread(self.camera.set_temperature, temp)
+            finally:
+                print('releasing: {}'.format(self.temperature.__name__))
+                self.lock.release()
+        # getter
+        temperature = None
+        print('acquiring: {}'.format(self.temperature.__name__))
+        yield self.lock.acquire()
         try:
-            print('acquired : {}'.format(self.get_temperature.__name__))
+            print('acquired : {}'.format(self.temperature.__name__))
             temperature = yield deferToThread(self.camera.get_temperature)
         finally:
-            print('releasing: {}'.format(self.get_temperature.__name__))
+            print('releasing: {}'.format(self.temperature.__name__))
             self.lock.release()
         if temperature is not None:
             returnValue(temperature)
-        """
-        Sets the target temperature.
-        print('acquiring: {}'.format(self.set_temperature.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.set_temperature.__name__))
-            yield deferToThread(self.camera.set_temperature, setTemp['degC'])
-        finally:
-            print('releasing: {}'.format(self.set_temperature.__name__))
-            self.lock.release()
-        """
 
     @setting(121, "Cooler", state=['b', 'i'], returns='b')
-    def cooler(self, c):
+    def cooler(self, c, state=None):
         """
-        Returns current cooler state.
+        Get/set the current cooler state.
+        Arguments:
+            state   (bool)  : the cooler state.
+        Returns:
+                    (bool)  : the cooler state.
         """
-        cooler_state = None
-        print('acquiring: {}'.format(self.get_cooler_state.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.get_cooler_state.__name__))
-            cooler_state = yield deferToThread(self.camera.get_cooler_state)
-        finally:
-            print('releasing: {}'.format(self.get_cooler_state.__name__))
-            self.lock.release()
-        if cooler_state is not None:
-            returnValue(cooler_state)
-        """
-        Turns cooler on.
-        """
-        print('acquiring: {}'.format(self.set_cooler_on.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.set_cooler_on.__name__))
-            yield deferToThread(self.camera.set_cooler_on)
-        finally:
-            print('releasing: {}'.format(self.set_cooler_on.__name__))
-            self.lock.release()
-        """
-        Turns cooler on.
-        """
+        # setter
+        if state is not None:
+            if (type(state) is int) and (state not in (0, 1)):
+                raise Exception("Error: invalid input.")
+            print('acquiring: {}'.format(self.set_cooler_on.__name__))
+            yield self.lock.acquire()
+            try:
+                print('acquired : {}'.format(self.set_cooler_on.__name__))
+                yield deferToThread(self.camera.set_cooler_on)
+            finally:
+                print('releasing: {}'.format(self.set_cooler_on.__name__))
+                self.lock.release()
+        # getter
         print('acquiring: {}'.format(self.set_cooler_off.__name__))
         yield self.lock.acquire()
         try:
