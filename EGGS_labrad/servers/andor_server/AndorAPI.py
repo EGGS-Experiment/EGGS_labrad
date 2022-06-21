@@ -53,6 +53,7 @@ class AndorAPI(object):
             print('Initializing Camera...')
             error = self.dll.Initialize(os.path.dirname(__file__))
             print('Done Initializing: {}'.format(ERROR_CODE[error]))
+
             # get camera parameters
             self.info = AndorInfo()
             self.get_detector_dimensions()
@@ -64,10 +65,11 @@ class AndorAPI(object):
             self.set_acquisition_mode(config.acquisition_mode)
             self.set_trigger_mode(config.trigger_mode)
             self.set_exposure_time(config.exposure_time)
-            # self.set_shutter_mode(config.shutter_mode)
+            self.set_shutter_mode(config.shutter_mode)
+
             # set image to full size with the default binning
             self.set_image(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)
-            self.set_cooler_on()
+            self.set_cooler_state(True)
             self.set_temperature(config.set_temperature)
             self.get_cooler_state()
             self.get_temperature()
@@ -189,19 +191,15 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    def set_cooler_on(self):
+    def set_cooler_state(self, state):
         """
-        Turns on cooling.
+        Sets cooling.
         """
-        error = self.dll.CoolerON()
-        if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
-            raise Exception(ERROR_CODE[error])
-
-    def set_cooler_off(self):
-        """
-        Turns off cooling.
-        """
-        error = self.dll.CoolerOFF()
+        error = None
+        if state:
+            error = self.dll.CoolerON()
+        else:
+            error = self.dll.CoolerOFF()
         if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
             raise Exception(ERROR_CODE[error])
 
@@ -498,7 +496,7 @@ READ_MODE = {
     'Full Vertical Binning': 0,
     'Multi-Track': 1,
     'Random-Track': 2,
-    'Sinle-Track': 3,
+    'Single-Track': 3,
     'Image': 4
 }
 
