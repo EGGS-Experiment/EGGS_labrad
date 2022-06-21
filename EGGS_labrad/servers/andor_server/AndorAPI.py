@@ -422,6 +422,9 @@ class AndorAPI(object):
         image_struct = c.c_uint32 * dim
         image = image_struct()
         error = self.dll.GetMostRecentImage(c.pointer(image), dim)
+        # todo: print getnumbernewimages
+        # todo: print size of ciruclar buffer
+        # todo: look at pixel shift settings
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             image = image[:]
             return image

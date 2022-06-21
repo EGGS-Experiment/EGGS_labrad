@@ -84,6 +84,7 @@ class AndorGUI(QWidget):
         self.acquisition_mode = QLineEdit()
         self.acquisition_mode.setReadOnly(True)
         self.acquisition_mode.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        # todo: make qcombobox
 
         # trigger
         trigger_label = QLabel("Trigger Mode")
@@ -91,6 +92,7 @@ class AndorGUI(QWidget):
         self.trigger_mode = QLineEdit()
         self.trigger_mode.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.trigger_mode.setReadOnly(True)
+        # todo: make qcombobox
 
         # add lines for the cross
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
@@ -118,6 +120,7 @@ class AndorGUI(QWidget):
 
     def _connectLayout(self):
         self.plt.scene().sigMouseClicked.connect(self.mouse_clicked)
+        # todo: fix autorange and tuoelves
         self.auto_levels_button.clicked.connect(lambda checked: self.img_view.autoLevels())
         self.view_all_button.clicked.connect(lambda checked: self.img_view.autoRange())
 

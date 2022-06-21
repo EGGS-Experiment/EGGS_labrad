@@ -123,6 +123,7 @@ class AndorClient(GUIClient):
         Configures acquisition settings if server isn't already acquiring images,
         then allows received images to be updated to the display.
         """
+        # todo: set polling
         self.update_display = status
         if status:
             # set up acquisition
@@ -142,6 +143,8 @@ class AndorClient(GUIClient):
             # todo: tell server to stop updating if it doesn't have any listeners
             yield self.cam.acquisition_stop()
             yield self.cam.mode_shutter('Close')
+        stat = yield self.cam.acquisition_status()
+        print('displaying:', self.update_display and stat)
 
 
     @inlineCallbacks
@@ -149,8 +152,10 @@ class AndorClient(GUIClient):
         """
         Processes received images from the server.
         """
+        print('received image')
         if self.update_display:
             # process & update image
+            # todo: fix bug where no self.pixels_x
             image_data = np.reshape(image_data, (self.pixels_y, self.pixels_x))
             self.gui.img_view.setImage(image_data.transpose(), autoRange=False, autoLevels=False,
                                        pos=[self.startx, self.starty], scale=[self.binx, self.biny], autoHistogramRange=False)

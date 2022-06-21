@@ -439,26 +439,27 @@ class AndorServer(PollingServer):
         returnValue(images.tolist())
 
     @setting(641, "Acquire Image Recent", returns='*i')
-    def getMostRecentImage(self, c):
+    def acquireImageRecent(self, c):
         """
         Get all data.
         """
+        print('getmostrecentimage')
         # get data
         # print('acquiring: {}'.format(self.getMostRecentImage.__name__))
         yield self.lock.acquire()
         try:
             # print('acquired : {}'.format(self.getMostRecentImage.__name__))
-            image = yield deferToThread(self.camera.get_most_recent_image)
+            image_data = yield deferToThread(self.camera.get_most_recent_image)
         finally:
             # print('releasing: {}'.format(self.getMostRecentImage.__name__))
             self.lock.release()
 
         # update image via signal
         # todo: maybe this is source of error
-        if image != self.last_image:
-            self.last_image = data
-            yield self.image_updated(data)
-        returnValue(image)
+        if image_data != self.last_image:
+            self.last_image = image_data
+            yield self.image_updated(image_data)
+        returnValue(image_data)
 
 
     """
@@ -469,8 +470,12 @@ class AndorServer(PollingServer):
         """
         Polls the camera for image readout.
         """
-        data = yield self.getMostRecentImage(None)
-        temp = yield self.temperature(None)
+        try:
+            data = yield self.acquireImageRecent(None)
+            #temp = yield self.temperature(None)
+        except Exception as e:
+            print('poll failure')
+            print(e)
         # if there is a new image since the last update, send a signal to the clients
         # todo: maybe this is source of error
         # if data != self.last_image:
