@@ -1,15 +1,14 @@
 """
 Base classes for building PyQt5 GUI clients for LabRAD.
 """
+import sys
+
 from os import _exit, environ
 from inspect import getmembers
 from abc import ABC, abstractmethod
 
-import sys
-
 from twisted.internet.defer import inlineCallbacks
 from labrad.logging import setupLogging, _LoggerWriter
-#from EGGS_labrad.clients.logging import setupLogging, _LoggerWriter
 
 from EGGS_labrad.clients.utils import createTrunk
 from EGGS_labrad.clients.Widgets import QClientMenuHeader
@@ -17,6 +16,7 @@ from EGGS_labrad.clients.Widgets import QClientMenuHeader
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
 # todo: co-opt recording into GUIClient and create record function dependent on class variable
+# todo: automatically connect to signals
 
 
 class GUIClient(ABC):
@@ -75,9 +75,11 @@ class GUIClient(ABC):
         # initialization sequence
         self.logger.info("Starting client...")
         d = self._connectLabrad()
+        # note: initClient has to be before getgui, since some GUIs are initialized
+        # using configuration objects that are only created during initClient
         d.addCallback(self._initClient)
         d.addCallback(self._getgui)
-        # initData has to be before initGUI otherwise signals will be active
+        # note: initData has to be before initGUI otherwise signals will be active
         # while we set initial values, causing the slots to trigger
         d.addCallback(self._initData)
         d.addCallback(self._initGUI)
@@ -211,7 +213,6 @@ class GUIClient(ABC):
         if not self.createMenu:
             return cxn
         try:
-            # todo: don't connect serial and polling if not a device server (e.g. stability client)
             # check if any members of the GUI are QClientMenuHeaders
             isQClientMenuHeader = lambda obj: isinstance(obj, QClientMenuHeader)
             QClientMenuHeader_list = getmembers(self.gui, isQClientMenuHeader)
@@ -237,15 +238,15 @@ class GUIClient(ABC):
             for server_nickname in self.servers.keys():
                 server_object = getattr(self, server_nickname)
 
-                # create appropriate submenu
+                # create appropriate submenus
                 if "Serial Query" in server_object.settings.keys():
                     menuHeader_object.addSerial(server_object)
-                    menuHeader_object.addSerial(server_object)
+                    menuHeader_object.addCommunication(server_object)
                 elif "GPIB Query" in server_object.settings.keys():
                     menuHeader_object.addGPIB(server_object)
+                    menuHeader_object.addCommunication(server_object)
                 if "Polling" in server_object.settings.keys():
                     menuHeader_object.addPolling(server_object)
-                # todo: add communicate menu
             self.logger.debug("Successfully connected to QClientMenuHeader.")
         except Exception as e:
             self.logger.error("Error connecting to QClientMenuHeader: {error}".format(error=e))
@@ -344,7 +345,6 @@ class GUIClient(ABC):
         To be subclassed.
         Called after initClient.
         Used to instantiate a GUI class with arbitrary configuration settings.
-        This function is called here to *** todo
         """
         pass
 

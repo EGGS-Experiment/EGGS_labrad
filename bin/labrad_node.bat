@@ -33,7 +33,7 @@ START "LabRAD Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://%LABRADHOST%:3000
 
-REM: ARTIQ Dashboard *** todo
+REM: ARTIQ Dashboard
 START "ARTIQ Dashboard" /min CMD "/k activate artiq && CALL artiq_dashboard -s %LABRADHOST%"
 
 REM: Run device busses if device flag is active
