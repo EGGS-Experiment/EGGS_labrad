@@ -28,14 +28,14 @@ class AndorClient(GUIClient):
 
     def initClient(self):
         # connect to signals
-        #yield self.cam.signal__image_updated(self.IMAGE_UPDATED_ID)
-        #yield self.cam.addListener(listener=self.update_image, source=None, ID=self.IMAGE_UPDATED_ID)
-        #yield self.cam.signal__mode_updated(self.MODE_UPDATED_ID)
-        #yield self.cam.addListener(listener=self.updateMode, source=None, ID=self.MODE_UPDATED_ID)
+        yield self.cam.signal__image_updated(self.IMAGE_UPDATED_ID)
+        yield self.cam.addListener(listener=self.update_image, source=None, ID=self.IMAGE_UPDATED_ID)
+        yield self.cam.signal__mode_updated(self.MODE_UPDATED_ID)
+        yield self.cam.addListener(listener=self.updateMode, source=None, ID=self.MODE_UPDATED_ID)
         yield self.cam.signal__acquisition_updated(self.ACQUISITION_UPDATED_ID)
         yield self.cam.addListener(listener=self.updateAcquisition, source=None, ID=self.ACQUISITION_UPDATED_ID)
         yield self.cam.signal__temperature_updated(self.TEMPERATURE_UPDATED_ID)
-        yield self.cam.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATURE_UPDATED_ID)
+        yield self.cam.addListener(listener=self.updatetemp, source=None, ID=self.TEMPERATURE_UPDATED_ID)
 
         # get attributes from config
         self.saved_data = None
@@ -116,6 +116,9 @@ class AndorClient(GUIClient):
         print('tempupdate')
         pass
         # todo
+
+    def updatetemp(self, *args, **kwargs):
+        print('yzdeeeeeeeeeeeeeeeee')
 
 
     # IMAGE UPDATING

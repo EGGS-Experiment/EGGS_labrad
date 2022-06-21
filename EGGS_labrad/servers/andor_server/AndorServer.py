@@ -68,7 +68,6 @@ class AndorServer(PollingServer):
 
     def initContext(self, c):
         self.listeners.add(c.ID)
-        print('new context listener:', self.listeners)
 
     def expireContext(self, c):
         self.listeners.remove(c.ID)
@@ -84,7 +83,6 @@ class AndorServer(PollingServer):
         """
         notified = self.listeners.copy()
         notified.remove(context.ID)
-        print('recorded:', notified)
         f(message, notified)
 
 
@@ -133,7 +131,6 @@ class AndorServer(PollingServer):
     def temperature(self, c, temp=None):
         """
         Get/set the current/target device temperature.
-        # todo: list accepted values
         Arguments:
             temp    (float) : the target temperature (in Celsius).
         Returns:
@@ -141,7 +138,6 @@ class AndorServer(PollingServer):
         """
         temp = yield self._run('temperature', 'get_temperature', 'set_temperature', temp)
         self.temperature_updated(temp)
-        print('temp other listen:', self.getOtherListeners(c))
         returnValue(temp)
 
     @setting(121, "Cooler", state=['b', 'i'], returns='b')
@@ -170,7 +166,6 @@ class AndorServer(PollingServer):
                     (int)   : the EMCCD gain.
         """
         gain = yield self._run('EMCCD Gain', 'get_emccd_gain', 'set_emccd_gain', gain)
-        self.acquisition_updated(('emccd_gain', float(gain))) #tmp remove todo
         self.notifyOtherListeners(c, ("emccd_gain", float(gain)), self.acquisition_updated)
         returnValue(gain)
 
