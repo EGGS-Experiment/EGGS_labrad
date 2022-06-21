@@ -76,10 +76,9 @@ class AndorAPI(object):
             raise Exception(e)
 
 
-    '''
+    """
     General
-    '''
-
+    """
     def print_get_software_version(self):
         """
         Gets the version of the SDK.
@@ -164,10 +163,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    Temperature-Related Settings
-    '''
 
+    """
+    Temperature-Related Settings
+    """
     def get_temperature_range(self):
         """
         Gets the range of available temperatures.
@@ -223,10 +222,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    EMCCD Gain Settings
-    '''
 
+    """
+    EMCCD Gain Settings
+    """
     def get_camera_em_gain_range(self):
         min_gain = c.c_int()
         max_gain = c.c_int()
@@ -254,10 +253,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    Read Mode
-    '''
 
+    """
+    Read Mode
+    """
     def set_read_mode(self, mode):
         try:
             mode_number = READ_MODE[mode]
@@ -272,10 +271,10 @@ class AndorAPI(object):
     def get_read_mode(self):
         return self.info.read_mode
 
-    '''
-    Shutter Mode
-    '''
 
+    """
+    Shutter Mode
+    """
     def set_shutter_mode(self, mode):
         try:
             mode_number = ShutterMode[mode]
@@ -290,10 +289,10 @@ class AndorAPI(object):
     def get_shutter_mode(self):
         return self.info.shutter_mode
 
-    '''
-    Acquisition Mode
-    '''
 
+    """
+    Acquisition Mode
+    """
     def set_acquisition_mode(self, mode):
         try:
             mode_number = AcquisitionMode[mode]
@@ -309,10 +308,9 @@ class AndorAPI(object):
         return self.info.acquisition_mode
 
 
-    '''
+    """
     Trigger Mode
-    '''
-
+    """
     def set_trigger_mode(self, mode):
         try:
             mode_number = TriggerMode[mode]
@@ -327,10 +325,10 @@ class AndorAPI(object):
     def get_trigger_mode(self):
         return self.info.trigger_mode
 
-    '''
-    Exposure Time
-    '''
 
+    """
+    Exposure Time
+    """
     def set_exposure_time(self, time):
         error = self.dll.SetExposureTime(c.c_float(time))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
@@ -353,10 +351,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    Image Region
-    '''
 
+    """
+    Image Region
+    """
     def get_image(self):
         return self.info.image_region
 
@@ -369,10 +367,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    Acquisition
-    '''
 
+    """
+    Acquisition
+    """
     def prepare_acqusition(self):
         error = self.dll.PrepareAcquisition()
         if ERROR_CODE[error] == "DRV_SUCCESS":
@@ -401,10 +399,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    Images
-    '''
 
+    """
+    Images
+    """
     def get_acquired_data(self, num_images):
         hbin, vbin, hstart, hend, vstart, vend = self.info.image_region
         dim = (hend - hstart + 1) * (vend - vstart + 1) / float(hbin * vbin)

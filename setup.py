@@ -1,7 +1,8 @@
 # todo: finish
-from distutils.core import setup
 import sys
 import versioneer
+
+from distutils.core import setup
 
 if sys.version_info[:2] < (3, 7):
     raise Exception("You need Python 3.7+")
@@ -25,10 +26,13 @@ requirements = [
 
 console_scripts = [
     # "artiq_client = artiq.frontend.artiq_client:main",
+    # todo: add labrad_master
+    # todo: add labrad_node
 ]
 
 gui_scripts = [
     # "artiq_browser = artiq.frontend.artiq_browser:main",
+    # todo: add EGGS GUI
 ]
 
 setup(

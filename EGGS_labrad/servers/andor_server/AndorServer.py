@@ -19,18 +19,15 @@ from twisted.internet.task import LoopingCall
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import returnValue, DeferredLock, Deferred, inlineCallbacks
 
-import numpy as np
-from labrad.units import WithUnit
+from numpy import reshape, ravel
 from labrad.server import LabradServer, setting, Signal
 
-from AndorAPI import AndorAPI
+from EGGS_labrad.servers.andor_server.AndorAPI import AndorAPI
 
 IMAGE_UPDATED_SIGNAL = 142312
-# todo: strip units
 # todo: clean up imports
-# todo: make setter/getter in one
-# todo: make logger instead
-# todo: remove all prints
+# todo: GUI signals
+# todo: make logger instead; remove all prints
 
 
 class AndorServer(LabradServer):
@@ -46,10 +43,21 @@ class AndorServer(LabradServer):
         self.lock = DeferredLock()
         self.camera = AndorAPI()
 
+    @inlineCallbacks
+    def stopServer(self):
+        try:
+            # todo: gui signal
+            print('acquiring: {}'.format(self.stopServer.__name__))
+            yield self.lock.acquire()
+            print('acquired : {}'.format(self.stopServer.__name__))
+            self.camera.shut_down()
+            print('releasing: {}'.format(self.stopServer.__name__))
+            self.lock.release()
+        except Exception as e:
+            print(e)
+            pass
+
     def initContext(self, c):
-        """
-        Initialize a new context object.
-        """
         self.listeners.add(c.ID)
 
     def expireContext(self, c):
@@ -61,13 +69,52 @@ class AndorServer(LabradServer):
         return notified
 
 
-    '''
+    """
+    General
+    """
+    @setting(11, "Info Serial Number", returns='i')
+    def serialNumber(self, c):
+        """
+        Gets the camera's serial number.
+        Returns:
+            (int)   : the camera's serial number.
+        """
+        return self.camera.get_camera_serial_number()
+
+    @setting(31, "Info Detector Dimensions", returns='ww')
+    def detectorDimensions(self, c):
+        """
+        Gets the dimensions of the camera's detector.
+        Returns:
+            (ww)   : the dimensions of the camera's detector.
+        """
+        print('acquiring: {}'.format(self.detectorDimensions.__name__))
+        yield self.lock.acquire()
+        try:
+            print('acquired : {}'.format(self.detectorDimensions.__name__))
+            dimensions = yield deferToThread(self.camera.get_detector_dimensions)
+        finally:
+            print('releasing: {}'.format(self.detectorDimensions.__name__))
+            self.lock.release()
+        returnValue(dimensions)
+
+    def wait(self, seconds, result=None):
+        """
+        Returns a deferred that will be fired later.
+        """
+        d = Deferred()
+        reactor.callLater(seconds, d.callback, result)
+        return d
+
+
+    """
     Temperature Related Settings
-    '''
+    """
     @setting(111, "Temperature", temp='v', returns='v')
     def temperature(self, c, temp=None):
         """
         Get/set the current/target device temperature.
+        # todo: list accepted values
         Arguments:
             temp    (float) : the target temperature (in Celsius).
         Returns:
@@ -109,215 +156,213 @@ class AndorServer(LabradServer):
         if state is not None:
             if (type(state) is int) and (state not in (0, 1)):
                 raise Exception("Error: invalid input.")
-            print('acquiring: {}'.format(self.set_cooler_on.__name__))
+            print('acquiring: {}'.format(self.cooler.__name__))
             yield self.lock.acquire()
             try:
-                print('acquired : {}'.format(self.set_cooler_on.__name__))
+                print('acquired : {}'.format(self.cooler.__name__))
                 yield deferToThread(self.camera.set_cooler_on)
             finally:
-                print('releasing: {}'.format(self.set_cooler_on.__name__))
+                print('releasing: {}'.format(self.cooler.__name__))
                 self.lock.release()
         # getter
-        print('acquiring: {}'.format(self.set_cooler_off.__name__))
+        print('acquiring: {}'.format(self.cooler.__name__))
         yield self.lock.acquire()
         try:
-            print('acquired : {}'.format(self.set_cooler_off.__name__))
+            print('acquired : {}'.format(self.cooler.__name__))
             yield deferToThread(self.camera.set_cooler_off)
         finally:
-            print('releasing: {}'.format(self.set_cooler_off.__name__))
+            print('releasing: {}'.format(self.cooler.__name__))
             self.lock.release()
 
 
-    '''
+    """
     EMCCD Gain Settings
-    '''
-    @setting(6, "Get EMCCD Gain", returns='i')
-    def getEMCCDGain(self, c):
+    """
+    @setting(211, "EMCCD Gain", gain='i', returns='i')
+    def EMCCDGain(self, c, gain=None):
         """
-        Gets the current EMCCD gain.
+        Get/set the current EMCCD gain.
+        # todo: list accepted values
+        Arguments:
+            gain    (int)   : the EMCCD gain.
+        Returns:
+                    (int)   : the EMCCD gain.
         """
+        # setter
+        if gain is not None:
+            print('acquiring: {}'.format(self.EMCCDGain.__name__))
+            yield self.lock.acquire()
+            try:
+                print('acquired : {}'.format(self.EMCCDGain.__name__))
+                yield deferToThread(self.camera.set_emccd_gain, gain)
+            finally:
+                print('releasing: {}'.format(self.EMCCDGain.__name__))
+                self.lock.release()
+        # getter
         gain = None
-        print('acquiring: {}'.format(self.getEMCCDGain.__name__))
+        print('acquiring: {}'.format(self.EMCCDGain.__name__))
         yield self.lock.acquire()
         try:
-            print('acquired : {}'.format(self.getEMCCDGain.__name__))
+            print('acquired : {}'.format(self.EMCCDGain.__name__))
             gain = yield deferToThread(self.camera.get_emccd_gain)
         finally:
-            print('releasing: {}'.format(self.getEMCCDGain.__name__))
+            print('releasing: {}'.format(self.EMCCDGain.__name__))
             self.lock.release()
         if gain is not None:
             returnValue(gain)
 
-    @setting(7, "Set EMCCD Gain", gain='i', returns='')
-    def setEMCCDGain(self, c, gain):
+    @setting(221, "EMCCD Gain Range", returns='(ii)')
+    def EMCCDRange(self, c):
         """
-        Sets the current EMCCD gain.
+        Get the EMCCD gain range.
+        Returns:
+            (int, int)  : the minimum and maximum EMCCD gain values.
         """
-        print('acquiring: {}'.format(self.setEMCCDGain.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.setEMCCDGain.__name__))
-            yield deferToThread(self.camera.set_emccd_gain, gain)
-        finally:
-            print('releasing: {}'.format(self.setEMCCDGain.__name__))
-            self.lock.release()
-        # todo: gui signal
+        return self.camera.get_camera_em_gain_range()
 
-    '''
-    Read mode
-    '''
 
-    @setting(8, "Get Read Mode", returns='s')
-    def getReadMode(self, c):
+    """
+    Acquisition Settings
+    """
+    @setting(311, "Read Mode", mode='s', returns='s')
+    def readMode(self, c, mode=None):
         """
-        Gets the current read mode.
+        Get/set the current read mode.
+        # todo: list accepted values
+        Arguments:
+            mode    (str)   : the current read mode.
+        Returns:
+                    (str)   : the current read mode.
         """
+        # setter
+        if mode is not None:
+            print('acquiring: {}'.format(self.readMode.__name__))
+            yield self.lock.acquire()
+            try:
+                print('acquired : {}'.format(self.readMode.__name__))
+                yield deferToThread(self.camera.set_read_mode, mode)
+            finally:
+                print('releasing: {}'.format(self.readMode.__name__))
+                self.lock.release()
+        # getter
         return self.camera.get_read_mode()
 
-    @setting(9, "Set Read Mode", readMode='s', returns='')
-    def setReadMode(self, c, readMode):
+    @setting(321, "Shutter Mode", mode='s', returns='s')
+    def shutterMode(self, c, mode):
         """
-        Sets the current read mode.
+        Get/set the current shutter mode.
+        # todo: list accepted values
+        Arguments:
+            mode    (str)   : the shutter mode.
+        Returns:
+                    (str)   : the shutter mode.
         """
-        mode = None
-        print('acquiring: {}'.format(self.setReadMode.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.setReadMode.__name__))
-            yield deferToThread(self.camera.set_read_mode, readMode)
-        finally:
-            print('releasing: {}'.format(self.setReadMode.__name__))
-            self.lock.release()
+        # setter
         if mode is not None:
-            returnValue(mode)
-
-
-    '''
-    Shutter Mode
-    '''
-    @setting(100, "get_shutter_mode", returns='s')
-    def get_shutter_mode(self, c):
-        """
-        Gets the current shutter mode.
-        """
+            mode = None
+            print('acquiring: {}'.format(self.shutterMode.__name__))
+            yield self.lock.acquire()
+            try:
+                print('acquired : {}'.format(self.shutterMode.__name__))
+                yield deferToThread(self.camera.set_shutter_mode, mode)
+            finally:
+                print('releasing: {}'.format(self.shutterMode.__name__))
+                self.lock.release()
+            if mode is not None:
+                returnValue(mode)
+        # getter
         return self.camera.get_shutter_mode()
 
-    @setting(101, "set_shutter_mode", shutterMode='s', returns='')
-    def set_shutter_mode(self, c, shutterMode):
+    @setting(331, "Acquisition Mode", mode='s', returns='s')
+    def acquisitionMode(self, c, mode=None):
         """
-        Sets the current shutter mode.
+        Get/set the current acquisition mode.
+        # todo: list accepted values
+        Arguments:
+            mode    (str)   : the acquisition mode.
+        Returns:
+                    (str)   : the acquisition mode.
         """
-        mode = None
-        print('acquiring: {}'.format(self.set_shutter_mode.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.set_shutter_mode.__name__))
-            yield deferToThread(self.camera.set_shutter_mode, shutterMode)
-        finally:
-            print('releasing: {}'.format(self.set_shutter_mode.__name__))
-            self.lock.release()
+        # setter
         if mode is not None:
-            returnValue(mode)
-
-
-    '''
-    Acquisition Mode
-    '''
-    @setting(10, "Get Acquisition Mode", returns='s')
-    def getAcquisitionMode(self, c):
-        """
-        Gets the current acquisition mode.
-        """
+            print('acquiring: {}'.format(self.acquisitionMode.__name__))
+            yield self.lock.acquire()
+            try:
+                print('acquired : {}'.format(self.acquisitionMode.__name__))
+                yield deferToThread(self.camera.set_acquisition_mode, mode)
+            finally:
+                print('releasing: {}'.format(self.acquisitionMode.__name__))
+                self.lock.release()
+        # getter
         return self.camera.get_acquisition_mode()
 
-    @setting(11, "Set Acquisition Mode", mode='s', returns='')
-    def setAcquisitionMode(self, c, mode):
+    @setting(341, "Trigger Mode", mode='s', returns='s')
+    def triggerMode(self, c, mode=None):
         """
-        Sets the current acquisition Mode.
+        Get/set the current trigger mode.
+        # todo: list accepted values
+        Arguments:
+            mode    (str)   : the trigger mode.
+        Returns:
+                    (str)   : the trigger mode.
         """
-        print('acquiring: {}'.format(self.setAcquisitionMode.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.setAcquisitionMode.__name__))
-            yield deferToThread(self.camera.set_acquisition_mode, mode)
-        finally:
-            print('releasing: {}'.format(self.setAcquisitionMode.__name__))
-            self.lock.release()
-        # todo: gui signal
-
-
-    '''
-    Trigger Mode
-    '''
-    @setting(12, "Get Trigger Mode", returns='s')
-    def getTriggerMode(self, c):
-        """
-        Gets the current trigger mode.
-        """
+        # setter
+        if mode is not None:
+            print('acquiring: {}'.format(self.triggerMode.__name__))
+            yield self.lock.acquire()
+            try:
+                print('acquired : {}'.format(self.triggerMode.__name__))
+                yield deferToThread(self.camera.set_acquisition_mode, mode)
+            finally:
+                print('releasing: {}'.format(self.triggerMode.__name__))
+                self.lock.release()
+        # getter
         return self.camera.get_trigger_mode()
 
-    @setting(13, "Set Trigger Mode", mode='s', returns='')
-    def setTriggerMode(self, c, mode):
+    @setting(351, "Exposure Time", time='v', returns='v')
+    def exposureTime(self, c, time=None):
         """
-        Sets the current trigger Mode.
+        Get/set the current exposure time.
+        # todo: list accepted values
+        Arguments:
+            time    (float)   : the trigger mode.
+        Returns:
+                    (float) : the current exposure time in seconds.
         """
-        print('acquiring: {}'.format(self.setTriggerMode.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.setTriggerMode.__name__))
-            yield deferToThread(self.camera.set_trigger_mode, mode)
-        finally:
-            print('releasing: {}'.format(self.setTriggerMode.__name__))
-            self.lock.release()
-        # todo: gui signal
+        # setter
+        if time is not None:
+            print('acquiring: {}'.format(self.exposureTime.__name__))
+            yield self.lock.acquire()
+            try:
+                print('acquired : {}'.format(self.exposureTime.__name__))
+                yield deferToThread(self.camera.set_exposure_time, time)
+            finally:
+                print('releasing: {}'.format(self.exposureTime.__name__))
+                self.lock.release()
+        # getter
+        return self.camera.get_exposure_time()
 
 
-    '''
-    Exposure Time
-    '''
-    @setting(14, "Get Exposure Time", returns='v[s]')
-    def getExposureTime(self, c):
-        """
-        Gets current exposure time.
-        """
-        time = self.camera.get_exposure_time()
-        return WithUnit(time, 's')
-
-    @setting(15, "Set Exposure Time", expTime='v[s]', returns='v[s]')
-    def setExposureTime(self, c, expTime):
-        """
-        Sets current exposure time.
-        """
-        print('acquiring: {}'.format(self.setExposureTime.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.setExposureTime.__name__))
-            yield deferToThread(self.camera.set_exposure_time, expTime['s'])
-        finally:
-            print('releasing: {}'.format(self.setExposureTime.__name__))
-            self.lock.release()
-        # need to request the actual set value because it may differ from the request when the request is not possible
-        time = self.camera.get_exposure_time()
-        # todo: gui signal
-        returnValue(WithUnit(time, 's'))
-
-
-    '''
+    """
     Image Region
-    '''
-    @setting(16, "Get Image Region", returns='*i')
+    """
+    @setting(411, "Get Image Region", returns='*i')
     def getImageRegion(self, c):
         """
         Gets current image region.
+        Returns:
+            # todo
         """
         return self.camera.get_image()
 
-    @setting(17, "Set Image Region", horizontalBinning='i', verticalBinning='i', horizontalStart='i', horizontalEnd='i',
+    @setting(412, "Set Image Region", horizontalBinning='i', verticalBinning='i', horizontalStart='i', horizontalEnd='i',
              verticalStart='i', verticalEnd='i', returns='')
     def setImageRegion(self, c, horizontalBinning, verticalBinning, horizontalStart, horizontalEnd, verticalStart,
                        verticalEnd):
         """
         Sets current image region.
+        Arguments:
+            # todo
         """
         print('acquiring: {}'.format(self.setImageRegion.__name__))
         yield self.lock.acquire()
@@ -328,119 +373,19 @@ class AndorServer(LabradServer):
         finally:
             print('releasing: {}'.format(self.setImageRegion.__name__))
             self.lock.release()
-    '''
-    Acquisition
-    '''
-    @setting(18, "Start Acquisition", returns='')
-    def startAcquisition(self, c):
-        print('acquiring: {}'.format(self.startAcquisition.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.startAcquisition.__name__))
-            # speeds up the call to start_acquisition
-            yield deferToThread(self.camera.prepare_acqusition)
-            yield deferToThread(self.camera.start_acquisition)
-            # necessary so that start_acquisition call completes even for long kinetic series
-            # yield self.wait(0.050)
-            yield self.wait(0.1)
-        finally:
-            print('releasing: {}'.format(self.startAcquisition.__name__))
-            self.lock.release()
-
-    @setting(19, "Wait For Acquisition", returns='')
-    def waitForAcquisition(self, c):
-        print('acquiring: {}'.format(self.waitForAcquisition.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.waitForAcquisition.__name__))
-            yield deferToThread(self.camera.wait_for_acquisition)
-        finally:
-            print('releasing: {}'.format(self.waitForAcquisition.__name__))
-            self.lock.release()
-
-    @setting(20, "Abort Acquisition", returns='')
-    def abortAcquisition(self, c):
-        # todo: gui signal
-        print('acquiring: {}'.format(self.abortAcquisition.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.abortAcquisition.__name__))
-            yield deferToThread(self.camera.abort_acquisition)
-        finally:
-            print('releasing: {}'.format(self.abortAcquisition.__name__))
-            self.lock.release()
-
-    @setting(21, "Get Acquired Data", num_images='i', returns='*i')
-    def getAcquiredData(self, c, num_images=1):
-        """
-        Get the acquired images.
-        """
-        print('acquiring: {}'.format(self.getAcquiredData.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.getAcquiredData.__name__))
-            image = yield deferToThread(self.camera.get_acquired_data, num_images)
-        finally:
-            print('releasing: {}'.format(self.getAcquiredData.__name__))
-            self.lock.release()
-        returnValue(image)
-
-    @setting(33, "Get Summed Data", num_images='i', returns='*i')
-    def getSummedData(self, c, num_images=1):
-        """
-        Get the counts with the vertical axis summed over.
-        """
-        print('acquiring: {}'.format(self.getAcquiredData.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired: {}'.format(self.getAcquiredData.__name__))
-            images = yield deferToThread(self.camera.get_acquired_data, num_images)
-            hbin, vbin, hstart, hend, vstart, vend = self.camera.get_image()
-            x_pixels = int((hend - hstart + 1.) / (hbin))
-            y_pixels = int(vend - vstart + 1.) / (vbin)
-            images = np.reshape(images, (num_images, y_pixels, x_pixels))
-            images = images.sum(axis=1)
-            images = np.ravel(images, order='C')
-            images = images.tolist()
-        finally:
-            print('releasing: {}'.format(self.getAcquiredData.__name__))
-            self.lock.release()
-        returnValue(images)
 
 
-    '''
-    General
-    '''
-    @setting(22, "Get Camera Serial Number", returns='i')
-    def getCameraSerialNumber(self, c):
-        """
-        Gets camera serial number.
-        """
-        return self.camera.get_camera_serial_number()
-
-    @setting(23, "Get Most Recent Image", returns='*i')
-    def getMostRecentImage(self, c):
-        """
-        Get all data.
-        """
-        #         print('acquiring: {}'.format(self.getMostRecentImage.__name__))
-        yield self.lock.acquire()
-        try:
-            #             print('acquired : {}'.format(self.getMostRecentImage.__name__))
-            image = yield deferToThread(self.camera.get_most_recent_image)
-        finally:
-            #             print('releasing: {}'.format(self.getMostRecentImage.__name__))
-            self.lock.release()
-        returnValue(image)
-
-    @setting(26, "Get Number Kinetics", returns='i')
+    """
+    Kinetic Series
+    """
+    @setting(511, "Get Number Kinetics", returns='i')
     def getNumberKinetics(self, c):
         """
         Gets number of scans in a kinetic cycle.
         """
         return self.camera.get_number_kinetics()
 
-    @setting(27, "Set Number Kinetics", numKin='i', returns='')
+    @setting(512, "Set Number Kinetics", numKin='i', returns='')
     def setNumberKinetics(self, c, numKin):
         """
         Sets number of scans in a kinetic cycle.
@@ -455,8 +400,8 @@ class AndorServer(LabradServer):
             self.lock.release()
 
     # UPDATED THE TIMEOUT. FIX IT LATER
-    @setting(28, "Wait For Kinetic", timeout='v[s]', returns='b')
-    def waitForKinetic(self, c, timeout=WithUnit(1, 's')):
+    @setting(513, "Wait For Kinetic", timeout='v[s]', returns='b')
+    def waitForKinetic(self, c, timeout=1):
         """
         Waits until the given number of kinetic images are completed.
         """
@@ -479,52 +424,116 @@ class AndorServer(LabradServer):
             yield self.wait(0.050)
         returnValue(False)
 
-    @setting(31, "Get Detector Dimensions", returns='ww')
-    def get_detector_dimensions(self, c):
-        print('acquiring: {}'.format(self.get_detector_dimensions.__name__))
+
+    """
+    Acquisition
+    """
+    @setting(611, "Acquisition Start", returns='')
+    def acquisitionStart(self, c):
+        """
+        Start acquisition.
+        """
+        print('acquiring: {}'.format(self.acquisitionStart.__name__))
         yield self.lock.acquire()
         try:
-            print('acquired : {}'.format(self.get_detector_dimensions.__name__))
-            dimensions = yield deferToThread(self.camera.get_detector_dimensions)
+            print('acquired : {}'.format(self.acquisitionStart.__name__))
+            # speeds up the call to start_acquisition
+            yield deferToThread(self.camera.prepare_acqusition)
+            yield deferToThread(self.camera.start_acquisition)
+            # necessary so that start_acquisition call completes even for long kinetic series
+            yield self.wait(0.1)
         finally:
-            print('releasing: {}'.format(self.get_detector_dimensions.__name__))
+            print('releasing: {}'.format(self.acquisitionStart.__name__))
             self.lock.release()
-        returnValue(dimensions)
 
-    @setting(32, "getemrange", returns='(ii)')
-    def getemrange(self, c):
-        # emrange = yield self.camera.get_camera_em_gain_range()
-        # returnValue(emrange)
-        return self.camera.get_camera_em_gain_range()
-
-    def wait(self, seconds, result=None):
-        """
-        Returns a deferred that will be fired later.
-        """
-        d = Deferred()
-        reactor.callLater(seconds, d.callback, result)
-        return d
-
-    def stop(self):
-        self._stopServer()
-
-    @inlineCallbacks
-    def stopServer(self):
-        """
-        Shut down camera before closing.
-        """
+    @setting(612, "Acquisition Stop", returns='')
+    def acquisitionStop(self, c):
+        # todo: gui signal
+        print('acquiring: {}'.format(self.acquisitionStop.__name__))
+        yield self.lock.acquire()
         try:
-            # todo: gui signal
-            print('acquiring: {}'.format(self.stopServer.__name__))
-            yield self.lock.acquire()
-            print('acquired : {}'.format(self.stopServer.__name__))
-            self.camera.shut_down()
-            print('releasing: {}'.format(self.stopServer.__name__))
+            print('acquired : {}'.format(self.acquisitionStop.__name__))
+            yield deferToThread(self.camera.abort_acquisition)
+        finally:
+            print('releasing: {}'.format(self.acquisitionStop.__name__))
             self.lock.release()
-        except Exception:
-            # not yet created
-            pass
 
+    @setting(621, "Acquisition Wait", returns='')
+    def acquisitionWait(self, c):
+        """
+        Wait for acquisition.
+        """
+        print('acquiring: {}'.format(self.acquisitionWait.__name__))
+        yield self.lock.acquire()
+        try:
+            print('acquired : {}'.format(self.acquisitionWait.__name__))
+            yield deferToThread(self.camera.wait_for_acquisition)
+        finally:
+            print('releasing: {}'.format(self.acquisitionWait.__name__))
+            self.lock.release()
+
+    @setting(631, "Acquire Data", num_images='i', returns='*i')
+    def acquireData(self, c, num_images=1):
+        """
+        Get the acquired images.
+        Arguments:
+            # todo
+        Returns:
+            # todo
+        """
+        print('acquiring: {}'.format(self.acquireData.__name__))
+        yield self.lock.acquire()
+        try:
+            print('acquired : {}'.format(self.acquireData.__name__))
+            image = yield deferToThread(self.camera.get_acquired_data, num_images)
+        finally:
+            print('releasing: {}'.format(self.acquireData.__name__))
+            self.lock.release()
+        returnValue(image)
+
+    @setting(632, "Acquire Data Summed", num_images='i', returns='*i')
+    def acquireDataSummed(self, c, num_images=1):
+        """
+        Get the counts with the vertical axis summed over.
+        Arguments:
+            # todo
+        Returns:
+            # todo
+        """
+        print('acquiring: {}'.format(self.acquireDataSummed.__name__))
+        yield self.lock.acquire()
+        try:
+            print('acquired: {}'.format(self.acquireDataSummed.__name__))
+            images = yield deferToThread(self.camera.get_acquired_data, num_images)
+            hbin, vbin, hstart, hend, vstart, vend = self.camera.get_image()
+            x_pixels = int((hend - hstart + 1.) / (hbin))
+            y_pixels = int(vend - vstart + 1.) / (vbin)
+            images = reshape(images, (num_images, y_pixels, x_pixels)).sum(axis=1)
+            images = ravel(images, order='C')
+        finally:
+            print('releasing: {}'.format(self.acquireDataSummed.__name__))
+            self.lock.release()
+        returnValue(images.tolist())
+
+    @setting(641, "Acquire Image Recent", returns='*i')
+    def getMostRecentImage(self, c):
+        """
+        Get all data.
+        """
+        #         print('acquiring: {}'.format(self.getMostRecentImage.__name__))
+        yield self.lock.acquire()
+        try:
+            #             print('acquired : {}'.format(self.getMostRecentImage.__name__))
+            image = yield deferToThread(self.camera.get_most_recent_image)
+        finally:
+            #             print('releasing: {}'.format(self.getMostRecentImage.__name__))
+            self.lock.release()
+        returnValue(image)
+
+
+    """
+    Signal
+    """
     @setting(201, returns='')
     def start_signal_loop(self, c):
         """
@@ -549,6 +558,7 @@ class AndorServer(LabradServer):
         if data != self.last_image:
             self.last_image = data
             yield self.image_updated(data)
+
 
     # HELPER
     def _run(self, function_name):

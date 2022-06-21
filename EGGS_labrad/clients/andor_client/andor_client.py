@@ -22,8 +22,6 @@ class AndorClient(GUIClient):
 
     def __init__(self, server):
         super(AndorGUI, self).__init__()
-        from labrad.units import WithUnit
-        self.WithUnit = WithUnit
         self.server = server
         self.setup_layout()
         self.live_update_loop = LoopingCall(self.live_update)
@@ -87,10 +85,10 @@ class AndorClient(GUIClient):
     def on_new_exposure(self, exposure):
         if self.live_update_loop.running:
             yield self.on_live_button(False)
-            yield self.server.setExposureTime(None, self.WithUnit(exposure, 's'))
+            yield self.server.setExposureTime(None, exposure)
             yield self.on_live_button(True)
         else:
-            yield self.server.setExposureTime(None, self.WithUnit(exposure, 's'))
+            yield self.server.setExposureTime(None, exposure)
 
     def set_exposure(self, exposure):
         self.exposureSpinBox.blockSignals(True)
