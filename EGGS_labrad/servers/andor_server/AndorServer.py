@@ -25,8 +25,10 @@ from EGGS_labrad.servers import PollingServer
 from EGGS_labrad.servers.andor_server.AndorAPI import AndorAPI
 
 IMAGE_UPDATED_SIGNAL = 142312
+MODE_UPDATED_SIGNAL = 142313
+ACQUISITION_UPDATED_SIGNAL = 142314
+TEMPERATURE_UPDATED_SIGNAL = 142315
 # todo: stop using reactor.callLater
-# todo: GUI signals
 # todo: finish moving all to run
 # todo: add binning
 
@@ -38,6 +40,9 @@ class AndorServer(PollingServer):
 
     name = "Andor Server"
     image_updated = Signal(IMAGE_UPDATED_SIGNAL, 'signal: image updated', '*i')
+    mode_updated = Signal(MODE_UPDATED_SIGNAL, 'signal: mode updated', '(ss)')
+    acquisition_updated = Signal(ACQUISITION_UPDATED_SIGNAL, 'signal: acquisition updated', '(sv)')
+    temperature_updated = Signal(TEMPERATURE_UPDATED_SIGNAL, 'signal: temperature updated', 'v')
 
     def initServer(self):
         super().initServer()
@@ -45,12 +50,12 @@ class AndorServer(PollingServer):
         self.lock = DeferredLock()
         self.camera = AndorAPI()
         self.last_image = None
+        self.acquisition_running = False
 
     @inlineCallbacks
     def stopServer(self):
         super().stopServer()
         try:
-            # todo: gui signal
             print('acquiring: {}'.format(self.stopServer.__name__))
             yield self.lock.acquire()
             print('acquired : {}'.format(self.stopServer.__name__))
@@ -63,6 +68,7 @@ class AndorServer(PollingServer):
 
     def initContext(self, c):
         self.listeners.add(c.ID)
+        print('new context listener:', self.listeners)
 
     def expireContext(self, c):
         self.listeners.remove(c.ID)
@@ -71,6 +77,15 @@ class AndorServer(PollingServer):
         notified = self.listeners.copy()
         notified.remove(c.ID)
         return notified
+
+    def notifyOtherListeners(self, context, message, f):
+        """
+        Notifies all listeners except the one in the given context, executing function f.
+        """
+        notified = self.listeners.copy()
+        notified.remove(context.ID)
+        print('recorded:', notified)
+        f(message, notified)
 
 
     """
@@ -125,6 +140,8 @@ class AndorServer(PollingServer):
                     (float) : the current temperature (in Celsius).
         """
         temp = yield self._run('temperature', 'get_temperature', 'set_temperature', temp)
+        self.temperature_updated(temp)
+        print('temp other listen:', self.getOtherListeners(c))
         returnValue(temp)
 
     @setting(121, "Cooler", state=['b', 'i'], returns='b')
@@ -141,7 +158,7 @@ class AndorServer(PollingServer):
 
 
     """
-    EMCCD Gain Settings
+    Acquisition Settings
     """
     @setting(211, "EMCCD Gain", gain='i', returns='i')
     def EMCCDGain(self, c, gain=None):
@@ -153,6 +170,8 @@ class AndorServer(PollingServer):
                     (int)   : the EMCCD gain.
         """
         gain = yield self._run('EMCCD Gain', 'get_emccd_gain', 'set_emccd_gain', gain)
+        self.acquisition_updated(('emccd_gain', float(gain))) #tmp remove todo
+        self.notifyOtherListeners(c, ("emccd_gain", float(gain)), self.acquisition_updated)
         returnValue(gain)
 
     @setting(221, "EMCCD Range", returns='(ii)')
@@ -164,9 +183,22 @@ class AndorServer(PollingServer):
         """
         return self.camera.get_camera_em_gain_range()
 
+    @setting(231, "Exposure Time", time='v', returns='v')
+    def exposureTime(self, c, time=None):
+        """
+        Get/set the current exposure time.
+        Arguments:
+            time    (float)   : the trigger mode.
+        Returns:
+                    (float) : the current exposure time in seconds.
+        """
+        mode = yield self._run('Exposure Time', 'get_exposure_time', 'set_exposure_time', time)
+        self.notifyOtherListeners(c, ("exposure_time", time), self.acquisition_updated)
+        returnValue(mode)
+
 
     """
-    Acquisition Settings
+    Mode Settings
     """
     @setting(311, "Mode Read", mode='s', returns='s')
     def modeRead(self, c, mode=None):
@@ -179,6 +211,7 @@ class AndorServer(PollingServer):
                     (str)   : the current read mode.
         """
         mode = yield self._run('Mode Read', 'get_read_mode', 'set_read_mode', mode)
+        self.notifyOtherListeners(c, ("read", mode), self.mode_updated)
         returnValue(mode)
 
     @setting(321, "Mode Shutter", mode='s', returns='s')
@@ -192,6 +225,7 @@ class AndorServer(PollingServer):
                     (str)   : the shutter mode.
         """
         mode = yield self._run('Mode Shutter', 'get_shutter_mode', 'set_shutter_mode', mode)
+        self.notifyOtherListeners(c, ("shutter", mode), self.mode_updated)
         returnValue(mode)
 
     @setting(331, "Mode Acquisition", mode='s', returns='s')
@@ -205,6 +239,7 @@ class AndorServer(PollingServer):
                     (str)   : the acquisition mode.
         """
         mode = yield self._run('Mode Acquisition', 'get_acquisition_mode', 'set_acquisition_mode', mode)
+        self.notifyOtherListeners(c, ("acquisition", mode), self.mode_updated)
         returnValue(mode)
 
     @setting(341, "Mode Trigger", mode='s', returns='s')
@@ -218,18 +253,7 @@ class AndorServer(PollingServer):
                     (str)   : the trigger mode.
         """
         mode = yield self._run('Mode Trigger', 'get_trigger_mode', 'set_trigger_mode', mode)
-        returnValue(mode)
-
-    @setting(351, "Exposure Time", time='v', returns='v')
-    def exposureTime(self, c, time=None):
-        """
-        Get/set the current exposure time.
-        Arguments:
-            time    (float)   : the trigger mode.
-        Returns:
-                    (float) : the current exposure time in seconds.
-        """
-        mode = yield self._run('Exposure Time', 'get_exposure_time', 'set_exposure_time', time)
+        self.notifyOtherListeners(c, ("trigger", mode), self.mode_updated)
         returnValue(mode)
 
 
@@ -241,18 +265,23 @@ class AndorServer(PollingServer):
         """
         Gets current image region.
         Returns:
-            # todo
+            [binx, biny, startx, stopx, starty, stopy]
         """
         return self.camera.get_image()
 
-    @setting(412, "Set Image Region", horizontalBinning='i', verticalBinning='i', horizontalStart='i', horizontalEnd='i',
-             verticalStart='i', verticalEnd='i', returns='')
-    def setImageRegion(self, c, horizontalBinning, verticalBinning, horizontalStart, horizontalEnd, verticalStart,
-                       verticalEnd):
+    @setting(412, "Set Image Region", horizontalBinning='i', verticalBinning='i', horizontalStart='i',
+             horizontalEnd='i', verticalStart='i', verticalEnd='i', returns='')
+    def setImageRegion(self, c, horizontalBinning, verticalBinning, horizontalStart,
+                       horizontalEnd, verticalStart, verticalEnd):
         """
         Sets current image region.
         Arguments:
-            # todo
+            horizontalBinning   (int)   : the horizontal binning multiple.
+            verticalBinning     (int)   : the vertical binning multiple.
+            horizontalStart     (int)   : the horizontal start position.
+            horizontalEnd       (int)   : the horizontal end position.
+            verticalStart     (int)     : the vertical start position.
+            verticalEnd       (int)     : the vertical end position.
         """
         print('acquiring: {}'.format(self.setImageRegion.__name__))
         yield self.lock.acquire()
@@ -328,20 +357,34 @@ class AndorServer(PollingServer):
             yield deferToThread(self.camera.start_acquisition)
             # necessary so that start_acquisition call completes even for long kinetic series
             yield self.wait(0.1)
+            self.acquisition_running = True
         finally:
             print('releasing: {}'.format(self.acquisitionStart.__name__))
             self.lock.release()
 
     @setting(612, "Acquisition Stop", returns='')
     def acquisitionStop(self, c):
+        """
+        Stop acquisition.
+        """
         print('acquiring: {}'.format(self.acquisitionStop.__name__))
         yield self.lock.acquire()
         try:
             print('acquired : {}'.format(self.acquisitionStop.__name__))
             yield deferToThread(self.camera.abort_acquisition)
+            self.acquisition_running = False
         finally:
             print('releasing: {}'.format(self.acquisitionStop.__name__))
             self.lock.release()
+
+    @setting(613, "Acquisition Status", returns='b')
+    def acquisitionStatus(self, c):
+        """
+        Get acquisition status.
+        Returns:
+            (bool): whether acquisition is stopped or started.
+        """
+        return self.acquisition_running
 
     @setting(621, "Acquisition Wait", returns='')
     def acquisitionWait(self, c):
@@ -405,6 +448,7 @@ class AndorServer(PollingServer):
         """
         Get all data.
         """
+        # get data
         # print('acquiring: {}'.format(self.getMostRecentImage.__name__))
         yield self.lock.acquire()
         try:
@@ -413,6 +457,12 @@ class AndorServer(PollingServer):
         finally:
             # print('releasing: {}'.format(self.getMostRecentImage.__name__))
             self.lock.release()
+
+        # update image via signal
+        # todo: maybe this is source of error
+        if image != self.last_image:
+            self.last_image = data
+            yield self.image_updated(data)
         returnValue(image)
 
 
@@ -425,10 +475,12 @@ class AndorServer(PollingServer):
         Polls the camera for image readout.
         """
         data = yield self.getMostRecentImage(None)
+        temp = yield self.temperature(None)
         # if there is a new image since the last update, send a signal to the clients
-        if data != self.last_image:
-            self.last_image = data
-            yield self.image_updated(data)
+        # todo: maybe this is source of error
+        # if data != self.last_image:
+        #     self.last_image = data
+        #     yield self.image_updated(data)
 
 
     # HELPER
