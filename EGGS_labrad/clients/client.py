@@ -13,7 +13,7 @@ from labrad.logging import setupLogging, _LoggerWriter
 from EGGS_labrad.clients.utils import createTrunk
 from EGGS_labrad.clients.Widgets import QClientMenuHeader
 
-__all__ = ["GUIClient", "RecordingGUIClient"]
+__all__ = ["GUIClient"]
 
 
 class GUIClient(ABC):
