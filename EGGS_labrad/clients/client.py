@@ -15,9 +15,6 @@ from EGGS_labrad.clients.Widgets import QClientMenuHeader
 
 __all__ = ["GUIClient", "RecordingGUIClient"]
 
-# todo: co-opt recording into GUIClient and create record function dependent on class variable
-# todo: automatically connect to signals
-
 
 class GUIClient(ABC):
     """
@@ -91,7 +88,6 @@ class GUIClient(ABC):
         """
         # set logger as instance variable
         self.logger = setupLogging('labrad.client', sender=self)
-
         # redirect stdout
         sys.stdout = _LoggerWriter(self.logger.info)
 
@@ -361,67 +357,5 @@ class GUIClient(ABC):
         To be subclassed.
         Called after initData.
         Should be used to connect GUI signals to slots and initialize the GUI.
-        """
-        pass
-
-
-class RecordingGUIClient(GUIClient):
-    """
-    Supports client polling and data taking.
-    """
-
-    def __init__(self, reactor, cxn=None, parent=None):
-        # add data vault as a necessary server first
-        self.servers['dv'] = 'Data Vault'
-        super().__init__(reactor, cxn, parent)
-        # set recording variables
-        self.c_record = self.cxn.context()
-        self.recording = False
-        self.starttime = None
-        # start device polling only if not already started
-
-    @inlineCallbacks
-    def _initClient(self, cxn):
-        super()._initClient(cxn)
-        # todo: polling on each server
-        # makes any polling servers start polling
-        for server_nickname in self.servers.keys():
-            # todo: check if server is pollingserver type
-            server = getattr(self, server_nickname)
-            if hasattr(server, 'polling'):
-                poll_params = yield server.polling()
-                if not poll_params[0]:
-                    yield self.tt.polling(True, 5.0)
-        return cxn
-
-    @inlineCallbacks
-    def _record(self):
-        """
-
-        """
-        yield self._createDataset()
-
-    @inlineCallbacks
-    def _createDataset(self, *args, **kwargs):
-        """
-
-        """
-        # create trunk for dataset
-        createTrunk(self.name)
-        # set up datavault
-        self.recording = status
-        if self.recording:
-            self.starttime = time()
-            trunk = createTrunk(self.name)
-            yield self.dv.cd(trunk, True, context=self.c_record)
-            yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')],
-                                       [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'),
-                                        ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_record)
-
-
-    # SUBCLASSED FUNCTIONS
-    def record(self, *args, **kwargs):
-        """
-        Creates a new dataset to record data and sets recording status.
         """
         pass
