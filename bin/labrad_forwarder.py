@@ -1,4 +1,3 @@
-
 # Author: Mario Scondo (www.Linux-Support.com)
 # Date: 2010-01-08
 # Script template by Stephen Chappell
@@ -17,26 +16,11 @@
 # Error messages are stored in file 'error.log'.
 #
 
-import socket
 import sys
-import _thread as thread
 import time
+import socket
+import _thread as thread
 
-def main(setup, error, args):
-    # open file for error messages
-    #sys.stderr = file(error, 'a')
-
-    # if args
-    if (len(args) > 0):
-        for settings in parse_args(args):
-            thread.start_new_thread(server, settings)
-    else:
-        # read settings for port forwarding
-        for settings in parse(setup):
-            thread.start_new_thread(server, settings)
-    # wait for <ctrl-c>
-    while True:
-       time.sleep(60)
 
 def parse(setup):
     settings = list()
@@ -79,6 +63,22 @@ def forward(source, destination):
         else:
             source.shutdown(socket.SHUT_RD)
             destination.shutdown(socket.SHUT_WR)
+
+def main(setup, error, args):
+    # open file for error messages
+    #sys.stderr = file(error, 'a')
+
+    # if args
+    if (len(args) > 0):
+        for settings in parse_args(args):
+            thread.start_new_thread(server, settings)
+    else:
+        # read settings for port forwarding
+        for settings in parse(setup):
+            thread.start_new_thread(server, settings)
+    # wait for <ctrl-c>
+    while True:
+       time.sleep(60)
 
 if __name__ == '__main__':
     main('port-forward.config', 'error.log', sys.argv[1:])

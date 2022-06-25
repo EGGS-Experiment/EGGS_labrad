@@ -163,9 +163,9 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
 
     # ACQUISITION
     @inlineCallbacks
-    def get_trace(self, channel, points=None):
+    def get_trace(self, channel, points=100000):
         # configure trace
-        yield self.write('DAT:SOUR CH%d' % channel)
+        yield self.write('DAT:SOUR CH{:d}'.format(channel))
         yield self.write('DAT:STAR 1')
         yield self.write('DAT:ENC ASCI')
         yield self.write('DAT:STOP {:d}'.format(points))
