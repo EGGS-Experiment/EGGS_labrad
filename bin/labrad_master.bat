@@ -1,5 +1,6 @@
 :: LabRAD Master
 :: Starts the LabRAD Master.
+:: todo: use setlocal for all
 
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
