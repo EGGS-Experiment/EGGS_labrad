@@ -1,6 +1,8 @@
-# files in all folders
-**/*.pyc
+# OSX
 **/.DS_Store
+
+# python
+**/*.pyc
 **/__pycache__
 **/*.pyon
 **/*.h5
@@ -9,9 +11,6 @@
 .idea
 **/.idea
 .idea/**
-
-# artiq stuff
-**/*.pyon
 
 # stuff we produce
 #**/*.txt
