@@ -1,9 +1,12 @@
 import numpy as np
-from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
+
+from labrad.units import WithUnit
+from labrad.gpib import GPIBDeviceWrapper
 
 
 class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
+
 
     # SYSTEM
     @inlineCallbacks
@@ -13,6 +16,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def clear_buffers(self):
         yield self.write('*CLS')
+
 
     # CHANNEL
     @inlineCallbacks
@@ -138,6 +142,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         resp = yield self.query(chString + '?')
         returnValue(resp.strip())
 
+
     # HORIZONTAL
     @inlineCallbacks
     def horizontal_offset(self, offset=None):
@@ -161,6 +166,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
+
     # ACQUISITION
     @inlineCallbacks
     def get_trace(self, channel, points=100000):
@@ -169,19 +175,21 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         yield self.write('DAT:STAR 1')
         yield self.write('DAT:ENC ASCI')
         yield self.write('DAT:STOP {:d}'.format(points))
+        timeout_tmp = WithUnit(points / 10000, 's')
 
-        # get preamble
+        # get preamble and waveform
         preamble = yield self.query('WFMO?')
-        # get waveform
-        data = yield self.query('CURV?')
-        # parse waveform preamble
+        data = yield self.query('CURV?', timeout=timeout_tmp)
+
+        # parse waveform preamble and data
         points, xincrement, xorigin, yincrement, yorigin, yreference = self._parsePreamble(preamble)
-        # parse data
         trace = self._parseByteData(data)
+
         # format data
         xAxis = np.arange(points) * xincrement + xorigin
         yAxis = (trace - yorigin) * yincrement + yreference
         returnValue((xAxis, yAxis))
+
 
     # MEASURE
     @inlineCallbacks
@@ -189,9 +197,10 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         # (re-)start measurement statistics
         self.write('MEAS:STAT:RES')
 
+
     # HELPER
-    def _parsePreamble(preamble):
-        '''
+    def _parsePreamble(self, preamble):
+        """
         <preamble_block> ::= <format 16-bit NR1>,
                          <type 16-bit NR1>,
                          <points 32-bit NR1>,
@@ -200,16 +209,15 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
                          <xreference 32-bit NR1>,
                          <yincrement 32-bit floating point NR3>,
                          <yorigin 32-bit floating point NR3>,
-        '''
+        """
         fields = preamble.split(';')
         points = int(fields[6])
         xincrement, xorigin, xreference = list(map(float, fields[9: 12]))
         yincrement, yorigin, yreference = list(map(float, fields[13: 16]))
         return (points, xincrement, xorigin, yincrement, yorigin, yreference)
 
-    def _parseByteData(data):
+    def _parseByteData(self, data):
         """
         Parse byte data
         """
-        trace = np.array(data.split(','), dtype=float)
-        return trace
+        return np.array(data.split(','), dtype=float)
