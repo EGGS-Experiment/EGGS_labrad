@@ -14,7 +14,6 @@ SET /A dev_flag=0
 FOR %%x IN (%*) DO (
     SET /A argCount+= 1
     IF "%%x"=="--ip" (SET /a ip_ind=!argCount!)
-    IF "%%x"=="--devices" (SET /a dev_flag=1)
     IF "%%x"=="-h" (GOTO HELP)
     IF "%%x"=="--help" (GOTO HELP)
     REM: IF "%%x"=="-w" (SET /a
@@ -36,11 +35,6 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://%LABRADHOST%:3000
 REM: ARTIQ Dashboard
 START "ARTIQ Dashboard" /min CMD "/k activate artiq && CALL artiq_dashboard -s %LABRADHOST%"
 
-REM: Run device busses if device flag is active
-IF %dev_flag%==1 (
-    TIMEOUT 5 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_devices.bat
-)
-
 REM: Clients
 TIMEOUT 10 > NUL && START /min CMD /c %EGGS_LABRAD_ROOT%\bin\utils\start_labrad_clients.bat
 
@@ -50,12 +44,11 @@ CALL %EGGS_LABRAD_ROOT%\bin\labrad_cxn.bat
 GOTO EOF
 
 :HELP
-@ECHO usage: labrad_node [-h] [--devices] [--ip IP_ADDRESS]
+@ECHO usage: labrad_node [-h] [--ip IP_ADDRESS]
 @ECHO:
 @ECHO LabRAD Node
 @ECHO Optional Arguments:
 @ECHO    -h, --help          show this message and exit
-@ECHO    --devices           start the labrad core as well as GPIB and serial bus servers
 @ECHO    --ip                connect to the labrad manager at the given IP address (default: %LABRADHOST%)
 @ECHO:
 

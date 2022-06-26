@@ -1,4 +1,5 @@
 :: Opens the EGGS GUI.
+::  Intended as a desktop shortcut.
 
 @ECHO OFF
 
