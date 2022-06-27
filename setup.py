@@ -1,4 +1,5 @@
 # todo: finish
+# todo: create desktop shortcuts
 import sys
 import versioneer
 

@@ -77,8 +77,10 @@ def main(setup, error, args):
         for settings in parse(setup):
             thread.start_new_thread(server, settings)
     # wait for <ctrl-c>
+    # todo: wait for ctrl c better
     while True:
        time.sleep(60)
+
 
 if __name__ == '__main__':
     main('port-forward.config', 'error.log', sys.argv[1:])
