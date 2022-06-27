@@ -1,4 +1,5 @@
 :: Opens the RealSimpleGrapher Client.
+::  Intended as a desktop shortcut.
 
 @ECHO OFF
 

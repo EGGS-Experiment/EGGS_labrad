@@ -6,6 +6,7 @@ import os
 import ctypes as c
 
 from EGGS_labrad.config.andor_config import AndorConfig as config
+# todo: add binning
 
 
 class AndorInfo(object):
@@ -53,6 +54,7 @@ class AndorAPI(object):
             print('Initializing Camera...')
             error = self.dll.Initialize(os.path.dirname(__file__))
             print('Done Initializing: {}'.format(ERROR_CODE[error]))
+
             # get camera parameters
             self.info = AndorInfo()
             self.get_detector_dimensions()
@@ -64,10 +66,11 @@ class AndorAPI(object):
             self.set_acquisition_mode(config.acquisition_mode)
             self.set_trigger_mode(config.trigger_mode)
             self.set_exposure_time(config.exposure_time)
-            # self.set_shutter_mode(config.shutter_mode)
+            self.set_shutter_mode(config.shutter_mode)
+
             # set image to full size with the default binning
             self.set_image(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)
-            self.set_cooler_on()
+            self.set_cooler_state(True)
             self.set_temperature(config.set_temperature)
             self.get_cooler_state()
             self.get_temperature()
@@ -76,10 +79,9 @@ class AndorAPI(object):
             raise Exception(e)
 
 
-    '''
+    """
     General
-    '''
-
+    """
     def print_get_software_version(self):
         """
         Gets the version of the SDK.
@@ -164,10 +166,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    Temperature-Related Settings
-    '''
 
+    """
+    Temperature-Related Settings
+    """
     def get_temperature_range(self):
         """
         Gets the range of available temperatures.
@@ -190,19 +192,15 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    def set_cooler_on(self):
+    def set_cooler_state(self, state):
         """
-        Turns on cooling.
+        Sets cooling.
         """
-        error = self.dll.CoolerON()
-        if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
-            raise Exception(ERROR_CODE[error])
-
-    def set_cooler_off(self):
-        """
-        Turns off cooling.
-        """
-        error = self.dll.CoolerOFF()
+        error = None
+        if state:
+            error = self.dll.CoolerON()
+        else:
+            error = self.dll.CoolerOFF()
         if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
             raise Exception(ERROR_CODE[error])
 
@@ -223,10 +221,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    EMCCD Gain Settings
-    '''
 
+    """
+    EMCCD Gain Settings
+    """
     def get_camera_em_gain_range(self):
         min_gain = c.c_int()
         max_gain = c.c_int()
@@ -254,10 +252,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    Read Mode
-    '''
 
+    """
+    Read Mode
+    """
     def set_read_mode(self, mode):
         try:
             mode_number = READ_MODE[mode]
@@ -272,10 +270,10 @@ class AndorAPI(object):
     def get_read_mode(self):
         return self.info.read_mode
 
-    '''
-    Shutter Mode
-    '''
 
+    """
+    Shutter Mode
+    """
     def set_shutter_mode(self, mode):
         try:
             mode_number = ShutterMode[mode]
@@ -290,10 +288,10 @@ class AndorAPI(object):
     def get_shutter_mode(self):
         return self.info.shutter_mode
 
-    '''
-    Acquisition Mode
-    '''
 
+    """
+    Acquisition Mode
+    """
     def set_acquisition_mode(self, mode):
         try:
             mode_number = AcquisitionMode[mode]
@@ -309,10 +307,9 @@ class AndorAPI(object):
         return self.info.acquisition_mode
 
 
-    '''
+    """
     Trigger Mode
-    '''
-
+    """
     def set_trigger_mode(self, mode):
         try:
             mode_number = TriggerMode[mode]
@@ -327,10 +324,10 @@ class AndorAPI(object):
     def get_trigger_mode(self):
         return self.info.trigger_mode
 
-    '''
-    Exposure Time
-    '''
 
+    """
+    Exposure Time
+    """
     def set_exposure_time(self, time):
         error = self.dll.SetExposureTime(c.c_float(time))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
@@ -353,10 +350,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    Image Region
-    '''
 
+    """
+    Image Region
+    """
     def get_image(self):
         return self.info.image_region
 
@@ -369,10 +366,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    Acquisition
-    '''
 
+    """
+    Acquisition
+    """
     def prepare_acqusition(self):
         error = self.dll.PrepareAcquisition()
         if ERROR_CODE[error] == "DRV_SUCCESS":
@@ -401,10 +398,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    '''
-    Images
-    '''
 
+    """
+    Images
+    """
     def get_acquired_data(self, num_images):
         hbin, vbin, hstart, hend, vstart, vend = self.info.image_region
         dim = (hend - hstart + 1) * (vend - vstart + 1) / float(hbin * vbin)
@@ -425,6 +422,9 @@ class AndorAPI(object):
         image_struct = c.c_uint32 * dim
         image = image_struct()
         error = self.dll.GetMostRecentImage(c.pointer(image), dim)
+        # todo: print getnumbernewimages
+        # todo: print size of ciruclar buffer
+        # todo: look at pixel shift settings
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             image = image[:]
             return image
@@ -500,7 +500,7 @@ READ_MODE = {
     'Full Vertical Binning': 0,
     'Multi-Track': 1,
     'Random-Track': 2,
-    'Sinle-Track': 3,
+    'Single-Track': 3,
     'Image': 4
 }
 
@@ -527,7 +527,3 @@ ShutterMode = {
     'Open': 1,
     'Close': 2
 }
-
-
-if __name__ == '__main__':
-    camera = AndorAPI()

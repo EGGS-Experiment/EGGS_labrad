@@ -78,7 +78,6 @@ class stability_client(GUIClient):
         self.gui.eigenmode_radial_display.addTopLevelItem(QTreeWidgetItem(["0"]))
 
     def initGUI(self):
-        # todo: ion_num change changes ion mass
         # ion chain signals
         self.gui.total_ions.valueChanged.connect(lambda val: self._changeNumIons(val))
         self.gui.ion_mass.valueChanged.connect(lambda val: self._updateMass(val))

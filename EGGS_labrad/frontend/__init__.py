@@ -1,0 +1,1 @@
+# todo: forwarder, master, node, manager, web gui

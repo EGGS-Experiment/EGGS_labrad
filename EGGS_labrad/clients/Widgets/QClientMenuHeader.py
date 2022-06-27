@@ -18,22 +18,23 @@ class QClientMenuHeader(QMenuBar):
         Creates the QClientMenuHeader with only a File menu.
         Does not associate the File menu with any slots.
         """
-        # file menu
-        self.fileMenu = QMenu("&File")
-        self.addMenu(self.fileMenu)
-        self.restart_action = QAction('&Restart')
-        self.lockGUI_action = QAction('&Lock GUI')
-        self.unlockGUI_action = QAction('&Unlock GUI')
-        self.fileMenu.addAction(self.restart_action)
-        self.fileMenu.addAction(self.lockGUI_action)
-        self.fileMenu.addAction(self.unlockGUI_action)
-        # config menu
-        self.configMenu = QMenu("&Configuration")
-        self.addMenu(self.configMenu)
-        self.saveConfig_action = QAction('&Save Configuration')
-        self.loadConfig_action = QAction('&Load Configuration')
-        self.configMenu.addAction(self.saveConfig_action)
-        self.configMenu.addAction(self.loadConfig_action)
+        # create file menu
+        file_menu = ("fileMenu", "&File")
+        file_actions = {
+            "restart_action": "&Restart",
+            "lockGUI_action": "&Lock GUI",
+            "unlockGUI_action": "&Unlock GUI",
+            "serialconnection_action": "Serial Connection"
+        }
+        self._createMenu(file_menu, action_dict=file_actions)
+
+        # create config menu
+        config_menu = ("configMenu", "&Configuration")
+        config_actions = {
+            "saveConfig_action": "&Save Configuration",
+            "loadConfig_action": "&Load Configuration"
+        }
+        self._createMenu(config_menu, action_dict=config_actions)
 
     def addFile(self, client):
         """
@@ -53,26 +54,22 @@ class QClientMenuHeader(QMenuBar):
         Arguments:
             server: the LabradServer object that we want to use.
         """
-        # create and add serial sub-menu to main menu
-        self.serialMenu = QMenu("&Serial")
-        self.addMenu(self.serialMenu)
-        # create and add serial menu actions
-        self.node_menu = QMenu('Port')
-        self.connect_action = QAction('Connect Default')
-        self.disconnect_action = QAction('Disconnect')
-        self.clear_action = QAction('Clear Buffers')
-        self.serialconnection_action = QAction('Serial Connection')
-        self.serialMenu.addMenu(self.node_menu)
-        self.serialMenu.addAction(self.connect_action)
-        self.serialMenu.addAction(self.disconnect_action)
-        self.serialMenu.addAction(self.clear_action)
-        self.serialMenu.addAction(self.serialconnection_action)
+        menu_names = ("serialMenu", "&Serial")
+        submenu_names = {"node_menu": "Port"}
+        action_names = {
+            "connect_action": "Connect Default",
+            "disconnect_action": "Disconnect",
+            "clear_action": "Clear Buffers",
+            "serialconnection_action": "Serial Connection"
+        }
+        self._createMenu(menu_names, submenu_names, action_names)
+
         # connect actions to slots
         self.serialMenu.aboutToShow.connect(lambda _server=server: self._getSerialDevice(_server))
         self.node_menu.aboutToShow.connect(lambda _server=server: self._getNodes(_server))
-        self.connect_action.triggered.connect(lambda action, _server=server: self._deviceSelect(_server))
-        self.disconnect_action.triggered.connect(lambda action, _server=server: self._deviceClose(_server))
-        self.clear_action.triggered.connect(lambda action, _server=server: self._deviceClear(_server))
+        self.connect_action.triggered.connect(lambda action, _server=server: server.device_select())
+        self.disconnect_action.triggered.connect(lambda action, _server=server: server.device_close())
+        self.clear_action.triggered.connect(lambda action, _server=server:  server.serial_flush())
 
     def addGPIB(self, server):
         """
@@ -81,17 +78,17 @@ class QClientMenuHeader(QMenuBar):
         Arguments:
             server: the LabradServer object that we want to use.
         """
-        self.gpibMenu = QMenu("&GPIB")
-        self.addMenu(self.gpibMenu)
-        self.select_action = QAction('Select Device')
-        self.deselect_action = QAction('Deselect Device')
-        #self.lock_action = QAction('Lock Device')
-        self.gpibMenu.addAction(self.select_action)
-        self.gpibMenu.addAction(self.deselect_action)
-        #self.gpibMenu.addAction(self.lock_action)
+        menu_names = ("gpibMenu", "&GPIB")
+        action_names = {
+            "select_action": "Select Device",
+            "deselect_action": "Deselect Device"
+            #"lock_action": "Lock Device"
+        }
+        self._createMenu(menu_names, action_dict=action_names)
+
         # connect actions to slots
-        self.select_action.triggered.connect(lambda action, _server=server: self._gpibSelect(_server))
-        self.deselect_action.triggered.connect(lambda action, _server=server: self._gpibDeselect(_server))
+        self.select_action.triggered.connect(lambda action, _server=server: server.select_device())
+        self.deselect_action.triggered.connect(lambda action, _server=server: server.deselect_device())
         #self.lock_action.triggered.connect(lambda action, _server=server: self._gpibLock(_server))
 
     def addPolling(self, server):
@@ -138,16 +135,14 @@ class QClientMenuHeader(QMenuBar):
         Arguments:
             server: the LabradServer object that we want to use.
         """
-        # create and add communication sub-menu to main menu
-        self.commMenu = QMenu("&Communication")
-        self.addMenu(self.commMenu)
-        # create and add communication menu actions
-        self.query_action = QAction('&Query')
-        self.write_action = QAction('&Write')
-        self.read_action = QAction('&Read')
-        self.commMenu.addAction(self.query_action)# dialog box with input and buffer
-        self.commMenu.addAction(self.write_action) #dialog box with input
-        self.commMenu.addAction(self.read_action) # dialog box
+        menu_names = ("commMenu", "&Communication")
+        action_names = {
+            "query_action": "&Query",
+            "write_action": "&Write",
+            "read_action": "&Read"
+        }
+        self._createMenu(menu_names, action_dict=action_names)
+
         # connect actions to slots
         self.query_action.triggered.connect(lambda action, _server=server: self._queryDialog(_server))
         self.write_action.triggered.connect(lambda action, _server=server: self._writeDialog(_server))
@@ -194,46 +189,6 @@ class QClientMenuHeader(QMenuBar):
         except Exception as e:
             print(e)
 
-    @inlineCallbacks
-    def _deviceSelect(self, server):
-        try:
-            yield server.device_select()
-        except Exception as e:
-            print(e)
-
-    @inlineCallbacks
-    def _deviceClose(self, server):
-        try:
-            yield server.device_close()
-            # todo: check if we have a device; if not, set node and port enabled
-        except Exception as e:
-            print('scde')
-            print(e)
-
-    @inlineCallbacks
-    def _deviceClear(self, server):
-        try:
-            yield server.serial_flush()
-        except Exception as e:
-            print(e)
-
-
-    # GPIB
-    @inlineCallbacks
-    def _gpibSelect(self, server):
-        try:
-            # todo: log
-            yield server.select_device()
-        except Exception as e:
-            print(e)
-
-    @inlineCallbacks
-    def _gpibDeselect(self, server):
-        try:
-            yield server.deselect_device()
-        except Exception as e:
-            print(e)
-
 
     # POLLING
     @inlineCallbacks
@@ -264,7 +219,7 @@ class QClientMenuHeader(QMenuBar):
     def _setPollingInterval(self, server, interval):
         try:
             status_tmp = self.pollstatus_action.isChecked()
-            polling_status, polling_interval = yield server.polling(status_tmp, interval)
+            yield server.polling(status_tmp, interval)
         except Exception as e:
             print(e)
 
@@ -293,3 +248,30 @@ class QClientMenuHeader(QMenuBar):
             pass
         except Exception as e:
             print(e)
+
+
+    # HELPERS
+    def _createMenu(self, menu, submenu_dict={}, action_dict={}):
+        """
+        Creates actions and adds them to the given menu.
+        Arguments:
+            menu: a tuple of (menu_reference: menu_name)
+            submenu_dict: a dictionary of {submenu_reference: submenu_name}
+            action_dict: a dictionary of {action_reference: action_name}
+        """
+        # create and add menu
+        menu_obj = QMenu(menu[1])
+        setattr(self, menu[0], menu_obj)
+        self.addMenu(menu_obj)
+
+        # create and add submenus to menu
+        for submenu_ref, submenu_name in submenu_dict.items():
+            submenu_obj = QMenu(submenu_name)
+            setattr(self, submenu_ref, submenu_obj)
+            menu_obj.addMenu(submenu_obj)
+
+        # create and add actions to menu
+        for action_ref, action_name in action_dict.items():
+            action_obj = QAction(action_name)
+            setattr(self, action_ref, action_obj)
+            menu_obj.addAction(action_obj)

@@ -25,7 +25,8 @@ server_dict = {
         'hf_gpib': 'hengfachuen_gpib_bus', 'cw_gpib': 'causewaybay_gpib_bus',
         'mk': 'node_mongkok', 'lh': 'node_lahaina', 'cw': 'node_causewaybay', 'hf': 'node_hengfachuen',
         'mk_ser': 'mongkok_serial_server', 'lh_ser': 'lahaina_serial_server', 'cw_ser': 'causewaybay_serial_server',
-        'hf_ser': 'hengfachuen_serial_server'
+        'hf_ser': 'hengfachuen_serial_server',
+        'cam': 'andor_server'
         }
 
 for servers in server_dict.items():

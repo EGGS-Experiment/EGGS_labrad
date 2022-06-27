@@ -211,68 +211,30 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
 
     # TRACE
     @inlineCallbacks
-    @inlineCallbacks
-    def getTrace(self, channel, points=1200):
-        # todo: :TRAC:DATA, set format :FORM:TRAC:DATA, set endianness :FORM:BORD
-        # oscilloscope must be stopped to get trace
-        yield self.write(':STOP')
-        # set max points
-        max_points = yield self.query(':ACQ:MDEP?')
-        max_points = int(max_points)
-        if points > max_points:
-            points = max_points
-        # configure trace
-        yield self.write(':WAV:SOUR CHAN{:d}'.format(channel))
-        yield self.write(':WAV:MODE RAW')
-        yield self.write(':WAV:FORM BYTE')
-        yield self.write(':WAV:STAR 1')
-        yield self.write(':WAV:STOP {:d}'.format(points))
+    def getTrace(self, channel):
+        # set data format
+        yield self.write(':FORM:TRAC:DATA ASC')
 
-        # transfer waveform preamble
-        preamble = yield self.query(':WAV:PRE?')
-        # get waveform data
-        data = yield self.query(':WAV:DATA?')
-        # start oscope back up
-        yield self.write(':RUN')
+        # get data
+        data = yield self.query(':TRAC:DATA? TRACE{:d}'.format(channel))
+        data = self._processData(data)
 
-        # parse waveform preamble
-        points, xincrement, xorigin, xreference, yincrement, yorigin, yreference = yield self._parsePreamble(preamble)
-        # parse data
-        trace = yield self._parseByteData(data)
-        # format data
-        xAxis = np.arange(points) * xincrement + xorigin
-        yAxis = (trace - yorigin - yreference) * yincrement
-        returnValue((xAxis, yAxis))
+        # create x-axis
+        freq_start = yield self.query(':SENS:FREQ:START?')
+        freq_stop = yield self.query(':SENS:FREQ:STOP?')
+        xAxis = np.linspace(int(freq_start), int(freq_stop), len(data))
+
+        returnValue((xAxis, data))
 
 
     # HELPER
-    def _parsePreamble(preamble):
-        '''
-        <preamble_block> = <format 16-bit NR1>,
-                         <type 16-bit NR1>,
-                         <points 32-bit NR1>,
-                         <count 32-bit NR1>,
-                         <xincrement 64-bit floating point NR3>,
-                         <xorigin 64-bit floating point NR3>,
-                         <xreference 32-bit NR1>,
-                         <yincrement 32-bit floating point NR3>,
-                         <yorigin 32-bit floating point NR3>,
-                         <yreference 32-bit NR1>
-        '''
-        fields = preamble.split(',')
-        points = int(fields[2])
-        xincrement, xorigin, xreference = list(map(float, fields[4: 7]))
-        yincrement, yorigin, yreference = list(map(float, fields[7: 10]))
-        print(str((points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)))
-        return (points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)
-
-    def _parseByteData(data):
+    def _processData(self, data):
         """
-        Parse byte data.
+        Process data for header and separate data values.
         """
-        # get tmc header in #NXXXXXXXXX format
+        # header is in #NXXXXXXXXX format
         tmc_N = int(data[1])
-        tmc_length = int(data[2: 2 + tmc_N])
-        print("tmc_N: " + str(tmc_N))
-        print("tmc_length: " + str(tmc_length))
-        return np.frombuffer(data[2 + tmc_N:], dtype=np.uint8)
+
+        # remove header and split data
+        processed_data = np.array(data[2 + tmc_N:].split(', '), dtype=float)
+        return processed_data
