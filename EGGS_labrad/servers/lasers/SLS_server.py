@@ -34,7 +34,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
     name = 'SLS Server'
     regKey = 'SLS Server'
     serNode = 'mongkok'
-    port = 'COM44'
+    port = 'COM4'
 
     baudrate = 115200
     timeout = Value(5.0, 's')
@@ -46,20 +46,20 @@ class SLSServer(SerialDeviceServer, PollingServer):
     # AUTOLOCK
     @setting(111, 'Autolock Toggle', enable='s', returns='s')
     def autolock_toggle(self, c, enable=None):
-        '''
+        """
         Toggle autolock.
-        '''
+        """
         chString = 'AutoLockEnable'
         resp = yield self._write_and_query(chString, enable)
         returnValue(resp)
 
     @setting(112, 'Autolock Status', returns='*s')
     def autolock_status(self, c):
-        '''
+        """
         Get autolock status.
         Returns:
             [v, v, v]: the lock time, lock count, and lock state
-        '''
+        """
         chString = ['LockTime', 'LockCount', 'AutoLockState']
         resp = []
         for string in chString:
@@ -75,9 +75,9 @@ class SLSServer(SerialDeviceServer, PollingServer):
 
     @setting(113, 'Autolock Parameter', param='s', returns='s')
     def autolock_param(self, c, param=None):
-        '''
+        """
         Choose parameter for autolock to sweep.
-        '''
+        """
         chString = 'SweepType'
         tgstring = {'OFF': '0', 'PZT': '1', 'CURRENT': '2'}
         param_tg = None
@@ -92,14 +92,14 @@ class SLSServer(SerialDeviceServer, PollingServer):
     # PDH
     @setting(211, 'PDH', param_name='s', param_val='?', returns='s')
     def PDH(self, c, param_name, param_val=None):
-        '''
+        """
         Adjust PDH settings
         Arguments:
             param_name      (string): the parameter to adjust, can be any of ['frequency', 'index', 'phase', 'filter']
             param_val       ()      : the value to set the parameter to
         Returns:
                                     : the value of param_name
-        '''
+        """
         chstring = {'frequency': 'PDHFrequency', 'index': 'PDHPMIndex', 'phase': 'PDHPhaseOffset', 'filter': 'PDHDemodFilter'}
         try:
             string_tmp = chstring[param_name.lower()]
@@ -124,26 +124,26 @@ class SLSServer(SerialDeviceServer, PollingServer):
     # OFFSET
     @setting(311, 'Offset Frequency', freq='v', returns='v')
     def offset_frequency(self, c, freq=None):
-        '''
+        """
         Set/get offset frequency.
         Arguments:
             freq    (float) : a frequency between [1e7, 8e8]
         Returns:
                     (float) : the value of offset frequency
-        '''
+        """
         chString = 'OffsetFrequency'
         resp = yield self._write_and_query(chString, freq)
         returnValue(float(resp))
 
     @setting(312, 'Offset Lockpoint', lockpoint='i', returns='i')
     def offset_lockpoint(self, c, lockpoint=None):
-        '''
+        """
         Set offset lockpoint.
         Arguments:
             lockpoint   (float) : offset lockpoint between [0, 4]. 0
         Returns:
                                 : the offset lockpoint
-        '''
+        """
         chString = 'LockPoint'
         resp = yield self._write_and_query(chString, lockpoint)
         returnValue(int(resp))
@@ -152,13 +152,13 @@ class SLSServer(SerialDeviceServer, PollingServer):
     # SERVO
     @setting(411, 'servo', servo_target='s', param_name='s', param_val='?', returns='s')
     def servo(self, c, servo_target, param_name, param_val=None):
-        '''
+        """
         Adjust PID servo for given parameter.
         Arguments:
             servo_target    (string): target of the PID lock
             param_name      (string): the parameter to change
             param_val       ()      : value to change
-        '''
+        """
         tgstring = {'current': 'Current', 'pzt': 'PZT', 'tx': 'TX'}
         chstring = {'p': 'ServoPropGain', 'i': 'ServoIntGain', 'd': 'ServoDiffGain', 'set': 'ServoSetpoint',
                     'loop': 'ServoInvertLoop', 'filter': 'ServoOutputFilter'}
@@ -174,9 +174,9 @@ class SLSServer(SerialDeviceServer, PollingServer):
     # MISC
     @setting(511, 'Get Values', returns='*2s')
     def get_values(self, c):
-        '''
+        """
         Returns the values of ALL parameters.
-        '''
+        """
         yield self.ser.acquire()
         yield self.ser.write_line('get values')
         resp = yield self.ser.read_line(_SLS_EOL)
