@@ -49,10 +49,11 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     def channel_scale(self, channel, scale=None):
         chString = 'CH{:d}:SCA'.format(channel)
         if scale is not None:
-            if (scale > 1e-3) and (scale < 1e1):
+            if (scale == 0) or ((scale > 1e-4) and (scale < 1e1)):
                 yield self.write(chString + ' ' + str(scale))
             else:
-                raise Exception('Scale must be in range: [1e-3, 1e1]')
+                print('pr1:', scale)
+                raise Exception('Scale must be in range: [1e-4, 1e1]')
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
@@ -88,10 +89,11 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         # value is in volts
         chString = 'CH{:d}:OFFS'.format(channel)
         if offset is not None:
-            if (offset == 0) or ((abs(offset) > 1e-3) and (abs(offset) < 1e1)):
-                yield self.write(chString + ' ' + str(offset))
+            # if (offset == 0) or ((abs(offset) > 1e-4) and (abs(offset) < 1e1)):
+            if True:
+                    yield self.write(chString + ' ' + str(offset))
             else:
-                raise Exception('Scale must be in range: [1e-3, 1e1]')
+                raise Exception('Offset must be in range: [1e-3, 1e1]')
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 

@@ -255,6 +255,7 @@ class ARTIQ_api(object):
         self.core.reset()
         cpld.cfg_switches(state)
 
+    # todo: getdds
     def getDDS(self, dds_name):
         """
         Get the frequency, amplitude, and phase values
@@ -302,7 +303,7 @@ class ARTIQ_api(object):
         self.core.reset()
         dev.set_mu(ftw, pow_=pow, asf=asf)
 
-    @autoreload
+    #@autoreload
     def getDDSatt(self, dds_name):
         """
         Set the DDS attenuation.
@@ -310,9 +311,9 @@ class ARTIQ_api(object):
         dev = self.dds_list[dds_name]
         # get channel number of dds
         channel_num = dev.chip_select - 4
-        att_reg = self._getUrukulAtt(dev.cpld)
+        att_reg = np.int32(self._getUrukulAtt(dev.cpld))
         # get only attenuation of channel
-        return (att_reg >> (8 * channel_num)) & 0xff
+        return np.int32((att_reg >> (8 * channel_num)) & 0xff)
 
     @autoreload
     def setDDSatt(self, dds_name, att_mu):
