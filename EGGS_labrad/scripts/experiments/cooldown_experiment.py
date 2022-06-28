@@ -6,9 +6,9 @@ from EGGS_labrad.servers.script_scanner.experiment import experiment
 
 
 class cooldown_experiment(experiment):
-    '''
+    """
     Records data when initiating cooldown of chamber.
-    '''
+    """
 
     name = 'Cooldown Recording'
 

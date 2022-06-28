@@ -30,7 +30,7 @@ IF NOT %ip_ind%==0 (
 
 
 @REM: Core Servers
-START "LabRAD Web GUI" /min %HOME%\Code\scalabrad-web-server-2.0.6\bin\labrad-web.bat
+START "LabRAD Web GUI" /min %PROG_HOME%\scalabrad-web_minimum_startup.bat
 START "LabRAD Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\labrad\node\__init__.py -s -x %LABRADHOST%:%EGGS_LABRAD_SYSLOG_PORT% -k True"
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://%LABRADHOST%:3000
