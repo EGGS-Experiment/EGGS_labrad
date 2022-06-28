@@ -17,6 +17,10 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     def clear_buffers(self):
         yield self.write('*CLS')
 
+    @inlineCallbacks
+    def autoscale(self):
+        yield self.write('AUTOS EXEC')
+
 
     # CHANNEL
     @inlineCallbacks
@@ -84,7 +88,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         # value is in volts
         chString = 'CH{:d}:OFFS'.format(channel)
         if offset is not None:
-            if (offset == 0) or ((offset > 1e-4) and (offset < 1e1)):
+            if (offset == 0) or ((abs(offset) > 1e-3) and (abs(offset) < 1e1)):
                 yield self.write(chString + ' ' + str(offset))
             else:
                 raise Exception('Scale must be in range: [1e-3, 1e1]')
