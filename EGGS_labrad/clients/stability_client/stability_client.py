@@ -30,7 +30,7 @@ class stability_client(GUIClient):
         'dc': 'DC Server'
     }
 
-    createMenu = False
+    createMenu = True
 
     def getgui(self):
         if self.gui is None:
