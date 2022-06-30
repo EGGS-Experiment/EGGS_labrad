@@ -16,7 +16,6 @@ timeout = 20
 ### END NODE INFO
 """
 
-# imports
 from labrad.units import WithUnit
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue

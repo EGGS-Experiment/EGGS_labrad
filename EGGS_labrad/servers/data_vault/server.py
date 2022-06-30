@@ -8,11 +8,16 @@ import win32api
 import numpy as np
 from . import errors
 from os import remove
+# todo: implement ability to delete things
 
 
 class DataVault(LabradServer):
+    """
+    Stores and manages data/datasets using the HDF5 format.
+    """
 
     name = 'Data Vault'
+
 
     # SETUP
     def __init__(self, session_store):
@@ -81,6 +86,7 @@ class DataVault(LabradServer):
                 datafile._fileTimeout()
             except Exception as e:
                 print(e)
+
 
     # CONTEXT MANAGEMENT
     def contextKey(self, c):

@@ -12,6 +12,7 @@ name_tmp = 'Rectifier Characterization'
 freq_range = linspace(10, 30, 30 + 1) * 1e6
 amp_range = linspace(1, 10, 30)
 # todo: set channel
+# todo: correctly set timescale
 
 
 try:
