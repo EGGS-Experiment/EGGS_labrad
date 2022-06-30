@@ -244,8 +244,8 @@ class OscilloscopeServer(GPIBManagedServer):
 
 
     # MEASURE
-    @setting(210, "Measure Setup", slot='i', channel='i', param='s', returns='')
-    def measure_setup(self, c, slot, channel, param):
+    @setting(210, "Measure Setup", slot='i', channel='i', param='s', returns='(iis)')
+    def measure_setup(self, c, slot, channel=0, param=None):
         """
         Set up a measurement slot.
         Arguments:
