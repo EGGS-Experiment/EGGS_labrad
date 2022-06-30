@@ -89,13 +89,13 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         # value is in volts
         chString = 'CH{:d}:OFFS'.format(channel)
         if offset is not None:
-            # if (offset == 0) or ((abs(offset) > 1e-4) and (abs(offset) < 1e1)):
-            if True:
+            if abs(offset) < 1e1:
                     yield self.write(chString + ' ' + str(offset))
             else:
-                raise Exception('Offset must be in range: [1e-3, 1e1]')
+                raise Exception('Offset must be less than 10V.')
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
+
 
     # TRIGGER
     @inlineCallbacks
@@ -199,10 +199,24 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
 
     # MEASURE
     @inlineCallbacks
-    def measure_start(self, c):
-        # (re-)start measurement statistics
-        self.write('MEAS:STAT:RES')
+    def measure_setup(self, slot, channel, param):
+        valid_measurement_parameters = ("AMP", "FREQ", "HIGH", "LOW", "MAX", "MEAN", "MINI", "PK2P")
+        if slot not in (1, 2, 3, 4):
+            raise Exception("Invalid measurement slot. Must be in [1, 4].")
+        # setter
+        if param not in valid_measurement_parameters:
+            raise Exception("Invalid measurement type. Must be one of {}".format(valid_measurement_parameters))
+        self.write('MEASU:MEAS{:d}:SOUR CH{:d}'.format(channel))
+        self.write('MEASU:MEAS{:d}:TYP {:s}'.format(param))
+        # getter
+        measure_params = yield self.query('MEASU:MEAS{:d}?'.format(slot))
+        measurement_source, measurement_type, _ = self._parseMeasurementParameters(measure_params)
+        return (slot, measurement_source, measurement_type)
 
+    @inlineCallbacks
+    def measure(self, slot):
+        measure_val = yield self.query('MEASU:MEAS{:d}:VAL?'.format(slot))
+        return float(measure_val)
 
     # HELPER
     def _parsePreamble(self, preamble):
@@ -227,3 +241,25 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         Parse byte data
         """
         return np.array(data.split(','), dtype=float)
+
+    def _parseMeasurementParameters(self, measurement_raw):
+        """
+        Parse raw response of parameters for a measurement slot.
+        <raw_params> =
+            <delay direction>;
+            <delay edge 1>;
+            <delay edge 2>;
+            <measurement type>;
+            <units>;<source 1>;
+            <source 2>;
+            <count>;
+            <minimum>;
+            <mean>;
+            <max>;
+            <value>
+        """
+        params = measurement_raw.split(';')
+        delay_dir, delay_edge1, delay_edge2 = params[:2]
+        count_num, count_min, count_mean, count_max = params[7:11]
+        measurement_source, measurement_type, measurement_value = params[5], params[3], params[-1]
+        return int(measurement_source[2:]), measurement_type, float(measurement_value)

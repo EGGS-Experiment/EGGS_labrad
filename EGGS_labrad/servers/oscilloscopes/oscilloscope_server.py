@@ -244,13 +244,29 @@ class OscilloscopeServer(GPIBManagedServer):
 
 
     # MEASURE
-    @setting(210, "Measure Start", channel='i', returns='')
-    def measure_start(self, c, channel):
-        '''
-        (re-)start measurement statistics
-        (see measure)
-        '''
-        return self.selectedDevice(c).measure_start(channel)
+    @setting(210, "Measure Setup", slot='i', channel='i', param='s', returns='')
+    def measure_setup(self, c, slot, channel, param):
+        """
+        Set up a measurement slot.
+        Arguments:
+            slot    (int): the measurement slot number to set up.
+            channel (int): the channel to measure.
+            param   (str): the measurement parameter
+        Returns:
+            (int, int, str): the measurement slot, the channel being measured, the measurement parameter.
+        """
+        return self.selectedDevice(c).measure_setup(slot, channel, param)
+
+    @setting(211, "Measure", slot='i', returns='f')
+    def measure(self, c, slot):
+        """
+        Get a measurement from a measurement slot.
+        Arguments:
+            slot    (int): the measurement slot number.
+        Returns:
+            (float): the measurement.
+        """
+        return self.selectedDevice(c).measure(slot)
 
     @setting(221, "Average Toggle", average_on='b', returns='b')
     def average_toggle(self, c, average_on=None):

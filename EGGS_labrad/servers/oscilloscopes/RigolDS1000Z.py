@@ -200,8 +200,9 @@ class RigolDS1000ZWrapper(GPIBDeviceWrapper):
         returnValue((xAxis, yAxis))
 
     # MEASURE
+    # todo: fix measurement stuff
     @inlineCallbacks
-    def measure_start(self, c):
+    def measure_setup(self, c):
         # (re-)start measurement statistics
         self.write(":MEAS:STAT:RES")
 
