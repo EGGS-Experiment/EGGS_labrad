@@ -59,16 +59,15 @@ class SMY01Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def amplitude(self, ampl, units):
         # setter
-        if ampl:
+        if ampl is not None:
             # check if units are valid, set default to dBm
             if not units:
                 units = 'DBM'
             elif units.upper() not in ['DBM', 'V']:
                 raise Exception('Error: invalid units')
-            yield self.write('LEV '+ str(ampl) + units)
+            yield self.write('LEV {} {}'.format(ampl, units.upper()))
         # getter
         resp = yield self.query('LEV?')
-        # strip text preamble
         resp = self._parse(resp, 'LEVEL')
         # special case if rf is off
         if resp == ':OFF':
