@@ -257,7 +257,7 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).measure_setup(slot, channel, param)
 
-    @setting(211, "Measure", slot='i', returns='f')
+    @setting(211, "Measure", slot='i', returns='v')
     def measure(self, c, slot):
         """
         Get a measurement from a measurement slot.
