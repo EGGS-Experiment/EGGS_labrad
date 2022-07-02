@@ -1,4 +1,18 @@
-@ECHO OFF & TITLE LabRAD Shell && conda activate labart && python -ix "%~f0" %* & goto :eof
+:: Server Connection
+::  Creates a connection to labrad with all servers given shortcuts.
 
-import labrad
-cxn = labrad.connect()
+@ECHO OFF
+@SETLOCAL
+
+@REM: Set up CMD
+TITLE LabRAD Shell
+CALL conda activate labart
+
+@REM: Set up file location
+SET FILE_DIR=%~dp0labrad_cxn.py
+
+@REM: Run labrad_cxn.py
+python -ix %FILE_DIR% %*
+
+@ENDLOCAL
+EXIT /B
