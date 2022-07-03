@@ -31,6 +31,9 @@ try:
     os.autoscale()
     os.measure_setup(3, os_channel, 'AMP')
     os.measure_setup(4, os_channel, 'MEAN')
+    # todo: set up trigger correctly
+    # os.trigger_source
+    # os.trigger_level
     print('Oscilloscope setup successful.')
 
     # set up signal generator
@@ -61,8 +64,6 @@ try:
             # set signal amplitude
             rf.amplitude(amp_val)
 
-            # center rectifier
-
             # first zoom out
             os.channel_offset(os_channel, 0)
             os.channel_scale(os_channel, 1)
@@ -72,9 +73,18 @@ try:
             os.channel_offset(3, offset_val)
 
             # zoom in on oscillation
-            osc_val = os.measure(3)
-            osc_val = float(osc_val) / 2
-            if osc_val == 0:
+            osc_val = float(os.measure(3)) / 4
+            if osc_val < 5e-3:
+                osc_val = 5e-3
+            os.channel_scale(3, osc_val)
+
+            # adjust offset again
+            offset_val = os.measure(4)
+            os.channel_offset(3, offset_val)
+
+            # zoom in on oscillation again
+            osc_val = float(os.measure(3)) / 4
+            if osc_val < 5e-3:
                 osc_val = 5e-3
             os.channel_scale(3, osc_val)
 

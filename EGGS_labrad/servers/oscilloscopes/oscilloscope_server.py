@@ -280,6 +280,7 @@ class OscilloscopeServer(GPIBManagedServer):
         return self.selectedDevice(c).average_toggle(average_on)
 
     # todo: make averaging a subset of measure
+    # todo: make trigger channel use numbers and not str
 
     @setting(222, "Average Number", averages='i', returns='i')
     def average_number(self, c, averages=None):
