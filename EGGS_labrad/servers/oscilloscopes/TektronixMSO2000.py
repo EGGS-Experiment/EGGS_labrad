@@ -200,6 +200,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     # MEASURE
     @inlineCallbacks
     def measure_setup(self, slot, channel=None, param=None):
+        # todo: write dict that converts this
         valid_measurement_parameters = ("AMP", "FREQ", "HIGH", "LOW", "MAX", "MEAN", "MINI", "PK2P")
         if slot not in (1, 2, 3, 4):
             raise Exception("Invalid measurement slot. Must be in [1, 4].")
@@ -207,8 +208,8 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
         if (channel is not None) and (param is not None):
             if param not in valid_measurement_parameters:
                 raise Exception("Invalid measurement type. Must be one of {}".format(valid_measurement_parameters))
-            self.write('MEASU:MEAS{:d}:SOUR CH{:d}'.format(channel))
-            self.write('MEASU:MEAS{:d}:TYP {:s}'.format(param))
+            self.write('MEASU:MEAS{:d}:SOUR CH{:d}'.format(slot, channel))
+            self.write('MEASU:MEAS{:d}:TYP {:s}'.format(slot, param))
         # getter
         measure_params = yield self.query('MEASU:MEAS{:d}?'.format(slot))
         measurement_source, measurement_type, _ = self._parseMeasurementParameters(measure_params)

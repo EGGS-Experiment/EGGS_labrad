@@ -279,6 +279,8 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).average_toggle(average_on)
 
+    # todo: make averaging a subset of measure
+
     @setting(222, "Average Number", averages='i', returns='i')
     def average_number(self, c, averages=None):
         """

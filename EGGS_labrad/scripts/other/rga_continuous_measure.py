@@ -5,6 +5,7 @@ cxn = labrad.connect()
 # general import
 from numpy import arange
 from time import time, sleep
+from EGGS_labrad.clients import createTrunk
 start_time = time()
 
 # get servers
@@ -18,8 +19,9 @@ dv_dep_var = [(':.01f amu'.format(mass), 'Pressure', 'Torr')
               for mass in arange(mass_initial, mass_final + mass_steps, mass_steps)]
 
 # create dataset
-dv.cd(['', 'rgaActual'], True, context=cr)
-dv.new('rgaActual', [('Elapsed time', 't')], dv_dep_var, context=cr)
+trunk_tmp = createTrunk("RGA Continuous Measurement")
+dv.cd(trunk_tmp, True, context=cr)
+dv.new('RGA Continuous Measurement', [('Elapsed time', 't')], dv_dep_var, context=cr)
 
 # set up rga scan
 rga.scan_mass_initial(mass_initial)
