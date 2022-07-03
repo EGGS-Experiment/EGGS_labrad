@@ -1,7 +1,8 @@
 """
 Characterize the rectifier for PID stabilization of the trap RF via oscilloscope.
 """
-
+# todo: make a proper experiment
+# todo: make messages correct
 import labrad
 from time import sleep
 
@@ -9,8 +10,8 @@ from numpy import linspace
 from EGGS_labrad.clients import createTrunk
 
 name_tmp = 'Rectifier Characterization'
-freq_range = linspace(10, 30, 30 + 1) * 1e6
-amp_range = linspace(1, 10, 30)
+freq_range = linspace(15, 30, 15 + 1) * 1e6
+amp_range = linspace(0, 10, 20 + 1)
 os_channel = 3
 
 
@@ -28,11 +29,9 @@ try:
 
     # set up oscilloscope
     os.select_device()
-    os.autoscale()
     os.measure_setup(3, os_channel, 'AMP')
     os.measure_setup(4, os_channel, 'MEAN')
-    # todo: set up trigger correctly
-    # os.trigger_source
+    os.trigger_channel(os_channel)
     # os.trigger_level
     print('Oscilloscope setup successful.')
 
@@ -67,31 +66,39 @@ try:
             # first zoom out
             os.channel_offset(os_channel, 0)
             os.channel_scale(os_channel, 1)
+            sleep(1)
 
             # center around offset
             offset_val = os.measure(4)
             os.channel_offset(3, offset_val)
+            sleep(0.5)
 
             # zoom in on oscillation
             osc_val = float(os.measure(3)) / 4
             if osc_val < 5e-3:
                 osc_val = 5e-3
             os.channel_scale(3, osc_val)
+            sleep(0.5)
 
             # adjust offset again
             offset_val = os.measure(4)
             os.channel_offset(3, offset_val)
+            sleep(0.5)
 
             # zoom in on oscillation again
             osc_val = float(os.measure(3)) / 4
             if osc_val < 5e-3:
                 osc_val = 5e-3
             os.channel_scale(3, osc_val)
+            sleep(1)
 
             # take oscope data
             osc_val = os.measure(3)
             offset_val = os.measure(4)
-            print('freq: {}; amp: {}; offset: {}; osc: {}'.format(freq_val, amp_val, float(offset_val), float(osc_val)))
+            # format freq,
+            print('freq: {:.0f} MHz; amp: {:.2f} dBm; offset: {:.1f} mV; osc amp: {.2} mV'.format(
+                freq_val / 1e6, amp_val, offset_val * 1e3, osc_val * 1e3
+            ))
 
             # record result
             dv.add(amp_val, offset_val, osc_val, context=cr)

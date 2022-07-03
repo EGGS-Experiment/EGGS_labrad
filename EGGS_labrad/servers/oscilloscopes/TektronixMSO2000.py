@@ -108,7 +108,8 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
             else:
                 raise Exception('Trigger channel must be one of: ' + str((1, 2, 3, 4)))
         resp = yield self.query(chString + '?')
-        returnValue(resp.strip())
+        resp = resp.strip()[2:]
+        returnValue(int(resp))
 
     @inlineCallbacks
     def trigger_slope(self, slope=None):

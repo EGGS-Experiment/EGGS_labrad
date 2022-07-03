@@ -155,14 +155,14 @@ class OscilloscopeServer(GPIBManagedServer):
 
 
     # TRIGGER
-    @setting(131, "Trigger Channel", source=['s', 'i'], returns='s')
+    @setting(131, "Trigger Channel", source='i', returns='i')
     def trigger_channel(self, c, source=None):
         """
         Set or query trigger channel.
         Arguments:
-            source (str): channel name
+            source (int): the channel number.
         Returns:
-            (str): Trigger source.
+            (int): the trigger source channel.
         """
         if source == '':
             source = None
@@ -268,44 +268,17 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).measure(slot)
 
-    @setting(221, "Average Toggle", average_on='b', returns='b')
-    def average_toggle(self, c, average_on=None):
+    @setting(221, "Measure Averaging", average_on='b', returns='b')
+    def measure_averaging(self, c, average_on=None):
         """
-        Turn averaging on or off.
+        Turn averaging on or off for measurements.
         Arguments:
             average_on (bool): If True, turn averaging on.
         Returns:
             (bool): whether averaging is on or off.
         """
-        return self.selectedDevice(c).average_toggle(average_on)
+        return self.selectedDevice(c).measure_averaging(average_on)
 
-    # todo: make averaging a subset of measure
-    # todo: make trigger channel use numbers and not str
-
-    @setting(222, "Average Number", averages='i', returns='i')
-    def average_number(self, c, averages=None):
-        """
-        Set number of averages.
-        Arguments:
-            averages (int): number of averages.
-        Returns:
-            (int): number of averages.
-        """
-        return self.selectedDevice(c).average_number(averages)
-
-    @setting(291, 'Measure Amplitude', channel='i', returns='v')
-    def measure_amplitude(self, c, channel):
-        """
-        Measure channel amplitude.
-        Arguments:
-            channel (int):      channel to query
-        Returns:
-                    (float):    the current channel amplitude
-        """
-        # todo set channel source MEAS:SOUR CH1
-        # todo activate statistic MEAS:STAT:ITEM VAMP,CHAN2
-        # todo get measurement MEAS:STAT:ITEM? CURR,VAMP
-        return self.selectedDevice(c).measure_amplitude(channel)
 
 
 if __name__ == '__main__':
