@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = Parameter Vault
-version = 2.0.1
+version = 2.1.1
 description = Loads experiment parameters from data vault
 instancename = Parameter Vault
 

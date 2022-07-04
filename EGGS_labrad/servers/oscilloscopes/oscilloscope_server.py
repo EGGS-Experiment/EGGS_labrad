@@ -145,13 +145,26 @@ class OscilloscopeServer(GPIBManagedServer):
         """
         Get or set the vertical offset.
         Arguments:
-            channel (int): the channel to get/set
-            offset (float): Vertical offset in units of divisions. If None,
+            channel (int): the channel to get/set.
+            offset (float): Vertical offset in units of volts. If None,
                 (the default), then we only query.
         Returns:
             (float): Vertical offset in units of divisions.
         """
         return self.selectedDevice(c).channel_offset(channel, offset)
+
+    @setting(117, "Channel Position", channel='i', position='v', returns='v')
+    def channel_position(self, c, channel, position=None):
+        """
+        Get or set the vertical position.
+        Arguments:
+            channel (int): the channel to get/set.
+            position (float): Vertical position in units of divisions. If None,
+                (the default), then we only query.
+        Returns:
+            (float): Vertical position in units of divisions.
+        """
+        return self.selectedDevice(c).channel_position(channel, position)
 
 
     # TRIGGER

@@ -121,6 +121,7 @@ class stability_client(GUIClient):
         # update parameters per user selection of radio button
         if self.gui.values_get.isChecked():
             # get RF parameters
+            # todo: update for new oscope functions
             v_rf = yield self.os.measure_amplitude(1)
             # if value is too large (>1e38), oscope is reading a null value
             if v_rf > 1e20:
