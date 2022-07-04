@@ -218,23 +218,25 @@ class ARTIQ_Server(LabradServer):
 
     # TTL
     @setting(211, 'TTL List', returns='*s')
-    def listTTL(self, c):
+    def ttlList(self, c):
         """
         Lists all available TTL channels.
         Returns:
                 (*str)  : a list of all TTL channels.
         """
-        return self.api.ttlout_list + self.api.ttlin_list
+        ttlin_list = list(self.api.ttlin_dict.keys())
+        ttlout_list = list(self.api.ttlout_dict.keys())
+        return ttlin_list + ttlout_list
 
     @setting(221, "TTL Set", ttl_name='s', state=['b', 'i'], returns='')
-    def setTTL(self, c, ttl_name, state):
+    def ttlSet(self, c, ttl_name, state):
         """
         Manually set a TTL to the given state. TTL can be of classes TTLOut or TTLInOut.
         Arguments:
             ttl_name    (str)           : name of the ttl
             state       [bool, int]     : ttl power state
         """
-        if ttl_name not in self.api.ttlout_list:
+        if ttl_name not in self.api.ttlout_dict:
             raise Exception('Error: device does not exist.')
         if (type(state) == int) and (state not in (0, 1)):
             raise Exception('Error: invalid state.')
@@ -242,7 +244,7 @@ class ARTIQ_Server(LabradServer):
         self.notifyOtherListeners(c, (ttl_name, state), self.ttlChanged)
 
     @setting(222, "TTL Get", ttl_name='s', returns='b')
-    def getTTL(self, c, ttl_name):
+    def ttlGet(self, c, ttl_name):
         """
         Read the power state of a TTL. TTL must be of class TTLInOut.
         Arguments:
@@ -250,7 +252,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
                         (bool)  : ttl power state
         """
-        if ttl_name not in self.api.ttlin_list:
+        if ttl_name not in self.api.ttlin_dict:
             raise Exception('Error: device does not exist.')
         state = yield self.api.getTTL(ttl_name)
         returnValue(bool(state))
@@ -264,8 +266,8 @@ class ARTIQ_Server(LabradServer):
         Returns:
             (*str)  : the list of DDS names.
         """
-        dds_list = yield self.api.dds_list.keys()
-        returnValue(list(dds_list))
+        dds_dict = yield self.api.dds_dict.keys()
+        returnValue(list(dds_dict))
 
     @setting(321, "DDS Initialize", dds_name='s', returns='')
     def DDSinitialize(self, c, dds_name):
@@ -274,7 +276,7 @@ class ARTIQ_Server(LabradServer):
         Arguments:
             dds_name    (str)   : the name of the DDS.
         """
-        if dds_name not in self.api.dds_list:
+        if dds_name not in self.api.dds_dict:
             raise Exception('Error: device does not exist.')
         yield self.api.initializeDDS(dds_name)
 
@@ -288,7 +290,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
                         (bool)          :
         """
-        if dds_name not in self.api.dds_list:
+        if dds_name not in self.api.dds_dict:
             raise Exception('Error: device does not exist.')
         # setter
         if state is not None:
@@ -310,7 +312,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
                         (int)   : the 32-bit frequency tuning word.
         """
-        if dds_name not in self.api.dds_list:
+        if dds_name not in self.api.dds_dict:
             raise Exception('Error: device does not exist.')
         # setter
         if freq is not None:
@@ -333,7 +335,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
                         (int)   : the 14-bit amplitude scaling factor.
         """
-        if dds_name not in self.api.dds_list:
+        if dds_name not in self.api.dds_dict:
             raise Exception('Error: device does not exist.')
         # setter
         if ampl is not None:
@@ -356,7 +358,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
                         (int)   : the 16-bit phase offset word.
         """
-        if dds_name not in self.api.dds_list:
+        if dds_name not in self.api.dds_dict:
             raise Exception('Error: device does not exist.')
         if phase is not None:
             if (phase >= 1) or (phase < 0):
@@ -378,7 +380,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
                         (int)   : the channel attenuation (in machine units).
         """
-        if dds_name not in self.api.dds_list:
+        if dds_name not in self.api.dds_dict:
             raise Exception('Error: device does not exist.')
         # setter
         if att is not None:
@@ -402,7 +404,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
             (word)  : the register value
         """
-        if dds_name not in self.api.dds_list:
+        if dds_name not in self.api.dds_dict:
             raise Exception('Error: device does not exist.')
         elif length not in (16, 32, 64):
             raise Exception('Error: invalid read length. Must be one of (16, 32, 64).')

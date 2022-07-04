@@ -23,12 +23,14 @@ class ARTIQ_api(object):
         """
         def inner(self, *args, **kwargs):
             try:
-                func(self, *args, **kwargs)
+                res = func(self, *args, **kwargs)
+                return res
             except (ConnectionAbortedError, ConnectionResetError) as e:
                 try:
                     print('Connection aborted, resetting connection to artiq_master...')
                     self.reset()
-                    func(self, *args, **kwargs)
+                    res = func(self, *args, **kwargs)
+                    return res
                 except Exception as e:
                     raise e
         return inner
@@ -66,10 +68,10 @@ class ARTIQ_api(object):
         self.core_dma = self.device_manager.get("core_dma")
         # store devices in dictionary where device
         # name is key and device itself is value
-        self.ttlout_list = {}
-        self.ttlin_list = {}
-        self.dds_list = {}
-        self.urukul_list = {}
+        self.ttlout_dict = {}
+        self.ttlin_dict = {}
+        self.dds_dict = {}
+        self.urukul_dict = {}
         self.zotino = None
         self.fastino = None
         self.dacType = None
@@ -85,13 +87,13 @@ class ARTIQ_api(object):
             devicetype = params['class']
             device = self.device_manager.get(name)
             if devicetype == 'TTLInOut':
-                self.ttlin_list[name] = device
+                self.ttlin_dict[name] = device
             elif devicetype == 'TTLOut':
-                self.ttlout_list[name] = device
+                self.ttlout_dict[name] = device
             elif devicetype == 'AD9910':
-                self.dds_list[name] = device
+                self.dds_dict[name] = device
             elif devicetype == 'CPLD':
-                self.urukul_list[name] = device
+                self.urukul_dict[name] = device
             elif devicetype == 'Zotino':
                 # need to specify both device types since
                 # all kernel functions need to be valid
@@ -124,8 +126,8 @@ class ARTIQ_api(object):
         with self.core_dma.record(sequencename):
             for i in range(50):
                 with parallel:
-                    self.ttlout_list[0].pulse(1*ms)
-                    self.ttlout_list[1].pulse(1*ms)
+                    self.ttlout_dict[0].pulse(1*ms)
+                    self.ttlout_dict[1].pulse(1*ms)
                 delay(1.0*ms)
 
     def record2(self, ttl_seq, dds_seq, sequencename):
@@ -171,7 +173,7 @@ class ARTIQ_api(object):
         Manually set the state of a TTL.
         """
         try:
-            dev = self.ttlout_list[ttlname]
+            dev = self.ttlout_dict[ttlname]
         except KeyError:
             raise Exception('Invalid device name.')
         self._setTTL(dev, state)
@@ -189,7 +191,7 @@ class ARTIQ_api(object):
         Manually set the state of a TTL.
         """
         try:
-            dev = self.ttlin_list[ttlname]
+            dev = self.ttlin_dict[ttlname]
         except KeyError:
             raise Exception('Invalid device name.')
         self._getTTL(dev)
@@ -204,13 +206,13 @@ class ARTIQ_api(object):
     @autoreload
     def initializeDDSAll(self):
         # initialize urukul cplds as well as dds channels
-        device_list = list(self.urukul_list.values())
+        device_list = list(self.urukul_dict.values())
         for device in device_list:
             self._initializeDDS(device)
 
     @autoreload
     def initializeDDS(self, dds_name):
-        dev = self.dds_list[dds_name]
+        dev = self.dds_dict[dds_name]
         self._initializeDDS(dev)
 
     @kernel
@@ -223,7 +225,7 @@ class ARTIQ_api(object):
         """
         Get the RF switch status of a DDS channel.
         """
-        dev = self.dds_list[dds_name]
+        dev = self.dds_dict[dds_name]
         # get channel number of dds
         channel_num = dev.chip_select - 4
         # get board status register
@@ -237,7 +239,7 @@ class ARTIQ_api(object):
         """
         Set the RF switch of a DDS channel.
         """
-        dev = self.dds_list[dds_name]
+        dev = self.dds_dict[dds_name]
         # get channel number of dds
         channel_num = dev.chip_select - 4
         # get board status register
@@ -255,13 +257,13 @@ class ARTIQ_api(object):
         self.core.reset()
         cpld.cfg_switches(state)
 
-    # todo: getdds
+    @autoreload
     def getDDS(self, dds_name):
         """
         Get the frequency, amplitude, and phase values
         (in machine units) of a DDS channel.
         """
-        dev = self.dds_list[dds_name]
+        dev = self.dds_dict[dds_name]
         # read in waveform values
         profiledata = self._readDDS64(dev, 0x0E)
         # separate register values into ftw, asf, and pow
@@ -280,7 +282,7 @@ class ARTIQ_api(object):
         """
         Manually set the frequency, amplitude, or phase of a DDS channel.
         """
-        dev = self.dds_list[dds_name]
+        dev = self.dds_dict[dds_name]
         ftw, asf, pow = (0, 0, 0)
         # read in current parameters
         profiledata = self._readDDS64(dev, 0x0E)
@@ -303,12 +305,12 @@ class ARTIQ_api(object):
         self.core.reset()
         dev.set_mu(ftw, pow_=pow, asf=asf)
 
-    #@autoreload
+    @autoreload
     def getDDSatt(self, dds_name):
         """
         Set the DDS attenuation.
         """
-        dev = self.dds_list[dds_name]
+        dev = self.dds_dict[dds_name]
         # get channel number of dds
         channel_num = dev.chip_select - 4
         att_reg = np.int32(self._getUrukulAtt(dev.cpld))
@@ -320,7 +322,7 @@ class ARTIQ_api(object):
         """
         Set the DDS attenuation.
         """
-        dev = self.dds_list[dds_name]
+        dev = self.dds_dict[dds_name]
         # get channel number of dds
         channel_num = dev.chip_select - 4
         att_reg = self._setDDSatt(dev.cpld, channel_num, att_mu)
@@ -346,7 +348,7 @@ class ARTIQ_api(object):
         """
         Read the value of a DDS register.
         """
-        dev = self.dds_list[dds_name]
+        dev = self.dds_dict[dds_name]
         if length == 16:
             return self._readDDS16(dev, reg)
         elif length == 32:
@@ -376,7 +378,7 @@ class ARTIQ_api(object):
         """
         Initialize an Urukul board.
         """
-        dev = self.urukul_list[urukul_name]
+        dev = self.urukul_dict[urukul_name]
         self._initializeUrukul(dev)
 
     @kernel
@@ -511,7 +513,7 @@ class ARTIQ_api(object):
 
     @autoreload
     def readFastino(self, addr):
-        self._readFastino(addr)
+        return self._readFastino(addr)
 
     @kernel
     def _readFastino(self, addr):
@@ -551,7 +553,7 @@ class ARTIQ_api(object):
 
     @autoreload
     def setSamplerGain(self, channel_num, gain_mu):
-        return self._setSamplerGain(channel_num, gain_mu)
+        self._setSamplerGain(channel_num, gain_mu)
 
     @kernel
     def setSamplerGain(self, channel_num, gain_mu):

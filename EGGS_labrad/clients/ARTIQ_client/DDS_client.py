@@ -90,16 +90,31 @@ class DDS_client(GUIClient):
                 ad9910_widget.lock(False)
 
     def updateDDS(self, c, signal):
+        """
+        Update the DDS widget if its values are modified by another client.
+        """
         ad9910_name, param, val = signal
-        ad9910_names = [ad9910_name for ad9910_list in self.urukul_list.values() for ad9910_name in ad9910_list.keys()]
-        if ad9910_name in ad9910_names:
-            # todo: get widget
-            # todo: lock gui
-            # todo: update values
-            # todo: set previous enabled state
-            print('name:', ad9910_name)
-            print('param:', param)
-            print('val:', val)
+        for urukul_name, ad9910_list in self.urukul_list.items():
+            if ad9910_name in ad9910_list:
+                ad9910_widget = self.urukul_list[urukul_name][ad9910_name]
+                #print('ext update ({:s}): {:s} = {}'.format(ad9910_name, param, val))
+                if param == 'onoff':
+                    ad9910_widget.rfswitch.blockSignals(True)
+                    ad9910_widget.rfswitch.setChecked(val)
+                    ad9910_widget.rfswitch.blockSignals(False)
+                elif param == 'att':
+                    ad9910_widget.att.blockSignals(True)
+                    ad9910_widget.att.setValue((255 - (int(val) & 0xff)) / 8)
+                    ad9910_widget.att.blockSignals(False)
+                elif param == 'ftw':
+                    ad9910_widget.freq.blockSignals(True)
+                    ad9910_widget.freq.setValue(val / 4.2949673)
+                    ad9910_widget.freq.blockSignals(False)
+                elif param == 'asf':
+                    ad9910_widget.ampl.blockSignals(True)
+                    ad9910_widget.ampl.setValue(val / 0x3fff)
+                    ad9910_widget.ampl.blockSignals(False)
+                # todo: set previous enabled state
 
 
 if __name__ == "__main__":
