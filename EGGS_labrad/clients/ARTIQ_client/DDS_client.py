@@ -62,12 +62,12 @@ class DDS_client(GUIClient):
                 freq_mu = yield self.aq.dds_frequency(ad9910_name)
                 ampl_mu = yield self.aq.dds_amplitude(ad9910_name)
                 # convert from machine units to human units
-                att_dbm = (255 - (att_mu & 0xff)) / 8
+                att_db = (255 - (att_mu & 0xff)) / 8
                 freq_mhz = freq_mu / 4.2949673
                 ampl_pct = ampl_mu / 0x3fff
                 # set values
                 ad9910_widget.rfswitch.setChecked(sw_status)
-                ad9910_widget.att.setValue(att_dbm)
+                ad9910_widget.att.setValue(att_db)
                 ad9910_widget.freq.setValue(freq_mhz / 1e6)
                 ad9910_widget.ampl.setValue(ampl_pct * 1e2)
 
@@ -99,12 +99,15 @@ class DDS_client(GUIClient):
                 ad9910_widget = self.urukul_list[urukul_name][ad9910_name]
                 #print('ext update ({:s}): {:s} = {}'.format(ad9910_name, param, val))
                 if param == 'onoff':
+                    dds_state = int(val)
                     ad9910_widget.rfswitch.blockSignals(True)
-                    ad9910_widget.rfswitch.setChecked(val)
+                    ad9910_widget.rfswitch.setChecked(dds_state)
+                    ad9910_widget.rfswitch.setAppearance(dds_state)
                     ad9910_widget.rfswitch.blockSignals(False)
                 elif param == 'att':
+                    att_db = (255 - (int(val) & 0xff)) / 8
                     ad9910_widget.att.blockSignals(True)
-                    ad9910_widget.att.setValue((255 - (int(val) & 0xff)) / 8)
+                    ad9910_widget.att.setValue(att_db)
                     ad9910_widget.att.blockSignals(False)
                 elif param == 'ftw':
                     ad9910_widget.freq.blockSignals(True)
