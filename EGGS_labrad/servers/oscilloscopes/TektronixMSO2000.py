@@ -166,10 +166,10 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     def horizontal_scale(self, scale=None):
         chString = 'HOR:SCA'
         if scale is not None:
-            if (scale > 1e-6) and (scale < 50):
+            if (scale > 2e-9) and (scale < 100):
                 yield self.write(chString + ' ' + str(scale))
             else:
-                raise Exception('Horizontal scale must be in range: ' + str('(1e-6, 50)'))
+                raise Exception('Horizontal scale must be in range: (2e-9, 100).')
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
@@ -201,16 +201,18 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     # MEASURE
     @inlineCallbacks
     def measure_setup(self, slot, channel=None, param=None):
-        # todo: write dict that converts this
-        valid_measurement_parameters = ("AMP", "FREQ", "HIGH", "LOW", "MAX", "MEAN", "MINI", "PK2P")
+        # convert generalized parameters to device specific parameters
+        valid_measurement_parameters = {
+            "AMP": "AMP", "FREQ": "FREQ", "MAX": "MAX", "MEAN": "MEAN", "MIN": "MINI", "P2P": "PK2P"
+        }
+        # setter
         if slot not in (1, 2, 3, 4):
             raise Exception("Invalid measurement slot. Must be in [1, 4].")
-        # setter
         if (channel is not None) and (param is not None):
             if param not in valid_measurement_parameters:
-                raise Exception("Invalid measurement type. Must be one of {}".format(valid_measurement_parameters))
+                raise Exception("Invalid measurement type. Must be one of {}.".format(valid_measurement_parameters.keys()))
             self.write('MEASU:MEAS{:d}:SOUR CH{:d}'.format(slot, channel))
-            self.write('MEASU:MEAS{:d}:TYP {:s}'.format(slot, param))
+            self.write('MEASU:MEAS{:d}:TYP {:s}'.format(slot, valid_measurement_parameters[param]))
         # getter
         measure_params = yield self.query('MEASU:MEAS{:d}?'.format(slot))
         measurement_source, measurement_type, _ = self._parseMeasurementParameters(measure_params)
@@ -220,6 +222,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     def measure(self, slot):
         measure_val = yield self.query('MEASU:MEAS{:d}:VAL?'.format(slot))
         return float(measure_val)
+
 
     # HELPER
     def _parsePreamble(self, preamble):
