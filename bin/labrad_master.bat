@@ -37,7 +37,7 @@ START "LabRAD Forwarder" /min CMD "/k activate labart && python %PROG_HOME%\labr
 START "LabRAD Manager" /min %PROG_HOME%\scalabrad_minimum_startup.bat --tls-required false
 START "LabRAD Web GUI" /min %PROG_HOME%\scalabrad-web_minimum_startup.bat
 @REM: todo: check if we actually need to run activate labart here
-START "LabRAD Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\labrad\node\__init__.py -s -x %LABRADHOST%:%EGGS_LABRAD_SYSLOG_PORT% -k True"
+START "LabRAD Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\labrad\node\__init__.py -x %LABRADHOST%:%EGGS_LABRAD_SYSLOG_PORT%"
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:3000
 
