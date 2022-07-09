@@ -1,6 +1,7 @@
 import numpy as np
 
-from artiq.experiment import *
+from artiq.language import *
+from artiq.coredevice import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
 from artiq.coredevice.urukul import urukul_sta_rf_sw

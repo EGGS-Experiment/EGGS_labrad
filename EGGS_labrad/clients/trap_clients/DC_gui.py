@@ -71,10 +71,12 @@ class AMO8_channel(QFrame):
         # connect signal to slot
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
-    @inlineCallbacks
     def lock(self, status):
-        yield self.resetswitch.setEnabled(status)
-        yield self.dac.setEnabled(status)
+        self.resetswitch.setEnabled(status)
+        self.dac.setEnabled(status)
+        self.ramp_start.setEnabled(status)
+        self.ramp_target.setEnabled(status)
+        self.ramp_rate.setEnabled(status)
 
 
 class DC_gui(QFrame):
