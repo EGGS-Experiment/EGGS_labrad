@@ -1,7 +1,5 @@
 :: LabRAD Master
 ::  Starts the LabRAD Master.
-::  @REM: todo: use %dp0 thing instead of setting eggs_labrad root and going from there; do we even needs eggs_labrad_root???
-::  @REM: todo: change bin to frontend
 
 @ECHO OFF
 @SETLOCAL EnableDelayedExpansion
@@ -30,13 +28,11 @@ START "Promtail Syslog" /min CMD "/k %HOME%\Code\loki\promtail-windows-amd64.exe
 START "LabRAD Autosaver" /min %PROG_HOME%\labrad_autosaver.bat
 
 @REM: Set up port forwarder to allow access via http
-@REM: todo: check if we actually need to run activate labart here
 START "LabRAD Forwarder" /min CMD "/k activate labart && python %PROG_HOME%\labrad_forwarder.py 8682:127.0.0.1:7682"
 
 @REM: Core Servers
 START "LabRAD Manager" /min %PROG_HOME%\scalabrad_minimum_startup.bat --tls-required false
 START "LabRAD Web GUI" /min %PROG_HOME%\scalabrad-web_minimum_startup.bat
-@REM: todo: check if we actually need to run activate labart here
 START "LabRAD Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\labrad\node\__init__.py -x %LABRADHOST%:%EGGS_LABRAD_SYSLOG_PORT%"
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:3000
