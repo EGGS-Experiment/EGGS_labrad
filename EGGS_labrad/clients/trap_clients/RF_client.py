@@ -76,6 +76,7 @@ class RF_client(GUIClient):
         """
         Resets RF client buttons and sends reset signal to server.
         """
+        print('yzdde')
         # call reset
         yield self.rf.reset()
         # set parameters to device defaults
