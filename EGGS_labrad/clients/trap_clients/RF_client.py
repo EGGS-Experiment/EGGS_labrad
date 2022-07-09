@@ -76,7 +76,6 @@ class RF_client(GUIClient):
         """
         Resets RF client buttons and sends reset signal to server.
         """
-        print('yzdde')
         # call reset
         yield self.rf.reset()
         # set parameters to device defaults
@@ -86,8 +85,6 @@ class RF_client(GUIClient):
         """
         Locks signal generator interface.
         """
-        # invert since textchangingbutton is weird
-        status = not status
         # waveform parameters
         self.gui.wav_ampl.setEnabled(status)
         self.gui.wav_freq.setEnabled(status)

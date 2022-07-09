@@ -1,30 +1,21 @@
+from numpy import log10
 from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
+# todo: set am dc modulation correctly
+# todo: ensure all modulation functions work
+# todo: round amplitude to correct decimal places
 
 
 class SMY01Wrapper(GPIBDeviceWrapper):
 
-    # need to store modulation parameters since we can't
-    # change them on the device without activating modulation
-    mod_active = False
-    mod_params = {'AM': 0, 'AF': 0, 'FM': 0, 'PHM': 0}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # need to store certain parameters since we can't
+        # change them on the device without activating them
+        self.amplitude_stored = -140
+        self.mod_active = False
+        self.mod_params = {'AM': 0, 'AF': 0, 'FM': 0, 'PHM': 0}
 
-    # Helper functions
-    _dbmToV = lambda self, dbm: dbm
-
-    #_parse = lambda self, resp, text: resp.split(text)[-1]
-    def _parse(self, resp, text):
-        """
-        Removes the command from the device response.
-        """
-        result = resp.split(text)[-1]
-        result = result.strip()
-        # in case device is off
-        try:
-            result = float(result)
-        except Exception as e:
-            result = 0
-        return result
 
     # GENERAL
     @inlineCallbacks
@@ -32,15 +23,15 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         yield self.write('*RST')
 
     @inlineCallbacks
-    def toggle(self, onoff):
+    def toggle(self, onoff=None):
         # setter
         if onoff is True:
-            yield self.write('LEV:ON')
+            yield self.write('LEV {:f} {}'.format(self.amplitude_stored, 'DBM'))
         elif onoff is False:
             yield self.write('LEV:OFF')
         # getter
         resp = yield self.query('LEV?')
-        # need to check LEVEL:OFF since there is no LEVEL:ON response
+        # need to specifically check LEVEL:OFF since there is no LEVEL:ON response
         if resp == 'LEVEL:OFF':
             returnValue(False)
         else:
@@ -51,13 +42,13 @@ class SMY01Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def frequency(self, freq):
         if freq:
-            yield self.write('RF ' + str(freq))
+            yield self.write('RF {:f}'.format(freq))
         resp = yield self.query('RF?')
         resp = self._parse(resp, 'RF')
         returnValue(float(resp))
 
     @inlineCallbacks
-    def amplitude(self, ampl, units):
+    def amplitude(self, ampl, units='DBM'):
         # setter
         if ampl is not None:
             # check if units are valid, set default to dBm
@@ -65,14 +56,23 @@ class SMY01Wrapper(GPIBDeviceWrapper):
                 units = 'DBM'
             elif units.upper() not in ['DBM', 'V']:
                 raise Exception('Error: invalid units')
-            yield self.write('LEV {} {}'.format(ampl, units.upper()))
+            elif units.upper() == 'V':
+                ampl = self._VptoDBM(ampl)
+                units = 'DBM'
+            # check device output status
+            resp = yield self.query('LEV?')
+            # if output is disabled, store amplitude
+            self.amplitude_stored = ampl
+            if resp != 'LEVEL:OFF':
+                yield self.write('LEV {:f} {}'.format(ampl, units.upper()))
         # getter
         resp = yield self.query('LEV?')
-        resp = self._parse(resp, 'LEVEL')
         # special case if rf is off
-        if resp == ':OFF':
-            returnValue(0)
-        returnValue(float(resp))
+        if resp == 'LEVEL:OFF':
+            returnValue(self.amplitude_stored)
+        else:
+            resp = self._parse(resp, 'LEVEL')
+            returnValue(float(resp))
 
 
     # MODULATION
@@ -82,7 +82,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
             self.mod_params['AF'] = freq
             # only write to device if modulation is already active
             if self.mod_active is True:
-                yield self.write('AF ' + str(freq))
+                yield self.write('AF {:f}'.format(freq))
         resp = yield self.query('AF?')
         resp = self._parse(resp, 'AF')
         returnValue(float(resp))
@@ -93,7 +93,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
             # get stored modulation frequency
             freq = self.mod_params['AF']
             if self.mod_active is True:
-                yield self.write('AF ' + str(freq))
+                yield self.write('AF {:f}'.format(freq))
         resp = yield self.query('AF?')
         resp = resp.split('AF')[1]
         if resp == ':OFF':
@@ -110,8 +110,8 @@ class SMY01Wrapper(GPIBDeviceWrapper):
                 # activate with updated parameter
                 mod_freq = self.mod_params['AF']
                 param = self.mod_params['AM']
-                yield self.write('AF ' + str(mod_freq))
-                yield self.write('AM:I ' + str(param))
+                yield self.write('AF {:f}'.format(mod_freq))
+                yield self.write('AM:I {}'.format(param))
             elif onoff is False:
                 yield self.write('AM:OFF')
         # getter
@@ -127,7 +127,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
             self.mod_params['AM'] = depth
             # only write to device if modulation is already active
             if self.mod_active is True:
-                yield self.write('AM ' + str(depth))
+                yield self.write('AM {:f}'.format(depth))
         resp = yield self.query('AM?')
         resp = self._parse(resp, 'AM:INT')
         returnValue(float(resp))
@@ -141,8 +141,8 @@ class SMY01Wrapper(GPIBDeviceWrapper):
                 # activate with updated parameter
                 mod_freq = self.mod_params['AF']
                 param = self.mod_params['FM']
-                yield self.write('AF ' + str(mod_freq))
-                yield self.write('FM:I ' + str(param))
+                yield self.write('AF {:f}'.format(mod_freq))
+                yield self.write('FM:I {}'.format(param))
             elif onoff is False:
                 yield self.write('FM:OFF')
         # getter
@@ -158,7 +158,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
             self.mod_params['FM'] = dev
             # only write to device if modulation is already active
             if self.mod_active is True:
-                yield self.write('FM ' + str(dev))
+                yield self.write('FM {:f}'.format(dev))
         resp = yield self.query('FM?')
         resp = self._parse(resp, 'FM:INT')
         returnValue(float(resp))
@@ -172,8 +172,8 @@ class SMY01Wrapper(GPIBDeviceWrapper):
                 # activate with updated parameter
                 mod_freq = self.mod_params['AF']
                 param = self.mod_params['PHM']
-                yield self.write('AF ' + str(mod_freq))
-                yield self.write('PHM:I ' + str(param))
+                yield self.write('AF {:f}'.format(mod_freq))
+                yield self.write('PHM:I {}'.format(param))
             elif onoff is False:
                 yield self.write('PHM:OFF')
         # getter
@@ -189,7 +189,7 @@ class SMY01Wrapper(GPIBDeviceWrapper):
             self.mod_params['PHM'] = dev
             # only write to device if modulation is already active
             if self.mod_active is True:
-                yield self.write('PHM ' + str(dev))
+                yield self.write('PHM {:f}'.format(dev))
         resp = yield self.query('PHM?')
         resp = self._parse(resp, 'PHM:INT')
         returnValue(float(resp))
@@ -212,7 +212,26 @@ class SMY01Wrapper(GPIBDeviceWrapper):
 
     def feedback_amplitude_depth(self, depth=None):
         if depth:
-            yield self.write('AM:E:D ' + str(depth))
+            yield self.write('AM:E:D {:f}'.format(depth))
         resp = yield self.query('AM?')
         resp = self._parse(resp, 'AM:E:D')
         returnValue(float(resp))
+
+
+    # HELPER
+    _VptoDBM = lambda self, volts_p: 10 * log10(volts_p ** 2 * 10)
+
+    def _parse(self, resp, text):
+        """
+        Removes the command from the device response.
+        If the returned parameter is not a number, then this function
+            return 0 by default.
+        """
+        result = resp.split(text)[-1]
+        result = result.strip()
+        # in case device is off
+        try:
+            result = float(result)
+        except Exception as e:
+            result = 0
+        return result

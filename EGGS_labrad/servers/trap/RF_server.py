@@ -18,6 +18,7 @@ from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
 
 from SMY01 import SMY01Wrapper
+# todo: add notification of listeners & signals
 
 
 class RFServer(GPIBManagedServer):
@@ -72,7 +73,7 @@ class RFServer(GPIBManagedServer):
         Arguments:
             ampl    (float) : the amplitude (units to be specified).
         Returns:
-                    (float) : the amplitude (in dBm).
+                    (float or str) : the amplitude (in dBm).
         """
         return self.selectedDevice(c).amplitude(ampl, units)
 

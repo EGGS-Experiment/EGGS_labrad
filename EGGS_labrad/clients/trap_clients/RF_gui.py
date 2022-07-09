@@ -1,6 +1,6 @@
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QGridLayout, QPushButton, QDoubleSpinBox, QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QGridLayout, QPushButton, QDoubleSpinBox, QVBoxLayout
 
 from EGGS_labrad.clients.Widgets import Lockswitch, TextChangingButton, QCustomGroupBox
 
@@ -30,7 +30,7 @@ class RF_gui(QFrame):
 
         self.wav_ampl = QDoubleSpinBox()
         self.wav_ampl.setDecimals(1)
-        self.wav_ampl.setRange(-140.0, -12)
+        self.wav_ampl.setRange(-140.0, -16)
         self.wav_ampl.setSingleStep(0.1)
         self.wav_ampl.setKeyboardTracking(False)
 

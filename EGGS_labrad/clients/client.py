@@ -15,6 +15,8 @@ from EGGS_labrad.clients.Widgets import QClientMenuHeader
 
 __all__ = ["GUIClient"]
 
+# todo: dissociate signals from slots during restart
+
 
 class GUIClient(ABC):
     """
