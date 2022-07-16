@@ -41,4 +41,4 @@ while True:
     elapsedtime = time() - starttime
     dv.add(elapsedtime, float(vamp1), context=cr_dv)
     #dv.add(elapsedtime, float(vamp1), float(vamp2), context=cr_dv)
-    sleep(5)
+    sleep(2)
