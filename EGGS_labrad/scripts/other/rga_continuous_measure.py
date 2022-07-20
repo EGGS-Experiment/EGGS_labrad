@@ -2,6 +2,9 @@
 import labrad
 cxn = labrad.connect()
 
+# todo: make real script
+# todo: allow general masses
+
 # general import
 from numpy import arange
 from time import time, sleep
