@@ -38,6 +38,7 @@ DACSIGNAL_ID = 828175
 ADCSIGNAL_ID = 828174
 EXPSIGNAL_ID = 828173
 DDSSIGNAL_ID = 828172
+# todo: move all mu stuff to api since api has better access to conversion stuff than we do and can call it in a nonkernel function
 
 
 class ARTIQ_Server(LabradServer):
@@ -253,6 +254,25 @@ class ARTIQ_Server(LabradServer):
             raise Exception('Error: device does not exist.')
         state = yield self.api.getTTL(ttl_name)
         returnValue(bool(state))
+
+    @setting(231, "TTL Counter", ttl_name='s', time_us='i', trials='i', returns='v')
+    def ttlCounter(self, c, ttl_name, time_us=100, trials=100):
+        """
+        Read the number of counts from a TTL in a given time. TTL must be of class EdgeCounter.
+        Arguments:
+            ttl_name    (str)   : name of the ttl
+            time_us     (int)   : number of seconds to count for
+            trials      (int)   : number of trials to average counts over
+        Returns:
+                        (float) : averaged number of ttl counts
+        """
+        if ttl_name not in self.api.ttlcounter_dict:
+            raise Exception('Error: device does not exist.')
+        # ensure we don't count for too long or too short
+        if (time_us * 1e-6 * trials > 1) or (time_us < 50):
+            raise Exception('Error: invalid total counting time.')
+        counts_averaged = yield self.api.counterTTL(ttl_name, time_us, trials)
+        returnValue(counts_averaged)
 
 
     # DDS
@@ -648,5 +668,4 @@ class ARTIQ_Server(LabradServer):
 
 if __name__ == '__main__':
     from labrad import util
-
     util.runServer(ARTIQ_Server())

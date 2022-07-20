@@ -71,6 +71,7 @@ class ARTIQ_api(object):
         # name is key and device itself is value
         self.ttlout_dict = {}
         self.ttlin_dict = {}
+        self.ttlcounter_dict = {}
         self.dds_dict = {}
         self.urukul_dict = {}
         self.zotino = None
@@ -109,6 +110,8 @@ class ARTIQ_api(object):
                 self.sampler = device
             elif devicetype == 'Phaser':
                 self.phaser = device
+            elif devicetype == 'EdgeCounter':
+                self.ttlcounter_dict[name] = device
 
     def _initializeDevices(self):
         """
@@ -201,6 +204,33 @@ class ARTIQ_api(object):
     def _getTTL(self, dev):
         self.core.reset()
         return dev.sample_get_nonrt()
+
+    @autoreload
+    def counterTTL(self, ttlname, time_us, trials):
+        """
+        Get the number of TTL input events for a given time, averaged over a number of trials.
+        """
+        try:
+            dev = self.ttlcounter_dict[ttlname]
+        except KeyError:
+            raise Exception('Invalid device name.')
+        # convert us to mu
+        time_mu = self.core.seconds_to_mu(time_us * us)
+        # get counts
+        counts = self._counterTTL(dev, time_mu, trials)
+        # return average
+        return np.avg(counts)
+
+    @kernel
+    def _counterTTL(self, dev, time_mu, trials):
+        self.core.reset()
+        list1 = np.zeros(trials)
+        for i in range(trials):
+            with parallel:
+                dev.gate_rising_mu(time_mu)
+                self.core.break_realtime()
+            list1[i] = dev.fetch_count()
+        return list1
 
 
     # DDS
