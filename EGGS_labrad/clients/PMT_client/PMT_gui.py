@@ -35,7 +35,7 @@ class PMT_gui(QFrame):
         self.count_display_label.setAlignment(Qt.AlignLeft)
         self.count_display = QLabel("0.000")
         self.count_display.setStyleSheet('color: red')
-        self.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=30))
+        self.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.count_display.setAlignment(Qt.AlignCenter)
         # sample time
         self.sample_time_label = QLabel('Sample Time (us)')
@@ -58,12 +58,13 @@ class PMT_gui(QFrame):
         # standard deviation
         # create radio buttons
         self.std_widget = QWidget()
+        self.sample_std_on = QRadioButton("On")
+        self.sample_std_off = QRadioButton("Off")
+        self.sample_std_off.setChecked(True)
         std_widget_layout = QVBoxLayout(self.std_widget)
-        self.sample_std_on = QRadioButton("Standard Deviation On")
-        self.sample_std_off = QRadioButton("Standard Deviation Off")
+        std_widget_layout.addWidget(QLabel("Std. Dev."))
         std_widget_layout.addWidget(self.sample_std_on)
         std_widget_layout.addWidget(self.sample_std_off)
-        self.sample_std_off.setChecked(True)
         # polling
         self.poll_interval_label = QLabel('Poll Interval (s)')
         self.poll_interval = QDoubleSpinBox()
@@ -84,19 +85,19 @@ class PMT_gui(QFrame):
         layout.addWidget(self.title,                    0, 0, 1, 3)
         # devices
         layout.addWidget(self.count_display_label,      3, 0, 1, 1)
-        layout.addWidget(self.count_display,            4, 0, 4, 2)
         layout.addWidget(self.std_widget,               3, 2, 2, 1)
+        layout.addWidget(self.count_display,            4, 0, 3, 2)
         # timing
-        layout.addWidget(self.sample_time_label,        8, 0)
-        layout.addWidget(self.sample_num_label,         8, 1)
-        layout.addWidget(self.poll_interval_label,      8, 2)
-        layout.addWidget(self.sample_time,              9, 0)
-        layout.addWidget(self.sample_num,               9, 1)
-        layout.addWidget(self.poll_interval,            9, 2)
+        layout.addWidget(self.sample_time_label,        7, 0)
+        layout.addWidget(self.sample_num_label,         7, 1)
+        layout.addWidget(self.poll_interval_label,      7, 2)
+        layout.addWidget(self.sample_time,              8, 0)
+        layout.addWidget(self.sample_num,               8, 1)
+        layout.addWidget(self.poll_interval,            8, 2)
         # running
-        layout.addWidget(self.read_once_switch,         10, 0)
-        layout.addWidget(self.read_cont_switch,         10, 1)
-        layout.addWidget(self.lockswitch,               10, 2)
+        layout.addWidget(self.read_once_switch,         9, 0)
+        layout.addWidget(self.read_cont_switch,         9, 1)
+        layout.addWidget(self.lockswitch,               9, 2)
 
     def stdToggle(self, status):
         """

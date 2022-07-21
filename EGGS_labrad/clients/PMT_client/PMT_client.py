@@ -53,13 +53,13 @@ class PMT_client(GUIClient):
         # get counts
         count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), sample_time_us, num_samples)
         # update display
-        if self.gui.sample_std_on.isChecked():
+        if self.gui.sample_std_off.isChecked():
             self.gui.count_display.setText("{:.3f}".format(mean(count_list)))
         else:
             self.gui.count_display.setText("{:.3f} \u00B1 {:.3f}".format(mean(count_list), std(count_list)))
         # store data if recording
         if self.recording:
-            yield self.dv.add(time() - self.starttime, counts, context=self.c_record)
+            yield self.dv.add(time() - self.starttime, mean(count_list), context=self.c_record)
 
     def toggle_polling(self, status):
         # start if not running
