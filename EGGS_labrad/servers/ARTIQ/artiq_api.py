@@ -219,18 +219,24 @@ class ARTIQ_api(object):
         # convert us to mu
         time_mu = self.core.seconds_to_mu(time_us * us)
         # get counts
-        setattr(self, 'arr0', np.zeros(trials, dtype=np.int32))
-        for i in range(trials):
-            self.arr0[i] = self._counterTTL(dev, time_mu)
-        # return average
-        return np.mean(self.arr0)
+        self.pmt_counts_array = np.zeros(trials)
+        self._counterTTL(dev, time_mu, trials)
+        return np.mean(self.pmt_counts_array)
 
     @kernel
-    def _counterTTL(self, dev, time_mu):
+    def _counterTTL(self, dev, time_mu, trials):
         self.core.break_realtime()
-        dev.gate_rising_mu(time_mu)
-        return dev.fetch_count()
+        for i in range(trials):
+            self.core.break_realtime()
+            dev.gate_rising_mu(time_mu)
+            self.recordValues(dev.fetch_count(), i)
 
+    @rpc(flags={"async"})
+    def recordValues(self, value, index):
+        """
+        Records values via rpc to minimize kernel overhead.
+        """
+        self.pmt_counts_array[index] = value
 
     # DDS
     @autoreload
