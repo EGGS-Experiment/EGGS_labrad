@@ -25,7 +25,7 @@ try:
     print('Connection successful.')
 
     # get servers
-    fg = cxn.functiongenerator_server
+    fg = cxn.function_generator_server
     aq = cxn.artiq_server
     dv = cxn.data_vault
     cr = cxn.context()
@@ -39,9 +39,8 @@ try:
     print('Function generator setup successful.')
 
     # create dataset
-    dv_dep_var = [('{:.f} Detuned Tickle', 'Frequency', 'kHz')
+    dv_dep_var = [('{:.3f} kHz Detuned Tickle'.format(frequency / 1e3), 'Frequency', 'kHz')
                   for frequency in scan_frequencies]
-
     trunk_tmp = createTrunk(name_tmp)
     dv.cd(trunk_tmp, True, context=cr)
     dv.new(
@@ -68,13 +67,15 @@ try:
             fg.frequency(frequency)
             fg.toggle(1)
             # 100 us, averaged 10 times
+            sleep(0.5)
             #pmt_counts[i] = aq.ttl_counter('ttl_counter{:d}'.format(pmt_ttl), pmt_time_us, pmt_trials)
             pmt_counts[i] = np.random.randint(10)
             # turn off tickle
             fg.toggle(0)
+            sleep(0.5)
 
-        # record result
-        dv.add([time() - starttime] + pmt_counts, context=cr)
+        # record resultg
+        dv.add(np.concatenate(([time() - starttime], pmt_counts)), context=cr)
         sleep(delay_time_s)
 
 except Exception as e:
