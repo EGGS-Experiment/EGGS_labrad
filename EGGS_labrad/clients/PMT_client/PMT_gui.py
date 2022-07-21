@@ -36,7 +36,8 @@ class PMT_gui(QFrame):
         self.count_display.setStyleSheet('color: blue')
         self.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=30))
         self.count_display.setAlignment(Qt.AlignCenter)
-        # record time
+        # todo: record button
+        # sample time
         self.sample_time_label = QLabel('Sample Time (us)')
         self.sample_time = QDoubleSpinBox()
         self.sample_time.setMinimum(1)
@@ -45,7 +46,7 @@ class PMT_gui(QFrame):
         self.sample_time.setDecimals(0)
         self.sample_time.setAlignment(Qt.AlignRight)
         self.sample_time.setFont(QFont('MS Shell Dlg 2', pointSize=12))
-        # record length
+        # number of samples
         self.sample_num_label = QLabel('Number of Samples')
         self.sample_num = QDoubleSpinBox()
         self.sample_num.setMinimum(1)
