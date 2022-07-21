@@ -1,4 +1,5 @@
 from time import time
+from numpy import mean, std
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
@@ -50,9 +51,12 @@ class PMT_client(GUIClient):
         sample_time_us = int(self.gui.sample_time.value())
         num_samples = int(self.gui.sample_num.value())
         # get counts
-        counts = yield self.aq.ttl_counter('ttl_counter{:d}'.format(0), sample_time_us, num_samples)
+        count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), sample_time_us, num_samples)
         # update display
-        self.gui.count_display.setText("{:.3f}".format(counts))
+        if self.gui.sample_std_on.isChecked():
+            self.gui.count_display.setText("{:.3f}".format(mean(count_list)))
+        else:
+            self.gui.count_display.setText("{:.3f} \u00B1 {:.3f}".format(mean(count_list), std(count_list)))
         # store data if recording
         if self.recording:
             yield self.dv.add(time() - self.starttime, counts, context=self.c_record)

@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
+from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton, QWidget, QVBoxLayout, QRadioButton
 
 from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
 
@@ -55,6 +55,15 @@ class PMT_gui(QFrame):
         self.sample_num.setDecimals(0)
         self.sample_num.setAlignment(Qt.AlignRight)
         self.sample_num.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        # standard deviation
+        # create radio buttons
+        self.std_widget = QWidget()
+        std_widget_layout = QVBoxLayout(self.std_widget)
+        self.sample_std_on = QRadioButton("Standard Deviation On")
+        self.sample_std_off = QRadioButton("Standard Deviation Off")
+        std_widget_layout.addWidget(self.sample_std_on)
+        std_widget_layout.addWidget(self.sample_std_off)
+        self.sample_std_off.setChecked(True)
         # polling
         self.poll_interval_label = QLabel('Poll Interval (s)')
         self.poll_interval = QDoubleSpinBox()
@@ -74,8 +83,9 @@ class PMT_gui(QFrame):
         layout = QGridLayout(self)
         layout.addWidget(self.title,                    0, 0, 1, 3)
         # devices
-        layout.addWidget(self.count_display_label,      3, 1, 1, 1)
-        layout.addWidget(self.count_display,            4, 0, 4, 3)
+        layout.addWidget(self.count_display_label,      3, 0, 1, 1)
+        layout.addWidget(self.count_display,            4, 0, 4, 2)
+        layout.addWidget(self.std_widget,               3, 2, 2, 1)
         # timing
         layout.addWidget(self.sample_time_label,        8, 0)
         layout.addWidget(self.sample_num_label,         8, 1)
@@ -87,6 +97,15 @@ class PMT_gui(QFrame):
         layout.addWidget(self.read_once_switch,         10, 0)
         layout.addWidget(self.read_cont_switch,         10, 1)
         layout.addWidget(self.lockswitch,               10, 2)
+
+    def stdToggle(self, status):
+        """
+        Changes display to include standard deviation.
+        """
+        if status:
+            pass
+        else:
+            pass
 
     def closeEvent(self, event):
         if self.parent is not None:
