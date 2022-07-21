@@ -14,7 +14,7 @@ name_tmp = 'Tickle PMT Counting'
 
 tickle_frequency = 1e6
 tickle_amplitude = 1
-scan_frequencies = linspace(-10, 10, 21) * 1e3
+scan_frequencies = linspace(-5, 5, 11) * 1e3
 pmt_ttl, pmt_time_us, pmt_trials = (0, 100, 10)
 delay_time_s = 10
 
@@ -66,13 +66,12 @@ try:
             # turn on tickle
             fg.frequency(frequency)
             fg.toggle(1)
+            sleep(0.2)
             # 100 us, averaged 10 times
-            sleep(0.5)
-            #pmt_counts[i] = aq.ttl_counter('ttl_counter{:d}'.format(pmt_ttl), pmt_time_us, pmt_trials)
-            pmt_counts[i] = np.random.randint(10)
+            pmt_counts[i] = aq.ttl_counter('ttl_counter{:d}'.format(pmt_ttl), pmt_time_us, pmt_trials)
             # turn off tickle
             fg.toggle(0)
-            sleep(0.5)
+            sleep(0.2)
 
         # record resultg
         dv.add(np.concatenate(([time() - starttime], pmt_counts)), context=cr)
