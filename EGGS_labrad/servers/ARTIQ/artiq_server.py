@@ -275,7 +275,7 @@ class ARTIQ_Server(LabradServer):
         counts_list = yield self.api.counterTTL(ttl_name, time_us, trials)
         returnValue(np.mean(counts_list))
 
-    @setting(232, "TTL Count List ", ttl_name='s', time_us='i', trials='i', returns='*v')
+    @setting(232, "TTL Count List", ttl_name='s', time_us='i', trials='i', returns='*v')
     def ttlCountList(self, c, ttl_name, time_us=100, trials=100):
         """
         Read the number of counts from a TTL in a given time for a number of trials and
