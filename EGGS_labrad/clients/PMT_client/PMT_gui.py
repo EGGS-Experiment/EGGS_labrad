@@ -15,79 +15,74 @@ class PMT_gui(QFrame):
         self.name = 'PMT Client'
         self.parent = parent
         self.setFrameStyle(0x0001 | 0x0030)
-        self.setFixedSize(300, 200)
+        self.setFixedSize(300, 250)
         self.makeWidgets()
         self.makeLayout()
         self.show()
 
     def makeWidgets(self):
-        # self.setStyleSheet("background-color: gray;")
+        # general
         self.setWindowTitle(self.name)
-        # title
-        self.title = QLabel(self.name)
-        self.title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
-        self.title.setAlignment(Qt.AlignCenter)
-        # devices
-        self.ttl_pmt_label = QLabel('PMT Channel')
-        self.ttl_pmt = QComboBox()
-        self.ttl_trigger_label = QLabel('Trigger Channel')
-        self.ttl_trigger = QComboBox()
-        self.trigger_active_label = QLabel('Trigger Status')
-        self.trigger_active = TextChangingButton(('Active', 'Inactive'))
-        # record time
-        self.time_record_label = QLabel('Record Time (us)')
-        self.time_record = QDoubleSpinBox()
-        self.time_record.setMinimum(1)
-        self.time_record.setMaximum(10000)
-        self.time_record.setSingleStep(1)
-        self.time_record.setDecimals(0)
-        # delay time
-        self.time_delay_label = QLabel('Delay Time (us)')
-        self.time_delay = QDoubleSpinBox()
-        self.time_delay.setMinimum(1)
-        self.time_delay.setMaximum(10000)
-        self.time_delay.setSingleStep(1)
-        self.time_delay.setDecimals(0)
-        # record length
-        self.time_length_label = QLabel('Record Length (us)')
-        self.time_length = QDoubleSpinBox()
-        self.time_length.setMinimum(10)
-        self.time_length.setMaximum(100000)
-        self.time_length.setSingleStep(1)
-        self.time_length.setDecimals(0)
-        # edge method
-        self.edge_method_label = QLabel('Edge Type')
-        self.edge_method = QComboBox()
-        self.edge_method.addItems(['rising', 'falling', 'both'])
-        # program
-        self.program_button = QPushButton('Program')
-        self.start_button = QPushButton('Start')
         self.lockswitch = Lockswitch()
+        self.read_once_switch = QPushButton("Read Once")
+        self.read_cont_switch = TextChangingButton(("Read Continuously", "Stop"))
+        self.title = QLabel(self.name)
+        self.title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        self.title.setAlignment(Qt.AlignCenter)
+        # display
+        self.count_display_label = QLabel("Counts")
+        self.count_display_label.setAlignment(Qt.AlignLeft)
+        self.count_display = QLabel("0.00")
+        self.count_display.setStyleSheet('color: blue')
+        self.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=30))
+        self.count_display.setAlignment(Qt.AlignCenter)
+        # record time
+        self.sample_time_label = QLabel('Sample Time (us)')
+        self.sample_time = QDoubleSpinBox()
+        self.sample_time.setMinimum(1)
+        self.sample_time.setMaximum(10000)
+        self.sample_time.setSingleStep(1)
+        self.sample_time.setDecimals(0)
+        self.sample_time.setAlignment(Qt.AlignRight)
+        self.sample_time.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        # record length
+        self.sample_num_label = QLabel('Number of Samples')
+        self.sample_num = QDoubleSpinBox()
+        self.sample_num.setMinimum(1)
+        self.sample_num.setMaximum(10000)
+        self.sample_num.setSingleStep(1)
+        self.sample_num.setDecimals(0)
+        self.sample_num.setAlignment(Qt.AlignRight)
+        self.sample_num.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        # polling
+        self.poll_interval_label = QLabel('Poll Interval (s)')
+        self.poll_interval = QDoubleSpinBox()
+        self.poll_interval.setMinimum(2)
+        self.poll_interval.setMaximum(20)
+        self.poll_interval.setSingleStep(1)
+        self.poll_interval.setDecimals(1)
+        self.poll_interval.setAlignment(Qt.AlignRight)
+        self.poll_interval.setFont(QFont('MS Shell Dlg 2', pointSize=12))
 
     def makeLayout(self):
-        # todo: add power TTL
         layout = QGridLayout(self)
         self.header = QClientMenuHeader()
         layout.setMenuBar(self.header)
-        layout.addWidget(self.title,                    1, 0, 1, 3)
+        layout.addWidget(self.title,                    0, 0, 1, 3)
         # devices
-        layout.addWidget(self.ttl_pmt_label,            2, 0)
-        layout.addWidget(self.ttl_trigger_label,        2, 1)
-        layout.addWidget(self.trigger_active_label,     2, 2)
-        layout.addWidget(self.ttl_pmt,                  3, 0)
-        layout.addWidget(self.ttl_trigger,              3, 1)
-        layout.addWidget(self.trigger_active,           3, 2)
+        layout.addWidget(self.count_display_label,      3, 1, 1, 1)
+        layout.addWidget(self.count_display,            4, 0, 4, 3)
         # timing
-        layout.addWidget(self.time_record_label,        4, 0)
-        layout.addWidget(self.time_delay_label,         4, 1)
-        layout.addWidget(self.time_length_label,        4, 2)
-        layout.addWidget(self.time_record,              5, 0)
-        layout.addWidget(self.time_delay,               5, 1)
-        layout.addWidget(self.time_length,              5, 2)
+        layout.addWidget(self.sample_time_label,        8, 0)
+        layout.addWidget(self.sample_num_label,         8, 1)
+        layout.addWidget(self.poll_interval_label,      8, 2)
+        layout.addWidget(self.sample_time,              9, 0)
+        layout.addWidget(self.sample_num,               9, 1)
+        layout.addWidget(self.poll_interval,            9, 2)
         # running
-        layout.addWidget(self.start_button,             6, 0)
-        layout.addWidget(self.program_button,           6, 1)
-        layout.addWidget(self.lockswitch,               6, 2)
+        layout.addWidget(self.read_once_switch,         10, 0)
+        layout.addWidget(self.read_cont_switch,         10, 1)
+        layout.addWidget(self.lockswitch,               10, 2)
 
     def closeEvent(self, event):
         if self.parent is not None:
