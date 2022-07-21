@@ -254,10 +254,12 @@ class ARTIQ_Server(LabradServer):
         state = yield self.api.getTTL(ttl_name)
         returnValue(bool(state))
 
-    @setting(231, "TTL Counter", ttl_name='s', time_us='i', trials='i', returns='v')
-    def ttlCounter(self, c, ttl_name, time_us=100, trials=100):
+    @setting(231, "TTL Counts", ttl_name='s', time_us='i', trials='i', returns='v')
+    def ttlCounts(self, c, ttl_name, time_us=100, trials=100):
         """
-        Read the number of counts from a TTL in a given time. TTL must be of class EdgeCounter.
+        Read the number of counts from a TTL in a given time and
+            averages it over a number of trials.
+            TTL must be of class EdgeCounter.
         Arguments:
             ttl_name    (str)   : name of the ttl
             time_us     (int)   : number of seconds to count for
@@ -268,10 +270,31 @@ class ARTIQ_Server(LabradServer):
         if ttl_name not in self.api.ttlcounter_dict:
             raise Exception('Error: device does not exist.')
         # ensure we don't count for too long or too short
-        if (time_us * 1e-6 * trials > 1) or (time_us < 50):
+        if (time_us * 1e-6 * trials > 1) or (time_us < 10):
             raise Exception('Error: invalid total counting time.')
-        counts_averaged = yield self.api.counterTTL(ttl_name, time_us, trials)
-        returnValue(counts_averaged)
+        counts_list = yield self.api.counterTTL(ttl_name, time_us, trials)
+        returnValue(np.mean(counts_list))
+
+    @setting(232, "TTL Count List ", ttl_name='s', time_us='i', trials='i', returns='*v')
+    def ttlCountList(self, c, ttl_name, time_us=100, trials=100):
+        """
+        Read the number of counts from a TTL in a given time for a number of trials and
+            returns the raw data.
+            TTL must be of class EdgeCounter.
+        Arguments:
+            ttl_name    (str)   : name of the ttl
+            time_us     (int)   : number of seconds to count for
+            trials      (int)   : number of trials to average counts over
+        Returns:
+                        (list(float)) : raw ttl counts for each trial
+        """
+        if ttl_name not in self.api.ttlcounter_dict:
+            raise Exception('Error: device does not exist.')
+        # ensure we don't count for too long or too short
+        if (time_us * 1e-6 * trials > 1) or (time_us < 10):
+            raise Exception('Error: invalid total counting time.')
+        counts_list = yield self.api.counterTTL(ttl_name, time_us, trials)
+        returnValue(counts_list)
 
 
     # DDS

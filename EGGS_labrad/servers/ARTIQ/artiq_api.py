@@ -221,7 +221,7 @@ class ARTIQ_api(object):
         # get counts
         self.pmt_counts_array = np.zeros(trials)
         self._counterTTL(dev, time_mu, trials)
-        return np.mean(self.pmt_counts_array)
+        return self.pmt_counts_array
 
     @kernel
     def _counterTTL(self, dev, time_mu, trials):
