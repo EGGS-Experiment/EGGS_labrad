@@ -1,5 +1,5 @@
 """
-Characterize the rectifier for PID stabilization of the trap RF via oscilloscope.
+Measure pickoff values from the helical resonator using an oscope.
 """
 # todo: make a proper experiment
 # todo: make messages correct
@@ -34,7 +34,7 @@ try:
     # create dataset
     trunk_tmp = createTrunk(name_tmp)
     dv.cd(trunk_tmp, True, context=cr)
-    print('Dataset successfully created')
+    print('Dataset successfully created.')
 
     # create dataset
     dv.new(
