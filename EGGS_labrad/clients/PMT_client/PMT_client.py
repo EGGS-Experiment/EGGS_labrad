@@ -8,7 +8,7 @@ from EGGS_labrad.clients.PMT_client.PMT_gui import PMT_gui
 class PMT_client(GUIClient):
 
     name = 'PMT Client'
-    servers = {'artiq': 'ARTIQ Server', 'dv': 'Data Vault'}
+    servers = {'aq': 'ARTIQ Server', 'dv': 'Data Vault'}
 
     def getgui(self):
         if self.gui is None:
@@ -22,32 +22,34 @@ class PMT_client(GUIClient):
         # create polling loop
         self.refresher = LoopingCall(self.update_counts)
 
-    @inlineCallbacks
     def initData(self):
-        self.gui.sample_time.setValue(500)
+        self.gui.sample_time.setValue(100)
         self.gui.sample_num.setValue(100)
-        self.gui.poll_interval.setValue(4)
+        self.gui.poll_interval.setValue(5)
 
     def initGUI(self):
         # read buttons
-        self.gui.read_once_switch.toggled.connect(lambda status: self.read_counts())
-        self.gui.read_cont_switch.toggled.connect(lambda status, _poll_time=self.gui.poll_interval.value(): self.refresher.start(_poll_time, now=True))
-        # start up locked
-        self.gui.lockswitch.setChecked(False)
+        self.gui.read_once_switch.clicked.connect(lambda: self.update_counts())
+        self.gui.read_cont_switch.toggled.connect(lambda status: self.toggle_polling(status))
+        # lock
+        self.gui.lockswitch.toggled.connect(lambda status: self._lock(status))
+        # todo: implement lock
+        # todo: make text red unless constant
 
 
     # SLOTS
     @inlineCallbacks
     def update_counts(self):
-        sample_time_us = self.gui.sample_time.value()
-        num_samples = self.gui.sample_num.value()
+        sample_time_us = int(self.gui.sample_time.value())
+        num_samples = int(self.gui.sample_num.value())
         counts = yield self.aq.ttl_counter('ttl_counter{:d}'.format(0), sample_time_us, num_samples)
-        self.gui.count_display.setText("{:.2f}".format(counts))
+        self.gui.count_display.setText("{:.3f}".format(counts))
 
     def toggle_polling(self, status):
         # start if not running
         if status and (not self.refresher.running):
             poll_interval_s = self.gui.poll_interval.value()
+            self.gui.poll_interval.setEnabled(False)
             self.refresher.start(poll_interval_s, now=True)
             # disable read once button
             self.gui.read_once_switch.setEnabled(False)
@@ -55,8 +57,9 @@ class PMT_client(GUIClient):
         elif (not status) and (self.refresher.running):
             self.refresher.stop()
             self.gui.read_once_switch.setEnabled(True)
+            self.gui.poll_interval.setEnabled(True)
 
-    def lock(self, status):
+    def _lock(self, status):
         self.gui.read_once_switch.setEnabled(status)
         self.gui.read_cont_switch.setEnabled(status)
         self.gui.sample_time.setEnabled(status)

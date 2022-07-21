@@ -1,8 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QDoubleSpinBox, QComboBox, QLabel, QGridLayout, QFrame, QPushButton
+from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QClientMenuHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
 
 
 class PMT_gui(QFrame):
@@ -25,19 +25,18 @@ class PMT_gui(QFrame):
         self.setWindowTitle(self.name)
         self.lockswitch = Lockswitch()
         self.read_once_switch = QPushButton("Read Once")
-        self.read_once_switch.setFont(QFont('MS Shell Dlg 2', pointSize=12))
-        self.read_cont_switch = TextChangingButton(("Read Continuously", "Stop"))
+        self.read_once_switch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.read_cont_switch = TextChangingButton(("Stop", "Loop"))
         self.title = QLabel(self.name)
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         self.title.setAlignment(Qt.AlignCenter)
         # display
         self.count_display_label = QLabel("Counts")
         self.count_display_label.setAlignment(Qt.AlignLeft)
-        self.count_display = QLabel("0.00")
+        self.count_display = QLabel("0.000")
         self.count_display.setStyleSheet('color: blue')
         self.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=30))
         self.count_display.setAlignment(Qt.AlignCenter)
-        # todo: record button
         # sample time
         self.sample_time_label = QLabel('Sample Time (us)')
         self.sample_time = QDoubleSpinBox()
@@ -65,11 +64,14 @@ class PMT_gui(QFrame):
         self.poll_interval.setDecimals(1)
         self.poll_interval.setAlignment(Qt.AlignRight)
         self.poll_interval.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        # record
+        self.record_button = TextChangingButton(("Stop Recording", "Start Recording"))
+        # grant's magic button
+        self.quick_check = QPushButton("Quick Check")
+
 
     def makeLayout(self):
         layout = QGridLayout(self)
-        self.header = QClientMenuHeader()
-        layout.setMenuBar(self.header)
         layout.addWidget(self.title,                    0, 0, 1, 3)
         # devices
         layout.addWidget(self.count_display_label,      3, 1, 1, 1)
