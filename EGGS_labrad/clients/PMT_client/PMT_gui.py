@@ -34,7 +34,7 @@ class PMT_gui(QFrame):
         self.count_display_label = QLabel("Counts")
         self.count_display_label.setAlignment(Qt.AlignLeft)
         self.count_display = QLabel("0.000")
-        self.count_display.setStyleSheet('color: blue')
+        self.count_display.setStyleSheet('color: red')
         self.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=30))
         self.count_display.setAlignment(Qt.AlignCenter)
         # sample time

@@ -23,6 +23,7 @@ class PMT_client(GUIClient):
         self.refresher = LoopingCall(self.update_counts)
 
     def initData(self):
+        # set default values
         self.gui.sample_time.setValue(100)
         self.gui.sample_num.setValue(100)
         self.gui.poll_interval.setValue(5)
@@ -33,8 +34,8 @@ class PMT_client(GUIClient):
         self.gui.read_cont_switch.toggled.connect(lambda status: self.toggle_polling(status))
         # lock
         self.gui.lockswitch.toggled.connect(lambda status: self._lock(status))
-        # todo: implement lock
-        # todo: make text red unless constant
+        # todo: implement quick check
+        # todo: make ttl counter # a variable
 
 
     # SLOTS
@@ -50,14 +51,15 @@ class PMT_client(GUIClient):
         if status and (not self.refresher.running):
             poll_interval_s = self.gui.poll_interval.value()
             self.gui.poll_interval.setEnabled(False)
-            self.refresher.start(poll_interval_s, now=True)
-            # disable read once button
             self.gui.read_once_switch.setEnabled(False)
+            self.count_display.setStyleSheet('color: green')
+            self.refresher.start(poll_interval_s, now=True)
         # stop if running
         elif (not status) and (self.refresher.running):
             self.refresher.stop()
             self.gui.read_once_switch.setEnabled(True)
             self.gui.poll_interval.setEnabled(True)
+            self.count_display.setStyleSheet('color: red')
 
     def _lock(self, status):
         self.gui.read_once_switch.setEnabled(status)
