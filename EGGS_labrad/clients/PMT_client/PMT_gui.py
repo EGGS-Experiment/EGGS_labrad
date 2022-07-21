@@ -25,6 +25,7 @@ class PMT_gui(QFrame):
         self.setWindowTitle(self.name)
         self.lockswitch = Lockswitch()
         self.read_once_switch = QPushButton("Read Once")
+        self.read_once_switch.setFont(QFont('MS Shell Dlg 2', pointSize=12))
         self.read_cont_switch = TextChangingButton(("Read Continuously", "Stop"))
         self.title = QLabel(self.name)
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
