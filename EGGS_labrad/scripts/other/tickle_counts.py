@@ -6,15 +6,17 @@ Record the number of counts while tickling.
 import labrad
 from time import sleep, time
 
-from numpy import linspace
+import numpy as np
+from numpy import linspace, zeros
 from EGGS_labrad.clients import createTrunk
 
 name_tmp = 'Tickle PMT Counting'
 
-secular_frequency = 1e6
-secular_amplitude = 1
-scan_frequencies = linspace(-20, 20, 21)
-pmt_ttl = 0
+tickle_frequency = 1e6
+tickle_amplitude = 1
+scan_frequencies = linspace(-10, 10, 21) * 1e3
+pmt_ttl, pmt_time_us, pmt_trials = (0, 100, 10)
+delay_time_s = 10
 
 
 try:
@@ -31,8 +33,8 @@ try:
 
     # set up oscilloscope
     fg.select_device()
-    fg.frequency(secular_frequency)
-    fg.amplitude(1)
+    fg.frequency(tickle_frequency)
+    fg.amplitude(tickle_amplitude)
     fg.toggle(0)
     print('Function generator setup successful.')
 
@@ -52,26 +54,28 @@ try:
 
 
     # scan frequencies
-    scan_frequencies += secular_frequency
+    scan_frequencies += tickle_frequency
     pmt_counts = zeros(len(scan_frequencies))
 
     # do timing
     starttime = time()
 
+    # main loop
     while True:
         # tickle and get counts at each detuning
-        for i, frequency in enum(scan_frequencies):
+        for i, frequency in enumerate(scan_frequencies):
             # turn on tickle
             fg.frequency(frequency)
             fg.toggle(1)
             # 100 us, averaged 10 times
-            pmt_counts[i] = aq.ttl_counter('ttl_counter0', 100, 10)
+            #pmt_counts[i] = aq.ttl_counter('ttl_counter{:d}'.format(pmt_ttl), pmt_time_us, pmt_trials)
+            pmt_counts[i] = np.random.randint(10)
             # turn off tickle
             fg.toggle(0)
 
         # record result
         dv.add([time() - starttime] + pmt_counts, context=cr)
-        sleep(3)
+        sleep(delay_time_s)
 
 except Exception as e:
     print('Error:', e)
