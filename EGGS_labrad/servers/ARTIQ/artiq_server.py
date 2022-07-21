@@ -65,12 +65,11 @@ class ARTIQ_Server(LabradServer):
     def initServer(self):
         # remove logger objects from artiq/sipyco
         logging.getLogger('artiq.coredevice.comm_kernel').disabled = True
+        # for logger_name, logger_object in self.logger.manager.loggerDict.items():
+        #     print('logger_name: {}\t\tlogger_obj: {}'.format(logger_name, logger_object))
 
-        for logger_name, logger_object in self.logger.manager.loggerDict.items():
-            print('logger_name: {}\t\tlogger_obj: {}'.format(logger_name, logger_object))
-
-        self.api = ARTIQ_api(device_db_module.__file__)
         # set up ARTIQ stuff
+        self.api = ARTIQ_api(device_db_module.__file__)
         yield self._setClients()
         yield self._setVariables()
         yield self._setDevices()

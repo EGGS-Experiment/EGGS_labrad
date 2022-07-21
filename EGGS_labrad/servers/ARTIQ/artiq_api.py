@@ -15,6 +15,8 @@ class ARTIQ_api(object):
     Directly accesses the hardware on the box without having to use artiq_master.
     # todo: set version so we know what we're compatible with
     # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
+    # todo: ensure essential dma sequences are recorded upon startup
+    # todo: speed up pmt counter
     """
 
     def autoreload(func):
@@ -217,20 +219,17 @@ class ARTIQ_api(object):
         # convert us to mu
         time_mu = self.core.seconds_to_mu(time_us * us)
         # get counts
-        counts = self._counterTTL(dev, time_mu, trials)
+        setattr(self, 'arr0', np.zeros(trials, dtype=np.int32))
+        for i in range(trials):
+            self.arr0[i] = self._counterTTL(dev, time_mu)
         # return average
-        return np.avg(counts)
+        return np.mean(self.arr0)
 
     @kernel
-    def _counterTTL(self, dev, time_mu, trials):
-        self.core.reset()
-        list1 = np.zeros(trials)
-        for i in range(trials):
-            with parallel:
-                dev.gate_rising_mu(time_mu)
-                self.core.break_realtime()
-            list1[i] = dev.fetch_count()
-        return list1
+    def _counterTTL(self, dev, time_mu):
+        self.core.break_realtime()
+        dev.gate_rising_mu(time_mu)
+        return dev.fetch_count()
 
 
     # DDS
