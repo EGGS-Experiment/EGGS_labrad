@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton,QLineEdit
 
 from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
 
@@ -20,9 +20,9 @@ class AD9910_channel(QFrame):
     def makeLayout(self, title):
         layout = QGridLayout(self)
         # labels
-        title = QLabel(title)
+        title = QLineEdit()#QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
-        title.setAlignment(Qt.AlignCenter)
+        title.setAlignment(Qt.AlignLeft)
         freqlabel = QLabel('Frequency (MHz)')
         powerlabel = QLabel('Amplitude (%)')
         attlabel = QLabel('Attenuation (dBm)')

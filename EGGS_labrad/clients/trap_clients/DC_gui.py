@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton, QLineEdit
 
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox, QClientMenuHeader
@@ -23,14 +23,15 @@ class AMO8_channel(QFrame):
         layout = QGridLayout(self)
         # title
         self.title = QLabel(title)
+        #self.title = QLineEdit()
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         self.title.setAlignment(Qt.AlignCenter)
         # dac
         self.dac_label = QLabel('Output Voltage (V)')
         self.dac = QDoubleSpinBox()
         self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=14))
-        self.dac.setDecimals(2)
-        self.dac.setSingleStep(0.01)
+        self.dac.setDecimals(1)
+        self.dac.setSingleStep(0.1)
         self.dac.setRange(0, 850)
         self.dac.setKeyboardTracking(False)
         # ramp

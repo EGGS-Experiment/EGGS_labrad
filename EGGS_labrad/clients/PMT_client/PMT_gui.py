@@ -78,11 +78,15 @@ class PMT_gui(QFrame):
         self.record_button = TextChangingButton(("Stop Recording", "Start Recording"))
         # grant's magic button
         self.quick_check = QPushButton("Quick Check")
+        # Grant's real magic button a.k.a. flipper
+        self.flip = QPushButton("Flip")
+        self.flip.setFont(QFont('MS Shell Dlg 2', pointSize=10))
 
 
     def makeLayout(self):
         layout = QGridLayout(self)
         layout.addWidget(self.title,                    0, 0, 1, 3)
+        layout.addWidget(self.flip,                     0, 4)
         # devices
         layout.addWidget(self.count_display_label,      3, 0, 1, 1)
         layout.addWidget(self.std_widget,               3, 2, 2, 1)

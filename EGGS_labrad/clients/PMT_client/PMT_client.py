@@ -1,4 +1,5 @@
 from time import time
+import time
 from numpy import mean, std
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
@@ -35,6 +36,7 @@ class PMT_client(GUIClient):
         # read buttons
         self.gui.read_once_switch.clicked.connect(lambda: self.update_counts())
         self.gui.read_cont_switch.toggled.connect(lambda status: self.toggle_polling(status))
+        self.gui.flip.clicked.connect(lambda: self.flipper_pulse())
         # lock
         self.gui.lockswitch.toggled.connect(lambda status: self._lock(status))
         # todo: implement quick check
@@ -69,12 +71,21 @@ class PMT_client(GUIClient):
             self.gui.read_once_switch.setEnabled(False)
             self.gui.count_display.setStyleSheet('color: green')
             self.refresher.start(poll_interval_s, now=True)
+            self.gui.flip.setEnabled(False)
         # stop if running
         elif (not status) and (self.refresher.running):
             self.refresher.stop()
             self.gui.read_once_switch.setEnabled(True)
             self.gui.poll_interval.setEnabled(True)
             self.gui.count_display.setStyleSheet('color: red')
+            self.gui.flip.setEnabled(True)
+
+    @inlineCallbacks
+    def flipper_pulse(self):
+        # send TTL to flipper mount
+        yield self.aq.ttl_set("ttl23", 1)
+        time.sleep(.2)
+        yield self.aq.ttl_set("ttl23", 0)
 
     @inlineCallbacks
     def record(self, status):
@@ -96,6 +107,7 @@ class PMT_client(GUIClient):
         self.gui.sample_time.setEnabled(status)
         self.gui.sample_num.setEnabled(status)
         self.gui.poll_interval.setEnabled(status)
+        self.gui.flip.setEnabled(status)
 
 
 if __name__ == "__main__":
