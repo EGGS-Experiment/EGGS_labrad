@@ -27,7 +27,7 @@ class PMT_client(GUIClient):
 
     def initData(self):
         # set default values
-        self.gui.sample_time.setValue(100)
+        self.gui.sample_time.setValue(500)
         self.gui.sample_num.setValue(100)
         self.gui.poll_interval.setValue(5)
 
