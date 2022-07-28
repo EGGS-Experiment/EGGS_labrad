@@ -21,7 +21,7 @@ START "Toptica Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%
 START "ARTIQ Server" /min CMD "/k activate labart2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\ARTIQ\artiq_server.py"
 
 @REM: Imaging
-TIMEOUT 5 > NUL && START "PMT Server" /min CMD "/k activate labart2 && TIMEOUT 2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\pmt\pmt_server.py"
+TIMEOUT 5 > NUL && START "Flipper Server" /min CMD "/k activate labart2 && TIMEOUT 2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\flipper\flipper_server.py"
 TIMEOUT 5 > NUL && START "Slider Server" /min CMD "/k activate labart2 && TIMEOUT 2 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\slider\slider_server.py"
 
 @REM: Devices
