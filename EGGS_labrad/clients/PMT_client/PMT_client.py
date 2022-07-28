@@ -37,7 +37,6 @@ class PMT_client(GUIClient):
         self.gui.read_cont_switch.toggled.connect(lambda status: self.toggle_polling(status))
         # lock
         self.gui.lockswitch.toggled.connect(lambda status: self._lock(status))
-        # todo: implement quick check
         # todo: make ttl counter # a variable
 
 
@@ -50,9 +49,14 @@ class PMT_client(GUIClient):
         # get values from GUI
         sample_time_us = int(self.gui.sample_time.value())
         num_samples = int(self.gui.sample_num.value())
+        time_per_data = sample_time_us * num_samples * 1e-6
+        # ensure valid timing
+        if (time_per_data > self.gui.poll_interval.value()) or (time_per_data > 1):
+            raise Exception("Error: invalid timing.")
         # get counts
         count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), sample_time_us, num_samples)
         # update display
+        # todo: clean up display
         if self.gui.sample_std_off.isChecked():
             self.gui.count_display.setText("{:.3f}".format(mean(count_list)))
         else:
