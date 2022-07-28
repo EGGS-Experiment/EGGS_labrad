@@ -52,6 +52,15 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         yield dev.clear_buffers()
 
+    @setting(13, "Autoset", returns='')
+    def autoset(self, c):
+        """
+        Automatically set the amplitude and frequency to
+        view the dominant signal.
+        """
+        dev = self.selectedDevice(c)
+        yield dev.autoset()
+
 
     # ATTENUATION
     @setting(21, "Preamplifier", status=['b', 'i'], returns='b')
@@ -113,6 +122,17 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
                     (float): the center frequency (in Hz).
         """
         return self.selectedDevice(c).frequencyCenter(freq)
+
+    @setting(114, "Frequency Span", span='v', returns='v')
+    def frequencySpan(self, c, span=None):
+        """
+        Get/set the frequency span.
+        Arguments:
+            span    (float): the frequency span (in Hz).
+        Returns:
+                    (float): the frequency span (in Hz).
+        """
+        return self.selectedDevice(c).frequencySpan(freq)
 
 
     # AMPLITUDE
@@ -322,7 +342,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).bandwidthResolution(bw)
 
     @setting(522, "Bandwidth Video", bw='i', returns='i')
-    def bandwidthResolution(self, c, bw=None):
+    def bandwidthVideo(self, c, bw=None):
         """
         Get/set the video bandwidth.
         Increasing video bandwidth increases the sweep time.

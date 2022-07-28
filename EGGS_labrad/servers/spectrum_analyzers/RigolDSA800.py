@@ -14,6 +14,10 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
     def clear_buffers(self):
         yield self.write('*CLS')
 
+    @inlineCallbacks
+    def autoset(self):
+        yield self.write(':SENS:POW:ATUN')
+
 
     # ATTENUATION
     @inlineCallbacks
@@ -63,6 +67,16 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
             else:
                 raise Exception('Error: center frequency must be in range: [0, 7.5e9].')
         resp = yield self.query(':SENS:FREQ:CENT?')
+        returnValue(float(resp))
+
+    @inlineCallbacks
+    def frequencySpan(self, span):
+        if span is not None:
+            if (span > 0) and (span < 7.5e9):
+                yield self.write(':SENS:FREQ:SPAN {:f}'.format(span))
+            else:
+                raise Exception('Error: frequency span must be in range: [0, 7.5e9].')
+        resp = yield self.query(':SENS:FREQ:SPAN?')
         returnValue(float(resp))
 
 
@@ -196,17 +210,17 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
             else:
                 raise Exception('Error: resolution bandwidth must be in range: [10, 1e7].')
         resp = yield self.query(':SENS:BAND:RES?')
-        returnValue(float(resp))
+        returnValue(int(resp))
 
     @inlineCallbacks
-    def bandwidthResolution(self, bw):
+    def bandwidthVideo(self, bw):
         if bw is not None:
             if (bw > 10) and (bw < 1e7):
                 yield self.write(':SENS:BAND:VID {:f}'.format(bw))
             else:
                 raise Exception('Error: video bandwidth must be in range: [10, 1e7].')
         resp = yield self.query(':SENS:BAND:VID?')
-        returnValue(float(resp))
+        returnValue(int(resp))
 
 
     # TRACE
