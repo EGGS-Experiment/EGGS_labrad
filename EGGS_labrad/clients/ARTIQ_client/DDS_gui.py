@@ -19,10 +19,17 @@ class AD9910_channel(QFrame):
 
     def makeLayout(self, title):
         layout = QGridLayout(self)
-        # labels
+
+        # name/title
+        name = QLabel(self.name)
+        name.setFont(QFont('MS Shell Dlg 2', pointSize=8))
+        name.setAlignment(Qt.AlignRight | Qt.AlignTop)
+
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         title.setAlignment(Qt.AlignCenter)
+
+        # labels
         freqlabel = QLabel('Freq. (MHz)')
         powerlabel = QLabel('Ampl. (%)')
         attlabel = QLabel('Att. (dBm)')
@@ -53,6 +60,7 @@ class AD9910_channel(QFrame):
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
         # add widgets to layout
+        layout.addWidget(name,                 0, 2, 1, 1)
         layout.addWidget(title,                 0, 0, 1, 3)
         layout.addWidget(freqlabel,             1, 0, 1, 1)
         layout.addWidget(powerlabel,            1, 1, 1, 1)

@@ -114,6 +114,12 @@
 # connection of required serial bus server.
 #===============================================================================
 
+#===============================================================================
+# 2022 - 07 - 23
+#
+# Added support for FT232 devices via pyft232.
+#===============================================================================
+
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
 from labrad.errors import Error
@@ -144,7 +150,7 @@ class SerialConnectionError(Exception):
     def __str__(self):
         return self.errorDict[self.code]
 
-
+# todo: add support for ft232 devices
 # DEVICE CLASS
 class SerialDeviceServer(LabradServer):
     """
