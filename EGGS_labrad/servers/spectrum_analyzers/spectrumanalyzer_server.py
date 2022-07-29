@@ -132,7 +132,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         Returns:
                     (float): the frequency span (in Hz).
         """
-        return self.selectedDevice(c).frequencySpan(freq)
+        return self.selectedDevice(c).frequencySpan(span)
 
 
     # AMPLITUDE

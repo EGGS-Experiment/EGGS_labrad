@@ -39,6 +39,7 @@ ADCSIGNAL_ID = 828174
 EXPSIGNAL_ID = 828173
 DDSSIGNAL_ID = 828172
 # todo: move all mu stuff to api since api has better access to conversion stuff than we do and can call it in a nonkernel function
+# todo: remove artiq comm stuff from logging
 
 
 class ARTIQ_Server(LabradServer):

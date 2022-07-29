@@ -15,6 +15,7 @@ class DDS_client(GUIClient):
     name = "Urukuls Client"
     servers = {'aq': 'ARTIQ Server'}
 
+
     def getgui(self):
         if self.gui is None:
             self.gui = DDS_gui(self.urukul_list)
@@ -49,8 +50,12 @@ class DDS_client(GUIClient):
         min_attenuations = {}
         yield self.reg.cd(['', 'Clients', 'ARTIQ', 'Urukul'])
         _, restricted_dds_channels = yield self.reg.dir()
+
+        # set limit on channel attenuations
         for dds_channel in restricted_dds_channels:
             min_attenuations[dds_channel] = yield self.reg.get(dds_channel)
+
+        # get data for each dds channel on each dds-board
         for urukul_name, ad9910_list in self.urukul_list.items():
             for ad9910_name, ad9910_widget in ad9910_list.items():
                 # check if this channel has a restricted attenuation range
@@ -61,15 +66,11 @@ class DDS_client(GUIClient):
                 att_mu = yield self.aq.dds_attenuation(ad9910_name)
                 freq_mu = yield self.aq.dds_frequency(ad9910_name)
                 ampl_mu = yield self.aq.dds_amplitude(ad9910_name)
-                # convert from machine units to human units
-                att_db = (255 - (att_mu & 0xff)) / 8
-                freq_mhz = freq_mu / 4.2949673
-                ampl_pct = ampl_mu / 0x3fff
                 # set values
                 ad9910_widget.rfswitch.setChecked(sw_status)
-                ad9910_widget.att.setValue(att_db)
-                ad9910_widget.freq.setValue(freq_mhz / 1e6)
-                ad9910_widget.ampl.setValue(ampl_pct * 1e2)
+                ad9910_widget.att.setValue((255 - (att_mu & 0xFF)) / 8)
+                ad9910_widget.freq.setValue(freq_mu * 1e3 / (0xFFFFFFFF - 1))
+                ad9910_widget.ampl.setValue(ampl_mu * 1e2 / 0x3FFF)
 
     def initGUI(self):
         # connect an urukul group
@@ -97,7 +98,9 @@ class DDS_client(GUIClient):
         for urukul_name, ad9910_list in self.urukul_list.items():
             if ad9910_name in ad9910_list:
                 ad9910_widget = self.urukul_list[urukul_name][ad9910_name]
-                #print('ext update ({:s}): {:s} = {}'.format(ad9910_name, param, val))
+                print('update:')
+                print('\tparam: {}'.format(param))
+                print('\tval: {:d}'.format(int(val)))
                 if param == 'onoff':
                     dds_state = int(val)
                     ad9910_widget.rfswitch.blockSignals(True)
@@ -105,19 +108,18 @@ class DDS_client(GUIClient):
                     ad9910_widget.rfswitch.setAppearance(dds_state)
                     ad9910_widget.rfswitch.blockSignals(False)
                 elif param == 'att':
-                    att_db = (255 - (int(val) & 0xff)) / 8
+                    att_db = (255 - (int(val) & 0xFF)) / 8
                     ad9910_widget.att.blockSignals(True)
                     ad9910_widget.att.setValue(att_db)
                     ad9910_widget.att.blockSignals(False)
                 elif param == 'ftw':
                     ad9910_widget.freq.blockSignals(True)
-                    ad9910_widget.freq.setValue(val / 4.2949673)
+                    ad9910_widget.freq.setValue(val * 1e3 / (0xFFFFFFFF - 1))
                     ad9910_widget.freq.blockSignals(False)
                 elif param == 'asf':
                     ad9910_widget.ampl.blockSignals(True)
-                    ad9910_widget.ampl.setValue(val / 0x3fff)
+                    ad9910_widget.ampl.setValue(val * 1e2 / 0x3FFF)
                     ad9910_widget.ampl.blockSignals(False)
-                # todo: set previous enabled state
 
 
 if __name__ == "__main__":

@@ -16,7 +16,8 @@ class ARTIQ_api(object):
     # todo: set version so we know what we're compatible with
     # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
     # todo: ensure essential dma sequences are recorded upon startup
-    # todo: speed up pmt counter
+    # todo: write sequence that pulls all dds values so we don't have to wait forever during dds client startup
+    # todo: see if we can get initialization status of DDSs and initialize upon startup only if they are uninitialized
     """
 
     def autoreload(func):
@@ -304,36 +305,32 @@ class ARTIQ_api(object):
         profiledata = self._readDDS64(dev, 0x0E)
         # separate register values into ftw, asf, and pow
         ftw = profiledata & 0xFFFFFFFF
-        pow = ((profiledata >> 32) & 0xFFFF)
+        pow = (profiledata >> 32) & 0xFFFF
         asf = (profiledata >> 48)
+        print('getdds: {:s}'.format(dds_name))
+        print('\tftw: {:x}'.format(ftw)) # debug
+        print('\tasf: {:x}\n'.format(asf)) # debug
         # asf = -1 means amplitude has not been set
-        if asf < 0:
-            asf = 0
-        else:
-            asf &= 0x3FFF
+        asf = 0 if asf < 0 else asf & 0x3FFF
         return np.int32(ftw), np.int32(asf), np.int32(pow)
 
     @autoreload
     def setDDS(self, dds_name, param, val):
         """
-        Manually set the frequency, amplitude, or phase of a DDS channel.
+        Manually set the frequency, amplitude, or phase values
+        (in machine units) of a DDS channel.
         """
         dev = self.dds_dict[dds_name]
-        ftw, asf, pow = (0, 0, 0)
         # read in current parameters
         profiledata = self._readDDS64(dev, 0x0E)
-        if param == 'ftw':
-            ftw = val
-            pow = ((profiledata >> 32) & 0xFFFF)
-            asf = ((profiledata >> 48) & 0xFFFF)
-        elif param == 'asf':
-            asf = val
-            ftw = profiledata & 0xFFFF
-            pow = ((profiledata >> 32) & 0xFFFF)
-        elif param == 'pow':
-            pow = val
-            ftw = profiledata & 0xFFFF
-            asf = ((profiledata >> 48) & 0xFFFF)
+        ftw = val if param == 'ftw' else (profiledata & 0xFFFF)
+        asf = val if param == 'asf' else ((profiledata >> 48) & 0xFFFF)
+        pow = val if param == 'pow' else ((profiledata >> 32) & 0xFFFF)
+        print('setdds: {:s}'.format(dds_name))
+        print('\tftw: {:x}'.format(ftw))
+        print('\tasf: {:x}'.format(asf))
+        print('\tpow: {:x}\n'.format(pow))
+
         self._setDDS(dev, np.int32(ftw), np.int32(asf), np.int32(pow))
 
     @kernel

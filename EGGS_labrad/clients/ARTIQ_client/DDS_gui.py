@@ -23,9 +23,9 @@ class AD9910_channel(QFrame):
         title = QLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         title.setAlignment(Qt.AlignCenter)
-        freqlabel = QLabel('Frequency (MHz)')
-        powerlabel = QLabel('Amplitude (%)')
-        attlabel = QLabel('Attenuation (dBm)')
+        freqlabel = QLabel('Freq. (MHz)')
+        powerlabel = QLabel('Ampl. (%)')
+        attlabel = QLabel('Att. (dBm)')
 
         # editable fields
         self.freq = QDoubleSpinBox()
