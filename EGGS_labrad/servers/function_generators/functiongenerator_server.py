@@ -23,7 +23,7 @@ from Agilent33210A import Agilent33210AWrapper
 
 class FunctionGeneratorServer(GPIBManagedServer):
     """
-    Manages communication with all function generators..
+    Manages communication with all function generators.
     """
 
     name = 'Function Generator Server'

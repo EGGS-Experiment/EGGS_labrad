@@ -26,11 +26,13 @@ from twisted.internet import reactor, threads
 from twisted.internet.task import deferLater
 from twisted.internet.defer import inlineCallbacks, returnValue
 
+import ft232
 from serial import Serial
 from serial.tools import list_ports
 from serial.serialutil import SerialException
 
 from EGGS_labrad.servers import PollingServer
+
 
 # ERRORS
 class NoPortSelectedError(Error):
