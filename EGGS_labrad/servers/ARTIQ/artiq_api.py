@@ -307,11 +307,10 @@ class ARTIQ_api(object):
         ftw = profiledata & 0xFFFFFFFF
         pow = (profiledata >> 32) & 0xFFFF
         asf = (profiledata >> 48)
-        print('getdds: {:s}'.format(dds_name))
-        print('\tftw: {:x}'.format(ftw)) # debug
-        print('\tasf: {:x}\n'.format(asf)) # debug
-        # asf = -1 means amplitude has not been set
-        asf = 0 if asf < 0 else asf & 0x3FFF
+        # ftw = -1 means not initialized
+        ftw = 0 if (ftw < 0) else ftw
+        # asf = -1 or 0x8b5 means amplitude has not been set
+        asf = 0 if (asf < 0) or ((asf == 0x8b5) & (ftw == 0x0)) else asf & 0x3FFF
         return np.int32(ftw), np.int32(asf), np.int32(pow)
 
     @autoreload
@@ -326,10 +325,6 @@ class ARTIQ_api(object):
         ftw = val if param == 'ftw' else (profiledata & 0xFFFF)
         asf = val if param == 'asf' else ((profiledata >> 48) & 0xFFFF)
         pow = val if param == 'pow' else ((profiledata >> 32) & 0xFFFF)
-        print('setdds: {:s}'.format(dds_name))
-        print('\tftw: {:x}'.format(ftw))
-        print('\tasf: {:x}'.format(asf))
-        print('\tpow: {:x}\n'.format(pow))
 
         self._setDDS(dev, np.int32(ftw), np.int32(asf), np.int32(pow))
 

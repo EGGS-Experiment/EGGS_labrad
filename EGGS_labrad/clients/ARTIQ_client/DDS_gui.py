@@ -30,9 +30,9 @@ class AD9910_channel(QFrame):
         title.setAlignment(Qt.AlignCenter)
 
         # labels
-        freqlabel = QLabel('Freq. (MHz)')
-        powerlabel = QLabel('Ampl. (%)')
-        attlabel = QLabel('Att. (dBm)')
+        freqlabel = QLabel('Frequency (MHz)')
+        powerlabel = QLabel('Amplitude (%)')
+        attlabel = QLabel('Attenuation (dBm)')
 
         # editable fields
         self.freq = QDoubleSpinBox()
