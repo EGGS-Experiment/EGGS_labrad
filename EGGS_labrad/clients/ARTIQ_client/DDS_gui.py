@@ -60,7 +60,7 @@ class AD9910_channel(QFrame):
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
         # add widgets to layout
-        layout.addWidget(name,                 0, 2, 1, 1)
+        layout.addWidget(name,                  0, 2, 1, 1)
         layout.addWidget(title,                 0, 0, 1, 3)
         layout.addWidget(freqlabel,             1, 0, 1, 1)
         layout.addWidget(powerlabel,            1, 1, 1, 1)

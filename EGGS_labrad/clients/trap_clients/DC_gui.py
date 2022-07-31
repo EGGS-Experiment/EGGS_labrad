@@ -27,53 +27,64 @@ class AMO8_channel(QFrame):
 
     def makeLayout(self, title):
         layout = QGridLayout(self)
-        # title
+
+        # channel number/title
+        chan_num = QLabel("Channel {:d}".format(self.num))
+        chan_num.setFont(QFont('MS Shell Dlg 2', pointSize=8))
+        chan_num.setAlignment(Qt.AlignRight | Qt.AlignTop)
         self.title = QLabel(title)
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
         self.title.setAlignment(Qt.AlignCenter)
+
         # dac
-        self.dac_label = QLabel('Output Voltage (V)')
+        dac_label = QLabel('Output Voltage (V)')
         self.dac = QCustomDoubleSpinBox()
         self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=14))
         self.dac.setDecimals(2)
         self.dac.setSingleStep(0.01)
         self.dac.setRange(0, 850)
         self.dac.setKeyboardTracking(False)
+
         # ramp
         self.ramp_start = QPushButton('Ramp')
         self.ramp_start.setFont(QFont('MS Shell Dlg 2', pointSize=11))
-        self.ramp_target_label = QLabel('End Voltage (V)')
+        ramp_target_label = QLabel('End Voltage (V)')
         self.ramp_target = QCustomDoubleSpinBox()
         self.ramp_target.setFont(QFont('MS Shell Dlg 2', pointSize=14))
         self.ramp_target.setDecimals(1)
         self.ramp_target.setSingleStep(0.1)
         self.ramp_target.setRange(0, 850)
         self.ramp_target.setKeyboardTracking(False)
-        self.ramp_rate_label = QLabel('Ramp Rate (V/s)')
+
+        ramp_rate_label = QLabel('Ramp Rate (V/s)')
         self.ramp_rate = QCustomDoubleSpinBox()
         self.ramp_rate.setFont(QFont('MS Shell Dlg 2', pointSize=14))
         self.ramp_rate.setDecimals(1)
         self.ramp_rate.setSingleStep(0.1)
         self.ramp_rate.setRange(0, 1000)
         self.ramp_rate.setKeyboardTracking(False)
+
         # buttons
         self.toggleswitch = TextChangingButton(("On", "Off"))
         self.resetswitch = QPushButton('Reset')
         self.resetswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.lockswitch = Lockswitch()
         self.lockswitch.setChecked(True)
-        # add widgets to layout
-        layout.addWidget(self.title, 0, 0, 1, 3)
-        layout.addWidget(self.dac_label, 1, 0, 1, 2)
-        layout.addWidget(self.dac, 2, 0, 1, 3)
-        layout.addWidget(self.ramp_target_label, 3, 1)
-        layout.addWidget(self.ramp_rate_label, 3, 2)
-        layout.addWidget(self.ramp_start, 4, 0, 1, 1)
-        layout.addWidget(self.ramp_target, 4, 1, 1, 1)
-        layout.addWidget(self.ramp_rate, 4, 2, 1, 1)
-        layout.addWidget(self.toggleswitch, 5, 0)
-        layout.addWidget(self.lockswitch, 5, 1)
-        layout.addWidget(self.resetswitch, 5, 2)
+
+        # layout
+        layout.addWidget(chan_num,                  0, 2, 1, 1)
+        layout.addWidget(self.title,                0, 0, 1, 3)
+        layout.addWidget(dac_label,                 1, 0, 1, 2)
+        layout.addWidget(self.dac,                  2, 0, 1, 3)
+        layout.addWidget(ramp_target_label,         3, 1)
+        layout.addWidget(ramp_rate_label,           3, 2)
+        layout.addWidget(self.ramp_start,           4, 0, 1, 1)
+        layout.addWidget(self.ramp_target,          4, 1, 1, 1)
+        layout.addWidget(self.ramp_rate,            4, 2, 1, 1)
+        layout.addWidget(self.toggleswitch,         5, 0)
+        layout.addWidget(self.lockswitch,           5, 1)
+        layout.addWidget(self.resetswitch,          5, 2)
+
         # connect signal to slot
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
@@ -128,7 +139,8 @@ class DC_gui(QFrame):
         channel_holder_layout.addWidget(self.doubleramp_endcaps,        0, 0)
         channel_holder_layout.addWidget(self.doubleramp_aramp,          0, 2)
         channel_holder_layout.addWidget(self.triangleramp_aramp,        1, 2)
-        shift_rows = 2# tmp remove todo
+        # tmp remove todo
+        shift_rows = 2
         for channel_name, channel_params in self.active_channels.items():
             channel_num = channel_params['num']
             # initialize GUIs for each channel
