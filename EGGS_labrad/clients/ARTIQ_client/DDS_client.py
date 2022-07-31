@@ -55,22 +55,24 @@ class DDS_client(GUIClient):
         for dds_channel in restricted_dds_channels:
             min_attenuations[dds_channel] = yield self.reg.get(dds_channel)
 
+        # get data using DDS Get All function on artiq server
+        dds_data = yield self.aq.dds_get_all()
+        num_boards = int(len(dds_data) / 4)
+        dds_data = dds_data.reshape((num_boards, 4, 4))
+
         # get data for each dds channel on each dds-board
-        for urukul_name, ad9910_list in self.urukul_list.items():
-            for ad9910_name, ad9910_widget in ad9910_list.items():
+        for board_num, (urukul_name, ad9910_list) in enumerate(self.urukul_list.items()):
+            for channel_num, (ad9910_name, ad9910_widget) in enumerate(ad9910_list.items()):
                 # check if this channel has a restricted attenuation range
                 if ad9910_name in min_attenuations:
                     ad9910_widget.att.setMinimum(min_attenuations[ad9910_name])
                 # get values
-                sw_status = yield self.aq.dds_toggle(ad9910_name)
-                att_mu = yield self.aq.dds_attenuation(ad9910_name)
-                freq_mu = yield self.aq.dds_frequency(ad9910_name)
-                ampl_mu = yield self.aq.dds_amplitude(ad9910_name)
+                freq_mu, ampl_mu, att_mu, sw_status = dds_data[board_num][channel_num]
                 # set values
-                ad9910_widget.rfswitch.setChecked(sw_status)
-                ad9910_widget.att.setValue((255 - (att_mu & 0xFF)) / 8)
                 ad9910_widget.freq.setValue(freq_mu * 1e3 / (0xFFFFFFFF - 1))
                 ad9910_widget.ampl.setValue(ampl_mu * 1e2 / 0x3FFF)
+                ad9910_widget.att.setValue((255 - (att_mu & 0xFF)) / 8)
+                ad9910_widget.rfswitch.setChecked(sw_status)
 
     def initGUI(self):
         # connect an urukul group

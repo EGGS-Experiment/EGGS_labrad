@@ -99,7 +99,7 @@ class ARTIQ_Server(LabradServer):
         self.ps_rid = None
         # conversions
         # DDS - val to mu
-        self.dds_frequency_to_ftw = lambda freq: np.int32(freq * 4.2949673) # 32 bits / 1GHz
+        self.dds_frequency_to_ftw = lambda freq: np.int32(freq * 4.294967295) # 0xFFFFFFFF / 1GHz
         self.dds_amplitude_to_asf = lambda ampl: np.int32(ampl * 0x3fff)
         self.dds_turns_to_pow = lambda phase: np.int32(phase * 0xffff)
         self.dds_att_to_mu = lambda dbm: np.int32(0xff) - np.int32(round(dbm * 8))
@@ -306,8 +306,7 @@ class ARTIQ_Server(LabradServer):
         Returns:
             (*str)  : the list of DDS names.
         """
-        dds_dict = yield self.api.dds_dict.keys()
-        returnValue(list(dds_dict))
+        return list(self.api.dds_dict.keys())
 
     @setting(321, "DDS Initialize", dds_name='s', returns='')
     def DDSinitialize(self, c, dds_name):
@@ -458,6 +457,34 @@ class ARTIQ_Server(LabradServer):
             reg_val2 = np.int32((reg_val >> 32) & 0xffffffff)
             resp = (reg_val1, reg_val2)
             returnValue(resp)
+
+    @setting(332, "DDS Get All", returns='*2i')
+    def DDSGetAll(self, c):
+        """
+        Quickly get frequency, amplitude, attenuation, and switch values
+            (in SI units) for all DDS channels.
+            Doesn't return pow (phase offset word).
+            Should only be used by DDS Client.
+        Returns:
+            list(tuple(int, int, int, bool)) : a list of dds parameters for all DDSs in the format (asf, ftw, att, sw)
+        """
+        # getter
+        #dds_data = yield self.api.getDDSAll()
+        #self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
+        dds_data = yield self.api.getDDSAll()
+        returnValue(dds_data)
+
+    def _ddsNameHelper(self, dds_name):
+        """
+        Ensure DDS channel exists.
+        """
+        # accept dds_name as tuple of (board_num, channel_num)
+        if (type(dds_name) is tuple) and (len(dds_name) == 2):
+            dds_name = "urukul{:d}_ch{:d}".format(dds_name[0], dds_name[1])
+        # check dds exists
+        if dds_name not in self.api.dds_dict:
+            raise Exception('Error: device does not exist.')
+        return dds_name
 
 
     # URUKUL

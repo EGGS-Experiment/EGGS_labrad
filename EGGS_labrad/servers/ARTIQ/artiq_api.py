@@ -116,6 +116,15 @@ class ARTIQ_api(object):
             elif devicetype == 'EdgeCounter':
                 self.ttlcounter_dict[name] = device
 
+        # tmp remove
+        self._dds_channels = list(self.dds_dict.values())
+        self._dds_boards = list(self.urukul_dict.values())
+
+        yz0 = ['urukul0_ch{:d}'.format(i) for i in range(4)]
+        yz1 = ['urukul1_ch{:d}'.format(i) for i in range(4)]
+        for dev_name in (yz0+yz1):
+            setattr(self, dev_name, self.device_manager.get(dev_name))
+
     def _initializeDevices(self):
         """
         Initialize devices that need to be initialized.
@@ -220,6 +229,7 @@ class ARTIQ_api(object):
         # convert us to mu
         time_mu = self.core.seconds_to_mu(time_us * us)
         # get counts
+        # todo: setattr instead
         self.pmt_counts_array = np.zeros(trials)
         self._counterTTL(dev, time_mu, trials)
         return self.pmt_counts_array
@@ -307,8 +317,9 @@ class ARTIQ_api(object):
         ftw = profiledata & 0xFFFFFFFF
         pow = (profiledata >> 32) & 0xFFFF
         asf = (profiledata >> 48)
-        # ftw = -1 means not initialized
-        ftw = 0 if (ftw < 0) else ftw
+        # ftw = 0XFFFFFFFF means not initialized
+        ftw = 0 if (ftw == 0xFFFFFFFF) else ftw
+        print('ftw: {:x}'.format(ftw))
         # asf = -1 or 0x8b5 means amplitude has not been set
         asf = 0 if (asf < 0) or ((asf == 0x8b5) & (ftw == 0x0)) else asf & 0x3FFF
         return np.int32(ftw), np.int32(asf), np.int32(pow)
@@ -322,10 +333,10 @@ class ARTIQ_api(object):
         dev = self.dds_dict[dds_name]
         # read in current parameters
         profiledata = self._readDDS64(dev, 0x0E)
-        ftw = val if param == 'ftw' else (profiledata & 0xFFFF)
-        asf = val if param == 'asf' else ((profiledata >> 48) & 0xFFFF)
+        ftw = val if param == 'ftw' else (profiledata & 0xFFFFFFFF)
+        asf = val if param == 'asf' else ((profiledata >> 48) & 0x3FFF)
         pow = val if param == 'pow' else ((profiledata >> 32) & 0xFFFF)
-
+        # set DDS
         self._setDDS(dev, np.int32(ftw), np.int32(asf), np.int32(pow))
 
     @kernel
@@ -398,6 +409,73 @@ class ARTIQ_api(object):
     def _readDDS64(self, dev, reg):
         self.core.reset()
         return dev.read64(reg)
+
+
+    # DDS QUICK GET
+    @autoreload
+    def getDDSAll(self):
+        """
+        Quickly get frequency, amplitude, attenuation, and switch values
+        (in machine units) for all DDS channels.
+        """
+        # create structures to hold params
+        dds_params_processed = np.zeros([len(self.dds_dict), 4], dtype=np.int32)
+        setattr(self, "channel_profiledata", [])
+        setattr(self, "board_sw", [])
+        setattr(self, "board_att", [])
+
+        # get params!
+        self._getDDSAll()
+
+        # process channel params
+        for i, profiledata in enumerate(self.channel_profiledata):
+            ftw = profiledata & 0xFFFFFFFF
+            ftw = 0 if (ftw == 0xFFFFFFFF) else np.int32(ftw)
+            asf = profiledata >> 48
+            asf = 0 if ((asf < 0) or ((asf == 0x8b5) & (ftw == 0x0))) else np.int32(asf & 0x3FFF)
+            dds_params_processed[i][:2] = [ftw, asf]
+
+        # process attenuation state
+        board_att_tmp = []
+        for i, att_state in enumerate(self.board_att):
+            att_state = hex(att_state)[2:][::-1]
+            board_att_tmp += [int(att_state[i: i+2], base=16) for i in range(0, len(att_state), 2)]
+        dds_params_processed[:, 2] = board_att_tmp
+
+        # process switch state
+        board_sw_tmp = []
+        for i, sw_state in enumerate(self.board_sw):
+            sw_state_processed = reversed('{:04b}'.format(sw_state))
+            board_sw_tmp += list(map(int, sw_state_processed))
+        dds_params_processed[:, 3] = board_sw_tmp
+
+        return dds_params_processed
+
+    @kernel
+    def _getDDSAll(self):
+        self.core.break_realtime()
+
+        # read channel parameters
+        for dev_ad9910 in self._dds_channels:
+            self._recordParamsChannel(dev_ad9910.read64(0x0E))
+            self.core.break_realtime()
+
+        # read board parameters
+        for dev_cpld in self._dds_boards:
+            cpld_sta_reg = dev_cpld.sta_read()
+            self.core.break_realtime()
+            cpld_att_reg = dev_cpld.get_att_mu()
+            self._recordParamsBoard(cpld_sta_reg, cpld_att_reg)
+            self.core.break_realtime()
+
+    @rpc(flags={"async"})
+    def _recordParamsChannel(self, profiledata):
+        self.channel_profiledata.append(profiledata)
+
+    @rpc(flags={"async"})
+    def _recordParamsBoard(self, sw_state, att_state):
+        self.board_sw.append(urukul_sta_rf_sw(sw_state))
+        self.board_att.append(np.uintc(att_state))
 
 
     # URUKUL

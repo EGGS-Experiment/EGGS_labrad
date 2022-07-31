@@ -77,6 +77,7 @@ class AD9910_channel(QFrame):
         self.ampl.setEnabled(status)
         self.att.setEnabled(status)
         self.rfswitch.setEnabled(status)
+        self.initbutton.setEnabled(status)
 
 
 class DDS_gui(QFrame):
