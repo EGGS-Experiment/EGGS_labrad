@@ -29,11 +29,11 @@ class AMO8_channel(QFrame):
         layout = QGridLayout(self)
 
         # channel number/title
-        chan_num = QLabel("Channel {:d}".format(self.num))
+        chan_num = QLabel("Chan. {:d}".format(self.number))
         chan_num.setFont(QFont('MS Shell Dlg 2', pointSize=8))
         chan_num.setAlignment(Qt.AlignRight | Qt.AlignTop)
         self.title = QLabel(title)
-        self.title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        self.title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.title.setAlignment(Qt.AlignCenter)
 
         # dac
