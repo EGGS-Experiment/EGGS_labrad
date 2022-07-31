@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox, QCustomEditableLabel
 
 
 class AD9910_channel(QFrame):
@@ -25,7 +25,7 @@ class AD9910_channel(QFrame):
         name.setFont(QFont('MS Shell Dlg 2', pointSize=8))
         name.setAlignment(Qt.AlignRight | Qt.AlignTop)
 
-        title = QLabel(title)
+        title = QCustomEditableLabel(title)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         title.setAlignment(Qt.AlignCenter)
 

@@ -3,7 +3,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox, QClientMenuHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox, QClientMenuHeader, QCustomEditableLabel
 
 
 class QCustomDoubleSpinBox(QDoubleSpinBox):
@@ -32,7 +32,7 @@ class AMO8_channel(QFrame):
         chan_num = QLabel("Chan. {:d}".format(self.number))
         chan_num.setFont(QFont('MS Shell Dlg 2', pointSize=8))
         chan_num.setAlignment(Qt.AlignRight | Qt.AlignTop)
-        self.title = QLabel(title)
+        self.title = QCustomEditableLabel(title)
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.title.setAlignment(Qt.AlignCenter)
 
