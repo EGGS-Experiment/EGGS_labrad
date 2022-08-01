@@ -10,8 +10,9 @@ from numpy import linspace
 from EGGS_labrad.clients import createTrunk
 
 name_tmp = 'Rectifier Characterization'
-freq_range = linspace(15, 30, 15 + 1) * 1e6
-amp_range = linspace(0, 10, 20 + 1)
+# freq_range = linspace(15, 30, 15 + 1) * 1e6
+freq_range = [20635000]
+amp_range = linspace(-20, -15, 50 + 1)
 os_channel = 3
 
 
@@ -96,10 +97,9 @@ try:
             osc_val = os.measure(3)
             offset_val = os.measure(4)
             # format freq,
-            print('freq: {:.0f} MHz; amp: {:.2f} dBm; offset: {:.1f} mV; osc amp: {.2} mV'.format(
+            print('freq: {:.0f} MHz; amp: {:.2f} dBm; offset: {:.1f} mV; osc amp: {.2f} mV'.format(
                 freq_val / 1e6, amp_val, offset_val * 1e3, osc_val * 1e3
             ))
-
             # record result
             dv.add(amp_val, offset_val, osc_val, context=cr)
 
