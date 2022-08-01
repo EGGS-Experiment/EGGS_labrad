@@ -34,7 +34,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
     name = 'SLS Server'
     regKey = 'SLS Server'
     serNode = 'mongkok'
-    port = 'COM3'
+    port = 'COM4'
 
     baudrate = 115200
     timeout = Value(5.0, 's')
