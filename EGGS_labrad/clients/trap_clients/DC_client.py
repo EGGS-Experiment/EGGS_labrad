@@ -59,9 +59,9 @@ class DC_client(GUIClient):
         self.gui.device_global_onswitch.clicked.connect(lambda: self.amo8.toggle_all(True))
         self.gui.device_global_offswitch.clicked.connect(lambda: self.amo8.toggle_all(False))
         self.gui.device_global_clear.clicked.connect(lambda: self.amo8.clear())
-        self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.startRamp([1, 2]))
-        self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.startRamp([5, 6]))
-        self.gui.triangleramp_aramp.clicked.connect(lambda blank: self.startTriangleRamp([5, 6]))
+        self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.startRamp([5, 2]))
+        self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.startRamp([7, 6]))
+        self.gui.triangleramp_aramp.clicked.connect(lambda blank: self.startTriangleRamp([7, 6]))
         #self.gui.doublechange_endcaps.clicked.connect(lambda blank: self.doublechange(1, 2))
         #self.gui.doublechange_aramp.clicked.connect(lambda blank: self.doublechange(5, 6))
         # todo: stop using self.gui.amo8_channels and move config to client side
@@ -85,7 +85,7 @@ class DC_client(GUIClient):
         channel_gui.dac.setValue(0)
         channel_gui.toggleswitch.setChecked(False)
         channel_gui.ramp_target.setValue(0)
-        channel_gui.ramp_rate.setValue(0)
+        channel_gui.ramp_rate.setValue(100)
         channel_gui.setEnabled(True)
 
     def updateToggle(self, c, signal):

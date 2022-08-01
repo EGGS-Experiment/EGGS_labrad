@@ -31,7 +31,7 @@ class functiongenerator_gui(QFrame):
         self.freq = QDoubleSpinBox()
         self.freq.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.freq.setDecimals(2)
-        self.freq.setSingleStep(0.01)
+        self.freq.setSingleStep(1)
         self.freq.setRange(1, 1e4) # in kHz
         self.freq.setKeyboardTracking(False)
         self.ampl = QDoubleSpinBox()
