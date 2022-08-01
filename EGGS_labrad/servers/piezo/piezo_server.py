@@ -41,6 +41,33 @@ class PiezoServer(SerialDeviceServer):
 
     # SIGNALS
     voltage_update = Signal(999999, 'signal: voltage update', '(iv)')
+    toggle_update = Signal(999998, 'signal: toggle update', '(ib)')
+
+    # CONTEXTS
+    def initContext(self, c):
+        self.listeners.add(c.ID)
+
+    def expireContext(self, c):
+        self.listeners.remove(c.ID)
+
+    def getOtherListeners(self, c):
+        notified = self.listeners.copy()
+        notified.remove(c.ID)
+        return notified
+
+    def notifyOtherListeners(self, context, message, f):
+        """
+        Notifies all listeners except the one in the given context, executing function f.
+        """
+        notified = self.listeners.copy()
+        notified.remove(context.ID)
+        f(message, notified)
+
+
+    # STARTUP
+    def initServer(self):
+        super().initServer()
+        self.listeners = set()
 
 
     # GENERAL
@@ -95,6 +122,7 @@ class PiezoServer(SerialDeviceServer):
         # parse
         resp = resp.strip()
         resp = bool(int(resp))
+        self.notifyOtherListeners(c, (channel, resp), self.toggle_update)
         returnValue(resp)
 
 
@@ -124,7 +152,8 @@ class PiezoServer(SerialDeviceServer):
         yield self.ser.write('vout.r {:d}\r\n'.format(channel))
         resp = yield self.ser.read_line('\n')
         self.ser.release()
-        # parse
+        resp = float(resp)
+        self.notifyOtherListeners(c, (channel, resp), self.voltage_update)
         returnValue(float(resp))
 
 

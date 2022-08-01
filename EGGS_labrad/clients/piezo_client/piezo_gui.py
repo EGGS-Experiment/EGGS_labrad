@@ -9,7 +9,7 @@ class piezo_gui(QFrame):
     def __init__(self, parent=None):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
-        self.setFixedSize(375, 275)
+        self.setFixedSize(350, 275)
         self.setWindowTitle("Piezo Client")
         self.makeWidgets()
 
@@ -31,7 +31,7 @@ class piezo_gui(QFrame):
             channel_widget.setFrameStyle(0x0001 | 0x0030)
             channel_widget_layout = QGridLayout(channel_widget)
 
-            channel_title = QLabel("Channel {:d}".format(i))
+            channel_title = QLabel("Channel {:d}".format(i + 1))
             channel_title.setFont(QFont(shell_font, pointSize=10))
             channel_title.setAlignment(Qt.AlignCenter)
 

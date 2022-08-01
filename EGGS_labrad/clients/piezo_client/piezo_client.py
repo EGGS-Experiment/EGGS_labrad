@@ -9,6 +9,7 @@ class piezo_client(GUIClient):
     name = 'Piezo Client'
 
     VOLTAGEID = 984312
+    TOGGLEID = 984311
     servers = {'pz': 'Piezo Server'}
 
     def getgui(self):
@@ -19,54 +20,46 @@ class piezo_client(GUIClient):
     @inlineCallbacks
     def initClient(self):
         # connect to device signals
-        yield self.niops.signal__voltage_update(self.VOLTAGEID)
-        yield self.niops.addListener(listener=self.updateVoltage, source=None, ID=self.VOLTAGEID)
+        yield self.pz.signal__voltage_update(self.VOLTAGEID)
+        yield self.pz.addListener(listener=self.updateVoltage, source=None, ID=self.VOLTAGEID)
+        yield self.pz.signal__toggle_update(self.TOGGLEID)
+        yield self.pz.addListener(listener=self.updateToggle, source=None, ID=self.TOGGLEID)
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
 
     @inlineCallbacks
     def initData(self):
-        # IP/NP power
-        device_status = yield self.niops.status()
-        device_status = device_status.strip().split(', ')
-        device_status = [text.split(' ') for text in device_status]
-        device_status = {val[0]: val[1] for val in device_status}
-        ip_on = True if device_status['IP'] == 'ON' else False
-        np_on = True if device_status['NP'] == 'ON' else False
-        self.gui.ip_power.setChecked(ip_on)
-        self.gui.np_power.setChecked(np_on)
-        # IP voltage
-        v_ip = yield self.niops.ip_voltage()
-        self.gui.ip_voltage_display.setText(str(v_ip))
-        self.gui.ip_voltage.setEnabled(ip_on)
+        for i in range(4):
+            channel_status = yield self.pz.toggle(i + 1)
+            self.gui.channels[i].toggleswitch.setChecked(channel_status)
+            channel_voltage = yield self.pz.voltage(i + 1)
+            self.gui.channels[i].voltage.setValue(channel_voltage)
 
     def initGUI(self):
-        # ion pump
-        self.gui.ip_lockswitch.toggled.connect(lambda status: self.lock_ip(status))
-        self.gui.ip_power.clicked.connect(lambda status: self.toggle_ni(status))
-        self.gui.ip_record.toggled.connect(lambda status: self.record_pressure(status))
-        self.gui.ip_voltage.valueChanged.connect(lambda voltage: self.niops.ip_voltage(int(voltage)))
-        # getter
-        self.gui.np_lockswitch.toggled.connect(lambda status: self.gui.np_power.setEnabled(status))
-        self.gui.np_mode.currentIndexChanged.connect(lambda index: self.niops.np_mode(index + 1))
-        self.gui.np_power.clicked.connect(lambda status: self.niops.np_toggle(status))
-        # lock on startup
-        self.gui.ip_lockswitch.setChecked(False)
-        self.gui.np_lockswitch.setChecked(False)
+        for i in range(4):
+            channel_widget = self.gui.channels[i]
+            channel_widget.voltage.valueChanged.connect(lambda _voltage, _chan=i+1: self.pz.voltage(_chan, _voltage))
+            channel_widget.toggleswitch.valueChanged.connect(lambda _status, _chan=i+1: self.pz.toggle(_chan, _status))
 
 
     # SLOTS
-    def updateVoltage(self, c, voltage):
-        # update voltage
-        self.gui.ip_voltage_display.setText(str(voltage))
+    def updateVoltage(self, c, msg):
+        chan_num, _voltage = msg
+        # need to convert channel number to index
+        channel_voltage_widget = self.gui.channels[chan_num - 1].voltage
+        channel_voltage_widget.blockSignals(True)
+        channel_voltage_widget.setValue(_voltage)
+        channel_voltage_widget.blockSignals(False)
 
-    def lock_ip(self, status):
-        """
-        Locks power status of ion pump.
-        """
-        self.gui.ip_voltage.setEnabled(status)
-        self.gui.ip_power.setEnabled(status)
+    def updateToggle(self, c, msg):
+        chan_num, _status = msg
+        # need to convert channel number to index
+        channel_switch_widget = self.gui.channels[chan_num - 1].toggleswitch
+        channel_switch_widget.blockSignals(True)
+        channel_switch_widget.setChecked(_status)
+        channel_switch_widget.setAppearance(_status)
+        channel_switch_widget.blockSignals(False)
 
 
 if __name__ == "__main__":
