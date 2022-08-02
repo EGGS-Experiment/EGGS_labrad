@@ -10,7 +10,7 @@ class dc_config(object):
         Specifies the layout of the header as [row, column].
         Starts from 0.
 
-    channel_dict: dict
+    channeldict: dict
     {
         channel_name: (num, row, col)
     }

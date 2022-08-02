@@ -40,6 +40,7 @@ EXPSIGNAL_ID = 828173
 DDSSIGNAL_ID = 828172
 # todo: move all mu stuff to api since api has better access to conversion stuff than we do and can call it in a nonkernel function
 # todo: remove artiq comm stuff from logging
+# todo: use dds name helper to allow board number and channel number to be used for settings
 
 
 class ARTIQ_Server(LabradServer):
@@ -468,6 +469,17 @@ class ARTIQ_Server(LabradServer):
         Returns:
             list(tuple(int, int, int, bool)) : a list of dds parameters for all DDSs in the format (asf, ftw, att, sw)
         """
+        dds_data = yield self.api.getDDSAll()
+        returnValue(dds_data)
+
+    @setting(341, "DDS Profile ", dds_name='s', profile='i', returns='(iii)')
+    def DDSGetAll(self, c, profile='i'):
+        """
+        Set profile of a DDS channel. Frequency and amplitude will be set to
+
+        Returns:
+            list(tuple(int, int, int, bool)) : a list of dds parameters for all DDSs in the format (asf, ftw, att, sw)
+        """
         # getter
         #dds_data = yield self.api.getDDSAll()
         #self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
@@ -488,7 +500,7 @@ class ARTIQ_Server(LabradServer):
 
 
     # URUKUL
-    @setting(341, "Urukul List", returns='*s')
+    @setting(351, "Urukul List", returns='*s')
     def UrukulList(self, c):
         """
         Get the list of available Urukul CPLDs.
@@ -498,7 +510,7 @@ class ARTIQ_Server(LabradServer):
         urukul_list = yield self.api.urukul_list.keys()
         returnValue(list(urukul_list))
 
-    @setting(342, "Urukul Initialize", urukul_name='s', returns='')
+    @setting(352, "Urukul Initialize", urukul_name='s', returns='')
     def UrukulInitialize(self, c, urukul_name):
         """
         Resets/initializes an Urukul CPLD.
