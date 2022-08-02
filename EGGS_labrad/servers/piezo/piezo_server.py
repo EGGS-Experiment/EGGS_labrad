@@ -33,7 +33,7 @@ class PiezoServer(SerialDeviceServer):
     name = 'Piezo Server'
     regKey = 'PiezoServer'
     serNode = 'MongKok'
-    port = 'COM4'
+    port = 'COM10'
 
     timeout = WithUnit(3.0, 's')
     baudrate = 38400
@@ -41,6 +41,33 @@ class PiezoServer(SerialDeviceServer):
 
     # SIGNALS
     voltage_update = Signal(999999, 'signal: voltage update', '(iv)')
+    toggle_update = Signal(999998, 'signal: toggle update', '(ib)')
+
+    # CONTEXTS
+    def initContext(self, c):
+        self.listeners.add(c.ID)
+
+    def expireContext(self, c):
+        self.listeners.remove(c.ID)
+
+    def getOtherListeners(self, c):
+        notified = self.listeners.copy()
+        notified.remove(c.ID)
+        return notified
+
+    def notifyOtherListeners(self, context, message, f):
+        """
+        Notifies all listeners except the one in the given context, executing function f.
+        """
+        notified = self.listeners.copy()
+        notified.remove(context.ID)
+        f(message, notified)
+
+
+    # STARTUP
+    def initServer(self):
+        super().initServer()
+        self.listeners = set()
 
 
     # GENERAL
@@ -63,10 +90,9 @@ class PiezoServer(SerialDeviceServer):
         yield self.ser.write('remote.r\r\n')
         resp = yield self.ser.read_line('\n')
         self.ser.release()
-        if resp.strip() == 'enabled':
-            returnValue(True)
-        else:
-            returnValue(False)
+        # parse
+        resp = bool(int(resp.strip()))
+        returnValue(resp)
 
 
     # ON/OFF
@@ -80,8 +106,9 @@ class PiezoServer(SerialDeviceServer):
         Returns:
                     (bool)  : result
         """
-        if channel not in (0, 1, 2, 3):
-            raise Exception("Error: channel must be one of (0, 1, 2, 3).")
+        if channel not in (1, 2, 3, 4):
+            raise Exception("Error: channel must be one of (1, 2, 3, 4).")
+        # setter
         if power is not None:
             yield self.ser.acquire()
             yield self.ser.write('out.w {:d} {:d}\r\n'.format(channel, power))
@@ -92,26 +119,27 @@ class PiezoServer(SerialDeviceServer):
         yield self.ser.write('out.r {:d}\r\n'.format(channel))
         resp = yield self.ser.read_line('\n')
         self.ser.release()
-        if resp.strip() == 'enabled':
-            returnValue(True)
-        else:
-            returnValue(False)
+        # parse
+        resp = resp.strip()
+        resp = bool(int(resp))
+        self.notifyOtherListeners(c, (channel, resp), self.toggle_update)
+        returnValue(resp)
 
 
     # VOLTAGE
     @setting(211, 'Voltage', channel='i', voltage='v', returns='v')
     def voltage(self, c, channel, voltage=None):
-        '''
+        """
         Sets/get the channel voltage.
         Arguments:
             channel (int)   : the channel to read/write
             voltage (float) : the channel voltage to set
         Returns:
                     (float) : the channel voltage
-        '''
+        """
         # setter
-        if channel not in (0, 1, 2, 3):
-            raise Exception("Error: channel must be one of (0, 1, 2, 3).")
+        if channel not in (1, 2, 3, 4):
+            raise Exception("Error: channel must be one of (1, 2, 3, 4).")
         if voltage is not None:
             if (voltage < 0) or (voltage > 150):
                 raise Exception("Error: voltage must be in [0, 150].")
@@ -124,9 +152,12 @@ class PiezoServer(SerialDeviceServer):
         yield self.ser.write('vout.r {:d}\r\n'.format(channel))
         resp = yield self.ser.read_line('\n')
         self.ser.release()
+        resp = float(resp)
+        self.notifyOtherListeners(c, (channel, resp), self.voltage_update)
         returnValue(float(resp))
 
 
 if __name__ == '__main__':
     from labrad import util
     util.runServer(PiezoServer())
+    

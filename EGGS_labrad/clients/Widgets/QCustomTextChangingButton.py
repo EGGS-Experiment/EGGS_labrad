@@ -3,6 +3,7 @@ from PyQt5.QtGui import QFont, QPalette
 from PyQt5.QtWidgets import QPushButton, QSizePolicy
 
 __all__ = ['TextChangingButton', 'Lockswitch']
+# todo: create onoff switch
 
 
 class TextChangingButton(QPushButton):

@@ -53,6 +53,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
     # STARTUP
     def initServer(self):
         super().initServer()
+        self.listeners = set()
         # RGA type
         self.m_max = 200
         self.current_to_pressure = None

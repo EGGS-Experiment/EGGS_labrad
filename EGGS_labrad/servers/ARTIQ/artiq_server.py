@@ -486,6 +486,18 @@ class ARTIQ_Server(LabradServer):
         dds_data = yield self.api.getDDSAll()
         returnValue(dds_data)
 
+    @setting(341, "DDS RAM Setup", dds_name='s', mode='s', returns='s')
+    def ddsRAMSetup(self, dds_name, mode=None):
+        """
+        """
+        pass
+
+    @setting(342, "DDS RAM Program", dds_name='s', data=['*i','*v'], returns='s')
+    def ddsRAMSetup(self, dds_name, data):
+        """
+        """
+        pass
+
     def _ddsNameHelper(self, dds_name):
         """
         Ensure DDS channel exists.

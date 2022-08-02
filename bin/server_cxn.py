@@ -19,7 +19,6 @@ server_dict = {
         'ni': 'niops03_server', 'tt': 'twistorr74_server', 'ls': 'lakeshore336_server',
         'rga': 'rga_server', 'rf': 'rf_server', 'sls': 'sls_server', 'aq': 'artiq_server',
         'dc': 'dc_server', 'fma': 'fma1700a_server', 'to': 'toptica_server',
-        'sd': 'slider_server',
         'os': 'oscilloscope_server', 'fg': 'function_generator_server', 'sa': 'spectrum_analyzer_server',
         'gpib': 'gpib_device_manager', 'mk_gpib': 'mongkok_gpib_bus', 'lh_gpib': 'lahaina_gpib_bus',
         'hf_gpib': 'hengfachuen_gpib_bus', 'cw_gpib': 'causewaybay_gpib_bus',

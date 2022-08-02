@@ -1,15 +1,10 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton, QLineEdit
 
 from twisted.internet.defer import inlineCallbacks
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox, QClientMenuHeader, QCustomEditableLabel
-
-
-class QCustomDoubleSpinBox(QDoubleSpinBox):
-    def __init__(self, *args, **kwargs):
-        self.wheelEvent = lambda event:None
-        super().__init__(*args, **kwargs)
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox,\
+    QClientMenuHeader, QCustomEditableLabel, QCustomUnscrollableSpinBox
 
 
 class AMO8_channel(QFrame):
@@ -38,10 +33,10 @@ class AMO8_channel(QFrame):
 
         # dac
         dac_label = QLabel('Output Voltage (V)')
-        self.dac = QCustomDoubleSpinBox()
+        self.dac = QCustomUnscrollableSpinBox()
         self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=14))
-        self.dac.setDecimals(2)
-        self.dac.setSingleStep(0.01)
+        self.dac.setDecimals(1)
+        self.dac.setSingleStep(0.1)
         self.dac.setRange(0, 850)
         self.dac.setKeyboardTracking(False)
 
@@ -49,7 +44,7 @@ class AMO8_channel(QFrame):
         self.ramp_start = QPushButton('Ramp')
         self.ramp_start.setFont(QFont('MS Shell Dlg 2', pointSize=11))
         ramp_target_label = QLabel('End Voltage (V)')
-        self.ramp_target = QCustomDoubleSpinBox()
+        self.ramp_target = QCustomUnscrollableSpinBox()
         self.ramp_target.setFont(QFont('MS Shell Dlg 2', pointSize=14))
         self.ramp_target.setDecimals(1)
         self.ramp_target.setSingleStep(0.1)
@@ -57,7 +52,7 @@ class AMO8_channel(QFrame):
         self.ramp_target.setKeyboardTracking(False)
 
         ramp_rate_label = QLabel('Ramp Rate (V/s)')
-        self.ramp_rate = QCustomDoubleSpinBox()
+        self.ramp_rate = QCustomUnscrollableSpinBox()
         self.ramp_rate.setFont(QFont('MS Shell Dlg 2', pointSize=14))
         self.ramp_rate.setDecimals(1)
         self.ramp_rate.setSingleStep(0.1)
