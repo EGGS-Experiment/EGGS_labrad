@@ -697,5 +697,6 @@ class ARTIQ_api(object):
         :param gain_mu: Register to read from
         :return: the value of the register
         """
+        # todo: make onboard function like pmt
         self.core.reset()
         return self.sampler.sample_mu(sampleArr)
