@@ -472,31 +472,37 @@ class ARTIQ_Server(LabradServer):
         dds_data = yield self.api.getDDSAll()
         returnValue(dds_data)
 
+    '''
     @setting(341, "DDS Profile ", dds_name='s', profile='i', returns='(iii)')
-    def DDSGetAll(self, c, profile='i'):
+    def DDSProfile(self, c, dds_name, profile=None):
         """
-        Set profile of a DDS channel. Frequency and amplitude will be set to
-
+        Set profile of a DDS channel.
+            Frequency and amplitude will be set to whatever parameters are stored for the selected profile.
+        Arguments:
+            profile     (int): the profile channel (must be between [0, 7]).
         Returns:
-            list(tuple(int, int, int, bool)) : a list of dds parameters for all DDSs in the format (asf, ftw, att, sw)
+                        tuple(int, int, int): a tuple of (profile number, ftw, asf).
         """
+        # setter
         # getter
         #dds_data = yield self.api.getDDSAll()
         #self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
-        dds_data = yield self.api.getDDSAll()
-        returnValue(dds_data)
+        dds_profile = yield self.api.getDDSProfile()
+        # todo: get ftw and asf
+        returnValue()
 
-    @setting(341, "DDS RAM Setup", dds_name='s', mode='s', returns='s')
+    @setting(351, "DDS RAM Setup", dds_name='s', mode='s', returns='s')
     def ddsRAMSetup(self, dds_name, mode=None):
         """
         """
         pass
 
-    @setting(342, "DDS RAM Program", dds_name='s', data=['*i','*v'], returns='s')
+    @setting(352, "DDS RAM Program", dds_name='s', data=['*i','*v'], returns='s')
     def ddsRAMSetup(self, dds_name, data):
         """
         """
         pass
+    '''
 
     def _ddsNameHelper(self, dds_name):
         """
@@ -675,26 +681,61 @@ class ARTIQ_Server(LabradServer):
         """
         yield self.api.initializeSampler()
 
-    @setting(512, "Sampler Gain", channel='i', gain='i', returns='')
+    @setting(512, "Sampler Gain", channel='i', gain='i', returns='i')
     def samplerGain(self, c, channel, gain):
         """
         Set the gain of a sampler channel.
         Arguments:
-            channel (int)   : the dac channel number
-            gain   (int)    : the channel gain
+            channel (int)   : the ADC channel number. Must be in [0, 7]).
+            gain    (int)   : the channel gain. Must be one of (1, 10, 100, 1000).
+        Returns:
+                    (int)   : the channel gain of the  (in mu).
         """
         if gain not in (1, 10, 100, 1000):
             raise Exception('Error: invalid gain. Must be one of (1, 10, 100, 1000).')
+        # setter
         yield self.api.setSamplerGain(channel, int(np.log10(gain)))
+        # getter
+        sampler_gains = yield self.api.getSamplerGains()
+        returnValue(sampler_gains[channel])
 
-    @setting(521, "Sampler Read", samples='i', returns='*v')
-    def samplerRead(self, c, samples=None):
+    @setting(521, "Sampler Read", channels='*i', rate='v', samples='i', returns='*v')
+    def samplerRead(self, c, channels, rate, samples):
         """
-        Acquire samples.
+        Read samples from given channels on the Sampler in a given time and
+            averages it over a number of trials.
         Arguments:
-            samples (int)   : the number of samples to read
+            channels    list(int): a list of channels to read. Channels must be in [0, 7].
+            rate        (float): the sample rate to read at (in Hz). Must be in [10, 1e4].
+            samples     (int): the number of samples to read.
         Returns:
-                    (*float): the samples
+                        list(float): the average values for each channel (in volts).
+        """
+        if samples % 2 == 1:
+            raise Exception('Error: number of samples must be even')
+        # get channel gains
+        gains = yield self.api.getSamplerGains()
+        gains = [(gains >> 2 * i) & 0b11 for i in range(8)]
+        # acquire samples
+        samples = yield self.api.readSampler(channels, rate, samples)
+        # todo: keep values only for channels of interest
+        # todo: average values
+        # todo: convert mu to volts
+        for i in range(len(sampleArr)):
+            self.adc_mu_to_volt(sampleArr[i], gains[i % 8])
+        returnValue(sampleArr)
+
+    @setting(522, "Sampler Read List", channels='*i', rate='v', samples='i', returns='*2v')
+    def samplerReadList(self, c, channels, rate, samples):
+        """
+        Read samples from given channels on the Sampler in a given time and
+            returns all values.
+        Arguments:
+            channels    list(int): a list of channels to read. Channels must be in [0, 7].
+            rate        (float): the sample rate to read at (in Hz). Must be in [10, 1e4].
+            samples     (int): the number of samples to read.
+        Returns:
+                        list(float): the sampler values for each channel (in volts).
         """
         if samples is None:
             samples = 8

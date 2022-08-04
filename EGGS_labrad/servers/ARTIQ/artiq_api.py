@@ -4,7 +4,7 @@ from artiq.language import *
 from artiq.coredevice import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
-from artiq.coredevice.urukul import urukul_sta_rf_sw
+from artiq.coredevice.urukul import urukul_sta_rf_sw, CFG_PROFILE
 
 from builtins import ConnectionAbortedError, ConnectionResetError
 
@@ -15,7 +15,6 @@ class ARTIQ_api(object):
     Directly accesses the hardware on the box without having to use artiq_master.
     # todo: set version so we know what we're compatible with
     # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
-    # todo: ensure essential dma sequences are recorded upon startup
     # todo: write sequence that pulls all dds values so we don't have to wait forever during dds client startup
     # todo: see if we can get initialization status of DDSs and initialize upon startup only if they are uninitialized
     """
@@ -144,7 +143,7 @@ class ARTIQ_api(object):
                 with parallel:
                     self.ttlout_dict[0].pulse(1*ms)
                     self.ttlout_dict[1].pulse(1*ms)
-                delay(1.0*ms)
+                delay(1.0 * ms)
 
     def record2(self, ttl_seq, dds_seq, sequencename):
         """
@@ -228,11 +227,14 @@ class ARTIQ_api(object):
             raise Exception('Invalid device name.')
         # convert us to mu
         time_mu = self.core.seconds_to_mu(time_us * us)
+        # create holding structures for counts
+        setattr(self, "ttl_counts_array", np.zeros(trials))
         # get counts
-        # todo: setattr instead
-        self.pmt_counts_array = np.zeros(trials)
         self._counterTTL(dev, time_mu, trials)
-        return self.pmt_counts_array
+        # delete holding structure
+        tmp_arr = self.ttl_counts_array
+        delattr(self, "ttl_counts_array")
+        return tmp_arr
 
     @kernel
     def _counterTTL(self, dev, time_mu, trials):
@@ -240,14 +242,14 @@ class ARTIQ_api(object):
         for i in range(trials):
             self.core.break_realtime()
             dev.gate_rising_mu(time_mu)
-            self.recordValues(dev.fetch_count(), i)
+            self._recordTTLCounts(dev.fetch_count(), i)
 
     @rpc(flags={"async"})
-    def recordValues(self, value, index):
+    def _recordTTLCounts(self, value, index):
         """
         Records values via rpc to minimize kernel overhead.
         """
-        self.pmt_counts_array[index] = value
+        self.ttl_counts_array[index] = value
 
     # DDS
     @autoreload
@@ -449,6 +451,11 @@ class ARTIQ_api(object):
             board_sw_tmp += list(map(int, sw_state_processed))
         dds_params_processed[:, 3] = board_sw_tmp
 
+        # delete holding structures
+        delattr(self, "channel_profiledata")
+        delattr(self, "board_sw")
+        delattr(self, "board_att")
+
         return dds_params_processed
 
     @kernel
@@ -476,6 +483,25 @@ class ARTIQ_api(object):
     def _recordParamsBoard(self, sw_state, att_state):
         self.board_sw.append(urukul_sta_rf_sw(sw_state))
         self.board_att.append(np.uintc(att_state))
+
+    #
+    # # DDS PROFILE/RAM
+    # def getDDSProfile(self, dds_name, profile_num):
+    #     """
+    #     Get the profile number of a DDS channel.
+    #     """
+    #     dev = self.dds_dict[dds_name]
+    #     # get channel number of dds
+    #     # channel_num = dev.chip_select - 4
+    #     # # get board status register
+    #     # urukul_cfg = self._getUrukulStatus(dev.cpld)
+    #     # # extract switch register from status register
+    #     # sw_reg = urukul_sta_rf_sw(urukul_cfg)
+    #     # return (sw_reg >> channel_num) & 0x1
+    #     # self.bus.set_config_mu(SPI_CONFIG | spi.SPI_END, 24,
+    #     #                        SPIT_CFG_WR, CS_CFG)
+    #     # self.bus.write(cfg << 8)
+    #     # self.cfg_reg = cfg
 
 
     # URUKUL
@@ -507,6 +533,14 @@ class ARTIQ_api(object):
         """
         self.core.reset()
         return cpld.get_att_mu()
+
+    # @kernel
+    # def _getUrukulProfile(self, cpld):
+    #     """
+    #     Get the profile register of an Urukul board.
+    #     """
+    #     self.core.reset()
+    #     return (cpld.cfg_reg >> CFG_PROFILE) & 0x8
 
 
     # DAC/ZOTINO
@@ -659,16 +693,16 @@ class ARTIQ_api(object):
 
     @autoreload
     def setSamplerGain(self, channel_num, gain_mu):
-        self._setSamplerGain(channel_num, gain_mu)
-
-    @kernel
-    def setSamplerGain(self, channel_num, gain_mu):
         """
         Set the gain for a sampler channel.
         :param channel_num: Channel to set
         :param gain_mu: Register to read from
         :return: the value of the register
         """
+        self._setSamplerGain(channel_num, gain_mu)
+
+    @kernel
+    def _setSamplerGain(self, channel_num, gain_mu):
         self.core.reset()
         self.sampler.set_gain_mu(channel_num, gain_mu)
 
@@ -686,17 +720,32 @@ class ARTIQ_api(object):
         return self.sampler.get_gains_mu()
 
     @autoreload
-    def readSampler(self, sampleArr):
-        return self._readSampler(sampleArr)
+    def readSampler(self, rate_hz, samples):
+        setattr(self, "sampler_dataset", np.zeros((samples, 8), dtype=np.int16))
+        setattr(self, "sampler_holder", np.zeros(8, dtype=np.int16))
+        # convert rate to mu
+        time_delay_mu = self.core.seconds_to_mu(1 / rate_hz)
+        # read samples!
+        self._readSampler(time_delay_mu, samples)
+        # delete holding structure
+        tmp_arr = self.sampler_dataset
+        setattr(self, "sampler_dataset")
+        setattr(self, "sampler_holder")
+        return tmp_arr
 
     @kernel
-    def _readSampler(self, sampleArr):
-        """
-        Set the gain of
-        :param channel_num: Channel to set
-        :param gain_mu: Register to read from
-        :return: the value of the register
-        """
-        # todo: make onboard function like pmt
+    def _readSampler(self, time_delay_mu, samples):
         self.core.reset()
-        return self.sampler.sample_mu(sampleArr)
+        for i in range(samples):
+            with parallel:
+                with sequential:
+                    self.sampler.sample_mu(self.sampler_holder)
+                    self._recordSamplerValues(i, self.sampler_holder)
+                delay_mu(time_delay_mu)
+
+    @rpc(flags={"async"})
+    def _recordSamplerValues(self, i, value_arr):
+        """
+        Records values via rpc to minimize kernel overhead.
+        """
+        self.sampler_dataset[i] = value_arr
