@@ -716,17 +716,20 @@ class ARTIQ_Server(LabradServer):
         """
         if samples % 2 == 1:
             raise Exception('Error: number of samples must be even')
+        elif (rate < 10) or (rate > 1e4):
+            raise Exception('Error: number of samples must be even')
         # get channel gains
-        gains = yield self.api.getSamplerGains()
-        gains = [(gains >> 2 * i) & 0b11 for i in range(8)]
+        sampler_gains = yield self.api.getSamplerGains()
+        gain_arr_mu = np.array([sampler_gains[channel_num] for channel_num in channels])
         # acquire samples
-        samples = yield self.api.readSampler(channels, rate, samples)
-        # todo: keep values only for channels of interest
-        # todo: average values
-        # todo: convert mu to volts
-        for i in range(len(sampleArr)):
-            self.adc_mu_to_volt(sampleArr[i], gains[i % 8])
-        returnValue(sampleArr)
+        samples = yield self.api.readSampler(rate, samples)
+        # keep values only for channels of interest
+        samples = np.array([samples[:, channel_num] for channel_num in channels])
+        # average values
+        sample_mean = np.mean(samples, axis=1)
+        # convert mu to volts
+        sample_mean_volts = [self.adc_mu_to_volt(sample_mean[i], gain_arr_mu[i]) for i in range(len(channels))]
+        returnValue(sample_mean_volts)
 
     @setting(522, "Sampler Read List", channels='*i', rate='v', samples='i', returns='*2v')
     def samplerReadList(self, c, channels, rate, samples):
@@ -740,21 +743,21 @@ class ARTIQ_Server(LabradServer):
         Returns:
                         list(float): the sampler values for each channel (in volts).
         """
-        if samples is None:
-            samples = 8
-        elif samples % 2 == 1:
+        if samples % 2 == 1:
+            raise Exception('Error: number of samples must be even')
+        elif (rate < 10) or (rate > 1e4):
             raise Exception('Error: number of samples must be even')
         # get channel gains
-        gains = yield self.api.getSamplerGains()
-        gains = [(gains >> 2 * i) & 0b11 for i in range(8)]
+        sampler_gains = yield self.api.getSamplerGains()
+        gain_arr_mu = np.array([sampler_gains[channel_num] for channel_num in channels])
         # acquire samples
-        sampleArr = [0] * samples
-        yield self.api.readSampler(sampleArr)
-        # convert mu to gain
-        for i in range(len(sampleArr)):
-            self.adc_mu_to_volt(sampleArr[i], gains[i % 8])
-        self.adcUpdated(sampleArr)
-        returnValue(sampleArr)
+        samples = yield self.api.readSampler(rate, samples)
+        # keep values only for channels of interest
+        samples = np.array([samples[:, channel_num] for channel_num in channels])
+        # convert mu to volts
+        # todo: finish
+        sample_mean_volts = [self.adc_mu_to_volt(sample_mean[i], gain_arr_mu[i]) for i in range(len(channels))]
+        returnValue(sample_mean_volts)
 
 
     # CONTEXT

@@ -729,16 +729,16 @@ class ARTIQ_api(object):
 
     @autoreload
     def readSampler(self, rate_hz, samples):
-        setattr(self, "sampler_dataset", np.zeros((samples, 8), dtype=np.int16))
-        setattr(self, "sampler_holder", np.zeros(8, dtype=np.int16))
+        setattr(self, "sampler_dataset", np.zeros((samples, 8), dtype=np.int32))
+        setattr(self, "sampler_holder", np.zeros(8, dtype=np.int32))
         # convert rate to mu
         time_delay_mu = self.core.seconds_to_mu(1 / rate_hz)
         # read samples!
         self._readSampler(time_delay_mu, samples)
         # delete holding structure
         tmp_arr = self.sampler_dataset
-        setattr(self, "sampler_dataset")
-        setattr(self, "sampler_holder")
+        delattr(self, "sampler_dataset")
+        delattr(self, "sampler_holder")
         return tmp_arr
 
     @kernel
