@@ -708,7 +708,15 @@ class ARTIQ_api(object):
 
     @autoreload
     def getSamplerGains(self):
-        return self._getSamplerGains()
+        # get raw gain register
+        gains = self._getSamplerGains()
+        gains = ('{:016b}'.format(gains))
+        # convert to machine units
+        gain_status_tmp = []
+        gain_status_tmp += [int(gains[i: i+2], base=2) for i in range(0, len(gains), 2)]
+        # reverse only at end since gains are ordered the other way
+        gain_status_tmp = gain_status_tmp[::-1]
+        return gain_status_tmp
 
     @kernel
     def _getSamplerGains(self):
@@ -717,7 +725,7 @@ class ARTIQ_api(object):
         :return: the sample channel gains.
         """
         self.core.reset()
-        return self.sampler.get_gains_mu()
+        return self.sampler.gains
 
     @autoreload
     def readSampler(self, rate_hz, samples):

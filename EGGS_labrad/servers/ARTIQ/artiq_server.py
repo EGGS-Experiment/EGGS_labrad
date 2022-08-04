@@ -682,7 +682,7 @@ class ARTIQ_Server(LabradServer):
         yield self.api.initializeSampler()
 
     @setting(512, "Sampler Gain", channel='i', gain='i', returns='i')
-    def samplerGain(self, c, channel, gain):
+    def samplerGain(self, c, channel, gain=None):
         """
         Set the gain of a sampler channel.
         Arguments:
@@ -691,13 +691,16 @@ class ARTIQ_Server(LabradServer):
         Returns:
                     (int)   : the channel gain of the  (in mu).
         """
-        if gain not in (1, 10, 100, 1000):
-            raise Exception('Error: invalid gain. Must be one of (1, 10, 100, 1000).')
         # setter
-        yield self.api.setSamplerGain(channel, int(np.log10(gain)))
+        if gain is not None:
+            if gain not in (1, 10, 100, 1000):
+                raise Exception('Error: invalid gain. Must be one of (1, 10, 100, 1000).')
+            gain_mu = int(np.log10(gain))
+            yield self.api.setSamplerGain(channel, gain_mu)
         # getter
         sampler_gains = yield self.api.getSamplerGains()
-        returnValue(sampler_gains[channel])
+        gain = int(10 ** sampler_gains[channel])
+        returnValue(gain)
 
     @setting(521, "Sampler Read", channels='*i', rate='v', samples='i', returns='*v')
     def samplerRead(self, c, channels, rate, samples):
