@@ -42,7 +42,7 @@ class PMT_client(GUIClient):
         self.gui.read_cont_switch.toggled.connect(lambda status: self.toggle_polling(status))
         self.gui.flip.clicked.connect(lambda: self.flipper_pulse())
         # lock
-        self.gui.lockswitch.toggled.connect(lambda status: self._lock(status))
+        self.gui.lockswitch.clicked.connect(lambda status: self._lock(status))
         # todo: make ttl counter # a variable
 
 
@@ -64,13 +64,13 @@ class PMT_client(GUIClient):
 
         # get counts
         try:
-            self._lock(True)
+            self._lock(False)
             count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), sample_time_us, num_samples)
         except Exception as e:
             print("Error while getting values:")
             print(e)
         finally:
-            self._lock(False)
+            self._lock(True)
 
         # update display
         # todo: clean up display
@@ -118,9 +118,11 @@ class PMT_client(GUIClient):
             self.gui.count_display.setStyleSheet('color: red')
 
         # set gui element status
-        self.gui.poll_interval.setEnabled(status)
-        self.gui.read_once_switch.setEnabled(status)
-        self.gui.flip.setEnabled(status)
+        self.gui.sample_time.setEnabled(not status)
+        self.gui.sample_num.setEnabled(not status)
+        self.gui.poll_interval.setEnabled(not status)
+        self.gui.read_once_switch.setEnabled(not status)
+        self.gui.flip.setEnabled(not status)
 
     @inlineCallbacks
     def flipper_pulse(self):
