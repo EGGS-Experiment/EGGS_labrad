@@ -63,14 +63,11 @@ class ADC_client(GUIClient):
         # set channel gain
         gain = 10 ** int(self.gui.channel_gain.currentIndex())
         channel = self.gui.channel_select.currentIndex()
-        print('ch: {:d}'.format(channel))
-        print('gain: {:d}'.format(gain))
-        #yield self.aq.sampler_gain([channel], gain)
-
+        yield self.aq.sampler_gain(channel, gain)
         # get counts
         try:
             self._lock(False)
-            count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), int(1e6 / sample_time_us), num_samples)
+            count_list = yield self.aq.sampler_read_list([channel], int(1e6 / sample_time_us), num_samples)
         except Exception as e:
             print("Error while getting values:")
             print(e)
@@ -80,9 +77,9 @@ class ADC_client(GUIClient):
         # update display
         # todo: clean up display
         if self.gui.sample_std_off.isChecked():
-            self.gui.count_display.setText("{:.3f}".format(mean(count_list)))
+            self.gui.count_display.setText("{:.4f}".format(mean(count_list)))
         else:
-            self.gui.count_display.setText("{:.3f} \u00B1 {:.3f}".format(mean(count_list), std(count_list)))
+            self.gui.count_display.setText("{:.4f} \u00B1 {:.4f}".format(mean(count_list), std(count_list)))
 
     @inlineCallbacks
     def update_counts_continually(self):
@@ -103,18 +100,23 @@ class ADC_client(GUIClient):
         if self.recording:
             yield self.dv.add(time() - self.starttime, mean(count_list), context=self.c_record)
 
+    @inlineCallbacks
     def toggle_polling(self, status):
+        print('h0')
         # start if not running
         if status and (not self.refresher.running):
             # set channel gain
             gain = 10 ** int(self.gui.channel_gain.currentIndex())
             self._channel = self.gui.channel_select.currentIndex()
-            yield self.aq.sampler_gain([self._channel], gain)
+            yield self.aq.sampler_gain(self._channel, gain)
+            print('h1')
             # get timing values
             poll_interval_s = self.gui.poll_interval.value()
             self.sample_time_us = int(self.gui.sample_time.value())
             self.num_samples = int(self.gui.sample_num.value())
             time_per_data = self.sample_time_us * self.num_samples * 1e-6
+            print('h1')
+
             # ensure valid timing
             if (time_per_data > poll_interval_s) or (time_per_data > 1):
                 raise Exception("Error: invalid timing.")
@@ -127,8 +129,12 @@ class ADC_client(GUIClient):
             self.gui.count_display.setStyleSheet('color: red')
 
         # set gui element status
-        self._lock(not status)
-        self.read_cont_switch.setEnabled(True)
+        self.gui.sample_time.setEnabled(not status)
+        self.gui.sample_num.setEnabled(not status)
+        self.gui.poll_interval.setEnabled(not status)
+        self.gui.read_once_switch.setEnabled(not status)
+        self.gui.channel_gain.setEnabled(not status)
+        self.gui.channel_select.setEnabled(not status)
 
     @inlineCallbacks
     def record(self, status):
@@ -151,7 +157,8 @@ class ADC_client(GUIClient):
         self.gui.sample_time.setEnabled(status)
         self.gui.sample_num.setEnabled(status)
         self.gui.poll_interval.setEnabled(status)
-        self.gui.flip.setEnabled(status)
+        self.gui.channel_gain.setEnabled(status)
+        self.gui.channel_select.setEnabled(status)
 
 
 if __name__ == "__main__":

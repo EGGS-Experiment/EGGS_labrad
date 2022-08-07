@@ -115,9 +115,9 @@ class ADC_gui(QFrame):
         layout.addWidget(self.sample_num,               10, 1)
         layout.addWidget(self.poll_interval,            10, 2)
         # running
-        layout.addWidget(self.read_once_switch,         10, 0)
-        layout.addWidget(self.read_cont_switch,         10, 1)
-        layout.addWidget(self.lockswitch,               10, 2)
+        layout.addWidget(self.read_once_switch,         11, 0)
+        layout.addWidget(self.read_cont_switch,         11, 1)
+        layout.addWidget(self.lockswitch,               11, 2)
 
     def stdToggle(self, status):
         """

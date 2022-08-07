@@ -751,13 +751,12 @@ class ARTIQ_Server(LabradServer):
         sampler_gains = yield self.api.getSamplerGains()
         gain_arr_mu = np.array([sampler_gains[channel_num] for channel_num in channels])
         # acquire samples
-        samples = yield self.api.readSampler(rate, samples)
+        samples_mu = yield self.api.readSampler(rate, samples)
         # keep values only for channels of interest
-        samples = np.array([samples[:, channel_num] for channel_num in channels])
+        samples_mu = np.array([samples_mu[:, channel_num] for channel_num in channels])
         # convert mu to volts
-        # todo: finish
-        sample_mean_volts = [self.adc_mu_to_volt(sample_mean[i], gain_arr_mu[i]) for i in range(len(channels))]
-        returnValue(sample_mean_volts)
+        samples_volts = np.array([self.adc_mu_to_volt(samples_mu[i], gain_arr_mu[i]) for i in range(len(channels))])
+        returnValue(samples_volts)
 
 
     # CONTEXT

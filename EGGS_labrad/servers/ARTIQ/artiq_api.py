@@ -357,7 +357,7 @@ class ARTIQ_api(object):
         att_reg = np.int32(self._getUrukulAtt(dev.cpld))
         # get only attenuation of channel
         return np.int32((att_reg >> (8 * channel_num)) & 0xff)
-~
+
     @autoreload
     def setDDSatt(self, dds_name, att_mu):
         """
