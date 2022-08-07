@@ -23,6 +23,8 @@ from EGGS_labrad.servers import PollingServer
 CURRENTSIGNAL = 913548
 TEMPERATURESIGNAL = 913549
 PIEZOSIGNAL = 913550
+# todo: send signal when values change
+# todo: subscribe to when values change
 
 
 class TopticaServer(PollingServer):
