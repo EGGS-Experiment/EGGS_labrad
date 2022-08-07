@@ -71,7 +71,7 @@ class DDS_client(GUIClient):
                 # set values
                 ad9910_widget.freq.setValue(freq_mu * 1e3 / (0xFFFFFFFF - 1))
                 ad9910_widget.ampl.setValue(ampl_mu * 1e2 / 0x3FFF)
-                ad9910_widget.att.setValue((255 - (att_mu & 0xFF)) / 8)
+                ad9910_widget.att.setValue((255 - (int(att_mu) & 0xFF)) / 8)
                 ad9910_widget.rfswitch.setChecked(sw_status)
 
     def initGUI(self):
