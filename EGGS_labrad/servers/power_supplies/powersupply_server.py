@@ -14,11 +14,14 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+from time import sleep
 from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
 
 # import device wrappers
-#from RigolDS1000Z import RigolDS1000ZWrapper
+from Keithley2231A import Keithley2231AWrapper
+# todo: channels
+# todo: output (series/parallel)
 
 
 class PowerSupplyServer(GPIBManagedServer):
@@ -29,7 +32,7 @@ class PowerSupplyServer(GPIBManagedServer):
     name = 'Power Supply Server'
 
     deviceWrappers = {
-        #'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper
+        #'RIGOL TECHNOLOGIES DS1104Z Plus': Keithley2231AWrapper
     }
 
 
