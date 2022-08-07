@@ -440,7 +440,7 @@ class ARTIQ_api(object):
         # process attenuation state
         board_att_tmp = []
         for i, att_state in enumerate(self.board_att):
-            att_state = hex(att_state)[2:][::-1]
+            att_state = '{:08x}'.format(att_state)[::-1]
             board_att_tmp += [int(att_state[i: i+2], base=16) for i in range(0, len(att_state), 2)]
         dds_params_processed[:, 2] = board_att_tmp
 
