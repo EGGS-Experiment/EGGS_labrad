@@ -16,13 +16,14 @@ timeout = 20
 ### END NODE INFO
 """
 import logging
+import numpy as np
 
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
 
-import numpy as np
 from artiq_api import ARTIQ_api
+from artiq_subscriber import ARTIQ_subscriber
 from EGGS_labrad.config import device_db as device_db_module
 
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
@@ -77,18 +78,32 @@ class ARTIQ_Server(LabradServer):
         yield self._setDevices()
         # set up context stuff
         self.listeners = set()
+        # todo: set up subscriber to listen to experiments
+        # todo: set up function that calls expRunning when subscriber notifies us that exp is running
+        # todo: set config that allows stop on run
 
     def _setClients(self):
         """
         Create clients to ARTIQ master.
         Used to get datasets, submit experiments, and monitor devices.
         """
+        # connect to master clients
         from sipyco.pc_rpc import Client
         try:
             self.scheduler = Client('::1', 3251, 'master_schedule')
             self.datasets = Client('::1', 3251, 'master_dataset_db')
         except Exception as e:
-            print('ARTIQ Master not running. Scheduler and datasets disabled.')
+            print("Unable to connect to ARTIQ Master. Scheduler and datasets disabled.")
+
+        # connect to master notifications
+        try:
+            self.subscriber_exp = ARTIQ_subscriber(self._thkim)
+            self.subscriber_exp.connect('::1', 3250)
+        except Exception as e:
+            print("Unable to connect to ARTIQ Master. Experiment notifications disabled.")
+
+    def _thkim(self, mod):
+        print('yzde ok {}'.format(mod))
 
     def _setVariables(self):
         """
@@ -154,9 +169,9 @@ class ARTIQ_Server(LabradServer):
     #     pass
 
 
-    # PULSE SEQUENCING
-    @setting(111, "Run Experiment", path='s', maxruns='i', returns='')
-    def runExperiment(self, c, path, maxruns=1):
+    # EXPERIMENTS/PULSE SEQUENCING
+    @setting(111, "Experiment Schedule", path='s', maxruns='i', returns='')
+    def experimentSchedule(self, c, path, maxruns=1):
         """
         Run the experiment a given number of times.
         Argument:
@@ -213,6 +228,33 @@ class ARTIQ_Server(LabradServer):
         """
         yield self.api.runDMA(handle_name)
         #todo: fix problem when we separately run experiment?
+
+    @setting(131, "Experiment Running", returns='')
+    def experimentRunning(self, c, ):
+        """
+        Run the experiment a given number of times.
+        Argument:
+            path    (string): the filepath to the ARTIQ experiment.
+            maxruns (int)   : the number of times to run the experiment
+        """
+        # set pipeline, priority, and expid
+        ps_pipeline = 'PS'
+        ps_priority = 1
+        ps_expid = {
+            'log_level': 30,
+            'file': path,
+            'class_name': None,
+            'arguments': {
+                'maxRuns': maxruns,
+                'linetrigger_enabled': self.linetrigger_enabled,
+                'linetrigger_delay_us': self.linetrigger_delay,
+                'linetrigger_ttl_name': self.linetrigger_ttl}
+        }
+
+        # run sequence then wait for experiment to submit
+        yield self.inCommunication.acquire()
+        self.ps_rid = yield deferToThread(self.scheduler.submit, pipeline_name=ps_pipeline, expid=ps_expid, priority=ps_priority)
+        self.inCommunication.release()
 
 
     # TTL
