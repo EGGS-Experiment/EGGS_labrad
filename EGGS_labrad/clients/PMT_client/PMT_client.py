@@ -144,7 +144,7 @@ class PMT_client(GUIClient):
             trunk = createTrunk(self.name)
             yield self.dv.cd(trunk, True, context=self.c_record)
             # todo: get channel correctly
-            yield self.dv.new('ARTIQ Sampler', [('Elapsed time', 't')], [('Channel N', 'Value', 'Volts')], context=self.c_record)
+            yield self.dv.new('PMT', [('Elapsed time', 't')], [('PMT Reading', 'Counts', 'Number')], context=self.c_record)
 
     def _lock(self, status):
         self.gui.read_once_switch.setEnabled(status)
