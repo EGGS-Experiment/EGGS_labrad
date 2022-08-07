@@ -757,3 +757,4 @@ class ARTIQ_api(object):
         Records values via rpc to minimize kernel overhead.
         """
         self.sampler_dataset[i] = value_arr
+

@@ -9,6 +9,9 @@ FILE_DIR="$( dirname "$0" )/server_cxn.py"
 source ~/.bash_profile
 conda activate labart
 
+# change shell title
+echo -n -e "\033]0;LabRAD Shell\007"
+
 # run file
 python -ix $FILE_DIR
 

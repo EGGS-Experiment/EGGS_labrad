@@ -6,6 +6,7 @@ from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.clients.PMT_client.PMT_gui import PMT_gui
+# todo: integrate recording
 
 
 class PMT_client(GUIClient):
@@ -24,7 +25,10 @@ class PMT_client(GUIClient):
         self.recording = False
         self.starttime = 0
         # create polling loop
-        self.refresher = LoopingCall(self.update_counts)
+        self.refresher = LoopingCall(self.update_counts_continually)
+        self._sample_time_us = 0
+        self._num_samples = 0
+        self._time_per_data = 0
 
     def initData(self):
         # set default values
@@ -34,7 +38,7 @@ class PMT_client(GUIClient):
 
     def initGUI(self):
         # read buttons
-        self.gui.read_once_switch.clicked.connect(lambda: self.update_counts())
+        self.gui.read_once_switch.clicked.connect(lambda: self.update_counts_once())
         self.gui.read_cont_switch.toggled.connect(lambda status: self.toggle_polling(status))
         self.gui.flip.clicked.connect(lambda: self.flipper_pulse())
         # lock
@@ -44,19 +48,46 @@ class PMT_client(GUIClient):
 
     # SLOTS
     @inlineCallbacks
-    def update_counts(self):
+    def update_counts_once(self):
         """
         Main function that actually gets counts from artiq.
+        Gets values once per button press.
         """
         # get values from GUI
         sample_time_us = int(self.gui.sample_time.value())
         num_samples = int(self.gui.sample_num.value())
         time_per_data = sample_time_us * num_samples * 1e-6
+
         # ensure valid timing
         if (time_per_data > self.gui.poll_interval.value()) or (time_per_data > 1):
             raise Exception("Error: invalid timing.")
+
         # get counts
-        count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), sample_time_us, num_samples)
+        try:
+            self._lock(True)
+            count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), sample_time_us, num_samples)
+        except Exception as e:
+            print("Error while getting values:")
+            print(e)
+        finally:
+            self._lock(False)
+
+        # update display
+        # todo: clean up display
+        if self.gui.sample_std_off.isChecked():
+            self.gui.count_display.setText("{:.3f}".format(mean(count_list)))
+        else:
+            self.gui.count_display.setText("{:.3f} \u00B1 {:.3f}".format(mean(count_list), std(count_list)))
+
+    @inlineCallbacks
+    def update_counts_continually(self):
+        """
+        Main function that actually gets counts from artiq.
+        Gets values continually.
+        """
+        # get counts
+        count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), self.sample_time_us, self.num_samples)
+
         # update display
         # todo: clean up display
         if self.gui.sample_std_off.isChecked():
@@ -70,19 +101,26 @@ class PMT_client(GUIClient):
     def toggle_polling(self, status):
         # start if not running
         if status and (not self.refresher.running):
+            # get timing values
             poll_interval_s = self.gui.poll_interval.value()
-            self.gui.poll_interval.setEnabled(False)
-            self.gui.read_once_switch.setEnabled(False)
+            self.sample_time_us = int(self.gui.sample_time.value())
+            self.num_samples = int(self.gui.sample_num.value())
+            time_per_data = self.sample_time_us * self.num_samples * 1e-6
+            # ensure valid timing
+            if (time_per_data > poll_interval_s) or (time_per_data > 1):
+                raise Exception("Error: invalid timing.")
+            # set up display and start polling
             self.gui.count_display.setStyleSheet('color: green')
             self.refresher.start(poll_interval_s, now=True)
-            self.gui.flip.setEnabled(False)
         # stop if running
         elif (not status) and (self.refresher.running):
             self.refresher.stop()
-            self.gui.read_once_switch.setEnabled(True)
-            self.gui.poll_interval.setEnabled(True)
             self.gui.count_display.setStyleSheet('color: red')
-            self.gui.flip.setEnabled(True)
+
+        # set gui element status
+        self.gui.poll_interval.setEnabled(status)
+        self.gui.read_once_switch.setEnabled(status)
+        self.gui.flip.setEnabled(status)
 
     @inlineCallbacks
     def flipper_pulse(self):
@@ -103,7 +141,8 @@ class PMT_client(GUIClient):
             self.starttime = time()
             trunk = createTrunk(self.name)
             yield self.dv.cd(trunk, True, context=self.c_record)
-            yield self.dv.new('PMT Counter', [('Elapsed time', 't')], [('PMT', 'Counts', 'Num.')], context=self.c_record)
+            # todo: get channel correctly
+            yield self.dv.new('ARTIQ Sampler', [('Elapsed time', 't')], [('Channel N', 'Value', 'Volts')], context=self.c_record)
 
     def _lock(self, status):
         self.gui.read_once_switch.setEnabled(status)
