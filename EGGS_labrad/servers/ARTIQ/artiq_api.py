@@ -321,7 +321,6 @@ class ARTIQ_api(object):
         asf = (profiledata >> 48)
         # ftw = 0XFFFFFFFF means not initialized
         ftw = 0 if (ftw == 0xFFFFFFFF) else ftw
-        print('ftw: {:x}'.format(ftw))
         # asf = -1 or 0x8b5 means amplitude has not been set
         asf = 0 if (asf < 0) or ((asf == 0x8b5) & (ftw == 0x0)) else asf & 0x3FFF
         return np.int32(ftw), np.int32(asf), np.int32(pow)
@@ -441,8 +440,7 @@ class ARTIQ_api(object):
         board_att_tmp = []
         for i, att_state in enumerate(self.board_att):
             att_state = '{:08x}'.format(att_state)
-            print('as: {:s}'.format(att_state))
-            board_att_tmp += [int(att_state[i: i+2], base=16) for i in range(0, len(att_state), 2)]
+            board_att_tmp += [int(att_state[i: i+2], base=16) for i in range(0, len(att_state), 2)][::-1]
         dds_params_processed[:, 2] = board_att_tmp
 
         # process switch state
