@@ -2,7 +2,52 @@ from twisted.internet.task import LoopingCall
 from labrad.server import LabradServer, setting
 
 
-__all__ = ["PollingServer", "ARTIQServer"]
+__all__ = ["ContextServer", "PollingServer", "ARTIQServer"]
+# todo: make polling server subclass from contextserver
+# todo: use contextserver more widely
+
+
+"""
+Context Server
+"""
+
+
+class ContextServer(LabradServer):
+    """
+    Holds all the functionality needed to manage contexts and listeners.
+    """
+
+    # STARTUP
+    def initServer(self):
+        super().initServer()
+        self.listeners = set()
+
+    def initContext(self, c):
+        """
+        Initialize a new context object.
+        """
+        self.listeners.add(c.ID)
+
+    def expireContext(self, c):
+        self.listeners.remove(c.ID)
+
+
+    # LISTENERS
+    def notifyOtherListeners(self, context, message, f):
+        """
+        Notifies all listeners except the one in the given context, executing function f.
+        """
+        notified = self.listeners.copy()
+        notified.remove(context.ID)
+        f(message, notified)
+
+    def getOtherListeners(self, c):
+        """
+        Get all listeners except for the context owner.
+        """
+        notified = self.listeners.copy()
+        notified.remove(c.ID)
+        return notified
 
 
 """
@@ -217,4 +262,3 @@ class ArduinoServer(SerialDeviceServer):
 
     # todo
     arduino_pins = {}
-
