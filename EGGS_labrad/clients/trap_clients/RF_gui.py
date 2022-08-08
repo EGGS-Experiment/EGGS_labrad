@@ -108,7 +108,7 @@ class RF_gui(QFrame):
         return QCustomGroupBox(modulation_widget, "Modulation")
 
     def makeLayout(self):
-        font = QFont('MS Shell Dlg 2', pointSize=20)
+        font = QFont('MS Shell Dlg 2', pointSize=17)
         layout = QGridLayout(self)
 
         # title
