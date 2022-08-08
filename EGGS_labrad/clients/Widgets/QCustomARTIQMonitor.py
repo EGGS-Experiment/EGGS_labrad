@@ -23,15 +23,16 @@ class QCustomARTIQMonitor(QFrame):
         layout = QGridLayout(self)
 
         # widgets
-        title = QLabel("Experiment Status")
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=12))
-        title.setAlignment(Qt.AlignCenter)
+        title = QLabel("Exp. Status")
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        title.setAlignment(Qt.AlignLeft)
         self.status_display = QLabel('Clear')
-        self.status_display.setStyleSheet('background-color: green')
+        self.status_display.setStyleSheet('background-color: green; color: white')
         self.status_display.setAlignment(Qt.AlignCenter)
+        self.status_display.setFont(QFont('MS Shell Dlg 2', pointSize=12))
 
         # lay out
-        layout.addWidget(title,         0, 0, 1, 1)
+        layout.addWidget(title,                 0, 0, 1, 1)
         layout.addWidget(self.status_display,   1, 0, 1, 1)
 
     def setStatus(self, status):
@@ -41,7 +42,7 @@ class QCustomARTIQMonitor(QFrame):
             status  (bool): whether an experiment is running.
         """
         if status:
-            self.status_display.setText('Experiment Running')
+            self.status_display.setText('Busy')
             self.status_display.setStyleSheet('background-color: red')
             self.parent.setDisabled(status)
         else:

@@ -3,7 +3,6 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton, QWidget, QVBoxLayout, QRadioButton
 
 from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomARTIQMonitor
-# todo: integrate recording
 
 
 class PMT_gui(QFrame):
@@ -16,7 +15,7 @@ class PMT_gui(QFrame):
         self.name = 'PMT Client'
         self.parent = parent
         self.setFrameStyle(0x0001 | 0x0030)
-        self.setFixedSize(300, 275)
+        self.setFixedSize(300, 350)
         self.makeWidgets()
         self.makeLayout()
         self.show()
@@ -30,17 +29,17 @@ class PMT_gui(QFrame):
         self.read_cont_switch = TextChangingButton(("Stop", "Loop"))
         self.title = QLabel(self.name)
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
-        self.title.setAlignment(Qt.AlignCenter)
+        self.title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         # create artiq experiment monitor
         self.artiq_monitor = QCustomARTIQMonitor(self)
 
         # display
         self.count_display_label = QLabel("Counts")
-        self.count_display_label.setAlignment(Qt.AlignLeft)
+        self.count_display_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.count_display = QLabel("0.000")
         self.count_display.setStyleSheet('color: red')
-        self.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        self.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=17))
         self.count_display.setAlignment(Qt.AlignCenter)
 
         # sample time
@@ -62,7 +61,6 @@ class PMT_gui(QFrame):
         self.sample_num.setDecimals(0)
         self.sample_num.setAlignment(Qt.AlignRight)
         self.sample_num.setFont(QFont('MS Shell Dlg 2', pointSize=12))
-        # todo: standard deviation
 
         # create radio buttons
         self.std_widget = QWidget()
@@ -116,6 +114,8 @@ class PMT_gui(QFrame):
         layout.addWidget(self.lockswitch,               9, 2)
         # flipper integration
         layout.addWidget(self.flip,                     10, 0)
+        # recording
+        layout.addWidget(self.record_button,            10, 1)
 
 
     def stdToggle(self, status):

@@ -1,14 +1,16 @@
-from time import time
-import time
 from numpy import mean, std
+from time import time, sleep
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
+
+from PyQt5.QtGui import QFont
 
 from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.clients.PMT_client.PMT_gui import PMT_gui
 
 EXPID = 564324
-# todo: integrate recording
+# todo: clean up display; make more programmatic
+# todo: make ttl counter # a variable
 
 
 class PMT_client(GUIClient):
@@ -47,9 +49,10 @@ class PMT_client(GUIClient):
         self.gui.read_once_switch.clicked.connect(lambda: self.update_counts_once())
         self.gui.read_cont_switch.toggled.connect(lambda status: self.toggle_polling(status))
         self.gui.flip.clicked.connect(lambda: self.flipper_pulse())
+        # recording
+        self.gui.record_button.clicked.connect(lambda status: self.record(status))
         # lock
         self.gui.lockswitch.clicked.connect(lambda status: self._lock(status))
-        # todo: make ttl counter # a variable
 
 
     # SLOTS
@@ -79,7 +82,6 @@ class PMT_client(GUIClient):
             self._lock(True)
 
         # update display
-        # todo: clean up display
         if self.gui.sample_std_off.isChecked():
             self.gui.count_display.setText("{:.3f}".format(mean(count_list)))
         else:
@@ -95,10 +97,11 @@ class PMT_client(GUIClient):
         count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), self.sample_time_us, self.num_samples)
 
         # update display
-        # todo: clean up display
         if self.gui.sample_std_off.isChecked():
+            self.gui.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=19))
             self.gui.count_display.setText("{:.3f}".format(mean(count_list)))
         else:
+            self.gui.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=17))
             self.gui.count_display.setText("{:.3f} \u00B1 {:.3f}".format(mean(count_list), std(count_list)))
         # store data if recording
         if self.recording:
@@ -134,7 +137,7 @@ class PMT_client(GUIClient):
     def flipper_pulse(self):
         # send TTL to flipper mount
         yield self.aq.ttl_set("ttl23", 1)
-        time.sleep(.2)
+        sleep(.2)
         yield self.aq.ttl_set("ttl23", 0)
 
     @inlineCallbacks
@@ -149,8 +152,7 @@ class PMT_client(GUIClient):
             self.starttime = time()
             trunk = createTrunk(self.name)
             yield self.dv.cd(trunk, True, context=self.c_record)
-            # todo: get channel correctly
-            yield self.dv.new('PMT', [('Elapsed time', 't')], [('PMT Reading', 'Counts', 'Number')], context=self.c_record)
+            yield self.dv.new('PMT', [('Elapsed time', 't')], [('PMT Counts', 'Counts', 'Number')], context=self.c_record)
 
     def experimentRunning(self, c, status):
         # stop polling
