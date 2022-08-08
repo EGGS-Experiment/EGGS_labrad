@@ -929,6 +929,7 @@ def open_backend(filename):
     """
     csv_file = filename + '.csv'
     hdf5_file = filename + '.hdf5'
+    h5_file = filename + '.h5'
 
     # check to see whether the CSV file exists
     if os.path.exists(csv_file):
@@ -939,6 +940,8 @@ def open_backend(filename):
     # check to see whether the HDF5 file exists
     elif os.path.exists(hdf5_file):
         return open_hdf5_file(hdf5_file)
+    elif os.path.exists(h5_file):
+        return open_hdf5_file(h5_file)
     # return an error if the file doesn't exist
     # (though this shouldn't happen since we check several times)
     else:

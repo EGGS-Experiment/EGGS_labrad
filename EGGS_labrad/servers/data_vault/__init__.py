@@ -21,6 +21,7 @@ _encodings = [
     ('>', '%g'),
     ('|', '%v')
 ]
+# todo: generalize file extension support
 
 
 def filename_encode(name):
@@ -220,9 +221,11 @@ class Session(object):
         """
         files = os.listdir(self.dir)
         dirs = [filename_decode(s[:-4]) for s in files if s.endswith('.dir')]
+        # todo: what about actual csv files?
         csv_datasets = [filename_decode(s[:-4]) for s in files if s.endswith('.ini') and s.lower() != 'session.ini']
         hdf5_datasets = [filename_decode(s[:-5]) for s in files if s.endswith('.hdf5')]
-        datasets = sorted(csv_datasets + hdf5_datasets)
+        h5_datasets = [filename_decode(s[:-3]) for s in files if s.endswith('.h5')]
+        datasets = sorted(csv_datasets + hdf5_datasets + h5_datasets)
 
         # apply tag filters
         def include(entries, tag, tags):
@@ -257,7 +260,7 @@ class Session(object):
         filenames = []
         for s in files:
             base, _, ext = s.rpartition('.')
-            if ext in ['csv', 'hdf5']:
+            if ext in ['csv', 'hdf5', 'h5']:
                 filenames.append(filename_decode(base))
         return sorted(filenames)
 
@@ -292,7 +295,8 @@ class Session(object):
 
         filename = filename_encode(name)
         file_base = os.path.join(self.dir, filename)
-        if not (os.path.exists(file_base + '.csv') or os.path.exists(file_base + '.hdf5')):
+        if not (os.path.exists(file_base + '.csv') or os.path.exists(file_base + '.hdf5') or os.path.exists(file_base + '.h5')):
+        # if not all(map(os.path.exists, [file_base + suffix for suffix in ['.csv', '.hdf5', '.h5']])):
             raise errors.DatasetNotFoundError(name)
 
         if name in self.datasets:
