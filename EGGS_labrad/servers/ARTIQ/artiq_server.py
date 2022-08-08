@@ -60,7 +60,7 @@ class ARTIQ_Server(LabradServer):
     ddsChanged = Signal(DDSSIGNAL_ID, 'signal: dds changed', '(ssv)')
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(isv)')
     adcUpdated = Signal(ADCSIGNAL_ID, 'signal: adc updated', '(*v)')
-    expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(b)')
+    expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', 'b')
 
 
     # STARTUP

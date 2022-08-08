@@ -102,6 +102,21 @@ class DDS_gui(QFrame):
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, self.row_length)
+
+        # create artiq experiment monitor
+        exp_monitor = QFrame()
+        exp_monitor.setFrameStyle(0x0001 | 0x0030)
+        exp_monitor_layout = QGridLayout(exp_monitor)
+        exp_monitor_label = QLabel("Experiment Status")
+        exp_monitor_label.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        exp_monitor_label.setAlignment(Qt.AlignCenter)
+        self.exp_monitor_status = QLabel('Clear')
+        self.exp_monitor_status.setStyleSheet('background-color: green')
+        self.exp_monitor_status.setAlignment(Qt.AlignCenter)
+        exp_monitor_layout.addWidget(exp_monitor_label,         0, 0, 1, 1)
+        exp_monitor_layout.addWidget(self.exp_monitor_status,   1, 0, 1, 1)
+        layout.addWidget(exp_monitor, 0, self.row_length - 1, 1, 1)
+
         # layout urukuls
         urukul_iter = iter(range(len(self.urukul_list)))
         for urukul_name, ad9910_list in self.urukul_list.items():
