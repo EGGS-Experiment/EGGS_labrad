@@ -40,6 +40,7 @@ import labrad.wrappers
 
 from data_vault import SessionStore
 from data_vault.server import DataVault
+# todo: add support for comments
 
 
 @inlineCallbacks

@@ -25,6 +25,9 @@ DATA_FORMAT = '%%.%dG' % PRECISION
 FILE_TIMEOUT_SEC = 60  # how long to keep datafiles open if not accessed
 DATA_TIMEOUT = 300  # how long to keep data in memory if not accessed
 DATA_URL_PREFIX = 'data:application/labrad;base64,'
+# todo: break backend up into general stuff (e.g. selfclosingfile, helper functions) and file format implementations
+# todo: note somewhere that versioning uses semantic versioning
+# todo: document versions and differences
 
 
 def time_to_str(t):
@@ -658,8 +661,7 @@ class HDF5MetaData(object):
         Parameter names in the HDF5 file are prefixed with 'Param.' to avoid
         conflicts with the other metadata.
         """
-        names = [str(k[6:]) for k in self.dataset.attrs if k.startswith('Param.')]
-        return names
+        return [str(k[6:]) for k in self.dataset.attrs if k.startswith('Param.')]
 
     def addComment(self, user, comment):
         """
@@ -820,7 +822,6 @@ class SimpleHDF5Data(HDF5MetaData):
     is stored in /DataVault within the HDF5 file.
     """
     def __init__(self, fh):
-
         self._file = fh
         if 'Version' not in self.file.attrs:
             self.file.attrs['Version'] = np.asarray([2, 0, 0], dtype=np.int32)
@@ -880,6 +881,89 @@ class SimpleHDF5Data(HDF5MetaData):
         return pos < len(self)
 
     def shape(self):
+        # todo: maybe better way of doing this? isn't cols just self.dataset.shape[1]?
+        cols = len(self.getIndependents() + self.getDependents())
+        rows = self.dataset.shape[0]
+        return (rows, cols)
+
+
+class ARTIQHDF5Data(HDF5MetaData):
+    """
+    todo
+    """
+    def __init__(self, fh):
+        self._file = fh
+
+        # set versioning
+        if 'Version' not in self.file.attrs:
+            self.file.attrs['Version'] = np.asarray([4, 0, 0], dtype=np.int32)
+        self.version = np.asarray(self.file.attrs['Version'], dtype=np.int32)
+
+        # get datasets
+        dataset_group = self.file["datasets"]
+        assert isinstance(dataset_group, h5py.Group)
+        # todo: figure a better way of accommodating multiple datasets
+        assert len(dataset_group) == 1
+        self.dataset_name = list(self.file["datasets"].keys())[0]
+
+    @property
+    def file(self):
+        return self._file()
+
+    @property
+    def dataset(self):
+        return self.file["datasets"][self.dataset_name]
+
+    def __len__(self):
+        return self.dataset.shape[0]
+
+    def initialize_info(self, title, indep, dep):
+        raise NotImplementedError
+
+    def addData(self, data):
+        raise NotImplementedError
+
+    def getIndependents(self):
+        """
+        todo: justify
+        """
+        prefix = 'Independent{}.'.format(1)
+        label = prefix + 'label'
+        shape = 1
+        datatype = 'v'
+        unit = 'arb.'
+        return [Independent(label, shape, datatype, unit)]
+
+    def getDependents(self):
+        rv = []
+        num_dependents = self.dataset.shape[1] - 1
+        for idx in range(num_dependents):
+            prefix = 'Dependent{}.'.format(idx)
+            label = prefix + 'label'
+            legend = prefix + 'legend'
+            shape = 1
+            datatype = 'v'
+            unit = 'arb.'
+            rv.append(Dependent(label, legend, shape, datatype, unit))
+        return rv
+
+    def getData(self, limit, start, transpose, simpleOnly):
+        """
+        Get up to <limit> rows from a dataset.
+        """
+        if transpose:
+            raise RuntimeError("Transpose specified for simple data format: not supported")
+        struct_data = self.dataset[start:] if limit is None else self.dataset[start:start + limit]
+        columns = []
+        for idx in range(len(struct_data.dtype)):
+            columns.append(struct_data['f{}'.format(idx)])
+        data = np.column_stack(columns)
+        return data, start + data.shape[0]
+
+    def hasMore(self, pos):
+        return pos < len(self)
+
+    def shape(self):
         cols = len(self.getIndependents() + self.getDependents())
         rows = self.dataset.shape[0]
         return (rows, cols)
@@ -896,13 +980,23 @@ def open_hdf5_file(filename):
     """
     # instantiate the file
     fh = SelfClosingFile(h5py.File, open_args=(filename, 'a'))
-    version = fh().attrs['Version']
 
-    # check file for versioning then return it
-    if version[0] == 2:
-        return SimpleHDF5Data(fh)
-    else:
-        return ExtendedHDF5Data(fh)
+    # instantiate correct data object
+    try:
+        version = fh().attrs['Version']
+
+        # check file for versioning then return it
+        if version[0] == 2:
+            return SimpleHDF5Data(fh)
+        else:
+            return ExtendedHDF5Data(fh)
+    # accommodate new files (must be new files since any labrad datavault files would have version)
+    except KeyError:
+        # accommodate artiq files
+        if 'artiq_version' in fh().keys():
+            return ARTIQHDF5Data(fh)
+    except Exception as e:
+        print('Error:', e)
 
 
 def create_backend(filename, title, indep, dep, extended):
@@ -911,10 +1005,7 @@ def create_backend(filename, title, indep, dep, extended):
     """
     hdf5_file = filename + '.hdf5'
     fh = SelfClosingFile(h5py.File, open_args=(hdf5_file, 'a'))
-    if extended:
-        data = ExtendedHDF5Data(fh)
-    else:
-        data = SimpleHDF5Data(fh)
+    data = ExtendedHDF5Data(fh) if extended else SimpleHDF5Data(fh)
     data.initialize_info(title, indep, dep)
     return data
 
