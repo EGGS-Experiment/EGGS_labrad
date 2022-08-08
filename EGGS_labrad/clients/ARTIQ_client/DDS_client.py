@@ -128,14 +128,7 @@ class DDS_client(GUIClient):
                     ad9910_widget.ampl.blockSignals(False)
 
     def experimentRunning(self, c, status):
-        if status:
-            self.gui.exp_monitor_status.setText('Running')
-            self.gui.exp_monitor_status.setStyleSheet('background-color: red')
-            self.gui.setDisabled(status)
-        else:
-            self.gui.setDisabled(status)
-            self.gui.exp_monitor_status.setText('Clear')
-            self.gui.exp_monitor_status.setStyleSheet('background-color: green')
+        self.gui.artiq_monitor.setStatus(status)
 
 
 if __name__ == "__main__":

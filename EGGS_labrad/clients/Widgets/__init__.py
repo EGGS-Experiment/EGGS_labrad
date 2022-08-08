@@ -1,7 +1,7 @@
 __all__ = [
-    "QDetachableTabWidget", "TextChangingButton", 'Lockswitch', 'QCustomSlideIndicator', 'QCustomGroupBox',
+    'QDetachableTabWidget', 'TextChangingButton', 'Lockswitch', 'QCustomSlideIndicator', 'QCustomGroupBox',
     'QClientHeader', 'QClientMenuHeader', 'QChannelHolder', 'QInitializePlaceholder', 'QCustomProgressBar',
-    'QCustomEditableLabel'
+    'QCustomEditableLabel', 'QCustomUnscrollableSpinBox', 'QCustomARTIQMonitor'
 ]
 
 
@@ -15,4 +15,5 @@ from .QClientMenuHeader import QClientMenuHeader
 from .QInitializePlaceholder import QInitializePlaceholder
 from .QCustomEditableLabel import QCustomEditableLabel
 from .QCustomUnscrollableSpinBox import QCustomUnscrollableSpinBox
+from .QCustomARTIQMonitor import QCustomARTIQMonitor
 # todo: create record button widget

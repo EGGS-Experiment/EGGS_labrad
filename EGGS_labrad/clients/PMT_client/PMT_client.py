@@ -6,6 +6,8 @@ from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.clients.PMT_client.PMT_gui import PMT_gui
+
+EXPID = 564324
 # todo: integrate recording
 
 
@@ -19,6 +21,7 @@ class PMT_client(GUIClient):
             self.gui = PMT_gui()
         return self.gui
 
+    @inlineCallbacks
     def initClient(self):
         # set recording stuff
         self.c_record = self.cxn.context()
@@ -29,6 +32,9 @@ class PMT_client(GUIClient):
         self._sample_time_us = 0
         self._num_samples = 0
         self._time_per_data = 0
+        # connect to signals
+        yield self.aq.signal__exp_running(EXPID)
+        yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID)
 
     def initData(self):
         # set default values
@@ -145,6 +151,13 @@ class PMT_client(GUIClient):
             yield self.dv.cd(trunk, True, context=self.c_record)
             # todo: get channel correctly
             yield self.dv.new('PMT', [('Elapsed time', 't')], [('PMT Reading', 'Counts', 'Number')], context=self.c_record)
+
+    def experimentRunning(self, c, status):
+        # stop polling
+        if self.refresher.running:
+            self.gui.read_cont_switch.click()
+        # set artiq monitor status
+        self.gui.artiq_monitor.setStatus(status)
 
     def _lock(self, status):
         self.gui.read_once_switch.setEnabled(status)
