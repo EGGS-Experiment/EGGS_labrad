@@ -10,47 +10,37 @@ class ARTIQ_subscriber(object):
     """
 
     def __init__(self, notify_cb):
-        self.loop = get_event_loop()
         self._notify_cb = notify_cb
-        self._struct_holder = None
+        self._struct_holder = struct_holder(dict())
         self._subscriber = Subscriber('schedule', self._target_builder, self._notify_cb)
-        print('artiq_subscriber: subscriber created')
 
     def connect(self, host, port):
-        print('artiq_subscriber: connecting...')
-        self.loop.run_until_complete(self._suscriber.connect(host, port))
+        get_event_loop().run_until_complete(self._subscriber.connect(host, port))
         # todo: is atexit_register_coroutine necessary?
         atexit_register_coroutine(self._subscriber.close)
-        print('artiq_subscriber: finished connecting...')
 
     def _target_builder(self, struct_init):
-        print('artiq_subscriber: target builder called')
-        self._struct_holder = structexample(struct_init)
+        self._struct_holder = struct_holder(struct_init)
+        return self._struct_holder
 
 
-class structexample:
+class struct_holder:
     def __init__(self, init):
-        print('init:', init)
         self.backing_store = init
 
     def __setitem__(self, k, v):
-        print('setitem called: {}'.format(self.backing_store.keys()))
         self.backing_store[k] = v
-        print(self.backing_store)
 
     def __delitem__(self, k):
-        print('delitem called: {}'.format(self.backing_store.keys()))
         del self.backing_store[k]
-        print(self.backing_store)
 
     def __getitem__(self, k):
-        print('getitem called: {}'.format(self.backing_store.keys()))
         def update():
             self[k] = self.backing_store[k]
         return substructexample(update, self.backing_store[k])
 
 
-class substructexample:
+class substruct_holder:
     def __init__(self, update_cb, ref):
         self.update_cb = update_cb
         self.ref = ref
@@ -76,4 +66,4 @@ class substructexample:
         self.update_cb()
 
     def __getitem__(self, key):
-        return substructexample(self.update_cb, self.ref[key])
+        return substruct_holder(self.update_cb, self.ref[key])

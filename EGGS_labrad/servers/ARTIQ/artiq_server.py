@@ -60,7 +60,7 @@ class ARTIQ_Server(LabradServer):
     ddsChanged = Signal(DDSSIGNAL_ID, 'signal: dds changed', '(ssv)')
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(isv)')
     adcUpdated = Signal(ADCSIGNAL_ID, 'signal: adc updated', '(*v)')
-    expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(bi)')
+    expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(b)')
 
 
     # STARTUP
@@ -82,6 +82,7 @@ class ARTIQ_Server(LabradServer):
         # todo: set up function that calls expRunning when subscriber notifies us that exp is running
         # todo: set config that allows stop on run
 
+    #@inlineCallbacks
     def _setClients(self):
         """
         Create clients to ARTIQ master.
@@ -97,13 +98,46 @@ class ARTIQ_Server(LabradServer):
 
         # connect to master notifications
         try:
-            self.subscriber_exp = ARTIQ_subscriber(self._thkim)
+            # set up ARTIQ subscriber
+            from asyncio import get_event_loop, set_event_loop, Event
+            self._exp_running = False
+            self.subscriber_exp = ARTIQ_subscriber(self._process_subscriber_update)
             self.subscriber_exp.connect('::1', 3250)
+
+            loop = get_event_loop()
+            stop_event = Event()
+
+            # set up thread to run subscriber event loop in background
+            from threading import Thread
+            def run_in_background(loop):
+                set_event_loop(loop)
+                loop.run_until_complete(stop_event.wait())
+                loop.close()
+
+            t = Thread(target=run_in_background, args=(loop,))
+            t.start()
+
         except Exception as e:
+            print(e)
             print("Unable to connect to ARTIQ Master. Experiment notifications disabled.")
 
-    def _thkim(self, mod):
-        print('yzde ok {}'.format(mod))
+    def _process_subscriber_update(self, mod):
+        """
+        Checks if any experiments are running and sends a Signal
+        to clients accordingly.
+        """
+        # get number of running experiments
+        num_exps = len(self.subscriber_exp._struct_holder.backing_store)
+        # send experiment stop message
+        if (num_exps == 0) and (self._exp_running):
+            self.expRunning(False)
+            self._exp_running = False
+            #print('\tsignal: stopping')
+        # send experiment start message
+        elif (num_exps > 0) and (not self._exp_running):
+            self.expRunning(True)
+            self._exp_running = True
+            #print('\tsignal: running')
 
     def _setVariables(self):
         """
