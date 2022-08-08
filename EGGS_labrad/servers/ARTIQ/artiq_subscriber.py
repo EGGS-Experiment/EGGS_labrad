@@ -37,7 +37,7 @@ class struct_holder:
     def __getitem__(self, k):
         def update():
             self[k] = self.backing_store[k]
-        return substructexample(update, self.backing_store[k])
+        return substruct_holder(update, self.backing_store[k])
 
 
 class substruct_holder:
