@@ -818,7 +818,7 @@ class SimpleHDF5Data(HDF5MetaData):
 
     This is a very simple implementation that only supports a single 2-D dataset
     of all floats.  HDF5 files support multiple types, multiple dimensions, and
-    a filesystem-like tree of datasets within one file.  Here, the single dataset
+    a filesystem-like tree of datasets within one file. Here, the single dataset
     is stored in /DataVault within the HDF5 file.
     """
     def __init__(self, fh):
@@ -889,22 +889,33 @@ class SimpleHDF5Data(HDF5MetaData):
 
 class ARTIQHDF5Data(HDF5MetaData):
     """
-    todo
+    An ARTIQ dataset backed by a HDF5 file.
+
+    This is a very barebones implementation that assumes the first column
+    of data is the independent variable, and all subsequent columns are the
+    dependent variables.
+    Independent and dependent variables have been given generic names since
+    these aren't typically specified in ARTIQs dataset management system.
+    Here, the dataset(s) are stored in /datasets within the HDF5 file.
+    For simplicity, we assume that there is only one dataset.
     """
     def __init__(self, fh):
         self._file = fh
-
-        # set versioning
-        if 'Version' not in self.file.attrs:
-            self.file.attrs['Version'] = np.asarray([4, 0, 0], dtype=np.int32)
-        self.version = np.asarray(self.file.attrs['Version'], dtype=np.int32)
-
         # get datasets
         dataset_group = self.file["datasets"]
         assert isinstance(dataset_group, h5py.Group)
         # todo: figure a better way of accommodating multiple datasets
         assert len(dataset_group) == 1
         self.dataset_name = list(self.file["datasets"].keys())[0]
+
+        # set versioning
+        if 'Version' not in self.file.attrs:
+            self.file.attrs['Version'] = np.asarray([2, 1, 0], dtype=np.int32)
+        self.version = np.asarray(self.file.attrs['Version'], dtype=np.int32)
+
+        # create comments
+        if 'Comments' not in self.file.attrs:
+            self.dataset.attrs['Comments'] = list()
 
     @property
     def file(self):
@@ -955,8 +966,8 @@ class ARTIQHDF5Data(HDF5MetaData):
             raise RuntimeError("Transpose specified for simple data format: not supported")
         struct_data = self.dataset[start:] if limit is None else self.dataset[start:start + limit]
         columns = []
-        for idx in range(len(struct_data.dtype)):
-            columns.append(struct_data['f{}'.format(idx)])
+        for idx in range(len(self.getIndependents() + self.getDependents())):
+            columns.append(struct_data[:, idx])
         data = np.column_stack(columns)
         return data, start + data.shape[0]
 
@@ -981,20 +992,17 @@ def open_hdf5_file(filename):
     # instantiate the file
     fh = SelfClosingFile(h5py.File, open_args=(filename, 'a'))
 
-    # instantiate correct data object
+    # accommodate artiq files
+    if 'artiq_version' in fh().keys():
+        return ARTIQHDF5Data(fh)
+
+    # instantiate correct data object using versioning
     try:
         version = fh().attrs['Version']
-
-        # check file for versioning then return it
-        if version[0] == 2:
+        if (version[0] == 2) and (version[1] == 0):
             return SimpleHDF5Data(fh)
-        else:
+        elif version[0] == 3:
             return ExtendedHDF5Data(fh)
-    # accommodate new files (must be new files since any labrad datavault files would have version)
-    except KeyError:
-        # accommodate artiq files
-        if 'artiq_version' in fh().keys():
-            return ARTIQHDF5Data(fh)
     except Exception as e:
         print('Error:', e)
 
