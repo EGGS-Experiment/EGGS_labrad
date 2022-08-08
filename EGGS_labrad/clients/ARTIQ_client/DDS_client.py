@@ -5,6 +5,7 @@ from EGGS_labrad.config.device_db import device_db
 from EGGS_labrad.clients.ARTIQ_client.DDS_gui import DDS_gui
 
 DDSID = 659313
+EXPID = 659314
 
 
 class DDS_client(GUIClient):
@@ -27,8 +28,11 @@ class DDS_client(GUIClient):
         self.urukul_list = {}
         # parse device_db for TTLs
         self._getDevices(device_db)
+        # connect to signals
         yield self.aq.signal__dds_changed(DDSID)
         yield self.aq.addListener(listener=self.updateDDS, source=None, ID=DDSID)
+        yield self.aq.signal__exp_running(EXPID)
+        yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID)
 
     def _getDevices(self, device_db):
         # get devices
@@ -122,6 +126,15 @@ class DDS_client(GUIClient):
                     ad9910_widget.ampl.blockSignals(True)
                     ad9910_widget.ampl.setValue(val * 1e2 / 0x3FFF)
                     ad9910_widget.ampl.blockSignals(False)
+
+    def experimentRunning(self, c, status):
+        print('called')
+        if status:
+            self.gui.exp_monitor_status.setText('Running')
+            self.gui.exp_monitor_status.setStyleSheet('background-color: red')
+        else:
+            self.gui.exp_monitor_status.setText('Clear')
+            self.gui.exp_monitor_status.setStyleSheet('background-color: green')
 
 
 if __name__ == "__main__":
