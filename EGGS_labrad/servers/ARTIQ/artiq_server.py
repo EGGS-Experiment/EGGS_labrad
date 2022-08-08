@@ -60,7 +60,7 @@ class ARTIQ_Server(LabradServer):
     ddsChanged = Signal(DDSSIGNAL_ID, 'signal: dds changed', '(ssv)')
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(isv)')
     adcUpdated = Signal(ADCSIGNAL_ID, 'signal: adc updated', '(*v)')
-    expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(b)')
+    expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', 'b')
 
 
     # STARTUP
@@ -78,9 +78,6 @@ class ARTIQ_Server(LabradServer):
         yield self._setDevices()
         # set up context stuff
         self.listeners = set()
-        # todo: set up subscriber to listen to experiments
-        # todo: set up function that calls expRunning when subscriber notifies us that exp is running
-        # todo: set config that allows stop on run
 
     #@inlineCallbacks
     def _setClients(self):
