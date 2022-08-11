@@ -227,25 +227,21 @@ class Session(object):
         files = os.listdir(self.dir)
         # objects that end in ".dir" are directories
         # todo: also allow folders that don't end in dir
-        #dirs = [filename_decode(filename[:-4]) for filename in files if os.path.isdir()]
-        print('\tfiles: {}'.format(files))
+        dirs_2 = [filename_decode(filename.split('.')[0]) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
         dirs = [filename_decode(filename[:-4]) for filename in files if filename.endswith('.dir')]
+        print('\tfiles: {}'.format(files))
+        print('\tdirs: {}'.format(dirs))
+        print('\tdirs2: {}'.format(dirs_2))
+        print('\tokok: {}'.format(dirs_2 == dirs))
+        # get only datasets of valid filetype
         # todo: what about actual csv files?
-        # todo: more programmatic way of getting datasets
         filetype_suffixes = ('.ini', '.hdf5', '.h5')
         def valid_filetype(filename):
             if filename == "session.ini":
                 return False
             else:
                 return any([filename.endswith(filetype) for filetype in filetype_suffixes])
-        datasets_2 = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_filetype(filename)])
-        print('\tdatasets: {}'.format(datasets_2))
-
-        csv_datasets = [filename_decode(filename[:-4]) for filename in files if (filename.endswith('.ini')) and (filename.lower() != 'session.ini')]
-        hdf5_datasets = [filename_decode(filename[:-5]) for filename in files if filename.endswith('.hdf5')]
-        h5_datasets = [filename_decode(filename[:-3]) for filename in files if filename.endswith('.h5')]
-        datasets = sorted(csv_datasets + hdf5_datasets + h5_datasets)
-        print('\tokok: {}'.format(datasets_2 == datasets))
+        datasets = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_filetype(filename)])
 
         # tag filtering functions
         def include(entries, tag, tags):
