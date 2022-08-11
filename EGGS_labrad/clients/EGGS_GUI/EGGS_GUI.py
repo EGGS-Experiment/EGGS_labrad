@@ -103,8 +103,8 @@ class EGGS_gui(QMainWindow):
         #from EGGS_labrad.clients.shutter_client import shutter_client
         clients = {
             SLS_client:                     {"pos": (0, 0)},
-            toptica_client:                 {"pos": (0, 1)},
-            DDS_client:                     {"pos": (1, 0)}
+            toptica_client:                 {"pos": (0, 1)}
+            #DDS_client:                     {"pos": (1, 0)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
