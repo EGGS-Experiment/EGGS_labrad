@@ -33,8 +33,6 @@ DATA_URL_PREFIX = 'data:application/labrad;base64,'
 
 
 def time_to_str(t):
-    print('\tfrom backend')
-    print('\tcall from init'.format(YZDE))
     return t.strftime(TIME_FORMAT)
 
 

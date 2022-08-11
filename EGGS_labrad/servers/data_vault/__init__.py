@@ -10,7 +10,6 @@ from . import backend, errors, util
 # todo: move session/sessionstore/dataset objects into a different file
 # todo: move shared functions into util
 
-YZDE = 'THKIM'
 
 ## Filename translation.
 _encodings = [
@@ -57,7 +56,6 @@ TIME_FORMAT = '%Y-%m-%d, %H:%M:%S'
 
 
 def time_to_str(t):
-    print('\tfrom init')
     return t.strftime(TIME_FORMAT)
 
 
@@ -143,7 +141,8 @@ class SessionStore(object):
 
         session = None
         # return the virtual root directory
-        if path == ['']:
+        print('\tpath: {}'.format(path))
+        if path == ('',):
             session = VirtualSession(self.datadirs, path, self.hub, self)
         # return the subdirectory
         elif len(self.datadirs) > 1:
@@ -422,27 +421,18 @@ class VirtualSession(object):
         """
         Get a list of directory names in this directory.
         """
-        # todo: get all folders
-
-        # # get all names in the directory
-        # files = os.listdir(self.dir)
-        #
-        # # get directories (objects that end in ".dir" are directories, though we also allow folders that don't end in dir)
-        # dirs = [filename_decode(filename.split('.')[0]) for filename in files if
-        #         os.path.isdir(os.path.join(self.dir, filename))]
-
         return self.subdirs, []
 
-    def newDataset(self):
+    def newDataset(self, title, independents, dependents, extended=False):
         raise errors.VirtualSessionError("newDataset")
 
-    def openDataset(self):
+    def openDataset(self, name):
         raise errors.VirtualSessionError("openDataset")
 
-    def updateTags(self):
+    def updateTags(self, tags, sessions, datasets):
         raise errors.VirtualSessionError("updateTags")
 
-    def getTags(self):
+    def getTags(self, sessions, datasets):
         raise errors.VirtualSessionError("getTags")
 
 
