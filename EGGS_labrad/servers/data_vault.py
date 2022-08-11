@@ -45,22 +45,30 @@ from data_vault.server import DataVault
 
 @inlineCallbacks
 def load_settings(cxn, name):
-    """Load settings from registry with fallback to command line if needed.
+    """
+    Load settings from registry with fallback to command line if needed.
 
     Attempts to load the data vault configuration for this node from the
     registry. If not configured, we instead prompt the user to enter a path
     to use for storing data, and save this config into the registry to be
     used later.
     """
-    path = ['', 'Servers', name, 'Repository']
     nodename = labrad.util.getNodeName()
+
+    # get startup values from registry
+    path = ['', 'Servers', name, 'Repository']
     reg = cxn.registry
     yield reg.cd(path, True)
     (dirs, keys) = yield reg.dir()
+
+    # look for node-specific directory
     if nodename in keys:
         datadir = yield reg.get(nodename)
+        print('datadir: {}'.format(datadir))
+    # otherwise, try to get default directory
     elif '__default__' in keys:
         datadir = yield reg.get('__default__')
+    # finally, have user assign starting directory
     else:
         default_datadir = os.path.expanduser('~/.labrad/vault')
         print('Could not load repository location from registry.')
@@ -78,6 +86,7 @@ def load_settings(cxn, name):
             path + [nodename], datadir))
         print('To change this, edit the registry keys and restart the server.')
     returnValue(datadir)
+
 
 def main(argv=sys.argv):
     from twisted.internet import reactor
