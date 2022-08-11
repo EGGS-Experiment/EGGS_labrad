@@ -181,31 +181,40 @@ class DataVault(LabradServer):
 
         # copy the current path
         temp = c['path'][:]
-        # todo: document
+
+        # go up directories if path is word/int
         if isinstance(path, (int, int)):
             if path > 0:
                 temp = temp[:-path]
                 if not len(temp):
                     temp = ['']
+
+        # go down directories if path is str
         else:
             if isinstance(path, str):
                 path = [path]
+            # go down each subdirectory specified
             for segment in path:
+                # empty calls in the directory list moves us back to the root directory
                 if segment == '':
                     temp = ['']
                 else:
                     temp.append(segment)
+                # check that subdirectory will exist
                 if (not self.session_store.exists(temp)) and (not create):
                     raise errors.DirectoryNotFoundError(temp)
                 # touch the session
                 _session = self.session_store.get(temp)
 
-        # stop listening to old session and start listening to new session
+        # change sessions
         if c['path'] != temp:
+            # remove context as listener to old session
             key = self.contextKey(c)
             c['session'].listeners.remove(key)
+            # add context as listener to new session
             session = self.session_store.get(temp)
             session.listeners.add(key)
+            # store new values
             c['session'] = session
             c['path'] = temp
 
