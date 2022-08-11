@@ -342,6 +342,7 @@ class Session(object):
 
         filename = filename_encode(name)
         file_base = os.path.join(self.dir, filename)
+        print('\tfile_base: {}'.format(file_base))
         if not (os.path.exists(file_base + '.csv') or os.path.exists(file_base + '.hdf5') or os.path.exists(file_base + '.h5')):
         # if not all(map(os.path.exists, [file_base + suffix for suffix in ['.csv', '.hdf5', '.h5']])):
             raise errors.DatasetNotFoundError(name)
