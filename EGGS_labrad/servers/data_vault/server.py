@@ -207,14 +207,12 @@ class DataVault(LabradServer):
                 else:
                     temp.append(segment)
                 # check that subdirectory will exist
-                # todo: virtual check
                 if (not self.session_store.exists(temp)) and (not create):
                     raise errors.DirectoryNotFoundError(temp)
                 # touch the session
                 _session = self.session_store.get(temp)
 
         # change sessions
-        # todo: virtual check
         if c['path'] != temp:
             # remove context as listener to old session
             key = self.contextKey(c)
@@ -240,7 +238,6 @@ class DataVault(LabradServer):
         Directory name cannot be empty.
         Returns the path to the created directory.
         """
-        # todo: virtual check
         if name == '':
             raise errors.EmptyNameError()
         path = c['path'] + [name]
