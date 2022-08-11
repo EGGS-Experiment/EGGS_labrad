@@ -20,7 +20,8 @@ import sys
 import time
 import socket
 import _thread as thread
-
+# todo: log to labrad syslog
+# todo: print logging to console
 
 def parse(setup):
     settings = list()

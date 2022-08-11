@@ -4,6 +4,7 @@ Base classes for building PyQt5 GUI clients for LabRAD.
 import sys
 
 from os import _exit, environ
+from socket import gethostname
 from inspect import getmembers
 from abc import ABC, abstractmethod
 
@@ -33,7 +34,7 @@ class GUIClient(ABC):
                                                 it will be set to the LABRADHOST environment variable.
         LABRADPASSWORD  (str)               : the password used to connect to the LabRAD manager. If left as None,
                                                 it will be set to the LABRADHOST environment variable.
-        createMenu      (bool)              : whether a QClientMenuHeader should be added to the Client.
+        menuCreate      (bool)              : whether a QClientMenuHeader should be added to the Client.
     """
     # Client parameters
     name = None
@@ -45,7 +46,9 @@ class GUIClient(ABC):
     LABRADPASSWORD = None
 
     # GUI parameters
-    createMenu = True
+    # todo: what if we have multiple serial devices in a client?
+    menuCreate = True
+    # menuToolbars = []
 
 
     # INITIALIZATION
@@ -110,7 +113,7 @@ class GUIClient(ABC):
                 self.LABRADPASSWORD = environ['LABRADPASSWORD']
             from labrad.wrappers import connectAsync
             self.logger.debug("Establishing connection to LabRAD manager @{ip_address:s}...".format(ip_address=self.LABRADHOST))
-            self.cxn = yield connectAsync(self.LABRADHOST, name=self.name, password=self.LABRADPASSWORD)
+            self.cxn = yield connectAsync(self.LABRADHOST, name="{:s} ({:s})".format(self.name, gethostname()), password=self.LABRADPASSWORD)
         else:
             self.logger.debug("LabRAD connection already provided.")
 
@@ -207,9 +210,11 @@ class GUIClient(ABC):
 
         For example, this allows users to restart the client in the event of errors.
         """
-        # don't create menu if createMenu = False
-        if not self.createMenu:
+        # don't create menu if menuCreate = False
+        if not self.menuCreate:
             return cxn
+        
+        # create menus
         try:
             # check if any members of the GUI are QClientMenuHeaders
             isQClientMenuHeader = lambda obj: isinstance(obj, QClientMenuHeader)
@@ -231,7 +236,7 @@ class GUIClient(ABC):
                 gui_layout.setMenuBar(menuHeader_object)
                 # initialize the QClientMenuHeader
                 menuHeader_object.addFile(self)
-
+            
             # search client servers for SerialDeviceServers, PollingServers, and GPIBManagedDeviceServers
             for server_nickname in self.servers.keys():
                 server_object = getattr(self, server_nickname)
