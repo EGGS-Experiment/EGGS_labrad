@@ -84,12 +84,14 @@ def main(argv=sys.argv):
 
     @inlineCallbacks
     def start():
+        # todo: document
         opts = labrad.util.parseServerOptions(name=DataVault.name)
         cxn = yield labrad.wrappers.connectAsync(
             host=opts['host'], port=int(opts['port']), password=opts['password']
         )
         datadir = yield load_settings(cxn, opts['name'])
         yield cxn.disconnect()
+        # todo: document
         session_store = SessionStore(datadir, hub=None)
         server = DataVault(session_store)
         session_store.hub = server

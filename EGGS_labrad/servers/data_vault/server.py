@@ -9,13 +9,14 @@ import numpy as np
 from . import errors
 from os import remove
 # todo: implement ability to delete things
+# todo: fix documentation
+# todo: fix up function names
 
 
 class DataVault(LabradServer):
     """
     Stores and manages data/datasets using the HDF5 format.
     """
-
     name = 'Data Vault'
 
 
@@ -39,6 +40,7 @@ class DataVault(LabradServer):
         # close all datasets on program shutdown
         win32api.SetConsoleCtrlHandler(self.closeAllDatasets, True)
         # create loopingcall to save routinely save datasets in background
+        # todo: make save interval customizable
         self.saveDatasetTimer = LoopingCall(self.saveAllDatasets)
         self.saveDatasetTimer.start(300)
 
@@ -173,10 +175,13 @@ class DataVault(LabradServer):
         is set to true, new directories will be created as needed.
         Returns the path to the new current directory.
         """
+        # empty call returns current path
         if path is None:
             return c['path']
 
-        temp = c['path'][:]  # copy the current path
+        # copy the current path
+        temp = c['path'][:]
+        # todo: document
         if isinstance(path, (int, int)):
             if path > 0:
                 temp = temp[:-path]
@@ -192,15 +197,18 @@ class DataVault(LabradServer):
                     temp.append(segment)
                 if not self.session_store.exists(temp) and not create:
                     raise errors.DirectoryNotFoundError(temp)
-                _session = self.session_store.get(temp)  # touch the session
+                # touch the session
+                _session = self.session_store.get(temp)
+
+        # stop listening to old session and start listening to new session
         if c['path'] != temp:
-            # stop listening to old session and start listening to new session
             key = self.contextKey(c)
             c['session'].listeners.remove(key)
             session = self.session_store.get(temp)
             session.listeners.add(key)
             c['session'] = session
             c['path'] = temp
+
         return c['path']
 
 
@@ -311,8 +319,9 @@ class DataVault(LabradServer):
         return c['path'], c['dataset']
 
     @setting(11, name=['s', 'w'], returns='b')
-    def delete_dataset(self, c, name):
+    def delete(self, c, name):
         """
+        # todo: make inclusive of folders as well as datasets
         Delete a Dataset.
 
         You can specify the dataset by name or number.
@@ -527,7 +536,7 @@ class DataVault(LabradServer):
 
 
     # METADATA
-    @setting(120, returns='*s')
+    @setting(120, 'Parameters', returns='*s')
     def parameters(self, c):
         """
         Get a list of parameter names.
@@ -537,7 +546,7 @@ class DataVault(LabradServer):
         dataset.param_listeners.add(key)  # send a message when new parameters are added
         return dataset.getParamNames()
 
-    @setting(121, 'add parameter', name='s', returns='')
+    @setting(121, name='s', returns='')
     def add_parameter(self, c, name, data):
         """
         Add a new parameter to the current dataset.

@@ -25,14 +25,18 @@ _encodings = [
 
 
 def filename_encode(name):
-    """Encode special characters to produce a name that can be used as a filename"""
+    """
+    Encode special characters to produce a name that can be used as a filename.
+    """
     for char, code in _encodings:
         name = name.replace(char, code)
     return name
 
 
 def filename_decode(name):
-    """Decode a string that has been encoded using filename_encode"""
+    """
+    Decode a string that has been encoded using filename_encode.
+    """
     for char, code in _encodings[1:] + _encodings[0:1]:
         name = name.replace(code, char)
     return name
@@ -219,37 +223,57 @@ class Session(object):
         """
         Get a list of directory names in this directory.
         """
+        # get all files
         files = os.listdir(self.dir)
-        dirs = [filename_decode(s[:-4]) for s in files if s.endswith('.dir')]
+        # objects that end in ".dir" are directories
+        # todo: also allow folders that don't end in dir
+        #dirs = [filename_decode(filename[:-4]) for filename in files if os.path.isdir()]
+        print('\tfiles: {}'.format(files))
+        dirs = [filename_decode(filename[:-4]) for filename in files if filename.endswith('.dir')]
         # todo: what about actual csv files?
-        csv_datasets = [filename_decode(s[:-4]) for s in files if s.endswith('.ini') and s.lower() != 'session.ini']
-        hdf5_datasets = [filename_decode(s[:-5]) for s in files if s.endswith('.hdf5')]
-        h5_datasets = [filename_decode(s[:-3]) for s in files if s.endswith('.h5')]
-        datasets = sorted(csv_datasets + hdf5_datasets + h5_datasets)
+        # todo: more programmatic way of getting datasets
+        filetype_suffixes = ('.ini', '.hdf5', '.h5')
+        def valid_filetype(filename):
+            if filename == "session.ini":
+                return False
+            else:
+                return any([filename.endswith(filetype) for filetype in filetype_suffixes])
+        datasets_2 = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_filetype(filename)])
+        print('\tdatasets: {}'.format(datasets_2))
 
-        # apply tag filters
+        csv_datasets = [filename_decode(filename[:-4]) for filename in files if (filename.endswith('.ini')) and (filename.lower() != 'session.ini')]
+        hdf5_datasets = [filename_decode(filename[:-5]) for filename in files if filename.endswith('.hdf5')]
+        h5_datasets = [filename_decode(filename[:-3]) for filename in files if filename.endswith('.h5')]
+        datasets = sorted(csv_datasets + hdf5_datasets + h5_datasets)
+        print('\tokok: {}'.format(datasets_2 == datasets))
+
+        # tag filtering functions
         def include(entries, tag, tags):
             """
             Include only entries that have the specified tag.
             """
             return [e for e in entries
-                    if e in tags and tag in tags[e]]
+                    if (e in tags) and (tag in tags[e])]
 
         def exclude(entries, tag, tags):
             """
             Exclude all entries that have the specified tag.
             """
             return [e for e in entries
-                    if e not in tags or tag not in tags[e]]
+                    if (e not in tags) or (tag not in tags[e])]
 
+        # apply tag filters
         for tag in tagFilters:
+            # choose correct filter function
             if tag[:1] == '-':
-                filter = exclude
+                filter_func = exclude
                 tag = tag[1:]
             else:
                 filter = include
-            dirs = filter(dirs, tag, self.session_tags)
-            datasets = filter(datasets, tag, self.dataset_tags)
+            # filter directories and datasets
+            dirs = filter_func(dirs, tag, self.session_tags)
+            datasets = filter_func(datasets, tag, self.dataset_tags)
+
         return sorted(dirs), sorted(datasets)
 
     def listDatasets(self):

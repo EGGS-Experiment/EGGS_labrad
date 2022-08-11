@@ -51,12 +51,12 @@ from data_vault import SessionStore
 from data_vault.server import DataVaultMultiHead
 
 def lock_path(d):
-    '''
+    """
     Lock a directory and return a file descriptor corresponding to the lockfile
 
     This lock is non-blocking and throws an exception if it can't get the lock.
     The user is expected to fix this.
-    '''
+    """
     if os.name != "posix":
         warnings.warn('File locks only available on POSIX.  Be very careful not to run two copies of the data vault')
         return
@@ -72,10 +72,10 @@ def lock_path(d):
     return fd
 
 def unlock(fd):
-    '''
+    """
     We don't actually use this, since we hold the lock until the datavault exits
     and let the OS clean up.
-    '''
+    """
     if os.name != "posix":
         warnings.warn('File locks only available on POSIX.  Be very careful not to run two copies of the data vault')
         return
@@ -187,7 +187,9 @@ class DataVaultConnector(Service):
 
 # Hub object: one instance total
 class DataVaultServiceHost(MultiService):
-    """Parent Service that manages multiple child DataVaultConnector's"""
+    """
+    Parent Service that manages multiple child DataVaultConnectors.
+    """
 
     signals = [
         'onNewDir',
@@ -217,17 +219,17 @@ class DataVaultServiceHost(MultiService):
             self.servers.remove(server)
 
     def reconnect(self, host_regex, port=0):
-        '''
+        """
         Drop the connection to the specified host(s).  They will auto-reconnect.
-        '''
+        """
         for s in self.servers:
             if re.match(host_regex, s.host) and (port == 0 or s.port==port):
                 s._cxn.disconnect()
 
     def ping(self):
-        '''
+        """
         Ping all attached managers as a keepalive/dropped connection detection mechanism
-        '''
+        """
         for s in self.servers:
             s.keepalive()
             #s.client.manager.packet()
@@ -237,9 +239,9 @@ class DataVaultServiceHost(MultiService):
         # return result
 
     def kick(self, host_regexp, port=0):
-        '''
+        """
         Disconnect from a manager and don't reconnect.
-        '''
+        """
         for connector in self:
             if re.match(host_regexp, connector.host) and (port == 0 or port == connector.port):
                 try:
@@ -249,11 +251,11 @@ class DataVaultServiceHost(MultiService):
 
     @inlineCallbacks
     def refresh_managers(self):
-        '''
+        """
         Refresh list of managers from the registry.  New servers will be added.  Existing servers
         will *not* be removed, even if they are no longer in the registry.  Use "kick" to disconnect
         them.
-        '''
+        """
 
         # We don't know which (if any) managers are live.  For now, just make a new client connection
         # to the "primary" manager.
@@ -288,6 +290,7 @@ class DataVaultServiceHost(MultiService):
         return 'DataVaultServiceHost(%s)' % (managers,)
 
     def wrapSignal(self, signal):
+        # todo: document
         print('wrapping signal:', signal)
         def relay(data, contexts=None, tag=None):
             for c in contexts:
@@ -295,14 +298,14 @@ class DataVaultServiceHost(MultiService):
                     sig = getattr(c.server, signal)
                     sig(data, [c.context], tag)
                 except Exception:
-                    print('{}:{} - error relaying signal {}'.format()
-                            c.server.host, c.server.port, signal)
+                    print('{}:{} - error relaying signal {}'.format(c.server.host, c.server.port, signal))
                     traceback.print_exc()
         setattr(self, signal, relay)
 
+
 @inlineCallbacks
 def load_settings_registry(cxn):
-    '''
+    """
     Make a client connection to the labrad host specified in the
     environment (i.e., by the node server) and load the rest of the settings
     from there.
@@ -312,7 +315,7 @@ def load_settings_registry(cxn):
     if the registry has a 'Node' key, the datavault will refuse to start
     on any other host.  This should prevent ever having two copies of the
     datavault running.
-    '''
+    """
     path = ['', 'Servers', 'Data Vault', 'Multihead']
     reg = cxn.registry
     # try to load for this node
@@ -326,6 +329,7 @@ def load_settings_registry(cxn):
         raise RuntimeError('Node name "%s" from registry does not match current host "%s"' % (ans.node, util.getNodeName()))
     cxn.disconnect()
     returnValue((ans.repo, ans.managers))
+
 
 def load_settings_cmdline(argv):
     if len(argv) < 3:
@@ -344,6 +348,7 @@ def load_settings_cmdline(argv):
             port = int(port)
         managers.append((host, port, password))
     return path, managers
+
 
 def start_server(args):
     path, managers = args
@@ -365,6 +370,7 @@ def start_server(args):
     service = DataVaultServiceHost(path, managers)
     service.startService()
 
+
 def main(argv=sys.argv):
     from twisted.internet import reactor
 
@@ -384,6 +390,7 @@ def main(argv=sys.argv):
 
     _ = start()
     reactor.run()
+
 
 if __name__ == '__main__':
     main()
