@@ -28,6 +28,8 @@ DATA_URL_PREFIX = 'data:application/labrad;base64,'
 # todo: break backend up into general stuff (e.g. selfclosingfile, helper functions) and file format implementations
 # todo: note somewhere that versioning uses semantic versioning
 # todo: document versions and differences
+# todo: if artiq dataset just has 1D, create dependent variables for down
+# todo: why are certain functions defined here again, as well as in __init__?
 
 
 def time_to_str(t):

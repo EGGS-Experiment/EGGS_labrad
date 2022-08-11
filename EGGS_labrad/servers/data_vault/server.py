@@ -195,7 +195,7 @@ class DataVault(LabradServer):
                     temp = ['']
                 else:
                     temp.append(segment)
-                if not self.session_store.exists(temp) and not create:
+                if (not self.session_store.exists(temp)) and (not create):
                     raise errors.DirectoryNotFoundError(temp)
                 # touch the session
                 _session = self.session_store.get(temp)

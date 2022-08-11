@@ -3,10 +3,11 @@ Contains the class structures needed for creating data files and directories.
 """
 import os
 import re
-import weakref
 from datetime import datetime
+from weakref import WeakValueDictionary
 
 from . import backend, errors, util
+# todo: move session/sessionstore/dataset objects into a different file
 
 ## Filename translation.
 _encodings = [
@@ -97,7 +98,7 @@ class SessionStore(object):
     """
 
     def __init__(self, datadir, hub):
-        self._sessions = weakref.WeakValueDictionary()
+        self._sessions = WeakValueDictionary()
         self.datadir = datadir
         self.hub = hub
 
@@ -145,8 +146,9 @@ class Session(object):
         self.hub = hub
         self.dir = filedir(datadir, path)
         self.infofile = os.path.join(self.dir, 'session.ini')
-        self.datasets = weakref.WeakValueDictionary()
+        self.datasets = WeakValueDictionary()
 
+        # create new directory if it doesn't exist
         if not os.path.exists(self.dir):
             os.makedirs(self.dir)
 
@@ -154,6 +156,8 @@ class Session(object):
             parent_session = session_store.get(path[:-1])
             hub.onNewDir(path[-1], parent_session.listeners)
 
+        # load existing infofile (session.ini file) if it exists,
+        # otherwise create it
         if os.path.exists(self.infofile):
             self.load()
         else:
@@ -162,7 +166,8 @@ class Session(object):
             self.session_tags = {}
             self.dataset_tags = {}
 
-        self.access()  # update current access time and save
+        # update current access time and save
+        self.access()
         self.listeners = set()
 
     def load(self):
@@ -223,16 +228,12 @@ class Session(object):
         """
         Get a list of directory names in this directory.
         """
-        # get all files
+        # get all names in the directory
         files = os.listdir(self.dir)
-        # objects that end in ".dir" are directories
-        # todo: also allow folders that don't end in dir
-        dirs_2 = [filename_decode(filename.split('.')[0]) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
-        dirs = [filename_decode(filename[:-4]) for filename in files if filename.endswith('.dir')]
-        print('\tfiles: {}'.format(files))
-        print('\tdirs: {}'.format(dirs))
-        print('\tdirs2: {}'.format(dirs_2))
-        print('\tokok: {}'.format(dirs_2 == dirs))
+
+        # get directories (objects that end in ".dir" are directories, though we also allow folders that don't end in dir)
+        dirs = [filename_decode(filename.split('.')[0]) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
+
         # get only datasets of valid filetype
         # todo: what about actual csv files?
         filetype_suffixes = ('.ini', '.hdf5', '.h5')
@@ -241,6 +242,7 @@ class Session(object):
                 return False
             else:
                 return any([filename.endswith(filetype) for filetype in filetype_suffixes])
+
         datasets = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_filetype(filename)])
 
         # tag filtering functions
