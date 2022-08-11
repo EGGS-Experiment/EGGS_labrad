@@ -66,4 +66,11 @@ class DataVersionMismatchError(T.Error):
     code = 11
 
     def __init__(self):
-        self.msg = "Dataset was created with newer API, cannot be read.  Use get_ex"
+        self.msg = "Dataset was created with newer API, cannot be read. Use get_ex"
+
+
+class VirtualSessionError(T.Error):
+    code = 12
+
+    def __init__(self, command):
+        self.msg = "Invalid command: {msg}.".format(command)

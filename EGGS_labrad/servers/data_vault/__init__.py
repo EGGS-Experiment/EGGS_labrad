@@ -8,6 +8,9 @@ from weakref import WeakValueDictionary
 
 from . import backend, errors, util
 # todo: move session/sessionstore/dataset objects into a different file
+# todo: move shared functions into util
+
+YZDE = 'THKIM'
 
 ## Filename translation.
 _encodings = [
@@ -44,7 +47,9 @@ def filename_decode(name):
 
 
 def filedir(datadir, path):
-    return os.path.join(datadir, *[filename_encode(d) + '.dir' for d in path[1:]])
+    aaz1 = os.path.join(datadir, *[filename_encode(d) + '.dir' for d in path[1:]])
+    print('\tfiledir: {}'.format(aaz1))
+    return aaz1
 
 
 ## time formatting
@@ -52,6 +57,7 @@ TIME_FORMAT = '%Y-%m-%d, %H:%M:%S'
 
 
 def time_to_str(t):
+    print('\tfrom init')
     return t.strftime(TIME_FORMAT)
 
 
@@ -96,11 +102,19 @@ class SessionStore(object):
     Handles session objects.
     Acts as main interface between server and files.
     """
+    # todo: ensure repositories can't contain one another
 
-    def __init__(self, datadir, hub):
+    def __init__(self, datadirs, hub):
         self._sessions = WeakValueDictionary()
-        self.datadir = datadir
         self.hub = hub
+
+        # todo: oneliner
+        if isinstance(datadirs, str):
+            datadirs = [datadirs]
+
+        # key = folder name, value = parent directory
+        self.datadirs = {os.path.basename(datadir): os.path.dirname(datadir) for datadir in datadirs}
+
 
     def get_all(self):
         return self._sessions.values()
@@ -112,7 +126,7 @@ class SessionStore(object):
         This does not tell us whether a session object has been
         created for that path.
         """
-        return os.path.exists(filedir(self.datadir, path))
+        return any([os.path.exists(filedir(datadir, path)) for datadir in self.datadirs.values()])
 
     def get(self, path):
         """
@@ -122,9 +136,19 @@ class SessionStore(object):
         Otherwise, create a new session instance.
         """
         path = tuple(path)
+
+        # return session if it exists
         if path in self._sessions:
             return self._sessions[path]
-        session = Session(self.datadir, path, self.hub, self)
+
+        session = None
+        # return the virtual root directory
+        if path == ['']:
+            session = VirtualSession(self.datadirs, path, self.hub, self)
+        # return the subdirectory
+        elif len(self.datadirs) > 1:
+            datadir = self.datadirs[path[1]]
+            session = Session(datadir, path, self.hub, self)
         self._sessions[path] = session
         return session
 
@@ -377,6 +401,49 @@ class Session(object):
         sessTags = [(s, sorted(self.session_tags.get(s, []))) for s in sessions]
         dataTags = [(d, sorted(self.dataset_tags.get(d, []))) for d in datasets]
         return sessTags, dataTags
+
+
+class VirtualSession(object):
+    """
+    todo: finish
+    """
+
+    def __init__(self, datadirs, path, hub, session_store):
+        """
+        Initialization that happens once when session object is created.
+        """
+        self.path = path
+        self.hub = hub
+        self.datasets = WeakValueDictionary()
+        self.listeners = set()
+        self.subdirs = sorted(datadirs.keys())
+
+    def listContents(self, tagFilters):
+        """
+        Get a list of directory names in this directory.
+        """
+        # todo: get all folders
+
+        # # get all names in the directory
+        # files = os.listdir(self.dir)
+        #
+        # # get directories (objects that end in ".dir" are directories, though we also allow folders that don't end in dir)
+        # dirs = [filename_decode(filename.split('.')[0]) for filename in files if
+        #         os.path.isdir(os.path.join(self.dir, filename))]
+
+        return self.subdirs, []
+
+    def newDataset(self):
+        raise errors.VirtualSessionError("newDataset")
+
+    def openDataset(self):
+        raise errors.VirtualSessionError("openDataset")
+
+    def updateTags(self):
+        raise errors.VirtualSessionError("updateTags")
+
+    def getTags(self):
+        raise errors.VirtualSessionError("getTags")
 
 
 class Dataset(object):

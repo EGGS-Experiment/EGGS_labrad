@@ -11,6 +11,7 @@ from os import remove
 # todo: implement ability to delete things
 # todo: fix documentation
 # todo: fix up function names
+# todo: make simple if statements oneliners
 
 
 class DataVault(LabradServer):
@@ -38,13 +39,13 @@ class DataVault(LabradServer):
         # create root session
         _root = self.session_store.get([''])
         # close all datasets on program shutdown
-        win32api.SetConsoleCtrlHandler(self.closeAllDatasets, True)
-        # create loopingcall to save routinely save datasets in background
+        win32api.SetConsoleCtrlHandler(self._closeAllDatasets, True)
+        # create LoopingCall to save routinely save datasets in background
         # todo: make save interval customizable
-        self.saveDatasetTimer = LoopingCall(self.saveAllDatasets)
+        self.saveDatasetTimer = LoopingCall(self._saveAllDatasets)
         self.saveDatasetTimer.start(300)
 
-    def saveAllDatasets(self):
+    def _saveAllDatasets(self):
         """
         Save all datasets routinely.
         Prevents data from being corrupted due to unforeseen/uninterruptible events.
@@ -66,7 +67,7 @@ class DataVault(LabradServer):
             except Exception as e:
                 print(e)
 
-    def closeAllDatasets(self, signal):
+    def _closeAllDatasets(self, signal):
         """
         Close all open datasets when we shut down.
         Needed on shutdown and disconnect since open HDF5 files may become corrupted.
@@ -153,10 +154,15 @@ class DataVault(LabradServer):
         """
         Get subdirectories and datasets in the current directory.
         """
+        # todo: make oneliner
         if isinstance(tagFilters, str):
             tagFilters = [tagFilters]
+
+        # get contents of session
         sess = self.getSession(c)
         dirs, datasets = sess.listContents(tagFilters)
+
+        # parse tags
         if includeTags:
             dirs, datasets = sess.getTags(dirs, datasets)
         return dirs, datasets
@@ -201,12 +207,14 @@ class DataVault(LabradServer):
                 else:
                     temp.append(segment)
                 # check that subdirectory will exist
+                # todo: virtual check
                 if (not self.session_store.exists(temp)) and (not create):
                     raise errors.DirectoryNotFoundError(temp)
                 # touch the session
                 _session = self.session_store.get(temp)
 
         # change sessions
+        # todo: virtual check
         if c['path'] != temp:
             # remove context as listener to old session
             key = self.contextKey(c)
@@ -227,17 +235,20 @@ class DataVault(LabradServer):
         """
         Make a new sub-directory in the current directory.
 
-        The current directory remains selected.  You must use the
-        'cd' command to select the newly-created directory.
-        Directory name cannot be empty.  Returns the path to the
-        created directory.
+        The current directory remains selected.
+        You must use the 'cd' command to select the newly-created directory.
+        Directory name cannot be empty.
+        Returns the path to the created directory.
         """
+        # todo: virtual check
         if name == '':
             raise errors.EmptyNameError()
         path = c['path'] + [name]
+
         if self.session_store.exists(path):
             raise errors.DirectoryExistsError(path)
-        _sess = self.session_store.get(path)  # make the new directory
+        # create a new directory
+        _sess = self.session_store.get(path)
         return path
 
     @setting(9, name='s',
