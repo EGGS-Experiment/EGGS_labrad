@@ -46,7 +46,7 @@ def filename_decode(name):
 
 
 def filedir(datadir, path):
-    aaz1 = os.path.join(datadir, *[filename_encode(d) + '.dir' for d in path[1:]])
+    aaz1 = os.path.join(datadir, *[filename_encode(d) for d in path[1:]])
     print('\tfiledir: {}'.format(aaz1))
     return aaz1
 
@@ -254,8 +254,9 @@ class Session(object):
         # get all names in the directory
         files = os.listdir(self.dir)
 
-        # get directories (objects that end in ".dir" are directories, though we also allow folders that don't end in dir)
-        dirs = [filename_decode(filename.split('.')[0]) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
+        # get directories (objects that end in '.dir' are directories, though we also allow folders that don't end in dir)
+        #dirs = [filename_decode(filename.split('.')[0]) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
+        dirs = [filename_decode(filename) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
 
         # get only datasets of valid filetype
         # todo: what about actual csv files?
@@ -266,7 +267,8 @@ class Session(object):
             else:
                 return any([filename.endswith(filetype) for filetype in filetype_suffixes])
 
-        datasets = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_filetype(filename)])
+        #datasets = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_filetype(filename)])
+        datasets = sorted([filename_decode(filename) for filename in files if valid_filetype(filename)])
 
         # tag filtering functions
         def include(entries, tag, tags):
