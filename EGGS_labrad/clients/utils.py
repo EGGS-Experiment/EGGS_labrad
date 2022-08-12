@@ -87,7 +87,7 @@ def createTrunk(name):
     trunk1 = '{0:d}_{1:02d}_{2:02d}'.format(date.year, date.month, date.day)
     trunk2 = '{0:s}_{1:02d}:{2:02d}'.format(name, date.hour, date.minute)
 
-    return ['', str(date.year), '{:02d}'.format(date.month), trunk1, trunk2]
+    return ['', 'labrad', str(date.year), '{:02d}'.format(date.month), trunk1, trunk2]
 
 
 # wav2RGB: adapted from http://codingmess.blogspot.com/2009/05/conversion-of-wavelength-in-nanometers.html
