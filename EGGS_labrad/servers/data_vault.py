@@ -64,7 +64,6 @@ def load_settings(cxn, name):
     # look for node-specific directory
     if nodename in keys:
         datadir = yield reg.get(nodename)
-        print('datadir: {}'.format(datadir))
     # otherwise, try to get default directory
     elif '__default__' in keys:
         datadir = yield reg.get('__default__')

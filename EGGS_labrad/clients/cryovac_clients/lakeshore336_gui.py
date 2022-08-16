@@ -57,14 +57,14 @@ class lakeshore336_gui(QFrame):
         self.heat1_mode = QComboBox()
         self.heat1_mode.addItems(["Off", "PID", "Zone", "Open Loop"])
         self.heat1_in = QComboBox()
-        self.heat1_in.addItems(["0", "1", "2", "3"])
+        self.heat1_in.addItems(["A", "B", "C", "D"])
         self.heat1_res = QComboBox()
         self.heat1_res.addItems(["25", "50"])
         self.heat1_curr = QDoubleSpinBox()
         self.heat1_range = QComboBox()
         self.heat1_range.addItems(["Off", "1", "10", "100"])
         self.heat1_p1 = QDoubleSpinBox()
-        self.heat1_p1.setRange(0, 100.0)
+        self.heat1_p1.setRange(0, 300.0)
         self.heat1_set = QDoubleSpinBox()
 
         for widget in (heat1_mode_label, self.heat1_mode, heat1_in_label, self.heat1_in, heat1_res_label,
@@ -86,14 +86,14 @@ class lakeshore336_gui(QFrame):
         self.heat2_mode = QComboBox()
         self.heat2_mode.addItems(["Off", "PID", "Zone", "Open Loop"])
         self.heat2_in = QComboBox()
-        self.heat2_in.addItems(["0", "1", "2", "3"])
+        self.heat2_in.addItems(["A", "B", "C", "D"])
         self.heat2_res = QComboBox()
         self.heat2_res.addItems(["25", "50"])
         self.heat2_curr = QDoubleSpinBox()
         self.heat2_range = QComboBox()
         self.heat2_range.addItems(["Off", "1", "10", "100"])
         self.heat2_p1 = QDoubleSpinBox()
-        self.heat2_p1.setRange(0, 100.0)
+        self.heat2_p1.setRange(0, 300.0)
         self.heat2_set = QDoubleSpinBox()
 
         for widget in (heat2_mode_label, self.heat2_mode, heat2_in_label, self.heat2_in, heat2_res_label,
