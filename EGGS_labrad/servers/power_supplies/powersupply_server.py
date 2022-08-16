@@ -34,7 +34,7 @@ class PowerSupplyServer(GPIBManagedServer):
 
     deviceWrappers = {
         'KEITHLEY INSTRUMENTS 2231A-30-3': Keithley2231AWrapper,
-        'RIGOL TECHNOLOGIES DS1104Z Plus': GWInstekGPP3060Wrapper
+        'GW INSTEK GPP-3060': GWInstekGPP3060Wrapper
     }
 
 
