@@ -33,13 +33,13 @@ class Keithley2231AWrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def channelMode(self, c, channel, mode=None):
-        VALID_MODES = ('NORMAL', 'SERIES', 'PARALLEL', 'TRACK')
+        VALID_MODES = ('INDEPENDENT', 'SERIES', 'PARALLEL', 'TRACK')
         # setter
         if mode is not None:
             # ensure mode is valid
             if mode not in VALID_MODES:
                 raise Exception("Invalid Value. Modes must be one of {}.".format(VALID_MODES))
-            if mode == 'NORMAL':
+            if mode == 'INDEPENDENT':
                 yield self.write('INST:COM:OFF')
             elif mode == 'SERIES':
                 yield self.write('INST:COM:SER')
@@ -59,13 +59,13 @@ class Keithley2231AWrapper(GPIBDeviceWrapper):
         elif int(status_parallel):
             returnValue('TRACK')
         else:
-            returnValue('NORMAL')
+            returnValue('INDEPENDENT')
 
     @inlineCallbacks
     def channelVoltage(self, c, channel, voltage=None):
         self._channelSelect(channel)
         chString = 'SOUR:VOLT:LEV:IMM:AMPL'
-        # ensure voltage is within valid range
+        # setter
         if voltage is not None:
             MAX_VOLTAGE = 30 if channel in (1, 2) else 5
             if (voltage < 0) or (voltage > MAX_VOLTAGE):
@@ -78,7 +78,7 @@ class Keithley2231AWrapper(GPIBDeviceWrapper):
     def channelCurrent(self, c, channel, current=None):
         self._channelSelect(channel)
         chString = 'SOUR:CURR:LEV:IMM:AMPL'
-        # ensure current is within valid range
+        # setter
         if current is not None:
             if (current < 0) or (current > 3):
                 raise Exception("Invalid Value. Current must be in [0, 3]A.")
