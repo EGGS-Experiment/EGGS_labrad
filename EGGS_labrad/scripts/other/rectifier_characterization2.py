@@ -12,7 +12,7 @@ from EGGS_labrad.clients import createTrunk
 name_tmp = 'Rectifier Characterization 2'
 freq_range = linspace(18, 23, 500 + 1) * 1e6
 amp_val = -40
-os_channel = 3
+os_channel = 1
 
 
 try:
@@ -30,7 +30,7 @@ try:
     # set up oscilloscope
     os.select_device()
     os.measure_setup(3, os_channel, 'AMP')
-    os.measure_setup(4, os_channel, 'MEAN')
+    os.measure_setup(1, os_channel, 'MEAN')
     os.trigger_channel(os_channel)
     # os.trigger_level
     print('Oscilloscope setup successful.')
@@ -62,7 +62,7 @@ try:
         sleep(1)
 
         # center around offset
-        offset_val = os.measure(4)
+        offset_val = os.measure(1)
         os.channel_offset(3, offset_val)
         sleep(0.5)
 
@@ -74,12 +74,12 @@ try:
         sleep(0.5)
 
         # adjust offset again
-        offset_val = os.measure(4)
+        offset_val = os.measure(1)
         os.channel_offset(3, offset_val)
         sleep(0.5)
 
         # zoom in on oscillation again
-        osc_val = float(os.measure(3)) / 4
+        osc_val = float(os.measure(1)) / 4
         if osc_val < 5e-3:
             osc_val = 5e-3
         os.channel_scale(3, osc_val)
@@ -87,13 +87,13 @@ try:
 
         # take oscope data
         osc_val = os.measure(3)
-        offset_val = os.measure(4)
+        offset_val = os.measure(1)
         # format freq,
         # print('freq: {:.0f} MHz; amp: {:.2f} dBm; offset: {:.1f} mV; osc amp: {.2f} mV'.format(
         #     freq_val / 1e6, amp_val, offset_val * 1e3, osc_val * 1e3
         # ))
         # record result
-        dv.add(amp_val, offset_val, osc_val, context=cr)
+        dv.add(freq_val, offset_val, osc_val, context=cr)
 
 except Exception as e:
     print('Error:', e)
