@@ -12,7 +12,7 @@ name_tmp = 'ASF Characterization'
 (dds_channel_amp, dds_channel_power) = ('urukul0_ch1', 'urukul0_ch3')
 dds_frequency_hz = 100 * 1e6
 dds_attenuation_dbm = 10
-amp_range = linspace(1, 100, 100)
+amp_range = linspace(1, 100, 100) / 100
 os_channel = 2
 
 
@@ -67,18 +67,19 @@ try:
         aq.dds_amplitude(dds_channel_amp, amp_val)
         aq.dds_amplitude(dds_channel_power, amp_val)
 
-        # scale oscope
-        os.autoscale()
-
-        # scale spec anal
+        # scale spec anal and oscope
         sa.autoset()
+        os.autoscale()
         sleep(5)
+
+        # get spec anal marker back
+        sa.marker_toggle(1, 1)
 
         # get oscope amplitude
         os_amplitude = os.measure(3)
 
         # get spec anal power
-        sa_power = os.marker_amplitude(1)
+        sa_power = sa.marker_amplitude(1)
 
         # record result
         dv.add(amp_val, os_amplitude, sa_power, context=cr)
