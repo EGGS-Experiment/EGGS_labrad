@@ -10,12 +10,12 @@ from numpy import linspace
 from EGGS_labrad.clients import createTrunk
 
 name_tmp = 'Rectifier Characterization'
-# freq_range = linspace(15, 30, 15 + 1) * 1e6
-freq_range = [20635000]
-amp_range = linspace(-20, -15, 50 + 1)
+freq_range = linspace(15, 25, 15 + 1) * 1e6
+#freq_range = [20635000]
+amp_range = linspace(-10, 10, 40 + 1)
 os_channel = 3
 
-
+osc_val = None
 try:
     # connect to labrad
     cxn = labrad.connect()
@@ -54,7 +54,7 @@ try:
 
         # create dataset
         dv.new(
-            'Rectifier Response {:f} MHz'.format(freq_val / 1e6),
+            'Rectifier Response {:d} kHz'.format(int(freq_val / 1e3)),
             [('RF Amplitude', 'dBm')],
             [('Rectifier Offset', 'DC Offset', 'V'), ('Rectifier Value', 'Oscillation Amplitude', 'V')],
             context=cr
@@ -71,37 +71,44 @@ try:
 
             # center around offset
             offset_val = os.measure(4)
-            os.channel_offset(3, offset_val)
-            sleep(0.5)
+            os.channel_offset(os_channel, offset_val)
+            sleep(1)
 
             # zoom in on oscillation
             osc_val = float(os.measure(3)) / 4
             if osc_val < 5e-3:
                 osc_val = 5e-3
-            os.channel_scale(3, osc_val)
-            sleep(0.5)
+            elif osc_val > 1:
+                sleep(1)
+                osc_val = os.measure(3)
+            os.channel_scale(os_channel, osc_val)
+            sleep(1)
 
             # adjust offset again
             offset_val = os.measure(4)
-            os.channel_offset(3, offset_val)
-            sleep(0.5)
+            os.channel_offset(os_channel, offset_val)
+            sleep(1)
 
             # zoom in on oscillation again
             osc_val = float(os.measure(3)) / 4
             if osc_val < 5e-3:
                 osc_val = 5e-3
-            os.channel_scale(3, osc_val)
+            elif osc_val > 1:
+                sleep(1)
+                osc_val = os.measure(3)
+            os.channel_scale(os_channel, osc_val)
             sleep(1)
 
             # take oscope data
             osc_val = os.measure(3)
             offset_val = os.measure(4)
             # format freq,
-            print('freq: {:.0f} MHz; amp: {:.2f} dBm; offset: {:.1f} mV; osc amp: {.2f} mV'.format(
-                freq_val / 1e6, amp_val, offset_val * 1e3, osc_val * 1e3
-            ))
+            # print('freq: {:.0f} MHz; amp: {:.2f} dBm; offset: {:.1f} mV; osc amp: {.2f} mV'.format(
+            #     freq_val / 1e6, amp_val, offset_val * 1e3, osc_val * 1e3
+            # ))
             # record result
             dv.add(amp_val, offset_val, osc_val, context=cr)
 
 except Exception as e:
     print('Error:', e)
+    print('osc val {}'.format(osc_val))

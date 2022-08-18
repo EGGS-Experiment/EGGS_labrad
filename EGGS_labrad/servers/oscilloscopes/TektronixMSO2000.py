@@ -87,10 +87,11 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     def channel_offset(self, channel, offset=None):
         # value is in volts
         chString = 'CH{:d}:OFFS'.format(channel)
-        if (offset is not None) and (abs(offset) < 1e1):
-            yield self.write(chString + ' ' + str(offset))
-        else:
-            raise Exception('Offset must be less than 10V.')
+        if offset is not None:
+            if abs(offset) < 1e1:
+                yield self.write(chString + ' ' + str(offset))
+            else:
+                raise Exception('Offset must be less than 10V.')
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
@@ -98,10 +99,11 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     def channel_position(self, channel, position=None):
         # value is in divisions
         chString = 'CH{:d}:POS'.format(channel)
-        if (position is not None) and (abs(position) < 4):
-            yield self.write(chString + ' ' + str(position))
-        else:
-            raise Exception('Vertical position must be less than 4 divisions.')
+        if position is not None:
+            if abs(position) < 4:
+                yield self.write(chString + ' ' + str(position))
+            else:
+                raise Exception('Vertical position must be less than 4 divisions.')
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 

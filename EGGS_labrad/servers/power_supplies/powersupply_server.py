@@ -20,6 +20,7 @@ from labrad.gpib import GPIBManagedServer
 
 # import device wrappers
 from Keithley2231A import Keithley2231AWrapper
+from GWInstekGPP3060 import GWInstekGPP3060Wrapper
 # todo: channels
 # todo: output (series/parallel)
 
@@ -32,7 +33,8 @@ class PowerSupplyServer(GPIBManagedServer):
     name = 'Power Supply Server'
 
     deviceWrappers = {
-        #'RIGOL TECHNOLOGIES DS1104Z Plus': Keithley2231AWrapper
+        'KEITHLEY INSTRUMENTS 2231A-30-3': Keithley2231AWrapper,
+        'GW INSTEK GPP-3060': GWInstekGPP3060Wrapper
     }
 
 
@@ -42,8 +44,7 @@ class PowerSupplyServer(GPIBManagedServer):
         """
         Reset the power supply to factory settings.
         """
-        dev = self.selectedDevice(c)
-        yield dev.reset()
+        yield self.selectedDevice(c).reset()
         sleep(3)
 
     @setting(12, "Clear Buffers", returns='')
@@ -51,16 +52,12 @@ class PowerSupplyServer(GPIBManagedServer):
         """
         Clear device status buffers.
         """
-        dev = self.selectedDevice(c)
-        yield dev.clear_buffers()
+        yield self.selectedDevice(c).clear_buffers()
 
-
-
-    # OUTPUT
-    @setting(111, 'Toggle', status=['b', 'i'], returns='b')
-    def toggle(self, c, status=None):
+    @setting(21, "Remote", status=['i', 'b'], returns='')
+    def remote(self, c, status):
         """
-        Turn the power supply on/off.
+        Set remote mode to enable/disable remote communication.
         Arguments:
             status  (bool)  : the power state of the power supply.
         Returns:
@@ -71,29 +68,86 @@ class PowerSupplyServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
                 status = bool(status)
-        return self.selectedDevice(c).toggle(status)
+        return self.selectedDevice(c).remote(status)
 
-    @setting(121, 'Voltage', voltage='v', returns='v')
-    def voltage(self, c, voltage=None):
-        """
-        Get/set the voltage of the power supply.
-        Arguments:
-            voltage (float) : the voltage (in V).
-        Returns:
-                    (float) : the voltage (in V).
-        """
-        return self.selectedDevice(c).voltage(voltage)
 
-    @setting(131, 'Current', current='v', returns='v')
-    def current(self, c, current=None):
+    # CHANNEL OUTPUT
+    @setting(111, 'Channel Toggle', channel='i', status=['b', 'i'], returns='b')
+    def channelToggle(self, c, channel, status=None):
         """
-        Get/set the current of the power supply.
+        Turn the power supply on/off.
         Arguments:
-            current (float) : the current (in A).
+            channel (int)   : the channel number.
+            status  (bool)  : the power state of the power supply.
         Returns:
-                    (float) : the current (in A).
+                    (bool)  : the power state of the power supply.
         """
-        return self.selectedDevice(c).current(current)
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).channelToggle(channel, status)
+
+    @setting(112, 'Channel Mode', channel='i', mode='s', returns='b')
+    def channelMode(self, c, channel, mode=None):
+        """
+        too&&&
+        Arguments:
+            channel (int)   : the channel number.
+            mode    (bool)  : the power state of the power supply.
+        Returns:
+                    (bool)  : the power state of the power supply.
+        """
+        return self.selectedDevice(c).channelMode(channel, mode)
+
+    @setting(121, 'Channel Voltage', channel='i', voltage='v', returns='v')
+    def channelVoltage(self, c, channel, voltage=None):
+        """
+        Get/set the target voltage of the power supply.
+        Arguments:
+            channel (int)   : the channel number.
+            voltage (float) : the target voltage (in V).
+        Returns:
+                    (float) : the target voltage (in V).
+        """
+        return self.selectedDevice(c).channelVoltage(channel, voltage)
+
+    @setting(122, 'Channel Current', channel='i', current='v', returns='v')
+    def channelCurrent(self, c, channel, current=None):
+        """
+        Get/set the target current of the power supply.
+        Arguments:
+            channel (int)   : the channel number.
+            current (float) : the target current (in A).
+        Returns:
+                    (float) : the target current (in A).
+        """
+        return self.selectedDevice(c).channelCurrent(channel, current)
+
+
+    # MEASURE
+    @setting(211, 'Measure Voltage', channel='i', returns='v')
+    def measureVoltage(self, c, channel):
+        """
+        Get the measured output voltage of the channel.
+        Arguments:
+            channel (int)   : the channel number.
+        Returns:
+                    (float) : the measured voltage (in V).
+        """
+        return self.selectedDevice(c).channelVoltageMeasure(channel)
+
+    @setting(212, 'Measure Current', channel='i', returns='v')
+    def measureCurrent(self, c, channel):
+        """
+        Get the measured output current of the channel.
+        Arguments:
+            channel (int)   : the channel number.
+        Returns:
+                    (float) : the measured current (in A).
+        """
+        return self.selectedDevice(c).channelCurrentMeasure(channel)
 
 
 if __name__ == '__main__':
