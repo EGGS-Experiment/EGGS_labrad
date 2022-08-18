@@ -76,7 +76,7 @@ try:
         sa.marker_toggle(1, 1)
 
         # get oscope amplitude
-        os_amplitude = os.measure(3)
+        os_amplitude = os.measure(1)
 
         # get spec anal power
         sa_power = sa.marker_amplitude(1)
