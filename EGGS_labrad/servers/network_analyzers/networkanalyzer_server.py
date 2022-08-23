@@ -19,7 +19,7 @@ from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
 
 # import device wrappers
-from RigolDSA800 import RigolDSA800Wrapper
+from Agilent8714ES import Agilent8714ESWrapper
 
 
 class NetworkAnalyzerServer(GPIBManagedServer):
@@ -30,7 +30,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
     name = 'Network Analyzer Server'
 
     deviceWrappers = {
-        'Rigol Technologies DSA815': RigolDSA800Wrapper
+        'HEWLETT-PACKARD 8714ES': Agilent8714ESWrapper
     }
 
 
@@ -76,17 +76,6 @@ class NetworkAnalyzerServer(GPIBManagedServer):
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).preamplifier(status)
-
-    @setting(22, "Attenuation", att='v', returns='v')
-    def attenuation(self, c, att=None):
-        """
-        Get/set the attenuation of the RF attenuator.
-        Arguments:
-            att     (float): the channel attenuation (in dB) from the RF attenuator.
-        Returns:
-                    (float): the channel attenuation (in dB) from the RF attenuator.
-        """
-        return self.selectedDevice(c).attenuation(att)
 
 
     # FREQUENCY RANGE
@@ -214,34 +203,31 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).markerMode(channel, mode)
 
-    @setting(314, "Marker Readout Mode", channel='i', mode='i', returns='i')
-    def markerReadoutMode(self, c, channel, mode=None):
+    @setting(314, "Marker Function", channel='i', mode='s', returns='i')
+    def markerFunction(self, c, channel, mode=None):
         """
-        Get/set the readout mode of a marker channel.
-            0: Frequency
-            1: Time
-            2: Inverse time
-            3: Period
+        Get/set the readout function of a marker channel.
+        Can be one of ['OFF', 'MAX', 'MIN', 'TARG', 'BWID', 'NOTCH'].
         Arguments:
             channel (int): the marker channel to get/set.
             mode    (int): the readout mode of the channel.
         Returns:
                     (int): the readout mode of the channel.
         """
-        return self.selectedDevice(c).markerReadoutMode(channel, mode)
+        return self.selectedDevice(c).markerFunction(channel, mode)
 
     @setting(315, "Marker Track", channel='i', status=['b', 'i'], returns='b')
     def markerTrack(self, c, channel, status=None):
         """
         Get/set the status of signal tracking.
-        If a marker is already active, signal tracking will
-        use that marker to set the center frequency.
-        If a marker does not already exist, signal tracking
-        will create a marker and use it to set the center frequency.
+        If a marker is already active, marker tracking will
+            use that marker to set the center frequency.
+        If a marker does not already exist, marker tracking
+            will create a marker and use it to set the center frequency.
         Arguments:
-            status  (bool): the status of signal tracking.
+            status  (bool): the status of marker tracking.
         Returns:
-                    (bool): the status of signal tracking.
+                    (bool): the status of marker tracking.
         """
         if type(status) == int:
             if status not in (0, 1):
@@ -250,28 +236,17 @@ class NetworkAnalyzerServer(GPIBManagedServer):
 
 
     # MARKER READOUT
-    @setting(321, "Marker Amplitude", channel='i', returns='v')
-    def markerAmplitude(self, c, channel):
+    @setting(321, "Marker Measure", channel='i', returns='v')
+    def markerMeasure(self, c, channel):
         """
-        Get the value of a marker channel.
+        Read the value of a marker channel.
+        The function to be measured by the marker is configured in marker_mode.
         Arguments:
             channel (int): the marker channel to get/set.
         Returns:
                     (float): the amplitude of the marker (in dBm).
         """
-        return self.selectedDevice(c).markerAmplitude(channel)
-
-    @setting(322, "Marker Frequency", channel='i', freq='v', returns='v')
-    def markerFrequency(self, c, channel, freq=None):
-        """
-        Get/set the x-position of a normal mode marker.
-        Arguments:
-            channel (int): the marker channel to get/set.
-            freq    (float): the frequency of the marker.
-        Returns:
-                    (float): the frequency of the marker.
-        """
-        return self.selectedDevice(c).markerFrequency(channel, freq)
+        return self.selectedDevice(c).markerMeasure(channel)
 
 
     # PEAK
@@ -365,6 +340,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
                     (*v, *v): the trace.
         """
         return self.selectedDevice(c).getTrace(channel)
+
 
 
 if __name__ == '__main__':

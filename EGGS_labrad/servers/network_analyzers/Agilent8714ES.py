@@ -3,7 +3,7 @@ from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 
-class RigolDSA800Wrapper(GPIBDeviceWrapper):
+class Agilent8714ESWrapper(GPIBDeviceWrapper):
 
     # SYSTEM
     @inlineCallbacks
@@ -138,37 +138,27 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
         returnValue(modeInvert[resp])
 
     @inlineCallbacks
-    def markerReadoutMode(self, channel, mode):
+    def markerFunction(self, channel, mode):
         modeConvert = {0: 'FREQ', 1: 'TIME', 2: 'ITIM', 3: 'PER'}
         modeInvert = {val: key for key, val in modeConvert.items()}
         if mode is not None:
             mode = modeConvert[mode]
-            yield self.write(':CALC:MARK{:d}:X:READ {:s}'.format(channel, mode))
-        resp = yield self.query(':CALC:MARK{:d}:X:READ?'.format(channel))
+            yield self.write(':CALC{:d}:MARK:FUNC:SEL {:d}'.format(channel, mode))
+        resp = yield self.query(':CALC{:d}:MARK:FUNC:SEL?'.format(channel))
         returnValue(modeInvert[resp])
 
     @inlineCallbacks
     def markerTrack(self, channel, status):
         if status is not None:
-            yield self.write(':CALC:MARK{:d}:TRAC:STAT {:d}'.format(channel, status))
-        resp = yield self.query(':CALC:MARK{:d}:TRAC:STAT?'.format(channel))
+            yield self.write(':CALC{:d}:MARK:FUNC:TRACK {:d}'.format(channel, status))
+        resp = yield self.query(':CALC{:d}:MARK:FUNC TRACK?'.format(channel))
         returnValue(bool(int(resp)))
 
 
     # MARKER READOUT
     @inlineCallbacks
     def markerAmplitude(self, channel):
-        resp = yield self.query(':CALC:MARK{:d}:Y?'.format(channel))
-        returnValue(float(resp))
-
-    @inlineCallbacks
-    def markerFrequency(self, channel, freq):
-        if freq is not None:
-            if (freq > 0) and (freq < 1.5e9):
-                yield self.write(':CALC:MARK{:d}:X {:d}'.format(channel, freq))
-            else:
-                raise Exception('Error: marker frequency must be in range: [0, 1.5e9].')
-        resp = yield self.query(':CALC:MARK{:d}:X?'.format(channel))
+        resp = yield self.query(':CALC{:d}:MARK:FUNC:RES?'.format(channel))
         returnValue(float(resp))
 
 
