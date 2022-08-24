@@ -1034,10 +1034,7 @@ def open_backend(filename):
 
     # check to see whether the CSV file exists
     if os.path.exists(csv_file):
-        if use_numpy:
-            return CsvNumpyData(csv_file)
-        else:
-            return CsvListData(csv_file)
+        return CsvNumpyData(csv_file)
     # check to see whether the HDF5 file exists
     elif os.path.exists(hdf5_file):
         return open_hdf5_file(hdf5_file)
