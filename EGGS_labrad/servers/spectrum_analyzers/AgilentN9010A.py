@@ -3,7 +3,7 @@ from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 
-class RigolDSA800Wrapper(GPIBDeviceWrapper):
+class AgilentN9010AWrapper(GPIBDeviceWrapper):
 
     # SYSTEM
     @inlineCallbacks

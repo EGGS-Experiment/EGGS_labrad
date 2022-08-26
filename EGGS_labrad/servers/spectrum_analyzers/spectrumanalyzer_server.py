@@ -20,6 +20,7 @@ from labrad.gpib import GPIBManagedServer
 
 # import device wrappers
 from RigolDSA800 import RigolDSA800Wrapper
+from AgilentN9010A import AgilentN9010AWrapper
 
 
 class SpectrumAnalyzerServer(GPIBManagedServer):
@@ -30,7 +31,8 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
     name = 'Spectrum Analyzer Server'
 
     deviceWrappers = {
-        'Rigol Technologies DSA815': RigolDSA800Wrapper
+        'Rigol Technologies DSA815': RigolDSA800Wrapper,
+        'Agilent Technologies N9010A': AgilentN9010AWrapper
     }
 
 
