@@ -30,7 +30,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
     name = 'Network Analyzer Server'
 
     deviceWrappers = {
-        'HEWLETT-PACKARD 8714ES': HP8714ESWrapper
+        '"HEWLETT-PACKARD 8714ES': HP8714ESWrapper  # yes, i know the " in front is weird but it works
     }
 
 
