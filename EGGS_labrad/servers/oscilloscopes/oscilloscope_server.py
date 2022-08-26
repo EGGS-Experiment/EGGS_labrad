@@ -38,10 +38,10 @@ class OscilloscopeServer(GPIBManagedServer):
         'KEYSIGHT DS1204G': KeysightDS1204GWrapper
     }
 
-    def initServer(self):
-        super().__initServer__()
-        # get connection to data vault to save traces
-        self.dv = self.clients.servers['Data Vault']
+    # def initServer(self):
+    #     super().__initServer__()
+    #     # get connection to data vault to save traces
+    #     self.dv = self.clients.servers['Data Vault']
 
 
     # SYSTEM
