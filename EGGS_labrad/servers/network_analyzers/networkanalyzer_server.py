@@ -19,7 +19,7 @@ from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
 
 # import device wrappers
-from Agilent8714ES import Agilent8714ESWrapper
+from HP8714ES import HP8714ESWrapper
 
 
 class NetworkAnalyzerServer(GPIBManagedServer):
@@ -30,7 +30,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
     name = 'Network Analyzer Server'
 
     deviceWrappers = {
-        'HEWLETT-PACKARD 8714ES': Agilent8714ESWrapper
+        'HEWLETT-PACKARD 8714ES': HP8714ESWrapper
     }
 
 
