@@ -49,7 +49,7 @@ def labrad_urlencode(data):
     else:
         data_bytes, t = T.flatten(data)
         all_bytes, _ = T.flatten((str(t), data_bytes), 'ss')
-    data_url = DATA_URL_PREFIX + base64.urlsafe_b64encode(all_bytes)
+    data_url = DATA_URL_PREFIX + (base64.urlsafe_b64encode(all_bytes)).decode()
     return data_url
 
 
@@ -126,7 +126,7 @@ class IniData(object):
     Handles dataset metadata stored in INI files.
 
     This is used via subclassing mostly out of laziness: this was the
-    easy way to separate it from the code that messes with the acutal
+    easy way to separate it from the code that messes with the actual
     data storage so that the data storage can be modified to use HDF5
     and complex data structures.  Once the HDF5 stuff is finished,
     this can be changed to use composition rather than inheritance.
