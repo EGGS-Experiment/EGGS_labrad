@@ -22,6 +22,15 @@ from labrad.gpib import GPIBManagedServer
 from HP8714ES import HP8714ESWrapper
 
 
+# cmds
+# POWer
+# OUTPut
+# ROUTe
+# SENSe (averaging/config etc)
+# SOURce (rf poewr output/atten etc)
+# CALCulate (marker)
+# TRACe (trace)
+
 class NetworkAnalyzerServer(GPIBManagedServer):
     """
     Manages communication with all network analyzers.
