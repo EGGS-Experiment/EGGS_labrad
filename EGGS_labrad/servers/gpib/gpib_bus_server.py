@@ -97,8 +97,9 @@ class GPIBBusServer(PollingServer):
                     self.devices[addr] = instr
                     self.sendDeviceMessage('GPIB Device Connect', addr)
                 except Exception as e:
-                    print('Failed to add ' + addr + ':' + str(e))
-
+                    pass
+                    # print('Failed to add ' + addr + ':' + str(e))
+                    # raise
             # send device disconnect messages
             for addr in deletions:
                 del self.devices[addr]
