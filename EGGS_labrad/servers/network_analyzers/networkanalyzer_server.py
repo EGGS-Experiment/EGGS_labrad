@@ -23,9 +23,6 @@ from HP8714ES import HP8714ESWrapper
 
 
 # cmds
-# POWer
-# OUTPut
-# ROUTe
 # SENSe (averaging/config etc)
 # SOURce (rf poewr output/atten etc)
 # CALCulate (marker)
@@ -87,6 +84,35 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).preamplifier(status)
 
 
+    # OUTPUT
+    @setting(31, "Output Toggle", status=['b', 'i'], returns='b')
+    def outputToggle(self, c, status=None):
+        """
+        Enable/disable RF output.
+        Arguments:
+            status  (bool): the RF output status.
+        Returns:
+                    (bool): the RF output status.
+        """
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+        return self.selectedDevice(c).outputToggle(status)
+
+
+    # SWEEP
+    @setting(41, "Sweep Mode", mode='s', returns='s')
+    def sweepMode(self, c, mode=None):
+        """
+        Get/set the sweep mode.
+        Arguments:
+            status  (bool): the sweep mode.
+        Returns:
+                    (bool): the sweep mode.
+        """
+        return self.selectedDevice(c).sweepMode(mode)
+
+
     # FREQUENCY RANGE
     @setting(111, "Frequency Start", freq='v', returns='v')
     def frequencyStart(self, c, freq=None):
@@ -133,41 +159,6 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).frequencySpan(span)
 
 
-    # AMPLITUDE
-    @setting(211, "Amplitude Reference", ampl='v', returns='v')
-    def amplitudeReference(self, c, ampl=None):
-        """
-        Get/set the amplitude reference level (i.e. the top of the trace).
-        Arguments:
-            ampl    (float): the reference level (in dBm).
-        Returns:
-                    (float): the reference level (in dBm).
-        """
-        return self.selectedDevice(c).amplitudeReference(ampl)
-
-    @setting(212, "Amplitude Offset", ampl='v', returns='v')
-    def amplitudeOffset(self, c, ampl=None):
-        """
-        Get/set the amplitude offset level. #todo better note and understand
-        Arguments:
-            ampl    (float): the offset level (in dBm).
-        Returns:
-                    (float): the offset level (in dBm).
-        """
-        return self.selectedDevice(c).amplitudeOffset(ampl)
-
-    @setting(213, "Amplitude Scale", factor='v', returns='v')
-    def amplitudeScale(self, c, factor=None):
-        """
-        Get/set the amplitude scale.
-        Arguments:
-            factor  (float): the amplitude scale (in dBm/div).
-        Returns:
-                    (float): the amplitude scale (in dBm/div).
-        """
-        return self.selectedDevice(c).amplitudeScale(factor)
-
-
     # MARKER SETUP
     @setting(311, "Marker Toggle", channel='i', status=['b', 'i'], returns='b')
     def markerToggle(self, c, channel, status=None):
@@ -184,35 +175,22 @@ class NetworkAnalyzerServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).markerToggle(channel, status)
 
-    @setting(312, "Marker Trace", channel='i', trace='i', returns='i')
-    def markerTrace(self, c, channel, trace=None):
+    @setting(312, "Marker Tracking", channel='i', status=['b', 'i'], returns='i')
+    def markerTracking(self, c, channel, status=None):
         """
-        Get/set the trace for a marker channel to follow.
+        Enable/disable marker tracking.
         Arguments:
-            channel (int): the marker channel to get/set.
-            status  (bool): whether the marker is on/off.
+            channel (int): the marker channel.
+            status  (bool): whether tracking is enabled.
         Returns:
-                    (bool): whether the marker is on/off.
+                    (bool): whether tracking is enabled.
         """
-        return self.selectedDevice(c).markerTrace(channel, trace)
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+        return self.selectedDevice(c).markerTracking(channel, status)
 
-    @setting(313, "Marker Mode", channel='i', mode='i', returns='i')
-    def markerMode(self, c, channel, mode=None):
-        """
-        Get/set the marker mode.
-            0: Position (normal).
-            1: Delta
-            2: Delta Pair
-            3: Span Pair
-        Arguments:
-            channel (int): the marker channel to get/set.
-            mode    (int): the marker mode, can be one of (0, 1, 2, 3).
-        Returns:
-                    (int): the marker mode.
-        """
-        return self.selectedDevice(c).markerMode(channel, mode)
-
-    @setting(314, "Marker Function", channel='i', mode='s', returns='i')
+    @setting(313, "Marker Function", channel='i', mode='s', returns='i')
     def markerFunction(self, c, channel, mode=None):
         """
         Get/set the readout function of a marker channel.
@@ -225,31 +203,11 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).markerFunction(channel, mode)
 
-    @setting(315, "Marker Track", channel='i', status=['b', 'i'], returns='b')
-    def markerTrack(self, c, channel, status=None):
-        """
-        Get/set the status of signal tracking.
-        If a marker is already active, marker tracking will
-            use that marker to set the center frequency.
-        If a marker does not already exist, marker tracking
-            will create a marker and use it to set the center frequency.
-        Arguments:
-            status  (bool): the status of marker tracking.
-        Returns:
-                    (bool): the status of marker tracking.
-        """
-        if type(status) == int:
-            if status not in (0, 1):
-                raise Exception('Error: input must be a boolean, 0, or 1.')
-        return self.selectedDevice(c).markerTrack(channel, status)
-
-
-    # MARKER READOUT
     @setting(321, "Marker Measure", channel='i', returns='v')
     def markerMeasure(self, c, channel):
         """
         Read the value of a marker channel.
-        The function to be measured by the marker is configured in marker_mode.
+            The function to be measured by the marker is configured in marker_function.
         Arguments:
             channel (int): the marker channel to get/set.
         Returns:
@@ -324,18 +282,6 @@ class NetworkAnalyzerServer(GPIBManagedServer):
                     (int): the resolution bandwidth (in Hz).
         """
         return self.selectedDevice(c).bandwidthResolution(bw)
-
-    @setting(522, "Bandwidth Video", bw='i', returns='i')
-    def bandwidthVideo(self, c, bw=None):
-        """
-        Get/set the video bandwidth.
-        Increasing video bandwidth increases the sweep time.
-        Arguments:
-            bw      (int): the video bandwidth (in Hz).
-        Returns:
-                    (int): the video bandwidth (in Hz).
-        """
-        return self.selectedDevice(c).bandwidthVideo(bw)
 
 
     # TRACE
