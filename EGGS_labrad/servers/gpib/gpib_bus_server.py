@@ -68,26 +68,28 @@ class GPIBBusServer(PollingServer):
     def initServer(self):
         super().initServer()
         self.devices = {}
-        self.refreshDevices()
+        self.rm = visa.ResourceManager()
 
     def _poll(self):
-        self.refreshDevices()
+        self._refreshDevices()
 
-    def refreshDevices(self):
+    def _refreshDevices(self):
         """
         Refresh the list of known devices on this bus.
         Currently supported are GPIB devices and GPIB over USB.
         """
         try:
-            rm = visa.ResourceManager()
-            addresses = [str(x) for x in rm.list_resources()]
-            additions = set(addresses) - set(self.devices.keys())
-            deletions = set(self.devices.keys()) - set(addresses)
+            # get device names
+            addresses = set([str(x) for x in self.rm.list_resources()])
+            additions = addresses - set(self.devices.keys())
+            deletions = set(self.devices.keys()) - addresses
+
+            # get names from new device
             for addr in additions:
                 try:
                     if not addr.startswith(KNOWN_DEVICE_TYPES):
                         continue
-                    instr = rm.open_resource(addr)
+                    instr = self.rm.open_resource(addr)
                     instr.write_termination = ''
                     instr.clear()
                     if addr.endswith('SOCKET'):
@@ -95,8 +97,10 @@ class GPIBBusServer(PollingServer):
                     self.devices[addr] = instr
                     self.sendDeviceMessage('GPIB Device Connect', addr)
                 except Exception as e:
-                    print('Failed to add ' + addr + ':' + str(e))
-                    raise
+                    pass
+                    # print('Failed to add ' + addr + ':' + str(e))
+                    # raise
+            # send device disconnect messages
             for addr in deletions:
                 del self.devices[addr]
                 self.sendDeviceMessage('GPIB Device Disconnect', addr)

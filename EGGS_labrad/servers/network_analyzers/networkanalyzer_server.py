@@ -1,9 +1,9 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Spectrum Analyzer Server
+name = Network Analyzer Server
 version = 1.1.0
-description = Talks to spectrum analyzers.
+description = Talks to network analyzers.
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -19,20 +19,24 @@ from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
 
 # import device wrappers
-from RigolDSA800 import RigolDSA800Wrapper
-from AgilentN9010A import AgilentN9010AWrapper
+from HP8714ES import HP8714ESWrapper
 
 
-class SpectrumAnalyzerServer(GPIBManagedServer):
+# cmds
+# SENSe (averaging/config etc)
+# SOURce (rf poewr output/atten etc)
+# CALCulate (marker)
+# TRACe (trace)
+
+class NetworkAnalyzerServer(GPIBManagedServer):
     """
-    Manages communication with all spectrum analyzers.
+    Manages communication with all network analyzers.
     """
 
-    name = 'Spectrum Analyzer Server'
+    name = 'Network Analyzer Server'
 
     deviceWrappers = {
-        'Rigol Technologies DSA815': RigolDSA800Wrapper,
-        'Agilent Technologies N9010A': AgilentN9010AWrapper
+        '"HEWLETT-PACKARD 8714ES': HP8714ESWrapper  # yes, i know the " in front is weird but it works
     }
 
 
@@ -40,7 +44,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
     @setting(11, "Reset", returns='')
     def reset(self, c):
         """
-        Reset the spectrum analyzer to factory settings.
+        Reset the network analyzer to factory settings.
         """
         dev = self.selectedDevice(c)
         yield dev.reset()
@@ -79,16 +83,34 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).preamplifier(status)
 
-    @setting(22, "Attenuation", att='v', returns='v')
-    def attenuation(self, c, att=None):
+
+    # OUTPUT
+    @setting(31, "Output Toggle", status=['b', 'i'], returns='b')
+    def outputToggle(self, c, status=None):
         """
-        Get/set the attenuation of the RF attenuator.
+        Enable/disable RF output.
         Arguments:
-            att     (float): the channel attenuation (in dB) from the RF attenuator.
+            status  (bool): the RF output status.
         Returns:
-                    (float): the channel attenuation (in dB) from the RF attenuator.
+                    (bool): the RF output status.
         """
-        return self.selectedDevice(c).attenuation(att)
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+        return self.selectedDevice(c).outputToggle(status)
+
+
+    # SWEEP
+    @setting(41, "Sweep Mode", mode='s', returns='s')
+    def sweepMode(self, c, mode=None):
+        """
+        Get/set the sweep mode.
+        Arguments:
+            status  (bool): the sweep mode.
+        Returns:
+                    (bool): the sweep mode.
+        """
+        return self.selectedDevice(c).sweepMode(mode)
 
 
     # FREQUENCY RANGE
@@ -137,41 +159,6 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).frequencySpan(span)
 
 
-    # AMPLITUDE
-    @setting(211, "Amplitude Reference", ampl='v', returns='v')
-    def amplitudeReference(self, c, ampl=None):
-        """
-        Get/set the amplitude reference level (i.e. the top of the trace).
-        Arguments:
-            ampl    (float): the reference level (in dBm).
-        Returns:
-                    (float): the reference level (in dBm).
-        """
-        return self.selectedDevice(c).amplitudeReference(ampl)
-
-    @setting(212, "Amplitude Offset", ampl='v', returns='v')
-    def amplitudeOffset(self, c, ampl=None):
-        """
-        Get/set the amplitude offset level. #todo better note and understand
-        Arguments:
-            ampl    (float): the offset level (in dBm).
-        Returns:
-                    (float): the offset level (in dBm).
-        """
-        return self.selectedDevice(c).amplitudeOffset(ampl)
-
-    @setting(213, "Amplitude Scale", factor='v', returns='v')
-    def amplitudeScale(self, c, factor=None):
-        """
-        Get/set the amplitude scale.
-        Arguments:
-            factor  (float): the amplitude scale (in dBm/div).
-        Returns:
-                    (float): the amplitude scale (in dBm/div).
-        """
-        return self.selectedDevice(c).amplitudeScale(factor)
-
-
     # MARKER SETUP
     @setting(311, "Marker Toggle", channel='i', status=['b', 'i'], returns='b')
     def markerToggle(self, c, channel, status=None):
@@ -188,92 +175,45 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).markerToggle(channel, status)
 
-    @setting(312, "Marker Trace", channel='i', trace='i', returns='i')
-    def markerTrace(self, c, channel, trace=None):
+    @setting(312, "Marker Tracking", channel='i', status=['b', 'i'], returns='i')
+    def markerTracking(self, c, channel, status=None):
         """
-        Get/set the trace for a marker channel to follow.
+        Enable/disable marker tracking.
         Arguments:
-            channel (int): the marker channel to get/set.
-            status  (bool): whether the marker is on/off.
+            channel (int): the marker channel.
+            status  (bool): whether tracking is enabled.
         Returns:
-                    (bool): whether the marker is on/off.
+                    (bool): whether tracking is enabled.
         """
-        return self.selectedDevice(c).markerTrace(channel, trace)
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+        return self.selectedDevice(c).markerTracking(channel, status)
 
-    @setting(313, "Marker Mode", channel='i', mode='i', returns='i')
-    def markerMode(self, c, channel, mode=None):
+    @setting(313, "Marker Function", channel='i', mode='s', returns='i')
+    def markerFunction(self, c, channel, mode=None):
         """
-        Get/set the marker mode.
-            0: Position (normal).
-            1: Delta
-            2: Delta Pair
-            3: Span Pair
-        Arguments:
-            channel (int): the marker channel to get/set.
-            mode    (int): the marker mode, can be one of (0, 1, 2, 3).
-        Returns:
-                    (int): the marker mode.
-        """
-        return self.selectedDevice(c).markerMode(channel, mode)
-
-    @setting(314, "Marker Readout Mode", channel='i', mode='i', returns='i')
-    def markerReadoutMode(self, c, channel, mode=None):
-        """
-        Get/set the readout mode of a marker channel.
-            0: Frequency
-            1: Time
-            2: Inverse time
-            3: Period
+        Get/set the readout function of a marker channel.
+        Can be one of ['OFF', 'MAX', 'MIN', 'TARG', 'BWID', 'NOTCH'].
         Arguments:
             channel (int): the marker channel to get/set.
             mode    (int): the readout mode of the channel.
         Returns:
                     (int): the readout mode of the channel.
         """
-        return self.selectedDevice(c).markerReadoutMode(channel, mode)
+        return self.selectedDevice(c).markerFunction(channel, mode)
 
-    @setting(315, "Marker Track", channel='i', status=['b', 'i'], returns='b')
-    def markerTrack(self, c, channel, status=None):
+    @setting(321, "Marker Measure", channel='i', returns='v')
+    def markerMeasure(self, c, channel):
         """
-        Get/set the status of signal tracking.
-        If a marker is already active, signal tracking will
-        use that marker to set the center frequency.
-        If a marker does not already exist, signal tracking
-        will create a marker and use it to set the center frequency.
-        Arguments:
-            status  (bool): the status of signal tracking.
-        Returns:
-                    (bool): the status of signal tracking.
-        """
-        if type(status) == int:
-            if status not in (0, 1):
-                raise Exception('Error: input must be a boolean, 0, or 1.')
-        return self.selectedDevice(c).markerTrack(channel, status)
-
-
-    # MARKER READOUT
-    @setting(321, "Marker Amplitude", channel='i', returns='v')
-    def markerAmplitude(self, c, channel):
-        """
-        Get the value of a marker channel.
+        Read the value of a marker channel.
+            The function to be measured by the marker is configured in marker_function.
         Arguments:
             channel (int): the marker channel to get/set.
         Returns:
                     (float): the amplitude of the marker (in dBm).
         """
-        return self.selectedDevice(c).markerAmplitude(channel)
-
-    @setting(322, "Marker Frequency", channel='i', freq='v', returns='v')
-    def markerFrequency(self, c, channel, freq=None):
-        """
-        Get/set the x-position of a normal mode marker.
-        Arguments:
-            channel (int): the marker channel to get/set.
-            freq    (float): the frequency of the marker.
-        Returns:
-                    (float): the frequency of the marker.
-        """
-        return self.selectedDevice(c).markerFrequency(channel, freq)
+        return self.selectedDevice(c).markerMeasure(channel)
 
 
     # PEAK
@@ -343,18 +283,6 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).bandwidthResolution(bw)
 
-    @setting(522, "Bandwidth Video", bw='i', returns='i')
-    def bandwidthVideo(self, c, bw=None):
-        """
-        Get/set the video bandwidth.
-        Increasing video bandwidth increases the sweep time.
-        Arguments:
-            bw      (int): the video bandwidth (in Hz).
-        Returns:
-                    (int): the video bandwidth (in Hz).
-        """
-        return self.selectedDevice(c).bandwidthVideo(bw)
-
 
     # TRACE
     @setting(911, "Trace", channel='i', returns='(*v*v)')
@@ -369,6 +297,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).getTrace(channel)
 
 
+
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(SpectrumAnalyzerServer())
+    util.runServer(NetworkAnalyzerServer())

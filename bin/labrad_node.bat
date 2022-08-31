@@ -42,7 +42,7 @@ START "ARTIQ Dashboard" /min CMD "/k activate artiq && CALL artiq_dashboard -s %
 TIMEOUT 10 > NUL && START /min CMD /c %PROG_HOME%\utils\start_labrad_clients.bat
 
 @REM: Run all device servers as specified, then open a python shell to begin
-CALL %PROG_HOME%\labrad_cxn.bat
+CALL %PROG_HOME%\server_cxn.bat
 
 GOTO EOF
 

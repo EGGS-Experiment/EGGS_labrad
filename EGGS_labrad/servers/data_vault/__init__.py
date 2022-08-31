@@ -252,6 +252,7 @@ class Session(object):
         files = os.listdir(self.dir)
 
         # get directories (objects that end in '.dir' are directories, though we also allow folders that don't end in dir)
+        # todo: fix .dir suffix problem, maybe try/except block that does .dir if fails?
         #dirs = [filename_decode(filename.split('.')[0]) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
         dirs = [filename_decode(filename) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
 
@@ -264,6 +265,7 @@ class Session(object):
             else:
                 return any([filename.endswith(filetype) for filetype in filetype_suffixes])
 
+        # todo: fix bug where it splits filenames that have a period in them, otherwise reject filenames with periods in them
         datasets = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_filetype(filename)])
         #datasets = sorted([filename_decode(filename) for filename in files if valid_filetype(filename)])
 
@@ -402,7 +404,8 @@ class Session(object):
 
 class VirtualSession(object):
     """
-    todo: finish
+    A session object that allows multiple directories in non-contiguous paths
+    to be treated as if they were in a single enclosing directory.
     """
 
     def __init__(self, datadirs, path, hub, session_store):

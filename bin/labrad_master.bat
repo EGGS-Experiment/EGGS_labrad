@@ -20,16 +20,22 @@ FOR %%x IN (%*) DO (
     IF "%%x"=="--help" (GOTO HELP)
 )
 
-@REM: Set up syslog for Grafana
-START "Loki Syslog" /min CMD "/k %HOME%\Code\loki\loki-windows-amd64.exe -config.file %PROG_HOME%\logging\loki-syslog-config.yaml"
-START "Promtail Syslog - LabRAD" /min CMD "/k %HOME%\Code\loki\promtail-windows-amd64.exe -config.file %PROG_HOME%\logging\promtail-syslog-config.yaml"
-START "Promtail - ARTIQ" /min CMD "/k %HOME%\Code\loki\promtail-windows-amd64.exe -config.file %PROG_HOME%\logging\promtail-artiq-config.yaml"
+@REM: Start core LabRAD tool suite
+IF %raw_flag%==0 (
+    @REM: Set up syslog for Grafana
+    START "Loki Syslog" /min CMD "/k %HOME%\Code\loki\loki-windows-amd64.exe -config.file %PROG_HOME%\logging\loki-syslog-config.yaml"
+    START "Promtail Syslog - LabRAD" /min CMD "/k %HOME%\Code\loki\promtail-windows-amd64.exe -config.file %PROG_HOME%\logging\promtail-syslog-config.yaml"
+    START "Promtail - ARTIQ" /min CMD "/k %HOME%\Code\loki\promtail-windows-amd64.exe -config.file %PROG_HOME%\logging\promtail-artiq-config.yaml"
 
-@REM: Set up autosaver
-START "LabRAD Autosaver" /min %PROG_HOME%\labrad_autosaver.bat
+    @REM: Set up autosaver
+    START "LabRAD Autosaver" /min %PROG_HOME%\labrad_autosaver.bat
 
-@REM: Set up port forwarder to allow access via http
-START "LabRAD Forwarder" /min CMD "/k activate labart && python %PROG_HOME%\labrad_forwarder.py 8682:127.0.0.1:7682"
+    @REM: Set up port forwarder to allow access via http
+    START "LabRAD Forwarder" /min CMD "/k activate labart && python %PROG_HOME%\labrad_forwarder.py 8682:127.0.0.1:7682"
+
+    @REM: ARTIQ
+    START /min CMD /c %PROG_HOME%\artiq_start.bat
+)
 
 @REM: Core Servers
 START "LabRAD Manager" /min %PROG_HOME%\scalabrad_minimum_startup.bat --tls-required false
@@ -38,19 +44,11 @@ START "LabRAD Node" /min CMD "/k activate labart && python %HOME%\Code\pylabrad\
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:3000
 
-@REM: ARTIQ
-START /min CMD /c %PROG_HOME%\artiq_start.bat
 
-@REM: Run all device servers as specified, then open a python shell to begin
+@REM: Run all device servers as specified, then open the relevant python shell
 IF %server_flag%==1 (
     TIMEOUT 8 > NUL && START /min CMD /c %PROG_HOME%\utils\start_labrad_servers.bat
-)
-
-@REM: Clients
-START /min CMD /c %PROG_HOME%\utils\start_labrad_clients.bat
-
-@REM: If all device servers are specified, open cxn with all servers assigned standard nicknames, otherwise run normal shell
-IF %server_flag%==1 (
+    START /min CMD /c %PROG_HOME%\utils\start_labrad_clients.bat
     TIMEOUT 8 > NUL && CALL %PROG_HOME%\server_cxn.bat
 ) ELSE ( CALL %PROG_HOME%\labrad_cxn.bat )
 

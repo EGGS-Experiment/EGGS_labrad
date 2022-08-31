@@ -17,6 +17,7 @@ timeout = 20
 from time import sleep
 from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
+from EGGS_labrad.clients import createTrunk
 
 # import device wrappers
 from RigolDS1000Z import RigolDS1000ZWrapper
@@ -36,6 +37,11 @@ class OscilloscopeServer(GPIBManagedServer):
         'TEKTRONIX MSO2024B': TektronixMSO2000Wrapper,
         'KEYSIGHT DS1204G': KeysightDS1204GWrapper
     }
+
+    # def initServer(self):
+    #     super().__initServer__()
+    #     # get connection to data vault to save traces
+    #     self.dv = self.clients.servers['Data Vault']
 
 
     # SYSTEM
@@ -241,19 +247,34 @@ class OscilloscopeServer(GPIBManagedServer):
 
 
     # ACQUISITION
-    @setting(201, "Trace", channel='i', points='i', returns='(*v*v)')
-    def get_trace(self, c, channel, points=None):
+    @setting(201, "Trace", channel='i', points='i', save='b', returns='(*v*v)')
+    def trace(self, c, channel, points, save=True):
         """
         Get a trace for a single channel.
         Arguments:
-            channel: The channel for which we want to get the trace.
+            channel (int): The channel for which we want to get the trace.
+            points  (int): The number of points to transfer.
+            save    (bool): Whether to save the result to the data vault.
         Returns:
-            (*float, *float): (the time
+            (*float, *float): (the time array, the signal array)
         """
-        if points is None:
-            return self.selectedDevice(c).get_trace(channel)
-        else:
-            return self.selectedDevice(c).get_trace(channel, points)
+        # get data
+        data = self.selectedDevice(c).trace(channel, points)
+        # save data to datavault
+        if save:
+            # create client-specific context
+            cntx_tmp = self.cxn.context()
+            # create folder
+            trunk_tmp = createTrunk(self.name)
+            self.dv.cd(trunk_tmp, True, context=cntx_tmp)
+            self.dv.new(
+                'Trace - CH{:d}'.format(channel),
+                [('Time', 's')], [('Signal', 'Voltage', 'V')],
+                context=cntx_tmp
+            )
+            # todo: add entire dataset at once somehow
+            #self.dv.add(amp_val, os_amplitude, sa_power, context=cntx_tmp)
+        return data
 
 
     # MEASURE

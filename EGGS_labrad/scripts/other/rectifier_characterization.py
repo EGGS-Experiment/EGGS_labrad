@@ -10,7 +10,7 @@ from numpy import linspace
 from EGGS_labrad.clients import createTrunk
 
 name_tmp = 'Rectifier Characterization'
-freq_range = linspace(15, 25, 15 + 1) * 1e6
+freq_range = linspace(15, 25, 10 + 1) * 1e6
 #freq_range = [20635000]
 amp_range = linspace(-10, 10, 40 + 1)
 os_channel = 3
@@ -97,7 +97,7 @@ try:
                 sleep(1)
                 osc_val = os.measure(3)
             os.channel_scale(os_channel, osc_val)
-            sleep(1)
+            sleep(2)
 
             # take oscope data
             osc_val = os.measure(3)

@@ -219,8 +219,8 @@ class SerialDeviceServer(LabradServer):
             self.release = lambda: self.comm_lock.release()
             # buffer
             self.buffer_size = lambda size: ser.buffer_size(size)
-            self.buffer_input_waiting = lambda: ser.in_waiting
-            self.buffer_output_waiting = lambda: ser.out_waiting
+            self.buffer_waiting_input = lambda: ser.buffer_waiting_input
+            self.buffer_waiting_output = lambda: ser.buffer_waiting_output
 
 
     # SETUP

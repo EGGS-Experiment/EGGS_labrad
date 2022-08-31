@@ -187,13 +187,28 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
 
     # ACQUISITION
     @inlineCallbacks
-    def get_trace(self, channel, points=100000):
-        # configure trace
-        yield self.write('DAT:SOUR CH{:d}'.format(channel))
+    def trace(self, channel, points=1250000):
+        # ensure trace length is valid
+        if (points > 1250000) or (points < 1000):
+            raise Exception("Invalid number of points. Must be in [1000, 1.25e6].")
+
+        # configure source
+        yield self.write('DAT:SOU CH{:d}'.format(channel))
+
+        # configure incoming waveform data
+        # set SINGULAR_YT composition to get singular sample waveform
+        yield self.write('DAT:COMP SINGULAR_YT')
+        # set resolution to FULL
+        yield self.write('DAT:RESO FULL')
+        # set encoding to RIB (signed, MSB transferred first)
+        yield self.write('DAT:ENC RIB')
+        # set data width to 16 bits
+        yield self.write('DAT:WID 2')
+
+        # set transfer length
         yield self.write('DAT:STAR 1')
-        yield self.write('DAT:ENC ASCI')
         yield self.write('DAT:STOP {:d}'.format(points))
-        timeout_tmp = WithUnit(points / 10000, 's')
+        timeout_tmp = WithUnit(points / 1000, 's')
 
         # get preamble and waveform
         preamble = yield self.query('WFMO?')

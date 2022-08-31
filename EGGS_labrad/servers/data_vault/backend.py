@@ -49,7 +49,7 @@ def labrad_urlencode(data):
     else:
         data_bytes, t = T.flatten(data)
         all_bytes, _ = T.flatten((str(t), data_bytes), 'ss')
-    data_url = DATA_URL_PREFIX + base64.urlsafe_b64encode(all_bytes)
+    data_url = DATA_URL_PREFIX + (base64.urlsafe_b64encode(all_bytes)).decode()
     return data_url
 
 
@@ -58,8 +58,10 @@ def labrad_urldecode(data_url):
         # decode parameter data from dataurl
         all_bytes = base64.urlsafe_b64decode(data_url[len(DATA_URL_PREFIX):])
         t, data_bytes = T.unflatten(all_bytes, 'ss')
-        data = T.unflatten(data_bytes, t)
-        return data
+        # ensure data_bytes is of type bytes
+        if type(data_bytes) == str:
+            data_bytes = data_bytes.encode()
+        return T.unflatten(data_bytes, t)
     else:
         raise ValueError("Trying to labrad_urldecode data that doesn't start "
                          "with prefix: {}".format(DATA_URL_PREFIX))
@@ -126,7 +128,7 @@ class IniData(object):
     Handles dataset metadata stored in INI files.
 
     This is used via subclassing mostly out of laziness: this was the
-    easy way to separate it from the code that messes with the acutal
+    easy way to separate it from the code that messes with the actual
     data storage so that the data storage can be modified to use HDF5
     and complex data structures.  Once the HDF5 stuff is finished,
     this can be changed to use composition rather than inheritance.
@@ -1034,10 +1036,7 @@ def open_backend(filename):
 
     # check to see whether the CSV file exists
     if os.path.exists(csv_file):
-        if use_numpy:
-            return CsvNumpyData(csv_file)
-        else:
-            return CsvListData(csv_file)
+        return CsvNumpyData(csv_file)
     # check to see whether the HDF5 file exists
     elif os.path.exists(hdf5_file):
         return open_hdf5_file(hdf5_file)
