@@ -1,12 +1,14 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QLabel, QDoubleSpinBox, QComboBox, QGridLayout, QTreeWidget, QTreeWidgetItem,\
-    QWidget, QSplitter, QHBoxLayout, QVBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QLabel, QGridLayout, QTreeWidget, QTreeWidgetItem,\
+    QWidget, QSplitter, QHBoxLayout, QVBoxLayout
 
 from EGGS_labrad.clients.Widgets import TextChangingButton as _TextChangingButton, QClientMenuHeader
 
 # todo: make right click open menu to close
-# todo: make right clock open documentation in RHS
+# todo: make double click open documentation in RHS
+# todo: set colors
+# todo: set relative ratio of sizes
 
 
 class ConnectionTreeWidget(QTreeWidget):
@@ -14,6 +16,7 @@ class ConnectionTreeWidget(QTreeWidget):
         # general initialization
         super().__init__()
         self.setWindowTitle("LabRAD Connections")
+        self.parent = parent
 
         # specific initialization
         self.setColumnCount(9)
@@ -24,7 +27,6 @@ class ConnectionTreeWidget(QTreeWidget):
             "Messages Sent", "Messages Received",
 
         ])
-        self.connection_dict = {}
 
     def createConnection(self, connection_data):
         """
@@ -33,40 +35,36 @@ class ConnectionTreeWidget(QTreeWidget):
             connection_data (dataset_location, dataset_name, artist_name): a unique identifier for an artist.
         """
         # create connection item
-        connection_id = connection_data[0]
         connection_data = list(map(str, connection_data))
         connection_item = QTreeWidgetItem(self, connection_data)
-        # add connection_item to connection_dict
-        self.connection_dict[connection_id] = connection_item
         return connection_item
 
-    def removeConnection(self, connection_ID):
+    def removeConnection(self, connection_item):
         """
         Removes the QTreeWidgetItem corresponding to a given connection ID.
         Arguments:
-            connection_ID   (int): the connection ID of the connection_item to be removed.
+            connection_item (QTreeWidgetItem): the connection ID of the connection_item to be removed.
         """
         try:
             # get connection item and its index
-            connection_item = self.connection_dict.pop(connection_ID)
             connection_item_index = self.indexOfTopLevelItem(connection_item)
             # remove from widget
             self.takeTopLevelItem(connection_item_index)
         except KeyError as e:
-            print("Error in connectionClient.removeConnection: connection ID {} not associated with a connection.".format(connection_ID))
-            print(e)
+            print("Error in connectionClient.removeConnection: {}".format(e))
 
 
 class DocumentationTreeWidget(QTreeWidget):
     def __init__(self, parent=None):
-        super().__init__()
         # general initialization
+        super().__init__()
         self.setWindowTitle("LabRAD Connections")
+        self.documentation_dict = {}
+        self.parent = parent
+
         # specific initialization
         self.setColumnCount(2)
         self.setHeaderLabels(["ID", "Name"])
-        # test
-        self.documentation_dict = {}
 
     def createDocumentation(self, setting_data):
         """
@@ -81,7 +79,7 @@ class DocumentationTreeWidget(QTreeWidget):
         documentation_item = QTreeWidgetItem(self, documentation_data)
         documentation_item.setExpanded(True)
 
-        # add connection_item to connection_dict
+        # add documentation_item to documentation_dict
         self.documentation_dict[setting_id] = documentation_item
 
         # add text to documentation item
@@ -103,25 +101,31 @@ class DocumentationTreeWidget(QTreeWidget):
 
 class ConnectionsGUI(QWidget):
     def __init__(self, parent=None):
-        super().__init__()
         # general initialization
+        super().__init__()
         self.setWindowTitle("LabRAD Connections")
+        self.parent = parent
+
         # make UI
         self.makeWidgets()
         self.showMaximized()
 
+        # todo: create signals/whatever to interact w/connections client
+
         # test tmp remove
-        #self.connectionWidget.createConnection(("test server ID", "Server", "test server type", 0, 1, 2, 3, 4, 5))
-        #self.documentationWidget.createDocumentation(("doc 1", "doc 2", "doc 3", "doc 4", "doc 5", "doc 6"))
+        self.connectionWidget.createConnection(("test server ID", "Server", "test server type", 0, 1, 2, 3, 4, 5))
+        self.documentationWidget.createDocumentation(("doc 1", "doc 2", "doc 3", "doc 4", "doc 5", "doc 6"))
 
     def makeWidgets(self):
-        layout = QGridLayout(self)
-
         # create connection widget
-        self.connectionWidget = ConnectionTreeWidget()
+        self.connectionWidget = ConnectionTreeWidget(self.parent)
+        connection_widget_holder = QWidget()
+        connection_layout = QVBoxLayout(connection_widget_holder)
+        connection_layout.addWidget(QLabel('Connections:'))
+        connection_layout.addWidget(self.connectionWidget)
 
         # create documentation widget
-        self.documentationWidget = DocumentationTreeWidget()
+        self.documentationWidget = DocumentationTreeWidget(self.parent)
         documentation_widget_holder = QWidget()
         documentation_layout = QVBoxLayout(documentation_widget_holder)
         documentation_layout.addWidget(QLabel('Documentation:'))
@@ -130,8 +134,17 @@ class ConnectionsGUI(QWidget):
         # create splitter
         splitter_widget = QSplitter()
         splitter_widget.setOrientation(Qt.Horizontal)
-        splitter_widget.addWidget(self.connectionWidget)
+        splitter_widget.addWidget(connection_widget_holder)
         splitter_widget.addWidget(documentation_widget_holder)
+
+        # create title widget
+        title_widget = QLabel('LabRAD Connections')
+        title_widget.setFont(QFont('MS Shell Dlg 2', pointSize=20))
+        title_widget.setAlignment(Qt.AlignCenter)
+
+        # create layout
+        layout = QVBoxLayout(self)
+        layout.addWidget(title_widget)
         layout.addWidget(splitter_widget)
 
 
