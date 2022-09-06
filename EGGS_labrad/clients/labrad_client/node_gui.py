@@ -1,13 +1,23 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QLabel, QTreeWidget, QTreeWidgetItem, QWidget, QSplitter, QVBoxLayout, QPlainTextEdit, QGridLayout, QMenu
+from PyQt5.QtWidgets import QLabel, QTreeWidget, QTreeWidgetItem, QWidget, QSplitter, QVBoxLayout,\
+    QPlainTextEdit, QGridLayout, QMenu, QTableWidget, QTableWidgetItem, QPushButton
 
-# todo: set colors
-# todo: create signals/whatever to interact w/connections client
-# todo: make arguments a list
+# store servers as dicts
 
 
-class ConnectionTreeWidget(QTreeWidget):
+class NodeServerWidgetItem(QTreeWidgetItem):
+    """
+    todo: document
+    """
+
+    def __init__(self, parent=None):
+        # general initialization
+        super().__init__()
+        self.parent = parent
+
+
+class NodeTableWidget(QTableWidget):
     """
     todo: document
     """
@@ -74,101 +84,6 @@ class ConnectionTreeWidget(QTreeWidget):
             self.parent.closeConnection(item)
             pass
 
-
-class ServerDocumentationWidget(QWidget):
-    """
-    todo: document
-    """
-
-    def __init__(self, parent=None):
-        # general initialization
-        super().__init__()
-        self.makeLayout()
-
-    def makeLayout(self):
-        # make widgets
-        # todo: set fonts
-        server_num_label = QLabel("Server ID:")
-        self.server_num = QLabel("N/A")
-        server_name_label = QLabel("Server Name:")
-        self.server_name = QLabel("N/A")
-        server_description_label = QLabel("Server Description:")
-        self.server_description = QPlainTextEdit()
-        self.server_description.setReadOnly(True)
-        # lay out
-        layout = QGridLayout(self)
-        layout.addWidget(server_num_label,          0, 0, 1, 1)
-        layout.addWidget(self.server_num,           0, 1, 1, 1)
-        layout.addWidget(server_name_label,         0, 2, 1, 1)
-        layout.addWidget(self.server_name,          0, 3, 1, 1)
-        layout.addWidget(server_description_label,  2, 0, 1, 1)
-        layout.addWidget(self.server_description,   3, 0, 3, 4)
-
-    def addServerDocumentation(self, server_data):
-        """
-        todo
-        """
-        # remove old server documentation
-        self.server_description.clear()
-
-        # add new server documentation
-        self.server_num.setText(str(server_data[0]))
-        self.server_name.setText(server_data[1])
-        self.server_description.appendPlainText(server_data[2])
-
-
-class SettingDocumentationWidget(QTreeWidget):
-    """
-    todo: document
-    """
-
-    def __init__(self, parent=None):
-        # general initialization
-        super().__init__()
-        self.documentation_dict = {}
-        self.parent = parent
-
-        # specific initialization
-        self.setColumnCount(2)
-        self.setHeaderLabels(["ID", "Name"])
-
-    def addSettingDocumentation(self, setting_data):
-        """
-        Creates and returns a QTreeWidgetItem that holds
-            the documentation for a server Setting.
-        Arguments:
-            setting_data    (tmp): a unique identifier for an artist.
-        """
-        # create documentation item
-        setting_id, setting_name = setting_data[0: 2]
-        documentation_data = [str(setting_id), setting_name]
-        documentation_item = QTreeWidgetItem(self, documentation_data)
-        documentation_item.setExpanded(True)
-
-        # add documentation_item to documentation_dict
-        self.documentation_dict[setting_id] = documentation_item
-
-        # add text to documentation item
-        # todo: add title of what it is
-        for text_data in setting_data[2:-1]:
-            # create setting documentation objects
-            setting_documentation = QTreeWidgetItem(documentation_item, [str(text_data)])
-            setting_documentation.setFirstColumnSpanned(True)
-            # make setting documentation objects children of documentation_data
-            documentation_item.addChild(setting_documentation)
-
-    def clear(self):
-        """
-        Removes all documentation objects.
-        """
-        # remove documentation_items in QTreeWidget
-        for index in reversed(range(self.topLevelItemCount())):
-            documentation_item = self.topLevelItem(index)
-            documentation_item.takeChildren()
-            self.takeTopLevelItem(index)
-
-        # clear holding dictionary
-        self.documentation_dict.clear()
 
 
 class ConnectionsGUI(QWidget):
