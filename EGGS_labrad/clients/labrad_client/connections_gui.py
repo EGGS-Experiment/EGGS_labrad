@@ -1,111 +1,138 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QLabel, QDoubleSpinBox, QComboBox, QGridLayout, QTreeWidget, QMenu, QFileDialog, QTreeWidgetItem
+from PyQt5.QtWidgets import QFrame, QLabel, QDoubleSpinBox, QComboBox, QGridLayout, QTreeWidget, QTreeWidgetItem,\
+    QWidget, QSplitter, QHBoxLayout, QVBoxLayout, QGridLayout
 
 from EGGS_labrad.clients.Widgets import TextChangingButton as _TextChangingButton, QClientMenuHeader
 
+# todo: make right click open menu to close
+# todo: make right clock open documentation in RHS
 
-class ConnectionsGUI(QTreeWidget):
+
+class ConnectionTreeWidget(QTreeWidget):
     def __init__(self, parent=None):
-        super().__init__()
         # general initialization
+        super().__init__()
         self.setWindowTitle("LabRAD Connections")
+
         # specific initialization
-        self.setColumnCount(10)
+        self.setColumnCount(9)
         self.setHeaderLabels([
             "ID", "Type", "Name",
             "Server Requests", "Server Responses",
             "Client Requests", "Client Responses",
             "Messages Sent", "Messages Received",
-            "Close"
+
         ])
-        # create
+        self.connection_dict = {}
 
-    def addDataset(self, dataset_ident):
+    def createConnection(self, connection_data):
         """
-        Adds a dataset header.
+        Creates and returns a QTreeWidgetItem that represents a LabRAD connection.
         Arguments:
-            dataset_ident   (dataset_location, dataset_name): a unique identifier for a dataset.
+            connection_data (dataset_location, dataset_name, artist_name): a unique identifier for an artist.
         """
-        if dataset_ident in self.dataset_dict.keys():
-            print('Error in tracelist.addDataset: Dataset already exists.')
-            print('\tdataset_ident:', dataset_ident)
-        else:
-            # create dataset header
-            ident_tmp = list(dataset_ident)
-            dataset_item = QTreeWidgetItem(self, ident_tmp[::-1])
-            dataset_item.setExpanded(True)
-            # store dataset_ident within dataset_item
-            dataset_item.setData(0, Qt.UserRole, dataset_ident)
-            # store header in self.dataset_dict
-            self.dataset_dict[dataset_ident] = dataset_item
+        # create connection item
+        connection_id = connection_data[0]
+        connection_data = list(map(str, connection_data))
+        connection_item = QTreeWidgetItem(self, connection_data)
+        # add connection_item to connection_dict
+        self.connection_dict[connection_id] = connection_item
+        return connection_item
 
-    def removeDataset(self, dataset_ident):
+    def removeConnection(self, connection_ID):
         """
-        Removes a dataset header and all child traces.
+        Removes the QTreeWidgetItem corresponding to a given connection ID.
         Arguments:
-            dataset_ident   (dataset_location, dataset_name): a unique identifier for a dataset.
+            connection_ID   (int): the connection ID of the connection_item to be removed.
         """
-        if dataset_ident not in self.dataset_dict.keys():
-            print("Error in tracelist.removeDataset: dataset doesn't exist.")
-            print('\tdataset_ident:', dataset_ident)
-        else:
-            dataset_item = self.dataset_dict.pop(dataset_ident, None)
-            dataset_item.takeChildren()
-            # remove dataset item from QTreeWidget
-            dataset_item_index = self.indexOfTopLevelItem(dataset_item)
-            self.takeTopLevelItem(dataset_item_index)
-            # remove from parent
-            self.parent.remove_dataset(dataset_ident)
-
-    def addTrace(self, artist_ident, color):
-        """
-        Adds a trace to the TraceListWidget.
-        Arguments:
-            artist_ident    (dataset_location, dataset_name, artist_name): a unique identifier for an artist.
-            color           Qt.Color: the color to set the trace.
-        """
-        dataset_ident = artist_ident[:2]
-        # get dataset
         try:
-            dataset_item = self.dataset_dict[dataset_ident]
-            # create artist_item
-            artist_item = QTreeWidgetItem(dataset_item, [artist_ident[2]])
-            artist_item.setData(0, Qt.UserRole, artist_ident)
-            artist_item.setBackground(0, QColor(0, 0, 0))
-            artist_item.setCheckState(0, Qt.Checked)
-            artist_item.setFirstColumnSpanned(True)
-            # set color of artist entry in tracelist
-            if self.use_trace_color:
-                artist_item.setForeground(0, color)
-            else:
-                artist_item.setForeground(0, QColor(255, 255, 255))
-            # add artist_item to dataset_item and holding dictionary
-            dataset_item.addChild(artist_item)
-            self.trace_dict[artist_ident] = artist_item
-            dataset_item.sortChildren(0, Qt.AscendingOrder)
-        except KeyError:
-            print("Error in tracelist.addTrace: parent dataset doesn't exist")
-            print("\tdataset_ident:", dataset_ident)
+            # get connection item and its index
+            connection_item = self.connection_dict.pop(connection_ID)
+            connection_item_index = self.indexOfTopLevelItem(connection_item)
+            # remove from widget
+            self.takeTopLevelItem(connection_item_index)
+        except KeyError as e:
+            print("Error in connectionClient.removeConnection: connection ID {} not associated with a connection.".format(connection_ID))
+            print(e)
 
-    def removeTrace(self, artist_ident):
+
+class DocumentationTreeWidget(QTreeWidget):
+    def __init__(self, parent=None):
+        super().__init__()
+        # general initialization
+        self.setWindowTitle("LabRAD Connections")
+        # specific initialization
+        self.setColumnCount(2)
+        self.setHeaderLabels(["ID", "Name"])
+        # test
+        self.documentation_dict = {}
+
+    def createDocumentation(self, setting_data):
         """
-        Removes a trace from the TraceListWidget.
+        Creates and returns a QTreeWidgetItem that holds
+            the documentation for a server Setting.
         Arguments:
-            artist_ident   (dataset_location, dataset_name, artist_name): a unique identifier for an artist.
+            setting_data    (tmp): a unique identifier for an artist.
         """
-        # get objects
-        dataset_ident = artist_ident[:2]
-        dataset_item = self.dataset_dict[dataset_ident]
-        artist_item = self.trace_dict[artist_ident]
-        # remove child from dataset_item
-        artist_index = dataset_item.indexOfChild(artist_item)
-        dataset_item.takeChild(artist_index)
-        # remove artist_item from parent graphwidget
-        self.parent.remove_artist(artist_ident)
-        # remove parent dataset if empty
-        if dataset_item.childCount() == 0:
-            self.removeDataset(dataset_ident)
+        # create documentation item
+        setting_id, setting_name = setting_data[0: 2]
+        documentation_data = [str(setting_id), setting_name]
+        documentation_item = QTreeWidgetItem(self, documentation_data)
+        documentation_item.setExpanded(True)
+
+        # add connection_item to connection_dict
+        self.documentation_dict[setting_id] = documentation_item
+
+        # add text to documentation item
+        for text_data in setting_data[2:]:
+            # create setting documentation objects
+            setting_documentation = QTreeWidgetItem(documentation_item, [text_data])
+            setting_documentation.setFirstColumnSpanned(True)
+            # make setting documentation objects children of documentation_data
+            documentation_item.addChild(setting_documentation)
+
+    def clear(self, connection_ID):
+        """
+        Removes all documentation objects.
+        """
+        for index in range(self.topLevelItemCount()):
+            documentation_item = self.takeTopLevelItem(index)
+            documentation_item.takeChildren()
+
+
+class ConnectionsGUI(QWidget):
+    def __init__(self, parent=None):
+        super().__init__()
+        # general initialization
+        self.setWindowTitle("LabRAD Connections")
+        # make UI
+        self.makeWidgets()
+        self.showMaximized()
+
+        # test tmp remove
+        #self.connectionWidget.createConnection(("test server ID", "Server", "test server type", 0, 1, 2, 3, 4, 5))
+        #self.documentationWidget.createDocumentation(("doc 1", "doc 2", "doc 3", "doc 4", "doc 5", "doc 6"))
+
+    def makeWidgets(self):
+        layout = QGridLayout(self)
+
+        # create connection widget
+        self.connectionWidget = ConnectionTreeWidget()
+
+        # create documentation widget
+        self.documentationWidget = DocumentationTreeWidget()
+        documentation_widget_holder = QWidget()
+        documentation_layout = QVBoxLayout(documentation_widget_holder)
+        documentation_layout.addWidget(QLabel('Documentation:'))
+        documentation_layout.addWidget(self.documentationWidget)
+
+        # create splitter
+        splitter_widget = QSplitter()
+        splitter_widget.setOrientation(Qt.Horizontal)
+        splitter_widget.addWidget(self.connectionWidget)
+        splitter_widget.addWidget(documentation_widget_holder)
+        layout.addWidget(splitter_widget)
 
 
 if __name__ == "__main__":
