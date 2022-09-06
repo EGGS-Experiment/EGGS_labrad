@@ -1,32 +1,36 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QLabel, QGridLayout, QTreeWidget, QTreeWidgetItem,\
-    QWidget, QSplitter, QHBoxLayout, QVBoxLayout
-
-from EGGS_labrad.clients.Widgets import TextChangingButton as _TextChangingButton, QClientMenuHeader
+from PyQt5.QtWidgets import QLabel, QTreeWidget, QTreeWidgetItem, QWidget, QSplitter, QVBoxLayout, QPlainTextEdit, QGridLayout, QMenu
 
 # todo: make right click open menu to close
 # todo: make double click open documentation in RHS
 # todo: set colors
-# todo: set relative ratio of sizes
+# todo: create signals/whatever to interact w/connections client
 
 
 class ConnectionTreeWidget(QTreeWidget):
+    """
+    todo: document
+    """
+
     def __init__(self, parent=None):
         # general initialization
         super().__init__()
-        self.setWindowTitle("LabRAD Connections")
         self.parent = parent
 
         # specific initialization
         self.setColumnCount(9)
         self.setHeaderLabels([
-            "ID", "Type", "Name",
+            "ID", "Name", "Server?",
             "Server Requests", "Server Responses",
             "Client Requests", "Client Responses",
             "Messages Sent", "Messages Received",
-
         ])
+        self.setSortingEnabled(True)
+        self.sortByColumn(0, Qt.AscendingOrder)
+
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.popupMenu)
 
     def createConnection(self, connection_data):
         """
@@ -53,12 +57,75 @@ class ConnectionTreeWidget(QTreeWidget):
         except KeyError as e:
             print("Error in connectionClient.removeConnection: {}".format(e))
 
+    def popupMenu(self, pos):
+        """
+        todo: document
+        """
+        # set up menu
+        menu = QMenu()
+        actionDict = {}
+        item = self.itemAt(pos)
 
-class DocumentationTreeWidget(QTreeWidget):
+        # permanent options
+        actionDict['closeConnectionAction'] = menu.addAction('Close Connection')
+
+        # process actions
+        action = menu.exec_(self.mapToGlobal(pos))
+        if action == actionDict.get('closeConnectionAction'):
+            self.parent.closeConnection(item)
+            pass
+
+
+class ServerDocumentationWidget(QWidget):
+    """
+    todo: document
+    """
+
     def __init__(self, parent=None):
         # general initialization
         super().__init__()
-        self.setWindowTitle("LabRAD Connections")
+        self.makeLayout()
+
+    def makeLayout(self):
+        # make widgets
+        # todo: set fonts
+        server_num_label = QLabel("Server ID:")
+        self.server_num = QLabel("N/A")
+        server_name_label = QLabel("Server Name:")
+        self.server_name = QLabel("N/A")
+        server_description_label = QLabel("Server Description:")
+        self.server_description = QPlainTextEdit()
+        self.server_description.setReadOnly(True)
+        # lay out
+        layout = QGridLayout(self)
+        layout.addWidget(server_num_label,          0, 0, 1, 1)
+        layout.addWidget(self.server_num,           0, 1, 1, 1)
+        layout.addWidget(server_name_label,         0, 2, 1, 1)
+        layout.addWidget(self.server_name,          0, 3, 1, 1)
+        layout.addWidget(server_description_label,  2, 0, 1, 1)
+        layout.addWidget(self.server_description,   3, 0, 3, 4)
+
+    def addServerDocumentation(self, server_data):
+        """
+        todo
+        """
+        # remove old server documentation
+        self.server_description.clear()
+
+        # add new server documentation
+        self.server_num.setText(str(server_data[0]))
+        self.server_name.setText(server_data[1])
+        self.server_description.appendPlainText(server_data[2])
+
+
+class SettingDocumentationWidget(QTreeWidget):
+    """
+    todo: document
+    """
+
+    def __init__(self, parent=None):
+        # general initialization
+        super().__init__()
         self.documentation_dict = {}
         self.parent = parent
 
@@ -66,7 +133,7 @@ class DocumentationTreeWidget(QTreeWidget):
         self.setColumnCount(2)
         self.setHeaderLabels(["ID", "Name"])
 
-    def createDocumentation(self, setting_data):
+    def addSettingDocumentation(self, setting_data):
         """
         Creates and returns a QTreeWidgetItem that holds
             the documentation for a server Setting.
@@ -83,23 +150,33 @@ class DocumentationTreeWidget(QTreeWidget):
         self.documentation_dict[setting_id] = documentation_item
 
         # add text to documentation item
-        for text_data in setting_data[2:]:
+        # todo: add title of what it is
+        for text_data in setting_data[2:-1]:
             # create setting documentation objects
-            setting_documentation = QTreeWidgetItem(documentation_item, [text_data])
+            setting_documentation = QTreeWidgetItem(documentation_item, [str(text_data)])
             setting_documentation.setFirstColumnSpanned(True)
             # make setting documentation objects children of documentation_data
             documentation_item.addChild(setting_documentation)
 
-    def clear(self, connection_ID):
+    def clear(self):
         """
         Removes all documentation objects.
         """
-        for index in range(self.topLevelItemCount()):
-            documentation_item = self.takeTopLevelItem(index)
+        # remove documentation_items in QTreeWidget
+        for index in reversed(range(self.topLevelItemCount())):
+            documentation_item = self.topLevelItem(index)
             documentation_item.takeChildren()
+            self.takeTopLevelItem(index)
+
+        # clear holding dictionary
+        self.documentation_dict.clear()
 
 
 class ConnectionsGUI(QWidget):
+    """
+    todo: document
+    """
+
     def __init__(self, parent=None):
         # general initialization
         super().__init__()
@@ -110,12 +187,6 @@ class ConnectionsGUI(QWidget):
         self.makeWidgets()
         self.showMaximized()
 
-        # todo: create signals/whatever to interact w/connections client
-
-        # test tmp remove
-        self.connectionWidget.createConnection(("test server ID", "Server", "test server type", 0, 1, 2, 3, 4, 5))
-        self.documentationWidget.createDocumentation(("doc 1", "doc 2", "doc 3", "doc 4", "doc 5", "doc 6"))
-
     def makeWidgets(self):
         # create connection widget
         self.connectionWidget = ConnectionTreeWidget(self.parent)
@@ -125,11 +196,13 @@ class ConnectionsGUI(QWidget):
         connection_layout.addWidget(self.connectionWidget)
 
         # create documentation widget
-        self.documentationWidget = DocumentationTreeWidget(self.parent)
+        self.serverDocumentationWidget = ServerDocumentationWidget(self.parent)
+        self.settingDocumentationWidget = SettingDocumentationWidget(self.parent)
         documentation_widget_holder = QWidget()
         documentation_layout = QVBoxLayout(documentation_widget_holder)
         documentation_layout.addWidget(QLabel('Documentation:'))
-        documentation_layout.addWidget(self.documentationWidget)
+        documentation_layout.addWidget(self.serverDocumentationWidget,      stretch=1)
+        documentation_layout.addWidget(self.settingDocumentationWidget,     stretch=4)
 
         # create splitter
         splitter_widget = QSplitter()
@@ -144,8 +217,8 @@ class ConnectionsGUI(QWidget):
 
         # create layout
         layout = QVBoxLayout(self)
-        layout.addWidget(title_widget)
-        layout.addWidget(splitter_widget)
+        layout.addWidget(title_widget,      stretch=1)
+        layout.addWidget(splitter_widget,   stretch=20)
 
 
 if __name__ == "__main__":
