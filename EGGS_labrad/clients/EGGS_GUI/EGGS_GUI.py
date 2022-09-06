@@ -43,7 +43,6 @@ class EGGS_gui(QMainWindow):
         self.tabWidget = QDetachableTabWidget()
         #self.tabWidget.setMovable(True)
         # create subwidgets
-        # use connection class for scriptscanner only
         script_scanner = self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac = self.makeCryovacWidget(self.reactor, cxn)
         trap = self.makeTrapWidget(self.reactor, cxn)
