@@ -80,7 +80,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).powerToggle(status)
 
-    @setting(112, "Power Output", power='f', returns='b')
+    @setting(112, "Power Output", power='v', returns='b')
     def powerOutput(self, c, power=None):
         """
         Get/set the output power.
@@ -91,7 +91,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).powerOutput(power)
 
-    @setting(113, "Power Attenuation", att='f', returns='b')
+    @setting(113, "Power Attenuation", att='v', returns='b')
     def powerAttenuation(self, c, att=None):
         """
         Get/set the input attenuation (in dB).

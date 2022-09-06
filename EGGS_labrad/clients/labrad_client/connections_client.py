@@ -15,6 +15,7 @@ class ConnectionsClient(GUIClient):
     name = 'Connections Client'
     servers = {'mgr': 'Manager'}
     POLL_INTERVAL = 5
+    menuCreate = False
 
     def getgui(self):
         if self.gui is None:
@@ -23,7 +24,6 @@ class ConnectionsClient(GUIClient):
             self.gui = ConnectionsGUI(self)
         return self.gui
 
-    @inlineCallbacks
     def initClient(self):
         # create main polling loop
         self.refresher = LoopingCall(self.getConnectionInfo)
