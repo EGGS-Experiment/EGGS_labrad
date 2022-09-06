@@ -19,146 +19,152 @@ class HP8714ESWrapper(GPIBDeviceWrapper):
         yield self.write(':SENS:POW:ATUN')
 
 
-    # ATTENUATION
+    # POWER
     @inlineCallbacks
-    def preamplifier(self, status):
+    def powerToggle(self, status=None):
         if status is not None:
-            yield self.write(':SENS:POW:RF:GAIN:STAT {:d}'.format(status))
-        resp = yield self.query(':SENS:POW:RF:GAIN:STAT?')
+            yield self.write('OUTP:STAT {:d}'.format(int(status)))
+        resp = yield self.query('OUTP:STAT?')
         returnValue(bool(int(resp)))
 
     @inlineCallbacks
-    def attenuation(self, att):
-        if att is not None:
-            if (att > 0) and (att < 30):
-                yield self.write(':SENS:POW:RF:ATT {:f}'.format(att))
-            else:
-                raise Exception('Error: RF attenuation must be in range: [0, 30].')
-        resp = yield self.query(':SENS:POW:RF:ATT?')
+    def powerOutput(self, power=None):
+        if power is not None:
+            yield self.write('SOUR:POW {:f}'.format(power))
+        resp = yield self.query('SOUR:POW?')
         returnValue(float(resp))
+
+    @inlineCallbacks
+    def powerAttenuation(self, att=None):
+        raise NotImplementedError
+
+
+    # SWEEP
+    @inlineCallbacks
+    def sweepMode(self, mode=None):
+        modeConversionDict = {'FREQ': 'FIX', 'POW': 'SWE'}
+        # setter
+        if mode is not None:
+            mode = mode.upper()
+            if mode in modeConversionDict.keys():
+                yield self.write('POW:MODE {}'.format(modeConversionDict[mode]))
+
+        # getter
+        resp = yield self.query('POW:MODE?')
+        if int(resp) == '0':
+            returnValue('FREQ')
+        elif int(resp) == '1':
+            returnValue('POW')
+
+    @inlineCallbacks
+    def sweepPoints(self, points=None):
+        if points is not None:
+            yield self.write('SENS:SWE:POIN {:d}'.format(points))
+        resp = yield self.query('SENS:SWE:POIN?')
+        returnValue(int(resp))
 
 
     # FREQUENCY RANGE
     @inlineCallbacks
-    def frequencyStart(self, freq):
+    def frequencyStart(self, freq=None):
         if freq is not None:
-            if (freq > 0) and (freq < 7.5e9):
-                yield self.write(':SENS:FREQ:STAR {:f}'.format(freq))
-            else:
-                raise Exception('Error: start frequency must be in range: [0, 7.5e9].')
-        resp = yield self.query(':SENS:FREQ:STAR?')
+            yield self.write('SENS:FREQ:STAR {:f}'.format(freq))
+        resp = yield self.query('SENS:FREQ:STAR?')
         returnValue(float(resp))
 
     @inlineCallbacks
-    def frequencyStop(self, freq):
+    def frequencyStop(self, freq=None):
         if freq is not None:
-            if (freq > 0) and (freq < 7.5e9):
-                yield self.write(':SENS:FREQ:STOP {:f}'.format(freq))
-            else:
-                raise Exception('Error: stop frequency must be in range: [0, 7.5e9].')
-        resp = yield self.query(':SENS:FREQ:STOP?')
+            yield self.write('SENS:FREQ:STOP {:f}'.format(freq))
+        resp = yield self.query('SENS:FREQ:STOP?')
         returnValue(float(resp))
 
     @inlineCallbacks
-    def frequencyCenter(self, freq):
+    def frequencyCenter(self, freq=None):
         if freq is not None:
-            if (freq > 0) and (freq < 7.5e9):
-                yield self.write(':SENS:FREQ:CENT {:f}'.format(freq))
-            else:
-                raise Exception('Error: center frequency must be in range: [0, 7.5e9].')
-        resp = yield self.query(':SENS:FREQ:CENT?')
+            yield self.write('SENS:FREQ:CENT {:f}'.format(freq))
+        resp = yield self.query('SENS:FREQ:CENT?')
         returnValue(float(resp))
 
     @inlineCallbacks
-    def frequencySpan(self, span):
-        if span is not None:
-            if (span > 0) and (span < 7.5e9):
-                yield self.write(':SENS:FREQ:SPAN {:f}'.format(span))
-            else:
-                raise Exception('Error: frequency span must be in range: [0, 7.5e9].')
-        resp = yield self.query(':SENS:FREQ:SPAN?')
+    def frequencySpan(self, freq=None):
+        if freq is not None:
+            yield self.write('SENS:FREQ:SPAN {:f}'.format(freq))
+        resp = yield self.query('SENS:FREQ:SPAN?')
         returnValue(float(resp))
 
 
     # AMPLITUDE
     @inlineCallbacks
     def amplitudeReference(self, ampl):
+        # setter
         if ampl is not None:
             if (ampl > -100) and (ampl < 20):
-                yield self.write(':DISP:WIN:TRAC:Y:SCAL:RLEV {:f}'.format(ampl))
+                yield self.write('DISP:WIND:TRAC:Y:SCAL:RLEV {:f}'.format(ampl))
             else:
                 raise Exception('Error: display reference value must be in range: [-100, 20].')
-        resp = yield self.query(':DISP:WIN:TRAC:Y:SCAL:RLEV?')
+        # getter
+        resp = yield self.query('DISP:WIND:TRAC:Y:SCAL:RLEV?')
         returnValue(float(resp))
 
     @inlineCallbacks
     def amplitudeOffset(self, ampl):
+        # setter
         if ampl is not None:
             if (ampl > -300) and (ampl < 300):
-                yield self.write(':DISP:WIN:TRAC:Y:SCAL:RLEV:OFFS {:f}'.format(ampl))
+                yield self.write('DISP:WIND:TRAC:Y:SCAL:RLEV {:f}'.format(ampl))
             else:
                 raise Exception('Error: display offset must be in range: [-300, 300].')
-        resp = yield self.query(':DISP:WIN:TRAC:Y:SCAL:RLEV:OFFS?')
+        # getter
+        resp = yield self.query('DISP:WIND:TRAC:Y:SCAL:RLEV?')
         returnValue(float(resp))
 
     @inlineCallbacks
     def amplitudeScale(self, factor):
+        # setter
         if factor is not None:
             if (factor > 0.1) and (factor < 20):
-                yield self.write(':DISP:WIN:TRAC:Y:SCAL:PDIV {:f}'.format(factor))
+                yield self.write('DISP:WIND:TRAC:Y:SCAL:PDIV {:f}'.format(factor))
             else:
                 raise Exception('Error: display scale must be in range: [0.1, 20].')
-        resp = yield self.query(':DISP:WIN:TRAC:Y:SCAL:PDIV?')
+        # getter
+        resp = yield self.query('DISP:WIND:TRAC:Y:SCAL:PDIV?')
         returnValue(float(resp))
 
 
-    # MARKER SETUP
+    # MARKER
     @inlineCallbacks
     def markerToggle(self, channel, status):
         if status is not None:
-            yield self.write(':CALC:MARK{:d}:STAT {:d}'.format(channel, status))
-        resp = yield self.query(':CALC:MARK{:d}:STAT?'.format(channel))
+            yield self.write('CALC:MARK:STAT {:d}'.format(int(status)))
+        resp = yield self.query('CALC:MARK:STAT?'.format(channel))
         returnValue(bool(int(resp)))
 
     @inlineCallbacks
-    def markerTrace(self, channel, trace):
-        if trace is not None:
-            yield self.write(':CALC:MARK{:d}:TRAC {:d}'.format(channel, trace))
-        resp = yield self.query(':CALC:MARK{:d}:TRAC?'.format(channel))
-        returnValue(int(resp))
-
-    @inlineCallbacks
-    def markerMode(self, channel, mode):
-        modeConvert = {0: 'POS', 1: 'DELT', 2: 'BAND', 3: 'SPAN'}
-        modeInvert = {val: key for key, val in modeConvert.items()}
-        if mode is not None:
-            mode = modeConvert[mode]
-            yield self.write(':CALC:MARK{:d}:MODE {:s}'.format(channel, mode))
-        resp = yield self.query(':CALC:MARK{:d}:MODE?'.format(channel))
-        returnValue(modeInvert[resp])
-
-    @inlineCallbacks
-    def markerFunction(self, channel, mode):
-        modeConvert = {0: 'FREQ', 1: 'TIME', 2: 'ITIM', 3: 'PER'}
-        modeInvert = {val: key for key, val in modeConvert.items()}
-        if mode is not None:
-            mode = modeConvert[mode]
-            yield self.write(':CALC{:d}:MARK:FUNC:SEL {:d}'.format(channel, mode))
-        resp = yield self.query(':CALC{:d}:MARK:FUNC:SEL?'.format(channel))
-        returnValue(modeInvert[resp])
-
-    @inlineCallbacks
-    def markerTrack(self, channel, status):
+    def markerTracking(self, channel, status):
         if status is not None:
-            yield self.write(':CALC{:d}:MARK:FUNC:TRACK {:d}'.format(channel, status))
-        resp = yield self.query(':CALC{:d}:MARK:FUNC TRACK?'.format(channel))
+            yield self.write('CALC{:d}:MARK:FUNC:TRACK {:d}'.format(channel, status))
+        resp = yield self.query('CALC{:d}:MARK:FUNC TRACK?'.format(channel))
         returnValue(bool(int(resp)))
 
-
-    # MARKER READOUT
     @inlineCallbacks
-    def markerAmplitude(self, channel):
-        resp = yield self.query(':CALC{:d}:MARK:FUNC:RES?'.format(channel))
+    def markerFunction(self, channel, mode=None):
+        MODECONVERT = {'MAX': 'MAX', 'MIN':'MIN', 'FREQ': 'TARG', 'BWID': 'BWID'}
+        MODEINVERT = {val: key for key, val in MODECONVERT.items()}
+        # setter
+        if mode is not None:
+            mode = mode.upper()
+            if mode not in MODECONVERT.keys():
+                raise Exception("Error: Invalid Mode.")
+            mode = MODECONVERT[mode]
+            yield self.write('CALC:MARK:FUNC:SEL {}'.format(mode))
+        # getter
+        resp = yield self.query('CALC:MARK:FUNC:SEL?')
+        returnValue(MODEINVERT[resp])
+
+    @inlineCallbacks
+    def markerMeasure(self, channel):
+        resp = yield self.query('CALC:MARK:FUNC:RES?')
         returnValue(float(resp))
 
 
@@ -202,43 +208,12 @@ class HP8714ESWrapper(GPIBDeviceWrapper):
         resp = yield self.query(':SENS:BAND:RES?')
         returnValue(int(resp))
 
-    @inlineCallbacks
-    def bandwidthVideo(self, bw):
-        if bw is not None:
-            if (bw > 10) and (bw < 1e7):
-                yield self.write(':SENS:BAND:VID {:f}'.format(bw))
-            else:
-                raise Exception('Error: video bandwidth must be in range: [10, 1e7].')
-        resp = yield self.query(':SENS:BAND:VID?')
-        returnValue(int(resp))
-
 
     # TRACE
     @inlineCallbacks
-    def getTrace(self, channel):
-        # set data format
-        yield self.write(':FORM:TRAC:DATA ASC')
+    def traceSetup(self, channel):
+        raise NotImplementedError
 
-        # get data
-        data = yield self.query(':TRAC:DATA? TRACE{:d}'.format(channel))
-        data = self._processData(data)
-
-        # create x-axis
-        freq_start = yield self.query(':SENS:FREQ:START?')
-        freq_stop = yield self.query(':SENS:FREQ:STOP?')
-        xAxis = np.linspace(int(freq_start), int(freq_stop), len(data))
-
-        returnValue((xAxis, data))
-
-
-    # HELPER
-    def _processData(self, data):
-        """
-        Process data for header and separate data values.
-        """
-        # header is in #NXXXXXXXXX format
-        tmc_N = int(data[1])
-
-        # remove header and split data
-        processed_data = np.array(data[2 + tmc_N:].split(', '), dtype=float)
-        return processed_data
+    @inlineCallbacks
+    def traceAcquire(self, channel):
+        raise NotImplementedError

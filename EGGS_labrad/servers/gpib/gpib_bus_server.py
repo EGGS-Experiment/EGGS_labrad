@@ -68,7 +68,9 @@ class GPIBBusServer(PollingServer):
     def initServer(self):
         super().initServer()
         self.devices = {}
-        self.rm = visa.ResourceManager()
+        #self.rm = visa.ResourceManager()
+        # tmp
+        self._refreshDevices()
 
     def _poll(self):
         self._refreshDevices()
@@ -79,8 +81,9 @@ class GPIBBusServer(PollingServer):
         Currently supported are GPIB devices and GPIB over USB.
         """
         try:
+            rm = visa.ResourceManager()
             # get device names
-            addresses = set([str(x) for x in self.rm.list_resources()])
+            addresses = set([str(x) for x in rm.list_resources()])
             additions = addresses - set(self.devices.keys())
             deletions = set(self.devices.keys()) - addresses
 
@@ -89,7 +92,7 @@ class GPIBBusServer(PollingServer):
                 try:
                     if not addr.startswith(KNOWN_DEVICE_TYPES):
                         continue
-                    instr = self.rm.open_resource(addr)
+                    instr = rm.open_resource(addr)
                     instr.write_termination = ''
                     instr.clear()
                     if addr.endswith('SOCKET'):
@@ -97,9 +100,9 @@ class GPIBBusServer(PollingServer):
                     self.devices[addr] = instr
                     self.sendDeviceMessage('GPIB Device Connect', addr)
                 except Exception as e:
-                    pass
-                    # print('Failed to add ' + addr + ':' + str(e))
-                    # raise
+                    #pass
+                    print('Failed to add ' + addr + ':' + str(e))
+                    raise
             # send device disconnect messages
             for addr in deletions:
                 del self.devices[addr]

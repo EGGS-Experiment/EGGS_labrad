@@ -74,6 +74,7 @@ class GPIBDeviceManager(LabradServer):
         self._cxn.addListener(disconnect_func, source=mgr.ID, ID=11)
         yield mgr.subscribe_to_named_message('GPIB Device Connect', 10, True)
         yield mgr.subscribe_to_named_message('GPIB Device Disconnect', 11, True)
+
         # do an initial scan of the available GPIB devices
         yield self.refreshDeviceLists()
         

@@ -22,11 +22,8 @@ from labrad.gpib import GPIBManagedServer
 from HP8714ES import HP8714ESWrapper
 
 
-# cmds
 # SENSe (averaging/config etc)
-# SOURce (rf poewr output/atten etc)
-# CALCulate (marker)
-# TRACe (trace)
+
 
 class NetworkAnalyzerServer(GPIBManagedServer):
     """
@@ -68,25 +65,9 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         yield dev.autoset()
 
 
-    # ATTENUATION
-    @setting(21, "Preamplifier", status=['b', 'i'], returns='b')
-    def preamplifier(self, c, status=None):
-        """
-        Enable/disable the preamplifier.
-        Arguments:
-            status  (bool): the status of the preamplifier.
-        Returns:
-                    (bool): the status of the preamplifier.
-        """
-        if type(status) == int:
-            if status not in (0, 1):
-                raise Exception('Error: input must be a boolean, 0, or 1.')
-        return self.selectedDevice(c).preamplifier(status)
-
-
-    # OUTPUT
-    @setting(31, "Output Toggle", status=['b', 'i'], returns='b')
-    def outputToggle(self, c, status=None):
+    # POWER
+    @setting(111, "Power Toggle", status=['b', 'i'], returns='b')
+    def powerToggle(self, c, status=None):
         """
         Enable/disable RF output.
         Arguments:
@@ -97,11 +78,33 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         if type(status) == int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
-        return self.selectedDevice(c).outputToggle(status)
+        return self.selectedDevice(c).powerToggle(status)
+
+    @setting(112, "Power Output", power='f', returns='b')
+    def powerOutput(self, c, power=None):
+        """
+        Get/set the output power.
+        Arguments:
+            power   (float): the RF output power (in dBm).
+        Returns:
+                    (float): the RF output power (in dBm).
+        """
+        return self.selectedDevice(c).powerOutput(power)
+
+    @setting(113, "Power Attenuation", att='f', returns='b')
+    def powerAttenuation(self, c, att=None):
+        """
+        Get/set the input attenuation (in dB).
+        Arguments:
+            att (float): the input attenuation (in dB).
+        Returns:
+                (float): the input attenuation (in dB).
+        """
+        return self.selectedDevice(c).powerAttenuation(att)
 
 
     # SWEEP
-    @setting(41, "Sweep Mode", mode='s', returns='s')
+    @setting(211, "Sweep Mode", mode='s', returns='s')
     def sweepMode(self, c, mode=None):
         """
         Get/set the sweep mode.
@@ -112,9 +115,20 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).sweepMode(mode)
 
+    @setting(212, "Sweep Points", points='i', returns='i')
+    def sweepPoints(self, c, points=None):
+        """
+        Get/set the number of points per sweep.
+        Arguments:
+            status  (int): the number of sweep points.
+        Returns:
+                    (int): the number of sweep points.
+        """
+        return self.selectedDevice(c).sweepPoints(points)
+
 
     # FREQUENCY RANGE
-    @setting(111, "Frequency Start", freq='v', returns='v')
+    @setting(311, "Frequency Start", freq='v', returns='v')
     def frequencyStart(self, c, freq=None):
         """
         Get/set the start frequency.
@@ -125,7 +139,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).frequencyStart(freq)
 
-    @setting(112, "Frequency Stop", freq='v', returns='v')
+    @setting(312, "Frequency Stop", freq='v', returns='v')
     def frequencyStop(self, c, freq=None):
         """
         Get/set the stop frequency.
@@ -136,7 +150,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).frequencyStop(freq)
 
-    @setting(113, "Frequency Center", freq='v', returns='v')
+    @setting(313, "Frequency Center", freq='v', returns='v')
     def frequencyCenter(self, c, freq=None):
         """
         Get/set center frequency.
@@ -147,7 +161,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).frequencyCenter(freq)
 
-    @setting(114, "Frequency Span", span='v', returns='v')
+    @setting(321, "Frequency Span", span='v', returns='v')
     def frequencySpan(self, c, span=None):
         """
         Get/set the frequency span.
@@ -159,8 +173,43 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).frequencySpan(span)
 
 
+    # AMPLITUDE
+    @setting(411, "Amplitude Reference", ampl='v', returns='v')
+    def amplitudeReference(self, c, ampl=None):
+        """
+        Get/set the amplitude reference level (i.e. the top of the trace).
+        Arguments:
+            ampl    (float): the reference level (in dBm).
+        Returns:
+                    (float): the reference level (in dBm).
+        """
+        return self.selectedDevice(c).amplitudeReference(ampl)
+
+    @setting(412, "Amplitude Offset", ampl='v', returns='v')
+    def amplitudeOffset(self, c, ampl=None):
+        """
+        Get/set the amplitude offset level.
+        Arguments:
+            ampl    (float): the offset level (in dBm).
+        Returns:
+                    (float): the offset level (in dBm).
+        """
+        return self.selectedDevice(c).amplitudeOffset(ampl)
+
+    @setting(413, "Amplitude Scale", factor='v', returns='v')
+    def amplitudeScale(self, c, factor=None):
+        """
+        Get/set the amplitude scale.
+        Arguments:
+            factor  (float): the amplitude scale (in dBm/div).
+        Returns:
+                    (float): the amplitude scale (in dBm/div).
+        """
+        return self.selectedDevice(c).amplitudeScale(factor)
+
+
     # MARKER SETUP
-    @setting(311, "Marker Toggle", channel='i', status=['b', 'i'], returns='b')
+    @setting(511, "Marker Toggle", channel='i', status=['b', 'i'], returns='b')
     def markerToggle(self, c, channel, status=None):
         """
         Enable/disable a marker channel.
@@ -175,7 +224,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).markerToggle(channel, status)
 
-    @setting(312, "Marker Tracking", channel='i', status=['b', 'i'], returns='i')
+    @setting(512, "Marker Tracking", channel='i', status=['b', 'i'], returns='i')
     def markerTracking(self, c, channel, status=None):
         """
         Enable/disable marker tracking.
@@ -190,7 +239,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).markerTracking(channel, status)
 
-    @setting(313, "Marker Function", channel='i', mode='s', returns='i')
+    @setting(513, "Marker Function", channel='i', mode='s', returns='i')
     def markerFunction(self, c, channel, mode=None):
         """
         Get/set the readout function of a marker channel.
@@ -203,7 +252,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).markerFunction(channel, mode)
 
-    @setting(321, "Marker Measure", channel='i', returns='v')
+    @setting(521, "Marker Measure", channel='i', returns='v')
     def markerMeasure(self, c, channel):
         """
         Read the value of a marker channel.
@@ -217,7 +266,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
 
 
     # PEAK
-    @setting(411, "Peak Search", status=['b', 'i'], returns='b')
+    @setting(611, "Peak Search", status=['b', 'i'], returns='b')
     def peakSearch(self, c, status=None):
         """
         Get/set the status of signal tracking.
@@ -236,7 +285,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).peakSearch(status)
 
-    @setting(412, "Peak Set", status='v', returns='b')
+    @setting(612, "Peak Set", status='v', returns='b')
     def peakSet(self, c, status=None):
         """
         Arguments:
@@ -247,7 +296,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         # todo
         return self.selectedDevice(c).peakSet(status)
 
-    @setting(421, "Peak Next", status='v', returns='b')
+    @setting(621, "Peak Next", status='v', returns='b')
     def peakNext(self, c, status=None):
         """
         Arguments:
@@ -260,7 +309,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
 
 
     # BANDWIDTH
-    @setting(511, "Bandwidth Sweep Time", time='v', returns='v')
+    @setting(711, "Bandwidth Sweep Time", time='v', returns='v')
     def bandwidthSweepTime(self, c, time=None):
         """
         Get/set the sweep time.
@@ -271,7 +320,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).bandwidthSweepTime(time)
 
-    @setting(521, "Bandwidth Resolution", bw='i', returns='i')
+    @setting(712, "Bandwidth Resolution", bw='i', returns='i')
     def bandwidthResolution(self, c, bw=None):
         """
         Get/set the resolution bandwidth.
@@ -285,8 +334,8 @@ class NetworkAnalyzerServer(GPIBManagedServer):
 
 
     # TRACE
-    @setting(911, "Trace", channel='i', returns='(*v*v)')
-    def getTrace(self, c, channel):
+    @setting(811, "Trace Setup", channel='i', returns='(*v*v)')
+    def traceSetup(self, c, channel):
         """
         Get the current trace.
         Arguments:
@@ -294,7 +343,18 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         Returns:
                     (*v, *v): the trace.
         """
-        return self.selectedDevice(c).getTrace(channel)
+        return self.selectedDevice(c).traceSetup(channel)
+
+    @setting(821, "Trace Acquire", channel='i', returns='(*v*v)')
+    def traceAcquire(self, c, channel):
+        """
+        Get the current trace.
+        Arguments:
+            channel (int): the trace channel to get/set.
+        Returns:
+                    (*v, *v): the trace.
+        """
+        return self.selectedDevice(c).traceAcquire(channel)
 
 
 
