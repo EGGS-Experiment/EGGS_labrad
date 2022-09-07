@@ -2,7 +2,7 @@ from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 
-class GWInstekGPP3060(GPIBDeviceWrapper):
+class GWInstekGPP3060Wrapper(GPIBDeviceWrapper):
 
     # GENERAL
     @inlineCallbacks
