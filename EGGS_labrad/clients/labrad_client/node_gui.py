@@ -3,6 +3,8 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QLabel, QTreeWidget, QTreeWidgetItem, QWidget, QSplitter, QVBoxLayout,\
     QPlainTextEdit, QGridLayout, QMenu, QTableWidget, QTableWidgetItem, QPushButton
 
+# todo: may have to create custom item/model views
+
 # store servers as dicts
 
 
@@ -83,7 +85,6 @@ class NodeTableWidget(QTableWidget):
         if action == actionDict.get('closeConnectionAction'):
             self.parent.closeConnection(item)
             pass
-
 
 
 class ConnectionsGUI(QWidget):

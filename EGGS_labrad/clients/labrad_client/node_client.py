@@ -6,7 +6,7 @@ from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.labrad_client.connections_gui import ConnectionsGUI
 
 
-class ConnectionsClient(GUIClient):
+class NodeClient(GUIClient):
     """
     Displays all connections to the LabRAD manager
     as well as their documentation.
@@ -122,4 +122,4 @@ class ConnectionsClient(GUIClient):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
-    runClient(ConnectionsClient)
+    runClient(NodeClient)

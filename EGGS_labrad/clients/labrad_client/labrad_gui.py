@@ -6,6 +6,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QGridLayout, QApplication
 
 from EGGS_labrad.clients import QDetachableTabWidget
+# todo: set colors/style
 
 
 class labradGUI(QMainWindow):
@@ -44,9 +45,13 @@ class labradGUI(QMainWindow):
 
         # create subwidgets
         connections = self.makeConnectionWidget(self.reactor, cxn)
+        registry = self.makeRegistryWidget(self.reactor, cxn)
+        #node = self.makeNodeWidget(self.reactor, cxn)
 
         # create tabs for each subwidget
         self.tabWidget.addTab(connections, '&Connections')
+        self.tabWidget.addTab(registry, '&Registry')
+        #self.tabWidget.addTab(node, '&Node')
 
         # put it all together
         layout.addWidget(self.tabWidget)
@@ -54,10 +59,17 @@ class labradGUI(QMainWindow):
 
     def makeConnectionWidget(self, reactor, cxn):
         from EGGS_labrad.clients.labrad_client.connections_client import ConnectionsClient
-        clients = {
-            ConnectionsClient:              {"pos": (0, 0)}
-            #niops03_client:                 {"pos": (1, 1)},
-        }
+        clients = {ConnectionsClient: {"pos": (0, 0)}}
+        return self._createTabLayout(clients, reactor, cxn)
+
+    def makeRegistryWidget(self, reactor, cxn):
+        from EGGS_labrad.clients.labrad_client.registry_client import RegistryClient
+        clients = {RegistryClient: {"pos": (0, 0)}}
+        return self._createTabLayout(clients, reactor, cxn)
+
+    def makeNodeWidget(self, reactor, cxn):
+        from EGGS_labrad.clients.labrad_client.node_client import NodeClient
+        clients = {NodeClient: {"pos": (0, 0)}}
         return self._createTabLayout(clients, reactor, cxn)
 
     def close(self):

@@ -1,91 +1,130 @@
-from socket import gethostname
 from twisted.internet.defer import inlineCallbacks
-from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QListWidget, QScrollArea
 
+from EGGS_labrad.clients import GUIClient
+from EGGS_labrad.clients.labrad_client.registry_gui import RegistryGUI
+# todo: duplicate context when interacting with editor widget so things can be done while we move away
+# todo: simplify confusing web of signals
 
-class RegistryClient(QWidget):
+class RegistryClient(GUIClient):
     """
-    Data vault pop-up window used to select datasets for plotting.
-    Creates a client connection to LabRAD to access the datavault and grapher servers.
+    Displays all connections to the LabRAD manager
+    as well as their documentation.
     """
 
-    def __init__(self, cxn=None):
-        super().__init__()
+    name = 'Registry Client'
+    servers = {'reg': 'Registry'}
+    menuCreate = False
 
-        self.cxn = cxn
-        self.cntx = cntx
-        self.parent = parent
-        self.root = root
-        # self.setStyleSheet("background-color:gray")
-        self.connect()
+    def getgui(self):
+        if self.gui is None:
+            self.gui = RegistryGUI(self)
+        return self.gui
+
+    def initClient(self):
+        # create directory holder
+        self.directory_list = ["Home"]
 
     @inlineCallbacks
-    def connect(self):
-        # connect to labrad
-        if not self.cxn:
-            from labrad.wrappers import connectAsync
-            self.cxn = yield connectAsync(name=gethostname() + ' Data Vault Client')
-        # get the data vault server
+    def initData(self):
+        # cd into root directory
+        yield self.reg.cd('')
+        yield self.changeDirectory('...')
+
+    def initGUI(self):
+        self.gui.browserWidget.changeDirectory.connect(lambda _dirname: self.changeDirectory(_dirname))
+        self.gui.browserWidget.removeDirectory.connect(lambda _dirname: self.removeDirectory(_dirname))
+        self.gui.browserWidget.refreshDirectory.connect(lambda: self.displayDirectory())
+        self.gui.browserWidget.openKey.connect(lambda _keyname: self.openKey(_keyname))
+        self.gui.browserWidget.removeKey.connect(lambda _keyname: self.removeKey(_keyname))
+
+        self.gui.editorWidget.createDirectorySignal.connect(lambda _dirname, tmp1: self.makeDirectory(_dirname, tmp1))
+        self.gui.editorWidget.createKeySignal.connect(lambda _keyname, _value, tmp1: self.makeKey(_keyname, _value, tmp1))
+
+    @inlineCallbacks
+    def displayDirectory(self):
+        """
+        Displays the current directory in the GUI
+        """
+        directories, keys = yield self.reg.dir()
+        self.gui.browserWidget.set(self.directory_list, directories, keys)
+
+
+    # SLOTS
+    @inlineCallbacks
+    def changeDirectory(self, directoryname):
+        """
+        CDs to the given registry directory and updates the GUI.
+        Arguments:
+            directoryname (str): the name of the directory to CD into.
+                                    None causes a refresh.
+                                    '...' goes up one directory.
+        """
+        # change directory
+        if directoryname == '...':
+            # go up a directory
+            yield self.reg.cd(1)
+            # remove current directory from directory list
+            if len(self.directory_list) > 1:
+                self.directory_list.pop()
+        elif directoryname is not None:
+            self.directory_list.append(directoryname)
+            yield self.reg.cd(directoryname)
+
+        # update the GUI
+        yield self.displayDirectory()
+
+    @inlineCallbacks
+    def makeDirectory(self, directoryname, tmparg):
+        """
+        Makes a subdirectory in the current directory and updates the GUI.
+        Arguments:
+            directoryname (str): the name of the directory to create.
+        """
+        yield self.reg.mkdir(directoryname)
+        yield self.displayDirectory()
+
+    @inlineCallbacks
+    def removeDirectory(self, directoryname):
+        """
+        Removes a subdirectory from the current registry directory and updates the GUI.
+        Arguments:
+            directoryname (str): the name of the directory to remove.
+        """
         try:
-            self.dv = yield self.cxn.data_vault
-            self._context = yield self.dv.context()
-            #self.grapher = yield self.cxn.real_simple_grapher
+            yield self.reg.rmdir(directoryname)
+            yield self.displayDirectory()
         except Exception as e:
-            print('Data vault not connected.')
-        self.initializeGUI()
-
-    def initializeGUI(self):
-        mainLayout = QGridLayout(self)
-        self.directoryString = ['Home']
-        self.directoryTitle = QLabel('Directory:')
-        self.directoryLabel = QLabel('\\'.join(self.directoryString))
-        self.dataListWidget = QListWidget()
-        self.dataListWidget.doubleClicked.connect(self.onDoubleclick)
-        self.dataListWidgetScroll = QScrollArea()
-        self.dataListWidgetScroll.setWidget(self.directoryLabel)
-        self.dataListWidgetScroll.setWidgetResizable(True)
-        self.dataListWidgetScroll.setFixedHeight(40)
-        mainLayout.addWidget(self.directoryTitle)
-        mainLayout.addWidget(self.dataListWidgetScroll)
-        mainLayout.addWidget(self.dataListWidget)
-        self.setWindowTitle('Data Vault')
-        self.populate()
+            print('Error in removeDirectory: {}'.format(e))
 
     @inlineCallbacks
-    def populate(self):
-        # remove old directories
-        self.dataListWidget.clear()
-        self.dataListWidget.addItem('...')
-        # get new directory
-        ls = yield self.dv.dir(context=self._context)
-        self.dataListWidget.addItems(sorted(ls[0]))
-        if ls[1] is not None:
-            self.dataListWidget.addItems(sorted(ls[1]))
+    def openKey(self, keyname):
+        """
+        Opens a key for viewing/editing in the GUI.
+        """
+        value = yield self.reg.get(keyname)
+        self.gui.editorWidget.openKey(keyname, value, self.directory_list)
 
     @inlineCallbacks
-    def onDoubleclick(self, item):
-        item = self.dataListWidget.currentItem().text()
-        # previous directory
-        if item == '...':
-            yield self.dv.cd(1, context=self._context)
-            if len(self.directoryString) > 1:
-                self.directoryString.pop()
-                self.directoryLabel.setText('\\'.join(self.directoryString))
-            self.populate()
-        else:
-            try:
-                # next directory
-                yield self.dv.cd(str(item), context=self._context)
-                self.directoryString.append(str(item))
-                self.directoryLabel.setText('\\'.join(self.directoryString))
-                self.populate()
-            except:
-                # plot if no directories left
-                path = yield self.dv.cd(context=self._context)
-                if self.root is not None:
-                    yield self.root.do_plot((path, str(item)), self.tracename, False)
-                else:
-                    yield self.grapher.plot((path, str(item)), self.tracename, False)
+    def makeKey(self, keyname, value, tmparg):
+        """
+        Removes a key from the current registry directory and updates the GUI.
+        """
+        print('makekey client called')
+        try:
+            yield self.reg.set(keyname, value)
+            yield self.displayDirectory()
+        except Exception as e:
+            print("Error in makeKey: {}".format(e))
 
-    def closeEvent(self, event):
-        self.cxn.disconnect()
+    @inlineCallbacks
+    def removeKey(self, keyname):
+        """
+        Removes a key from the current registry directory and updates the GUI.
+        """
+        yield self.reg.del_(keyname)
+        yield self.displayDirectory()
+
+
+if __name__ == "__main__":
+    from EGGS_labrad.clients import runClient
+    runClient(RegistryClient)

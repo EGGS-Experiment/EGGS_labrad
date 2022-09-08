@@ -2,14 +2,14 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QLabel, QTreeWidget, QTreeWidgetItem, QWidget, QSplitter, QVBoxLayout, QPlainTextEdit, QGridLayout, QMenu
 
-# todo: set colors
-# todo: create signals/whatever to interact w/connections client
-# todo: make arguments a list
+from EGGS_labrad.clients.Widgets import QCustomGroupBox
+# todo: merge server and documentation widgets
+# todo: make constituent widget functions available in composite GUI and have client only access those
 
 
 class ConnectionTreeWidget(QTreeWidget):
     """
-    todo: document
+    GUI for displaying all connections to the LabRAD manager.
     """
 
     def __init__(self, parent=None):
@@ -58,7 +58,9 @@ class ConnectionTreeWidget(QTreeWidget):
 
     def popupMenu(self, pos):
         """
-        todo: document
+        Creates a popupMenu upon right-clicking.
+        Arguments:
+            pos (QPoint): the position of the right-clicked item.
         """
         # set up menu
         menu = QMenu()
@@ -72,12 +74,11 @@ class ConnectionTreeWidget(QTreeWidget):
         action = menu.exec_(self.mapToGlobal(pos))
         if action == actionDict.get('closeConnectionAction'):
             self.parent.closeConnection(item)
-            pass
 
 
 class ServerDocumentationWidget(QWidget):
     """
-    todo: document
+    GUI for displaying server documentation.
     """
 
     def __init__(self, parent=None):
@@ -87,7 +88,6 @@ class ServerDocumentationWidget(QWidget):
 
     def makeLayout(self):
         # make widgets
-        # todo: set fonts
         server_num_label = QLabel("Server ID:")
         self.server_num = QLabel("N/A")
         server_name_label = QLabel("Server Name:")
@@ -106,7 +106,7 @@ class ServerDocumentationWidget(QWidget):
 
     def addServerDocumentation(self, server_data):
         """
-        todo
+        Display documentation for a new server.
         """
         # remove old server documentation
         self.server_description.clear()
@@ -119,7 +119,7 @@ class ServerDocumentationWidget(QWidget):
 
 class SettingDocumentationWidget(QTreeWidget):
     """
-    todo: document
+    GUI for displaying server setting documentation.
     """
 
     def __init__(self, parent=None):
@@ -173,7 +173,8 @@ class SettingDocumentationWidget(QTreeWidget):
 
 class ConnectionsGUI(QWidget):
     """
-    todo: document
+    GUI for the LabRAD connections page.
+    Uses ConnectionTreeWidget, ServerDocumentationWidget, and SettingDocumentationWidget.
     """
 
     def __init__(self, parent=None):
@@ -189,25 +190,24 @@ class ConnectionsGUI(QWidget):
     def makeWidgets(self):
         # create connection widget
         self.connectionWidget = ConnectionTreeWidget(self.parent)
-        connection_widget_holder = QWidget()
-        connection_layout = QVBoxLayout(connection_widget_holder)
-        connection_layout.addWidget(QLabel('Connections:'))
-        connection_layout.addWidget(self.connectionWidget)
 
         # create documentation widget
         self.serverDocumentationWidget = ServerDocumentationWidget(self.parent)
         self.settingDocumentationWidget = SettingDocumentationWidget(self.parent)
         documentation_widget_holder = QWidget()
         documentation_layout = QVBoxLayout(documentation_widget_holder)
-        documentation_layout.addWidget(QLabel('Documentation:'))
         documentation_layout.addWidget(self.serverDocumentationWidget,      stretch=1)
         documentation_layout.addWidget(self.settingDocumentationWidget,     stretch=4)
 
         # create splitter
         splitter_widget = QSplitter()
         splitter_widget.setOrientation(Qt.Horizontal)
-        splitter_widget.addWidget(connection_widget_holder)
-        splitter_widget.addWidget(documentation_widget_holder)
+        splitter_widget.addWidget(QCustomGroupBox(self.connectionWidget, "Connections"))
+        splitter_widget.addWidget(QCustomGroupBox(documentation_widget_holder, "Documentation"))
+        splitter_widget.setStretchFactor(0, 8)
+        splitter_widget.setStretchFactor(1, 2)
+        # splitter_widget.moveSplitter(50, 0)
+        # splitter_widget.moveSplitter(50, 1)
 
         # create title widget
         title_widget = QLabel('LabRAD Connections')

@@ -8,8 +8,7 @@ from EGGS_labrad.clients.labrad_client.connections_gui import ConnectionsGUI
 
 class ConnectionsClient(GUIClient):
     """
-    Displays all connections to the LabRAD manager
-    as well as their documentation.
+    Displays all connections to the LabRAD manager and their documentation.
     """
 
     name = 'Connections Client'
@@ -86,9 +85,13 @@ class ConnectionsClient(GUIClient):
             server_ident (str, str): the server identification to get documentation for.
         """
         # get and set documentation for the server
-        server_ID, server_name = (connection_item.data(0, Qt.DisplayRole), connection_item.data(1, Qt.DisplayRole))
-        server_info = yield self.mgr.help(int(server_ID))
-        self.gui.serverDocumentationWidget.addServerDocumentation((server_ID, server_name, server_info[0]))
+        try:
+            server_ID, server_name = (connection_item.data(0, Qt.DisplayRole), connection_item.data(1, Qt.DisplayRole))
+            server_info = yield self.mgr.help(int(server_ID))
+            self.gui.serverDocumentationWidget.addServerDocumentation((server_ID, server_name, server_info[0]))
+        except Exception as e:
+            print("Error in updateDocumentation: {}".format(e))
+            return
 
         # get and set documentation for all settings
         self.gui.settingDocumentationWidget.clear()
