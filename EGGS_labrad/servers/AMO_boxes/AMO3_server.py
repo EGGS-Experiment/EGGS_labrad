@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Piezo Server
+name = AMO3 Server
 version = 1.0.0
 description = Communicates with the AMO3 box for control of piezo voltages.
-instancename = PiezoServer
+instancename = AMO3Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -25,13 +25,13 @@ from EGGS_labrad.servers import SerialDeviceServer
 TERMINATOR = '\r\n'
 
 
-class PiezoServer(SerialDeviceServer):
+class AMO3Server(SerialDeviceServer):
     """
     Communicates with the AMO3 box for control of piezo voltages.
     """
 
-    name = 'Piezo Server'
-    regKey = 'PiezoServer'
+    name = 'AMO3 Server'
+    regKey = 'AMO3Server'
     serNode = 'MongKok'
     port = 'COM10'
 
@@ -159,5 +159,5 @@ class PiezoServer(SerialDeviceServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(PiezoServer())
+    util.runServer(AMO3Server())
     
