@@ -13,6 +13,8 @@ from EGGS_labrad.clients.Widgets import QCustomGroupBox
 # todo: enable click away
 # todo: display key value on rhs in browser
 # todo: add cliked and qpoint thing
+# todo: convert string to code
+
 
 class RegistryBrowserWidget(QWidget):
     """

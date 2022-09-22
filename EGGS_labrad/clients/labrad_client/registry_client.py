@@ -1,3 +1,4 @@
+from ast import literal_eval
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
@@ -109,12 +110,17 @@ class RegistryClient(GUIClient):
         """
         Removes a key from the current registry directory and updates the GUI.
         """
-        print('makekey client called')
+        # process string into literals
+        try:
+            value = literal_eval(value)
+        except Exception as e:
+            print("Error in makeKey (unable to process value): {}".format(e))
+            raise
         try:
             yield self.reg.set(keyname, value)
             yield self.displayDirectory()
         except Exception as e:
-            print("Error in makeKey: {}".format(e))
+            print("Error in makeKey (unable to set value): {}".format(e))
 
     @inlineCallbacks
     def removeKey(self, keyname):
