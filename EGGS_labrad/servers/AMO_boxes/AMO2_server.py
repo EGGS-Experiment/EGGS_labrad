@@ -33,7 +33,7 @@ class AMO2Server(SerialDeviceServer):
     name = 'AMO2 Server'
     regKey = 'AMO2Server'
     serNode = 'MongKok'
-    port = 'COM10'
+    port = 'COM6'
 
     timeout = WithUnit(3.0, 's')
     baudrate = 38400
@@ -155,7 +155,7 @@ class AMO2Server(SerialDeviceServer):
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         # parse
-        resp = float(resp.strip())
+        resp = float(resp[:-2])
         self.notifyOtherListeners(c, resp, self.temperature_update)
         returnValue(resp)
 
@@ -171,9 +171,9 @@ class AMO2Server(SerialDeviceServer):
                     (float): the temperature setpoint.
         """
         # setter
-        if (temp < 10) or (temp > 35):
-            raise Exception("Error: set temperature must be in range (10, 35).")
         if temp is not None:
+            if (temp < 10) or (temp > 35):
+                raise Exception("Error: set temperature must be in range (10, 35).")
             yield self.ser.acquire()
             yield self.ser.write('temp.w {:f}\r\n'.format(temp))
             yield self.ser.read_line('\n')
@@ -184,7 +184,7 @@ class AMO2Server(SerialDeviceServer):
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         # parse resp
-        resp = float(resp.strip())
+        resp = float(resp[:-2])
         # todo: notify other listeners
         returnValue(resp)
 
@@ -198,9 +198,9 @@ class AMO2Server(SerialDeviceServer):
                     (float): the proportional parameter.
         """
         # setter
-        if (prop < 0) or (prop > 35):
-            raise Exception("Error: proportional parameter must be in range (0, 255).")
         if prop is not None:
+            if (prop < 0) or (prop > 255):
+                raise Exception("Error: proportional parameter must be in range (0, 255).")
             yield self.ser.acquire()
             yield self.ser.write('p.w {:f}\r\n'.format(prop))
             yield self.ser.read_line('\n')
@@ -225,9 +225,9 @@ class AMO2Server(SerialDeviceServer):
                     (float): the integral parameter.
         """
         # setter
-        if (integ < 0) or (integ > 35):
-            raise Exception("Error: integral parameter must be in range (0, 255).")
         if integ is not None:
+            if (integ < 0) or (integ > 255):
+                raise Exception("Error: integral parameter must be in range (0, 255).")
             yield self.ser.acquire()
             yield self.ser.write('i.w {:f}\r\n'.format(integ))
             yield self.ser.read_line('\n')
@@ -243,7 +243,7 @@ class AMO2Server(SerialDeviceServer):
         returnValue(resp)
 
     @setting(223, 'Locking D', deriv='v', returns='v')
-    def lockingP(self, c, deriv=None):
+    def lockingD(self, c, deriv=None):
         """
         Get/set the derivative parameter.
         Arguments:
@@ -252,9 +252,9 @@ class AMO2Server(SerialDeviceServer):
                     (float): the derivative parameter.
         """
         # setter
-        if (deriv < 0) or (deriv > 35):
-            raise Exception("Error: derivative parameter must be in range (0, 255).")
         if deriv is not None:
+            if (deriv < 0) or (deriv > 255):
+                raise Exception("Error: derivative parameter must be in range (0, 255).")
             yield self.ser.acquire()
             yield self.ser.write('d.w {:f}\r\n'.format(deriv))
             yield self.ser.read_line('\n')
