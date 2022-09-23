@@ -49,14 +49,14 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         """
         Reset the power supply to factory settings.
         """
-        yield self.ser.write('*RST')
+        yield self.ser.write('*RST\r\n')
 
     @setting(12, "Clear Buffers", returns='')
     def clear_buffers(self, c):
         """
         Clear device status buffers.
         """
-        yield self.ser.write('*CLS')
+        yield self.ser.write('*CLS\r\n')
 
     @setting(21, "Remote", status=['i', 'b'], returns='')
     def remote(self, c, status):
@@ -68,9 +68,9 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
                     (bool)  : the power state of the power supply.
         """
         if status == True:
-            yield self.ser.write('SYST:REM')
+            yield self.ser.write('SYST:REM\r\n')
         else:
-            yield self.ser.write('SYST:LOC')
+            yield self.ser.write('SYST:LOC\r\n')
 
 
     # CHANNEL OUTPUT
@@ -89,7 +89,7 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         if status is not None:
             yield self.ser.write(chString + ' ' + int(status))
         # getter
-        yield self.ser.write(chString + '?')
+        yield self.ser.write(chString + '?\r\n')
         resp = yield self.ser.read_line()
         returnValue(int(resp))
 
@@ -112,9 +112,9 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
                 raise Exception("Invalid Value. Modes must be one of {}.".format(tuple(CONVERSION_DICT.values())))
             mode = {'INDEPENDENT': 'IND', 'SERIES': 'SER', 'PARALLEL':'PAR',
                     'CC': 'CC', 'CV': 'CV', 'CR': 'CR'}[mode]
-            yield self.ser.write('TRACK{:d}'.format(mode))
+            yield self.ser.write('TRACK{:d}\r\n'.format(mode))
         # getter
-        yield self.ser.write(':MODE{:d}?'.format(channel))
+        yield self.ser.write(':MODE{:d}?\r\n'.format(channel))
         resp = yield self.ser.read_line()
         returnValue(CONVERSION_DICT[resp])
 
@@ -133,9 +133,9 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         if voltage is not None:
             if (voltage < 0) or (voltage > 30):
                 raise Exception("Invalid Value. Voltage must be in [0, 30]V.")
-            yield self.ser.write(chString + ' ' + voltage)
+            yield self.ser.write(chString + ' ' + voltage + '\r\n')
         # getter
-        yield self.ser.write(chString + '?')
+        yield self.ser.write(chString + '?\r\n')
         resp = yield self.ser.read_line()
         returnValue(int(resp))
 
@@ -154,9 +154,9 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         if current is not None:
             if (current < 0) or (current > 30):
                 raise Exception("Invalid Value. Current must be in [0, 6]A.")
-            yield self.ser.write(chString + ' ' + current)
+            yield self.ser.write(chString + ' ' + current + '\r\n')
         # getter
-        yield self.ser.write(chString + '?')
+        yield self.ser.write(chString + '?\r\n')
         resp = yield self.ser.read_line()
         returnValue(int(resp))
 
@@ -174,7 +174,7 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         if channel not in (1, 2, 3):
             raise Exception("Invalid Value. Channel must be in (1, 2, 3).")
         # get the actual output voltage
-        yield self.ser.write('VOUT{:d}?'.format(channel))
+        yield self.ser.write('VOUT{:d}?\r\n'.format(channel))
         resp = yield self.ser.read_line()
         returnValue(int(resp))
 
@@ -190,7 +190,7 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         if channel not in (1, 2, 3):
             raise Exception("Invalid Value. Channel must be in (1, 2, 3).")
         # get the actual output current
-        yield self.ser.write('IOUT{:d}?'.format(channel))
+        yield self.ser.write('IOUT{:d}?\r\n'.format(channel))
         resp = yield self.ser.read_line()
         returnValue(int(resp))
 
