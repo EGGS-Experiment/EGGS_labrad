@@ -18,11 +18,9 @@ timeout = 20
 
 from labrad.units import WithUnit
 from labrad.server import setting, Signal
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import returnValue
 
 from EGGS_labrad.servers import PollingServer, SerialDeviceServer
-
-TEMPSIGNAL = 122485
 
 
 class GPP3060Server(SerialDeviceServer, PollingServer):
@@ -84,14 +82,18 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         Returns:
                     (bool)  : the power state of the power supply.
         """
-        chString = 'OUTP{:d}:STAT'.format(channel)
         # setter
         if status is not None:
-            yield self.ser.write(chString + ' ' + int(status))
+            yield self.ser.write('OUTP{:d}:STAT {:d}'.format(channel, status))
         # getter
-        yield self.ser.write(chString + '?\r\n')
+        yield self.ser.write('OUTP{:d}:STAT?\r\n'.format(channel))
         resp = yield self.ser.read_line()
-        returnValue(int(resp))
+        resp = resp.strip()
+        if resp == 'ON':
+            resp = True
+        elif resp == 'OFF':
+            resp = False
+        returnValue(resp)
 
     @setting(112, 'Channel Mode', channel='i', mode='s', returns='b')
     def channelMode(self, c, channel, mode=None):
@@ -103,7 +105,7 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         Returns:
                     (bool)  : the power state of the power supply.
         """
-        CONVERSION_DICT = {'INDE': 'INDEPENDENT', 'SER': 'SERIES', 'PAR': 'PARALLEL',
+        CONVERSION_DICT = {'IND': 'INDEPENDENT', 'SER': 'SERIES', 'PAR': 'PARALLEL',
                            'CV': 'CV', 'CC': 'CC', 'CR': 'CR'}
         # setter
         if mode is not None:
@@ -128,16 +130,15 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         Returns:
                     (float) : the target voltage (in V).
         """
-        chString = 'SOUR{:d}:VOLT'.format(channel)
         # setter
         if voltage is not None:
             if (voltage < 0) or (voltage > 30):
                 raise Exception("Invalid Value. Voltage must be in [0, 30]V.")
-            yield self.ser.write(chString + ' ' + voltage + '\r\n')
+            yield self.ser.write('SOUR{:d}:VOLT {:f}\r\n'.format(channel, voltage))
         # getter
-        yield self.ser.write(chString + '?\r\n')
+        yield self.ser.write('SOUR{:d}:VOLT?\r\n'.format(channel))
         resp = yield self.ser.read_line()
-        returnValue(int(resp))
+        returnValue(float(resp))
 
     @setting(122, 'Channel Current', channel='i', current='v', returns='v')
     def channelCurrent(self, c, channel, current=None):
@@ -149,16 +150,15 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         Returns:
                     (float) : the target current (in A).
         """
-        chString = 'SOUR{:d}:CURR'.format(channel)
         # setter
         if current is not None:
             if (current < 0) or (current > 30):
                 raise Exception("Invalid Value. Current must be in [0, 6]A.")
-            yield self.ser.write(chString + ' ' + current + '\r\n')
+            yield self.ser.write('SOUR{:d}:CURR {:f}\r\n'.format(channel, current))
         # getter
-        yield self.ser.write(chString + '?\r\n')
+        yield self.ser.write('SOUR{:d}:CURR?\r\n'.format(channel))
         resp = yield self.ser.read_line()
-        returnValue(int(resp))
+        returnValue(float(resp))
 
 
     # MEASURE
@@ -176,7 +176,8 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         # get the actual output voltage
         yield self.ser.write('VOUT{:d}?\r\n'.format(channel))
         resp = yield self.ser.read_line()
-        returnValue(int(resp))
+        resp = resp[:-1]
+        returnValue(float(resp))
 
     @setting(212, 'Measure Current', channel='i', returns='v')
     def measureCurrent(self, c, channel):
@@ -192,7 +193,8 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         # get the actual output current
         yield self.ser.write('IOUT{:d}?\r\n'.format(channel))
         resp = yield self.ser.read_line()
-        returnValue(int(resp))
+        resp = resp[:-1]
+        returnValue(float(resp))
 
 
 if __name__ == '__main__':
