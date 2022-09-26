@@ -6,9 +6,9 @@ from EGGS_labrad.servers.script_scanner.experiment import experiment
 
 
 class rga_measurement(experiment):
-    '''
+    """
     Measure a value from the RGA.
-    '''
+    """
 
     name = 'RGA Measurement'
 

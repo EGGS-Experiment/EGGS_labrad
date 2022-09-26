@@ -495,7 +495,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         # automatically enables total pressure measurement
         yield self._setter('HV', 0, c)
         # get total pressure conversion factor
-        sp = yield self._getter('SP', c, c)
+        sp = yield self._getter('SP', c)
         sp = 1e-13 / float(sp)
         # start a total pressure measurement
         msg = 'TP?' + _SRS_EOL
