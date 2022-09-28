@@ -43,7 +43,7 @@ class AMO2Server(SerialDeviceServer, PollingServer):
     toggle_update = Signal(999999, 'signal: toggle update', 'b')
     current_update = Signal(999998, 'signal: current update', 'v')
     temperature_update = Signal(999997, 'signal: temperature update', 'v')
-    lock_update = Signal(999996, 'signal: lock update', '((vvv),v)')
+    lock_update = Signal(999996, 'signal: lock update', '(sv)')
 
 
     # CONTEXTS
