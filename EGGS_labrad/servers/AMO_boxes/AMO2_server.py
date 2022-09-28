@@ -17,15 +17,15 @@ timeout = 20
 """
 
 from labrad.units import WithUnit
-from labrad.server import setting, Signal
+from labrad.server import setting, Signal, inlineCallbacks
 
 from twisted.internet.defer import returnValue
-from EGGS_labrad.servers import SerialDeviceServer
+from EGGS_labrad.servers import SerialDeviceServer, PollingServer
 
 TERMINATOR = '\r\n'
 
 
-class AMO2Server(SerialDeviceServer):
+class AMO2Server(SerialDeviceServer, PollingServer):
     """
     Communicates with the AMO2 box for control of TECs.
     """
@@ -268,6 +268,16 @@ class AMO2Server(SerialDeviceServer):
         resp = float(resp.strip())
         # todo: notify other listeners
         returnValue(resp)
+
+
+    # POLLING
+    @inlineCallbacks
+    def _poll(self):
+        """
+        Polls the device for temperature and current readout.
+        """
+        yield self.temperature(None)
+        yield self.current(None)
 
 
 if __name__ == '__main__':

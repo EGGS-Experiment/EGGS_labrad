@@ -32,6 +32,8 @@ class TEC_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
+        # todo: get set current
+        # todo
         for i in range(4):
             channel_status = yield self.tec.toggle(i + 1)
             self.gui.channels[i].toggleswitch.setChecked(channel_status)
