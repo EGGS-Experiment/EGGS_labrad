@@ -42,17 +42,17 @@ class TEC_client(GUIClient):
         curr = yield self.tec.current()
         temp = yield self.tec.temperature()
         lock_set = yield self.tec.locking_setpoint()
-        lock_p = yield self.tec.locking_p()
-        lock_i = yield self.tec.locking_i()
-        lock_d = yield self.tec.locking_d()
+        lock_P = yield self.tec.locking_p()
+        lock_I = yield self.tec.locking_i()
+        lock_D = yield self.tec.locking_d()
         # set GUI
         self.gui.toggle_button.setChecked(status)
         self.gui.displayCurr.setText(str(curr))
         self.gui.displayTemp.setText(str(temp))
         self.gui.lock_set.setValue(lock_set)
-        self.gui.lock_p.setValue(lock_p)
-        self.gui.lock_i.setValue(lock_i)
-        self.gui.lock_d.setValue(lock_d)
+        self.gui.lock_P.setValue(lock_P)
+        self.gui.lock_I.setValue(lock_I)
+        self.gui.lock_D.setValue(lock_D)
 
     def initGUI(self):
         # general
@@ -62,9 +62,9 @@ class TEC_client(GUIClient):
 
         # locking
         self.gui.lock_set.valueChanged.connect(lambda val_set: self.tec.locking_setpoint(val_set))
-        self.gui.lock_p.valueChanged.connect(lambda val_p: self.tec.locking_p(val_p))
-        self.gui.lock_i.valueChanged.connect(lambda val_i: self.tec.locking_i(val_i))
-        self.gui.lock_d.valueChanged.connect(lambda val_d: self.tec.locking_d(val_d))
+        self.gui.lock_P.valueChanged.connect(lambda val_p: self.tec.locking_p(val_p))
+        self.gui.lock_I.valueChanged.connect(lambda val_i: self.tec.locking_i(val_i))
+        self.gui.lock_D.valueChanged.connect(lambda val_d: self.tec.locking_d(val_d))
 
         # todo: check
         self.gui.lock_button.setChecked(False)
@@ -90,9 +90,9 @@ class TEC_client(GUIClient):
     def _lock(self, status):
         self.gui.toggle_button.setEnabled(status)
         self.gui.lock_set.setEnabled(status)
-        self.gui.lock_p.setEnabled(status)
-        self.gui.lock_i.setEnabled(status)
-        self.gui.lock_d.setEnabled(status)
+        self.gui.lock_P.setEnabled(status)
+        self.gui.lock_I.setEnabled(status)
+        self.gui.lock_D.setEnabled(status)
 
     @inlineCallbacks
     def updateTemperature(self, c, temp):
@@ -100,7 +100,6 @@ class TEC_client(GUIClient):
         if self.recording:
             yield self.dv.add(time() - self.starttime, temp, context=self.c_record)
 
-    @inlineCallbacks
     def updateCurrent(self, c, curr):
         self.gui.displayCurr.setText(str(curr))
 
@@ -116,11 +115,11 @@ class TEC_client(GUIClient):
         param, value = msg
         # get appropriate widget
         if param == 'p':
-            widget = self.gui.lock_p
+            widget = self.gui.lock_P
         elif param == 'i':
-            widget = self.gui.lock_i
+            widget = self.gui.lock_I
         elif param == 'd':
-            widget = self.gui.lock_d
+            widget = self.gui.lock_D
         # set value
         widget.setValue(param)
 
