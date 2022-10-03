@@ -10,7 +10,7 @@ from EGGS_labrad.clients import createTrunk
 name_tmp = 'ASF Calibration'
 dds_channel = 'urukul1_ch1'
 dds_frequency_hz = 110 * 1e6
-dds_attenuation_dbm = 16
+dds_attenuation_arr = (15, 16, 17, 18, 19)
 amp_range = linspace(1, 50, 50) / 100
 
 wav_nm = 400
@@ -31,9 +31,6 @@ try:
 
     # set up DDSs
     aq.dds_frequency(dds_channel, dds_frequency_hz)
-    sleep(0.5)
-    aq.dds_attenuation(dds_channel, dds_attenuation_dbm)
-    sleep(0.5)
     aq.dds_toggle(dds_channel, 1)
     print('DDS setup successful.')
 
@@ -46,12 +43,15 @@ try:
     print('Power meter setup successful.')
 
     # create dataset
-    trunk_tmp = createTrunk(name_tmp)
-    dv.cd(trunk_tmp, True, context=cr)
+    dep_vars = [
+        ('{:f} dB'.format(att_dB), 'Attenuation', 'dB')
+        for att_dB in dds_attenuation_arr
+    ]
+    dv.cd(createTrunk(name_tmp), True, context=cr)
     dv.new(
-        'ASF Calibration',
+        'ASF Calibration - {:s}'.format(dds_channel),
         [('ASF', 'Scale')],
-        [('Power Meter Reading', 'Power', 'W')],
+        dep_vars,
         context=cr
     )
     print('Dataset successfully created.')
@@ -61,14 +61,19 @@ try:
     for amp_val in amp_range:
         # set asf
         aq.dds_amplitude(dds_channel, amp_val)
-        sleep(0.25)
 
-        # measure power
-        res_pow = pm.measure()
+        # sweep attenuation
+        pow_holder = [amp_val]
+        for att_val in dds_attenuation_arr:
+            # set att
+            aq.dds_attenuation(dds_channel, att_val)
+            sleep(0.1)
 
-        # record result
-        print('asf {:f}: pow = {:f}'.format(amp_val, res_pow))
-        dv.add(amp_val, res_pow, context=cr)
+            # measure power
+            pow_holder.append(pm.measure())
+
+        # add data to dataset
+        dv.add(pow_holder, context=cr)
 
 except Exception as e:
     print('Error:', e)
