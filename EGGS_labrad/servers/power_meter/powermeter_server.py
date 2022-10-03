@@ -35,7 +35,7 @@ class PowerMeterServer(GPIBManagedServer):
     name = 'Power Meter Server'
 
     deviceWrappers = {
-        'THORLABS PM100D P0017227': PM100DWrapper
+        'THORLABS PM100D': PM100DWrapper
     }
 
 
@@ -98,11 +98,11 @@ class PowerMeterServer(GPIBManagedServer):
     @setting(132, 'Configure Range', range='v', returns='v')
     def configureRange(self, c, range=None):
         """
-        Get/set the measurement range of the power meter.
+        Get/set the measurement range of the power meter (in W).
         Arguments:
-            range   (float)  : the measurement range.
+            range   (float)  : the measurement range (in W).
         Returns:
-                    (float)  : the measurement range.
+                    (float)  : the measurement range (in W).
         """
         return self.selectedDevice(c).configureRange(range)
 
@@ -125,9 +125,9 @@ class PowerMeterServer(GPIBManagedServer):
     @setting(211, 'Measure', returns='v')
     def measure(self, c):
         """
-        Get a power measurement from the power meter.
+        Get a power measurement from the power meter (in W).
         Returns:
-            (float): the sensor power (in mW).
+            (float): the sensor power (in W).
         """
         return self.selectedDevice(c).measure()
 

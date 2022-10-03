@@ -62,7 +62,7 @@ class PM100DWrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query('POW:RANG:AUTO?')
-        returnValue(int(resp))
+        returnValue(bool(int(resp)))
 
     @inlineCallbacks
     def configureRange(self, range=None):
@@ -74,13 +74,13 @@ class PM100DWrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query('POW:RANG?')
-        returnValue(int(resp))
+        returnValue(float(resp))
 
     @inlineCallbacks
     def configureMode(self, mode=None):
         # setter
         if mode is not None:
-            yield self.write('CONF {:f}'.format(mode))
+            yield self.write('CONF:{:s}'.format(mode))
 
         # getter
         resp = yield self.query('CONF?')
