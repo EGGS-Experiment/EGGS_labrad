@@ -265,6 +265,10 @@ class DataVault(LabradServer):
         a legend entry that should be unique for each trace.
         Returns the path and name for this dataset.
         """
+        # ensure valid filename
+        if "." in name:
+            raise Exception("Error: invalid title (contains periods).")
+
         session = self.getSession(c)
         dataset = session.newDataset(name or 'untitled', independents, dependents)
         c['dataset'] = dataset.name  # not the same as name; has number prefixed
@@ -306,6 +310,10 @@ class DataVault(LabradServer):
 
         The legacy format requires each column be a scalar v[unit] type.
         """
+        # ensure valid filename
+        if "." in name:
+            raise Exception("Error: invalid title (contains periods).")
+
         session = self.getSession(c)
         dataset = session.newDataset(name, independents, dependents, extended=True)
         c['dataset'] = dataset.name  # not the same as name; has number prefixed

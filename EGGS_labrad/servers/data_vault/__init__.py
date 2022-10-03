@@ -309,10 +309,21 @@ class Session(object):
         return sorted(filenames)
 
     def newDataset(self, title, independents, dependents, extended=False):
+        """
+        todo: document
+        Args:
+            title:
+            independents:
+            dependents:
+            extended:
+        Returns:
+            todo
+        """
         num = self.counter
         self.counter += 1
         self.modified = datetime.now()
 
+        # todo: this is what makes the datasets have strange numbers in front of it; fix it up
         name = '%05d - %s' % (num, title)
         dataset = Dataset(self, name, title, create=True,
                           independents=independents,
