@@ -989,23 +989,15 @@ class MultipleHDF5Data(HDF5MetaData):
     An HDF5Data object used to represent a single dataset
         when an ARTIQ hdf5 file has multiple datasets.
     """
-    def __init__(self, fh):
+    def __init__(self, fh, dataset_name):
         self._file = fh
-        # get datasets
-        dataset_group = self.file["datasets"]
-        assert isinstance(dataset_group, h5py.Group)
-        # todo: figure a better way of accommodating multiple datasets
-        assert len(dataset_group) == 1
-        self.dataset_name = list(self.file["datasets"].keys())[0]
+        self.dataset_name = dataset_name
 
-        # set versioning
-        if 'Version' not in self.file.attrs:
-            self.file.attrs['Version'] = np.asarray([2, 1, 0], dtype=np.int32)
-        self.version = np.asarray(self.file.attrs['Version'], dtype=np.int32)
+        # get specific dataset
+        dataset_group = self.file["datasets"][dataset_name]
 
-        # create comments
-        if 'Comments' not in self.file.attrs:
-            self.dataset.attrs['Comments'] = list()
+        # set versioning (can't assign to file since we're read-only)
+        self.version = np.asarray([2, 1, 0], dtype=np.int32)
 
     @property
     def file(self):
@@ -1023,6 +1015,21 @@ class MultipleHDF5Data(HDF5MetaData):
 
     def addData(self, data):
         raise NotImplementedError
+
+    def access(self):
+        # todo: raise error?
+        pass
+
+    def addParam(self, name, data):
+        # todo: raise error?
+        pass
+
+    def addComment(self, user, comment):
+        # todo: raise error?
+        pass
+
+    def numComments(self):
+        return 0
 
     def getIndependents(self):
         """
@@ -1083,7 +1090,7 @@ def open_hdf5_file(filename, dataset_name=None):
     # and we have to use MultipleHDF5Data
     if dataset_name is not None:
         fh = SelfClosingFile(h5py.File, open_args=(filename, 'r'))
-        return MultipleHDF5Data(fh)
+        return MultipleHDF5Data(fh, dataset_name)
 
     # instantiate the file
     fh = SelfClosingFile(h5py.File, open_args=(filename, 'a'))

@@ -573,7 +573,10 @@ class VirtualFileSession(VirtualSession):
             dataset.access()
         # otherwise, create new wrapper for dataset
         else:
-            dataset = Dataset(self, dataset_name, create=False, dataset_name=dataset_name)
+            # strip filename of extension
+            filename_raw = filename_decode(self.dataset_filename.split('.')[0])
+            # create dataset
+            dataset = Dataset(self, filename_raw, title=dataset_name, create=False, dataset_name=dataset_name)
             self.datasets[dataset_name] = dataset
 
         return dataset
