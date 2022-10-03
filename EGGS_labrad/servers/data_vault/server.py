@@ -230,7 +230,7 @@ class DataVault(LabradServer):
     @setting(8, name='s', returns='*s')
     def mkdir(self, c, name):
         """
-        Make a new sub-directory in the current directory.
+        Make a new subdirectory in the current directory.
 
         The current directory remains selected.
         You must use the 'cd' command to select the newly-created directory.

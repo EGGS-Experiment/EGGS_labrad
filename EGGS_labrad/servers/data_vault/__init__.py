@@ -3,6 +3,7 @@ Contains the class structures needed for creating data files and directories.
 """
 import os
 import re
+import h5py
 from datetime import datetime
 from weakref import WeakValueDictionary
 
@@ -88,6 +89,25 @@ def parse_dependent(s):
     units = _get_match(_re_units, s, '')
     return label, legend, units
 
+def check_if_multiple_datasets(filename):
+    """
+    Check if hdf5 or h5 file has multiple datasets.
+    Arguments:
+        filename    (str): the name of the file to check
+    Returns:
+                    (bool): whether the file has multiple datasets.
+    """
+    # open file
+    num_datasets = 0
+    with h5py.File(filename, 'r') as file_tmp:
+        num_datasets = len(file_tmp["datasets"])
+
+    # get number of datasets
+    if num_datasets > 1:
+        return True
+    else:
+        return False
+
 
 ## data-url support for storing parameters
 DATA_URL_PREFIX = 'data:application/labrad;base64,'
@@ -104,13 +124,11 @@ class SessionStore(object):
         self._sessions = WeakValueDictionary()
         self.hub = hub
 
-        # todo: oneliner
-        if isinstance(datadirs, str):
-            datadirs = [datadirs]
+        datadirs = [datadirs] if isinstance(datadirs, str) else datadirs
 
-        # key = folder name, value = parent directory
+        # self.datadirs holds the root directories and the name to represent them as
+        # (e.g. {'labrad': C:\\Users\\EGGS1\\Documents\\.labrad})
         self.datadirs = {os.path.basename(datadir): os.path.dirname(datadir) for datadir in datadirs}
-
 
     def get_all(self):
         return self._sessions.values()
@@ -127,9 +145,12 @@ class SessionStore(object):
     def get(self, path):
         """
         Get a Session object.
-
-        If a session already exists for the given path, return it.
-        Otherwise, create a new session instance.
+            If a session already exists for the given path, return it.
+            Otherwise, create a new session instance.
+        Arguments:
+            path    list(str): the desired path.
+        Returns:
+                    class(Session): a Session object representing the desired directory.
         """
         path = tuple(path)
 
@@ -138,13 +159,22 @@ class SessionStore(object):
             return self._sessions[path]
 
         session = None
+
         # return the virtual root directory
         if path == ('',):
             session = VirtualSession(self.datadirs, path, self.hub, self)
-        # return the subdirectory
-        elif len(self.datadirs) > 1:
+        else:
+            # redirect the path to the appropriate real directory
             datadir = self.datadirs[path[1]]
-            session = Session(datadir, path, self.hub, self)
+
+            # return a virtual file directory if filepath contains a real hdf5/h5 file
+            if ('.hdf5' in path[-1]) or ('.h5' in path[-1]):
+                session = VirtualFileSession(datadir, path, self.hub, self)
+            # normal case
+            else:
+                session = Session(datadir, path, self.hub, self)
+
+        # add session to list of sessions
         self._sessions[path] = session
         return session
 
@@ -156,6 +186,7 @@ class Session(object):
     One session object is created for each data directory accessed.
     The session object manages reading from and writing to the config
     file, and manages the datasets in this directory.
+    # todo: make all functions in Session class that are not used elsewhere begin with "_"
     """
 
     def __init__(self, datadir, path, hub, session_store):
@@ -260,15 +291,24 @@ class Session(object):
         #dirs = [filename_decode(filename.split('.')[0]) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
         dirs = [filename_decode(filename) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
 
-        # get only datasets of valid filetype (ignore csv since they're partnered with ini files)
+        # get only valid dataset files (ignore csv since they're partnered with ini files)
         filetype_suffixes = ('.ini', '.hdf5', '.h5')
-        def valid_filetype(filename):
+        def valid_datafile(filename):
             if filename == "session.ini":
                 return False
+            # hdf5 files with more than multiple datasets are to be treated as virtual directories
+            elif (filename.endswith('.hdf5') or filename.endswith('.h5')):
+                multiple_datasets = check_if_multiple_datasets(os.path.join(self.dir, filename))
+                # add filename to directories
+                if multiple_datasets:
+                    dirs.append(filename_decode(filename))
+                    return False
+                else:
+                    return True
             else:
                 return any([filename.endswith(filetype) for filetype in filetype_suffixes])
 
-        datasets = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_filetype(filename)])
+        datasets = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_datafile(filename)])
 
         # todo: turn these functions into lambda functions
         # tag filtering functions
@@ -350,12 +390,11 @@ class Session(object):
 
     def openDataset(self, name):
         """
-        todo: document
-        Args:
+        Creates and returns a Dataset object from its name.
+        Arguments:
             name:
-
         Returns:
-            todo
+            Dataset: a Dataset object.
         """
         # try to look up dataset by number
         if isinstance(name, (int, int)):
@@ -438,7 +477,7 @@ class Session(object):
 class VirtualSession(object):
     """
     A session object that allows multiple directories in non-contiguous paths
-    to be treated as if they were in a single enclosing directory.
+        to be treated as if they were in a single enclosing directory.
     """
 
     def __init__(self, datadirs, path, hub, session_store):
@@ -447,7 +486,6 @@ class VirtualSession(object):
         """
         self.path = path
         self.hub = hub
-        self.datasets = WeakValueDictionary()
         self.listeners = set()
         self.subdirs = sorted(datadirs.keys())
 
@@ -470,6 +508,77 @@ class VirtualSession(object):
         raise errors.VirtualSessionError("getTags")
 
 
+class VirtualFileSession(VirtualSession):
+    """
+    A session object that represents a hdf5 file with multiple datasets as a directory.
+    """
+
+    def __init__(self, datadir, path, hub, session_store):
+        """
+        Initialization that happens once when session object is created.
+        """
+        self.path = path
+        self.hub = hub
+        self.datasets = WeakValueDictionary()
+        self.dataset_filedir = filedir(datadir, path)
+        self.dataset_names = None
+        self.listeners = set()
+
+        # todo: ensure dataset file exists
+        filename = filename_encode(name)
+        file_base = os.path.join(self.dir, filename)
+        if not (os.path.exists(file_base + '.hdf5') or os.path.exists(file_base + '.h5')):
+            raise errors.DatasetNotFoundError(name)
+
+        # get dataset names
+        with h5py.File(self.dataset_filedir) as file_tmp:
+            datasets = file_tmp["datasets"]
+            self.dataset_names = list(map(str, datasets.keys()))
+
+        self.dataset_names = sorted(self.dataset_names)
+
+    def listContents(self, tagFilters):
+        """
+        Get a list of directory names in this directory.
+        """
+        return [], self.dataset_names
+
+    def openDataset(self, name):
+        """
+        Creates and returns a Dataset object from its name.
+            Backed by an MultipleHDF5Data.
+        Arguments:
+            name:
+        Returns:
+            Dataset: a Dataset object.
+        """
+        # if it's still a number, we didn't find the dataset
+        if isinstance(name, (int, int)):
+            raise errors.DatasetNotFoundError(name)
+
+        # todo: need to create and pass filename
+
+        # get dataset wrapper if it already exists
+        if dataset_name in self.datasets:
+            dataset = self.datasets[dataset_name]
+            dataset.access()
+        # otherwise, create new wrapper for dataset
+        else:
+            dataset = Dataset(self, name, create=False, dataset_name=name)
+            self.datasets[name] = dataset
+
+        return dataset
+
+    def newDataset(self, title, independents, dependents, extended=False):
+        raise errors.VirtualSessionError("newDataset")
+
+    def updateTags(self, tags, sessions, datasets):
+        raise errors.VirtualSessionError("updateTags")
+
+    def getTags(self, sessions, datasets):
+        raise errors.VirtualSessionError("getTags")
+
+
 class Dataset(object):
     """
     This object basically takes care of listeners and notifications.
@@ -477,7 +586,7 @@ class Dataset(object):
     backend object.
     """
 
-    def __init__(self, session, name, title=None, create=False, independents=[], dependents=[], extended=False):
+    def __init__(self, session, name, title=None, create=False, independents=[], dependents=[], extended=False, dataset_name=None):
         self.hub = session.hub
         self.name = name
         file_base = os.path.join(session.dir, filename_encode(name))
@@ -491,7 +600,7 @@ class Dataset(object):
             self.data = backend.create_backend(file_base, title, indep, dep, extended)
             self.save()
         else:
-            self.data = backend.open_backend(file_base)
+            self.data = backend.open_backend(file_base, dataset_name)
             self.load()
             self.access()
 
