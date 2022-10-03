@@ -335,20 +335,24 @@ class Session(object):
                 if name == num:
                     name = oldName
                     break
-        # if it's still a number, we didn't find the set
+
+        # if it's still a number, we didn't find the dataset
         if isinstance(name, (int, int)):
             raise errors.DatasetNotFoundError(name)
 
+        # try to find dataset file
         filename = filename_encode(name)
         file_base = os.path.join(self.dir, filename)
         if not (os.path.exists(file_base + '.csv') or os.path.exists(file_base + '.hdf5') or os.path.exists(file_base + '.h5')):
         # if not all(map(os.path.exists, [file_base + suffix for suffix in ['.csv', '.hdf5', '.h5']])):
             raise errors.DatasetNotFoundError(name)
+
+        # get dataset wrapper if it already exists
         if name in self.datasets:
             dataset = self.datasets[name]
             dataset.access()
+        # otherwise, create new wrapper for dataset
         else:
-            # need to create a new wrapper for this dataset
             dataset = Dataset(self, name)
             self.datasets[name] = dataset
         self.access()
