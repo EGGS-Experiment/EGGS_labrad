@@ -247,6 +247,10 @@ class Session(object):
     def listContents(self, tagFilters):
         """
         Get a list of directory names in this directory.
+        Arguments:
+            tagFilters list(str): todo
+        Returns:
+            tuple(str), tuple(str): sorted tuples of directories and datasets, respectively.
         """
         # get all names in the directory
         files = os.listdir(self.dir)
@@ -268,6 +272,8 @@ class Session(object):
 
         # todo: turn these functions into lambda functions
         # tag filtering functions
+        # include = lambda entries, tag, tags: [e for e in entries if (e in tags) and (tag in tags[e])]
+        # exclude = lambda entries, tag, tags: [e for e in entries if (e not in tags) or (tag not in tags[e])]
         def include(entries, tag, tags):
             """
             Include only entries that have the specified tag.
@@ -282,14 +288,14 @@ class Session(object):
             return [e for e in entries
                     if (e not in tags) or (tag not in tags[e])]
 
-        # apply tag filters
+        # iteratively apply tag filters
         for tag in tagFilters:
-            # choose correct filter function
+            # choose filter function
+            filter_func = include
             if tag[:1] == '-':
                 filter_func = exclude
                 tag = tag[1:]
-            else:
-                filter = include
+
             # filter directories and datasets
             dirs = filter_func(dirs, tag, self.session_tags)
             datasets = filter_func(datasets, tag, self.dataset_tags)
@@ -299,9 +305,15 @@ class Session(object):
     def listDatasets(self):
         """
         Get a list of dataset names in this directory.
+            Only used by Session.openDataset
+        Returns:
+            list(str): a list of dataset filenames.
         """
+        # get files
         files = os.listdir(self.dir)
         filenames = []
+
+        # separate filenames from extensions
         for s in files:
             base, _, ext = s.rpartition('.')
             if ext in ['csv', 'hdf5', 'h5']:
@@ -337,7 +349,15 @@ class Session(object):
         return dataset
 
     def openDataset(self, name):
-        # first lookup by number if necessary
+        """
+        todo: document
+        Args:
+            name:
+
+        Returns:
+            todo
+        """
+        # try to look up dataset by number
         if isinstance(name, (int, int)):
             for oldName in self.listDatasets():
                 num = int(oldName[:5])
