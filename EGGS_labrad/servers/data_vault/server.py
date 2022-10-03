@@ -154,9 +154,8 @@ class DataVault(LabradServer):
         """
         Get subdirectories and datasets in the current directory.
         """
-        # todo: make oneliner
-        if isinstance(tagFilters, str):
-            tagFilters = [tagFilters]
+        # ensure tagFilters is a list object
+        tagFilters = [tagFilters] if isinstance(tagFilters, str) else tagFilters
 
         # get contents of session
         sess = self.getSession(c)

@@ -264,9 +264,9 @@ class Session(object):
             else:
                 return any([filename.endswith(filetype) for filetype in filetype_suffixes])
 
-        # todo: fix bug where it splits filenames that have a period in them, otherwise reject filenames with periods in them
         datasets = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_filetype(filename)])
 
+        # todo: turn these functions into lambda functions
         # tag filtering functions
         def include(entries, tag, tags):
             """
