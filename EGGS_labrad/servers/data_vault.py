@@ -64,26 +64,33 @@ def load_settings(cxn, name):
     # look for node-specific directory
     if nodename in keys:
         datadir = yield reg.get(nodename)
+
     # otherwise, try to get default directory
     elif '__default__' in keys:
         datadir = yield reg.get('__default__')
+
     # finally, have user assign starting directory
     else:
         default_datadir = os.path.expanduser('~/.labrad/vault')
+
+        # get user input
         print('Could not load repository location from registry.')
         print('Please enter data storage directory or hit enter to use')
         print('the default directory ({}):'.format(default_datadir))
         datadir = os.path.expanduser(input('>>>'))
+
+        # set to default_datadir if empty, and create it if it doesn't exist
         if datadir == '':
             datadir = default_datadir
         if not os.path.exists(datadir):
             os.makedirs(datadir)
+
         # set as default and for this node
         yield reg.set(nodename, datadir)
         yield reg.set('__default__', datadir)
-        print('Data location configured in the registry at {}: {}'.format(\
-            path + [nodename], datadir))
+        print('Data location configured in the registry at {}: {}'.format(path + [nodename], datadir))
         print('To change this, edit the registry keys and restart the server.')
+
     returnValue(datadir)
 
 
@@ -92,14 +99,15 @@ def main(argv=sys.argv):
 
     @inlineCallbacks
     def start():
-        # todo: document
+        # create connection to labrad
         opts = labrad.util.parseServerOptions(name=DataVault.name)
         cxn = yield labrad.wrappers.connectAsync(
             host=opts['host'], port=int(opts['port']), password=opts['password']
         )
         datadir = yield load_settings(cxn, opts['name'])
         yield cxn.disconnect()
-        # todo: document
+
+        # create SessionStore
         session_store = SessionStore(datadir, hub=None)
         server = DataVault(session_store)
         session_store.hub = server
