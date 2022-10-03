@@ -47,6 +47,9 @@ def filename_decode(name):
 
 
 def filedir(datadir, path):
+    """
+    Decodes the name of each directory separately and joins them into a single string.
+    """
     return os.path.join(datadir, *[filename_encode(d) for d in path[1:]])
 
 
@@ -100,7 +103,11 @@ def check_if_multiple_datasets(filename):
     # open file
     num_datasets = 0
     with h5py.File(filename, 'r') as file_tmp:
-        num_datasets = len(file_tmp["datasets"])
+        # todo: more general way of checking; check # of datasets of all groups
+        try:
+            num_datasets = len(file_tmp["datasets"])
+        except:
+            return False
 
     # get number of datasets
     if num_datasets > 1:
@@ -487,6 +494,7 @@ class VirtualSession(object):
         self.path = path
         self.hub = hub
         self.listeners = set()
+        self.datasets = WeakValueDictionary()
         self.subdirs = sorted(datadirs.keys())
 
     def listContents(self, tagFilters):
@@ -520,22 +528,25 @@ class VirtualFileSession(VirtualSession):
         self.path = path
         self.hub = hub
         self.datasets = WeakValueDictionary()
-        self.dataset_filedir = filedir(datadir, path)
-        self.dataset_names = None
+        self.dataset_names = []
         self.listeners = set()
 
-        # todo: ensure dataset file exists
-        filename = filename_encode(name)
-        file_base = os.path.join(self.dir, filename)
-        if not (os.path.exists(file_base + '.hdf5') or os.path.exists(file_base + '.h5')):
-            raise errors.DatasetNotFoundError(name)
+        # need to have a dir pointing to directory that holds the hdf5 file
+        # since Dataset takes session.dir and adds on the hdf5 filename
+        self.dir = filedir(datadir, path[:-1])
+        # the actual filename, formatted correctly
+        self.dataset_filename = filename_encode(path[-1])
+        # the full encoded directory string (incl. h5 file)
+        self.dataset_filedir = os.path.join(self.dir, self.dataset_filename)
+
+        # ensure dataset file exists
+        if not os.path.exists(self.dataset_filedir):
+            raise errors.DatasetNotFoundError(self.dataset_filename)
 
         # get dataset names
         with h5py.File(self.dataset_filedir) as file_tmp:
             datasets = file_tmp["datasets"]
-            self.dataset_names = list(map(str, datasets.keys()))
-
-        self.dataset_names = sorted(self.dataset_names)
+            self.dataset_names = sorted(list(map(str, datasets.keys())))
 
     def listContents(self, tagFilters):
         """
@@ -543,20 +554,18 @@ class VirtualFileSession(VirtualSession):
         """
         return [], self.dataset_names
 
-    def openDataset(self, name):
+    def openDataset(self, dataset_name):
         """
         Creates and returns a Dataset object from its name.
-            Backed by an MultipleHDF5Data.
+            Backed by a MultipleHDF5Data object.
         Arguments:
-            name:
+            name: todo
         Returns:
             Dataset: a Dataset object.
         """
-        # if it's still a number, we didn't find the dataset
-        if isinstance(name, (int, int)):
-            raise errors.DatasetNotFoundError(name)
-
-        # todo: need to create and pass filename
+        # ignore function call if name is a number
+        if isinstance(dataset_name, (int, int)):
+            raise errors.DatasetNotFoundError('{} - {}'.format(self.dataset_filename, dataset_name))
 
         # get dataset wrapper if it already exists
         if dataset_name in self.datasets:
@@ -564,8 +573,8 @@ class VirtualFileSession(VirtualSession):
             dataset.access()
         # otherwise, create new wrapper for dataset
         else:
-            dataset = Dataset(self, name, create=False, dataset_name=name)
-            self.datasets[name] = dataset
+            dataset = Dataset(self, dataset_name, create=False, dataset_name=dataset_name)
+            self.datasets[dataset_name] = dataset
 
         return dataset
 
