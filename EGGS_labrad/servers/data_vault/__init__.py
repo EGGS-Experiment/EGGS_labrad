@@ -256,8 +256,7 @@ class Session(object):
         #dirs = [filename_decode(filename.split('.')[0]) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
         dirs = [filename_decode(filename) for filename in files if os.path.isdir(os.path.join(self.dir, filename))]
 
-        # get only datasets of valid filetype
-        # todo: what about actual csv files?
+        # get only datasets of valid filetype (ignore csv since they're partnered with ini files)
         filetype_suffixes = ('.ini', '.hdf5', '.h5')
         def valid_filetype(filename):
             if filename == "session.ini":
@@ -267,7 +266,6 @@ class Session(object):
 
         # todo: fix bug where it splits filenames that have a period in them, otherwise reject filenames with periods in them
         datasets = sorted([filename_decode(filename.split('.')[0]) for filename in files if valid_filetype(filename)])
-        #datasets = sorted([filename_decode(filename) for filename in files if valid_filetype(filename)])
 
         # tag filtering functions
         def include(entries, tag, tags):
