@@ -10,8 +10,10 @@ from EGGS_labrad.clients import createTrunk
 name_tmp = 'ASF Calibration'
 dds_channel = 'urukul1_ch1'
 dds_frequency_hz = 110 * 1e6
-dds_attenuation_dbm = 22
-amp_range = linspace(1, 50, 491) / 100
+dds_attenuation_dbm = 16
+amp_range = linspace(1, 50, 50) / 100
+
+wav_nm = 400
 num_avgs = 100
 
 
@@ -33,11 +35,11 @@ try:
     aq.dds_attenuation(dds_channel, dds_attenuation_dbm)
     sleep(0.5)
     aq.dds_toggle(dds_channel, 1)
-    sleep(0.5)
     print('DDS setup successful.')
 
     # set up power meter
     pm.select_device()
+    pm.configure_wavelength(wav_nm)
     pm.configure_autoranging(1)
     pm.configure_mode('POW')
     pm.configure_averaging(num_avgs)
@@ -63,7 +65,6 @@ try:
 
         # measure power
         res_pow = pm.measure()
-        sleep(2)
 
         # record result
         print('asf {:f}: pow = {:f}'.format(amp_val, res_pow))
