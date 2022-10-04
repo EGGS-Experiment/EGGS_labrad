@@ -86,7 +86,7 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         """
         # setter
         if status is not None:
-            yield self.ser.write(':OUTP{:d}:STAT {:d}'.format(channel, status))
+            yield self.ser.write(':OUTP{:d}:STAT {:d}\r\n'.format(channel, status))
         # getter
         yield self.ser.write(':OUTP{:d}:STAT?\r\n'.format(channel))
         resp = yield self.ser.read_line()
