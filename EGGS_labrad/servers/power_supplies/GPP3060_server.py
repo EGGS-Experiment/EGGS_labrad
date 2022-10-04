@@ -17,10 +17,12 @@ timeout = 20
 """
 
 from labrad.units import WithUnit
-from labrad.server import setting, Signal
+from labrad.server import setting, Signal, inlineCallbacks
 from twisted.internet.defer import returnValue
 
 from EGGS_labrad.servers import PollingServer, SerialDeviceServer
+# todo: max values
+# todo: use signals
 
 
 class GPP3060Server(SerialDeviceServer, PollingServer):
@@ -84,9 +86,9 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         """
         # setter
         if status is not None:
-            yield self.ser.write('OUTP{:d}:STAT {:d}'.format(channel, status))
+            yield self.ser.write(':OUTP{:d}:STAT {:d}'.format(channel, status))
         # getter
-        yield self.ser.write('OUTP{:d}:STAT?\r\n'.format(channel))
+        yield self.ser.write(':OUTP{:d}:STAT?\r\n'.format(channel))
         resp = yield self.ser.read_line()
         resp = resp.strip()
         if resp == 'ON':
