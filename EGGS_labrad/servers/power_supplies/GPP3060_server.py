@@ -20,7 +20,7 @@ from labrad.units import WithUnit
 from labrad.server import setting, Signal, inlineCallbacks
 from twisted.internet.defer import returnValue
 
-from EGGS_labrad.servers import PollingServer, SerialDeviceServer, ContextServer
+from EGGS_labrad.servers import PollingServer, SerialDeviceServer
 
 TOGGLESIGNAL =  303980
 MODESIGNAL =    303981
@@ -31,7 +31,7 @@ MAXSIGNAL =     303984
 # todo: set polling minimum
 
 
-class GPP3060Server(SerialDeviceServer, PollingServer, ContextServer):
+class GPP3060Server(SerialDeviceServer, PollingServer):
     """
     Talks to the GW Instek GPP 3060 power supply.
     """
@@ -129,15 +129,17 @@ class GPP3060Server(SerialDeviceServer, PollingServer, ContextServer):
     @setting(112, 'Channel Mode', channel='i', mode='s', returns='b')
     def channelMode(self, c, channel, mode=None):
         """
-        too&&&
+        Get/set the operation mode of the channel.
+        # todo: allowed modes
         Arguments:
             channel (int)   : the channel number.
-            mode    (bool)  : the power state of the power supply.
+            mode    (str)   : the operation mode of the channel.
         Returns:
-                    (bool)  : the power state of the power supply.
+                    (str)   : the operation mode of the channel.
         """
         CONVERSION_DICT = {'IND': 'INDEPENDENT', 'SER': 'SERIES', 'PAR': 'PARALLEL',
                            'CV': 'CV', 'CC': 'CC', 'CR': 'CR'}
+
         # setter
         if mode is not None:
             # ensure mode is valid
@@ -240,7 +242,7 @@ class GPP3060Server(SerialDeviceServer, PollingServer, ContextServer):
 
         # parse
         resp = float(resp[:-1])
-        self.notifyOtherListeners(c, ('V', channel, resp), self.actual_update)
+        self.actual_update(('V', channel, resp))
         returnValue(resp)
 
     @setting(212, 'Measure Current', channel='i', returns='v')
@@ -263,19 +265,18 @@ class GPP3060Server(SerialDeviceServer, PollingServer, ContextServer):
 
         # parse
         resp = float(resp[:-1])
-        self.notifyOtherListeners(c, ('I', channel, resp), self.actual_update)
-        returnValue(float(resp))
+        self.actual_update(('I', channel, resp))
+        returnValue(resp)
 
     @inlineCallbacks
     def _poll(self):
         # main channels
         for i in range(2):
-            yield self.measureVoltage(None, i)
-            yield self.measureCurrent(None, i)
-
+            yield self.measureVoltage(None, i + 1)
+            yield self.measureCurrent(None, i + 1)
         # 5V channel
         yield self.measureCurrent(None, 3)
-
+        print('kk4')
 
 if __name__ == '__main__':
     from labrad import util

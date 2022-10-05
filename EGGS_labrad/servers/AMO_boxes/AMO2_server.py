@@ -25,7 +25,7 @@ from EGGS_labrad.servers import SerialDeviceServer, PollingServer, ContextServer
 TERMINATOR = '\r\n'
 
 
-class AMO2Server(SerialDeviceServer, PollingServer, ContextServer):
+class AMO2Server(SerialDeviceServer, PollingServer):
     """
     Communicates with the AMO2 box for control of TECs.
     """

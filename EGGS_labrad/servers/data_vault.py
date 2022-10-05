@@ -17,8 +17,8 @@
 ### BEGIN NODE INFO
 [info]
 name = Data Vault
-version = 3.0.2
-description = Store and retrieve numeric data
+version = 3.1.2
+description = Manages interaction with datasets.
 
 [startup]
 cmdline = %PYTHON% %FILE%

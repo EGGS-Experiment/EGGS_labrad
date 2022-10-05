@@ -45,7 +45,7 @@ class gpp3060_client(GUIClient):
             widget = self.gui.channels[i]
 
             # get values
-            channel_status = yield self.gpp.toggle(i + 1)
+            channel_status = yield self.gpp.channel_toggle(i + 1)
             channel_voltage = yield self.gpp.channel_voltage(i + 1)
             channel_current = yield self.gpp.channel_current(i + 1)
 
@@ -55,13 +55,16 @@ class gpp3060_client(GUIClient):
             widget.currentSet.setValue(channel_current)
 
     def initGUI(self):
+        # configure GUI
+        self.gui.title.setText("GPP3060 Power Supply Client")
+        self.gui.setFixedSize(550, 650)
         # configure channel 3 display (the 5V channel)
         self.gui.channels[2].voltageDisp.setText("5.00")
 
         # connect regular signals
         for i in range(3):
             channel_widget = self.gui.channels[i]
-            channel_widget.toggleswitch.valueChanged.connect(lambda _status, _chan=i+1: self.gpp.channel_toggle(_chan, _status))
+            channel_widget.toggleswitch.clicked.connect(lambda _status, _chan=i+1: self.gpp.channel_toggle(_chan, _status))
             channel_widget.voltageSet.valueChanged.connect(lambda _voltage, _chan=i+1: self.gpp.channel_voltage(_chan, _voltage))
             channel_widget.currentSet.valueChanged.connect(lambda _current, _chan=i+1: self.gpp.channel_current(_chan, _current))
 
@@ -95,7 +98,7 @@ class gpp3060_client(GUIClient):
         if val_name == 'I':
             widget = self.gui.channels[chan_num - 1].currentDisp
         elif val_name == 'V':
-            widget = self.gui.channels[chan_num - 1].voltDisp
+            widget = self.gui.channels[chan_num - 1].voltageDisp
         widget.setText(str(value))
 
     def updateSet(self, c, msg):
@@ -104,9 +107,9 @@ class gpp3060_client(GUIClient):
         # get correct widget
         widget = None
         if val_name == 'I':
-            widget = self.gui.channels[chan_num - 1].currentDisp
+            widget = self.gui.channels[chan_num - 1].currentSet
         elif val_name == 'V':
-            widget = self.gui.channels[chan_num - 1].voltDisp
+            widget = self.gui.channels[chan_num - 1].voltageSet
 
         # set value
         widget.blockSignal(True)

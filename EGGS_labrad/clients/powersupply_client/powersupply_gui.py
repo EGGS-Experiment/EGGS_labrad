@@ -44,7 +44,7 @@ class powersupply_gui(QFrame):
             # VOLTAGE
             channel_widget.voltageDisp_label = QLabel("Actual Voltage")
             channel_widget.voltageDisp_label.setFont(QFont(shell_font, pointSize=10))
-            channel_widget.voltageDisp = QLabel("00.00 V")
+            channel_widget.voltageDisp = QLabel("00.00V")
             channel_widget.voltageDisp.setAlignment(Qt.AlignRight)
             channel_widget.voltageDisp.setFont(QFont(shell_font, pointSize=24))
             channel_widget.voltageDisp.setStyleSheet('color: blue')
@@ -53,7 +53,7 @@ class powersupply_gui(QFrame):
             channel_widget.voltageSet_label.setFont(QFont(shell_font, pointSize=10))
             channel_widget.voltageSet = QCustomUnscrollableSpinBox()
             channel_widget.voltageSet.setRange(0, 30)
-            channel_widget.voltageSet.setDecimals(3)
+            channel_widget.voltageSet.setDecimals(2)
             channel_widget.voltageSet.setSingleStep(1)
             channel_widget.voltageSet.setKeyboardTracking(False)
             channel_widget.voltageSet.setFont(QFont(shell_font, pointSize=16))
@@ -63,7 +63,7 @@ class powersupply_gui(QFrame):
             channel_widget.voltageMax_label.setFont(QFont(shell_font, pointSize=10))
             channel_widget.voltageMax = QCustomUnscrollableSpinBox()
             channel_widget.voltageMax.setRange(0, 30)
-            channel_widget.voltageMax.setDecimals(3)
+            channel_widget.voltageMax.setDecimals(2)
             channel_widget.voltageMax.setSingleStep(1)
             channel_widget.voltageMax.setKeyboardTracking(False)
             channel_widget.voltageMax.setFont(QFont(shell_font, pointSize=16))
@@ -72,7 +72,7 @@ class powersupply_gui(QFrame):
             # CURRENT
             channel_widget.currentDisp_label = QLabel("Actual Current")
             channel_widget.currentDisp_label.setFont(QFont(shell_font, pointSize=10))
-            channel_widget.currentDisp = QLabel("00.00 A")
+            channel_widget.currentDisp = QLabel("0.00A")
             channel_widget.currentDisp.setAlignment(Qt.AlignRight)
             channel_widget.currentDisp.setFont(QFont(shell_font, pointSize=24))
             channel_widget.currentDisp.setStyleSheet('color: blue')
@@ -81,7 +81,7 @@ class powersupply_gui(QFrame):
             channel_widget.currentSet_label.setFont(QFont(shell_font, pointSize=10))
             channel_widget.currentSet = QCustomUnscrollableSpinBox()
             channel_widget.currentSet.setRange(0, 30)
-            channel_widget.currentSet.setDecimals(3)
+            channel_widget.currentSet.setDecimals(2)
             channel_widget.currentSet.setSingleStep(1)
             channel_widget.currentSet.setKeyboardTracking(False)
             channel_widget.currentSet.setFont(QFont(shell_font, pointSize=16))
@@ -91,7 +91,7 @@ class powersupply_gui(QFrame):
             channel_widget.currentMax_label.setFont(QFont(shell_font, pointSize=10))
             channel_widget.currentMax = QCustomUnscrollableSpinBox()
             channel_widget.currentMax.setRange(0, 30)
-            channel_widget.currentMax.setDecimals(3)
+            channel_widget.currentMax.setDecimals(2)
             channel_widget.currentMax.setSingleStep(1)
             channel_widget.currentMax.setKeyboardTracking(False)
             channel_widget.currentMax.setFont(QFont(shell_font, pointSize=16))
@@ -119,7 +119,7 @@ class powersupply_gui(QFrame):
             # add channel to holder
             self.channels.append(channel_widget)
             layout.addWidget(
-                QCustomGroupBox(channel_widget, "Channel {:d}".format(i)),
+                QCustomGroupBox(channel_widget, "Channel {:d}".format(i + 1)),
                 1 + i // 2, i % 2, 1, 1
             )
 
