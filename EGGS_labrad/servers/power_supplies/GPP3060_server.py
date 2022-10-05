@@ -20,12 +20,18 @@ from labrad.units import WithUnit
 from labrad.server import setting, Signal, inlineCallbacks
 from twisted.internet.defer import returnValue
 
-from EGGS_labrad.servers import PollingServer, SerialDeviceServer
-# todo: max values
-# todo: use signals
+from EGGS_labrad.servers import PollingServer, SerialDeviceServer, ContextServer
+
+TOGGLESIGNAL =  303980
+MODESIGNAL =    303981
+ACTUALSIGNAL =  303982
+SETSIGNAL =     303983
+MAXSIGNAL =     303984
+# todo: max/ovp values
+# todo: set polling minimum
 
 
-class GPP3060Server(SerialDeviceServer, PollingServer):
+class GPP3060Server(SerialDeviceServer, PollingServer, ContextServer):
     """
     Talks to the GW Instek GPP 3060 power supply.
     """
@@ -39,8 +45,13 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
     baudrate = 115200
     bytesize = 8
 
+
     # SIGNALS
-    # temp_update = Signal(TEMPSIGNAL, 'signal: temperature update', '(vvvv)')
+    toggle_update = Signal(TOGGLESIGNAL,    'signal: toggle update',    '(iv)')
+    mode_update =   Signal(MODESIGNAL,      'signal: mode update',      '(ss)')
+    actual_update = Signal(ACTUALSIGNAL,    'signal: actual update',    '(siv)')
+    set_update =    Signal(SETSIGNAL,       'signal: set update',       '(siv)')
+    max_update =    Signal(MAXSIGNAL,       'signal: max update',       '(siv)')
 
 
     # GENERAL
@@ -49,28 +60,38 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         """
         Reset the power supply to factory settings.
         """
+        yield self.ser.acquire()
         yield self.ser.write('*RST\r\n')
+        self.ser.release()
 
     @setting(12, "Clear Buffers", returns='')
     def clear_buffers(self, c):
         """
         Clear device status buffers.
         """
+        yield self.ser.acquire()
         yield self.ser.write('*CLS\r\n')
+        self.ser.release()
 
     @setting(21, "Remote", status=['i', 'b'], returns='')
     def remote(self, c, status):
         """
-        Set remote mode to enable/disable remote communication.
+        Enable/disable remote communication.
         Arguments:
             status  (bool)  : the power state of the power supply.
         Returns:
                     (bool)  : the power state of the power supply.
         """
-        if status == True:
-            yield self.ser.write('SYST:REM\r\n')
-        else:
-            yield self.ser.write('SYST:LOC\r\n')
+        # check for valid input
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+
+        # setter
+        chString = 'SYST:REM\r\n' if status else 'SYST:LOC\r\n'
+        yield self.ser.acquire()
+        yield self.ser.write(chString)
+        self.ser.release()
 
 
     # CHANNEL OUTPUT
@@ -86,15 +107,23 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         """
         # setter
         if status is not None:
+            yield self.ser.acquire()
             yield self.ser.write(':OUTP{:d}:STAT {:d}\r\n'.format(channel, status))
+            self.ser.release()
+
         # getter
+        yield self.ser.acquire()
         yield self.ser.write(':OUTP{:d}:STAT?\r\n'.format(channel))
         resp = yield self.ser.read_line()
+        self.ser.release()
+
+        # parse
         resp = resp.strip()
         if resp == 'ON':
             resp = True
         elif resp == 'OFF':
             resp = False
+        self.notifyOtherListeners(c, (channel, resp), self.toggle_update)
         returnValue(resp)
 
     @setting(112, 'Channel Mode', channel='i', mode='s', returns='b')
@@ -116,11 +145,20 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
                 raise Exception("Invalid Value. Modes must be one of {}.".format(tuple(CONVERSION_DICT.values())))
             mode = {'INDEPENDENT': 'IND', 'SERIES': 'SER', 'PARALLEL':'PAR',
                     'CC': 'CC', 'CV': 'CV', 'CR': 'CR'}[mode]
+            yield self.ser.acquire()
             yield self.ser.write('TRACK{:d}\r\n'.format(mode))
+            self.ser.release()
+
         # getter
+        yield self.ser.acquire()
         yield self.ser.write(':MODE{:d}?\r\n'.format(channel))
         resp = yield self.ser.read_line()
-        returnValue(CONVERSION_DICT[resp])
+        self.ser.release()
+
+        # parse
+        resp = CONVERSION_DICT[resp]
+        self.notifyOtherListeners(c, (channel, resp), self.mode_update)
+        returnValue(resp)
 
     @setting(121, 'Channel Voltage', channel='i', voltage='v', returns='v')
     def channelVoltage(self, c, channel, voltage=None):
@@ -136,11 +174,20 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         if voltage is not None:
             if (voltage < 0) or (voltage > 30):
                 raise Exception("Invalid Value. Voltage must be in [0, 30]V.")
+            yield self.ser.acquire()
             yield self.ser.write('SOUR{:d}:VOLT {:f}\r\n'.format(channel, voltage))
+            self.ser.release()
+
         # getter
+        yield self.ser.acquire()
         yield self.ser.write('SOUR{:d}:VOLT?\r\n'.format(channel))
         resp = yield self.ser.read_line()
-        returnValue(float(resp))
+        self.ser.release()
+
+        # parse
+        resp = float(resp)
+        self.notifyOtherListeners(c, ('V', channel, resp), self.set_update)
+        returnValue(resp)
 
     @setting(122, 'Channel Current', channel='i', current='v', returns='v')
     def channelCurrent(self, c, channel, current=None):
@@ -156,11 +203,20 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         if current is not None:
             if (current < 0) or (current > 30):
                 raise Exception("Invalid Value. Current must be in [0, 6]A.")
+            yield self.ser.acquire()
             yield self.ser.write('SOUR{:d}:CURR {:f}\r\n'.format(channel, current))
+            self.ser.release()
+
         # getter
+        yield self.ser.acquire()
         yield self.ser.write('SOUR{:d}:CURR?\r\n'.format(channel))
         resp = yield self.ser.read_line()
-        returnValue(float(resp))
+        self.ser.release()
+
+        # parse
+        resp = float(resp)
+        self.notifyOtherListeners(c, ('I', channel, resp), self.set_update)
+        returnValue(resp)
 
 
     # MEASURE
@@ -175,11 +231,17 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         """
         if channel not in (1, 2, 3):
             raise Exception("Invalid Value. Channel must be in (1, 2, 3).")
+
         # get the actual output voltage
+        yield self.ser.acquire()
         yield self.ser.write('VOUT{:d}?\r\n'.format(channel))
         resp = yield self.ser.read_line()
-        resp = resp[:-1]
-        returnValue(float(resp))
+        self.ser.release()
+
+        # parse
+        resp = float(resp[:-1])
+        self.notifyOtherListeners(c, ('V', channel, resp), self.actual_update)
+        returnValue(resp)
 
     @setting(212, 'Measure Current', channel='i', returns='v')
     def measureCurrent(self, c, channel):
@@ -192,11 +254,27 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
         """
         if channel not in (1, 2, 3):
             raise Exception("Invalid Value. Channel must be in (1, 2, 3).")
+
         # get the actual output current
+        yield self.ser.acquire()
         yield self.ser.write('IOUT{:d}?\r\n'.format(channel))
         resp = yield self.ser.read_line()
-        resp = resp[:-1]
+        self.ser.release()
+
+        # parse
+        resp = float(resp[:-1])
+        self.notifyOtherListeners(c, ('I', channel, resp), self.actual_update)
         returnValue(float(resp))
+
+    @inlineCallbacks
+    def _poll(self):
+        # main channels
+        for i in range(2):
+            yield self.measureVoltage(None, i)
+            yield self.measureCurrent(None, i)
+
+        # 5V channel
+        yield self.measureCurrent(None, 3)
 
 
 if __name__ == '__main__':
