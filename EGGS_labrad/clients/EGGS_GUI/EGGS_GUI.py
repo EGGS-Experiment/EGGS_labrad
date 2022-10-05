@@ -98,11 +98,13 @@ class EGGS_gui(QMainWindow):
     def makeLaserWidget(self, reactor, cxn):
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
         from EGGS_labrad.clients.toptica_client.toptica_client import toptica_client
+        from EGGS_labrad.clients.powersupply_client.gpp3060_client import gpp3060_client
         from EGGS_labrad.clients.ARTIQ_client.DDS_client import DDS_client
         #from EGGS_labrad.clients.shutter_client import shutter_client
         clients = {
             SLS_client:                     {"pos": (0, 0)},
-            toptica_client:                 {"pos": (0, 1)}
+            toptica_client:                 {"pos": (0, 1)},
+            gpp3060_client:                 {"pos": (1, 1)}
             #DDS_client:                     {"pos": (1, 0)}
         }
         return self._createTabLayout(clients, reactor, cxn)

@@ -10,7 +10,6 @@ class powersupply_gui(QFrame):
     def __init__(self, parent=None):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
-        #self.setFixedSize(350, 275)
         self.setWindowTitle("Power Supply Client")
         self.makeWidgets()
 
@@ -22,7 +21,7 @@ class powersupply_gui(QFrame):
         self.title = QLabel('Power Supply Client')
         self.title.setFont(QFont(shell_font, pointSize=16))
         self.title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.title, 0, 0, 1, 2)
+        layout.addWidget(self.title, 0, 0, 1, 3)
 
         # create channel widgets
         self.channels = list()
@@ -42,14 +41,14 @@ class powersupply_gui(QFrame):
             channel_widget.modeSelect.addItems(["Series", "Parallel"])
 
             # VOLTAGE
-            channel_widget.voltageDisp_label = QLabel("Actual Voltage")
+            channel_widget.voltageDisp_label = QLabel("Actual Voltage (V)")
             channel_widget.voltageDisp_label.setFont(QFont(shell_font, pointSize=10))
             channel_widget.voltageDisp = QLabel("00.00V")
             channel_widget.voltageDisp.setAlignment(Qt.AlignRight)
             channel_widget.voltageDisp.setFont(QFont(shell_font, pointSize=24))
             channel_widget.voltageDisp.setStyleSheet('color: blue')
 
-            channel_widget.voltageSet_label = QLabel("Set Voltage")
+            channel_widget.voltageSet_label = QLabel("Set Voltage (V)")
             channel_widget.voltageSet_label.setFont(QFont(shell_font, pointSize=10))
             channel_widget.voltageSet = QCustomUnscrollableSpinBox()
             channel_widget.voltageSet.setRange(0, 30)
@@ -59,7 +58,7 @@ class powersupply_gui(QFrame):
             channel_widget.voltageSet.setFont(QFont(shell_font, pointSize=16))
             channel_widget.voltageSet.setAlignment(Qt.AlignRight)
 
-            channel_widget.voltageMax_label = QLabel("Max Voltage")
+            channel_widget.voltageMax_label = QLabel("Max Voltage (V)")
             channel_widget.voltageMax_label.setFont(QFont(shell_font, pointSize=10))
             channel_widget.voltageMax = QCustomUnscrollableSpinBox()
             channel_widget.voltageMax.setRange(0, 30)
@@ -70,14 +69,14 @@ class powersupply_gui(QFrame):
             channel_widget.voltageMax.setAlignment(Qt.AlignRight)
 
             # CURRENT
-            channel_widget.currentDisp_label = QLabel("Actual Current")
+            channel_widget.currentDisp_label = QLabel("Actual Current (A)")
             channel_widget.currentDisp_label.setFont(QFont(shell_font, pointSize=10))
             channel_widget.currentDisp = QLabel("0.00A")
             channel_widget.currentDisp.setAlignment(Qt.AlignRight)
             channel_widget.currentDisp.setFont(QFont(shell_font, pointSize=24))
             channel_widget.currentDisp.setStyleSheet('color: blue')
 
-            channel_widget.currentSet_label = QLabel("Set Current")
+            channel_widget.currentSet_label = QLabel("Set Current (A)")
             channel_widget.currentSet_label.setFont(QFont(shell_font, pointSize=10))
             channel_widget.currentSet = QCustomUnscrollableSpinBox()
             channel_widget.currentSet.setRange(0, 30)
@@ -87,7 +86,7 @@ class powersupply_gui(QFrame):
             channel_widget.currentSet.setFont(QFont(shell_font, pointSize=16))
             channel_widget.currentSet.setAlignment(Qt.AlignRight)
 
-            channel_widget.currentMax_label = QLabel("Max Current")
+            channel_widget.currentMax_label = QLabel("Max Current (A)")
             channel_widget.currentMax_label.setFont(QFont(shell_font, pointSize=10))
             channel_widget.currentMax = QCustomUnscrollableSpinBox()
             channel_widget.currentMax.setRange(0, 30)
@@ -120,7 +119,8 @@ class powersupply_gui(QFrame):
             self.channels.append(channel_widget)
             layout.addWidget(
                 QCustomGroupBox(channel_widget, "Channel {:d}".format(i + 1)),
-                1 + i // 2, i % 2, 1, 1
+                #1 + i // 2, i % 2, 1, 1
+                1, i, 1, 1
             )
 
     def _lock(self, channel_num, status):

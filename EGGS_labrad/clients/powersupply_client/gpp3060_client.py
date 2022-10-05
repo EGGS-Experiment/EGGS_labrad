@@ -13,7 +13,7 @@ class gpp3060_client(GUIClient):
     MODEID =    130943
     ACTUALID =  130942
     SETID =     130941
-    MAXID =   130940
+    MAXID =     130940
     servers = {'gpp': 'GPP3060 Server'}
 
     def getgui(self):
@@ -57,7 +57,7 @@ class gpp3060_client(GUIClient):
     def initGUI(self):
         # configure GUI
         self.gui.title.setText("GPP3060 Power Supply Client")
-        self.gui.setFixedSize(550, 650)
+        self.gui.setFixedSize(800, 350)
         # configure channel 3 display (the 5V channel)
         self.gui.channels[2].voltageDisp.setText("5.00")
 
@@ -97,9 +97,10 @@ class gpp3060_client(GUIClient):
         widget = None
         if val_name == 'I':
             widget = self.gui.channels[chan_num - 1].currentDisp
+            widget.setText('{:.3f}'.format(value))
         elif val_name == 'V':
             widget = self.gui.channels[chan_num - 1].voltageDisp
-        widget.setText(str(value))
+            widget.setText('{:.3f}'.format(value))
 
     def updateSet(self, c, msg):
         val_name, chan_num, value = msg
