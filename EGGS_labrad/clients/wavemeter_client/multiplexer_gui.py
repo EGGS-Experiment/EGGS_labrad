@@ -348,7 +348,7 @@ class multiplexer_gui(QFrame):
         # interferometer display
         qBox_intTrace = QGroupBox('Interferometer')
         qBox_intTrace_layout = QGridLayout(qBox_intTrace)
-        pg.setConfigOption('background', 'k')
+        pg.setConfigOption('background', 'w')
         # configure pyqtgraph
         pg.setConfigOption('antialias', False)
         from importlib.util import find_spec
@@ -398,7 +398,7 @@ class multiplexer_gui(QFrame):
         color = wav2RGB(wavelength)
         widget.currentfrequency.setStyleSheet('color: rgb' + str(color))
         # create PlotDataItem (i.e. a trace) and add it to the legend
-        self.pattern[wmChannel] = self.trace_display.plot(pen=pg.mkPen(color=color, width=3),
+        self.pattern[wmChannel] = self.trace_display.plot(pen=pg.mkPen(color=color, width=2),
                                                           name="{:.0f}nm".format(wavelength),
                                                           skipFiniteCheck=True)
         # dacPort
