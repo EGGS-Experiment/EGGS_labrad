@@ -25,6 +25,8 @@ class ContextServer(LabradServer):
     def initContext(self, c):
         """
         Initialize a new context object.
+        Arguments:
+            c (context): the context object of the caller.
         """
         self.listeners.add(c.ID)
 
@@ -33,17 +35,23 @@ class ContextServer(LabradServer):
 
 
     # LISTENERS
-    def notifyOtherListeners(self, context, message, f):
+    def notifyOtherListeners(self, c, message, f):
         """
         Notifies all listeners except the one in the given context, executing function f.
+        Arguments:
+            c           (context)   : the context object of the caller.
+            message     (arb.)      : the message to send.
+            f           (function)  : the function to execute.
         """
         notified = self.listeners.copy()
-        notified.remove(context.ID)
+        notified.remove(c.ID)
         f(message, notified)
 
     def getOtherListeners(self, c):
         """
         Get all listeners except for the context owner.
+        Arguments:
+            c (context): the context object of the caller.
         """
         notified = self.listeners.copy()
         notified.remove(c.ID)
