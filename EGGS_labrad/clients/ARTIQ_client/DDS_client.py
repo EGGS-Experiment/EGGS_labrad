@@ -24,10 +24,13 @@ class DDS_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
-        # device dictionaries
-        self.urukul_list = {}
         # parse device_db for TTLs
+        self.urukul_list = {}
         self._getDevices(device_db)
+
+        # variables for storing dds state when we try to rescue
+        self.before_rescue_params = None
+
         # connect to signals
         yield self.aq.signal__dds_changed(DDSID)
         yield self.aq.addListener(listener=self.updateDDS, source=None, ID=DDSID)
@@ -79,10 +82,14 @@ class DDS_client(GUIClient):
                 ad9910_widget.rfswitch.setChecked(sw_status)
 
     def initGUI(self):
+        # rescue ion
+        self.gui.rescue_button.clicked.connect(lambda status: self.rescueIon(status))
+
         # connect an urukul group
         for urukul_name, ad9910_list in self.gui.urukul_list.items():
             button = getattr(self.gui, "{:s}_init".format(urukul_name))
             button.clicked.connect(lambda _name=urukul_name: self.aq.urukul_initialize(_name))
+
             # connect DDS channels
             for ad9910_name, ad9910_widget in ad9910_list.items():
                 ad9910_widget.initbutton.clicked.connect(lambda status, _channel_name=ad9910_name: self.aq.dds_initialize(_channel_name))
@@ -96,6 +103,8 @@ class DDS_client(GUIClient):
                                                        self.aq.dds_toggle(_channel_name, status))
                 ad9910_widget.lock(False)
 
+
+    # SLOTS
     def updateDDS(self, c, signal):
         """
         Update the DDS widget if its values are modified by another client.
@@ -129,6 +138,43 @@ class DDS_client(GUIClient):
 
     def experimentRunning(self, c, status):
         self.gui.artiq_monitor.setStatus(status)
+
+    @inlineCallbacks
+    def rescueIon(self, status):
+        """
+        Quickly rescues the ion by red-detuning the 397nm beam
+        """
+        # todo: add rf switch capability
+        # todo: test
+        widget = self.urukul_list['urukul1_cpld']['urukul1_ch1']
+        if status:
+            # save current dds values
+            self.before_rescue_params = (
+                widget.freq.value(),
+                widget.ampl.value(),
+                widget.att.value(),
+                widget.rfswitch.checked()
+            )
+
+            # set rescuing parameters
+            widget.freq.setValue(90)
+            widget.ampl.setValue(0.5)
+            widget.att.setValue(14)
+            # todo: set output on
+
+            # lock widget
+            widget.blockSignals(True)
+            widget.setDisabled(True)
+
+        elif self.before_rescue_params is not None:
+            # reenable widget
+            widget.setDisabled(False)
+            widget.blockSignals(False)
+
+            # restore values in client
+            widget.freq.setValue(self.before_rescue_params[0])
+            widget.ampl.setValue(self.before_rescue_params[1])
+            widget.att.setValue(self.before_rescue_params[2])
 
 
 if __name__ == "__main__":

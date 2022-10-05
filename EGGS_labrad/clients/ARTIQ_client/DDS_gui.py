@@ -97,6 +97,7 @@ class DDS_gui(QFrame):
     def makeLayout(self):
         # create layout
         layout = QGridLayout(self)
+
         # set title
         title = QLabel(self.name)
         title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
@@ -106,6 +107,10 @@ class DDS_gui(QFrame):
         # create artiq experiment monitor
         self.artiq_monitor = QCustomARTIQMonitor(self)
         layout.addWidget(self.artiq_monitor, 0, self.row_length - 1, 1, 1)
+
+        # create rescue button
+        self.rescue_button = TextChangingButton(("Stop Rescuing", "Rescue Ion"))
+        layout.addWidget(self.rescue_button, 0, 0, 1, 1)
 
         # layout urukuls
         urukul_iter = iter(range(len(self.urukul_list)))
@@ -122,10 +127,12 @@ class DDS_gui(QFrame):
         # create widget
         urukul_group = QWidget()
         urukul_group_layout = QGridLayout(urukul_group)
+
         # add initialize button
         init_cpld = QPushButton('Initialize Board')
         urukul_group_layout.addWidget(init_cpld,        0, 0, 1, 1)
         setattr(self, '{:s}_init'.format(urukul_name), init_cpld)
+
         # layout individual ad9910 channels
         for channel_num, ad9910_name in enumerate(ad9910_list.keys()):
             # initialize GUIs for each channel
@@ -136,6 +143,7 @@ class DDS_gui(QFrame):
             # add widget to client list and layout
             self.urukul_list[urukul_name][ad9910_name] = channel_gui
             urukul_group_layout.addWidget(channel_gui, row, column)
+
         # wrap channels in QGroupBox
         urukul_wrapped = QCustomGroupBox(urukul_group, urukul_name)
         return urukul_wrapped

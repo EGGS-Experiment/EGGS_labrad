@@ -830,6 +830,16 @@ class ARTIQ_Server(LabradServer):
         # convert mu to volts
         samples_volts = np.array([self.adc_mu_to_volt(samples_mu[i], gain_arr_mu[i]) for i in range(len(channels))])
         returnValue(samples_volts)
+    #
+    #
+    # # OTHER
+    # @setting(611, "Rescue Ion", returns='')
+    # def rescueIon(self, c):
+    #     """
+    #     Rescues the ion by red-detuning the 397nm by 30MHz (as far as the AOM will go)
+    #         and increasing the beam power.
+    #     """
+    #     self.api.rescueIon()
 
 
     # CONTEXT

@@ -757,3 +757,29 @@ class ARTIQ_api(object):
         """
         self.sampler_dataset[i] = value_arr
 
+
+    # OTHER
+    # def rescueIon(self):
+    #     dev = self.dds_dict['urukul1_ch1']
+    #
+    #     self._rescueIon(dev)
+    #
+    # @kernel
+    # def _rescueIon(self, dev):
+    #     # set waveform
+    #     dev.set_mu(0x170A3D70, asf=0x2000)
+    #     # set attenuation
+    #     channel_num = dev.chip_select - 4
+    #     cpld.bus.set_config_mu(0x0C, 32, 16, 2)
+    #     # shift in zeros, shift out current value
+    #     cpld.bus.write(0)
+    #     cpld.bus.set_config_mu(0x0A, 32, 6, 2)
+    #     delay_mu(10000)
+    #     cpld.att_reg = cpld.bus.read()
+    #     # remove old attenuator value for desired channel
+    #     cpld.att_reg &= ~(0xff << (8 * channel_num))
+    #     # add in new attenuator value
+    #     cpld.att_reg |= (att_mu << (8 * channel_num))
+    #     # shift in adjusted value and latch
+    #     cpld.bus.write(cpld.att_reg)
+    #
