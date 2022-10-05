@@ -117,9 +117,11 @@ class EGGS_gui(QMainWindow):
     def makeImagingWidget(self, reactor, cxn):
         from EGGS_labrad.clients.PMT_client.PMT_client import PMT_client
         from EGGS_labrad.clients.slider_client.slider_client import slider_client
+        #from EGGS_labrad.clients.ARTIQ_client.DDS_client import DDS_client
         clients = {
             PMT_client:                     {"pos": (0, 0)},
             slider_client:                  {"pos": (0, 1)}
+            #,DDS_client:                     {"pos":(1,0)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 

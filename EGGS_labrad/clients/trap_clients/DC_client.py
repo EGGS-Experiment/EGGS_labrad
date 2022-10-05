@@ -59,9 +59,9 @@ class DC_client(GUIClient):
         self.gui.device_global_onswitch.clicked.connect(lambda: self.amo8.toggle_all(True))
         self.gui.device_global_offswitch.clicked.connect(lambda: self.amo8.toggle_all(False))
         self.gui.device_global_clear.clicked.connect(lambda: self.amo8.clear())
-        self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.startRamp([5, 1]))
-        self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.startRamp([7, 6]))
-        self.gui.triangleramp_aramp.clicked.connect(lambda blank: self.startTriangleRamp([7, 6]))
+        self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.startRamp([2, 3]))
+        self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.startRamp([6, 1]))
+        self.gui.triangleramp_aramp.clicked.connect(lambda blank: self.startTriangleRamp([6, 1]))
         #self.gui.doublechange_endcaps.clicked.connect(lambda blank: self.doublechange(1, 2))
         #self.gui.doublechange_aramp.clicked.connect(lambda blank: self.doublechange(5, 6))
         # todo: stop using self.gui.amo8_channels and move config to client side

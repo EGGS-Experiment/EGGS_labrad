@@ -68,7 +68,7 @@ class PMT_client(GUIClient):
         time_per_data = sample_time_us * num_samples * 1e-6
 
         # ensure valid timing
-        if (time_per_data > self.gui.poll_interval.value()) or (time_per_data > 1):
+        if (time_per_data > self.gui.poll_interval.value()) or (time_per_data > 10):
             raise Exception("Error: invalid timing.")
 
         # get counts
