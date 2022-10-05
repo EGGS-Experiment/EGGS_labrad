@@ -276,7 +276,7 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
             yield self.measureCurrent(None, i + 1)
         # 5V channel
         yield self.measureCurrent(None, 3)
-        print('kk4')
+
 
 if __name__ == '__main__':
     from labrad import util
