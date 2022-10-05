@@ -41,7 +41,7 @@ class gpp3060_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
-        for i in range(3):
+        for i in range(2):
             widget = self.gui.channels[i]
 
             # get values
