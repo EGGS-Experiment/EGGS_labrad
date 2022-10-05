@@ -6,6 +6,7 @@ from EGGS_labrad.clients.labrad_client.registry_gui import RegistryGUI
 # todo: duplicate context when interacting with editor widget so things can be done while we move away
 # todo: simplify confusing web of signals
 
+
 class RegistryClient(GUIClient):
     """
     Displays all connections to the LabRAD manager

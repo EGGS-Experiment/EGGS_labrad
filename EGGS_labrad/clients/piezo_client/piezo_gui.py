@@ -39,7 +39,6 @@ class piezo_gui(QFrame):
             channel_widget.voltage.setRange(0, 15)
             channel_widget.voltage.setDecimals(2)
             channel_widget.voltage.setSingleStep(1)
-            channel_widget.voltage.setSingleStep(1)
             channel_widget.voltage.setKeyboardTracking(False)
             channel_widget.voltage.setFont(QFont(shell_font, pointSize=12))
             channel_widget.voltage.setAlignment(Qt.AlignRight)

@@ -42,6 +42,32 @@ class cooldown_experiment(experiment):
     def run(self, cxn, context, replacement_parameters={}):
         starttime = time()
 
+        # todo: degas
+            # todo: poll pressure
+            # todo: only stop when time is up
+
+        # todo: get rga trace
+        # todo: record pressure and temperature
+        # todo: optional conditioning
+        # todo: wait until min pressure
+
+        # todo: filament off
+        # todo: new pressure and temperature measurements
+        # todo: conditioning start
+            # todo: poll pressures
+            # todo: if above threshold
+                # todo: stop activation
+                # todo: wait until below threshold
+                # todo: redo sequence
+            # todo: only stop when time is up
+
+        # todo: wait until pressure hit min
+        # todo: filament on
+            # todo: wait 5 mins
+        # todo: new pressure and temperature datasets
+        # todo: continuous rga measurement
+
+
         while True:
             sleep(2)
             temp_tmp = self.ls.read_temperature()

@@ -14,20 +14,51 @@ cxn = labrad.connect()
 
 # list of servers we want and their shorthand names
 server_dict = {
-        'mgr': 'manager', 'reg': 'registry',
-        'ss': 'script_scanner', 'pv': 'parameter_vault', 'dv': 'data_vault',
-        'ni': 'niops03_server', 'tt': 'twistorr74_server', 'ls': 'lakeshore336_server',
-        'rga': 'rga_server', 'rf': 'rf_server', 'sls': 'sls_server', 'aq': 'artiq_server',
-        'dc': 'dc_server', 'fma': 'fma1700a_server', 'to': 'toptica_server',
-        'os': 'oscilloscope_server', 'fg': 'function_generator_server', 'sa': 'spectrum_analyzer_server',
-        'gpib': 'gpib_device_manager', 'mk_gpib': 'mongkok_gpib_bus', 'lh_gpib': 'lahaina_gpib_bus',
-        'hf_gpib': 'hengfachuen_gpib_bus', 'cw_gpib': 'causewaybay_gpib_bus',
-        'mk': 'node_mongkok', 'lh': 'node_lahaina', 'cw': 'node_causewaybay', 'hf': 'node_hengfachuen',
-        'mk_ser': 'mongkok_serial_server', 'lh_ser': 'lahaina_serial_server', 'cw_ser': 'causewaybay_serial_server',
-        'hf_ser': 'hengfachuen_serial_server',
-        'cam': 'andor_server'
-        }
+    # MANAGER
+    'mgr': 'manager',
+    'reg': 'registry',
+    # CORE
+    'ss': 'script_scanner',
+    'pv': 'parameter_vault',
+    'dv': 'data_vault',
+    # NODES
+    'mk': 'node_mongkok',
+    'lh': 'node_lahaina',
+    'cw': 'node_causewaybay',
+    'hf': 'node_hengfachuen',
+    # CRYOVAC
+    'ni': 'niops03_server',
+    'tt': 'twistorr74_server',
+    'ls': 'lakeshore336_server',
+    'rga': 'rga_server',
+    # SCIENCE
+    'rf': 'rf_server',
+    'dc': 'dc_server',
+    'aq': 'artiq_server',
+    # IMAGING
+    'sls': 'sls_server',
+    'to':'toptica_server',
+    'cam': 'andor_server',
+    # TEST & MEASUREMENT
+    'os': 'oscilloscope_server',
+    'fg': 'function_generator_server',
+    'sa': 'spectrum_analyzer_server',
+    'gpp': 'gpp3060_server',
+    # AMO BOXES
+    'amo2': 'amo2_server',
+    # BUS
+    'gpib': 'gpib_device_manager',
+    'mk_gpib': 'mongkok_gpib_bus',
+    'lh_gpib': 'lahaina_gpib_bus',
+    'hf_gpib': 'hengfachuen_gpib_bus',
+    'cw_gpib': 'causewaybay_gpib_bus',
+    'mk_ser': 'mongkok_serial_server',
+    'lh_ser': 'lahaina_serial_server',
+    'cw_ser': 'causewaybay_serial_server',
+    'hf_ser': 'hengfachuen_serial_server'
+}
 
+# create shortcuts
 for servers in server_dict.items():
     try:
         # set server as variable

@@ -23,7 +23,7 @@ class GUIClient(ABC):
     """
     Creates a client that connects to LabRAD and has a GUI.
     Does all necessary startup steps under the hood such that the user only
-    needs to do implementation-specific initialization.
+        needs to do implementation-specific initialization.
 
     Attributes:
         name            (str)               : the name of the GUI client.

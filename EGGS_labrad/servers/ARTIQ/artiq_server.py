@@ -345,7 +345,7 @@ class ARTIQ_Server(LabradServer):
         if ttl_name not in self.api.ttlcounter_dict:
             raise Exception('Error: device does not exist.')
         # ensure we don't count for too long or too short
-        if (time_us * 1e-6 * trials > 1) or (time_us < 10):
+        if (time_us * 1e-6 * trials > 20) or (time_us < 10):
             raise Exception('Error: invalid total counting time.')
         counts_list = yield self.api.counterTTL(ttl_name, time_us, trials)
         returnValue(np.mean(counts_list))
@@ -366,7 +366,7 @@ class ARTIQ_Server(LabradServer):
         if ttl_name not in self.api.ttlcounter_dict:
             raise Exception('Error: device does not exist.')
         # ensure we don't count for too long or too short
-        if (time_us * 1e-6 * trials > 1) or (time_us < 10):
+        if (time_us * 1e-6 * trials > 20) or (time_us < 10):
             raise Exception('Error: invalid total counting time.')
         counts_list = yield self.api.counterTTL(ttl_name, time_us, trials)
         returnValue(counts_list)

@@ -984,8 +984,101 @@ class ARTIQHDF5Data(HDF5MetaData):
         return (rows, cols)
 
 
+class MultipleHDF5Data(HDF5MetaData):
+    """
+    An HDF5Data object used to represent a single dataset
+        when an ARTIQ hdf5 file has multiple datasets.
+    """
+    def __init__(self, fh, dataset_name):
+        self._file = fh
+        self.dataset_name = dataset_name
+
+        # get specific dataset
+        dataset_group = self.file["datasets"][dataset_name]
+
+        # set versioning (can't assign to file since we're read-only)
+        self.version = np.asarray([2, 1, 0], dtype=np.int32)
+
+    @property
+    def file(self):
+        return self._file()
+
+    @property
+    def dataset(self):
+        return self.file["datasets"][self.dataset_name]
+
+    def __len__(self):
+        return self.dataset.shape[0]
+
+    def initialize_info(self, title, indep, dep):
+        raise NotImplementedError
+
+    def addData(self, data):
+        raise NotImplementedError
+
+    def access(self):
+        # todo: raise error?
+        pass
+
+    def addParam(self, name, data):
+        # todo: raise error?
+        pass
+
+    def addComment(self, user, comment):
+        # todo: raise error?
+        pass
+
+    def numComments(self):
+        return 0
+
+    def getIndependents(self):
+        """
+        todo: justify
+        """
+        prefix = 'Independent{}.'.format(1)
+        label = prefix + 'label'
+        shape = 1
+        datatype = 'v'
+        unit = 'arb.'
+        return [Independent(label, shape, datatype, unit)]
+
+    def getDependents(self):
+        rv = []
+        num_dependents = self.dataset.shape[1] - 1
+        for idx in range(num_dependents):
+            prefix = 'Dependent{}.'.format(idx)
+            label = prefix + 'label'
+            legend = prefix + 'legend'
+            shape = 1
+            datatype = 'v'
+            unit = 'arb.'
+            rv.append(Dependent(label, legend, shape, datatype, unit))
+        return rv
+
+    def getData(self, limit, start, transpose, simpleOnly):
+        """
+        Get up to <limit> rows from a dataset.
+        """
+        if transpose:
+            raise RuntimeError("Transpose specified for simple data format: not supported")
+        struct_data = self.dataset[start:] if limit is None else self.dataset[start:start + limit]
+        columns = []
+        for idx in range(len(self.getIndependents() + self.getDependents())):
+            columns.append(struct_data[:, idx])
+        data = np.column_stack(columns)
+        return data, start + data.shape[0]
+
+    def hasMore(self, pos):
+        return pos < len(self)
+
+    def shape(self):
+        cols = len(self.getIndependents() + self.getDependents())
+        rows = self.dataset.shape[0]
+        return (rows, cols)
+
+
 # FILE BACKEND CREATION
-def open_hdf5_file(filename):
+def open_hdf5_file(filename, dataset_name=None):
     """
     Factory for HDF5 files.
 
@@ -993,6 +1086,12 @@ def open_hdf5_file(filename):
     options exist: version 2.0.0 -> legacy format, 3.0.0 -> extended format.
     Version 1 is reserved for CSV files.
     """
+    # selection of a specific dataset name means we have multiple datasets in the file
+    # and we have to use MultipleHDF5Data
+    if dataset_name is not None:
+        fh = SelfClosingFile(h5py.File, open_args=(filename, 'r'))
+        return MultipleHDF5Data(fh, dataset_name)
+
     # instantiate the file
     fh = SelfClosingFile(h5py.File, open_args=(filename, 'a'))
 
@@ -1022,7 +1121,7 @@ def create_backend(filename, title, indep, dep, extended):
     return data
 
 
-def open_backend(filename):
+def open_backend(filename, dataset_name=None):
     """
     Make a data object that manages in-memory and on-disk storage for a dataset.
 
@@ -1039,9 +1138,9 @@ def open_backend(filename):
         return CsvNumpyData(csv_file)
     # check to see whether the HDF5 file exists
     elif os.path.exists(hdf5_file):
-        return open_hdf5_file(hdf5_file)
+        return open_hdf5_file(hdf5_file, dataset_name)
     elif os.path.exists(h5_file):
-        return open_hdf5_file(h5_file)
+        return open_hdf5_file(h5_file, dataset_name)
     # return an error if the file doesn't exist
     # (though this shouldn't happen since we check several times)
     else:

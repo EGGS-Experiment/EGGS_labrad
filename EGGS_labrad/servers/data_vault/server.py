@@ -154,9 +154,8 @@ class DataVault(LabradServer):
         """
         Get subdirectories and datasets in the current directory.
         """
-        # todo: make oneliner
-        if isinstance(tagFilters, str):
-            tagFilters = [tagFilters]
+        # ensure tagFilters is a list object
+        tagFilters = [tagFilters] if isinstance(tagFilters, str) else tagFilters
 
         # get contents of session
         sess = self.getSession(c)
@@ -231,7 +230,7 @@ class DataVault(LabradServer):
     @setting(8, name='s', returns='*s')
     def mkdir(self, c, name):
         """
-        Make a new sub-directory in the current directory.
+        Make a new subdirectory in the current directory.
 
         The current directory remains selected.
         You must use the 'cd' command to select the newly-created directory.
@@ -265,6 +264,10 @@ class DataVault(LabradServer):
         a legend entry that should be unique for each trace.
         Returns the path and name for this dataset.
         """
+        # ensure valid filename
+        if "." in name:
+            raise Exception("Error: invalid title (contains periods).")
+
         session = self.getSession(c)
         dataset = session.newDataset(name or 'untitled', independents, dependents)
         c['dataset'] = dataset.name  # not the same as name; has number prefixed
@@ -306,6 +309,10 @@ class DataVault(LabradServer):
 
         The legacy format requires each column be a scalar v[unit] type.
         """
+        # ensure valid filename
+        if "." in name:
+            raise Exception("Error: invalid title (contains periods).")
+
         session = self.getSession(c)
         dataset = session.newDataset(name, independents, dependents, extended=True)
         c['dataset'] = dataset.name  # not the same as name; has number prefixed

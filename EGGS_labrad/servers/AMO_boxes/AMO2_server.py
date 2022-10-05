@@ -17,15 +17,15 @@ timeout = 20
 """
 
 from labrad.units import WithUnit
-from labrad.server import setting, Signal
+from labrad.server import setting, Signal, inlineCallbacks
 
 from twisted.internet.defer import returnValue
-from EGGS_labrad.servers import SerialDeviceServer
+from EGGS_labrad.servers import SerialDeviceServer, PollingServer, ContextServer
 
 TERMINATOR = '\r\n'
 
 
-class AMO2Server(SerialDeviceServer):
+class AMO2Server(SerialDeviceServer, PollingServer):
     """
     Communicates with the AMO2 box for control of TECs.
     """
@@ -43,34 +43,7 @@ class AMO2Server(SerialDeviceServer):
     toggle_update = Signal(999999, 'signal: toggle update', 'b')
     current_update = Signal(999998, 'signal: current update', 'v')
     temperature_update = Signal(999997, 'signal: temperature update', 'v')
-    lock_update = Signal(999996, 'signal: lock update', '((vvv),v)')
-
-
-    # CONTEXTS
-    def initContext(self, c):
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        self.listeners.remove(c.ID)
-
-    def getOtherListeners(self, c):
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
-
-    def notifyOtherListeners(self, context, message, f):
-        """
-        Notifies all listeners except the one in the given context, executing function f.
-        """
-        notified = self.listeners.copy()
-        notified.remove(context.ID)
-        f(message, notified)
-
-
-    # STARTUP
-    def initServer(self):
-        super().initServer()
-        self.listeners = set()
+    lock_update = Signal(999996, 'signal: lock update', '(sv)')
 
 
     # GENERAL
@@ -114,6 +87,7 @@ class AMO2Server(SerialDeviceServer):
             yield self.ser.write('out.w {:d}\r\n'.format(status))
             yield self.ser.read_line('\n')
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write('out.r\r\n')
@@ -137,6 +111,7 @@ class AMO2Server(SerialDeviceServer):
         yield self.ser.write('iout.r\r\n')
         resp = yield self.ser.read_line('\n')
         self.ser.release()
+
         # parse
         resp = float(resp.strip())
         self.notifyOtherListeners(c, resp, self.current_update)
@@ -154,6 +129,7 @@ class AMO2Server(SerialDeviceServer):
         yield self.ser.write('tempsensor.r\r\n')
         resp = yield self.ser.read_line('\n')
         self.ser.release()
+
         # parse
         resp = float(resp[:-2])
         self.notifyOtherListeners(c, resp, self.temperature_update)
@@ -268,6 +244,16 @@ class AMO2Server(SerialDeviceServer):
         resp = float(resp.strip())
         # todo: notify other listeners
         returnValue(resp)
+
+
+    # POLLING
+    @inlineCallbacks
+    def _poll(self):
+        """
+        Polls the device for temperature and current readout.
+        """
+        yield self.temperature(None)
+        yield self.current(None)
 
 
 if __name__ == '__main__':
