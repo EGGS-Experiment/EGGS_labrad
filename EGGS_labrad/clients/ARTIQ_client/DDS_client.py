@@ -153,7 +153,7 @@ class DDS_client(GUIClient):
                 widget.freq.value(),
                 widget.ampl.value(),
                 widget.att.value(),
-                widget.rfswitch.checked()
+                widget.rfswitch.isChecked()
             )
 
             # set rescuing parameters
@@ -175,6 +175,8 @@ class DDS_client(GUIClient):
             widget.freq.setValue(self.before_rescue_params[0])
             widget.ampl.setValue(self.before_rescue_params[1])
             widget.att.setValue(self.before_rescue_params[2])
+            yield self.aq.dds_toggle('urukul1_ch1', self.before_rescue_params[3])
+            widget.rfswitch.setChecked(self.before_rescue_params[3])
 
 
 if __name__ == "__main__":

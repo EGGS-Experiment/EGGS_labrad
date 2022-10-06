@@ -130,6 +130,7 @@ class ARTIQ_Server(LabradServer):
             self.expRunning(False)
             self._exp_running = False
             #print('\tsignal: stopping')
+
         # send experiment start message
         elif (num_exps > 0) and (not self._exp_running):
             self.expRunning(True)
