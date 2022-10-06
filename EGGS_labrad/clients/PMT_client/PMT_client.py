@@ -154,12 +154,13 @@ class PMT_client(GUIClient):
             yield self.dv.cd(trunk, True, context=self.c_record)
             yield self.dv.new('PMT', [('Elapsed time', 't')], [('PMT Counts', 'Counts', 'Number')], context=self.c_record)
 
-    def experimentRunning(self, c, status):
+    def experimentRunning(self, c, msg):
         # stop polling
         if self.refresher.running:
             self.gui.read_cont_switch.click()
+
         # set artiq monitor status
-        self.gui.artiq_monitor.setStatus(status)
+        self.gui.artiq_monitor.setStatus(msg)
 
     def _lock(self, status):
         self.gui.read_once_switch.setEnabled(status)

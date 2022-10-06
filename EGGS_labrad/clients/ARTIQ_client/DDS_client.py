@@ -136,8 +136,8 @@ class DDS_client(GUIClient):
                     ad9910_widget.ampl.setValue(val * 1e2 / 0x3FFF)
                     ad9910_widget.ampl.blockSignals(False)
 
-    def experimentRunning(self, c, status):
-        self.gui.artiq_monitor.setStatus(status)
+    def experimentRunning(self, c, msg):
+        self.gui.artiq_monitor.setStatus(msg)
 
     @inlineCallbacks
     def rescueIon(self, status):
