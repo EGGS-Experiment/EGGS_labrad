@@ -113,9 +113,9 @@ class DDS_client(GUIClient):
         for urukul_name, ad9910_list in self.urukul_list.items():
             if ad9910_name in ad9910_list:
                 ad9910_widget = self.urukul_list[urukul_name][ad9910_name]
-                print('update:')
-                print('\tparam: {}'.format(param))
-                print('\tval: {:d}'.format(int(val)))
+                # print('update:')
+                # print('\tparam: {}'.format(param))
+                # print('\tval: {:d}'.format(int(val)))
                 if param == 'onoff':
                     dds_state = int(val)
                     ad9910_widget.rfswitch.blockSignals(True)
