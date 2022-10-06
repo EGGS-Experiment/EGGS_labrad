@@ -24,6 +24,7 @@ from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
 
 from artiq_api import ARTIQ_api
 from artiq_subscriber import ARTIQ_subscriber
+from EGGS_labrad.servers import ContextServer
 from EGGS_labrad.config import device_db as device_db_module
 
 from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_READ_OFFSET,\
@@ -44,7 +45,7 @@ DDSSIGNAL_ID = 828172
 # todo: use dds name helper to allow board number and channel number to be used for settings
 
 
-class ARTIQ_Server(LabradServer):
+class ARTIQ_Server(ContextServer):
     """
     A bridge between LabRAD and ARTIQ.
     Allows us to easily incorporate ARTIQ into LabRAD for most things.
@@ -60,12 +61,14 @@ class ARTIQ_Server(LabradServer):
     ddsChanged = Signal(DDSSIGNAL_ID, 'signal: dds changed', '(ssv)')
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(isv)')
     adcUpdated = Signal(ADCSIGNAL_ID, 'signal: adc updated', '(*v)')
-    expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', 'b')
+    expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(bi)')
 
 
     # STARTUP
     @inlineCallbacks
     def initServer(self):
+        super().initServer()
+
         # remove logger objects from artiq/sipyco
         logging.getLogger('artiq.coredevice.comm_kernel').disabled = True
         # for logger_name, logger_object in self.logger.manager.loggerDict.items():
@@ -76,8 +79,6 @@ class ARTIQ_Server(LabradServer):
         yield self._setClients()
         yield self._setVariables()
         yield self._setDevices()
-        # set up context stuff
-        self.listeners = set()
 
     #@inlineCallbacks
     def _setClients(self):
@@ -98,9 +99,10 @@ class ARTIQ_Server(LabradServer):
             # set up ARTIQ subscriber
             from asyncio import get_event_loop, set_event_loop, Event
             self._exp_running = False
-            self.subscriber_exp = ARTIQ_subscriber(self._process_subscriber_update)
+            self.subscriber_exp = ARTIQ_subscriber(self._process_subscriber_update, self)
             self.subscriber_exp.connect('::1', 3250)
 
+            # set up event loop for ARTIQ_subscriber
             loop = get_event_loop()
             stop_event = Event()
 
@@ -123,19 +125,19 @@ class ARTIQ_Server(LabradServer):
         Checks if any experiments are running and sends a Signal
         to clients accordingly.
         """
-        # get number of running experiments
-        num_exps = len(self.subscriber_exp._struct_holder.backing_store)
-        # send experiment stop message
-        if (num_exps == 0) and (self._exp_running):
-            self.expRunning(False)
-            self._exp_running = False
-            #print('\tsignal: stopping')
+        running_exp = None
 
-        # send experiment start message
-        elif (num_exps > 0) and (not self._exp_running):
-            self.expRunning(True)
-            self._exp_running = True
-            #print('\tsignal: running')
+        # check if any experiments are running
+        for rid, exp_params in self.struct_holder.backing_store.items():
+            run_status = exp_params['status']
+
+            # send experiment details to clients if experiment is running
+            if run_status == 'running':
+                self.expRunning((True, rid))
+                return
+
+        # otherwise, no experiment running, so inform clients
+        self.expRunning((False, -1))
 
     def _setVariables(self):
         """
@@ -841,33 +843,6 @@ class ARTIQ_Server(LabradServer):
     #         and increasing the beam power.
     #     """
     #     self.api.rescueIon()
-
-
-    # CONTEXT
-    def notifyOtherListeners(self, context, message, f):
-        """
-        Notifies all listeners except the one in the given context, executing function f.
-        """
-        notified = self.listeners.copy()
-        notified.remove(context.ID)
-        f(message, notified)
-
-    def getOtherListeners(self, c):
-        """
-        Get all listeners except for the context owner.
-        """
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
-
-    def initContext(self, c):
-        """
-        Initialize a new context object.
-        """
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        self.listeners.remove(c.ID)
 
 
 if __name__ == '__main__':

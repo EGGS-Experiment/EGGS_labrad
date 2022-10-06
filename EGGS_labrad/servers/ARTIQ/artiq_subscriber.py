@@ -9,9 +9,10 @@ class ARTIQ_subscriber(object):
     to notifications from artiq_master.
     """
 
-    def __init__(self, notify_cb):
+    def __init__(self, notify_cb, parent=None):
         self._notify_cb = notify_cb
         self._struct_holder = struct_holder(dict())
+        self.parent = parent
         self._subscriber = Subscriber('schedule', self._target_builder, self._notify_cb)
 
     def connect(self, host, port):
@@ -21,6 +22,8 @@ class ARTIQ_subscriber(object):
 
     def _target_builder(self, struct_init):
         self._struct_holder = struct_holder(struct_init)
+        if self.parent is not None:
+            setattr(self.parent, "struct_holder", self._struct_holder)
         return self._struct_holder
 
 

@@ -8,13 +8,11 @@ __all__ = ['QCustomARTIQMonitor']
 class QCustomARTIQMonitor(QFrame):
     """
     A widget that displays whether ARTIQ is currently running any experiments.
+    Arguments:
+        parent  (QWidget) : the parent GUI
     """
 
     def __init__(self, parent):
-        """
-        Args:
-            parent  (QWidget) : the parent GUI
-        """
         super().__init__()
 
         # general setup
@@ -35,14 +33,15 @@ class QCustomARTIQMonitor(QFrame):
         layout.addWidget(title,                 0, 0, 1, 1)
         layout.addWidget(self.status_display,   1, 0, 1, 1)
 
-    def setStatus(self, status):
+    def setStatus(self, msg):
         """
         Enables/disables the GUI and sets the display.
         Args:
-            status  (bool): whether an experiment is running.
+            msg  (bool, int): the run status and experiment RID (if running).
         """
+        status, rid = msg
         if status:
-            self.status_display.setText('Busy')
+            self.status_display.setText('RID: {}'.format(rid))
             self.status_display.setStyleSheet('background-color: red')
             self.parent.setDisabled(status)
         else:
