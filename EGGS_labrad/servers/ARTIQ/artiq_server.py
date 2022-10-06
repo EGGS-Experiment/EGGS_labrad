@@ -180,115 +180,38 @@ class ARTIQ_Server(ContextServer):
         """
         return list(self.api.device_db.keys())
 
-    @setting(31, 'Dataset Get', dataset_name='s', returns='?')
-    def getDataset(self, c, dataset_name):
+    @setting(31, 'Dataset Get', dataset_key='s', returns='?')
+    def datasetGet(self, c, dataset_key):
         """
         Returns a dataset.
         Arguments:
-            dataset_name    (str)   : the name of the dataset
+            dataset_key (str)   : the name of the dataset.
         Returns:
-            the dataset
+            the dataset values
         """
-        return self.datasets.get(dataset_name, archive=False)
+        return self.datasets.get(dataset_key)
 
-    # @setting(32, 'Dataset Set', dataset_name='s', values='?')
-    # def setDataset(self, c, dataset_name):
-    #     """
-    #     Sets the values of a dataset.
-    #     Arguments:
-    #         dataset_name    (str)   : the name of the dataset
-    #         values                  : the values for the dataset
-    #     """
-    #     #return self.datasets.get(dataset_name, archive=False)
-    #     pass
-
-
-    # EXPERIMENTS/PULSE SEQUENCING
-    @setting(111, "Experiment Schedule", path='s', maxruns='i', returns='')
-    def experimentSchedule(self, c, path, maxruns=1):
+    @setting(32, 'Dataset Set', dataset_key='s', dataset_value='?', persist='b', returns='')
+    def datasetSet(self, c, dataset_key, dataset_value, persist=True):
         """
-        Run the experiment a given number of times.
-        Argument:
-            path    (string): the filepath to the ARTIQ experiment.
-            maxruns (int)   : the number of times to run the experiment
-        """
-        # set pipeline, priority, and expid
-        ps_pipeline = 'PS'
-        ps_priority = 1
-        ps_expid = {
-            'log_level': 30,
-            'file': path,
-            'class_name': None,
-            'arguments': {
-                'maxRuns': maxruns,
-                'linetrigger_enabled': self.linetrigger_enabled,
-                'linetrigger_delay_us': self.linetrigger_delay,
-                'linetrigger_ttl_name': self.linetrigger_ttl}
-        }
-
-        # run sequence then wait for experiment to submit
-        yield self.inCommunication.acquire()
-        self.ps_rid = yield deferToThread(self.scheduler.submit, pipeline_name=ps_pipeline, expid=ps_expid, priority=ps_priority)
-        self.inCommunication.release()
-
-    @setting(112, "Stop Experiment", returns='')
-    def stopSequence(self, c):
-        """
-        Stops any currently running sequence.
-        """
-        # check that an experiment is currently running
-        if self.ps_rid not in self.scheduler.get_status().keys():
-            raise Exception('Error: no experiment currently running')
-        yield self.inCommunication.acquire()
-        yield deferToThread(self.scheduler.delete, self.ps_rid)
-        self.ps_rid = None
-        #todo: make resetting of ps_rid contingent on defertothread completion
-        self.inCommunication.release()
-
-    @setting(113, "Runs Completed", returns='i')
-    def runsCompleted(self, c):
-        """
-        Check how many iterations of the experiment have been completed.
-        """
-        completed_runs = yield self.datasets.get('numRuns')
-        returnValue(completed_runs)
-
-    @setting(121, "DMA Run", handle_name='s', returns='')
-    def runDMA(self, c, handle_name):
-        """
-        Run an experiment from core DMA.
+        Sets the values of a dataset.
+            If the dataset does not exist, a new one will be created.
+            If the dataset already exists, the old value will completely overwritten.
         Arguments:
-            handle_name     (str)   : the name of the DMA sequence
+            dataset_key (str)   : the name of the dataset.
+            dataset_value       : the values for the dataset.
+            persist     (bool)  : whether the data should persist between master reboots.
         """
-        yield self.api.runDMA(handle_name)
-        #todo: fix problem when we separately run experiment?
+        self.datasets.set(dataset_key, dataset_value, persist)
 
-    @setting(131, "Experiment Running", returns='')
-    def experimentRunning(self, c, ):
+    @setting(33, 'Dataset Delete', dataset_key='s', values='?')
+    def datasetDelete(self, c, dataset_key):
         """
-        Run the experiment a given number of times.
-        Argument:
-            path    (string): the filepath to the ARTIQ experiment.
-            maxruns (int)   : the number of times to run the experiment
+        De;ete a dataset/
+        Arguments:
+            dataset_key (str)   : the name of the dataset.
         """
-        # set pipeline, priority, and expid
-        ps_pipeline = 'PS'
-        ps_priority = 1
-        ps_expid = {
-            'log_level': 30,
-            'file': path,
-            'class_name': None,
-            'arguments': {
-                'maxRuns': maxruns,
-                'linetrigger_enabled': self.linetrigger_enabled,
-                'linetrigger_delay_us': self.linetrigger_delay,
-                'linetrigger_ttl_name': self.linetrigger_ttl}
-        }
-
-        # run sequence then wait for experiment to submit
-        yield self.inCommunication.acquire()
-        self.ps_rid = yield deferToThread(self.scheduler.submit, pipeline_name=ps_pipeline, expid=ps_expid, priority=ps_priority)
-        self.inCommunication.release()
+        self.datasets.delete(dataset_key)
 
 
     # TTL
