@@ -62,7 +62,7 @@ try:
 
         # set up dataset
         dv.new(
-            'RF Frequency Response',
+            'RF Frequency Response - {:.0f} mV'.format(amp_val * 1000),
             [('RF Amplitude', 'dBm')],
             [('Frequency', 'Modulation Frequency', 'Hz'),
              ('Amplitude', 'Modulation Amplitude', 'V'),
@@ -70,43 +70,48 @@ try:
             context=cr
         )
 
+        # first zoom out
+        os.channel_offset(os_channel, 0)
+        os.channel_scale(os_channel, 1)
+        sleep(1)
+
+        # center around offset
+        offset_val = os.measure(4)
+        os.channel_offset(os_channel, offset_val)
+        sleep(1)
+
+        # zoom in on oscillation
+        osc_val = float(os.measure(3)) / 4
+        if osc_val < 5e-3:
+            osc_val = 5e-3
+        elif osc_val > 1:
+            sleep(1)
+            osc_val = os.measure(3)
+        os.channel_scale(os_channel, osc_val)
+        sleep(1)
+
+        # adjust offset again
+        offset_val = os.measure(4)
+        os.channel_offset(os_channel, offset_val)
+        sleep(1)
+
+        # zoom in on oscillation again
+        osc_val = float(os.measure(3)) / 4
+        if osc_val < 5e-3:
+            osc_val = 5e-3
+        elif osc_val > 1:
+            sleep(1)
+            osc_val = os.measure(3)
+        os.channel_scale(os_channel, osc_val)
+        sleep(2)
+
+        # sweep frequency
         for freq_val in freq_range:
             # set signal amplitude
             fg.frequency(freq_val)
 
-            # first zoom out
-            os.channel_offset(os_channel, 0)
-            os.channel_scale(os_channel, 1)
-            sleep(1)
-
-            # center around offset
-            offset_val = os.measure(4)
-            os.channel_offset(os_channel, offset_val)
-            sleep(1)
-
-            # zoom in on oscillation
-            osc_val = float(os.measure(3)) / 4
-            if osc_val < 5e-3:
-                osc_val = 5e-3
-            elif osc_val > 1:
-                sleep(1)
-                osc_val = os.measure(3)
-            os.channel_scale(os_channel, osc_val)
-            sleep(1)
-
-            # adjust offset again
-            offset_val = os.measure(4)
-            os.channel_offset(os_channel, offset_val)
-            sleep(1)
-
-            # zoom in on oscillation again
-            osc_val = float(os.measure(3)) / 4
-            if osc_val < 5e-3:
-                osc_val = 5e-3
-            elif osc_val > 1:
-                sleep(1)
-                osc_val = os.measure(3)
-            os.channel_scale(os_channel, osc_val)
+            # set horizontal scale
+            os.horizontal_scale(1 / freq_val)
             sleep(2)
 
             # take oscope data
