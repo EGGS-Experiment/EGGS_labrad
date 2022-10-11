@@ -75,7 +75,7 @@ class ionChain(object):
     def add_ion(self, mass, position=None):
         """
         Add an ion to the chain.
-        Ion is inserted at end of chain by default.
+            Ion is inserted at end of chain by default.
         Arguments:
             mass        (float)     : the mass of the ion (in amu).
             position    (position)  : the position (i.e. index) of the ion. Starts at 0.
@@ -152,7 +152,7 @@ class ionChain(object):
             **kwargs: the trap parameter name and the new value to set it to.
         """
         # get trap parameters
-        for param in ('v_rf', 'w_rf', 'k_r', 'r0', 'v_dc', 'k_z', 'z0'):
+        for param in ('v_rf', 'w_rf', 'k_r', 'r0', 'v_dc', 'k_z', 'z0', 'v_off'):
             try:
                 val = kwargs[param]
                 setattr(self, param, val)
@@ -198,7 +198,7 @@ class ionChain(object):
         """
         return np.sqrt(
             0.5 * ((_QE * self.v_rf * self.k_r) / (mass * self.w_rf * self.r0**2))**2 -
-            _QE / mass * (self.k_z * self.v_dc / self.z0**2 - self.k_r * self.v_off / self.r0**2)
+            _QE / mass * ((self.k_z * self.v_dc / self.z0**2) - (self.k_r * self.v_off / self.r0**2))
         )
 
     def _mathieu_a_radial(self, mass):

@@ -82,6 +82,7 @@ class stability_client(GUIClient):
         self.gui.total_ions.valueChanged.connect(lambda val: self._changeNumIons(val))
         self.gui.ion_mass.valueChanged.connect(lambda val: self._updateMass(val))
         self.gui.ion_num.currentIndexChanged.connect(lambda val: self._changeIonNum(val))
+
         # trap geometry signals
         for param_name in ("r0", "z0"):
             spinbox = getattr(self.gui, "{:s}_display".format(param_name.replace("_", "")))
@@ -89,10 +90,12 @@ class stability_client(GUIClient):
         for param_name in ("k_r", "k_z"):
             spinbox = getattr(self.gui, "{:s}_display".format(param_name.replace("_", "")))
             spinbox.valueChanged.connect(lambda val, _param_name=param_name: self.chain.set_trap(_param_name=val))
+
         # mathieu display signals
         #self.gui.record_button.toggled.connect(lambda status: self.record_start(status))
         self.gui.beta_setting.valueChanged.connect(lambda value: self.gui.drawStability(value))
         self.gui.autoscale.clicked.connect(lambda blank: self.os.autoscale())
+
         # radio button
         self.gui.values_set.toggled.connect(lambda status: self._setManualAdjust(status))
 
@@ -136,8 +139,10 @@ class stability_client(GUIClient):
             v_dc1 = yield self.dc.voltage(1)
             v_dc2 = yield self.dc.voltage(2)
             self.gui.vdc_display.setValue(0.5 * (v_dc1 + v_dc2))
+
         # update ionChain
         self._updateChain()
+
         # update values on GUI
         ion_num = self.gui.ion_num.currentIndex()
         ion_obj = self.chain.ions[ion_num]
@@ -149,6 +154,7 @@ class stability_client(GUIClient):
         self.gui.l0_distance.setText("{:.2f}".format(self.chain.l0 / _um))
         self.gui.stability_point.setData(x=[mathieu_q], y=[mathieu_a])
         # todo: update anharmonic limit
+
         # update mode data
         for i, (mode_freq, mode_vec) in enumerate(self.chain.mode_axial.items()):
             freq_item = self.gui.eigenmode_axial_display.topLevelItem(i)
@@ -158,6 +164,7 @@ class stability_client(GUIClient):
                 vec_item = QTreeWidgetItem(freq_item, ["", str(i + 1), "{:.4f}".format(vec_val)])
                 #vec_item.setFirstColumnSpanned(True)
                 freq_item.addChild(vec_item)
+
         for i, (mode_freq, mode_vec) in enumerate(self.chain.mode_radial.items()):
             freq_item = self.gui.eigenmode_radial_display.topLevelItem(i)
             freq_item.setText(0, "{:.3f}".format(mode_freq / _wmhz))
@@ -166,6 +173,7 @@ class stability_client(GUIClient):
                 vec_item = QTreeWidgetItem(freq_item, ["{:.4f}".format(vec_val)])
                 vec_item.setFirstColumnSpanned(True)
                 freq_item.addChild(vec_item)
+
         # recording
         if self.recording:
             elapsedtime = time() - self.starttime
