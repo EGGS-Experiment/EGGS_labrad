@@ -3,6 +3,8 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.SLS_client.fibernoise_gui import fibernoise_gui
 # todo: support max/ovp
+_OSCOPE_NAME = "DS1ZC221401223"
+_OSCOPE_CHANNEL = 1
 
 
 class fibernoise_client(GUIClient):
@@ -15,25 +17,34 @@ class fibernoise_client(GUIClient):
             self.gui = fibernoise_gui()
         return self.gui
 
+    @inlineCallbacks
+    def initClient(self):
+        dev_list = yield self.os.list_devices()
+
+        # connect to correct oscilloscope
+        for dev_num, dev_name in dev_list:
+            if _OSCOPE_NAME in dev_name:
+                yield self.os.select_device(dev_num)
+
     def initGUI(self):
         # connect signals
-        self.gui.toggleswitch.clicked.connect(lambda _status: self.gpp.channel_toggle(_status))
-        self.gui.voltageSet.valueChanged.connect(lambda _voltage: self.gpp.channel_voltage(_voltage))
-        self.gui.currentSet.valueChanged.connect(lambda _current: self.gpp.channel_current(_current))
+        self.gui.trace_button.clicked.connect(lambda: self.display_trace())
+        self.gui.save_button.clicked.connect(lambda: self.save_trace())
 
 
     # SLOTS
-    def updateMode(self, c, msg):
-        chan_num, mode = msg
-        widget = self.gui.channels[chan_num - 1].voltage
+    def display_trace(self):
+        """
+        Pulls a trace from the oscilloscope displaying the fiber noise error
+            and displays it on the GUI.
+        """
+        pass
 
-        # todo: convert mode to index
-
-        # correctly set value
-        widget.blockSignals(True)
-        widget.setValue(mode)
-        widget.blockSignals(False)
-
+    def save_trace(self):
+        """
+        Saves the current trace to the data vault.
+        """
+        pass
 
 
 if __name__ == "__main__":
