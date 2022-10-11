@@ -321,9 +321,11 @@ class multiplexer_gui(QFrame):
 
     def makeLayout(self):
         layout = QGridLayout(self)
+
         # wavemeter channels
         qBox_wm = QGroupBox('Wavemeter Channels')
         qBox_wm_layout = QGridLayout(qBox_wm)
+
             # wavemeter buttons
         self.startSwitch = TextChangingButton('Wavemeter')
         #self.startSwitch.setMaximumHeight(50)
@@ -331,6 +333,7 @@ class multiplexer_gui(QFrame):
         self.lockSwitch.setMaximumHeight(50)
         qBox_wm_layout.addWidget(self.startSwitch, 0, 0)
         qBox_wm_layout.addWidget(self.lockSwitch, 0, 1)
+
             # holder for wavemeter channels
         wm_scroll = QScrollArea()
         wm_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -349,12 +352,14 @@ class multiplexer_gui(QFrame):
         qBox_intTrace = QGroupBox('Interferometer')
         qBox_intTrace_layout = QGridLayout(qBox_intTrace)
         pg.setConfigOption('background', 'w')
+
         # configure pyqtgraph
         pg.setConfigOption('antialias', False)
         from importlib.util import find_spec
         if find_spec('OpenGL'):
             pg.setConfigOption('useOpenGL', True)
             pg.setConfigOption('enableExperimental', True)
+
         # configure interferometer display
         self.trace_display = pg.PlotWidget(name='Interferometer Trace', border=True)
         self.trace_display.showGrid(x=True, y=True, alpha=0.5)
@@ -363,6 +368,7 @@ class multiplexer_gui(QFrame):
         self.trace_display.setMaximumWidth(1000)
         self.trace_display_legend = self.trace_display.addLegend(size=(200, 200))
         qBox_intTrace_layout.addWidget(self.trace_display)
+
         # create channel widgets
         for chan_name, chan_params in self.chaninfo.items():
             wmChannel = chan_params[0]
@@ -372,15 +378,19 @@ class multiplexer_gui(QFrame):
             # add to holders
             self.channels[wmChannel] = widget
             wmChan_layout.addWidget(self.channels[wmChannel], position[1], position[0], 1, 3)
+
         # add wavemeter channel holder to qBox
         wm_scroll.setWidget(wmChan_widget)
         wm_scroll.setMinimumWidth(wmChan_widget.sizeHint().width())
+
         # add title
         title = QLabel('Wavemeter Client')
         title.setFont(QFont('MS Shell Dlg 2', pointSize=18))
         title.setMaximumHeight(40)
+
         # create header
         self.header = QClientMenuHeader()
+
         # final layout
         layout.setMenuBar(self.header)
         layout.addWidget(title,             0, 0, 1, 2)
@@ -393,6 +403,7 @@ class multiplexer_gui(QFrame):
         wmChannel, frequency, _, displayPID, dacPort, rails = params
         widget = multiplexer_channel(name, wmChannel, dacPort, frequency, displayPID)
         widget.spinFreq.setValue(float(frequency))
+
         # get color of frequency
         wavelength = 2.998e8 / (float(frequency) * 1e3)
         color = wav2RGB(wavelength)
