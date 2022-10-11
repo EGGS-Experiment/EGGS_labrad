@@ -4,7 +4,7 @@ Characterize the frequency response of the RF locking system using an oscillosco
 import labrad
 from time import sleep
 
-from numpy import linspace, zeros
+from numpy import linspace
 from EGGS_labrad.clients import createTrunk
 
 script_name = "Frequency Response Characterization"
@@ -12,7 +12,6 @@ freq_range = linspace(0.1, 100, 1000) * 1e3
 amp_range = (0.1, 0.2, 0.3, 0.4, 0.5)
 os_channel = 3
 
-osc_val = None
 try:
     # connect to labrad
     cxn = labrad.connect()
@@ -115,12 +114,12 @@ try:
             sleep(2)
 
             # take oscope data
-            freq_val = os.measure(2)
-            amp_val = os.measure(3)
-            mean_val = os.measure(4)
+            freq_res = os.measure(2)
+            amp_res = os.measure(3)
+            mean_res = os.measure(4)
 
             # add to dataset
-            dv.add([freq_val, freq_val, amp_val, mean_val], context=cr)
+            dv.add([freq_val, freq_res, amp_res, mean_res], context=cr)
 
 
 except Exception as e:
