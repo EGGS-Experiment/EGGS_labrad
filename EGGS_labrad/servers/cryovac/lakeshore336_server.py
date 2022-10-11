@@ -234,6 +234,8 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
                             (float): the setpoint (in Kelvin)
         """
         chString = 'SETP'
+        if output_channel not in (1,2):
+            raise Exception('Invalid input: heater channel must be one of: (1, 2).')
         # setter
         if setpoint is not None:
             output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint) + TERMINATOR

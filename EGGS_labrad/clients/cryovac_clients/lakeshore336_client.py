@@ -39,6 +39,7 @@ class lakeshore336_client(GUIClient):
         res2, max_curr2 = yield self.ls.heater_setup(2)
         self.gui.heat2_res.setCurrentIndex(res2 - 1)
         self.gui.heat2_curr.setValue(max_curr2)
+
         # mode
         mode1, in1 = yield self.ls.heater_mode(1)
         self.gui.heat1_mode.setCurrentIndex(mode1)
@@ -46,16 +47,24 @@ class lakeshore336_client(GUIClient):
         mode2, in2 = yield self.ls.heater_mode(2)
         self.gui.heat2_mode.setCurrentIndex(mode2)
         self.gui.heat2_in.setCurrentIndex(in2)
+
         # range
         range1 = yield self.ls.heater_range(1)
         self.gui.heat1_range.setCurrentIndex(range1)
         range2 = yield self.ls.heater_range(2)
         self.gui.heat2_range.setCurrentIndex(range2)
+
         # power
         pow1 = yield self.ls.heater_power(1)
         self.gui.heat1_p1.setValue(pow1)
         pow2 = yield self.ls.heater_power(2)
         self.gui.heat2_p1.setValue(pow2)
+
+        # setpoint
+        setp1 = yield self.ls.heater_setpoint(1)
+        self.gui.heat1_set.setValue(setp1)
+        setp2 = yield self.ls.heater_setpoint(2)
+        self.gui.heat2_set.setValue(setp2)
 
     def initGUI(self):
         # temperature
@@ -80,7 +89,9 @@ class lakeshore336_client(GUIClient):
             # current
         self.gui.heat1_p1.valueChanged.connect(lambda value: self.ls.heater_power(1, value))
         self.gui.heat2_p1.valueChanged.connect(lambda value: self.ls.heater_power(2, value))
-
+            # setpoints
+        self.gui.heat1_set.valueChanged.connect(lambda value: self.ls.heater_setpoint(1, value))
+        self.gui.heat2_set.valueChanged.connect(lambda value: self.ls.heater_setpoint(2, value))
 
     # SLOTS
     @inlineCallbacks
@@ -122,6 +133,7 @@ class lakeshore336_client(GUIClient):
         self.gui.heat1_p1.setEnabled(status)
         self.gui.heat1_set.setEnabled(status)
         self.gui.heat1_mode.setEnabled(status)
+
         # heater 2
         self.gui.heat2_mode.setEnabled(status)
         self.gui.heat2_in.setEnabled(status)

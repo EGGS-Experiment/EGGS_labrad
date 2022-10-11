@@ -66,6 +66,7 @@ class lakeshore336_gui(QFrame):
         self.heat1_p1 = QDoubleSpinBox()
         self.heat1_p1.setRange(0, 300.0)
         self.heat1_set = QDoubleSpinBox()
+        self.heat1_set.setRange(0, 300)
 
         for widget in (heat1_mode_label, self.heat1_mode, heat1_in_label, self.heat1_in, heat1_res_label,
                        self.heat1_res, heat1_curr_label, self.heat1_curr, heat1_range_label, self.heat1_range,
@@ -95,6 +96,7 @@ class lakeshore336_gui(QFrame):
         self.heat2_p1 = QDoubleSpinBox()
         self.heat2_p1.setRange(0, 300.0)
         self.heat2_set = QDoubleSpinBox()
+        self.heat2_set.setRange(0, 300)
 
         for widget in (heat2_mode_label, self.heat2_mode, heat2_in_label, self.heat2_in, heat2_res_label,
                        self.heat2_res, heat2_curr_label, self.heat2_curr, heat2_range_label, self.heat2_range,
