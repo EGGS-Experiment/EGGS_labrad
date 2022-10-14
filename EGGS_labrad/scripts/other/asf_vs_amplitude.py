@@ -4,17 +4,22 @@ as a function of asf (amplitude scaling factor).
 """
 import labrad
 from time import sleep
+from numpy import linspace, zeros, mean, amax
 
-from numpy import linspace, zeros, mean
 from EGGS_labrad.clients import createTrunk
 
+# experiment parameters
 name_tmp = 'ASF Characterization'
-(dds_channel_amp, dds_channel_power) = ('urukul0_ch1', 'urukul0_ch3')
-dds_frequency_hz = 50 * 1e6
-dds_attenuation_dbm = 10
-amp_range = linspace(1, 100, 100) / 100
-os_channel = 4
+(dds_channel_amp, dds_channel_power) = ('urukul0_ch2', 'urukul0_ch3')
 num_avgs = 10
+
+# dds parameters
+dds_freq_hz = 110 * 1e6
+dds_att_list_dbm = [10]
+dds_amp_list_pct = linspace(1, 100, 100) / 100
+
+# device parameters
+os_channel = 4
 
 
 try:
@@ -30,17 +35,16 @@ try:
     cr = cxn.context()
     print('Server connection successful.')
 
+    # check DDS attenuation values are valid
+    if amax(dds_att_list_dbm) > 14:
+        raise Exception("Error: value in dds attenuation list is too high.")
+
     # set up DDSs
     for dds_name in (dds_channel_amp, dds_channel_power):
-        # set frequency
-        aq.dds_frequency(dds_name, dds_frequency_hz)
-        sleep(0.5)
-        # set attenuation
-        aq.dds_attenuation(dds_name, dds_attenuation_dbm)
-        sleep(0.5)
-        # turn on
+        # turn on DDS
         aq.dds_toggle(dds_name, 1)
-        sleep(0.5)
+        # set amplitude
+        aq.dds_frequency(dds_channel_amp, dds_freq_hz)
 
     # set up oscilloscope
     os.select_device()
@@ -64,12 +68,7 @@ try:
         raise Exception('Bad reading: oscope amp')
 
     # horizontal centering
-    time_calib = 1 / os.measure(2)
-    if (time_calib > 3e-9) and (time_calib < 1):
-        os.horizontal_scale(time_calib)
-    else:
-        print('time_calib: {f}'.format(time_calib))
-        raise Exception('Bad reading: oscope freq')
+    os.horizontal_scale(1 / dds_freq_hz)
     print('Oscilloscope setup successful.')
 
     # set up spectrum analyzer
@@ -80,56 +79,67 @@ try:
     # create dataset
     trunk_tmp = createTrunk(name_tmp)
     dv.cd(trunk_tmp, True, context=cr)
-    dv.new(
-        'ASF Characterization',
-        [('ASF', 'Scale')],
-        [('DDS Amplitude', 'Amplitude', 'V'), ('DDS Power', 'Power', 'dBm')],
-        context=cr
-    )
-    print('Dataset successfully created.')
+    print('Data vault successfully setup.')
 
+    # sweep attenuation
+    for att_val in dds_att_list_dbm:
 
-    # MAIN SEQUENCE
-    for amp_val in amp_range:
-        # set asf
-        aq.dds_amplitude(dds_channel_amp, amp_val)
-        aq.dds_amplitude(dds_channel_power, amp_val)
+        # create dataset
+        dataset_title_tmp = 'ASF Characterization: {} dB'.format(str(att_val).replace('.', '_'))
+        dv.new(
+            dataset_title_tmp
+            [('ASF', 'Scale')],
+            [('DDS Amplitude', 'Amplitude', 'V'), ('DDS Power', 'Power', 'dBm')],
+            context=cr
+        )
+        dv.add_parameter("attenuation", att_val, context=cr)
 
-        # scale spec anal and oscope
-        sa.autoset()
+        # set attenuation
+        aq.dds_attenuation(dds_channel_amp, att_val)
+        aq.dds_attenuation(dds_channel_power, att_val)
 
-        # try to center oscope
-        amp_calib = os.measure(1)
-        if (amp_calib < 20) and (amp_calib > 0):
-            os.channel_scale(os_channel, amp_calib / 5)
-        else:
-            raise Exception('Bad reading')
+        # sweep asf
+        for amp_val in dds_amp_list_pct:
 
-        # record oscope values
-        os_amplitude = zeros(num_avgs)
-        for i in range(num_avgs):
-            os_amplitude[i] = os.measure(1)
-            sleep(0.5)
-        #print(os_amplitude)
-        os_amplitude = mean(os_amplitude)
+            # set asf
+            aq.dds_amplitude(dds_channel_amp, amp_val)
+            aq.dds_amplitude(dds_channel_power, amp_val)
 
-        # wait for spec anal to finish
-        sleep(5)
+            # scale spec anal and oscope
+            sa.autoset()
 
-        # get spec anal marker back and record
-        sa.marker_toggle(1, 1)
-        sleep(1)
+            # try to center oscope
+            amp_calib = os.measure(1)
+            if (amp_calib < 20) and (amp_calib > 0):
+                os.channel_scale(os_channel, amp_calib / 5)
+            else:
+                raise Exception('Bad reading')
 
-        sa_power = zeros(num_avgs)
-        for i in range(num_avgs):
-            sa_power[i] = sa.marker_amplitude(1)
-            sleep(0.5)
+            # record oscope values
+            os_amplitude = zeros(num_avgs)
+            for i in range(num_avgs):
+                os_amplitude[i] = os.measure(1)
+                sleep(0.5)
+            #print(os_amplitude)
+            os_amplitude = mean(os_amplitude)
 
-        sa_power = mean(sa_power)
+            # wait for spec anal to finish
+            sleep(5)
 
-        # record result
-        print('asf {:f}: amp = {:f}, pow = {:f}'.format(amp_val, os_amplitude, sa_power))
-        dv.add(amp_val, os_amplitude, sa_power, context=cr)
+            # get spec anal marker back and record
+            sa.marker_toggle(1, 1)
+            sleep(1)
+
+            sa_power = zeros(num_avgs)
+            for i in range(num_avgs):
+                sa_power[i] = sa.marker_amplitude(1)
+                sleep(0.5)
+
+            sa_power = mean(sa_power)
+
+            # record result
+            print('asf {:f}: amp = {:f}, pow = {:f}'.format(amp_val, os_amplitude, sa_power))
+            dv.add(amp_val, os_amplitude, sa_power, context=cr)
 
 except Exception as e:
     print('Error:', e)
