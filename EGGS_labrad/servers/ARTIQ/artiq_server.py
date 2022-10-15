@@ -202,6 +202,7 @@ class ARTIQ_Server(ContextServer):
             dataset_value       : the values for the dataset.
             persist     (bool)  : whether the data should persist between master reboots.
         """
+        print('\tds set: {}\n'.format(dataset_value))
         self.datasets.set(dataset_key, dataset_value, persist)
 
     @setting(33, 'Dataset Delete', dataset_key='s', returns='')

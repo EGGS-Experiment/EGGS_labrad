@@ -4,7 +4,7 @@ as a function of asf (amplitude scaling factor).
 """
 import labrad
 from time import sleep
-from numpy import linspace, zeros, mean, amax
+from numpy import arange, linspace, zeros, mean, amax
 
 from EGGS_labrad.clients import createTrunk
 
@@ -15,11 +15,11 @@ num_avgs = 10
 
 # dds parameters
 dds_freq_hz = 110 * 1e6
-dds_att_list_dbm = [10]
+dds_att_list_dbm = arange(5, 11)
 dds_amp_list_pct = linspace(1, 100, 100) / 100
 
 # device parameters
-os_channel = 4
+os_channel = 3
 
 
 try:
@@ -36,7 +36,7 @@ try:
     print('Server connection successful.')
 
     # check DDS attenuation values are valid
-    if amax(dds_att_list_dbm) > 14:
+    if amax(dds_att_list_dbm) < 2:
         raise Exception("Error: value in dds attenuation list is too high.")
 
     # set up DDSs
@@ -47,7 +47,7 @@ try:
         aq.dds_frequency(dds_channel_amp, dds_freq_hz)
 
     # set up oscilloscope
-    os.select_device()
+    os.select_device(2)
     os.measure_setup(1, os_channel, 'AMP')
     os.measure_setup(2, os_channel, 'FREQ')
     # todo: turn off all channels except os channel
@@ -87,7 +87,7 @@ try:
         # create dataset
         dataset_title_tmp = 'ASF Characterization: {} dB'.format(str(att_val).replace('.', '_'))
         dv.new(
-            dataset_title_tmp
+            dataset_title_tmp,
             [('ASF', 'Scale')],
             [('DDS Amplitude', 'Amplitude', 'V'), ('DDS Power', 'Power', 'dBm')],
             context=cr
@@ -143,3 +143,4 @@ try:
 
 except Exception as e:
     print('Error:', e)
+    cxn.disconnect()

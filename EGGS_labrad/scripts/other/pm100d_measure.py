@@ -1,31 +1,44 @@
 import labrad
 from time import time, sleep
-from datetime import datetime
+from numpy import arange, linspace, zeros, mean, amax
 
-# connect to eggs labrad
-cxn = labrad.connect('localhost', password='lab')
+from EGGS_labrad.clients import createTrunk
+
+name_tmp = "PM100D Measure"
+interval_s = 5
+
+
+cxn = labrad.connect()
+print('Connection successful.')
+
+# get servers
+pm = cxn.power_meter_server
 dv = cxn.data_vault
-pm = cxn.pm100d_server
-cr_dv = cxn.context()
+cr = cxn.context()
+print('Server connection successful.')
+
+# set up power meter
+pm.select_device()
+
 
 # create dataset
-date = datetime.now()
-year = str(date.year)
-month = '{:02d}'.format(date.month)
-trunk1 = '{0:s}_{1:s}_{2:02d}'.format(year, month, date.day)
-trunk2 = '{0:s}_{1:02d}:{2:02d}'.format('397 Measure', date.hour, date.minute)
-dv.cd(['', year, month, trunk1, trunk2], True, context=cr_dv)
-dv.new('397nm Power', [('Elapsed time', 's')], [('397', 'Power', 'arb')], context=cr_dv)
+trunk_tmp = createTrunk(name_tmp)
+dv.cd(trunk_tmp, True, context=cr)
+dv.new(
+    name_tmp,
+    [('Time', 's')],
+    [('397nm Power', 'Power', 'uW')],
+    context=cr
+)
+print('Data vault successfully setup.')
 
 # set up recording
-pm.wavelength(397)
-pm.measure_start()
+#pm.wavelength(400)
 
 # start recording
 starttime = time()
 while True:
-    pow = pm.power()
+    pow = pm.measure()
     elapsedtime = time() - starttime
-    dv.add(elapsedtime, pow, context=cr_dv)
-    sleep(5)
-
+    dv.add(elapsedtime, pow, context=cr)
+    sleep(interval_s)
