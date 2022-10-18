@@ -23,6 +23,7 @@ from EGGS_labrad.clients import createTrunk
 from RigolDS1000Z import RigolDS1000ZWrapper
 from TektronixMSO2000 import TektronixMSO2000Wrapper
 from KeysightDS1204G import KeysightDS1204GWrapper
+from KeysightDSOX2024A import KeysightDSOX2024AWrapper
 
 
 class OscilloscopeServer(GPIBManagedServer):
@@ -35,7 +36,8 @@ class OscilloscopeServer(GPIBManagedServer):
     deviceWrappers = {
         'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper,
         'TEKTRONIX MSO2024B': TektronixMSO2000Wrapper,
-        'KEYSIGHT DS1204G': KeysightDS1204GWrapper
+        'KEYSIGHT DS1204G': KeysightDS1204GWrapper,
+        'AGILENT TECHNOLOGIES DSO-X 2024A': KeysightDSOX2024AWrapper
     }
 
     # def initServer(self):
