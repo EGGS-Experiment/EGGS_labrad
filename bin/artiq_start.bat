@@ -1,10 +1,10 @@
 :: ARTIQ Start
-:: Starts all components necessary for running ARTIQ
+::  Starts all components necessary for running ARTIQ
 
 @ECHO OFF
 
 @REM: MOVE TO ARTIQ ROOT
-CD %ARTIQ_ROOT%
+CD "%ARTIQ_ROOT%"
 CALL conda activate artiq
 
 SETLOCAL EnableDelayedExpansion
@@ -37,9 +37,9 @@ SET LOGFILENAME=%LOGFILENAME: =0%
 
 
 @REM: Start ARTIQ interface
-TIMEOUT 3 > NUL && START "ARTIQ Master" /min CMD "/c artiq_master -g -r %ARTIQ_ROOT%/repository --device-db %ARTIQ_ROOT%\%ddb_name% --bind=%ip_addr% --log-file C:\Users\EGGS1\Documents\.labrad\logfiles\artiq\%LOGFILENAME%.log"
-TIMEOUT 3 > NUL && START "ARTIQ Dashboard" /min CMD "/c TIMEOUT 2 && CALL artiq_dashboard"
-TIMEOUT 3 > NUL && START "ARTIQ Controller Manager" /min CMD "/k TIMEOUT 2 && artiq_ctlmgr"
+TIMEOUT 3 > NUL && START "ARTIQ Master" /min CMD /c artiq_master -g -r "%ARTIQ_ROOT%/repository" --device-db "%ARTIQ_ROOT%\%ddb_name%" --bind=%ip_addr% --log-file "C:\Users\EGGS1\Documents\.labrad\logfiles\artiq\%LOGFILENAME%.log"
+TIMEOUT 3 > NUL && START "ARTIQ Dashboard" /min CMD /c TIMEOUT 2 && CALL artiq_dashboard
+TIMEOUT 3 > NUL && START "ARTIQ Controller Manager" /min CMD /k TIMEOUT 2 && artiq_ctlmgr
 
 GOTO EOF
 
@@ -50,7 +50,7 @@ GOTO EOF
 @ECHO Optional Arguments:
 @ECHO    -h, --help          show this message and exit
 @ECHO    --ip                bind the artiq_master to the given IP address (default: %ARTIQ_HOST%)
-@ECHO    --ddb               device database file (default: %ARTIQ_DDB%)
+@ECHO    --ddb               device database file (default: "%ARTIQ_DDB%")
 @ECHO
 
 :EOF
