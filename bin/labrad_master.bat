@@ -31,7 +31,7 @@ IF %raw_flag%==0 (
     START "LabRAD Autosaver" /min "%PROG_HOME%\labrad_autosaver.bat"
 
     @REM: Set up port forwarder to allow access via http
-    START "LabRAD Forwarder" /min CMD /k activate labart && python "%PROG_HOME%\labrad_forwarder.py" 8682:127.0.0.1:7682
+    START "LabRAD Forwarder" /min CMD /k "activate labart && python "%PROG_HOME%\labrad_forwarder.py" 8682:127.0.0.1:7682"
 
     @REM: ARTIQ
     START /min CMD /c "%PROG_HOME%\artiq_start.bat"
@@ -40,7 +40,7 @@ IF %raw_flag%==0 (
 @REM: Core Servers
 START "LabRAD Manager" /min "%PROG_HOME%\scalabrad_minimum_startup.bat" --tls-required false
 START "LabRAD Web GUI" /min "%PROG_HOME%\scalabrad-web_minimum_startup.bat"
-START "LabRAD Node" /min CMD /k activate labart && python "%HOME%\Code\pylabrad\labrad\node\__init__.py" -x %LABRADHOST%:%EGGS_LABRAD_SYSLOG_PORT%
+START "LabRAD Node" /min CMD /k "activate labart && python "%HOME%\Code\pylabrad\labrad\node\__init__.py" -x %LABRADHOST%:%EGGS_LABRAD_SYSLOG_PORT%"
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:3000
 
