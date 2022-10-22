@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = TwisTorr74 Server
+name = Turbo-V 81AG Server
 version = 1.0
-description = Talks to the TwisTorr 74 Turbopump
-instancename = TwisTorr74 Server
+description = Talks to the Varian Agilent Turbo-V 81AG Pump Controller
+instancename = TurboV81AG Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -35,15 +35,15 @@ _TT74_ERRORS_msg = {
 }
 
 
-class TwisTorr74Server(SerialDeviceServer, PollingServer):
+class TurboV81AGServer(SerialDeviceServer, PollingServer):
     """
-    Talks to the TwisTorr 74 Turbopump.
+    Talks to the Turbo-V 81AG Turbopump.
     """
 
-    name = 'TwisTorr74 Server'
-    regKey = 'TwisTorr74 Server'
+    name = 'TurboV81AG Server'
+    regKey = 'TurboV81AG Server'
     serNode = 'mongkok'
-    port = 'COM54'
+    port = 'COM19'
 
     timeout = Value(5.0, 's')
     baudrate = 9600
@@ -200,7 +200,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     # HELPER
     def _create_message(self, CMD_msg, DIR_msg, DATA_msg=b''):
         """
-        Creates a message according to the Twistorr74 serial protocol.
+        Creates a message according to the Turbo-V 81AG serial protocol.
         """
         # create message as bytearray
         msg = _TT74_STX_msg + _TT74_ADDR_msg + CMD_msg + DIR_msg + DATA_msg + _TT74_ETX_msg
@@ -216,7 +216,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
 
     def _parse(self, ans):
         """
-        Parses the Twistorr74 response.
+        Parses the Turbo-V 81AG response.
         """
         if ans == b'':
             raise Exception('No response from device')
@@ -236,4 +236,4 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(TwisTorr74Server())
+    util.runServer(TurboV81AGServer())
