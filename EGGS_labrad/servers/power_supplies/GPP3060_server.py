@@ -45,6 +45,8 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
     baudrate = 115200
     bytesize = 8
 
+    POLL_ON_STARTUP = True
+
 
     # SIGNALS
     toggle_update = Signal(TOGGLESIGNAL,    'signal: toggle update',    '(iv)')
