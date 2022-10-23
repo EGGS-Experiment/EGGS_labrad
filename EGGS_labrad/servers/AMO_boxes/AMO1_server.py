@@ -190,7 +190,7 @@ class AMO1Server(SerialDeviceServer):
             if (curr_ma < 0) or (curr_ma > 80):
                 raise Exception("Error: max current must be in range (10, 35) mA.")
             yield self.ser.acquire()
-            yield self.ser.write('iout.ma.w {:f}\r\n'.format(curr_ma))
+            yield self.ser.write('ilim.ma.w {:f}\r\n'.format(curr_ma))
             yield self.ser.read_line('\n')
             self.ser.release()
 
@@ -201,7 +201,7 @@ class AMO1Server(SerialDeviceServer):
         self.ser.release()
 
         # parse resp
-        resp = float(resp.strip()) / 1e3
+        resp = float(resp.strip())
         self.notifyOtherListeners(c, ('SET', resp), self.current_update)
         returnValue(resp)
 
