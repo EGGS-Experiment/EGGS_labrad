@@ -32,8 +32,8 @@ class AMO1Server(SerialDeviceServer):
 
     name = 'AMO1 Server'
     regKey = 'AMO1Server'
-    # serNode = 'MongKok'
-    # port = 'COM6'
+    serNode = 'MongKok'
+    port = 'COM25'
 
     timeout = WithUnit(3.0, 's')
     baudrate = 38400
@@ -41,7 +41,8 @@ class AMO1Server(SerialDeviceServer):
 
     # SIGNALS
     toggle_update = Signal(999999, 'signal: toggle update', 'b')
-    current_update = Signal(999998, 'signal: current update', 'v')
+    output_update = Signal(999998, 'signal: output update', '(vv)')
+    current_update = Signal(999997, 'signal: current update', '(sv)')
 
 
     # CONTEXTS
@@ -112,44 +113,96 @@ class AMO1Server(SerialDeviceServer):
             yield self.ser.write('out.w {:d}\r\n'.format(status))
             yield self.ser.read_line('\n')
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write('out.r\r\n')
         resp = yield self.ser.read_line('\n')
         self.ser.release()
+
         # parse
         resp = resp.strip()
         resp = bool(int(resp))
         self.notifyOtherListeners(c, resp, self.toggle_update)
         returnValue(resp)
 
-
-    # CURRENT
-    @setting(211, 'Current', curr='v', returns='v')
-    def lockingSetpoint(self, c, curr=None):
+    @setting(121, 'Outputs', returns='(vv)')
+    def outputs(self, c):
         """
-        Get/set the output current.
-        Arguments:
-            curr    (float) : the output current.
+        Get the diode outputs.
         Returns:
-                    (float): the output current.
+            tuple(float, float): the diode voltage (in V) and current (in A).
         """
-        # setter
-        if curr is not None:
-            if (curr < 0) or (curr > 80):
-                raise Exception("Error: set current must be in range (10, 35) mA.")
-            yield self.ser.acquire()
-            yield self.ser.write('iout.w {:f}\r\n'.format(curr))
-            yield self.ser.read_line('\n')
-            self.ser.release()
         # getter
         yield self.ser.acquire()
-        yield self.ser.write('iout.r\r\n')
+        yield self.ser.write('diode.r\r\n')
         resp = yield self.ser.read_line('\n')
         self.ser.release()
+
+        # parse
+        resp = resp.strip().split(', ')
+        resp = tuple([float(val[:-1]) for val in resp])
+        self.notifyOtherListeners(c, resp, self.output_update)
+        returnValue(resp)
+
+
+    # CURRENT
+    @setting(211, 'Current Set', curr_ma='v', returns='v')
+    def currentSet(self, c, curr_ma=None):
+        """
+        Get/set the set output current.
+        Arguments:
+            curr_ma (float) : the output current (in mA).
+        Returns:
+                    (float) : the output current (in mA).
+        """
+        # setter
+        if curr_ma is not None:
+            if (curr_ma < 0) or (curr_ma > 80):
+                raise Exception("Error: set current must be in range (10, 35) mA.")
+            yield self.ser.acquire()
+            yield self.ser.write('iout.na.w {:f}\r\n'.format(curr_ma * 1e6))
+            yield self.ser.read_line('\n')
+            self.ser.release()
+
+        # getter
+        yield self.ser.acquire()
+        yield self.ser.write('iout.na.r\r\n')
+        resp = yield self.ser.read_line('\n')
+        self.ser.release()
+
         # parse resp
-        resp = float(resp[:-2])
-        # todo: notify other listeners
+        resp = float(resp.strip()) / 1e6
+        self.notifyOtherListeners(c, ('SET', resp), self.current_update)
+        returnValue(resp)
+
+    @setting(222, 'Current Max', curr_ma='v', returns='v')
+    def currentMax(self, c, curr_ma=None):
+        """
+        Get/set the maximum output current.
+        Arguments:
+            curr_ma (float) : the maximum output current (in mA).
+        Returns:
+                    (float) : the maximum output current (in mA).
+        """
+        # setter
+        if curr_ma is not None:
+            if (curr_ma < 0) or (curr_ma > 80):
+                raise Exception("Error: max current must be in range (10, 35) mA.")
+            yield self.ser.acquire()
+            yield self.ser.write('iout.ma.w {:f}\r\n'.format(curr_ma))
+            yield self.ser.read_line('\n')
+            self.ser.release()
+
+        # getter
+        yield self.ser.acquire()
+        yield self.ser.write('ilim.ma.r\r\n')
+        resp = yield self.ser.read_line('\n')
+        self.ser.release()
+
+        # parse resp
+        resp = float(resp.strip()) / 1e3
+        self.notifyOtherListeners(c, ('SET', resp), self.current_update)
         returnValue(resp)
 
 
