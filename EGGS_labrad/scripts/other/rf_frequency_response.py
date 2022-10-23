@@ -10,6 +10,10 @@ from EGGS_labrad.clients import createTrunk
 script_name = "Frequency Response Characterization"
 freq_range = linspace(0.1, 100, 1000) * 1e3
 amp_range = (0.1, 0.2, 0.3, 0.4, 0.5)
+
+rf_amp = -18
+rf_freq = 19.023
+
 os_channel = 3
 
 try:
@@ -43,7 +47,7 @@ try:
 
     # set up signal generator
     rf.select_device()
-    rf.amplitude(-12)
+    rf.amplitude(rf_amp)
     rf.gpib_write("AM:E:D 100")
     rf.toggle(1)
     print("Signal generator setup successful.")
@@ -68,6 +72,7 @@ try:
              ('Mean', 'Signal Mean', 'V')],
             context=cr
         )
+        dv.add_parameter('Function Generator Voltage', amp_val, context=cr)
 
         # first zoom out
         os.channel_offset(os_channel, 0)
