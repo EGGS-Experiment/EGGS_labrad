@@ -12,7 +12,7 @@ from numpy import linspace, mean, std
 from EGGS_labrad.clients import createTrunk
 
 name_tmp = 'Rectifier Characterization'
-freq_range = linspace(15, 25, 11) * 1e6
+freq_range = linspace(19.013, 19.033, 21) * 1e6
 amp_range = linspace(-22, -15, 71)
 
 sampler_channel = 0
@@ -32,13 +32,13 @@ try:
     print("Server connection successful.")
 
     # set up sampler
-    aq.select_device()
     aq.sampler_gain(1, 10)
     print("Sampler setup successful.")
 
     # set up signal generator
     rf.select_device()
     rf.gpib_write("AM OFF")
+    rf.toggle(1)
     print("Signal generator setup successful.")
 
     # create dataset
@@ -64,10 +64,13 @@ try:
         # sweep amplitudes
         for amp_val in amp_range:
 
+            # set amplitude
+            rf.amplitude(amp_val)
+
             # take sampler data
-            rectifier_output = aq.sampler_read_list([sampler_channel], sample_rate, sample_num)
+            rectifier_output = aq.sampler_read_list([sampler_channel], sample_rate, sample_num) * 2
+            print(mean(rectifier_output))
             dv.add(amp_val, mean(rectifier_output), std(rectifier_output), context=cr)
 
 except Exception as e:
     print('Error:', e)
-    print('freq val: {}, amp val: {}'.format(freq_val, amp_val))
