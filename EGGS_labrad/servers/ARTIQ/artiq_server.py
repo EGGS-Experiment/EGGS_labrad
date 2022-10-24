@@ -773,7 +773,7 @@ class ARTIQ_Server(ContextServer):
         # set cooling waveform
         self.api.setDDS('urukul1_ch1', 'ftw', 0x170A3D70)
         self.api.setDDS('urukul1_ch1', 'asf', 0x2000)
-        self.api.setDDSatt('urukul1_ch1', 0x37)
+        self.api.setDDSatt('urukul1_ch1', 0x8F)
 
         # switch on dds
         self.api.setDDSsw('urukul1_ch1', True)
