@@ -144,39 +144,58 @@ class DDS_client(GUIClient):
         """
         Quickly rescues the ion by red-detuning the 397nm beam
         """
-        # todo: add rf switch capability
-        # todo: test
         widget = self.urukul_list['urukul1_cpld']['urukul1_ch1']
+        print('rescuing: {}'.format(status))
+
+        # rescue ion
         if status:
             # save current dds values
             self.before_rescue_params = (
-                widget.freq.value(),
-                widget.ampl.value(),
+                widget.rfswitch.isChecked(),
                 widget.att.value(),
-                widget.rfswitch.isChecked()
+                widget.freq.value(),
+                widget.ampl.value()
             )
+            print('sw state: {}'.format(widget.rfswitch.isChecked()))
 
-            # set rescuing parameters
-            widget.freq.setValue(90)
-            widget.ampl.setValue(0.5)
-            widget.att.setValue(14)
-            # todo: set output on
-
-            # lock widget
+            # block signals
             widget.blockSignals(True)
+
+            # set rescue parameters
+            yield self.aq.dds_attenuation('urukul1_ch1', 20)
+            yield self.aq.dds_amplitude('urukul1_ch1', 0.5)
+            yield self.aq.dds_frequency('urukul1_ch1', 90000000)
+            yield self.aq.dds_toggle('urukul1_ch1', True)
+
+
+            # update dds front panel
+            widget.rfswitch.setChecked(True)
+            widget.freq.setValue(90)
+            widget.ampl.setValue(50)
+            widget.att.setValue(20)
+
+            # disable dds
             widget.setDisabled(True)
 
-        elif self.before_rescue_params is not None:
+        # restore dds state
+        else:
             # reenable widget
             widget.setDisabled(False)
-            widget.blockSignals(False)
 
             # restore values in client
-            widget.freq.setValue(self.before_rescue_params[0])
-            widget.ampl.setValue(self.before_rescue_params[1])
-            widget.att.setValue(self.before_rescue_params[2])
-            yield self.aq.dds_toggle('urukul1_ch1', self.before_rescue_params[3])
-            widget.rfswitch.setChecked(self.before_rescue_params[3])
+            widget.rfswitch.setChecked(self.before_rescue_params[0])
+            widget.att.setValue(self.before_rescue_params[1])
+            widget.freq.setValue(self.before_rescue_params[2])
+            widget.ampl.setValue(self.before_rescue_params[3])
+
+            # update artiq values
+            yield self.aq.dds_attenuation('urukul1_ch1', self.before_rescue_params[1])
+            yield self.aq.dds_amplitude('urukul1_ch1', self.before_rescue_params[3] / 100)
+            yield self.aq.dds_frequency('urukul1_ch1', self.before_rescue_params[2] * 1e6)
+            yield self.aq.dds_toggle('urukul1_ch1', self.before_rescue_params[0])
+
+            # allow server interaction
+            widget.blockSignals(False)
 
 
 if __name__ == "__main__":
