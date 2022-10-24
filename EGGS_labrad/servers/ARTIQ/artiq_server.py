@@ -40,6 +40,7 @@ DACSIGNAL_ID = 828175
 ADCSIGNAL_ID = 828174
 EXPSIGNAL_ID = 828173
 DDSSIGNAL_ID = 828172
+RESCUESIGNAL_ID = 828171
 # todo: move all mu stuff to api since api has better access to conversion stuff than we do and can call it in a nonkernel function
 # todo: remove artiq comm stuff from logging
 # todo: use dds name helper to allow board number and channel number to be used for settings
@@ -62,6 +63,7 @@ class ARTIQ_Server(ContextServer):
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(isv)')
     adcUpdated = Signal(ADCSIGNAL_ID, 'signal: adc updated', '(*v)')
     expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(bi)')
+    rescueSignal = Signal(RESCUESIGNAL_ID, 'signal: rescue ion', 'b')
 
 
     # STARTUP
@@ -202,6 +204,7 @@ class ARTIQ_Server(ContextServer):
             dataset_value       : the values for the dataset.
             persist     (bool)  : whether the data should persist between master reboots.
         """
+        print('\tds set: {}\n'.format(dataset_value))
         self.datasets.set(dataset_key, dataset_value, persist)
 
     @setting(33, 'Dataset Delete', dataset_key='s', returns='')
@@ -756,16 +759,25 @@ class ARTIQ_Server(ContextServer):
         # convert mu to volts
         samples_volts = np.array([self.adc_mu_to_volt(samples_mu[i], gain_arr_mu[i]) for i in range(len(channels))])
         returnValue(samples_volts)
-    #
-    #
-    # # OTHER
-    # @setting(611, "Rescue Ion", returns='')
-    # def rescueIon(self, c):
-    #     """
-    #     Rescues the ion by red-detuning the 397nm by 30MHz (as far as the AOM will go)
-    #         and increasing the beam power.
-    #     """
-    #     self.api.rescueIon()
+
+
+    # OTHER
+    @setting(611, "Rescue Ion", returns='')
+    def rescueIon(self, c):
+        """
+        Rescues the ion by red-detuning the 397nm cooling beam and maxing out power.
+        """
+        # turn off dds to prevent power surge
+        self.api.setDDSsw('urukul1_ch1', False)
+
+        # set cooling waveform
+        self.api.setDDS('urukul1_ch1', 'ftw', 0x170A3D70)
+        self.api.setDDS('urukul1_ch1', 'asf', 0x2000)
+        self.api.setDDSatt('urukul1_ch1', 0x37)
+
+        # switch on dds
+        self.api.setDDSsw('urukul1_ch1', True)
+        self.rescueSignal(True)
 
 
 if __name__ == '__main__':

@@ -371,15 +371,19 @@ class ARTIQ_api(object):
     def _setDDSatt(self, cpld, channel_num, att_mu):
         self.core.reset()
         cpld.bus.set_config_mu(0x0C, 32, 16, 2)
+
         # shift in zeros, shift out current value
         cpld.bus.write(0)
         cpld.bus.set_config_mu(0x0A, 32, 6, 2)
         delay_mu(10000)
         cpld.att_reg = cpld.bus.read()
+
         # remove old attenuator value for desired channel
         cpld.att_reg &= ~(0xff << (8 * channel_num))
+
         # add in new attenuator value
         cpld.att_reg |= (att_mu << (8 * channel_num))
+
         # shift in adjusted value and latch
         cpld.bus.write(cpld.att_reg)
 
@@ -759,27 +763,28 @@ class ARTIQ_api(object):
 
 
     # OTHER
+    # @autoreload
     # def rescueIon(self):
-    #     dev = self.dds_dict['urukul1_ch1']
+    #     # get relevant devices
+    #     dds_cooling = self.dds_dict['urukul1_ch1']
     #
-    #     self._rescueIon(dev)
+    #     # rescue ion
+    #     self._rescueIon(dds_cooling, cpld_qubit)
+    #
     #
     # @kernel
-    # def _rescueIon(self, dev):
-    #     # set waveform
-    #     dev.set_mu(0x170A3D70, asf=0x2000)
-    #     # set attenuation
-    #     channel_num = dev.chip_select - 4
-    #     cpld.bus.set_config_mu(0x0C, 32, 16, 2)
-    #     # shift in zeros, shift out current value
-    #     cpld.bus.write(0)
-    #     cpld.bus.set_config_mu(0x0A, 32, 6, 2)
-    #     delay_mu(10000)
-    #     cpld.att_reg = cpld.bus.read()
-    #     # remove old attenuator value for desired channel
-    #     cpld.att_reg &= ~(0xff << (8 * channel_num))
-    #     # add in new attenuator value
-    #     cpld.att_reg |= (att_mu << (8 * channel_num))
-    #     # shift in adjusted value and latch
-    #     cpld.bus.write(cpld.att_reg)
+    # def _rescueIon(self, dds_cooling, cpld_qubit):
+    #     # turn all channels off except cooling repump
+    #     dds_cooling.cpld.cfg_switches(0b0100)
+    #     cpld_qubit.cfg_switches(0b0000)
     #
+    #     # set waveform: 90MHz, 50% amplitude
+    #     dds_cooling.set_mu(0x170A3D70, asf=0x2000)
+    #
+    #     # set attenuations
+    #     att_tmp = dds_cooling.cpld.get_att_mu()
+    #     # todo: adjust att
+    #     dds_cooling.cpld.set_att_mu(att_tmp)
+    #
+    #     # switch on cooling & cooling repump
+    #     dds_cooling.cpld.cfg_switches(0b0110)

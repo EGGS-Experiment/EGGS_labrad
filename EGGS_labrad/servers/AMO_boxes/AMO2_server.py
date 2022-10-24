@@ -154,11 +154,13 @@ class AMO2Server(SerialDeviceServer, PollingServer):
             yield self.ser.write('temp.w {:f}\r\n'.format(temp))
             yield self.ser.read_line('\n')
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write('temp.r\r\n')
         resp = yield self.ser.read_line('\n')
         self.ser.release()
+
         # parse resp
         resp = float(resp[:-2])
         # todo: notify other listeners
@@ -181,11 +183,13 @@ class AMO2Server(SerialDeviceServer, PollingServer):
             yield self.ser.write('p.w {:f}\r\n'.format(prop))
             yield self.ser.read_line('\n')
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write('p.r\r\n')
         resp = yield self.ser.read_line('\n')
         self.ser.release()
+
         # parse resp
         resp = float(resp.strip())
         # todo: notify other listeners
@@ -208,11 +212,13 @@ class AMO2Server(SerialDeviceServer, PollingServer):
             yield self.ser.write('i.w {:f}\r\n'.format(integ))
             yield self.ser.read_line('\n')
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write('i.r\r\n')
         resp = yield self.ser.read_line('\n')
         self.ser.release()
+
         # parse resp
         resp = float(resp.strip())
         # todo: notify other listeners
@@ -235,11 +241,13 @@ class AMO2Server(SerialDeviceServer, PollingServer):
             yield self.ser.write('d.w {:f}\r\n'.format(deriv))
             yield self.ser.read_line('\n')
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write('d.r\r\n')
         resp = yield self.ser.read_line('\n')
         self.ser.release()
+
         # parse resp
         resp = float(resp.strip())
         # todo: notify other listeners

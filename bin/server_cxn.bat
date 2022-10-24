@@ -12,7 +12,7 @@ CALL conda activate labart
 SET FILE_DIR=%~dp0server_cxn.py
 
 @REM: Run server_cxn.py
-python -ix %FILE_DIR% %*
+python -ix "%FILE_DIR%" %*
 
 @ENDLOCAL
 EXIT /B

@@ -1,6 +1,6 @@
 :: LabRAD Autosaver
 ::  Automatically pushes the datavault contents to
-::      the remote repository on the hudsongroup server
+::  the remote repository on the hudsongroup server
 
 @ECHO OFF
 @SETLOCAL EnableDelayedExpansion
@@ -37,7 +37,7 @@ IF NOT '%1'=='' (
 
 @REM: Begin messages
 ECHO %DATE% %TIME%: Autosaver started.
-ECHO %DATE% %TIME%: Drive location set at %drive_location%.
+ECHO %DATE% %TIME%: Drive location set at "%drive_location%".
 
 
 :LOOPSTART
@@ -62,12 +62,12 @@ GOTO LOOPSTART
 
 :HELP
 @REM: todo: still need to finish
-@ECHO usage: labrad_autosaver [-h] [--devices] [-t] [-p] [-n]
+@ECHO usage: labrad_autosaver [-h] [-t] [-p] [-n]
 @ECHO:
 @ECHO LabRAD Autosaver
 @ECHO Optional Arguments:
 @ECHO    -h, --help             show this message and exit
-@ECHO    -d                     set the location to back up to (default: \\eric.physics.ucla.edu\groups\motion\.labrad_remote)
+@ECHO    -d                     set the location to back        (default: \\eric.physics.ucla.edu\groups\motion\.labrad_remote)
 @ECHO    -t                     set the time between backups    (default: 10 minutes)
 @ECHO:
 

@@ -4,8 +4,6 @@ from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.config.device_db import device_db
 from EGGS_labrad.clients.ARTIQ_client.DAC_gui import DAC_gui
 
-from copy import deepcopy
-
 DACID = 659312
 
 

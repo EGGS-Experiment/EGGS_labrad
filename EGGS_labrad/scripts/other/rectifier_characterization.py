@@ -19,14 +19,14 @@ osc_val = None
 try:
     # connect to labrad
     cxn = labrad.connect()
-    print('Connection successful.')
+    print("Connection successful.")
 
     # get servers
     os = cxn.oscilloscope_server
     rf = cxn.rf_server
     dv = cxn.data_vault
     cr = cxn.context()
-    print('Server connection successful.')
+    print("Server connection successful.")
 
     # set up oscilloscope
     os.select_device()
@@ -34,17 +34,17 @@ try:
     os.measure_setup(4, os_channel, 'MEAN')
     os.trigger_channel(os_channel)
     # os.trigger_level
-    print('Oscilloscope setup successful.')
+    print("Oscilloscope setup successful.")
 
     # set up signal generator
     rf.select_device()
     rf.gpib_write("AM OFF")
-    print('Signal generator setup successful.')
+    print("Signal generator setup successful.")
 
     # create dataset
     trunk_tmp = createTrunk(name_tmp)
     dv.cd(trunk_tmp, True, context=cr)
-    print('Dataset successfully created')
+    print("Dataset successfully created")
 
     for freq_val in freq_range:
         # set signal frequency

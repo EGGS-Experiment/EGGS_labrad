@@ -109,7 +109,7 @@ class DDS_gui(QFrame):
         layout.addWidget(self.artiq_monitor, 0, self.row_length - 1, 1, 1)
 
         # create rescue button
-        self.rescue_button = TextChangingButton(("Stop Rescuing", "Rescue Ion"))
+        self.rescue_button = QPushButton("Rescue Ion")
         layout.addWidget(self.rescue_button, 0, 0, 1, 1)
 
         # layout urukuls
