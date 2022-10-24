@@ -14,11 +14,11 @@ from EGGS_labrad.clients import createTrunk
 name_tmp = 'Temperature Measurement Calibration'
 dds_name = 'urukul1_ch0'
 freq_range_hz = linspace(87.5, 137.5, 23) * 1e6
-amp_range_pct = [0, 50]
+amp_range_pct = [0, 0.5]
 att_db = 14
 
-target_power_uw = 30
-tolerance_power_uw = 1
+target_power_uw = 100
+tolerance_power_uw = 3
 target_wavelength_nm = 400
 num_averages = 100
 
@@ -41,7 +41,7 @@ try:
     pm.configure_wavelength(target_wavelength_nm)
     pm.configure_autoranging(True)
     pm.configure_averaging(num_averages)
-    print("Sampler setup successful.")
+    print("Power meter setup successful.")
 
     # set up 397nm probe beam
     aq.dds_toggle(dds_name, True)
@@ -68,8 +68,12 @@ try:
         # set asf and get power
         amp_tmp_pct = 0.5 * (amp_min_pct + amp_max_pct)
         aq.dds_amplitude(dds_name, amp_tmp_pct)
-        sleep(1)
-        pow_tmp_uw = pm.measure()
+        sleep(0.5)
+        pow_tmp_uw = pm.measure() * 1e6
+
+        # tmp remove
+        #print('[min, max]: {}'.format((amp_min_pct, amp_max_pct)))
+        #print('pow_tmp_uw: {}'.format(pow_tmp_uw))
 
         # return target value
         if abs(pow_tmp_uw - target_power_uw) <= tolerance_power_uw:
@@ -92,8 +96,11 @@ try:
             # get calibrated asf
             amp_target_pct = recursion_search(amp_range_pct[0], amp_range_pct[1])
 
+            # tmp remove
+            #print('res: {}'.format(amp_target_pct))
+
             # add to data vault
-            dv.add(amp_val, amp_range_pct, context=cr)
+            dv.add(freq_val_hz, amp_target_pct, context=cr)
 
 
 except Exception as e:
