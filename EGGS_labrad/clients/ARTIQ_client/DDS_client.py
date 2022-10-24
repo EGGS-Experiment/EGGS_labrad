@@ -6,6 +6,7 @@ from EGGS_labrad.clients.ARTIQ_client.DDS_gui import DDS_gui
 
 DDSID = 659313
 EXPID = 659314
+RESCUEID = 659315
 
 
 class DDS_client(GUIClient):
@@ -28,14 +29,13 @@ class DDS_client(GUIClient):
         self.urukul_list = {}
         self._getDevices(device_db)
 
-        # variables for storing dds state when we try to rescue
-        self.before_rescue_params = None
-
         # connect to signals
         yield self.aq.signal__dds_changed(DDSID)
         yield self.aq.addListener(listener=self.updateDDS, source=None, ID=DDSID)
         yield self.aq.signal__exp_running(EXPID)
         yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID)
+        yield self.aq.signal__rescue_ion(RESCUEID)
+        yield self.aq.addListener(listener=self.rescueIon, source=None, ID=RESCUEID)
 
     def _getDevices(self, device_db):
         # get devices
@@ -83,7 +83,7 @@ class DDS_client(GUIClient):
 
     def initGUI(self):
         # rescue ion
-        self.gui.rescue_button.clicked.connect(lambda status: self.rescueIon(status))
+        self.gui.rescue_button.clicked.connect(lambda status: self.aq.rescue_ion())
 
         # connect an urukul group
         for urukul_name, ad9910_list in self.gui.urukul_list.items():
@@ -139,63 +139,31 @@ class DDS_client(GUIClient):
     def experimentRunning(self, c, msg):
         self.gui.artiq_monitor.setStatus(msg)
 
-    @inlineCallbacks
     def rescueIon(self, status):
         """
         Quickly rescues the ion by red-detuning the 397nm beam
         """
         widget = self.urukul_list['urukul1_cpld']['urukul1_ch1']
-        print('rescuing: {}'.format(status))
 
-        # rescue ion
-        if status:
-            # save current dds values
-            self.before_rescue_params = (
-                widget.rfswitch.isChecked(),
-                widget.att.value(),
-                widget.freq.value(),
-                widget.ampl.value()
-            )
-            print('sw state: {}'.format(widget.rfswitch.isChecked()))
+        # block signals
+        widget.rfswitch.blockSignals(True)
+        widget.att.blockSignals(True)
+        widget.ampl.blockSignals(True)
+        widget.freq.blockSignals(True)
 
-            # block signals
-            widget.blockSignals(True)
+        # set values
+        widget.rfswitch.setChecked(True)
+        widget.att.setValue(14)
+        widget.freq.setValue(90)
+        widget.ampl.setValue(50)
 
-            # set rescue parameters
-            yield self.aq.dds_attenuation('urukul1_ch1', 20)
-            yield self.aq.dds_amplitude('urukul1_ch1', 0.5)
-            yield self.aq.dds_frequency('urukul1_ch1', 90000000)
-            yield self.aq.dds_toggle('urukul1_ch1', True)
+        # enable signals
+        widget.rfswitch.blockSignals(False)
+        widget.att.blockSignals(False)
+        widget.ampl.blockSignals(False)
+        widget.freq.blockSignals(False)
 
 
-            # update dds front panel
-            widget.rfswitch.setChecked(True)
-            widget.freq.setValue(90)
-            widget.ampl.setValue(50)
-            widget.att.setValue(20)
-
-            # disable dds
-            widget.setDisabled(True)
-
-        # restore dds state
-        else:
-            # reenable widget
-            widget.setDisabled(False)
-
-            # restore values in client
-            widget.rfswitch.setChecked(self.before_rescue_params[0])
-            widget.att.setValue(self.before_rescue_params[1])
-            widget.freq.setValue(self.before_rescue_params[2])
-            widget.ampl.setValue(self.before_rescue_params[3])
-
-            # update artiq values
-            yield self.aq.dds_attenuation('urukul1_ch1', self.before_rescue_params[1])
-            yield self.aq.dds_amplitude('urukul1_ch1', self.before_rescue_params[3] / 100)
-            yield self.aq.dds_frequency('urukul1_ch1', self.before_rescue_params[2] * 1e6)
-            yield self.aq.dds_toggle('urukul1_ch1', self.before_rescue_params[0])
-
-            # allow server interaction
-            widget.blockSignals(False)
 
 
 if __name__ == "__main__":
