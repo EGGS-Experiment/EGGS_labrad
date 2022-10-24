@@ -767,6 +767,7 @@ class ARTIQ_Server(ContextServer):
         """
         Rescues the ion by red-detuning the 397nm cooling beam and maxing out power.
         """
+        # todo: speed up
         # turn off dds to prevent power surge
         self.api.setDDSsw('urukul1_ch1', False)
 
