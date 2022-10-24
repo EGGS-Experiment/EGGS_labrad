@@ -32,7 +32,7 @@ class AD9910_channel(QFrame):
         # labels
         freqlabel = QLabel('Frequency (MHz)')
         powerlabel = QLabel('Amplitude (%)')
-        attlabel = QLabel('Attenuation (dBm)')
+        attlabel = QLabel('Attenuation (dB)')
 
         # editable fields
         self.freq = QDoubleSpinBox()
