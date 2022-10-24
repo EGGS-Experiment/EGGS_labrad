@@ -63,7 +63,7 @@ class ARTIQ_Server(ContextServer):
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(isv)')
     adcUpdated = Signal(ADCSIGNAL_ID, 'signal: adc updated', '(*v)')
     expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(bi)')
-    rescueSignal = Signal(RESCUESIGNAL_ID, 'signal: rescue ion', '')
+    rescueSignal = Signal(RESCUESIGNAL_ID, 'signal: rescue ion', 'b')
 
 
     # STARTUP
@@ -769,10 +769,15 @@ class ARTIQ_Server(ContextServer):
         """
         # turn off dds to prevent power surge
         self.api.setDDSsw('urukul1_ch1', False)
+
+        # set cooling waveform
         self.api.setDDS('urukul1_ch1', 'ftw', 0x170A3D70)
         self.api.setDDS('urukul1_ch1', 'asf', 0x2000)
-        self.api.setDDSatt('urukul1_ch1', 0x8F)
-        self.rescueSignal()
+        self.api.setDDSatt('urukul1_ch1', 0x37)
+
+        # switch on dds
+        self.api.setDDSsw('urukul1_ch1', True)
+        self.rescueSignal(True)
 
 
 if __name__ == '__main__':

@@ -139,7 +139,7 @@ class DDS_client(GUIClient):
     def experimentRunning(self, c, msg):
         self.gui.artiq_monitor.setStatus(msg)
 
-    def rescueIon(self, status):
+    def rescueIon(self, c, msg):
         """
         Quickly rescues the ion by red-detuning the 397nm beam
         """
@@ -152,7 +152,7 @@ class DDS_client(GUIClient):
         widget.freq.blockSignals(True)
 
         # set values
-        widget.rfswitch.setChecked(True)
+        widget.rfswitch.clicked.emit(True)
         widget.att.setValue(14)
         widget.freq.setValue(90)
         widget.ampl.setValue(50)
@@ -162,8 +162,6 @@ class DDS_client(GUIClient):
         widget.att.blockSignals(False)
         widget.ampl.blockSignals(False)
         widget.freq.blockSignals(False)
-
-
 
 
 if __name__ == "__main__":
