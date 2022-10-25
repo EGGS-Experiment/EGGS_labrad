@@ -61,7 +61,7 @@ class DDS_client(GUIClient):
         # set limit on channel parameters
         for dds_channel in restricted_dds_channels:
             min_vals_tmp = yield self.reg.get(dds_channel)
-            min_vals[dds_channel] = min_vals_tmp
+            min_vals[dds_channel] = dict(min_vals_tmp)
 
         # get data using DDS Get All function on artiq server
         dds_data = yield self.aq.dds_get_all()
