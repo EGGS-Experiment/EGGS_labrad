@@ -53,14 +53,15 @@ class DDS_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
-        # get minimum attenuations from registry
-        min_attenuations = {}
+        # get minimum parameters from registry
+        min_vals = {}
         yield self.reg.cd(['', 'Clients', 'ARTIQ', 'Urukul'])
         _, restricted_dds_channels = yield self.reg.dir()
 
-        # set limit on channel attenuations
+        # set limit on channel parameters
         for dds_channel in restricted_dds_channels:
-            min_attenuations[dds_channel] = yield self.reg.get(dds_channel)
+            min_vals_tmp = yield self.reg.get(dds_channel)
+            min_vals[dds_channel] = min_vals_tmp
 
         # get data using DDS Get All function on artiq server
         dds_data = yield self.aq.dds_get_all()
@@ -70,12 +71,14 @@ class DDS_client(GUIClient):
         # get data for each dds channel on each dds-board
         for board_num, (urukul_name, ad9910_list) in enumerate(self.urukul_list.items()):
             for channel_num, (ad9910_name, ad9910_widget) in enumerate(ad9910_list.items()):
-                # check if this channel has a restricted attenuation range
-                if ad9910_name in min_attenuations:
-                    ad9910_widget.att.setMinimum(min_attenuations[ad9910_name])
-                # get values
+
+                # check if this channel has restricted parameters
+                if ad9910_name in min_vals:
+                    ad9910_widget.att.setMinimum(min_vals[ad9910_name]['att_db'])
+                    ad9910_widget.ampl.setMaximum(min_vals[ad9910_name]['asf_pct'])
+
+                # get & set values
                 freq_mu, ampl_mu, att_mu, sw_status = dds_data[board_num][channel_num]
-                # set values
                 ad9910_widget.freq.setValue(freq_mu * 1e3 / (0xFFFFFFFF - 1))
                 ad9910_widget.ampl.setValue(ampl_mu * 1e2 / 0x3FFF)
                 ad9910_widget.att.setValue((255 - (int(att_mu) & 0xFF)) / 8)
