@@ -2,7 +2,6 @@ pyparsing>=2.1.*
 pyOpenSSL >= 18.0.*
 
 numpy>=1.20.3
-pylabrad>=0.98.1
 pyserial>=3.5
 PyVISA>=1.11.3
 Twisted>=21.7.0
@@ -11,9 +10,7 @@ h5py>=3.2.1
 mock>=4.0.3
 pytest>=7.0.1
 pywin32>=228
-treedict>=0.22
 
-artiq>=6.*.*
 artiq-comtools>=1.1
 sipyco>=1.2
 matplotlib>=3.4.2
