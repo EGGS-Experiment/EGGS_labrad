@@ -45,6 +45,10 @@ class FunctionGeneratorServer(GPIBManagedServer):
     def toggle(self, c, status=None):
         """
         Turn the function generator on/off.
+        Arguments:
+            status  (bool)  : whether the function generator is on/off.
+        Returns:
+                    (bool)  : whether the function generator is on/off.
         """
         if type(status) == int:
             if status not in (0, 1):
@@ -97,7 +101,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
         Returns:
                     (float) : the offset (in V).
         """
-        return self.selectedDevice(c).amplitude(off)
+        return self.selectedDevice(c).offset(off)
 
 
     # MODULATION
