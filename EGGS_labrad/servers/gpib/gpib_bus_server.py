@@ -222,7 +222,7 @@ class GPIBBusServer(PollingServer):
         """
         Manually refresh devices.
         """
-        self.refreshDevices()
+        self._refreshDevices()
 
     def _poll_fail(self, failure):
         print('Polling failed.')
