@@ -1,6 +1,6 @@
 ::Starts all finished LabRAD servers
 
-CALL %EGGS_LABRAD_ROOT%\bin\prepare_labrad.bat
+CALL %EGGS_LABRAD_ROOT%\bin\labrad_prepare.bat
 
 @REM: Cryovac
 REM START "Lakeshore Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\cryovac\lakeshore336_server.py"
