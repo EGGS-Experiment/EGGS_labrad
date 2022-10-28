@@ -96,12 +96,12 @@ class TEC_client(GUIClient):
 
     @inlineCallbacks
     def updateTemperature(self, c, temp):
-        self.gui.displayTemp.setText(str(temp))
+        self.gui.displayTemp.setText("{:.3f}".format(temp))
         if self.recording:
             yield self.dv.add(time() - self.starttime, temp, context=self.c_record)
 
     def updateCurrent(self, c, curr):
-        self.gui.displayCurr.setText(str(curr))
+        self.gui.displayCurr.setText("{:.3f}".format(curr))
 
     def updateToggle(self, c, status):
         # need to convert channel number to index

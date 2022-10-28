@@ -114,7 +114,7 @@ class AMO2Server(SerialDeviceServer, PollingServer):
 
         # parse
         resp = float(resp.strip())
-        self.notifyOtherListeners(c, resp, self.current_update)
+        self.current_update(resp)
         returnValue(resp)
 
     @setting(122, 'Temperature', returns='v')
@@ -132,7 +132,7 @@ class AMO2Server(SerialDeviceServer, PollingServer):
 
         # parse
         resp = float(resp[:-2])
-        self.notifyOtherListeners(c, resp, self.temperature_update)
+        self.temperature_update(resp)
         returnValue(resp)
 
 
