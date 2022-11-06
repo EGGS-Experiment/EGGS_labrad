@@ -63,6 +63,16 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         yield dev.autoset()
 
+    @setting(14, "Operation Complete", returns='b')
+    def operationComplete(self, c):
+        """
+        Query whether the current operation has completed.
+        Returns:
+            (bool)  : whether the current operation has completed.
+        """
+        dev = self.selectedDevice(c)
+        return dev.operationComplete()
+
 
     # ATTENUATION
     @setting(21, "Preamplifier", status=['b', 'i'], returns='b')
@@ -236,11 +246,10 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
     def markerTrack(self, c, channel, status=None):
         """
         Get/set the status of signal tracking.
-        If a marker is already active, signal tracking will
-        use that marker to set the center frequency.
-        If a marker does not already exist, signal tracking
-        will create a marker and use it to set the center frequency.
+        If a marker is already active, signal tracking will use that marker to set the center frequency.
+        If a marker does not already exist, signal tracking will create a marker and use it to set the center frequency.
         Arguments:
+            channel (int) : the channel to set signal trcaking for.
             status  (bool): the status of signal tracking.
         Returns:
                     (bool): the status of signal tracking.

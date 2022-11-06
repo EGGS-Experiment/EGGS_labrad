@@ -18,6 +18,11 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
     def autoset(self):
         yield self.write(':SENS:POW:ATUN')
 
+    @inlineCallbacks
+    def operationComplete(self):
+        resp = self.query('*OPC?')
+        returnValue(bool(int(resp)))
+
 
     # ATTENUATION
     @inlineCallbacks

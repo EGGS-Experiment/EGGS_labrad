@@ -21,6 +21,11 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     def autoscale(self):
         yield self.write('AUTOS EXEC')
 
+    @inlineCallbacks
+    def operationComplete(self):
+        resp = self.query('*OPC?')
+        returnValue(bool(int(resp)))
+
 
     # CHANNEL
     @inlineCallbacks

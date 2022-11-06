@@ -23,11 +23,18 @@
 #
 # 2021 October 17 - Clayton Ho
 # Added back automatic device polling
+#
 # 2021 November 25 - Clayton Ho
 # Added configurable device polling
+#
 # 2021 December 15 - Clayton Ho
 # Subclassed it from PollingServer to support polling
 # instead of using server methods
+#
+# 2022 November 6 - Clayton Ho
+# Copied over some changes made by Landon in UCLALabrad repository:
+#   - _refreshDevices now closes devices before deleting them from the holding dictionary
+#   - timeout function now actually sets the timeout with the GPIB device instead of just storing it within the context
 
 
 """
@@ -75,6 +82,10 @@ class GPIBBusServer(PollingServer):
     def _poll(self):
         self._refreshDevices()
 
+    def _poll_fail(self, failure):
+        print('Polling failed.')
+
+
     def _refreshDevices(self):
         """
         Refresh the list of known devices on this bus.
@@ -100,13 +111,15 @@ class GPIBBusServer(PollingServer):
                     self.devices[addr] = instr
                     self.sendDeviceMessage('GPIB Device Connect', addr)
                 except Exception as e:
-                    #pass
                     print('Failed to add ' + addr + ':' + str(e))
                     raise
+
             # send device disconnect messages
             for addr in deletions:
+                self.devices[addr].close()
                 del self.devices[addr]
                 self.sendDeviceMessage('GPIB Device Disconnect', addr)
+
         except Exception as e:
             print('Problem while refreshing devices:', str(e))
             raise e
@@ -126,6 +139,8 @@ class GPIBBusServer(PollingServer):
         instr = self.devices[c['addr']]
         return instr
 
+
+    # SETTINGS
     @setting(0, addr='s', returns='s')
     def address(self, c, addr=None):
         """
@@ -144,8 +159,8 @@ class GPIBBusServer(PollingServer):
         Get or set the GPIB timeout.
         """
         if time is not None:
-            c['timeout'] = time
-        return c['timeout']
+            self.getDevice(c).timeout = time['ms']
+        return WithUnit(self.getDevice(c).timeout / 1000.0, 's')
 
     @setting(3, data='s', returns='')
     def write(self, c, data):
@@ -223,9 +238,6 @@ class GPIBBusServer(PollingServer):
         Manually refresh devices.
         """
         self._refreshDevices()
-
-    def _poll_fail(self, failure):
-        print('Polling failed.')
 
 
 __server__ = GPIBBusServer()
