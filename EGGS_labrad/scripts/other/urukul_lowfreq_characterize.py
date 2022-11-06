@@ -13,12 +13,12 @@ name_tmp = 'Urukul Harmonic Characterization'
 # dds parameters
 dds_channel = 'urukul0_ch2'
 dds_amp_pct = 50
-dds_att_list_dbm = arange(5, 11)
-dds_freq_list_hz = arange(300, 3000) * 1e3
+dds_att_list_dbm = arange(15, 20)
+dds_freq_list_hz = arange(1000, 3000) * 1e3
 
 # device parameters
-sa_att_db = 0
-sa_span_hz = 1000
+sa_att_db = 10
+sa_span_hz = 10000
 sa_bandwidth_hz = 100
 
 
@@ -40,7 +40,7 @@ try:
 
     # set up DDSs
     aq.dds_toggle(dds_channel, 1)
-    aq.dds_amplitude(dds_channel, dds_amp_pct / 100)
+    aq.dds_amplitude(dds_channel, float(dds_amp_pct / 100))
     print("ARTIQ DDS setup successful.")
 
     # set up spectrum analyzer
@@ -80,24 +80,21 @@ try:
         for freq_val in dds_freq_list_hz:
 
             # set asf
-            aq.dds_amplitude(dds_channel, freq_val)
+            aq.dds_frequency(dds_channel, freq_val)
 
             # get power of 0th order
             sa.frequency_center(freq_val)
-            sleep(1)
-            sa.gpib_query('*OPC?')
+            sleep(7)
             zeroth_power = sa.marker_amplitude(1)
 
             # get power of 1st order harmonic
             sa.frequency_center(2 * freq_val)
-            sleep(1)
-            sa.gpib_query('*OPC?')
+            sleep(7)
             first_power = sa.marker_amplitude(1)
 
             # get power of 2nd order harmonic
             sa.frequency_center(3 * freq_val)
-            sleep(1)
-            sa.gpib_query('*OPC?')
+            sleep(7)
             second_power = sa.marker_amplitude(1)
 
             # record result
