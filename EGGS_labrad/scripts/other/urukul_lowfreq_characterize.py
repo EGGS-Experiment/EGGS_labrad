@@ -11,10 +11,10 @@ from EGGS_labrad.clients import createTrunk
 name_tmp = 'Urukul Harmonic Characterization'
 
 # dds parameters
-dds_channel = 'urukul0_ch2'
+dds_channel = 'urukul0_ch3'
 dds_amp_pct = 50
-dds_att_list_dbm = arange(15, 20)
-dds_freq_list_hz = arange(1000, 3000) * 1e3
+dds_att_list_dbm = arange(10, 20)
+dds_freq_list_hz = arange(300, 2000, 5) * 1e3
 
 # device parameters
 sa_att_db = 10
@@ -59,6 +59,19 @@ try:
     dv.cd(trunk_tmp, True, context=cr)
     print("Data vault successfully setup.")
 
+    # wrap readout in error handling to prevent problems
+    def _get_pow():
+        sa_pow = 0
+        try:
+            sleep(2)
+            sa_pow = sa.marker_amplitude(1)
+        except Exception as e:
+            print("fehler welp")
+            sleep(5)
+            sa_pow = sa.marker_amplitude(1)
+
+        return sa_pow
+
     # sweep attenuation
     for att_val in dds_att_list_dbm:
 
@@ -84,18 +97,15 @@ try:
 
             # get power of 0th order
             sa.frequency_center(freq_val)
-            sleep(7)
-            zeroth_power = sa.marker_amplitude(1)
+            zeroth_power = _get_pow()
 
             # get power of 1st order harmonic
             sa.frequency_center(2 * freq_val)
-            sleep(7)
-            first_power = sa.marker_amplitude(1)
+            first_power = _get_pow()
 
             # get power of 2nd order harmonic
             sa.frequency_center(3 * freq_val)
-            sleep(7)
-            second_power = sa.marker_amplitude(1)
+            second_power = _get_pow()
 
             # record result
             print("freq {:f}: 0th = {:f}, first = {:f}, second = {:f}".format(freq_val, zeroth_power, first_power, second_power))
