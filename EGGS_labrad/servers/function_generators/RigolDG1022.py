@@ -36,18 +36,22 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
             raise Exception("Error: invalid device response: {}".format(resp))
 
     def channel(self, chan_num):
-        # check input
-        if chan_num not in (1, 2):
-            raise Exception('Error: invalid input. Channel must be one of (1, 2).')
+        # setter
+        if chan_num is not None:
+            # check input
+            if chan_num not in (1, 2):
+                raise Exception('Error: invalid input. Channel must be one of (1, 2).')
 
-        # set channel string
-        if chan_num == 1:
-            self.channel_string = ''
-        else:
-            self.channel_string = ':CH2'
+            # set channel string
+            if chan_num == 1:
+                self.channel_string = ''
+            else:
+                self.channel_string = ':CH2'
 
-        # getter/setter
-        self.channel_num = chan_num
+            # set value
+            self.channel_num = chan_num
+
+        # getter
         return self.channel_num
 
 

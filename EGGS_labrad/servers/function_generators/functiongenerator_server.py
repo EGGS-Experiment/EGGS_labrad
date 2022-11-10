@@ -59,7 +59,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
                 status = bool(status)
         return self.selectedDevice(c).toggle(status)
 
-    @setting(131, 'Channel', chan_num='i', returns='b')
+    @setting(131, 'Channel', chan_num='i', returns='i')
     def channel(self, c, chan_num=None):
         """
         Set the channel number. Default is 0.
