@@ -276,6 +276,10 @@ class GPIBDeviceManager(LabradServer):
 
         This info includes currently known devices, registered device
         servers, and registered identification functions.
+
+        Returns:
+            tuple(str, str, str):   a tuple composed of all known devices, device servers, and ident functions.
+                                    Each str is a dict object simply converted into a string.
         """
         return (str(self.knownDevices),
                 str(self.deviceServers),
