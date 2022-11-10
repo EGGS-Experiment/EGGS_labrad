@@ -60,7 +60,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
         return self.selectedDevice(c).toggle(status)
 
     @setting(131, 'Channel', chan_num='i', returns='b')
-    def channel(self, c, status=None):
+    def channel(self, c, chan_num=None):
         """
         Set the channel number. Default is 0.
             This function allows the server to accommodate function generators with multiple outputs
@@ -71,7 +71,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
         Returns:
                     (int)   : the channel number.
         """
-        return self.selectedDevice(c).toggle(status)
+        return self.selectedDevice(c).channel(chan_num)
 
 
     # WAVEFORM

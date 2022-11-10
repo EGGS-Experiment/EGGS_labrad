@@ -11,45 +11,49 @@ from EGGS_labrad.clients import createTrunk
 name_tmp = 'Signal Harmonic Characterization'
 
 # function generator parameters
-dds_channel = 'urukul0_ch3'
-dds_amp_pct = 50
-dds_att_list_dbm = arange(10, 20)
-dds_freq_list_hz = arange(300, 2000, 5) * 1e3
+#dds_amp_1_vpp_list = arange(5, 10 + 0.1, 0.1)
+rf_amp_1_vpp = 5
+rf_freq_1_hz = 19e6
+
+rf_amp_2_vpp_list = arange(0.5, 4, 0.01)
+rf_freq_2_list_hz = arange(300, 2000, 5) * 1e3
 
 # device parameters
-sa_att_db = 30
-sa_span_hz = 3e6
+sa_att_db = 10
+sa_span_hz = 5e6
 sa_bandwidth_hz = 1e3
 
 
+# main loop
 try:
     # connect to labrad
     cxn = labrad.connect()
     print("Connection successful.")
 
     # get servers
-    aq = cxn.artiq_server
+    fg = cxn.function_generator_server
     sa = cxn.spectrum_analyzer_server
     dv = cxn.data_vault
     cr = cxn.context()
     print("Server connection successful.")
 
-    # check DDS attenuation values are valid
-    if amax(dds_att_list_dbm) < 2:
-        raise Exception("Error: value in dds attenuation list is too high.")
-
-    # set up DDSs
-    aq.dds_toggle(dds_channel, 1)
-    aq.dds_amplitude(dds_channel, float(dds_amp_pct / 100))
-    print("ARTIQ DDS setup successful.")
+    # set up function generator
+    fg.toggle(1)
+    fg.amplitude()
+    print("Function generator setup successful.")
 
     # set up spectrum analyzer
-    sa.select_device()
+    sa.select_device(1)
     sa.attenuation(sa_att_db)
     sa.frequency_span(sa_span_hz)
+    sa.frequency_center(rf_freq_1_hz)
     sa.bandwidth_resolution(sa_bandwidth_hz)
-    sa.marker_toggle(1, True)
-    sa.peak_search(True)
+    # set up spectrum analyzer markers
+    for i in range(5):
+        sa.marker_toggle(i, True)
+        sa.marker_mode(i, 0)
+
+    #sa.peak_search(True)
     # average readings
     # TODO: set up averaging on device
     print("Spectrum analyzer setup successful.")
@@ -73,7 +77,7 @@ try:
         return sa_pow
 
     # sweep attenuation
-    for att_val in dds_att_list_dbm:
+    for att_val in rf_att_list_dbm:
 
         # create dataset
         dataset_title_tmp = '{}: {} dB'.format(name_tmp, str(att_val).replace('.', '_'))
@@ -86,14 +90,11 @@ try:
         dv.add_parameter("attenuation", att_val, context=cr)
         dv.add_parameter("amplitude_fractional", dds_amp_pct, context=cr)
 
-        # set attenuation
-        aq.dds_attenuation(dds_channel, att_val)
-
         # sweep frequency
         for freq_val in dds_freq_list_hz:
 
             # set asf
-            aq.dds_frequency(dds_channel, freq_val)
+            fg.dds_frequency(dds_channel, freq_val)
 
             # get power of 0th order
             sa.frequency_center(freq_val)

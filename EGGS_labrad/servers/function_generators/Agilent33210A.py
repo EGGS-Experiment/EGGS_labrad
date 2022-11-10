@@ -19,6 +19,8 @@ class Agilent33210AWrapper(GPIBDeviceWrapper):
         resp = bool(int(resp))
         returnValue(resp)
 
+    def channel(self, chan_num):
+        return 1
 
     # WAVEFORM
     @inlineCallbacks
