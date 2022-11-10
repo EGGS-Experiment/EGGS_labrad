@@ -85,30 +85,30 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     def amplitudeReference(self, ampl):
         if ampl is not None:
             if (ampl > -100) and (ampl < 20):
-                yield self.write(':DISP:WIN:TRAC:Y:SCAL:RLEV {:f}'.format(ampl))
+                yield self.write(':DISP:WIND:TRAC:Y:SCAL:RLEV {:f}'.format(ampl))
             else:
                 raise Exception('Error: display reference value must be in range: [-100, 20].')
-        resp = yield self.query(':DISP:WIN:TRAC:Y:SCAL:RLEV?')
+        resp = yield self.query(':DISP:WIND:TRAC:Y:SCAL:RLEV?')
         returnValue(float(resp))
 
     @inlineCallbacks
     def amplitudeOffset(self, ampl):
         if ampl is not None:
             if (ampl > -300) and (ampl < 300):
-                yield self.write(':DISP:WIN:TRAC:Y:SCAL:RLEV:OFFS {:f}'.format(ampl))
+                yield self.write(':DISP:WIND:TRAC:Y:SCAL:RLEV:OFFS {:f}'.format(ampl))
             else:
                 raise Exception('Error: display offset must be in range: [-300, 300].')
-        resp = yield self.query(':DISP:WIN:TRAC:Y:SCAL:RLEV:OFFS?')
+        resp = yield self.query(':DISP:WIND:TRAC:Y:SCAL:RLEV:OFFS?')
         returnValue(float(resp))
 
     @inlineCallbacks
     def amplitudeScale(self, factor):
         if factor is not None:
             if (factor > 0.1) and (factor < 20):
-                yield self.write(':DISP:WIN:TRAC:Y:SCAL:PDIV {:f}'.format(factor))
+                yield self.write(':DISP:WIND:TRAC:Y:SCAL:PDIV {:f}'.format(factor))
             else:
                 raise Exception('Error: display scale must be in range: [0.1, 20].')
-        resp = yield self.query(':DISP:WIN:TRAC:Y:SCAL:PDIV?')
+        resp = yield self.query(':DISP:WIND:TRAC:Y:SCAL:PDIV?')
         returnValue(float(resp))
 
 
