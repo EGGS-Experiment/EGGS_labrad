@@ -305,7 +305,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).peakSearch(status)
 
-    @setting(412, "Peak Set", channel='v')
+    @setting(412, "Peak Set", channel='i')
     def peakSet(self, c, channel):
         """
         Sets the marker channel at the local peak.

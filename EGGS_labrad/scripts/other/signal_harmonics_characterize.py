@@ -12,16 +12,16 @@ name_tmp = 'Signal Harmonic Characterization'
 
 # function generator parameters
 #dds_amp_1_vpp_list = arange(5, 10 + 0.1, 0.1)
-rf_amp_1_vpp = 5
+rf_amp_1_vpp = 2
 rf_freq_1_hz = 19e6
 
-rf_amp_2_vpp_list = arange(0.5, 4, 0.01)
-rf_freq_2_list_hz = arange(300, 2000, 5) * 1e3
+rf_amp_2_vpp_list = arange(0.5, 2, 0.1)
+rf_freq_2_list_hz = arange(300, 2000, 1) * 1e3
 
 # device parameters
 sa_att_db = 10
 sa_span_hz = 5e6
-sa_bandwidth_hz = 1e3
+sa_bandwidth_hz = 1e4
 sa_num_markers = 5
 
 
@@ -39,6 +39,7 @@ try:
     print("Server connection successful.")
 
     # set up function generator
+    fg.select_device(1)
     fg.channel(1)
     fg.toggle(1)
     fg.amplitude(rf_amp_1_vpp)
@@ -53,12 +54,10 @@ try:
     sa.frequency_center(rf_freq_1_hz)
     sa.bandwidth_resolution(sa_bandwidth_hz)
     # set up spectrum analyzer markers
-    for i in range(sa_num_markers):
+    for i in range(1, sa_num_markers + 1):
         sa.marker_toggle(i, True)
         sa.marker_mode(i, 0)
         sa.marker_trace(i, 1)
-    # average readings
-    # TODO: set up averaging on device
     print("Spectrum analyzer setup successful.")
 
     # create dataset
@@ -70,7 +69,6 @@ try:
     def _get_pow(channel):
         sa_pow = 0
         try:
-            sleep(0.5)
             sa_pow = sa.marker_amplitude(channel)
         except Exception as e:
             print("fehler welp")
@@ -101,25 +99,37 @@ try:
         dv.add_parameter("modulation_frequency_hz", freq_val_hz, context=cr)
 
         # set frequency
-        fg.frequency(freq_val_hz)
+        fg.gpib_write('FREQ:CH2 {:f}'.format(freq_val_hz))
+        sleep(1)
+        #fg.frequency(freq_val_hz)
 
         # get peaks
-        for i in range(sa_num_markers):
-            # ith marker should be on ith peak
-            for j in range(i):
+        for i in range(1, sa_num_markers + 1):
+            # set marker at peak
+            sa.peak_set(i)
+            sleep(0.5)
+
+            # move ith marker to ith peak
+            for j in range(i - 1):
                 sa.peak_next(i)
+                sleep(0.5)
 
         # sweep modulation amplitude
         for amp_val_vpp in rf_amp_2_vpp_list:
 
             # set amplitude
-            fg.amplitude(amp_val_vpp)
+            # try:
+            #     fg.channel(2)
+            #     fg.amplitude(amp_val_vpp)
+            # except Exception as e:
+            fg.gpib_write('VOLT:CH2 {}'.format(amp_val_vpp))
+            sleep(1)
 
             # results holder
             res_list = []
 
             # get marker values
-            for i in range(sa_num_markers):
+            for i in range(1, sa_num_markers + 1):
                 res_list.append(_get_pow(i))
 
             # record result
