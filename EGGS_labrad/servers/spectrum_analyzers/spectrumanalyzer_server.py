@@ -316,16 +316,14 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         # todo
         return self.selectedDevice(c).peakSet(status)
 
-    @setting(421, "Peak Next", status='v', returns='b')
-    def peakNext(self, c, status=None):
+    @setting(421, "Peak Next", channel='i')
+    def peakNext(self, c, channel):
         """
+        Move the marker to the next peak.
         Arguments:
-            status  (bool): the status of signal tracking.
-        Returns:
-                    (bool): the status of signal tracking.
+            channel (int): the marker channel to get/set.
         """
-        # todo
-        return self.selectedDevice(c).peakNext(status)
+        self.selectedDevice(c).peakNext(channel)
 
 
     # BANDWIDTH

@@ -22,6 +22,7 @@ rf_freq_2_list_hz = arange(300, 2000, 5) * 1e3
 sa_att_db = 10
 sa_span_hz = 5e6
 sa_bandwidth_hz = 1e3
+sa_num_markers = 5
 
 
 # main loop
@@ -38,8 +39,11 @@ try:
     print("Server connection successful.")
 
     # set up function generator
+    fg.channel(1)
     fg.toggle(1)
-    fg.amplitude()
+    fg.amplitude(rf_amp_1_vpp)
+    fg.frequency(rf_freq_1_hz)
+    fg.channel(2)
     print("Function generator setup successful.")
 
     # set up spectrum analyzer
@@ -49,11 +53,10 @@ try:
     sa.frequency_center(rf_freq_1_hz)
     sa.bandwidth_resolution(sa_bandwidth_hz)
     # set up spectrum analyzer markers
-    for i in range(5):
+    for i in range(sa_num_markers):
         sa.marker_toggle(i, True)
         sa.marker_mode(i, 0)
-
-    #sa.peak_search(True)
+        sa.marker_trace(i, 1)
     # average readings
     # TODO: set up averaging on device
     print("Spectrum analyzer setup successful.")
@@ -64,53 +67,64 @@ try:
     print("Data vault successfully setup.")
 
     # wrap readout in error handling to prevent problems
-    def _get_pow():
+    def _get_pow(channel):
         sa_pow = 0
         try:
-            sleep(2)
-            sa_pow = sa.marker_amplitude(1)
+            sleep(0.5)
+            sa_pow = sa.marker_amplitude(channel)
         except Exception as e:
             print("fehler welp")
-            sleep(5)
-            sa_pow = sa.marker_amplitude(1)
+            sleep(2)
+            sa_pow = sa.marker_amplitude(channel)
 
         return sa_pow
 
-    # sweep attenuation
-    for att_val in rf_att_list_dbm:
+
+    # MAIN LOOP
+    # sweep frequency
+    for freq_val_hz in rf_freq_2_list_hz:
 
         # create dataset
-        dataset_title_tmp = '{}: {} dB'.format(name_tmp, str(att_val).replace('.', '_'))
+        dataset_title_tmp = '{}: {} kHz'.format(name_tmp, str(freq_val_hz / 1e3).replace('.', '_'))
         dv.new(
             dataset_title_tmp,
-            [('Frequency', 'Hz')],
-            [('0th Order Harmonic', 'Power', 'dBm'), ('1st Order Harmonic', 'Power', 'dBm'), ('2nd Order Harmonic', 'Power', 'dBm')],
+            [('Amplitude', 'Vpp')],
+            [
+                ('1st Order Harmonic', 'Power', 'dBm'),
+                ('2nd Order Harmonic (Left)', 'Power', 'dBm'), ('2nd Order Harmonic (Right)', 'Power', 'dBm'),
+                ('3rd Order Harmonic (Left)', 'Power', 'dBm'), ('3rd Order Harmonic (Right)', 'Power', 'dBm')
+            ],
             context=cr
         )
-        dv.add_parameter("attenuation", att_val, context=cr)
-        dv.add_parameter("amplitude_fractional", dds_amp_pct, context=cr)
+        dv.add_parameter("carrier_frequency_hz", rf_freq_1_hz, context=cr)
+        dv.add_parameter("carrier_amplitude_vpp", rf_amp_1_vpp, context=cr)
+        dv.add_parameter("modulation_frequency_hz", freq_val_hz, context=cr)
 
-        # sweep frequency
-        for freq_val in dds_freq_list_hz:
+        # set frequency
+        fg.frequency(freq_val_hz)
 
-            # set asf
-            fg.dds_frequency(dds_channel, freq_val)
+        # get peaks
+        for i in range(sa_num_markers):
+            # ith marker should be on ith peak
+            for j in range(i):
+                sa.peak_next(i)
 
-            # get power of 0th order
-            sa.frequency_center(freq_val)
-            zeroth_power = _get_pow()
+        # sweep modulation amplitude
+        for amp_val_vpp in rf_amp_2_vpp_list:
 
-            # get power of 1st order harmonic
-            sa.frequency_center(2 * freq_val)
-            first_power = _get_pow()
+            # set amplitude
+            fg.amplitude(amp_val_vpp)
 
-            # get power of 2nd order harmonic
-            sa.frequency_center(3 * freq_val)
-            second_power = _get_pow()
+            # results holder
+            res_list = []
+
+            # get marker values
+            for i in range(sa_num_markers):
+                res_list.append(_get_pow(i))
 
             # record result
-            print("freq {:f}: 0th = {:f}, first = {:f}, second = {:f}".format(freq_val, zeroth_power, first_power, second_power))
-            dv.add(freq_val, zeroth_power, first_power, second_power, context=cr)
+            print("amp {:f}: 0th = {:f}, first = {:f}, second = {:f}".format(amp_val_vpp, res_list[0], res_list[1], res_list[3]))
+            dv.add([amp_val_vpp] + res_list, context=cr)
 
 except Exception as e:
     print("Error:", e)

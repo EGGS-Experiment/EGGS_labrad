@@ -176,6 +176,7 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     # PEAK
     @inlineCallbacks
     def peakSearch(self, status):
+        # todo: fix, this is wrong
         if status is not None:
             yield self.write(':CALC:MARK:CPE:STAT {:d}'.format(status))
         resp = yield self.query(':CALC:MARK:CPE:STAT?')
@@ -187,9 +188,8 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
         pass
 
     @inlineCallbacks
-    def peakNext(self, status):
-        # todo:
-        pass
+    def peakNext(self, channel):
+        yield self.write(':CALC:MARK{:d}:NEXT'.format(channel))
 
 
     # BANDWIDTH

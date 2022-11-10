@@ -80,7 +80,7 @@ try:
         dv.new(
             dataset_title_tmp,
             [('Frequency', 'Hz')],
-            [('0th Order Harmonic', 'Power', 'dBm'), ('1st Order Harmonic', 'Power', 'dBm'), ('2nd Order Harmonic', 'Power', 'dBm')],
+            [('1st Order Harmonic', 'Power', 'dBm'), ('2nd Order Harmonic', 'Power', 'dBm'), ('3rd Order Harmonic', 'Power', 'dBm')],
             context=cr
         )
         dv.add_parameter("attenuation", att_val, context=cr)
