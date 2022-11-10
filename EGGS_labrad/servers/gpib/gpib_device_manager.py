@@ -5,7 +5,8 @@
 #     function because this setting could not be properly accessed through the
 #     LabRAD manager at the time of execution.
 # 1.4.0: Updated for Python 3
-# 1.4.1: Case is ignored when matching device names.
+# 1.4.1: Case is ignored when matching device names
+# 1.4.2: Changed parseIDNResponse function to account for problems where string has more than 4 parts
 """
 ### BEGIN NODE INFO
 [info]
@@ -35,7 +36,7 @@ def parseIDNResponse(s):
     """
     Parse the response from *IDN? to get mfr and model info.
     """
-    mfr, model, ver, rev = s.split(',')
+    mfr, model, ver, rev = s.split(',', 3)
     # convert response to uppercase
     return mfr.strip().upper() + ' ' + model.strip().upper()
 
