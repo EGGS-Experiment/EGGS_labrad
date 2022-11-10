@@ -111,7 +111,8 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
         resp = yield self.query(':DISP:WIND:TRAC:Y:SCAL:PDIV?')
         returnValue(float(resp))
 
-
+    # todo: account for OFF in marker mode
+    # todo: marker track problem
     # MARKER SETUP
     @inlineCallbacks
     def markerToggle(self, channel, status):
@@ -150,8 +151,8 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def markerTrack(self, channel, status):
         if status is not None:
-            yield self.write(':CALC:MARK{:d}:TRAC:STAT {:d}'.format(channel, status))
-        resp = yield self.query(':CALC:MARK{:d}:TRAC:STAT?'.format(channel))
+            yield self.write(':CALC:MARK{:d}:TRCK:STAT {:d}'.format(channel, status))
+        resp = yield self.query(':CALC:MARK{:d}:TRCK:STAT?'.format(channel))
         returnValue(bool(int(resp)))
 
 
