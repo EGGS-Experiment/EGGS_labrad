@@ -205,22 +205,22 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def bandwidthResolution(self, bw):
         if bw is not None:
-            if (bw > 10) and (bw < 1e7):
+            if (bw > 1) and (bw < 1e7):
                 yield self.write(':SENS:BAND:RES {:f}'.format(bw))
             else:
-                raise Exception('Error: resolution bandwidth must be in range: [10, 1e7].')
+                raise Exception('Error: resolution bandwidth must be in range: [1, 1e7].')
         resp = yield self.query(':SENS:BAND:RES?')
-        returnValue(int(resp))
+        returnValue(float(resp))
 
     @inlineCallbacks
     def bandwidthVideo(self, bw):
         if bw is not None:
-            if (bw > 10) and (bw < 1e7):
+            if (bw > 1) and (bw < 1e7):
                 yield self.write(':SENS:BAND:VID {:f}'.format(bw))
             else:
-                raise Exception('Error: video bandwidth must be in range: [10, 1e7].')
+                raise Exception('Error: video bandwidth must be in range: [1, 1e7].')
         resp = yield self.query(':SENS:BAND:VID?')
-        returnValue(int(resp))
+        returnValue(float(resp))
 
 
     # TRACE

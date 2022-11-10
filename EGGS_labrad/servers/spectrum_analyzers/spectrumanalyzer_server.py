@@ -340,27 +340,27 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).bandwidthSweepTime(time)
 
-    @setting(521, "Bandwidth Resolution", bw='i', returns='i')
+    @setting(521, "Bandwidth Resolution", bw='v', returns='v')
     def bandwidthResolution(self, c, bw=None):
         """
         Get/set the resolution bandwidth.
         Increasing resolution bandwidth increases the sweep time.
         Arguments:
-            bw      (int): the resolution bandwidth (in Hz).
+            bw      (float) : the resolution bandwidth (in Hz).
         Returns:
-                    (int): the resolution bandwidth (in Hz).
+                    (float) : the resolution bandwidth (in Hz).
         """
         return self.selectedDevice(c).bandwidthResolution(bw)
 
-    @setting(522, "Bandwidth Video", bw='i', returns='i')
+    @setting(522, "Bandwidth Video", bw='v', returns='v')
     def bandwidthVideo(self, c, bw=None):
         """
         Get/set the video bandwidth.
-        Increasing video bandwidth increases the sweep time.
+            Increasing video bandwidth increases the sweep time.
         Arguments:
-            bw      (int): the video bandwidth (in Hz).
+            bw      (float) : the video bandwidth (in Hz).
         Returns:
-                    (int): the video bandwidth (in Hz).
+                    (float) : the video bandwidth (in Hz).
         """
         return self.selectedDevice(c).bandwidthVideo(bw)
 
