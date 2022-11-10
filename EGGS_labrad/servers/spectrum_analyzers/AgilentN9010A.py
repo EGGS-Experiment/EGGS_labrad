@@ -183,13 +183,13 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
         returnValue(bool(int(resp)))
 
     @inlineCallbacks
-    def peakSet(self, status):
-        # todo:
-        pass
+    def peakSet(self, channel):
+        yield self.write(':CALC:MARK{:d}:MAX'.format(channel))
+
 
     @inlineCallbacks
     def peakNext(self, channel):
-        yield self.write(':CALC:MARK{:d}:NEXT'.format(channel))
+        yield self.write(':CALC:MARK{:d}:MAX:NEXT'.format(channel))
 
 
     # BANDWIDTH
