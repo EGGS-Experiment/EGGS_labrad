@@ -13,7 +13,7 @@ name_tmp = 'Urukul Harmonic Characterization'
 # dds parameters
 dds_channel = 'urukul0_ch3'
 dds_amp_pct = 50
-dds_att_list_dbm = arange(10, 20)
+dds_att_list_dbm = [20, 25, 30, 5]
 dds_freq_list_hz = arange(300, 2000, 5) * 1e3
 
 # device parameters

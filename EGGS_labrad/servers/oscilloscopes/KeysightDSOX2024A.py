@@ -1,8 +1,7 @@
 import numpy as np
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from labrad.units import WithUnit
-from labrad.types import Value
+
 from labrad.gpib import GPIBDeviceWrapper
 
 
