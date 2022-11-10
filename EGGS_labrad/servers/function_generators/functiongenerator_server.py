@@ -19,6 +19,7 @@ from labrad.gpib import GPIBManagedServer
 
 # import device wrappers
 from Agilent33210A import Agilent33210AWrapper
+from RigolDG1022 import RigolDG1022Wrapper
 
 
 class FunctionGeneratorServer(GPIBManagedServer):
@@ -29,7 +30,8 @@ class FunctionGeneratorServer(GPIBManagedServer):
     name = 'Function Generator Server'
 
     deviceWrappers = {
-        'AGILENT TECHNOLOGIES 33210A': Agilent33210AWrapper
+        'AGILENT TECHNOLOGIES 33210A': Agilent33210AWrapper,
+        'RIGOL TECHNOLOGIES DG1022': RigolDG1022Wrapper
     }
 
 
@@ -55,6 +57,20 @@ class FunctionGeneratorServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
                 status = bool(status)
+        return self.selectedDevice(c).toggle(status)
+
+    @setting(131, 'Channel', chan_num='i', returns='b')
+    def channel(self, c, status=None):
+        """
+        Set the channel number. Default is 0.
+            This function allows the server to accommodate function generators with multiple outputs
+            without having to specify a channel number in each function argument.
+            If the function generator only has one output, this function does nothing.
+        Arguments:
+            status  (int)   : the channel number.
+        Returns:
+                    (int)   : the channel number.
+        """
         return self.selectedDevice(c).toggle(status)
 
 

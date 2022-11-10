@@ -30,11 +30,11 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def attenuation(self, att):
         if att is not None:
-            if (att > 0) and (att < 30):
-                yield self.write(':SENS:POW:RF:ATT {:f}'.format(att))
+            if (att > 0) and (att < 60):
+                yield self.write(':POW:ATT {:f}'.format(att))
             else:
-                raise Exception('Error: RF attenuation must be in range: [0, 30].')
-        resp = yield self.query(':SENS:POW:RF:ATT?')
+                raise Exception('Error: RF attenuation must be in range: [0, 60].')
+        resp = yield self.query(':POW:ATT?')
         returnValue(float(resp))
 
 
