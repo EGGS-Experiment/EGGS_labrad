@@ -5,6 +5,8 @@ import labrad
 from time import sleep
 from numpy import arange, linspace, zeros, mean, amax
 
+# TODO: SET MODULATION TO MAX BEFORE SETTING MARKERS SO THE MARKERS KNOW WHERE TO BE
+
 from EGGS_labrad.clients import createTrunk
 
 # experiment parameters
@@ -12,16 +14,16 @@ name_tmp = 'Signal Harmonic Characterization'
 
 # function generator parameters
 #dds_amp_1_vpp_list = arange(5, 10 + 0.1, 0.1)
-rf_amp_1_vpp = 2
+rf_amp_1_vpp = 2.390
 rf_freq_1_hz = 19e6
 
 rf_amp_2_vpp_list = arange(0.5, 2, 0.1)
-rf_freq_2_list_hz = arange(300, 2000, 1) * 1e3
+rf_freq_2_list_hz = arange(300, 2000, 10) * 1e3
 
 # device parameters
 sa_att_db = 10
 sa_span_hz = 5e6
-sa_bandwidth_hz = 1e4
+sa_bandwidth_hz = 2.5e4
 sa_num_markers = 5
 
 
@@ -41,14 +43,14 @@ try:
     # set up function generator
     fg.select_device(1)
     fg.channel(1)
-    fg.toggle(1)
-    fg.amplitude(rf_amp_1_vpp)
-    fg.frequency(rf_freq_1_hz)
-    fg.channel(2)
+    # fg.toggle(1)
+    # fg.amplitude(rf_amp_1_vpp)
+    # fg.frequency(rf_freq_1_hz)
+    # fg.channel(1)
     print("Function generator setup successful.")
 
     # set up spectrum analyzer
-    sa.select_device(1)
+    sa.select_device(0)
     sa.attenuation(sa_att_db)
     sa.frequency_span(sa_span_hz)
     sa.frequency_center(rf_freq_1_hz)
@@ -99,7 +101,7 @@ try:
         dv.add_parameter("modulation_frequency_hz", freq_val_hz, context=cr)
 
         # set frequency
-        fg.gpib_write('FREQ:CH2 {:f}'.format(freq_val_hz))
+        fg.gpib_write('FREQ {:f}'.format(freq_val_hz))
         sleep(1)
         #fg.frequency(freq_val_hz)
 
@@ -122,7 +124,7 @@ try:
             #     fg.channel(2)
             #     fg.amplitude(amp_val_vpp)
             # except Exception as e:
-            fg.gpib_write('VOLT:CH2 {}'.format(amp_val_vpp))
+            fg.gpib_write('VOLT {}'.format(amp_val_vpp))
             sleep(1)
 
             # results holder
