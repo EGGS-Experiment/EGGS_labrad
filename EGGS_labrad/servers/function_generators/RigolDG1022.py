@@ -54,6 +54,25 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
         # getter
         return self.channel_num
 
+    @inlineCallbacks
+    def sync(self, status):
+        # setter
+        if status is not None:
+            if status is True:
+                yield self.write('OUTP:SYNC ON')
+            else:
+                yield self.write('OUTP:SYNC OFF')
+
+        # getter
+        resp = yield self.query('OUTP:SYNC?')
+        resp = resp.split(' ')[-1].strip()
+        if resp == 'ON':
+            returnValue(True)
+        elif resp == 'OFF':
+            returnValue(True)
+        else:
+            raise Exception("Error: invalid device response: {}".format(resp))
+
 
     # WAVEFORM
     @inlineCallbacks

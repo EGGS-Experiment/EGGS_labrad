@@ -73,6 +73,17 @@ class FunctionGeneratorServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).channel(chan_num)
 
+    @setting(141, 'Sync', status='b', returns='b')
+    def sync(self, c, status=None):
+        """
+        Toggle the TTL sync signal output.
+        Arguments:
+            status  (bool)  : the status of the SYNC output signal.
+        Returns:
+                    (bool)  : the status of the SYNC output signal.
+        """
+        return self.selectedDevice(c).channel(status)
+
 
     # WAVEFORM
     @setting(211, 'Function', shape='s', returns='s')
