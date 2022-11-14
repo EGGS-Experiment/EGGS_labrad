@@ -286,6 +286,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
 
 
     # PEAK
+    # todo: make explicitly known that this does continuous peak tracking and add marker channel as an arg
     @setting(411, "Peak Search", status=['b', 'i'], returns='b')
     def peakSearch(self, c, status=None):
         """

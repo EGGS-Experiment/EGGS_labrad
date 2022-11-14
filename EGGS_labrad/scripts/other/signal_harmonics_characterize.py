@@ -17,14 +17,14 @@ name_tmp = 'Signal Harmonic Characterization'
 rf_amp_1_vpp = 2.390
 rf_freq_1_hz = 19e6
 
-rf_amp_2_vpp_list = arange(0.5, 2, 0.1)
+rf_amp_2_vpp_list = arange(0.01, 0.1, 0.01)
 rf_freq_2_list_hz = arange(300, 2000, 10) * 1e3
 
 # device parameters
-sa_att_db = 10
-sa_span_hz = 5e6
-sa_bandwidth_hz = 2.5e4
-sa_num_markers = 5
+sa_att_db = 5
+sa_span_hz = 4e6
+sa_bandwidth_hz = 1e4
+sa_num_markers = 2
 
 
 # main loop
@@ -41,8 +41,8 @@ try:
     print("Server connection successful.")
 
     # set up function generator
-    fg.select_device(1)
-    fg.channel(1)
+    fg.select_device(0)
+    #fg.channel(1)
     # fg.toggle(1)
     # fg.amplitude(rf_amp_1_vpp)
     # fg.frequency(rf_freq_1_hz)
@@ -96,20 +96,23 @@ try:
             ],
             context=cr
         )
-        dv.add_parameter("carrier_frequency_hz", rf_freq_1_hz, context=cr)
-        dv.add_parameter("carrier_amplitude_vpp", rf_amp_1_vpp, context=cr)
-        dv.add_parameter("modulation_frequency_hz", freq_val_hz, context=cr)
+        # dv.add_parameter("carrier_frequency_hz", rf_freq_1_hz, context=cr)
+        # dv.add_parameter("carrier_amplitude_vpp", rf_amp_1_vpp, context=cr)
+        # dv.add_parameter("modulation_frequency_hz", freq_val_hz, context=cr)
 
         # set frequency
-        fg.gpib_write('FREQ {:f}'.format(freq_val_hz))
+        #fg.gpib_write('FREQ {:f}'.format(freq_val_hz))
         sleep(1)
-        #fg.frequency(freq_val_hz)
+        fg.frequency(freq_val_hz)
 
         # get peaks
         for i in range(1, sa_num_markers + 1):
             # set marker at peak
-            sa.peak_set(i)
-            sleep(0.5)
+            try:
+                sa.peak_set(i)
+                sleep(0.5)
+            except:
+                print("Error setting peak: {}".format(i))
 
             # move ith marker to ith peak
             for j in range(i - 1):
@@ -125,6 +128,7 @@ try:
             #     fg.amplitude(amp_val_vpp)
             # except Exception as e:
             fg.gpib_write('VOLT {}'.format(amp_val_vpp))
+            #fg.amplitude(amp_val_vpp)
             sleep(1)
 
             # results holder
