@@ -50,7 +50,7 @@ class Agilent33210AWrapper(GPIBDeviceWrapper):
     def amplitude(self, ampl):
         # setter
         if ampl:
-            if (ampl < 1e1) and (ampl > 1e-2):
+            if (ampl <= 1e1) and (ampl >= 1e-2):
                 yield self.write('VOLT {:f}'.format(ampl))
             else:
                 raise Exception('Error: invalid input. Amplitude must be in range [1e-2 Vpp, 1e1 Vpp].')

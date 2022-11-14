@@ -5,7 +5,6 @@ import labrad
 from time import sleep
 from numpy import arange, linspace, zeros, mean, amax
 
-# TODO: SET MODULATION TO MAX BEFORE SETTING MARKERS SO THE MARKERS KNOW WHERE TO BE
 
 from EGGS_labrad.clients import createTrunk
 
@@ -21,9 +20,9 @@ rf_amp_2_vpp_list = arange(0.01, 0.1, 0.01)
 rf_freq_2_list_hz = arange(300, 2000, 10) * 1e3
 
 # device parameters
-sa_att_db = 5
-sa_span_hz = 4e6
-sa_bandwidth_hz = 1e4
+sa_att_int_db = 5
+sa_att_ext_db = 10
+sa_bandwidth_hz = 3e3
 sa_num_markers = 2
 
 
@@ -51,9 +50,7 @@ try:
 
     # set up spectrum analyzer
     sa.select_device(0)
-    sa.attenuation(sa_att_db)
-    sa.frequency_span(sa_span_hz)
-    sa.frequency_center(rf_freq_1_hz)
+    sa.attenuation(sa_att_int_db)
     sa.bandwidth_resolution(sa_bandwidth_hz)
     # set up spectrum analyzer markers
     for i in range(1, sa_num_markers + 1):
@@ -65,7 +62,7 @@ try:
     # create dataset
     trunk_tmp = createTrunk(name_tmp)
     dv.cd(trunk_tmp, True, context=cr)
-    print("Data vault successfully setup.")
+    print("Data vault setup successful.")
 
     # wrap readout in error handling to prevent problems
     def _get_pow(channel):
@@ -77,7 +74,7 @@ try:
             sleep(2)
             sa_pow = sa.marker_amplitude(channel)
 
-        return sa_pow
+        return sa_pow + sa_att_ext_db
 
 
     # MAIN LOOP
@@ -91,8 +88,8 @@ try:
             [('Amplitude', 'Vpp')],
             [
                 ('1st Order Harmonic', 'Power', 'dBm'),
-                ('2nd Order Harmonic (Left)', 'Power', 'dBm'), ('2nd Order Harmonic (Right)', 'Power', 'dBm'),
-                ('3rd Order Harmonic (Left)', 'Power', 'dBm'), ('3rd Order Harmonic (Right)', 'Power', 'dBm')
+                ('2nd Order Harmonic (Left)', 'Power', 'dBm')#, ('2nd Order Harmonic (Right)', 'Power', 'dBm'),
+                #('3rd Order Harmonic (Left)', 'Power', 'dBm'), ('3rd Order Harmonic (Right)', 'Power', 'dBm')
             ],
             context=cr
         )
@@ -102,22 +99,37 @@ try:
 
         # set frequency
         #fg.gpib_write('FREQ {:f}'.format(freq_val_hz))
-        sleep(1)
         fg.frequency(freq_val_hz)
 
-        # get peaks
-        for i in range(1, sa_num_markers + 1):
-            # set marker at peak
-            try:
-                sa.peak_set(i)
-                sleep(0.5)
-            except:
-                print("Error setting peak: {}".format(i))
+        # set correct span
+        sa.frequency_start(freq_val_hz - 50 * 1e3)
+        sa.frequency_stop(freq_val_hz * 2 + 100 * 1e3)
 
-            # move ith marker to ith peak
-            for j in range(i - 1):
-                sa.peak_next(i)
-                sleep(0.5)
+        # increase attenuation to set peaks correctly
+        sa_att_tmp = sa.attenuation(25)
+        if sa_att_tmp == 25:
+            # set large amplitude so harmonics are more apparent and peaks are easier to find
+            #fg.amplitude(rf_amp_2_vpp_list[-1])
+            fg.amplitude(1)
+            sleep(1)
+
+            # get peaks
+            for i in range(1, sa_num_markers + 1):
+                try:
+                    # set marker at peak
+                    sa.peak_set(i)
+                    sleep(0.5)
+
+                    # move ith marker to ith peak
+                    for j in range(i - 1):
+                        sa.peak_next(i)
+                        sleep(0.5)
+                except:
+                    print("Error setting peak: {}".format(i))
+
+            # restore settings
+            fg.amplitude(rf_amp_2_vpp_list[0])
+            sa.attenuation(sa_att_int_db)
 
         # sweep modulation amplitude
         for amp_val_vpp in rf_amp_2_vpp_list:
@@ -127,8 +139,8 @@ try:
             #     fg.channel(2)
             #     fg.amplitude(amp_val_vpp)
             # except Exception as e:
-            fg.gpib_write('VOLT {}'.format(amp_val_vpp))
-            #fg.amplitude(amp_val_vpp)
+            #fg.gpib_write('VOLT {}'.format(amp_val_vpp))
+            fg.amplitude(amp_val_vpp)
             sleep(1)
 
             # results holder
@@ -139,7 +151,7 @@ try:
                 res_list.append(_get_pow(i))
 
             # record result
-            print("amp {:f}: 0th = {:f}, first = {:f}, second = {:f}".format(amp_val_vpp, res_list[0], res_list[1], res_list[3]))
+            print("amp {:f}: 0th = {:f}, first = {:f}".format(amp_val_vpp, res_list[0], res_list[1]))
             dv.add([amp_val_vpp] + res_list, context=cr)
 
 except Exception as e:
