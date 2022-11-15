@@ -67,7 +67,7 @@ GOTO LOOPSTART
 @ECHO LabRAD Autosaver
 @ECHO Optional Arguments:
 @ECHO    -h, --help             show this message and exit
-@ECHO    -d                     set the location to back        (default: \\eric.physics.ucla.edu\groups\motion\.labrad_remote)
+@ECHO    -d                     set the location to back up to  (default: \\eric.physics.ucla.edu\groups\motion\.labrad_remote)
 @ECHO    -t                     set the time between backups    (default: 10 minutes)
 @ECHO:
 
