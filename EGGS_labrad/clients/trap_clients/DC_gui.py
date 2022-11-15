@@ -28,7 +28,6 @@ class AMO8_channel(QFrame):
         chan_num.setAlignment(Qt.AlignRight | Qt.AlignTop)
         self.title = QCustomEditableLabel(title)
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
-        self.title.setAlignment(Qt.AlignLeft)
 
         # dac
         dac_label = QLabel('Output Voltage (V)')
@@ -66,8 +65,8 @@ class AMO8_channel(QFrame):
         self.lockswitch.setChecked(True)
 
         # layout
-        layout.addWidget(chan_num,                  0, 2, 1, 1)
         layout.addWidget(self.title,                0, 0, 1, 3)
+        layout.addWidget(chan_num,                  0, 2, 1, 1)
         layout.addWidget(dac_label,                 1, 0, 1, 2)
         layout.addWidget(self.dac,                  2, 0, 1, 3)
         layout.addWidget(ramp_target_label,         3, 1)
