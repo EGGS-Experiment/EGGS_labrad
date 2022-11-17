@@ -4,7 +4,7 @@
 name = AMO2 Server
 version = 1.0.0
 description = Communicates with the AMO2 box for control of TECs.
-instancename = AMO2Server
+instancename = AMO2 Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
