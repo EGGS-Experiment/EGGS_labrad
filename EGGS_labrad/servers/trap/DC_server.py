@@ -4,7 +4,7 @@
 name = DC Server
 version = 1.0.0
 description = Communicates with the AMO8 box for control of all DC voltages.
-instancename = DCServer
+instancename = DC Server
 
 [startup]
 cmdline = %PYTHON% %FILE%

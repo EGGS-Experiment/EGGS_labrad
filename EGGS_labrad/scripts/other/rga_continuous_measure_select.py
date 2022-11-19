@@ -9,7 +9,7 @@ cxn = labrad.connect()
 # todo: make real script
 
 # parameters
-masses = (1, 2, 10, 40)
+masses = (1, 2, 3, 4, 5, 6, 14, 18, 28, 32, 37, 38, 39, 40, 44)
 
 # get servers
 rga = cxn.rga_server
@@ -30,7 +30,7 @@ res = [0] * len(masses)
 start_time = time()
 
 # start recording
-while time() - start_time < 3600:
+while True:
     # take rga data
     for i, mass in enumerate(masses):
         res[i] = rga.smm_start(mass)
