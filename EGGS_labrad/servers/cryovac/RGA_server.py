@@ -465,7 +465,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         if (mass < 0) or (mass > self.m_max):
             raise Exception('Error: invalid input.')
         # get partial pressure conversion
-        st = yield self._getter('ST', c)
+        st = yield self._getter('SP', c)
         st = 1e-13 / float(st)
         # start a single mass measurement
         msg = 'MR' + str(mass) + _SRS_EOL
