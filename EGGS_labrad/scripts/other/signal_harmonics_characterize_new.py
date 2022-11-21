@@ -22,6 +22,7 @@ rf_freq_2_list_hz = arange(300, 2000, 10) * 1e3
 sa_att_int_db = 10
 sa_att_ext_db = 30
 sa_bandwidth_hz = 25000
+sa_peak_threshold = -95
 
 
 # main loop
@@ -70,7 +71,7 @@ try:
         print('starting amp: {}'.format(amp_val_vpp))
 
         # create dataset
-        dataset_title_tmp = '{}: {} Vpp'.format(name_tmp, str(amp_val_vpp / 1e3).replace('.', '_'))
+        dataset_title_tmp = '{}: {} Vpp'.format(name_tmp, str(amp_val_vpp).replace('.', '_'))
         dv.new(
             dataset_title_tmp,
             [('Modulation Amplitude', 'Vpp')],
@@ -99,23 +100,21 @@ try:
             sleep(0.5)
 
             # get peaks
-            resp = sa.gpib_query('CALC:DATA1:PEAK? -80, 10, AMPL, GTDL')
+            resp = sa.gpib_query('CALC:DATA1:PEAK? {:d}, 10, AMPL, GTDL'.format(sa_peak_threshold))
 
             # parse peaks
             res_list = [float(val) for val in resp.split(',')]
-            res_list[0] = int(res_list[0])
             #freq_list = res_list[2::2]
             amp_list = res_list[1::2]
             amp_list = [amp_val_db + sa_att_ext_db for amp_val_db in amp_list]
 
             # ensure correct number of peaks
-            if len(amp_list) > 3:
-                amp_list = amp_list[:3]
-            elif len(amp_list) < 3:
-                amp_list = [0.0, 0.0, 0.0]
+            if len(amp_list) < 3:
+                print('\tfehler: too few @ {:f} MHz: {}'.format(freq_val_hz/1e6, amp_list))
+                amp_list += [0.0, 0.0, 0.0]
 
             # record result
-            dv.add([freq_val_hz] + amp_list, context=cr)
+            dv.add([freq_val_hz] + amp_list[:3], context=cr)
 
 except Exception as e:
     print("Error:", e)
