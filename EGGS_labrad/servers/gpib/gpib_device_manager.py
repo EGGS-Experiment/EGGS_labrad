@@ -138,11 +138,11 @@ class GPIBDeviceManager(LabradServer):
         or the query fails, the name will be listed as '<unknown>'.
         """
         p = self.client.servers[server].packet()
-        p.address(channel).timeout(Value(1, 's')).write('*CLS').write('*IDN?').read()
+        p.address(channel).timeout(Value(1, 's')).query('*IDN?')
         print('Sending *IDN? to', server, channel)
         resp = None
         try:
-            resp = (yield p.send()).read
+            resp = (yield p.send()).query
             name = parseIDNResponse(resp)
         except Exception as e:
             print('Error sending *IDN? to', server, channel + ':', e)
