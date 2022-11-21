@@ -22,10 +22,7 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     # ATTENUATION
     @inlineCallbacks
     def preamplifier(self, status):
-        if status is not None:
-            yield self.write(':SENS:POW:RF:GAIN:STAT {:d}'.format(status))
-        resp = yield self.query(':SENS:POW:RF:GAIN:STAT?')
-        returnValue(bool(int(resp)))
+        raise NotImplementedError
 
     @inlineCallbacks
     def attenuation(self, att):
