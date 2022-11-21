@@ -6,12 +6,15 @@
 #     LabRAD manager at the time of execution.
 # 1.4.0: Updated for Python 3
 # 1.4.1: Case is ignored when matching device names
-# 1.4.2: Changed parseIDNResponse function to account for problems where string has more than 4 parts
+# 1.4.2:
+#   Changed parseIDNResponse function to account for problems where string has more than 4 parts
+#   Removed *CLS call in lookupDeviceName
+#   fd
 """
 ### BEGIN NODE INFO
 [info]
 name = GPIB Device Manager
-version = 1.4.0
+version = 1.4.2
 description = Manages discovery and lookup of GPIB devices
 
 [startup]
