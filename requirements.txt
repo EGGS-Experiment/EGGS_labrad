@@ -1,5 +1,6 @@
 pyparsing>=2.1.*
 pyOpenSSL >= 18.0.*
+requests>=2.*
 
 numpy>=1.20.3
 pyserial>=3.5

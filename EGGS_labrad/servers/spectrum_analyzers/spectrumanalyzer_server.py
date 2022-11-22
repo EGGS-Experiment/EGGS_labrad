@@ -63,6 +63,16 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         yield dev.autoset()
 
+    @setting(14, "Operation Complete", returns='b')
+    def operationComplete(self, c):
+        """
+        Query whether the current operation has completed.
+        Returns:
+            (bool)  : whether the current operation has completed.
+        """
+        dev = self.selectedDevice(c)
+        return dev.operationComplete()
+
 
     # ATTENUATION
     @setting(21, "Preamplifier", status=['b', 'i'], returns='b')
@@ -236,11 +246,10 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
     def markerTrack(self, c, channel, status=None):
         """
         Get/set the status of signal tracking.
-        If a marker is already active, signal tracking will
-        use that marker to set the center frequency.
-        If a marker does not already exist, signal tracking
-        will create a marker and use it to set the center frequency.
+        If a marker is already active, signal tracking will use that marker to set the center frequency.
+        If a marker does not already exist, signal tracking will create a marker and use it to set the center frequency.
         Arguments:
+            channel (int) : the channel to set signal trcaking for.
             status  (bool): the status of signal tracking.
         Returns:
                     (bool): the status of signal tracking.
@@ -277,6 +286,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
 
 
     # PEAK
+    # todo: make explicitly known that this does continuous peak tracking and add marker channel as an arg
     @setting(411, "Peak Search", status=['b', 'i'], returns='b')
     def peakSearch(self, c, status=None):
         """
@@ -296,27 +306,23 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).peakSearch(status)
 
-    @setting(412, "Peak Set", status='v', returns='b')
-    def peakSet(self, c, status=None):
+    @setting(412, "Peak Set", channel='i')
+    def peakSet(self, c, channel):
         """
+        Sets the marker channel at the local peak.
         Arguments:
-            status  (bool): the status of signal tracking.
-        Returns:
-                    (bool): the status of signal tracking.
+            channel (int): the marker channel to get/set.
         """
-        # todo
-        return self.selectedDevice(c).peakSet(status)
+        return self.selectedDevice(c).peakSet(channel)
 
-    @setting(421, "Peak Next", status='v', returns='b')
-    def peakNext(self, c, status=None):
+    @setting(421, "Peak Next", channel='i')
+    def peakNext(self, c, channel):
         """
+        Move the marker to the next peak.
         Arguments:
-            status  (bool): the status of signal tracking.
-        Returns:
-                    (bool): the status of signal tracking.
+            channel (int): the marker channel to get/set.
         """
-        # todo
-        return self.selectedDevice(c).peakNext(status)
+        self.selectedDevice(c).peakNext(channel)
 
 
     # BANDWIDTH
@@ -331,27 +337,27 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).bandwidthSweepTime(time)
 
-    @setting(521, "Bandwidth Resolution", bw='i', returns='i')
+    @setting(521, "Bandwidth Resolution", bw='v', returns='v')
     def bandwidthResolution(self, c, bw=None):
         """
         Get/set the resolution bandwidth.
         Increasing resolution bandwidth increases the sweep time.
         Arguments:
-            bw      (int): the resolution bandwidth (in Hz).
+            bw      (float) : the resolution bandwidth (in Hz).
         Returns:
-                    (int): the resolution bandwidth (in Hz).
+                    (float) : the resolution bandwidth (in Hz).
         """
         return self.selectedDevice(c).bandwidthResolution(bw)
 
-    @setting(522, "Bandwidth Video", bw='i', returns='i')
+    @setting(522, "Bandwidth Video", bw='v', returns='v')
     def bandwidthVideo(self, c, bw=None):
         """
         Get/set the video bandwidth.
-        Increasing video bandwidth increases the sweep time.
+            Increasing video bandwidth increases the sweep time.
         Arguments:
-            bw      (int): the video bandwidth (in Hz).
+            bw      (float) : the video bandwidth (in Hz).
         Returns:
-                    (int): the video bandwidth (in Hz).
+                    (float) : the video bandwidth (in Hz).
         """
         return self.selectedDevice(c).bandwidthVideo(bw)
 

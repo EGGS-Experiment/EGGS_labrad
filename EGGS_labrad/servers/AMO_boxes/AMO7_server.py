@@ -4,7 +4,7 @@
 name = AMO7 Server
 version = 1.0.0
 description = Communicates with the AMO7 stepper motor driver box.
-instancename = AMO7Server
+instancename = AMO7 Server
 
 [startup]
 cmdline = %PYTHON% %FILE%

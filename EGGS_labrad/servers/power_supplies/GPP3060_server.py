@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Lakeshore336 Server
+name = GPP3060 Server
 version = 1.0
-description = Talks to the Lakeshore336 Temperature Controller
-instancename = Lakeshore336 Server
+description = Talks to the GW Instek GPP3060 Power Supply.
+instancename = GPP3060Server
 
 [startup]
 cmdline = %PYTHON% %FILE%

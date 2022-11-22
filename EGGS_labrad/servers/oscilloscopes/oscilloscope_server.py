@@ -74,6 +74,16 @@ class OscilloscopeServer(GPIBManagedServer):
         dev = self.selectedDevice(c)
         yield dev.autoscale()
 
+    @setting(14, "Operation Complete", returns='b')
+    def operationComplete(self, c):
+        """
+        Query whether the current operation has completed.
+        Returns:
+            (bool)  : whether the current operation has completed.
+        """
+        dev = self.selectedDevice(c)
+        return dev.operationComplete()
+
 
     # CHANNEL
     @setting(100, "Channel Info", channel='i', returns='(bvvvsb)')

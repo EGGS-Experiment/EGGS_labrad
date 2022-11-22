@@ -8,7 +8,7 @@
 SET PROG_HOME=%~dp0
 
 @REM: Prepare LabRAD CMD
-CALL "%PROG_HOME%\prepare_labrad.bat"
+CALL "%PROG_HOME%\labrad_prepare.bat"
 
 @REM: Parse arguments for server activation
 SET /A server_flag=0

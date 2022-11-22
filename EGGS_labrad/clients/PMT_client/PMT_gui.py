@@ -76,7 +76,7 @@ class PMT_gui(QFrame):
         self.poll_interval_label = QLabel('Poll Interval (s)')
         self.poll_interval = QDoubleSpinBox()
         self.poll_interval.setMinimum(.5)
-        self.poll_interval.setMaximum(20)
+        self.poll_interval.setMaximum(600)
         self.poll_interval.setSingleStep(1)
         self.poll_interval.setDecimals(1)
         self.poll_interval.setAlignment(Qt.AlignRight)

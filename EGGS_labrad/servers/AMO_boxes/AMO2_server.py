@@ -4,7 +4,7 @@
 name = AMO2 Server
 version = 1.0.0
 description = Communicates with the AMO2 box for control of TECs.
-instancename = AMO2Server
+instancename = AMO2 Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -114,7 +114,7 @@ class AMO2Server(SerialDeviceServer, PollingServer):
 
         # parse
         resp = float(resp.strip())
-        self.notifyOtherListeners(c, resp, self.current_update)
+        self.current_update(resp)
         returnValue(resp)
 
     @setting(122, 'Temperature', returns='v')
@@ -132,7 +132,7 @@ class AMO2Server(SerialDeviceServer, PollingServer):
 
         # parse
         resp = float(resp[:-2])
-        self.notifyOtherListeners(c, resp, self.temperature_update)
+        self.temperature_update(resp)
         returnValue(resp)
 
 

@@ -4,7 +4,7 @@
 name = AMO8 Server
 version = 1.0.0
 description = Communicates with the AMO8 box for control of all DC voltages.
-instancename = AMO8Server
+instancename = AMO8 Server
 
 [startup]
 cmdline = %PYTHON% %FILE%

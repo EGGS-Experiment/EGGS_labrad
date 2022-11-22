@@ -22,19 +22,16 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     # ATTENUATION
     @inlineCallbacks
     def preamplifier(self, status):
-        if status is not None:
-            yield self.write(':SENS:POW:RF:GAIN:STAT {:d}'.format(status))
-        resp = yield self.query(':SENS:POW:RF:GAIN:STAT?')
-        returnValue(bool(int(resp)))
+        raise NotImplementedError
 
     @inlineCallbacks
     def attenuation(self, att):
         if att is not None:
-            if (att > 0) and (att < 30):
-                yield self.write(':SENS:POW:RF:ATT {:f}'.format(att))
+            if (att > 0) and (att < 60):
+                yield self.write(':POW:ATT {:f}'.format(att))
             else:
-                raise Exception('Error: RF attenuation must be in range: [0, 30].')
-        resp = yield self.query(':SENS:POW:RF:ATT?')
+                raise Exception('Error: RF attenuation must be in range: [0, 60].')
+        resp = yield self.query(':POW:ATT?')
         returnValue(float(resp))
 
 
@@ -85,33 +82,34 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     def amplitudeReference(self, ampl):
         if ampl is not None:
             if (ampl > -100) and (ampl < 20):
-                yield self.write(':DISP:WIN:TRAC:Y:SCAL:RLEV {:f}'.format(ampl))
+                yield self.write(':DISP:WIND:TRAC:Y:SCAL:RLEV {:f}'.format(ampl))
             else:
                 raise Exception('Error: display reference value must be in range: [-100, 20].')
-        resp = yield self.query(':DISP:WIN:TRAC:Y:SCAL:RLEV?')
+        resp = yield self.query(':DISP:WIND:TRAC:Y:SCAL:RLEV?')
         returnValue(float(resp))
 
     @inlineCallbacks
     def amplitudeOffset(self, ampl):
         if ampl is not None:
             if (ampl > -300) and (ampl < 300):
-                yield self.write(':DISP:WIN:TRAC:Y:SCAL:RLEV:OFFS {:f}'.format(ampl))
+                yield self.write(':DISP:WIND:TRAC:Y:SCAL:RLEV:OFFS {:f}'.format(ampl))
             else:
                 raise Exception('Error: display offset must be in range: [-300, 300].')
-        resp = yield self.query(':DISP:WIN:TRAC:Y:SCAL:RLEV:OFFS?')
+        resp = yield self.query(':DISP:WIND:TRAC:Y:SCAL:RLEV:OFFS?')
         returnValue(float(resp))
 
     @inlineCallbacks
     def amplitudeScale(self, factor):
         if factor is not None:
             if (factor > 0.1) and (factor < 20):
-                yield self.write(':DISP:WIN:TRAC:Y:SCAL:PDIV {:f}'.format(factor))
+                yield self.write(':DISP:WIND:TRAC:Y:SCAL:PDIV {:f}'.format(factor))
             else:
                 raise Exception('Error: display scale must be in range: [0.1, 20].')
-        resp = yield self.query(':DISP:WIN:TRAC:Y:SCAL:PDIV?')
+        resp = yield self.query(':DISP:WIND:TRAC:Y:SCAL:PDIV?')
         returnValue(float(resp))
 
-
+    # todo: account for OFF in marker mode
+    # todo: marker track problem
     # MARKER SETUP
     @inlineCallbacks
     def markerToggle(self, channel, status):
@@ -150,8 +148,8 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def markerTrack(self, channel, status):
         if status is not None:
-            yield self.write(':CALC:MARK{:d}:TRAC:STAT {:d}'.format(channel, status))
-        resp = yield self.query(':CALC:MARK{:d}:TRAC:STAT?'.format(channel))
+            yield self.write(':CALC:MARK{:d}:TRCK:STAT {:d}'.format(channel, status))
+        resp = yield self.query(':CALC:MARK{:d}:TRCK:STAT?'.format(channel))
         returnValue(bool(int(resp)))
 
 
@@ -175,20 +173,20 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     # PEAK
     @inlineCallbacks
     def peakSearch(self, status):
+        # todo: fix, this is wrong
         if status is not None:
             yield self.write(':CALC:MARK:CPE:STAT {:d}'.format(status))
         resp = yield self.query(':CALC:MARK:CPE:STAT?')
         returnValue(bool(int(resp)))
 
     @inlineCallbacks
-    def peakSet(self, status):
-        # todo:
-        pass
+    def peakSet(self, channel):
+        yield self.write(':CALC:MARK{:d}:MAX'.format(channel))
+
 
     @inlineCallbacks
-    def peakNext(self, status):
-        # todo:
-        pass
+    def peakNext(self, channel):
+        yield self.write(':CALC:MARK{:d}:MAX:NEXT'.format(channel))
 
 
     # BANDWIDTH
@@ -205,22 +203,22 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def bandwidthResolution(self, bw):
         if bw is not None:
-            if (bw > 10) and (bw < 1e7):
+            if (bw > 1) and (bw < 1e7):
                 yield self.write(':SENS:BAND:RES {:f}'.format(bw))
             else:
-                raise Exception('Error: resolution bandwidth must be in range: [10, 1e7].')
+                raise Exception('Error: resolution bandwidth must be in range: [1, 1e7].')
         resp = yield self.query(':SENS:BAND:RES?')
-        returnValue(int(resp))
+        returnValue(float(resp))
 
     @inlineCallbacks
     def bandwidthVideo(self, bw):
         if bw is not None:
-            if (bw > 10) and (bw < 1e7):
+            if (bw > 1) and (bw < 1e7):
                 yield self.write(':SENS:BAND:VID {:f}'.format(bw))
             else:
-                raise Exception('Error: video bandwidth must be in range: [10, 1e7].')
+                raise Exception('Error: video bandwidth must be in range: [1, 1e7].')
         resp = yield self.query(':SENS:BAND:VID?')
-        returnValue(int(resp))
+        returnValue(float(resp))
 
 
     # TRACE

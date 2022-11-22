@@ -25,7 +25,7 @@ os_channel = 3
 try:
     # connect to labrad
     cxn = labrad.connect()
-    print('Connection successful.')
+    print("Connection successful.")
 
     # get servers
     aq = cxn.artiq_server
@@ -33,7 +33,7 @@ try:
     sa = cxn.spectrum_analyzer_server
     dv = cxn.data_vault
     cr = cxn.context()
-    print('Server connection successful.')
+    print("Server connection successful.")
 
     # check DDS attenuation values are valid
     if amax(dds_att_list_dbm) < 2:
@@ -65,21 +65,21 @@ try:
     if (amp_calib < 20) and (amp_calib > 0):
         os.channel_scale(os_channel, amp_calib / 5)
     else:
-        raise Exception('Bad reading: oscope amp')
+        raise Exception("Bad reading: oscope amp")
 
     # horizontal centering
     os.horizontal_scale(1 / dds_freq_hz)
-    print('Oscilloscope setup successful.')
+    print("Oscilloscope setup successful.")
 
     # set up spectrum analyzer
     sa.select_device()
     sa.marker_toggle(1, True)
-    print('Spectrum analyzer setup successful.')
+    print("Spectrum analyzer setup successful.")
 
     # create dataset
     trunk_tmp = createTrunk(name_tmp)
     dv.cd(trunk_tmp, True, context=cr)
-    print('Data vault successfully setup.')
+    print("Data vault successfully setup.")
 
     # sweep attenuation
     for att_val in dds_att_list_dbm:
@@ -113,7 +113,7 @@ try:
             if (amp_calib < 20) and (amp_calib > 0):
                 os.channel_scale(os_channel, amp_calib / 5)
             else:
-                raise Exception('Bad reading')
+                raise Exception("Bad reading")
 
             # record oscope values
             os_amplitude = zeros(num_avgs)
@@ -138,9 +138,9 @@ try:
             sa_power = mean(sa_power)
 
             # record result
-            print('asf {:f}: amp = {:f}, pow = {:f}'.format(amp_val, os_amplitude, sa_power))
+            print("asf {:f}: amp = {:f}, pow = {:f}".format(amp_val, os_amplitude, sa_power))
             dv.add(amp_val, os_amplitude, sa_power, context=cr)
 
 except Exception as e:
-    print('Error:', e)
+    print("Error:", e)
     cxn.disconnect()

@@ -23,18 +23,30 @@
 #
 # 2021 October 17 - Clayton Ho
 # Added back automatic device polling
+#
 # 2021 November 25 - Clayton Ho
 # Added configurable device polling
+#
 # 2021 December 15 - Clayton Ho
 # Subclassed it from PollingServer to support polling
 # instead of using server methods
+#
+# 2022 November 6 - Clayton Ho
+# Copied over some changes made by Landon in UCLALabrad repository:
+#   - _refreshDevices now closes devices before deleting them from the holding dictionary
+#   - timeout function now actually sets the timeout with the GPIB device instead of just storing it within the context
+#
+# 2022 November 20 - Clayton Ho
+# Removed stupid use of read_raw/write in read() and query().
+# Removed TCPIP as a recognized device type since all bus servers will recognize the network device, leading to duplicates.
+# Implemented stopServer, which closes any and all open devices (yes, this isn't tremendously necessary, but whatever).
 
 
 """
 ### BEGIN NODE INFO
 [info]
 name = GPIB Bus
-version = 1.5.2
+version = 1.5.3
 description = Gives access to GPIB devices via pyvisa.
 instancename = %LABRADNODE% GPIB Bus
 
@@ -53,7 +65,7 @@ from labrad.server import setting
 from labrad.errors import DeviceNotSelectedError
 from EGGS_labrad.servers import PollingServer
 
-KNOWN_DEVICE_TYPES = ('GPIB', 'TCPIP', 'USB')
+KNOWN_DEVICE_TYPES = ('GPIB', 'USB')
 
 
 class GPIBBusServer(PollingServer):
@@ -65,15 +77,46 @@ class GPIBBusServer(PollingServer):
     defaultTimeout = WithUnit(1.0, 's')
     POLL_ON_STARTUP = True
 
+
+    # GENERAL
     def initServer(self):
         super().initServer()
         self.devices = {}
+        # tmp remove
         #self.rm = visa.ResourceManager()
-        # tmp
         self._refreshDevices()
+
+    def stopServer(self):
+        """
+        Close all open devices.
+        """
+        for dev in self.devices.values():
+            try:
+                dev.close()
+            except Exception as e:
+                print("Error on closing: {}".format(e))
+
+    def initContext(self, c):
+        c['timeout'] = self.defaultTimeout
 
     def _poll(self):
         self._refreshDevices()
+
+    def _poll_fail(self, failure):
+        print('Polling failed.')
+
+
+    # DEVICES & MESSAGES
+    def getDevice(self, c):
+        """
+        Returns the GPIB device stored within the given context, if any.
+        """
+        if 'addr' not in c:
+            raise DeviceNotSelectedError("No GPIB address selected.")
+        if c['addr'] not in self.devices:
+            raise Exception('Could not find device ' + c['addr'])
+        instr = self.devices[c['addr']]
+        return instr
 
     def _refreshDevices(self):
         """
@@ -100,13 +143,15 @@ class GPIBBusServer(PollingServer):
                     self.devices[addr] = instr
                     self.sendDeviceMessage('GPIB Device Connect', addr)
                 except Exception as e:
-                    #pass
                     print('Failed to add ' + addr + ':' + str(e))
                     raise
+
             # send device disconnect messages
             for addr in deletions:
+                self.devices[addr].close()
                 del self.devices[addr]
                 self.sendDeviceMessage('GPIB Device Disconnect', addr)
+
         except Exception as e:
             print('Problem while refreshing devices:', str(e))
             raise e
@@ -115,17 +160,8 @@ class GPIBBusServer(PollingServer):
         print(msg + ': ' + addr)
         self.client.manager.send_named_message(msg, (self.name, addr))
 
-    def initContext(self, c):
-        c['timeout'] = self.defaultTimeout
 
-    def getDevice(self, c):
-        if 'addr' not in c:
-            raise DeviceNotSelectedError("No GPIB address selected.")
-        if c['addr'] not in self.devices:
-            raise Exception('Could not find device ' + c['addr'])
-        instr = self.devices[c['addr']]
-        return instr
-
+    # SETTINGS
     @setting(0, addr='s', returns='s')
     def address(self, c, addr=None):
         """
@@ -144,8 +180,8 @@ class GPIBBusServer(PollingServer):
         Get or set the GPIB timeout.
         """
         if time is not None:
-            c['timeout'] = time
-        return c['timeout']
+            self.getDevice(c).timeout = time['ms']
+        return WithUnit(self.getDevice(c).timeout / 1000.0, 's')
 
     @setting(3, data='s', returns='')
     def write(self, c, data):
@@ -157,44 +193,24 @@ class GPIBBusServer(PollingServer):
     @setting(8, data='y', returns='')
     def write_raw(self, c, data):
         """
-        Write a string to the GPIB bus.
+        Write a raw string to the GPIB bus.
         """
         self.getDevice(c).write_raw(data)
 
-    @setting(4, n_bytes='w', returns='s')
-    def read(self, c, n_bytes=None):
+    @setting(4, returns='s')
+    def read(self, c):
         """
         Read from the GPIB bus.
 
         Termination characters, if any, will be stripped.
         This includes any bytes corresponding to termination in
-        binary data. If specified, reads only the given number
-        of bytes. Otherwise, reads until the device stops sending.
+        binary data.
         """
         instr = self.getDevice(c)
-        if n_bytes is None:
-            ans = instr.read_raw()
-        else:
-            ans = instr.read_raw(n_bytes)
-        ans = ans.strip().decode()
-        return ans
+        ans = instr.read()
+        return ans.strip()
 
-    @setting(5, data='s', returns='s')
-    def query(self, c, data):
-        """
-        Make a GPIB query, a write followed by a read.
-
-        This query is atomic.  No other communication to the
-        device will occur while the query is in progress.
-        """
-        instr = self.getDevice(c)
-        instr.write(data)
-        ans = instr.read_raw()
-        # convert from bytes to string for python 3
-        ans = ans.strip().decode()
-        return ans
-
-    @setting(7, n_bytes='w', returns='y')
+    @setting(6, n_bytes='w', returns='y')
     def read_raw(self, c, n_bytes=None):
         """
         Read raw bytes from the GPIB bus.
@@ -210,6 +226,18 @@ class GPIBBusServer(PollingServer):
             ans = instr.read_raw(n_bytes)
         return bytes(ans)
 
+    @setting(7, data='s', returns='s')
+    def query(self, c, data):
+        """
+        Make a GPIB query (a write followed by a read).
+
+        This query is atomic. No other communication to the
+        device will occur while the query is in progress.
+        """
+        instr = self.getDevice(c)
+        ans = instr.query(data)
+        return ans.strip()
+
     @setting(20, returns='*s')
     def list_devices(self, c):
         """
@@ -222,10 +250,7 @@ class GPIBBusServer(PollingServer):
         """
         Manually refresh devices.
         """
-        self.refreshDevices()
-
-    def _poll_fail(self, failure):
-        print('Polling failed.')
+        self._refreshDevices()
 
 
 __server__ = GPIBBusServer()

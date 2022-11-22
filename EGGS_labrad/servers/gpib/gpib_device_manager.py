@@ -5,12 +5,16 @@
 #     function because this setting could not be properly accessed through the
 #     LabRAD manager at the time of execution.
 # 1.4.0: Updated for Python 3
-# 1.4.1: Case is ignored when matching device names.
+# 1.4.1: Case is ignored when matching device names
+# 1.4.2:
+#   Changed parseIDNResponse function to account for problems where string has more than 4 parts
+#   Removed *CLS call in lookupDeviceName
+#   fd
 """
 ### BEGIN NODE INFO
 [info]
 name = GPIB Device Manager
-version = 1.4.0
+version = 1.4.2
 description = Manages discovery and lookup of GPIB devices
 
 [startup]
@@ -35,7 +39,7 @@ def parseIDNResponse(s):
     """
     Parse the response from *IDN? to get mfr and model info.
     """
-    mfr, model, ver, rev = s.split(',')
+    mfr, model, ver, rev = s.split(',', 3)
     # convert response to uppercase
     return mfr.strip().upper() + ' ' + model.strip().upper()
 
@@ -137,11 +141,11 @@ class GPIBDeviceManager(LabradServer):
         or the query fails, the name will be listed as '<unknown>'.
         """
         p = self.client.servers[server].packet()
-        p.address(channel).timeout(Value(1, 's')).write('*CLS').write('*IDN?').read()
+        p.address(channel).timeout(Value(1, 's')).query('*IDN?')
         print('Sending *IDN? to', server, channel)
         resp = None
         try:
-            resp = (yield p.send()).read
+            resp = (yield p.send()).query
             name = parseIDNResponse(resp)
         except Exception as e:
             print('Error sending *IDN? to', server, channel + ':', e)
@@ -276,6 +280,10 @@ class GPIBDeviceManager(LabradServer):
 
         This info includes currently known devices, registered device
         servers, and registered identification functions.
+
+        Returns:
+            tuple(str, str, str):   a tuple composed of all known devices, device servers, and ident functions.
+                                    Each str is a dict object simply converted into a string.
         """
         return (str(self.knownDevices),
                 str(self.deviceServers),

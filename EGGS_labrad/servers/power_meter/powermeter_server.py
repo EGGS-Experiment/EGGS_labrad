@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Lakeshore336 Server
+name = Power Meter Server
 version = 1.0
 description = Talks to the PM100D Power Meter
-instancename = Lakeshore336 Server
+instancename = Power Meter Server
 
 [startup]
 cmdline = %PYTHON% %FILE%

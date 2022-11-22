@@ -4,7 +4,7 @@
 name = AMO3 Server
 version = 1.0.0
 description = Communicates with the AMO3 box for control of piezo voltages.
-instancename = AMO3Server
+instancename = AMO3 Server
 
 [startup]
 cmdline = %PYTHON% %FILE%

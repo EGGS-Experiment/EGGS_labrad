@@ -1,12 +1,14 @@
 import numpy as np
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from labrad.units import WithUnit
+
 from labrad.gpib import GPIBDeviceWrapper
 
 
 class KeysightDSOX2024AWrapper(GPIBDeviceWrapper):
-
+    def __init__(self, guid, name):
+        super().__init__(guid, name)
+        self.measurement_slots = [None] * 4
 
     # SYSTEM
     @inlineCallbacks
@@ -19,8 +21,7 @@ class KeysightDSOX2024AWrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def autoscale(self):
-        yield self.write('AUTOS EXEC')
-
+        yield self.write(':AUT')
 
     # CHANNEL
     @inlineCallbacks
@@ -35,21 +36,21 @@ class KeysightDSOX2024AWrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def channel_coupling(self, channel, coupling=None):
-        chString = 'CH{:d}:COUP'.format(channel)
+        chString = ':CHAN{:d}:COUP'.format(channel)
         if coupling is not None:
             coupling = coupling.upper()
-            if coupling in ('AC', 'DC', 'GND'):
+            if coupling in ('AC', 'DC'):
                 yield self.write(chString + ' ' + coupling)
             else:
-                raise Exception('Coupling must be one of: ' + str(('AC', 'DC', 'GND')))
+                raise Exception('Coupling must be one of: ' + str(('AC', 'DC')))
         resp = yield self.query(chString + '?')
         returnValue(resp.strip())
 
     @inlineCallbacks
     def channel_scale(self, channel, scale=None):
-        chString = 'CH{:d}:SCA'.format(channel)
+        chString = ':CHAN{:d}:SCAL'.format(channel)
         if scale is not None:
-            if (scale == 0) or ((scale > 1e-4) and (scale < 1e1)):
+            if (scale > 1e-3) and (scale < 1e1):
                 yield self.write(chString + ' ' + str(scale))
             else:
                 raise Exception('Scale must be in range: [1e-4, 1e1]')
@@ -58,113 +59,99 @@ class KeysightDSOX2024AWrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def channel_probe(self, channel, atten=None):
-        chString = 'CH{:d}:PRO:GAIN'.format(channel)
+        chString = ':CHAN{:d}:PROB'.format(channel)
         if atten is not None:
-            if atten in (0.1, 1, 10):
-                yield self.write(chString + ' ' + str(1 / atten))
+            if (atten > 1e-3) and (atten < 1e3):
+                yield self.write(chString + ' ' + str(atten))
             else:
-                raise Exception('Probe attenuation must be one of: ' + str((0.1, 1, 10)))
+                raise Exception('Probe attenuation must be between .001 and 1000')
         resp = yield self.query(chString + '?')
-        returnValue(1 / float(resp))
+        returnValue(float(resp))
 
     @inlineCallbacks
     def channel_toggle(self, channel, state=None):
-        chString = 'SEL:CH{:d}'.format(channel)
+        chString = ':CHAN{:d}:DISP'.format(channel)
         if state is not None:
             yield self.write(chString + ' ' + str(int(state)))
-        resp = yield self.query(chString + '?')
+        resp = yield self.query(chString + '? ')
         returnValue(bool(int(resp)))
 
     @inlineCallbacks
     def channel_invert(self, channel, invert=None):
-        chString = 'CH{:d}:INV'.format(channel)
+        chString = ':CHAN{:d}:INV'.format(channel)
         if invert is not None:
             yield self.write(chString + ' ' + str(int(invert)))
         resp = yield self.query(chString + '?')
         returnValue(bool(int(resp)))
 
     @inlineCallbacks
-    def channel_offset(self, channel, offset=None):
-        # value is in volts
-        chString = 'CH{:d}:OFFS'.format(channel)
-        if offset is not None:
-            if abs(offset) < 1e1:
-                yield self.write(chString + ' ' + str(offset))
-            else:
-                raise Exception('Offset must be less than 10V.')
-        resp = yield self.query(chString + '?')
-        returnValue(float(resp))
-
-    @inlineCallbacks
     def channel_position(self, channel, position=None):
         # value is in divisions
-        chString = 'CH{:d}:POS'.format(channel)
+        chString = ':CHAN{:d}:OFFS'.format(channel)
         if position is not None:
-            if abs(position) < 4:
+            if (position > 1e-4) and (position < 1e1):
+                position = position * -1
                 yield self.write(chString + ' ' + str(position))
             else:
                 raise Exception('Vertical position must be less than 4 divisions.')
         resp = yield self.query(chString + '?')
-        returnValue(float(resp))
-
+        returnValue(float(resp) * -1)
 
     # TRIGGER
     @inlineCallbacks
     def trigger_channel(self, channel=None):
         # note: target channel must be on
-        chString = 'TRIG:A:EDGE:SOU'
+        chString = ':TRIG:EDGE:SOUR'
         if channel is not None:
             if channel in (1, 2, 3, 4):
-                yield self.write(chString + ' CH' + str(channel))
+                yield self.write(chString + ' CHAN' + str(channel))
             else:
                 raise Exception('Trigger channel must be one of: ' + str((1, 2, 3, 4)))
         resp = yield self.query(chString + '?')
-        resp = resp.strip()[2:]
+        resp = resp.strip()[4:]
         returnValue(int(resp))
 
     @inlineCallbacks
     def trigger_slope(self, slope=None):
-        chString = 'TRIG:A:EDGE:SLOP'
+        chString = 'TRIG:EDGE:SLOP'
         if slope is not None:
             slope = slope.upper()
-            if slope in ('RIS', 'FALL'):
+            if slope in ('POS', 'NEG', 'EITH', 'ALT'):
                 yield self.write(chString + ' ' + slope)
             else:
-                raise Exception('Slope must be one of: ' + str(('RIS', 'FALL')))
+                raise Exception('Slope must be one of: ' + str(('POS', 'NEG', 'EITH', 'ALT')))
         resp = yield self.query(chString + '?')
         returnValue(resp.strip())
 
     @inlineCallbacks
     def trigger_level(self, channel, level=None):
-        if channel not in (1, 2, 3, 4):
-            raise Exception('Channel must be one of: ' + str((1, 2, 3, 4)))
-        chString = 'TRIG:A:LEV:CH{:d}'.format(channel)
+        chString = ':TRIG:EDGE:LEV'
         if level is not None:
-            vscale_tmp = yield self.channel_scale(channel)
+            chan_tmp = yield self.trigger_channel()
+            vscale_tmp = yield self.channel_scale(chan_tmp)
             level_max = 5 * vscale_tmp
             if (level == 0) or (abs(level) <= level_max):
                 yield self.write(chString + ' ' + str(level))
             else:
-                raise Exception('Trigger level must be in range: ' + str((-level_max, level_max)))
+                raise Exception('Error: Trigger level must be in range: ' + str((-level_max, level_max)))
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
     @inlineCallbacks
     def trigger_mode(self, mode=None):
-        chString = 'TRIG:A:MOD'
+        chString = ':TRIG:SWE'
         if mode is not None:
             if mode in ('AUTO', 'NORM'):
                 yield self.write(chString + ' ' + mode)
             else:
-                raise Exception('Trigger mode must be one of: ' + str(('AUTO', 'NORM')))
+                raise Exception('Error: Trigger mode must be one of: ' + str(('AUTO', 'NORM')))
         resp = yield self.query(chString + '?')
         returnValue(resp.strip())
-
 
     # HORIZONTAL
     @inlineCallbacks
     def horizontal_offset(self, offset=None):
-        chString = 'HOR:DEL:TIM'
+        chString = 'TIM:POS'
         if offset is not None:
             if (offset == 0) or ((abs(offset) > 1e-6) and (abs(offset) < 1e0)):
                 yield self.write(chString + ' ' + str(offset))
@@ -175,123 +162,119 @@ class KeysightDSOX2024AWrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def horizontal_scale(self, scale=None):
-        chString = 'HOR:SCA'
+        chString = ':TIM:SCAL'
         if scale is not None:
-            if (scale > 2e-9) and (scale < 100):
+            if (scale > 2e-9) and (scale < 5e1):
                 yield self.write(chString + ' ' + str(scale))
             else:
                 raise Exception('Horizontal scale must be in range: (2e-9, 100).')
         resp = yield self.query(chString + '?')
         returnValue(float(resp))
 
-
     # ACQUISITION
     @inlineCallbacks
     def trace(self, channel, points=1250000):
-        # ensure trace length is valid
-        if (points > 1250000) or (points < 1000):
-            raise Exception("Invalid number of points. Must be in [1000, 1.25e6].")
+        """
+        Get a trace for a single channel.
+        Arguments:
+            channel: The channel for which we want to get the trace.
+        Returns:
+            Tuple of ((ValueArray[s]) Time axis, (ValueArray[V]) Voltages).
+        """
+        # first need to stop oscilloscope to record
+        yield self.write(':STOP')
 
-        # configure source
-        yield self.write('DAT:SOU CH{:d}'.format(channel))
+        # set channel to take trace on
+        yield self.write(':WAV:SOUR CHAN{:d}'.format(channel))
+        # use raw mode which gives us the entire on-screen waveform with full horizontal resolution
+        yield self.write(':WAV:POIN:MODE RAW')
+        # return format (default byte), use ASC or WORD for better vertical resolution
+        yield self.write(':WAV:FORM BYTE')
 
-        # configure incoming waveform data
-        # set SINGULAR_YT composition to get singular sample waveform
-        yield self.write('DAT:COMP SINGULAR_YT')
-        # set resolution to FULL
-        yield self.write('DAT:RESO FULL')
-        # set encoding to RIB (signed, MSB transferred first)
-        yield self.write('DAT:ENC RIB')
-        # set data width to 16 bits
-        yield self.write('DAT:WID 2')
+        # transfer waveform preamble
+        preamble = yield self.query(':WAV:PRE?')
+        # get waveform data
+        data = yield self.query(':WAV:DATA?')
 
-        # set transfer length
-        yield self.write('DAT:STAR 1')
-        yield self.write('DAT:STOP {:d}'.format(points))
-        timeout_tmp = WithUnit(points / 1000, 's')
+        # start oscope back up
+        yield self.write(':RUN')
 
-        # get preamble and waveform
-        preamble = yield self.query('WFMO?')
-        data = yield self.query('CURV?', timeout=timeout_tmp)
+        # parse waveform preamble
+        points, xincrement, xorigin, xreference, yincrement, yorigin, yreference = yield self._parsePreamble(preamble)
+        # parse data
+        trace = yield self._parseByteData(data)
 
-        # parse waveform preamble and data
-        points, xincrement, xorigin, yincrement, yorigin, yreference = self._parsePreamble(preamble)
-        trace = self._parseByteData(data)
-
-        # format data
-        xAxis = np.arange(points) * xincrement + xorigin
-        yAxis = (trace - yorigin) * yincrement + yreference
+        # convert data to volts
+        xAxis = (np.arange(points) * xincrement + xorigin)
+        yAxis = (trace - yorigin - yreference) * yincrement
         returnValue((xAxis, yAxis))
-
 
     # MEASURE
     @inlineCallbacks
-    def measure_setup(self, slot, channel=None, param=None):
+    def measure_setup(self, slot, channel, param):
         # convert generalized parameters to device specific parameters
         valid_measurement_parameters = {
-            "AMP": "AMP", "FREQ": "FREQ", "MAX": "MAX", "MEAN": "MEAN", "MIN": "MINI", "P2P": "PK2P"
+            "FREQ": "FREQ", "AMP": "VAMP", "MEAN": "VAV", "MAX": "VMAX", "MIN": "VMIN", "P2P": "VPP"
         }
-        # setter
         if slot not in (1, 2, 3, 4):
             raise Exception("Invalid measurement slot. Must be in [1, 4].")
         if (channel is not None) and (param is not None):
             if param not in valid_measurement_parameters:
-                raise Exception("Invalid measurement type. Must be one of {}.".format(valid_measurement_parameters.keys()))
-            self.write('MEASU:MEAS{:d}:SOUR CH{:d}'.format(slot, channel))
-            self.write('MEASU:MEAS{:d}:TYP {:s}'.format(slot, valid_measurement_parameters[param]))
-        # getter
-        measure_params = yield self.query('MEASU:MEAS{:d}?'.format(slot))
-        measurement_source, measurement_type, _ = self._parseMeasurementParameters(measure_params)
-        return (slot, measurement_source, measurement_type)
+                raise Exception(
+                    "Invalid measurement type. Must be one of {}.".format(valid_measurement_parameters.keys()))
+            self.measurement_slots[slot - 1] = (channel, valid_measurement_parameters[param])
+            yield self.write(':MEAS:CLE')
+            for i in range(4):
+                if self.measurement_slots[i]:
+                    yield self.write(
+                        ':MEAS:{:s} CHAN{:d}'.format(self.measurement_slots[i][1], self.measurement_slots[i][0]))
+        if not (self.measurement_slots[slot - 1]):
+            raise Exception("")
+        measurement_source, measurement_type = self.measurement_slots[slot - 1]
+        returnValue((slot, measurement_source, measurement_type))
 
     @inlineCallbacks
     def measure(self, slot):
-        measure_val = yield self.query('MEASU:MEAS{:d}:VAL?'.format(slot))
-        return float(measure_val)
-
+        valid_measurement_parameters = {
+            "FREQ": "FREQ", "AMP": "VAMP", "MEAN": "VAV", "MAX": "VMAX", "MIN": "VMIN", "P2P": "VPP"
+        }
+        if slot not in (1, 2, 3, 4) or (not self.measurement_slots[slot - 1]):
+            raise Exception("Invalid measurement slot. Must be in [1, 4].")
+        measurement_source, measurement_type = self.measurement_slots[slot - 1]
+        print(measurement_source)
+        print(measurement_type)
+        measure_val = yield self.query('MEAS:{:s}? CHAN{:d}'.format(measurement_type, measurement_source))
+        returnValue(float(measure_val))
 
     # HELPER
-    def _parsePreamble(self, preamble):
+    def _parsePreamble(preamble):
         """
-        <preamble_block> ::= <format 16-bit NR1>,
+        <preamble_block> = <format 16-bit NR1>,
                          <type 16-bit NR1>,
                          <points 32-bit NR1>,
                          <count 32-bit NR1>,
+                         <xincrement 64-bit floating point NR3>,
                          <xorigin 64-bit floating point NR3>,
                          <xreference 32-bit NR1>,
                          <yincrement 32-bit floating point NR3>,
                          <yorigin 32-bit floating point NR3>,
+                         <yreference 32-bit NR1>
         """
-        fields = preamble.split(';')
-        points = int(fields[6])
-        xincrement, xorigin, xreference = list(map(float, fields[9: 12]))
-        yincrement, yorigin, yreference = list(map(float, fields[13: 16]))
-        return (points, xincrement, xorigin, yincrement, yorigin, yreference)
+        fields = preamble.split(',')
+        points = int(fields[2])
+        xincrement, xorigin, xreference = float(fields[4: 7])
+        yincrement, yorigin, yreference = float(fields[7: 10])
+        # print(str((points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)))
+        return (points, xincrement, xorigin, xreference, yincrement, yorigin, yreference)
 
-    def _parseByteData(self, data):
+    def _parseByteData(data):
         """
-        Parse byte data
+        Parse byte data.
         """
-        return np.array(data.split(','), dtype=float)
-
-    def _parseMeasurementParameters(self, measurement_raw):
-        """
-        Parse raw response of parameters for a measurement slot.
-        <raw_params> =
-            <delay direction>;
-            <delay edge 1>;
-            <delay edge 2>;
-            <measurement type>;
-            <units>;<source 1>;
-            <source 2>;
-            <count>;
-            <minimum>;
-            <mean>;
-            <max>;
-            <value>
-        """
-        params = measurement_raw.split(';')
-        delay_dir, delay_edge1, delay_edge2 = params[:3]
-        count_num, count_min, count_mean, count_max = params[7:11]
-        measurement_source, measurement_type, measurement_value = params[5], params[3], params[-1]
-        return int(measurement_source[2:]), measurement_type, float(measurement_value)
+        # get tmc header in #NXXXXXXXXX format
+        tmc_N = int(data[1])
+        tmc_length = int(data[2: 2 + tmc_N])
+        # print("tmc_N: " + str(tmc_N))
+        # print("tmc_length: " + str(tmc_length))
+        # use this return if return format is in bytes, otherwise need to adjust
+        return np.frombuffer(data[2 + tmc_N:], dtype=np.uint8)
