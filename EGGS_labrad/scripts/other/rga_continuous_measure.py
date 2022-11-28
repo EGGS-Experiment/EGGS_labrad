@@ -10,8 +10,8 @@ cxn = labrad.connect()
 # todo: make real script
 
 # parameters
-(mass_initial, mass_final, mass_steps) = (1, 40, 10)
-scan_type = 'a'
+(mass_initial, mass_final, mass_steps) = (1, 50, 10)
+scan_type = 'h'
 
 # get servers
 rga = cxn.rga_server
