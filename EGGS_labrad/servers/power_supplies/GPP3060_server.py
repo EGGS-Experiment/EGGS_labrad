@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = GPP3060 Server
-version = 1.0
+version = 1.0.0
 description = Talks to the GW Instek GPP3060 Power Supply.
 instancename = GPP3060 Server
 

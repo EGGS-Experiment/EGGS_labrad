@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = Keithley 2231A Server
-version = 1.0
+version = 1.0.0
 description = Talks to the Keithley 2231A Power Supply.
 instancename = Keithley 2231A Server
 
@@ -57,7 +57,7 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
 
     # GENERAL
     @setting(11, "Reset", returns='')
-    def reset(self):
+    def reset(self, c):
         yield self.ser.acquire()
         yield self.ser.write('*RST\r\n')
         self.ser.release()
@@ -213,9 +213,11 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
         yield self._channelSelect(channel)
 
         # initiate a new voltage measurement
-        yield self.ser.write('MEAS:SCAL:VOLT:DC?\r\n')
+        yield self.ser.write('MEAS:VOLT?\r\n')
+        yield self.ser.read_line()
+
         # fetch the new voltage measurement
-        yield self.ser.write('FETC:VOLT:DC\r\n')
+        yield self.ser.write('FETC:VOLT?\r\n')
         resp = yield self.ser.read_line()
         self.ser.release()
         returnValue(float(resp))
@@ -233,9 +235,11 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
         yield self._channelSelect(channel)
 
         # initiate a new current measurement
-        resp = yield self.ser.write('MEAS:SCAL:CURR:DC?\r\n')
+        yield self.ser.write('MEAS:CURR?\r\n')
+        yield self.ser.read_line()
+
         # fetch the new voltage measurement
-        yield self.ser.write('FETC:CURR:DC\r\n')
+        yield self.ser.write('FETC:CURR?\r\n')
         resp = yield self.ser.read_line()
         self.ser.release()
         returnValue(float(resp))
