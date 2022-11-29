@@ -206,7 +206,7 @@ class SerialDeviceServer(LabradServer):
             self.read_line = lambda x='': ser.read_line(x, context=self.ctxt)
             self.read_as_words = lambda x=0: ser.read_as_words(x, context=self.ctxt)
             # other
-            self.close = lambda: ser.close_port(context=self.ctxt)
+            self.close = lambda: ser.close(context=self.ctxt)
             self.flush_input = lambda: ser.flush_input(context=self.ctxt)
             self.flush_output = lambda: ser.flush_output(context=self.ctxt)
             self.ID = ser.ID
