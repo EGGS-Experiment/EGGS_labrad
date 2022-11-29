@@ -145,7 +145,7 @@ class SerialConnectionError(Exception):
 
 
 # DEVICE CLASS
-class SerialDeviceServer(LabradServer):
+class MultipleSerialDeviceServer(LabradServer):
     """
     Base class for serial device servers.
 
