@@ -4,7 +4,7 @@
 name = GPP3060 Server
 version = 1.0
 description = Talks to the GW Instek GPP3060 Power Supply.
-instancename = GPP3060Server
+instancename = GPP3060 Server
 
 [startup]
 cmdline = %PYTHON% %FILE%

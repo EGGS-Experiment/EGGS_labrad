@@ -26,5 +26,5 @@ REM START "Oscilloscope Server" /min CMD "/k activate labart && python %EGGS_LAB
 REM START "Function Generator Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\function_generators\functiongenerator_server.py"
 REM START "Spectrum Analyzer Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\spectrum_analyzers\spectrumanalyzer_server.py"
 REM START "Network Analyzer Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\network_analyzers\networkanalyzer_server.py"
-START "Power Meter Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\power_meter\powermeter_server.py"
-START "GPP3060 Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\power_supplies\GPP3060_server.py"
+REM START "GPP3060 Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\power_supplies\GPP3060_server.py"
+REM START "Power Meter Server" /min CMD "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\power_meter\powermeter_server.py"
