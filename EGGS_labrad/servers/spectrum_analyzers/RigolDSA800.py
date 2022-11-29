@@ -177,7 +177,7 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
         returnValue(float(resp))
 
 
-    # PEAK
+    # MARKER-RELATED PEAK FUNCTIONS
     @inlineCallbacks
     def peakSearch(self, status):
         if status is not None:
@@ -192,6 +192,25 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def peakNext(self, channel):
         yield self.write('CALC:MARK{:d}:MAX:NEXT'.format(channel))
+
+
+    # PEAKS ONLY
+    def peakThreshold(self, c, threshold):
+        raise NotImplementedError
+
+    def peakExcursion(self, c, excursion):
+        raise NotImplementedError
+
+    def peakTable(self, c):
+        # parse response
+        resp = yield self.query(':TRAC:MATH:PEAK?')
+        resp = [float(val) for val in resp.split(',')]
+
+        # separate amplitude and frequency
+        amp_list = resp[1::2]
+        freq_list = resp[0::2]
+
+        return list(zip(freq_list, amp_list))
 
 
     # BANDWIDTH

@@ -19,7 +19,7 @@ from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
 
 # import device wrappers
-from Keithley2231A import Keithley2231AWrapper
+from Keithley2231A_server import Keithley2231AWrapper
 from GWInstekGPP3060 import GWInstekGPP3060Wrapper
 # todo: channels
 # todo: output (series/parallel)

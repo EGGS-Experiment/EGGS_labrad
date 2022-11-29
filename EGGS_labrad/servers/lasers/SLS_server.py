@@ -3,7 +3,7 @@
 [info]
 name = SLS Server
 version = 1.0
-description =
+description = Connects to the 729nm SLS Laser.
 instancename = SLS Server
 
 [startup]
@@ -33,8 +33,8 @@ class SLSServer(SerialDeviceServer, PollingServer):
 
     name = 'SLS Server'
     regKey = 'SLS Server'
-    serNode = 'mongkok'
-    port = 'COM4'
+    serNode = 'hengfachuen'
+    port = 'COM5'
 
     baudrate = 115200
     timeout = Value(5.0, 's')

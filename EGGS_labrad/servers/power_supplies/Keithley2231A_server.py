@@ -2,9 +2,9 @@
 ### BEGIN NODE INFO
 [info]
 name = Keithley 2231A Server
-version = 1.0
+version = 1.0.0
 description = Talks to the Keithley 2231A Power Supply.
-instancename = Keithley2231AServer
+instancename = Keithley 2231A Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -37,15 +37,14 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
     """
 
     name = 'Keithley 2231A Server'
-    regKey = 'GPP3060 Server'
+    regKey = 'Keithley2231A Server'
     serNode = 'MongKok'
-    port = 'COM18'
+    port = 'COM19'
 
     timeout = WithUnit(5.0, 's')
-    baudrate = 115200
-    bytesize = 8
+    baudrate = 9600
 
-    POLL_ON_STARTUP = True
+    POLL_ON_STARTUP = False
 
 
     # SIGNALS
@@ -58,24 +57,24 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
 
     # GENERAL
     @setting(11, "Reset", returns='')
-    def reset(self):
+    def reset(self, c):
         yield self.ser.acquire()
-        yield self.ser.write('*RST')
+        yield self.ser.write('*RST\r\n')
         self.ser.release()
 
     @setting(12, "Clear Buffers", returns='')
     def clear_buffers(self, c):
         yield self.ser.acquire()
-        yield self.ser.write('*CLS')
+        yield self.ser.write('*CLS\r\n')
         self.ser.release()
 
     @setting(21, "Remote", status=['i', 'b'], returns='')
     def remote(self, c, status):
         yield self.ser.acquire()
         if status is True:
-            yield self.ser.write('SYST:REM')
+            yield self.ser.write('SYST:REM\r\n')
         else:
-            yield self.ser.write('SYST:LOC')
+            yield self.ser.write('SYST:LOC\r\n')
         self.ser.release()
 
 
@@ -96,13 +95,13 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
 
         # setter
         if status is not None:
-            yield self.ser.write(chString + ' ' + int(status))
+            yield self.ser.write(chString + ' {:d}\r\n'.format(status))
 
         # getter
-        yield self.ser.write(chString + '?')
+        yield self.ser.write(chString + '?\r\n')
         resp = yield self.ser.read_line()
         self.ser.release()
-        returnValue(int(resp))
+        returnValue(bool(int(resp)))
 
     @setting(112, 'Channel Mode', channel='i', mode='s', returns='b')
     def channelMode(self, c, channel, mode=None):
@@ -123,24 +122,24 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
             if mode not in VALID_MODES:
                 raise Exception("Invalid Value. Modes must be one of {}.".format(VALID_MODES))
             if mode == 'INDEPENDENT':
-                yield self.ser.write('INST:COM:OFF')
+                yield self.ser.write('INST:COM:OFF\r\n')
             elif mode == 'SERIES':
-                yield self.ser.write('INST:COM:SER')
+                yield self.ser.write('INST:COM:SER\r\n')
             elif mode == 'PARALLEL':
-                yield self.ser.write('INST:COM:PARA')
+                yield self.ser.write('INST:COM:PARA\r\n')
             elif mode == 'TRACK':
-                yield self.ser.write('INST:COM:TRAC')
+                yield self.ser.write('INST:COM:TRAC\r\n')
 
         # getter
-        status_series = yield self.query('OUTP:SER?')
-        status_parallel = yield self.query('OUTP:PARA?')
-        status_track = yield self.query('OUTP:TRAC?')
+        status_series = yield self.query('OUTP:SER?\r\n')
+        status_parallel = yield self.query('OUTP:PARA?\r\n')
+        status_track = yield self.query('OUTP:TRAC?\r\n')
         # todo: make sure returnvalue works, otherwise need normal return
         if int(status_series):
             returnValue('SERIES')
         elif int(status_parallel):
             returnValue('PARALLEL')
-        elif int(status_parallel):
+        elif int(status_track):
             returnValue('TRACK')
         else:
             returnValue('INDEPENDENT')
@@ -165,14 +164,13 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
             MAX_VOLTAGE = 30 if channel in (1, 2) else 5
             if (voltage < 0) or (voltage > MAX_VOLTAGE):
                 raise Exception("Invalid Value. Voltage must be in [0, {:f}]V.".format(MAX_VOLTAGE))
-
-            yield self.ser.write(chString + ' ' + voltage)
+            yield self.ser.write(chString + ' {:f}\r\n'.format(voltage))
 
         # getter
-        yield self.ser.write(chString + '?')
+        yield self.ser.write(chString + '?\r\n')
         resp = yield self.ser.read_line()
         self.ser.release()
-        returnValue(int(resp))
+        returnValue(float(resp))
 
     @setting(122, 'Channel Current', channel='i', current='v', returns='v')
     def channelCurrent(self, c, channel, current=None):
@@ -192,13 +190,13 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
         if current is not None:
             if (current < 0) or (current > 3):
                 raise Exception("Invalid Value. Current must be in [0, 3]A.")
-            yield self.ser.write(chString + ' ' + current)
+            yield self.ser.write(chString + ' {:f}\r\n'.format(current))
 
         # getter
-        yield self.ser.write(chString + '?')
+        yield self.ser.write(chString + '?\r\n')
         resp = yield self.ser.read_line()
         self.ser.release()
-        returnValue(int(resp))
+        returnValue(float(resp))
 
 
     # MEASURE
@@ -211,17 +209,18 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
         Returns:
                     (float) : the measured voltage (in V).
         """
-        chString = 'MEAS:SCAL:VOLT:DC?'
         yield self.ser.acquire()
         yield self._channelSelect(channel)
 
         # initiate a new voltage measurement
-        resp = yield self.ser.write(chString)
+        yield self.ser.write('MEAS:VOLT?\r\n')
+        yield self.ser.read_line()
+
         # fetch the new voltage measurement
-        yield self.ser.write('FETC:VOLT:DC')
+        yield self.ser.write('FETC:VOLT?\r\n')
         resp = yield self.ser.read_line()
         self.ser.release()
-        returnValue(int(resp))
+        returnValue(float(resp))
 
     @setting(212, 'Measure Current', channel='i', returns='v')
     def measureCurrent(self, c, channel):
@@ -232,17 +231,18 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
         Returns:
                     (float) : the measured current (in A).
         """
-        chString = 'MEAS:SCAL:CURR:DC?'
         yield self.ser.acquire()
         yield self._channelSelect(channel)
 
         # initiate a new current measurement
-        resp = yield self.ser.write(chString)
+        yield self.ser.write('MEAS:CURR?\r\n')
+        yield self.ser.read_line()
+
         # fetch the new voltage measurement
-        yield self.ser.write('FETC:CURR:DC')
+        yield self.ser.write('FETC:CURR?\r\n')
         resp = yield self.ser.read_line()
         self.ser.release()
-        returnValue(int(resp))
+        returnValue(float(resp))
 
 
     # HELPER
@@ -252,4 +252,9 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
         if channel not in (1, 2, 3):
             raise Exception("Invalid Value. Channel must be one of: {}.".format((1, 2, 3)))
         # todo: ensure channel selection blocks
-        yield self.ser.write('INST:SEL CH{:d}'.format(channel))
+        yield self.ser.write('INST:SEL CH{:d}\r\n'.format(channel))
+
+
+if __name__ == '__main__':
+    from labrad import util
+    util.runServer(Keithley2231AServer())

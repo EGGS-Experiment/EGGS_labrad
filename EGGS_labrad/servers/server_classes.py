@@ -22,12 +22,15 @@ class ContextServer(LabradServer):
         super().initServer()
         self.listeners = set()
 
+
+    # CONTEXT CREATION
     def initContext(self, c):
         """
         Initialize a new context object.
         Arguments:
             c (context): the context object of the caller.
         """
+        super().initContext(c)
         self.listeners.add(c.ID)
 
     def expireContext(self, c):
@@ -61,6 +64,7 @@ class ContextServer(LabradServer):
 """
 Polling Server
 """
+# todo: remove context stuff and subclass contextserver instead
 class PollingServer(LabradServer):
     """
     Holds all the functionality needed to run polling loops on the server.

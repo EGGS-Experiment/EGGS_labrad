@@ -24,6 +24,7 @@ from RigolDS1000Z import RigolDS1000ZWrapper
 from TektronixMSO2000 import TektronixMSO2000Wrapper
 from KeysightDS1204G import KeysightDS1204GWrapper
 from KeysightDSOX2024A import KeysightDSOX2024AWrapper
+from AgilentDSO7054 import AgilentDSO7054Wrapper
 
 
 class OscilloscopeServer(GPIBManagedServer):
@@ -34,10 +35,11 @@ class OscilloscopeServer(GPIBManagedServer):
     name = 'Oscilloscope Server'
 
     deviceWrappers = {
-        'RIGOL TECHNOLOGIES DS1104Z Plus': RigolDS1000ZWrapper,
-        'TEKTRONIX MSO2024B': TektronixMSO2000Wrapper,
-        'KEYSIGHT DS1204G': KeysightDS1204GWrapper,
-        'AGILENT TECHNOLOGIES DSO-X 2024A': KeysightDSOX2024AWrapper
+        'RIGOL TECHNOLOGIES DS1104Z Plus':      RigolDS1000ZWrapper,
+        'TEKTRONIX MSO2024B':                   TektronixMSO2000Wrapper,
+        'KEYSIGHT DS1204G':                     KeysightDS1204GWrapper,
+        'AGILENT TECHNOLOGIES DSO-X 2024A':     KeysightDSOX2024AWrapper,
+        'AGILENT TECHNOLOGIES DSO7054':         AgilentDSO7054Wrapper
     }
 
     # def initServer(self):

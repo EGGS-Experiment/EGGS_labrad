@@ -285,7 +285,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         return self.selectedDevice(c).markerFrequency(channel, freq)
 
 
-    # PEAK
+    # MARKER-RELATED PEAK FUNCTIONS
     # todo: make explicitly known that this does continuous peak tracking and add marker channel as an arg
     @setting(411, "Peak Search", status=['b', 'i'], returns='b')
     def peakSearch(self, c, status=None):
@@ -323,6 +323,40 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
             channel (int): the marker channel to get/set.
         """
         self.selectedDevice(c).peakNext(channel)
+
+
+    # PEAKS ONLY
+    # todo: peak threshold status
+    @setting(431, "Peak Threshold", threshold='v', returns='v')
+    def peakThreshold(self, c, threshold=None):
+        """
+        Set the threshold value for a peak to register.
+        Arguments:
+            threshold   (float): the threshold value (in dBm).
+        Returns:
+                        (float): the threshold value (in dBm).
+        """
+        return self.selectedDevice(c).peakThreshold(threshold)
+
+    @setting(432, "Peak Excursion", excursion='v', returns='v')
+    def peakExcursion(self, c, excursion=None):
+        """
+        Set the dropoff value (i.e. excursion) for a peak to register.
+        Arguments:
+            excursion   (float): the excursion value (in dBm).
+        Returns:
+                        (float): the excursion value (in dBm).
+        """
+        return self.selectedDevice(c).peakExcursion(excursion)
+
+    @setting(433, "Peak Table", returns='*(vv)')
+    def peakTable(self, c):
+        """
+        Get the frequency and amplitude of all peaks.
+        Returns:
+            list(list(float, float)): a list of the frequency (in Hz) and amplitude (in dBm) of each peak.
+        """
+        return self.selectedDevice(c).peakTable()
 
 
     # BANDWIDTH
