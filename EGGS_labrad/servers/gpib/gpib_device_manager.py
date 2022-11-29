@@ -14,7 +14,7 @@
 ### BEGIN NODE INFO
 [info]
 name = GPIB Device Manager
-version = 1.4.2
+version = 1.4.3
 description = Manages discovery and lookup of GPIB devices
 
 [startup]
@@ -81,7 +81,9 @@ class GPIBDeviceManager(LabradServer):
 
         # do an initial scan of the available GPIB devices
         yield self.refreshDeviceLists()
-        
+
+
+    # DEVICE DETECTION & IDENTIFICATION
     @inlineCallbacks
     def refreshDeviceLists(self):
         """
@@ -102,35 +104,6 @@ class GPIBDeviceManager(LabradServer):
                 for addr in addrs:
                     self.gpib_device_connect(serverName, addr)
 
-    @inlineCallbacks
-    def gpib_device_connect(self, gpibBusServer, channel):
-        """
-        Handle messages when devices connect.
-        """
-        print('Device Connect:', gpibBusServer, channel)
-        if (gpibBusServer, channel) in self.knownDevices:
-            return
-        device, idnResult = yield self.lookupDeviceName(gpibBusServer, channel)
-        if device == UNKNOWN:
-            device = yield self.identifyDevice(gpibBusServer, channel, idnResult)
-        self.knownDevices[gpibBusServer, channel] = (device, idnResult)
-        # forward message if someone cares about this device
-        if device in self.deviceServers:
-            self.notifyServers(device, gpibBusServer, channel, True)
-    
-    def gpib_device_disconnect(self, server, channel):
-        """
-        Handle messages when devices disconnect.
-        """
-        print('Device Disconnect:', server, channel)
-        if (server, channel) not in self.knownDevices:
-            return
-        device, idnResult = self.knownDevices[server, channel]
-        del self.knownDevices[server, channel]
-        # forward message if someone cares about this device
-        if device in self.deviceServers:
-            self.notifyServers(device, server, channel, False)
-        
     @inlineCallbacks
     def lookupDeviceName(self, server, channel):
         """
@@ -210,85 +183,38 @@ class GPIBDeviceManager(LabradServer):
                 returnValue(resp)
         except Exception as e:
             print('Error during ident:', str(e))
-    
-    @setting(1, 'Register Server',
-             devices=['s', '*s'], messageID='w',
-             returns='*(s{device} s{server} s{address}, b{isConnected})')
-    def register_server(self, c, devices, messageID):
+
+
+    # SIGNAL FUNCTIONS
+    @inlineCallbacks
+    def gpib_device_connect(self, gpibBusServer, channel):
         """
-        Register as a server that handles a particular GPIB device(s).
-
-        Returns a list with information about all matching devices that
-        have been connected up to this point:
-        [(device name, gpib server name, gpib channel, bool)]
-
-        After registering, messages will be sent to the registered
-        message ID whenever a matching device connects or disconnects.
-        The clusters sent in response to this setting and those sent as
-        messages have the same format.  For messages, the final boolean
-        indicates whether the device has been connected or disconnected,
-        while in response to this function call, the final boolean is
-        always true, since we only send info about connected devices.
-
-        The device name is determined by parsing the response to a *IDN?
-        query.  To handle devices that don't support *IDN? correctly, use
-        the 'Register Ident Function' in addition.
+        Handle messages when devices connect.
         """
-        # managed device servers can specify device names as string or a list of strings
-        if isinstance(devices, str):
-            devices = [devices]
-        found = []
-        # search through
-        for device in devices:
-            # convert to uppercase
-            device = device.upper()
-            # store GPIB managed device server details
-            servers = self.deviceServers.setdefault(device, [])
-            servers.append({'target': c.source,
-                            'context': c.ID,
-                            'messageID': messageID})
-            # check the new device against all known devices
-            for (server, channel), (known_device, idnResult) in self.knownDevices.items():
-                if device != known_device:
-                    continue
-                found.append((device, server, channel, True))
-        return found
+        print('Device Connect:', gpibBusServer, channel)
+        if (gpibBusServer, channel) in self.knownDevices:
+            return
+        device, idnResult = yield self.lookupDeviceName(gpibBusServer, channel)
+        if device == UNKNOWN:
+            device = yield self.identifyDevice(gpibBusServer, channel, idnResult)
+        self.knownDevices[gpibBusServer, channel] = (device, idnResult)
+        # forward message if someone cares about this device
+        if device in self.deviceServers:
+            self.notifyServers(device, gpibBusServer, channel, True)
 
-    @setting(2, 'Register Ident Function', setting=['s', 'w'])
-    def register_ident_function(self, c, setting):
-        """Specify a setting to be called to identify devices.
-
-        This setting must accept either of the following:
-        
-            s, s, s: server, address, *IDN? response
-            s, s:    server, address
-
-        If a device returned a non-standard response to a *IDN? query
-        (including possibly an empty string), then the first call signature
-        will be used.  If the *IDN? query timed out or otherwise failed,
-        the second call signature will be used.  As a server writer, you
-        must choose which of these signatures to support.  Note that if the
-        device behavior is unpredictable (sometimes it returns a string,
-        sometimes it times out), you may need to support both signatures.
+    def gpib_device_disconnect(self, server, channel):
         """
-        self.identFunctions[c.source] = setting, c.ID
-
-    @setting(10)
-    def dump_info(self, c):
+        Handle messages when devices disconnect.
         """
-        Returns information about the server status.
+        print('Device Disconnect:', server, channel)
+        if (server, channel) not in self.knownDevices:
+            return
+        device, idnResult = self.knownDevices[server, channel]
+        del self.knownDevices[server, channel]
+        # forward message if someone cares about this device
+        if device in self.deviceServers:
+            self.notifyServers(device, server, channel, False)
 
-        This info includes currently known devices, registered device
-        servers, and registered identification functions.
-
-        Returns:
-            tuple(str, str, str):   a tuple composed of all known devices, device servers, and ident functions.
-                                    Each str is a dict object simply converted into a string.
-        """
-        return (str(self.knownDevices),
-                str(self.deviceServers),
-                str(self.identFunctions))
-    
     def notifyServers(self, device, server, channel, isConnected):
         """
         Notify all registered servers about a device status change.
@@ -349,6 +275,86 @@ class GPIBDeviceManager(LabradServer):
                 deletions.append(src)
         for src in deletions:
             del self.identFunctions[src]
+
+
+    # SETTINGS
+    @setting(1, 'Register Server',
+             devices=['s', '*s'], messageID='w',
+             returns='*(s{device} s{server} s{address}, b{isConnected})')
+    def register_server(self, c, devices, messageID):
+        """
+        Register as a server that handles a particular GPIB device(s).
+
+        Returns a list with information about all matching devices that
+        have been connected up to this point:
+        [(device name, gpib server name, gpib channel, bool)]
+
+        After registering, messages will be sent to the registered
+        message ID whenever a matching device connects or disconnects.
+        The clusters sent in response to this setting and those sent as
+        messages have the same format.  For messages, the final boolean
+        indicates whether the device has been connected or disconnected,
+        while in response to this function call, the final boolean is
+        always true, since we only send info about connected devices.
+
+        The device name is determined by parsing the response to a *IDN?
+        query.  To handle devices that don't support *IDN? correctly, use
+        the 'Register Ident Function' in addition.
+        """
+        # managed device servers can specify device names as string or a list of strings
+        if isinstance(devices, str):
+            devices = [devices]
+        found = []
+        # search through
+        for device in devices:
+            # convert to uppercase
+            device = device.upper()
+            # store GPIB managed device server details
+            servers = self.deviceServers.setdefault(device, [])
+            servers.append({'target': c.source,
+                            'context': c.ID,
+                            'messageID': messageID})
+            # check the new device against all known devices
+            for (server, channel), (known_device, idnResult) in self.knownDevices.items():
+                if device != known_device:
+                    continue
+                found.append((device, server, channel, True))
+        return found
+
+    @setting(2, 'Register Ident Function', setting=['s', 'w'])
+    def register_ident_function(self, c, setting):
+        """Specify a setting to be called to identify devices.
+
+        This setting must accept either of the following:
+
+            s, s, s: server, address, *IDN? response
+            s, s:    server, address
+
+        If a device returned a non-standard response to a *IDN? query
+        (including possibly an empty string), then the first call signature
+        will be used.  If the *IDN? query timed out or otherwise failed,
+        the second call signature will be used.  As a server writer, you
+        must choose which of these signatures to support.  Note that if the
+        device behavior is unpredictable (sometimes it returns a string,
+        sometimes it times out), you may need to support both signatures.
+        """
+        self.identFunctions[c.source] = setting, c.ID
+
+    @setting(10, 'Dump Info')
+    def dump_info(self, c):
+        """
+        Returns information about the server status.
+
+        This info includes currently known devices, registered device
+        servers, and registered identification functions.
+
+        Returns:
+            tuple(str, str, str):   a tuple composed of all known devices, device servers, and ident functions.
+                                    Each str is a dict object simply converted into a string.
+        """
+        return (str(self.knownDevices),
+                str(self.deviceServers),
+                str(self.identFunctions))
 
 
 __server__ = GPIBDeviceManager()
