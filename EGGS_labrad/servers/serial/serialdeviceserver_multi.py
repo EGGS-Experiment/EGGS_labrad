@@ -116,10 +116,12 @@
 
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
-from labrad.errors import Error
 from labrad.server import LabradServer, setting
+from labrad.errors import Error, NoDevicesAvailableError, DeviceNotSelectedError, NoSuchDeviceError
 
-__all__ = ["SerialDeviceError", "SerialConnectionError", "SerialDeviceServer"]
+from EGGS_labrad.servers import ContextServer
+
+__all__ = ["SerialDeviceError", "SerialConnectionError", "MultipleSerialDeviceServer"]
 
 
 # ERROR CLASSES
@@ -145,7 +147,7 @@ class SerialConnectionError(Exception):
 
 
 # DEVICE CLASS
-class MultipleSerialDeviceServer(LabradServer):
+class MultipleSerialDeviceServer(ContextServer):
     """
     Base class for serial device servers.
 
@@ -190,10 +192,10 @@ class MultipleSerialDeviceServer(LabradServer):
             parity = kwargs.get('parity')
             stopbits = kwargs.get('stopbits')
             self.ctxt = context
-            # serial parameters
 
             ser.open(port, context=self.ctxt)
 
+            # serial parameters
             if timeout is not None: ser.timeout(timeout, context=self.ctxt)
             if baudrate is not None: ser.baudrate(baudrate, context=self.ctxt)
             if bytesize is not None: ser.bytesize(bytesize, context=self.ctxt)
@@ -225,6 +227,7 @@ class MultipleSerialDeviceServer(LabradServer):
     def initServer(self):
         # call parent initServer to support further subclassing
         super().initServer()
+
         # get default node and port from registry (this overrides hard-coded values)
         if self.reg_key is not None:
             print('RegKey specified. Looking in registry for default node and port.')
@@ -234,7 +237,6 @@ class MultipleSerialDeviceServer(LabradServer):
             self.default_port = port
 
         # open connection on startup if default node and port are specified
-
         if self.default_node and self.default_port:
 
             print('Default node and port specified. Connecting to device on startup.')
@@ -271,6 +273,7 @@ class MultipleSerialDeviceServer(LabradServer):
                 conn.release()
 
     def initContext(self, c):
+        # todo: document
         for node, port in self.serial_connection_dict:
             if self.default_node and self.default_port and self._matchSerial(self.default_node,
                                                                              node) and port == self.default_port:
@@ -304,6 +307,7 @@ class MultipleSerialDeviceServer(LabradServer):
             returnValue((node, port))
         except Exception as e:
             yield reg.cd(tmp)
+
 
     # SERIAL
     @inlineCallbacks
@@ -375,35 +379,54 @@ class MultipleSerialDeviceServer(LabradServer):
         nodeMatch = serNode.lower() in potMatch.lower()
         return serMatch and nodeMatch
 
+    def selectedDevice(self, context):
+        """
+        Get the selected device within the given context, if any.
+        """
+        # check that devices exist for us to connect to
+        if not len(self.serial_connection_dict):
+            raise NoDevicesAvailableError()
+
+        # check that a device has been selected within the context
+        try:
+            key = context['Serial Connection']
+        except KeyError:
+            raise DeviceNotSelectedError()
+
+        # try to access the device
+        try:
+            ser = self.serial_connection_dict[key]
+        except KeyError:
+            raise NoSuchDeviceError()
+
+        # todo: implement device locking
+        return ser
+
+
     # SIGNALS
-
-    def serverConnected(self, ID, name):
-        """
-        Attempt to connect to last connected serial bus server upon server connection.
-        """
-        # check if we aren't connected to a device, port and node are fully specified,
-        # and connected server is the required serial bus server
-        if (c['Serial Connection'] is None) and self.default_port and self.default_node and (
-        self._matchSerial(self.default_node, name)):
-            print(name, 'connected after we connected.')
-            yield self.deviceSelect(None)
-
     def serverDisconnected(self, ID, name):
         """
         Close serial device connection (if we are connected).
         """
-        for bus_server in [ser for (ser, port) in self.serial_connection_dict]:
-            if bus_server == name:
-                print('Serial bus server ' + name + ' disconnected. Relaunch the serial server')
-                for context_obj in self.contexts.values():
-                    if 'Serial Connection' in context_obj.data and context_obj.data['Serial Connection'] and \
-                            context_obj.data['Serial Node'] == name:
-                        context_obj.data['Serial Connection'] = None
-                        context_obj.data['Serial Port'] = None
-                        context_obj.data['Serial Node'] = None
-                for (node, port) in list(self.serial_connection_dict.keys()):
-                    if node == name:
-                        del self.serial_connection_dict[(node, port)]
+        # for bus_server in [ser for (ser, port) in self.serial_connection_dict if ser == name]:
+        #     print('Serial bus server {} disconnected. Relaunch the serial server'.format(name))
+
+        # check all devices across all contexts
+        for context_obj in self.contexts.values():
+
+            # check if device exists and is from disconnected serial bus server
+            if (context_obj.data.get('Serial Connection', False)) and (context_obj.data['Serial Node'] == name):
+
+                # remove device
+                context_obj.data['Serial Connection'] = None
+                context_obj.data['Serial Port'] = None
+                context_obj.data['Serial Node'] = None
+
+        # todo: combine bottom with above
+        for (node, port) in self.serial_connection_dict.keys():
+            if node == name:
+                del self.serial_connection_dict[(node, port)]
+
 
     # SETTINGS
 
@@ -423,6 +446,7 @@ class MultipleSerialDeviceServer(LabradServer):
         # do nothing if device is already selected
         if 'Serial Connection' in c and c['Serial Connection']:
             raise Exception('A serial device is already opened.')
+
         # set parameters if specified
         elif (node is not None) and (port is not None):
             desired_node = node
@@ -436,14 +460,24 @@ class MultipleSerialDeviceServer(LabradServer):
         # raise error if only node or port is specified
         else:
             raise Exception('Insufficient arguments.')
+
+        # otherwise, try to create serial connection
         try:
             desired_node = yield self.findSerial(desired_node)
             if (desired_node, desired_port) not in self.serial_connection_dict:
                 yield self.initSerial(desired_node, desired_port, timeout=self.timeout, baudrate=self.baudrate,
                                       bytesize=self.bytesize, parity=self.parity, stopbits=self.stopbits)
+
+            # place serial device object and connection parameters in context
+            c['Serial Connection'] = self.serial_connection_dict[(desired_node, desired_port)]
+            c['Serial Node'] = desired_node
+            c['Serial Port'] = desired_port
+
+        # handle serial connection errors
         except SerialConnectionError as e:
             if (desired_node, desired_port) in self.serial_connection_dict:
                 del self.serial_connection_dict[(desired_node, desired_port)]
+
             if e.code == 0:
                 print('Could not find serial server for node: %s' % desired_node)
                 print('Please start correct serial server')
@@ -452,12 +486,12 @@ class MultipleSerialDeviceServer(LabradServer):
             else:
                 print('Unknown connection error')
             raise e
+
+        # handle general errors
         except Exception as e:
             self.ser = None
             print(e)
-        c['Serial Connection'] = self.serial_connection_dict[(desired_node, desired_port)]
-        c['Serial Node'] = desired_node
-        c['Serial Port'] = desired_port
+
         return (c['Serial Node'], c['Serial Port'])
 
     @setting(111112, 'Device Close', returns='')
@@ -465,18 +499,23 @@ class MultipleSerialDeviceServer(LabradServer):
         """
         Closes the current serial device.
         """
-        if c['Serial Connection']:
-            c['Serial Connection'].close()
-            del self.serial_connection_dict[(c['Serial Node'], c['Serial Port'])]
-            c['Serial Connection'] = None
-            c['Serial Port'] = None
-            c['Serial Node'] = None
-            print('Serial connection closed.')
-        else:
-            raise Exception('No device selected.')
+        # get device and connection parameters
+        ser = self.selectedDevice(c)
+        node = c['Serial Node']
+        port = c['Serial Port']
 
-    @setting(111113, 'Connection Info', returns='(ss)')
-    def connectionInfo(self, c):
+        # close device and reset connection parameters
+        ser.close()
+        del self.serial_connection_dict[(node, port)]
+        ser = None
+        node = None
+        port = None
+
+        print('Serial connection closed.')
+
+
+    @setting(111113, 'Device Info', returns='(ss)')
+    def deviceInfo(self, c):
         """
         Returns the currently connected serial device's
         node and port.
@@ -488,6 +527,7 @@ class MultipleSerialDeviceServer(LabradServer):
             return (c['Serial Node'], c['Serial Port'])
         else:
             return ("", "")
+
 
     # DIRECT SERIAL COMMUNICATION
     @setting(222223, 'Serial Query', data='s', stop=['i: read a given number of characters',
@@ -501,17 +541,20 @@ class MultipleSerialDeviceServer(LabradServer):
         Returns:
                     (str)   : the device response (stripped of EOL characters)
         """
-        yield c['Serial Connection'].acquire()
+        ser = self.selectedDevice(c)
+        yield ser.acquire()
+
         try:
-            yield c['Serial Connection'].write(data)
+            yield ser.write(data)
             if stop is None:
-                resp = yield c['Serial Connection'].read()
+                resp = yield ser.read()
             elif type(stop) == int:
-                resp = yield c['Serial Connection'].read(stop)
+                resp = yield ser.read(stop)
             elif type(stop) == str:
-                resp = yield c['Serial Connection'].read_line(stop)
+                resp = yield ser.read_line(stop)
         finally:
-            c['Serial Connection'].release()
+            ser.release()
+
         returnValue(resp)
 
     @setting(222224, 'Serial Write', data='s', returns='')
@@ -521,11 +564,13 @@ class MultipleSerialDeviceServer(LabradServer):
         Args:
             data    (str)   : the data to write to the device
         """
-        yield c['Serial Connection'].acquire()
+        ser = self.selectedDevice(c)
+        yield ser.acquire()
+
         try:
-            yield c['Serial Connection'].write(data)
+            yield ser.write(data)
         finally:
-            c['Serial Connection'].release()
+            ser.release()
 
     @setting(222225, 'Serial Read', stop=['i: read a given number of characters',
                                           's: read until the given character'], returns='s')
@@ -535,42 +580,46 @@ class MultipleSerialDeviceServer(LabradServer):
         Returns:
                     (str)   : the device response (stripped of EOL characters)
         """
-        yield c['Serial Connection'].acquire()
+        ser = self.selectedDevice(c)
+        yield ser.acquire()
+
         try:
             if stop is None:
-                resp = yield c['Serial Connection'].read()
+                resp = yield ser.read()
             elif type(stop) == int:
-                resp = yield c['Serial Connection'].read(stop)
+                resp = yield ser.read(stop)
             elif type(stop) == str:
-                resp = yield c['Serial Connection'].read_line(stop)
+                resp = yield ser.read_line(stop)
         finally:
-            c['Serial Connection'].release()
+            ser.release()
+
         returnValue(resp)
 
-    # HELPER
     @setting(222231, 'Serial Flush', returns='')
     def serial_flush(self, c):
         """
         Flush the serial input and output buffers.
         """
-        yield c['Serial Connection'].acquire()
-        try:
-            yield c['Serial Connection'].flush_input()
-            yield c['Serial Connection'].flush_output()
-        finally:
-            c['Serial Connection'].release()
+        ser = self.selectedDevice(c)
+        yield ser.acquire()
 
-    # HELPER
+        try:
+            yield ser.flush_input()
+            yield ser.flush_output()
+        finally:
+            ser.release()
+
     @setting(222235, 'Get Simulated Device Errors', returns='*(sss)')
     def get_simulated_device_errors(self, c):
         """
         Flush the serial input and output buffers.
         """
-        yield c['Serial Connection'].acquire()
+        ser = self.selectedDevice(c)
+        yield ser.acquire()
+
         try:
-            resp = yield c['Serial Connection'].get_simulated_device_errors()
-
-
+            resp = yield ser.get_simulated_device_errors()
         finally:
-            c['Serial Connection'].release()
+            ser.release()
+
         returnValue(resp)

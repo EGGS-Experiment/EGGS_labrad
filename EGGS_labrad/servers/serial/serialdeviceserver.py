@@ -370,7 +370,7 @@ class SerialDeviceServer(LabradServer):
         # check if we aren't connected to a device, port and node are fully specified,
         # and connected server is the required serial bus server
         if (self.ser is None) and (None not in (self.port, self.serNode)) and (self._matchSerial(self.serNode, name)):
-            print(name, 'connected after we connected.')
+            print('{} connected after we connected.'.format(name))
             yield self.deviceSelect(None)
 
     def serverDisconnected(self, ID, name):
@@ -378,7 +378,7 @@ class SerialDeviceServer(LabradServer):
         Close serial device connection (if we are connected).
         """
         if self.ser and self.ser.ID == ID:
-            print('Serial bus server disconnected. Relaunch the serial server')
+            print('Serial bus server {} disconnected. Relaunch the serial server'.format(name))
             self.ser = None
 
 
@@ -445,8 +445,7 @@ class SerialDeviceServer(LabradServer):
     @setting(111113, 'Device Info', returns='(ss)')
     def deviceInfo(self, c):
         """
-        Returns the currently connected serial device's
-        node and port.
+        Returns the currently connected serial device's node and port.
         Returns:
             (str)   : the node
             (str)   : the port
@@ -458,6 +457,7 @@ class SerialDeviceServer(LabradServer):
 
 
     # DIRECT SERIAL COMMUNICATION
+    # todo: use a try and finally block for each of these to ensure we release serial object
     @setting(222223, 'Serial Query', data='s', stop=['i: read a given number of characters',
                                                      's: read until the given character'], returns='s')
     def serial_query(self, c, data, stop=None):
@@ -509,8 +509,6 @@ class SerialDeviceServer(LabradServer):
         self.ser.release()
         returnValue(resp)
 
-
-    # HELPER
     @setting(222231, 'Serial Flush', returns='')
     def serial_flush(self, c):
         """
@@ -529,8 +527,6 @@ class SerialDeviceServer(LabradServer):
         """
         self.ser.release()
 
-
-    # DEBUGGING
     @setting(222241, 'Serial Debug', status='b', returns='b')
     def serialDebug(self, c, status=None):
         """
