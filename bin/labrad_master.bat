@@ -23,7 +23,7 @@ FOR %%x IN (%*) DO (
 @REM: Start core LabRAD tool suite
 IF %raw_flag%==0 (
     @REM: Set up syslog for Grafana
-    START "Loki Syslog" /min CMD /k " "%HOME%\Code\loki\loki-windows-amd64.exe" -config.file "%PROG_HOME%\logging\loki-syslog-config.yaml" "
+    START "Loki Syslog" /min CMD /k " "%HOME%\Code\loki\loki-windows-amd64.exe" -config.expand-env=true -config.file "%PROG_HOME%\logging\loki-syslog-config.yaml" "
     START "Promtail Syslog - LabRAD" /min CMD /k " "%HOME%\Code\loki\promtail-windows-amd64.exe" -config.file "%PROG_HOME%\logging\promtail-syslog-config.yaml" "
     START "Promtail - ARTIQ" /min CMD /k " "%HOME%\Code\loki\promtail-windows-amd64.exe" -config.file "%PROG_HOME%\logging\promtail-artiq-config.yaml" "
 
