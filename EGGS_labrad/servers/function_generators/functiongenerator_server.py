@@ -74,7 +74,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).channel(chan_num)
 
-    @setting(141, 'Sync', status='b', returns='b')
+    @setting(141, 'Sync', status=['b', 'i'], returns='b')
     def sync(self, c, status=None):
         """
         Toggle the TTL sync signal output.
@@ -83,6 +83,11 @@ class FunctionGeneratorServer(GPIBManagedServer):
         Returns:
                     (bool)  : the status of the SYNC output signal.
         """
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
         return self.selectedDevice(c).sync(status)
 
 
