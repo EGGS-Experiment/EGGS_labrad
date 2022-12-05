@@ -136,6 +136,9 @@ class GPIBBusServer(PollingServer):
                     if not addr.startswith(KNOWN_DEVICE_TYPES):
                         continue
                     instr = rm.open_resource(addr)
+                    # tmp remove
+                    instr.query_delay = 0.01
+                    # tmp remove close
                     instr.write_termination = ''
                     instr.clear()
                     if addr.endswith('SOCKET'):

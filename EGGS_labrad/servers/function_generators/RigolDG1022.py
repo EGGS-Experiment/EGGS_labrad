@@ -1,5 +1,8 @@
+from time import sleep
 from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
+
+_RIGOL_DG1022_QUERY_DELAY = 0.1
 
 
 class RigolDG1022Wrapper(GPIBDeviceWrapper):
@@ -26,6 +29,7 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
                 yield self.write('OUTP{} OFF'.format(self.channel_string))
 
         # getter
+        sleep(_RIGOL_DG1022_QUERY_DELAY)
         resp = yield self.query('OUTP{}?'.format(self.channel_string))
         resp = resp.strip().upper()
         if resp == 'ON':
@@ -64,6 +68,7 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
                 yield self.write('OUTP:SYNC OFF')
 
         # getter
+        sleep(_RIGOL_DG1022_QUERY_DELAY)
         resp = yield self.query('OUTP:SYNC?')
         resp = resp.split(' ')[-1].strip()
         if resp == 'ON':
@@ -86,6 +91,7 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
                 raise Exception('Error: invalid input. Shape must be one of (SIN, SQU, RAMP, PULS, NOIS, DC).')
 
         # getter
+        sleep(_RIGOL_DG1022_QUERY_DELAY)
         resp = yield self.query('FUNC{}?'.format(self.channel_string))
         resp = resp.split(':')[-1].strip()
         returnValue(resp)
@@ -100,6 +106,7 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
                 raise Exception('Error: invalid input. Frequency must be in range [1mHz, 20MHz].')
 
         # getter
+        sleep(_RIGOL_DG1022_QUERY_DELAY)
         resp = yield self.query('FREQ{}?'.format(self.channel_string))
         resp = resp.split(':')[-1].strip()
         returnValue(float(resp))
@@ -114,6 +121,7 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
                 raise Exception('Error: invalid input. Amplitude must be in range [1e-2 Vpp, 1e1 Vpp].')
 
         # getter
+        sleep(_RIGOL_DG1022_QUERY_DELAY)
         resp = yield self.query('VOLT{}?'.format(self.channel_string))
         resp = resp.split(':')[-1].strip()
         returnValue(float(resp))
@@ -128,6 +136,7 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
                 raise Exception('Error: invalid input. Amplitude offset must be in range [-1e1 Vpp, 1e1 Vpp].')
 
         # getter
+        sleep(_RIGOL_DG1022_QUERY_DELAY)
         resp = yield self.query('VOLT:OFFS{}?'.format(self.channel_string))
         returnValue(float(resp))
 
