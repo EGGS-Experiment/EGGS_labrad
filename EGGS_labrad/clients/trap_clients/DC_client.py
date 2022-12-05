@@ -69,13 +69,13 @@ class DC_client(GUIClient):
         for channel in self.gui.amo8_channels.values():
             channel.dac.valueChanged.connect(lambda value, _channel_num=channel.number: self.amo8.voltage(_channel_num, value))
             channel.ramp_start.clicked.connect(lambda blank, _channel_num=channel.number: self.startRamp([_channel_num]))
-            channel.toggleswitch.clicked.connect(lambda status, _channel_num=channel.number:
-                                                 self.amo8.toggle(_channel_num, status))
+            channel.toggleswitch.clicked.connect(lambda status, _channel_num=channel.number: self.amo8.toggle(_channel_num, status))
             channel.resetswitch.clicked.connect(lambda blank, _channel_num=channel.number: self.reset(_channel_num))
             channel.lockswitch.setChecked(False)
 
 
     # SLOTS
+    # todo: use blockSignal instead of lockswitches
     @inlineCallbacks
     def reset(self, channel_num):
         channel_gui = self.gui.amo8_channels[channel_num]
