@@ -99,16 +99,16 @@ class ARTIQ_api(object):
         self.core_dma = self.device_manager.get("core_dma")
         # store devices in dictionary where device
         # name is key and device itself is value
-        self.ttlout_dict = {}
-        self.ttlin_dict = {}
-        self.ttlcounter_dict = {}
-        self.dds_dict = {}
-        self.urukul_dict = {}
-        self.zotino = None
-        self.fastino = None
-        self.dacType = None
-        self.sampler = None
-        self.phaser = None
+        self.ttlout_dict =          dict()
+        self.ttlin_dict =           dict()
+        self.ttlcounter_dict =      dict()
+        self.dds_dict =             dict()
+        self.urukul_dict =          dict()
+        self.zotino =               None
+        self.fastino =              None
+        self.dacType =              None
+        self.sampler =              None
+        self.phaser =               None
 
         # assign names and devices
         for name, params in self.device_db.items():
@@ -143,23 +143,13 @@ class ARTIQ_api(object):
             elif devicetype == 'EdgeCounter':
                 self.ttlcounter_dict[name] = device
 
-        # tmp remove
-        self._dds_channels = list(self.dds_dict.values())
-        self._dds_boards = list(self.urukul_dict.values())
+        # holder objects for dds channels
+        # these are needed so we can iterate devices in kernel functions
+        self._dds_channels =    list(self.dds_dict.values())
+        self._dds_boards =      list(self.urukul_dict.values())
 
-        yz0 = ['urukul0_ch{:d}'.format(i) for i in range(4)]
-        yz1 = ['urukul1_ch{:d}'.format(i) for i in range(4)]
-        for dev_name in (yz0+yz1):
+        for dev_name in self._dds_channels:
             setattr(self, dev_name, self.device_manager.get(dev_name))
-
-    def _initializeDevices(self):
-        """
-        Initialize devices that need to be initialized.
-        """
-        # initialize DDSs
-        self.initializeDDSAll()
-        # one-off device init
-        self.initializeDAC()
 
 
     # PULSE SEQUENCING
@@ -760,6 +750,7 @@ class ARTIQ_api(object):
 
     @autoreload
     def readSampler(self, rate_hz, samples):
+        # create structures to hold results
         setattr(self, "sampler_dataset", np.zeros((samples, 8), dtype=np.int32))
         setattr(self, "sampler_holder", np.zeros(8, dtype=np.int32))
         # convert rate to mu
