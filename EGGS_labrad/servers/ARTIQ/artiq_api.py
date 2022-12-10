@@ -15,8 +15,6 @@ class ARTIQ_api(object):
     Directly accesses the hardware on the box without having to use artiq_master.
     # todo: set version so we know what we're compatible with
     # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
-    # todo: write sequence that pulls all dds values so we don't have to wait forever during dds client startup
-    # todo: see if we can get initialization status of DDSs and initialize upon startup only if they are uninitialized
     """
 
     def autoreload(func):
@@ -25,18 +23,48 @@ class ARTIQ_api(object):
         the connection to artiq_master if we lost it.
         """
         def inner(self, *args, **kwargs):
+
+            # run decorated function
             try:
                 res = func(self, *args, **kwargs)
                 return res
+
+            # handle connection errors
             except (ConnectionAbortedError, ConnectionResetError) as e:
+
+                # attempt to reconnect to master and reset client objects
                 try:
+                    # reset connection
                     print('Connection aborted, resetting connection to artiq_master...')
-                    self.reset()
+                    self.reset_connection()
+
+                    # retry decorated function
                     res = func(self, *args, **kwargs)
                     return res
                 except Exception as e:
                     raise e
+
+            # handle RTIOUnderflows
+            except RTIOUnderflow as e:
+                # add slack
+                self.core.break_realtime()
+
+                # retry decorated function
+                res = func(self, *args, **kwargs)
+                return res
+
+            # handle RTIOOverflows
+            except RTIOOverflow as e:
+                # reset core & add more slack
+                self.core.reset()
+                self.core.break_realtime()
+
+                # retry decorated function
+                res = func(self, *args, **kwargs)
+                return res
+
         return inner
+
 
     def __init__(self, ddb_filepath):
         devices = DeviceDB(ddb_filepath)
@@ -51,7 +79,7 @@ class ARTIQ_api(object):
         """
         self.device_manager.close_devices()
 
-    def reset(self):
+    def reset_connection(self):
         """
         Reestablishes a connection to artiq_master.
         """

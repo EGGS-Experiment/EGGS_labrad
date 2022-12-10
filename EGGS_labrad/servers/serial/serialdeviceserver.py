@@ -189,38 +189,38 @@ class SerialDeviceServer(LabradServer):
         """
         def __init__(self, ser, port, **kwargs):
             # parse kwargs
-            timeout =       kwargs.get('timeout')
-            baudrate =      kwargs.get('baudrate')
-            bytesize =      kwargs.get('bytesize')
-            parity =        kwargs.get('parity')
-            debug =         kwargs.get('debug')
+            timeout =                       kwargs.get('timeout')
+            baudrate =                      kwargs.get('baudrate')
+            bytesize =                      kwargs.get('bytesize')
+            parity =                        kwargs.get('parity')
+            debug =                         kwargs.get('debug')
 
             # serial parameters
             ser.open(port)
-            if timeout is not None:     ser.timeout(timeout)
-            if baudrate is not None:    ser.baudrate(baudrate)
-            if bytesize is not None:    ser.bytesize(bytesize)
-            if parity is not None:      ser.parity(parity)
-            if debug is not None:       ser.serial_debug(debug)
+            if timeout  is not None:        ser.timeout(timeout)
+            if baudrate is not None:        ser.baudrate(baudrate)
+            if bytesize is not None:        ser.bytesize(bytesize)
+            if parity   is not None:        ser.parity(parity)
+            if debug    is not None:        ser.serial_debug(debug)
 
             # serial r/w
-            self.write =            lambda s:           ser.write(s)
-            self.write_line =       lambda s:           ser.write_line(s)
-            self.read =             lambda x=0:         ser.read(x)
-            self.read_line =        lambda x='':        ser.read_line(x)
-            self.read_as_words =    lambda x=0:         ser.read_as_words(x)
+            self.write =                    lambda s:           ser.write(s)
+            self.write_line =               lambda s:           ser.write_line(s)
+            self.read =                     lambda x=0:         ser.read(x)
+            self.read_line =                lambda x='':        ser.read_line(x)
+            self.read_as_words =            lambda x=0:         ser.read_as_words(x)
 
             # other
-            self.ID =               ser.ID
-            self.close =            lambda:             ser.close()
-            self.flush_input =      lambda:             ser.flush_input()
-            self.flush_output =     lambda:             ser.flush_output()
-            self.debug =            lambda b=None:      ser.serial_debug(b)
+            self.ID =                       ser.ID
+            self.close =                    lambda:             ser.close()
+            self.flush_input =              lambda:             ser.flush_input()
+            self.flush_output =             lambda:             ser.flush_output()
+            self.debug =                    lambda b=None:      ser.serial_debug(b)
 
             # comm lock
-            self.comm_lock =        DeferredLock()
-            self.acquire =          lambda:             self.comm_lock.acquire()
-            self.release =          lambda:             self.comm_lock.release()
+            self.comm_lock =                DeferredLock()
+            self.acquire =                  lambda:             self.comm_lock.acquire()
+            self.release =                  lambda:             self.comm_lock.release()
 
             # buffer
             self.buffer_size =              lambda size:        ser.buffer_size(size)
