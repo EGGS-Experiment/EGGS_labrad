@@ -148,7 +148,7 @@ class ARTIQ_api(object):
         self._dds_channels =    list(self.dds_dict.values())
         self._dds_boards =      list(self.urukul_dict.values())
 
-        for dev_name in self._dds_channels:
+        for dev_name in (list(self.dds_dict.keys()) + list(self.urukul_dict.keys())):
             setattr(self, dev_name, self.device_manager.get(dev_name))
 
 
