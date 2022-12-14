@@ -5,7 +5,7 @@
 
 @REM: MOVE TO ARTIQ ROOT
 CD "%ARTIQ_ROOT%"
-CALL conda activate artiq
+CALL conda activate artiq7
 
 SETLOCAL EnableDelayedExpansion
 
