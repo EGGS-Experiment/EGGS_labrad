@@ -30,15 +30,15 @@ schema_config:
  
 storage_config:
   boltdb_shipper:
-    active_index_directory: $HOME/.labrad/logfiles/data/loki/boltdb-shipper-active
-    cache_location: $HOME/.labrad/logfiles/data/loki/boltdb-shipper-cache
+    active_index_directory: ${HOME}/.labrad/logfiles/data/loki/boltdb-shipper-active
+    cache_location: ${HOME}/.labrad/logfiles/data/loki/boltdb-shipper-cache
     cache_ttl: 24h         # Can be increased for faster performance over longer query periods, uses more disk space
     shared_store: filesystem
   filesystem:
-    directory: $HOME/.labrad/logfiles/data/loki/chunks
+    directory: ${HOME}/.labrad/logfiles/data/loki/chunks
  
 compactor:
-  working_directory: $HOME/.labrad/logfiles/data/loki/boltdb-shipper-compactor
+  working_directory: ${HOME}/.labrad/logfiles/data/loki/boltdb-shipper-compactor
   shared_store: filesystem
  
 limits_config:
@@ -56,8 +56,8 @@ ruler:
   storage:
     type: local
     local:
-      directory: $HOME/.labrad/logfiles/data/loki/rules
-  rule_path: $HOME/.labrad/logfiles/data/loki/rules-temp
+      directory: ${HOME}/.labrad/logfiles/data/loki/rules
+  rule_path: ${HOME}/.labrad/logfiles/data/loki/rules-temp
   alertmanager_url: http://localhost:9093
   ring:
     kvstore:
