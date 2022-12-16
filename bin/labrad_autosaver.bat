@@ -6,7 +6,7 @@
 @SETLOCAL EnableDelayedExpansion
 
 
-@REM: Change directory to .labard
+@REM: Change directory to .labrad
 CD "%HOME%\.labrad"
 
 
