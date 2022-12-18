@@ -43,7 +43,7 @@ class TurboV81AGServer(SerialDeviceServer, PollingServer):
     name = 'TurboV81AG Server'
     regKey = 'TurboV81AG Server'
     serNode = 'mongkok'
-    port = 'COM19'
+    port = 'COM36'
 
     timeout = Value(5.0, 's')
     baudrate = 9600

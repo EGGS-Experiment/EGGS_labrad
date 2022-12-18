@@ -74,7 +74,7 @@ class PMT_client(GUIClient):
         # get counts
         try:
             self._lock(False)
-            count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), sample_time_us, num_samples)
+            count_list = yield self.aq.ttl_count_list('ttl{:d}_counter'.format(0), sample_time_us, num_samples)
         except Exception as e:
             print("Error while getting values:")
             print(e)
@@ -94,7 +94,7 @@ class PMT_client(GUIClient):
         Gets values continually.
         """
         # get counts
-        count_list = yield self.aq.ttl_count_list('ttl_counter{:d}'.format(0), self.sample_time_us, self.num_samples)
+        count_list = yield self.aq.ttl_count_list('ttl{:d}_counter'.format(0), self.sample_time_us, self.num_samples)
 
         # update display
         if self.gui.sample_std_off.isChecked():

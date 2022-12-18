@@ -37,7 +37,7 @@ class RGA_Server(SerialDeviceServer, PollingServer):
 
     name = 'RGA Server'
     regKey = 'RGA Server'
-    port = 'COM55'
+    port = 'COM48'
     serNode = 'mongkok'
 
     timeout = WithUnit(8.0, 's')

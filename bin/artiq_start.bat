@@ -37,9 +37,9 @@ SET LOGFILENAME=%LOGFILENAME: =0%
 
 
 @REM: Start ARTIQ interface
-TIMEOUT 3 > NUL && START "ARTIQ Master" /min CMD /c " artiq_master -g -r "%ARTIQ_ROOT%/repository" --device-db "%ARTIQ_ROOT%\%ddb_name%" --bind=%ip_addr% --log-file "%HOME%\.labrad\logfiles\artiq\%LOGFILENAME%.log" "
-TIMEOUT 3 > NUL && START "ARTIQ Dashboard" /min CMD /c "TIMEOUT 2 && CALL artiq_dashboard"
-TIMEOUT 3 > NUL && START "ARTIQ Controller Manager" /min CMD /k "TIMEOUT 2 && artiq_ctlmgr"
+START "ARTIQ Master" /min CMD /c " artiq_master -g -r "%ARTIQ_ROOT%/repository" --device-db "%ARTIQ_ROOT%\%ddb_name%" --bind=%ip_addr% --log-file "%HOME%\.labrad\logfiles\artiq\%LOGFILENAME%.log" "
+START "ARTIQ Dashboard" /min CMD /c "TIMEOUT 2 && CALL artiq_dashboard"
+START "ARTIQ Controller Manager" /min CMD /k "TIMEOUT 2 && artiq_ctlmgr"
 
 GOTO EOF
 
