@@ -72,6 +72,7 @@ class ARTIQ_Server(ContextServer):
         super().initServer()
 
         # remove logger objects from artiq/sipyco
+        logging.getLogger('artiq.coredevice.comm').disabled = True
         logging.getLogger('artiq.coredevice.comm_kernel').disabled = True
         # for logger_name, logger_object in self.logger.manager.loggerDict.items():
         #     print('logger_name: {}\t\tlogger_obj: {}'.format(logger_name, logger_object))

@@ -12,13 +12,13 @@ from EGGS_labrad.clients import createTrunk
 
 # parameters
 name_tmp = 'Temperature Measurement Calibration'
-dds_name = 'urukul1_ch0'
-freq_range_hz = linspace(87.5, 137.5, 23) * 1e6
-amp_range_pct = [0, 0.5]
-att_db = 14
+dds_name = 'urukul1_ch1'
+freq_range_hz = linspace(80, 140, 25) * 1e6
+amp_range_pct = [0, 0.4]
+att_db = 20
 
-target_power_uw = 100
-tolerance_power_uw = 3
+target_power_uw = 6
+tolerance_power_uw = 1
 target_wavelength_nm = 400
 num_averages = 100
 

@@ -15,8 +15,6 @@ class ARTIQ_api(object):
     Directly accesses the hardware on the box without having to use artiq_master.
     # todo: set version so we know what we're compatible with
     # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
-    # todo: write sequence that pulls all dds values so we don't have to wait forever during dds client startup
-    # todo: see if we can get initialization status of DDSs and initialize upon startup only if they are uninitialized
     """
 
     def autoreload(func):
@@ -25,18 +23,48 @@ class ARTIQ_api(object):
         the connection to artiq_master if we lost it.
         """
         def inner(self, *args, **kwargs):
+
+            # run decorated function
             try:
                 res = func(self, *args, **kwargs)
                 return res
+
+            # handle connection errors
             except (ConnectionAbortedError, ConnectionResetError) as e:
+
+                # attempt to reconnect to master and reset client objects
                 try:
+                    # reset connection
                     print('Connection aborted, resetting connection to artiq_master...')
-                    self.reset()
+                    self.reset_connection()
+
+                    # retry decorated function
                     res = func(self, *args, **kwargs)
                     return res
                 except Exception as e:
                     raise e
+
+            # handle RTIOUnderflows
+            except RTIOUnderflow as e:
+                # add slack
+                self.core.break_realtime()
+
+                # retry decorated function
+                res = func(self, *args, **kwargs)
+                return res
+
+            # handle RTIOOverflows
+            except RTIOOverflow as e:
+                # reset core & add more slack
+                self.core.reset()
+                self.core.break_realtime()
+
+                # retry decorated function
+                res = func(self, *args, **kwargs)
+                return res
+
         return inner
+
 
     def __init__(self, ddb_filepath):
         devices = DeviceDB(ddb_filepath)
@@ -51,7 +79,7 @@ class ARTIQ_api(object):
         """
         self.device_manager.close_devices()
 
-    def reset(self):
+    def reset_connection(self):
         """
         Reestablishes a connection to artiq_master.
         """
@@ -71,16 +99,16 @@ class ARTIQ_api(object):
         self.core_dma = self.device_manager.get("core_dma")
         # store devices in dictionary where device
         # name is key and device itself is value
-        self.ttlout_dict = {}
-        self.ttlin_dict = {}
-        self.ttlcounter_dict = {}
-        self.dds_dict = {}
-        self.urukul_dict = {}
-        self.zotino = None
-        self.fastino = None
-        self.dacType = None
-        self.sampler = None
-        self.phaser = None
+        self.ttlout_dict =          dict()
+        self.ttlin_dict =           dict()
+        self.ttlcounter_dict =      dict()
+        self.dds_dict =             dict()
+        self.urukul_dict =          dict()
+        self.zotino =               None
+        self.fastino =              None
+        self.dacType =              None
+        self.sampler =              None
+        self.phaser =               None
 
         # assign names and devices
         for name, params in self.device_db.items():
@@ -115,23 +143,13 @@ class ARTIQ_api(object):
             elif devicetype == 'EdgeCounter':
                 self.ttlcounter_dict[name] = device
 
-        # tmp remove
-        self._dds_channels = list(self.dds_dict.values())
-        self._dds_boards = list(self.urukul_dict.values())
+        # holder objects for dds channels
+        # these are needed so we can iterate devices in kernel functions
+        self._dds_channels =    list(self.dds_dict.values())
+        self._dds_boards =      list(self.urukul_dict.values())
 
-        yz0 = ['urukul0_ch{:d}'.format(i) for i in range(4)]
-        yz1 = ['urukul1_ch{:d}'.format(i) for i in range(4)]
-        for dev_name in (yz0+yz1):
+        for dev_name in (list(self.dds_dict.keys()) + list(self.urukul_dict.keys())):
             setattr(self, dev_name, self.device_manager.get(dev_name))
-
-    def _initializeDevices(self):
-        """
-        Initialize devices that need to be initialized.
-        """
-        # initialize DDSs
-        self.initializeDDSAll()
-        # one-off device init
-        self.initializeDAC()
 
 
     # PULSE SEQUENCING
@@ -732,6 +750,7 @@ class ARTIQ_api(object):
 
     @autoreload
     def readSampler(self, rate_hz, samples):
+        # create structures to hold results
         setattr(self, "sampler_dataset", np.zeros((samples, 8), dtype=np.int32))
         setattr(self, "sampler_holder", np.zeros(8, dtype=np.int32))
         # convert rate to mu

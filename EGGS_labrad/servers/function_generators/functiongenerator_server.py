@@ -20,6 +20,7 @@ from labrad.gpib import GPIBManagedServer
 # import device wrappers
 from Agilent33210A import Agilent33210AWrapper
 from RigolDG1022 import RigolDG1022Wrapper
+# todo: allow multiple type names
 
 
 class FunctionGeneratorServer(GPIBManagedServer):
@@ -31,7 +32,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
 
     deviceWrappers = {
         'AGILENT TECHNOLOGIES 33210A': Agilent33210AWrapper,
-        'RIGOL TECHNOLOGIES DG1022': RigolDG1022Wrapper
+        'RIGOL TECHNOLOGIES DG1022A': RigolDG1022Wrapper
     }
 
 
@@ -73,7 +74,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).channel(chan_num)
 
-    @setting(141, 'Sync', status='b', returns='b')
+    @setting(141, 'Sync', status=['b', 'i'], returns='b')
     def sync(self, c, status=None):
         """
         Toggle the TTL sync signal output.
@@ -82,7 +83,12 @@ class FunctionGeneratorServer(GPIBManagedServer):
         Returns:
                     (bool)  : the status of the SYNC output signal.
         """
-        return self.selectedDevice(c).channel(status)
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).sync(status)
 
 
     # WAVEFORM
