@@ -39,7 +39,7 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
     name = 'Keithley 2231A Server'
     regKey = 'Keithley2231A Server'
     serNode = 'MongKok'
-    port = 'COM19'
+    port = 'COM17'
 
     timeout = WithUnit(5.0, 's')
     baudrate = 9600
