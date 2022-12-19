@@ -172,6 +172,7 @@ class RFServer(GPIBManagedServer):
 
 
     # FEEDBACK
+    # todo: directly relate to locking
     @setting(411, 'Toggle Feedback Amplitude', status=['b', 'i'], returns='b')
     def feedback_toggle(self, c, status=None):
         """

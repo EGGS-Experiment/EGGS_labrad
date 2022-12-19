@@ -312,6 +312,7 @@ class OscilloscopeServer(GPIBManagedServer):
     def measure(self, c, slot):
         """
         Get a measurement from a measurement slot.
+            Note: measure_setup must be run first to set up measurement statistics for the desired slot.
         Arguments:
             slot    (int): the measurement slot number.
         Returns:
