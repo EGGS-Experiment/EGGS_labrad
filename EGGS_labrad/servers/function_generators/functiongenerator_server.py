@@ -138,6 +138,17 @@ class FunctionGeneratorServer(GPIBManagedServer):
 
 
     # MODULATION
+    @setting(311, 'Gating Burst', status='b', returns='b')
+    def gatingBurst(self, c, status=None):
+        """
+        Activate/deactivate the triggered gated burst mode.
+        Arguments:
+            status  (bool) : the status of triggered gating burst.
+        Returns:
+                    (bool) : the status of triggered gating burst.
+        """
+        return self.selectedDevice(c).gating_burst(status)
+
 
     # SWEEP
 
