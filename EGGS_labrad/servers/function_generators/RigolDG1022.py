@@ -193,6 +193,6 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
         if resp == 'ON':
             returnValue(True)
         elif resp == 'OFF':
-            returnValue(True)
+            returnValue(False)
         else:
             raise Exception("Error: invalid device response: {}".format(resp))
