@@ -20,6 +20,10 @@ class RigolDG2025Wrapper(GPIBDeviceWrapper):
         yield self.write('*RST')
 
     @inlineCallbacks
+    def trigger(self):
+        yield self.write('*TRG')
+
+    @inlineCallbacks
     def toggle(self, status):
         # setter
         if status is not None:

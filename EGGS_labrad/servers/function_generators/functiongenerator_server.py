@@ -44,6 +44,13 @@ class FunctionGeneratorServer(GPIBManagedServer):
         """
         yield self.selectedDevice(c).reset()
 
+    @setting(112, 'Trigger', returns='')
+    def trigger(self, c):
+        """
+        Send a trigger command to the function generator.
+        """
+        yield self.selectedDevice(c).trigger()
+
     @setting(121, 'Toggle', status=['b', 'i'], returns='b')
     def toggle(self, c, status=None):
         """
@@ -137,20 +144,89 @@ class FunctionGeneratorServer(GPIBManagedServer):
         return self.selectedDevice(c).offset(off)
 
 
-    # MODULATION
-    @setting(311, 'Gating Burst', status='b', returns='b')
-    def gatingBurst(self, c, status=None):
+    # TRIGGER
+    @setting(311, 'Trigger Mode', mode='s', returns='s')
+    def triggerMode(self, c, mode=None):
         """
-        Activate/deactivate the triggered gated burst mode.
+        Get/set the triggering mode. Can be one of:
+            "IMM": Internal triggering (i.e. continuous output).
+            "EXT": External triggering via TTL input.
+            "BUS": External triggering via bus (e.g. USB).
         Arguments:
-            status  (bool) : the status of triggered gating burst.
+            mode    (str)   : the current trigger mode.
         Returns:
-                    (bool) : the status of triggered gating burst.
+                    (str)   : the current trigger mode.
         """
-        return self.selectedDevice(c).gating_burst(status)
+        # check valid input
+        if type(mode) == str:
+            mode = mode.upper()
+            if mode not in ('IMM', 'EXT', 'BUS'):
+                raise Exception('Error: input must be one of ("IMM", "EXT", "BUS").')
+
+        return self.selectedDevice(c).triggerMode(mode)
+
+    @setting(321, 'Trigger Slope', slope='s', returns='s')
+    def triggerSlope(self, c, slope=None):
+        """
+        Get/set the triggering slope (applies only when external triggering is enabled).
+        Can be one of:
+            "POS": Trigger on positive (rising) edge.
+            "NEG": Trigger on negative (falling) edge.
+        Arguments:
+            slope   (str)   : the current trigger slope.
+        Returns:
+                    (str)   : the current trigger slope.
+        """
+        # check valid input
+        if type(slope) == str:
+            slope = slope.upper()
+            if slope not in ('POS', 'NEG'):
+                raise Exception('Error: input must be one of ("POS", "NEG").')
+
+        return self.selectedDevice(c).triggerSlope(slope)
 
 
-    # SWEEP
+    # MODES
+    @setting(411, 'Burst', status=['b', 'i'], returns='b')
+    def burst(self, c, status=None):
+        """
+        Activate/deactivate burst mode.
+        Arguments:
+            status  (bool) : the status of burst mode.
+        Returns:
+                    (bool) : the status of burst mode.
+        """
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+
+        return self.selectedDevice(c).burst(status)
+
+    @setting(412, 'Burst Mode', mode='s', returns='s')
+    def burstMode(self, c, mode=None):
+        """
+        Get/set the burst mode (applies only when burst mode is enabled).
+        Can be one of:
+            "TRIG": ***
+            "GAT":  ***
+        Arguments:
+            mode    (str)   : the current burst mode.
+        Returns:
+                    (str)   : the current burst mode.
+        """
+        # check valid input
+        if type(mode) == str:
+            mode = mode.upper()
+            if mode not in ('TRIG', 'GAT'):
+                raise Exception('Error: input must be one of ("TRIG", "GAT").')
+
+        return self.selectedDevice(c).burstMode(mode)
+
+
+    # todo: SWEEP
+    # todo: modulation
 
 
 if __name__ == '__main__':
