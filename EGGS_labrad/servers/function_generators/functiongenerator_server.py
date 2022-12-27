@@ -20,8 +20,7 @@ from labrad.gpib import GPIBManagedServer
 # import device wrappers
 from Agilent33210A import Agilent33210AWrapper
 from RigolDG1022 import RigolDG1022Wrapper
-from RigolDG2025 import RigolDG2025Wrapper
-# todo: allow multiple type names
+from RigolDG2052 import RigolDG2052Wrapper
 
 
 class FunctionGeneratorServer(GPIBManagedServer):
@@ -34,7 +33,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
     deviceWrappers = {
         'AGILENT TECHNOLOGIES 33210A':      Agilent33210AWrapper,
         'RIGOL TECHNOLOGIES DG1022A':       RigolDG1022Wrapper,
-        'RIGOL TECHNOLOGIES DG2025':        RigolDG2025Wrapper
+        'RIGOL TECHNOLOGIES DG2052':        RigolDG2052Wrapper
     }
 
 

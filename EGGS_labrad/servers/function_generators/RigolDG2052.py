@@ -2,7 +2,7 @@ from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 
-class RigolDG2025Wrapper(GPIBDeviceWrapper):
+class RigolDG2052Wrapper(GPIBDeviceWrapper):
 
     # INITIALIZE
     def __init__(self, *args, **kwargs):
