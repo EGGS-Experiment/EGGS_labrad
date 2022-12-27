@@ -34,7 +34,12 @@ class ContextServer(LabradServer):
         self.listeners.add(c.ID)
 
     def expireContext(self, c):
-        self.listeners.remove(c.ID)
+        # tmp remove
+        try:
+            self.listeners.remove(c.ID)
+        except Exception as e:
+            print('Error in expireContext: {}'.format(e))
+        # tmp remove close
 
 
     # LISTENERS

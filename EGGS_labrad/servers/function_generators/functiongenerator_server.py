@@ -29,11 +29,12 @@ class FunctionGeneratorServer(GPIBManagedServer):
     """
 
     name = 'Function Generator Server'
-
     deviceWrappers = {
         'AGILENT TECHNOLOGIES 33210A':      Agilent33210AWrapper,
         'RIGOL TECHNOLOGIES DG1022A':       RigolDG1022Wrapper,
         'RIGOL TECHNOLOGIES DG2052':        RigolDG2052Wrapper
+    # '^RIGOL TECHNOLOGIES DG2([\d\w])+$'
+    # bool(th1.match('rigol technologies dg2052A'))
     }
 
 

@@ -10,7 +10,7 @@
 #   Changed parseIDNResponse function to account for problems where string has more than 4 parts
 #   Removed *CLS call in lookupDeviceName
 # 1.4.3:
-#   Allowed devices of the same generation
+#   Added support for pattern matching to allow wrappers to cover a broader range of devices.
 #
 """
 ### BEGIN NODE INFO
@@ -28,6 +28,7 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
+import re
 from twisted.internet.reactor import callLater
 from twisted.internet.defer import DeferredList, DeferredLock
 
@@ -65,10 +66,10 @@ class GPIBDeviceManager(LabradServer):
         """
         Initialize the server after connecting to LabRAD.
         """
-        self.knownDevices = {} # maps (server, channel) to (name, idn)
-        self.deviceServers = {} # maps device name to list of interested servers.
-                                # each interested server is {'target':<>,'context':<>,'messageID':<>}
-        self.identFunctions = {} # maps server to (setting, ctx) for ident
+        self.knownDevices = {}          # maps (server, channel) to (name, idn)
+        self.deviceServers = {}         # maps device name to list of interested servers.
+                                            # each interested server is {'target':<>,'context':<>,'messageID':<>}
+        self.identFunctions = {}        # maps server to (setting, ctx) for ident
         self.identLock = DeferredLock()
         
         # named messages are sent with source ID first, which we ignore
@@ -96,13 +97,13 @@ class GPIBDeviceManager(LabradServer):
                         (('List Devices' in s.settings) or \
                          ('list_devices' in s.settings))]
         serverNames = [s.name for s in servers]
-        print('Pinging servers:', serverNames)
+        print('Pinging servers: {}'.format(serverNames))
         resp = yield DeferredList([s.list_devices() for s in servers])
         for serverName, (success, addrs) in zip(serverNames, resp):
             if not success:
-                print('Failed to get device list for:', serverName)
+                print('Failed to get device list for: {}'.format(serverName))
             else:
-                print('Server %s has devices: %s' % (serverName, addrs))
+                print('{} has devices: {}'.format(serverName, addrs))
                 for addr in addrs:
                     self.gpib_device_connect(serverName, addr)
 
@@ -117,13 +118,14 @@ class GPIBDeviceManager(LabradServer):
         """
         p = self.client.servers[server].packet()
         p.address(channel).timeout(Value(1, 's')).query('*IDN?')
-        print('Sending *IDN? to', server, channel)
+        print('Sending *IDN? to: {}'.format((server, channel)))
         resp = None
         try:
             resp = (yield p.send()).query
             name = parseIDNResponse(resp)
         except Exception as e:
-            print('Error sending *IDN? to', server, channel + ':', e)
+            print('Error sending *IDN? to: {}'.format((server, channel)))
+            print(e)
             name = UNKNOWN
         returnValue((name, resp))
 
@@ -172,7 +174,7 @@ class GPIBDeviceManager(LabradServer):
             yield self.client.refresh()
             s = self.client[identifier]
             setting, context = self.identFunctions[identifier]
-            print('Trying to identify device', server, channel,)
+            print('Trying to identify device: {}'.format((server, channel)))
             print('on server', identifier,)
             print('with *IDN?:', repr(idn))
             if idn is None:
@@ -184,7 +186,7 @@ class GPIBDeviceManager(LabradServer):
                 print('Server %s identified device %s %s as "%s"' % data)
                 returnValue(resp)
         except Exception as e:
-            print('Error during ident:', str(e))
+            print('Error during ident: {}'.format(e))
 
 
     # SIGNAL FUNCTIONS
@@ -193,7 +195,7 @@ class GPIBDeviceManager(LabradServer):
         """
         Handle messages when devices connect.
         """
-        print('Device Connect:', gpibBusServer, channel)
+        print('Device Connect: {}'.format((gpibBusServer, channel)))
         if (gpibBusServer, channel) in self.knownDevices:
             return
         device, idnResult = yield self.lookupDeviceName(gpibBusServer, channel)
@@ -208,7 +210,7 @@ class GPIBDeviceManager(LabradServer):
         """
         Handle messages when devices disconnect.
         """
-        print('Device Disconnect:', server, channel)
+        print('Device Disconnect: {}'.format((server, channel)))
         if (server, channel) not in self.knownDevices:
             return
         device, idnResult = self.knownDevices[server, channel]
@@ -253,7 +255,7 @@ class GPIBDeviceManager(LabradServer):
         """
         Stop sending notifications when a context expires.
         """
-        print('Expiring context:', c.ID)
+        print('Expiring context: {}'.format(c.ID))
         # device servers
         deletions = []
         for device, servers in list(self.deviceServers.items()):
