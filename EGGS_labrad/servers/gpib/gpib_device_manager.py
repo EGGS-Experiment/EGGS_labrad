@@ -9,7 +9,9 @@
 # 1.4.2:
 #   Changed parseIDNResponse function to account for problems where string has more than 4 parts
 #   Removed *CLS call in lookupDeviceName
-#   fd
+# 1.4.3:
+#   Allowed devices of the same generation
+#
 """
 ### BEGIN NODE INFO
 [info]

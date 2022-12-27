@@ -19,6 +19,9 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
     def reset(self):
         yield self.write('*RST')
 
+    def trigger(self):
+        raise NotImplementedError
+
     @inlineCallbacks
     def toggle(self, status):
         # setter

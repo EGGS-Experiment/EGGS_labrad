@@ -10,6 +10,10 @@ class Agilent33210AWrapper(GPIBDeviceWrapper):
         yield self.write('*RST')
 
     @inlineCallbacks
+    def trigger(self):
+        yield self.write('*TRG')
+
+    @inlineCallbacks
     def toggle(self, status):
         # setter
         if status is not None:
@@ -71,8 +75,50 @@ class Agilent33210AWrapper(GPIBDeviceWrapper):
         returnValue(float(resp))
 
 
-    # MODULATION
-    # todo
+    # TRIGGER
+    @inlineCallbacks
+    def triggerMode(self, mode):
+        # setter
+        if mode is not None:
+            yield self.write('TRIG:SOUR {:s}'.format(mode))
+
+        # getter
+        resp = yield self.query('TRIG:SOUR?')
+        returnValue(resp)
+
+    @inlineCallbacks
+    def triggerSlope(self, slope):
+        # setter
+        if slope is not None:
+            yield self.write('TRIG:SLOP {:s}'.format(slope))
+
+        # getter
+        resp = yield self.query('TRIG:SLOP?')
+        returnValue(resp)
+
+
+    # EXTERNAL MODULATION
+    @inlineCallbacks
+    def burst(self, status):
+        # setter
+        if status is not None:
+            yield self.write('BURS:STAT {:d}'.format(status))
+
+        # getter
+        resp = yield self.query('BURS:STAT?')
+        resp = bool(int(resp))
+        returnValue(resp)
+
+    @inlineCallbacks
+    def burstMode(self, mode):
+        # setter
+        if mode is not None:
+            yield self.write('BURS:MODE {:s}'.format(mode))
+
+        # getter
+        resp = yield self.query('BURS:MODE?')
+        returnValue(resp)
+
 
     # SWEEP
     # todo
