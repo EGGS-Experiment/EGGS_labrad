@@ -61,26 +61,6 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
         # getter
         return self.channel_num
 
-    @inlineCallbacks
-    def sync(self, status):
-        # setter
-        if status is not None:
-            if status is True:
-                yield self.write('OUTP:SYNC ON')
-            else:
-                yield self.write('OUTP:SYNC OFF')
-
-        # getter
-        sleep(_RIGOL_DG1022_QUERY_DELAY)
-        resp = yield self.query('OUTP:SYNC?')
-        resp = resp.split(' ')[-1].strip()
-        if resp == 'ON':
-            returnValue(True)
-        elif resp == 'OFF':
-            returnValue(True)
-        else:
-            raise Exception("Error: invalid device response: {}".format(resp))
-
 
     # WAVEFORM
     @inlineCallbacks
@@ -144,8 +124,75 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
         returnValue(float(resp))
 
 
-    # MODULATION
-    # todo
+    # TRIGGER
+    @inlineCallbacks
+    def triggerMode(self, mode):
+        # setter
+        if mode is not None:
+            yield self.write('TRIG:SOUR {:s}'.format(mode))
 
-    # SWEEP
-    # todo
+        # getter
+        resp = yield self.query('TRIG:SOUR?')
+        returnValue(resp)
+
+    @inlineCallbacks
+    def triggerSlope(self, slope):
+        # setter
+        if slope is not None:
+            yield self.write('TRIG:SLOP {:s}'.format(slope))
+
+        # getter
+        resp = yield self.query('TRIG:SLOP?')
+        returnValue(resp)
+
+
+    # EXTERNAL MODULATION
+    @inlineCallbacks
+    def burst(self, status):
+        # setter
+        if status is not None:
+            if status == True:
+                yield self.write('BURS:STAT ON')
+            else:
+                yield self.write('BURS:STAT OFF')
+
+        # getter
+        resp = yield self.query('BURS:STAT?')
+        if resp == 'ON':
+            returnValue(True)
+        elif resp == 'OFF':
+            returnValue(False)
+        else:
+            raise Exception("Error: invalid device response: {}".format(resp))
+
+    @inlineCallbacks
+    def burstMode(self, mode):
+        # setter
+        if mode is not None:
+            yield self.write('BURS:MODE {:s}'.format(mode))
+
+        # getter
+        resp = yield self.query('BURS:MODE?')
+        returnValue(resp)
+
+
+    # SYNCHRONIZATION
+    @inlineCallbacks
+    def sync(self, status):
+        # setter
+        if status is not None:
+            if status is True:
+                yield self.write('OUTP:SYNC ON')
+            else:
+                yield self.write('OUTP:SYNC OFF')
+
+        # getter
+        sleep(_RIGOL_DG1022_QUERY_DELAY)
+        resp = yield self.query('OUTP:SYNC?')
+        resp = resp.split(' ')[-1].strip()
+        if resp == 'ON':
+            returnValue(True)
+        elif resp == 'OFF':
+            returnValue(True)
+        else:
+            raise Exception("Error: invalid device response: {}".format(resp))
