@@ -84,6 +84,7 @@ class GPIBBusServer(PollingServer):
         self.devices = {}
         # tmp remove
         #self.rm = visa.ResourceManager()
+        # tmp remove close
         self._refreshDevices()
 
     def stopServer(self):
@@ -125,12 +126,13 @@ class GPIBBusServer(PollingServer):
         """
         try:
             rm = visa.ResourceManager()
+
             # get device names
             addresses = set([str(x) for x in rm.list_resources()])
             additions = addresses - set(self.devices.keys())
             deletions = set(self.devices.keys()) - addresses
 
-            # get names from new device
+            # get names from new devices
             for addr in additions:
                 try:
                     if not addr.startswith(KNOWN_DEVICE_TYPES):
@@ -146,7 +148,8 @@ class GPIBBusServer(PollingServer):
                     self.devices[addr] = instr
                     self.sendDeviceMessage('GPIB Device Connect', addr)
                 except Exception as e:
-                    print('Failed to add ' + addr + ':' + str(e))
+                    print('Failed to add {}'.format(addr))
+                    print('\tError: {}'.format(e))
                     raise
 
             # send device disconnect messages
@@ -156,7 +159,7 @@ class GPIBBusServer(PollingServer):
                 self.sendDeviceMessage('GPIB Device Disconnect', addr)
 
         except Exception as e:
-            print('Problem while refreshing devices:', str(e))
+            print('Problem while refreshing devices: {}'.format(e))
             raise e
 
     def sendDeviceMessage(self, msg, addr):
@@ -209,8 +212,7 @@ class GPIBBusServer(PollingServer):
         This includes any bytes corresponding to termination in
         binary data.
         """
-        instr = self.getDevice(c)
-        ans = instr.read()
+        ans = self.getDevice(c).read()
         return ans.strip()
 
     @setting(6, n_bytes='w', returns='y')
@@ -222,6 +224,7 @@ class GPIBBusServer(PollingServer):
         If n_bytes is specified, reads only that many bytes.
         Otherwise, reads until the device stops sending.
         """
+        ans = None
         instr = self.getDevice(c)
         if n_bytes is None:
             ans = instr.read_raw()
@@ -237,8 +240,7 @@ class GPIBBusServer(PollingServer):
         This query is atomic. No other communication to the
         device will occur while the query is in progress.
         """
-        instr = self.getDevice(c)
-        ans = instr.query(data)
+        ans = self.getDevice(c).query(data)
         return ans.strip()
 
     @setting(20, returns='*s')
