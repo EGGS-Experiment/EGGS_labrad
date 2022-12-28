@@ -56,7 +56,7 @@ timeout = 20
 
 [shutdown]
 message = 987654321
-timeout = 100
+timeout = 10
 ### END NODE INFO
 """
 import pyvisa as visa
@@ -74,7 +74,7 @@ class GPIBBusServer(PollingServer):
     """
 
     name = '%LABRADNODE% GPIB Bus'
-    defaultTimeout = WithUnit(1.0, 's')
+    defaultTimeout = WithUnit(3.0, 's')
     POLL_ON_STARTUP = True
 
 
@@ -84,6 +84,7 @@ class GPIBBusServer(PollingServer):
         self.devices = {}
         # tmp remove
         #self.rm = visa.ResourceManager()
+        # tmp remove close
         self._refreshDevices()
 
     def stopServer(self):
@@ -125,38 +126,49 @@ class GPIBBusServer(PollingServer):
         """
         try:
             rm = visa.ResourceManager()
-            # get device names
-            addresses = set([str(x) for x in rm.list_resources()])
+
+            # get only desired device names
+            addresses = set([
+                str(addr)
+                for addr in rm.list_resources()
+                if addr.startswith(KNOWN_DEVICE_TYPES)
+            ])
+
+            # get additions and deletions
             additions = addresses - set(self.devices.keys())
             deletions = set(self.devices.keys()) - addresses
 
-            # get names from new device
+            # process newly connected devices
             for addr in additions:
                 try:
-                    if not addr.startswith(KNOWN_DEVICE_TYPES):
-                        continue
                     instr = rm.open_resource(addr)
-                    # tmp remove
+
+                    # set up device communication
+                    instr.timeout = self.defaultTimeout['ms']
                     instr.query_delay = 0.01
-                    # tmp remove close
+                    # todo: why is termination ''? maybe b/c we want to figure out termination ourselves?
                     instr.write_termination = ''
-                    instr.clear()
                     if addr.endswith('SOCKET'):
                         instr.write_termination = '\n'
+                    # todo: wrap this in a try except block
+                    instr.clear()
+
+                    # recognize device and let listeners know
                     self.devices[addr] = instr
                     self.sendDeviceMessage('GPIB Device Connect', addr)
                 except Exception as e:
-                    print('Failed to add ' + addr + ':' + str(e))
-                    raise
+                    print('Failed to add {}'.format(addr))
+                    print('\tError: {}'.format(e))
+                    raise e
 
-            # send device disconnect messages
+            # process disconnected devices
             for addr in deletions:
                 self.devices[addr].close()
                 del self.devices[addr]
                 self.sendDeviceMessage('GPIB Device Disconnect', addr)
 
         except Exception as e:
-            print('Problem while refreshing devices:', str(e))
+            print('Problem while refreshing devices: {}'.format(e))
             raise e
 
     def sendDeviceMessage(self, msg, addr):
@@ -209,8 +221,7 @@ class GPIBBusServer(PollingServer):
         This includes any bytes corresponding to termination in
         binary data.
         """
-        instr = self.getDevice(c)
-        ans = instr.read()
+        ans = self.getDevice(c).read()
         return ans.strip()
 
     @setting(6, n_bytes='w', returns='y')
@@ -222,6 +233,7 @@ class GPIBBusServer(PollingServer):
         If n_bytes is specified, reads only that many bytes.
         Otherwise, reads until the device stops sending.
         """
+        ans = None
         instr = self.getDevice(c)
         if n_bytes is None:
             ans = instr.read_raw()
@@ -237,8 +249,7 @@ class GPIBBusServer(PollingServer):
         This query is atomic. No other communication to the
         device will occur while the query is in progress.
         """
-        instr = self.getDevice(c)
-        ans = instr.query(data)
+        ans = self.getDevice(c).query(data)
         return ans.strip()
 
     @setting(20, returns='*s')

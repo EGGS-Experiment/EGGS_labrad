@@ -20,7 +20,7 @@ from labrad.gpib import GPIBManagedServer
 # import device wrappers
 from Agilent33210A import Agilent33210AWrapper
 from RigolDG1022 import RigolDG1022Wrapper
-# todo: allow multiple type names
+from RigolDG2052 import RigolDG2052Wrapper
 
 
 class FunctionGeneratorServer(GPIBManagedServer):
@@ -29,10 +29,12 @@ class FunctionGeneratorServer(GPIBManagedServer):
     """
 
     name = 'Function Generator Server'
-
     deviceWrappers = {
-        'AGILENT TECHNOLOGIES 33210A': Agilent33210AWrapper,
-        'RIGOL TECHNOLOGIES DG1022A': RigolDG1022Wrapper
+        'AGILENT TECHNOLOGIES 33210A':      Agilent33210AWrapper,
+        'RIGOL TECHNOLOGIES DG1022A':       RigolDG1022Wrapper,
+        'RIGOL TECHNOLOGIES DG2052':        RigolDG2052Wrapper
+    # '^RIGOL TECHNOLOGIES DG2([\d\w])+$'
+    # bool(th1.match('rigol technologies dg2052A'))
     }
 
 
@@ -80,22 +82,6 @@ class FunctionGeneratorServer(GPIBManagedServer):
                     (int)   : the channel number.
         """
         return self.selectedDevice(c).channel(chan_num)
-
-    @setting(141, 'Sync', status=['b', 'i'], returns='b')
-    def sync(self, c, status=None):
-        """
-        Toggle the TTL sync signal output.
-        Arguments:
-            status  (bool)  : the status of the SYNC output signal.
-        Returns:
-                    (bool)  : the status of the SYNC output signal.
-        """
-        if type(status) == int:
-            if status not in (0, 1):
-                raise Exception('Error: input must be a boolean, 0, or 1.')
-            else:
-                status = bool(status)
-        return self.selectedDevice(c).sync(status)
 
 
     # WAVEFORM
@@ -209,8 +195,8 @@ class FunctionGeneratorServer(GPIBManagedServer):
         """
         Get/set the burst mode (applies only when burst mode is enabled).
         Can be one of:
-            "TRIG": ***
-            "GAT":  ***
+            "TRIG": fd
+            "GAT":  fd
         Arguments:
             mode    (str)   : the current burst mode.
         Returns:
@@ -226,7 +212,25 @@ class FunctionGeneratorServer(GPIBManagedServer):
 
 
     # todo: SWEEP
-    # todo: modulation
+    # todo: MODULATION
+
+    # SYNCHRONIZATION
+    @setting(611, 'Sync', status=['b', 'i'], returns='b')
+    def sync(self, c, status=None):
+        """
+        Toggle output of the TTL sync signal.
+        Arguments:
+            status  (bool)  : the status of the SYNC output signal.
+        Returns:
+                    (bool)  : the status of the SYNC output signal.
+        """
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+
+        return self.selectedDevice(c).sync(status)
 
 
 if __name__ == '__main__':

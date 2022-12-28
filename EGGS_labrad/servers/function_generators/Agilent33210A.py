@@ -18,6 +18,7 @@ class Agilent33210AWrapper(GPIBDeviceWrapper):
         # setter
         if status is not None:
             yield self.write('OUTP {:d}'.format(status))
+
         # getter
         resp = yield self.query('OUTP?')
         resp = bool(int(resp))
@@ -35,6 +36,7 @@ class Agilent33210AWrapper(GPIBDeviceWrapper):
                 yield self.write('FUNC {:s}'.format(shape))
             else:
                 raise Exception('Error: invalid input. Shape must be one of (SIN, SQU, RAMP, PULS, NOIS, DC).')
+
         resp = yield self.query('FUNC?')
         returnValue(resp)
 
@@ -46,6 +48,7 @@ class Agilent33210AWrapper(GPIBDeviceWrapper):
                 yield self.write('FREQ {:f}'.format(freq))
             else:
                 raise Exception('Error: invalid input. Frequency must be in range [1mHz, 10MHz].')
+
         # getter
         resp = yield self.query('FREQ?')
         returnValue(float(resp))
@@ -97,7 +100,7 @@ class Agilent33210AWrapper(GPIBDeviceWrapper):
         returnValue(resp)
 
 
-    # EXTERNAL MODULATION
+    # MODES
     @inlineCallbacks
     def burst(self, status):
         # setter
@@ -120,5 +123,14 @@ class Agilent33210AWrapper(GPIBDeviceWrapper):
         returnValue(resp)
 
 
-    # SWEEP
-    # todo
+    # SYNCHRONIZATION
+    @inlineCallbacks
+    def sync(self, status):
+        # setter
+        if status is not None:
+            yield self.write('OUTP:SYNC {:d}'.format(status))
+
+        # getter
+        resp = yield self.query('OUTP:SYNC?')
+        resp = bool(int(resp))
+        returnValue(resp)
