@@ -36,6 +36,8 @@ from labrad.units import Value
 from labrad.server import LabradServer, setting, inlineCallbacks, returnValue
 
 UNKNOWN = '<unknown>'
+# todo: finish implementing regex
+# todo: finish documenting functions and cleaning up
 
 
 def parseIDNResponse(s):
@@ -171,20 +173,24 @@ class GPIBDeviceManager(LabradServer):
         otherwise returns None.
         """
         try:
+            # todo: is this client refresh necessary?
             yield self.client.refresh()
             s = self.client[identifier]
             setting, context = self.identFunctions[identifier]
+
             print('Trying to identify device: {}'.format((server, channel)))
             print('on server', identifier,)
             print('with *IDN?:', repr(idn))
+
             if idn is None:
                 resp = yield s[setting](server, channel, context=context)
             else:
                 resp = yield s[setting](server, channel, idn, context=context)
+
             if resp is not None:
-                data = (identifier, server, channel, resp)
-                print('Server %s identified device %s %s as "%s"' % data)
+                print('Server {} identified device {} {} as "{}"'.format(identifier, server, channel, resp))
                 returnValue(resp)
+
         except Exception as e:
             print('Error during ident: {}'.format(e))
 
@@ -198,11 +204,16 @@ class GPIBDeviceManager(LabradServer):
         print('Device Connect: {}'.format((gpibBusServer, channel)))
         if (gpibBusServer, channel) in self.knownDevices:
             return
+
+        # attempt to identify device by querying *IDN?
+        yield self.client.refresh()
         device, idnResult = yield self.lookupDeviceName(gpibBusServer, channel)
+        # if that fails, try other ident functions
         if device == UNKNOWN:
             device = yield self.identifyDevice(gpibBusServer, channel, idnResult)
-        self.knownDevices[gpibBusServer, channel] = (device, idnResult)
+
         # forward message if someone cares about this device
+        self.knownDevices[gpibBusServer, channel] = (device, idnResult)
         if device in self.deviceServers:
             self.notifyServers(device, gpibBusServer, channel, True)
 
@@ -213,8 +224,11 @@ class GPIBDeviceManager(LabradServer):
         print('Device Disconnect: {}'.format((server, channel)))
         if (server, channel) not in self.knownDevices:
             return
+
+        # todo: document
         device, idnResult = self.knownDevices[server, channel]
         del self.knownDevices[server, channel]
+
         # forward message if someone cares about this device
         if device in self.deviceServers:
             self.notifyServers(device, server, channel, False)
@@ -225,7 +239,7 @@ class GPIBDeviceManager(LabradServer):
         """
         for s in self.deviceServers[device]:
             rec = s['messageID'], (device, server, channel, isConnected)
-            print('Sending message:', s['target'], s['context'], [rec])
+            print('Sending message to GPIBManagedServers: {} {} {}'.format(s['target'], s['context'], [rec]))
             self.client._sendMessage(s['target'], [rec], context=s['context'])
 
     def serverConnected(self, ID, name):

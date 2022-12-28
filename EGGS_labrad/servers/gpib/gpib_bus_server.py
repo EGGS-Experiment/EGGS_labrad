@@ -150,6 +150,7 @@ class GPIBBusServer(PollingServer):
                     instr.write_termination = ''
                     if addr.endswith('SOCKET'):
                         instr.write_termination = '\n'
+                    # todo: wrap this in a try except block
                     instr.clear()
 
                     # recognize device and let listeners know
