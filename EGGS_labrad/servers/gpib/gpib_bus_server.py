@@ -146,20 +146,23 @@ class GPIBBusServer(PollingServer):
                     # set up device communication
                     instr.timeout = self.defaultTimeout['ms']
                     instr.query_delay = 0.01
-                    # todo: why is termination ''? maybe b/c we want to figure out termination ourselves?
+                    # todo: why do we set termination like this? maybe b/c we want to figure out termination ourselves?
                     instr.write_termination = ''
                     if addr.endswith('SOCKET'):
                         instr.write_termination = '\n'
-                    # todo: wrap this in a try except block
                     instr.clear()
 
                     # recognize device and let listeners know
                     self.devices[addr] = instr
                     self.sendDeviceMessage('GPIB Device Connect', addr)
+
                 except Exception as e:
                     print('Failed to add {}'.format(addr))
                     print('\tError: {}'.format(e))
-                    raise e
+
+                    # ensure problematic device is removed from self.devices
+                    if addr in self.devices:
+                        del self.devices[addr]
 
             # process disconnected devices
             for addr in deletions:
