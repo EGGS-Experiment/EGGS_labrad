@@ -506,7 +506,7 @@ device_db["phaser0"] = {
     "class": "Phaser",
     "arguments": {
         "channel_base": 0x00002e,
-        "miso_delay": 1,
+        "miso_delay": 1
     }
 }
 
@@ -559,3 +559,51 @@ device_db["led1"] = {
     "class": "TTLOut",
     "arguments": {"channel": 0x000038}
 }
+
+
+# customize phaser configuration
+_phaser_dac_config = {
+    'mixer_ena':            1,
+    'nco_ena':              1
+}
+
+# original
+# _phaser_trf_config = {
+#     'lo_div_sel':           0b00,
+#     'pll_div_sel':          0b01,
+#     'rdiv':                 2,
+#     'nint':                 23,
+#     'prsc_sel':             0,
+#     'cal_clk_sel':          0b1110
+# }
+
+# max
+# _phaser_trf_config = {
+#     'lo_div_sel':           0b11,
+#     'pll_div_sel':          0b01,
+#     'rdiv':                 21,
+#     'nint':                 420,
+#     'prsc_sel':             1,
+#     'cal_clk_sel':          0b1010
+# }
+
+# min - new
+_phaser_trf_config = {
+    'pll_div_sel':          0b01,
+    'rdiv':                 3,
+    'nint':                 29,
+    'prsc_sel':             0,
+    'cal_clk_sel':          0b1110,
+    'lo_div_sel':           0b11,
+
+
+    'tx_div_sel':           0b11,
+    'tx_div_bias':          0b00,
+    'lo_div_bias':          0b00
+}
+
+
+# update phaser0 config options
+device_db["phaser0"]["arguments"]["dac"] =      _phaser_dac_config
+device_db["phaser0"]["arguments"]["trf0"] =     _phaser_trf_config
+#device_db["phaser0"]["arguments"]["trf1"] =     _phaser_trf_config
