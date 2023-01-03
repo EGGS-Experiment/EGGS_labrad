@@ -593,7 +593,7 @@ _phaser_trf_config = {
     'rdiv':                 3,
     'nint':                 29,
     'prsc_sel':             0,
-    'cal_clk_sel':          0b1110,
+    'cal_clk_sel':          0b1100,
     'lo_div_sel':           0b11,
 
 

@@ -18,6 +18,7 @@ from labrad.server import setting, Signal
 from twisted.internet.defer import returnValue, inlineCallbacks
 from toptica.lasersdk.client import Client, NetworkConnection
 
+import logging
 from EGGS_labrad.servers import PollingServer
 
 CURRENTSIGNAL = 913548
@@ -48,9 +49,11 @@ class TopticaServer(PollingServer):
     @inlineCallbacks
     def initServer(self):
         super().initServer()
+
         # get DLC pro addresses from registry
         reg = self.client.registry
         ip_addresses = {}
+
         try:
             tmp = yield reg.cd()
             yield reg.cd(['', 'Servers', self.regKey])
@@ -67,6 +70,7 @@ class TopticaServer(PollingServer):
             yield reg.cd(tmp)
         except Exception as e:
             yield reg.cd(tmp)
+
         # create DLC Pro device objects
         for name, ip_address in ip_addresses.items():
             try:
@@ -75,6 +79,7 @@ class TopticaServer(PollingServer):
                 self.devices[name] = dev
             except Exception as e:
                 print(e)
+
         # get laser parameters
         for chan_num in self.channels.keys():
             try:
@@ -87,7 +92,11 @@ class TopticaServer(PollingServer):
                 self.channels[chan_num]['temp_min'] = fac_params[4][0]
                 self.channels[chan_num]['temp_max'] = fac_params[4][1]
             except Exception as e:
-                print('Channel ', chan_num, ':', e)
+                print('Channel {}: {}'.format(chan_num, ':', e))
+
+        # stop logging everything
+        logging.getLogger('toptica.lasersdk.asyncio.connection').disabled = True
+
 
     def stopServer(self):
         # close all devices on completion
