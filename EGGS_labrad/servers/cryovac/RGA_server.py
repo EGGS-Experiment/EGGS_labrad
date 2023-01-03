@@ -464,17 +464,21 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         # sanitize input
         if (mass < 0) or (mass > self.m_max):
             raise Exception('Error: invalid input.')
+
         # get partial pressure conversion
         st = yield self._getter('SP', c)
         st = 1e-13 / float(st)
+
         # start a single mass measurement
         msg = 'MR' + str(mass) + _SRS_EOL
         yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(4)
+
         # set the rods back to zero
         yield self.ser.write('MR0\r')
         self.ser.release()
+
         # process and return the result
         if type(resp) == str:
             resp = bytes(resp, encoding='utf-8')

@@ -106,7 +106,11 @@ class RGA_client(GUIClient):
         Updates GUI when values are received from server.
         """
         param, value = data
-        if param != 'status':
+
+        # todo: fix temp hack, handle SP better
+        if param == 'SP':
+            pass
+        elif (param != 'status'):
             try:
                 class_type = self.gui_elements[param].__class__.__name__
                 if class_type == 'QDoubleSpinBox':
@@ -125,7 +129,7 @@ class RGA_client(GUIClient):
             # print out RGA errors
             for i in range(len(value)):
                 if value[- (i+1)] == '1':
-                    self.gui.buffer_readout.appendPlainText('Status: ' + _RGA_ERRORS[i])
+                    self.gui.buffer_readout.appendPlainText('Status: {}'.format(_RGA_ERRORS[i]))
 
 
     # SLOTS
