@@ -300,12 +300,12 @@ class OscilloscopeServer(GPIBManagedServer):
             slot    (int): the measurement slot number to set up.
             channel (int): the channel to measure.
             param   (str): the measurement parameter.
-                            Must be one of ("AMP", "FREQ", "MAX", "MEAN", "MIN", "P2P").
+                            Must be one of ("AMP", "FREQ", "MAX", "MEAN", "MIN", "P2P", "RMS").
         Returns:
             (int, int, str): the measurement slot, the channel being measured, the measurement parameter.
         """
-        if (param is not None) and (param not in ("AMP", "FREQ", "MAX", "MEAN", "MIN", "P2P")):
-            raise Exception("Invalid measurement type. Must be one of {}.".format(str(("AMP", "FREQ", "MAX", "MEAN", "MIN", "P2P"))))
+        if (param is not None) and (param not in ("AMP", "FREQ", "MAX", "MEAN", "MIN", "P2P", "RMS")):
+            raise Exception("Invalid measurement type. Must be one of {}.".format(str(("AMP", "FREQ", "MAX", "MEAN", "MIN", "P2P", "RMS"))))
         return self.selectedDevice(c).measure_setup(slot, channel, param)
 
     @setting(211, "Measure", slot='i', returns='v')
