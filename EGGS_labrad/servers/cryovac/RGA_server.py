@@ -476,7 +476,6 @@ class RGA_Server(SerialDeviceServer, PollingServer):
         yield self.ser.write('MR0\r')
         self.ser.release()
         # process and return the result
-        print('text:', resp)
         if type(resp) == str:
             resp = bytes(resp, encoding='utf-8')
         current = int.from_bytes(resp, 'little', signed=True)
