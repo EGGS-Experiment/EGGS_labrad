@@ -169,11 +169,11 @@ class AMO2Server(SerialDeviceServer, PollingServer):
     @setting(221, 'Locking P', prop='v', returns='v')
     def lockingP(self, c, prop=None):
         """
-        Get/set the proportional parameter.
+        Get/set the proportional parameter (in machine units).
         Arguments:
-            prop    (float): the proportional parameter.
+            prop    (float): the proportional parameter (in machine units).
         Returns:
-                    (float): the proportional parameter.
+                    (float): the proportional parameter (in machine units).
         """
         # setter
         if prop is not None:
@@ -198,11 +198,11 @@ class AMO2Server(SerialDeviceServer, PollingServer):
     @setting(222, 'Locking I', integ='v', returns='v')
     def lockingI(self, c, integ=None):
         """
-        Get/set the integral parameter.
+        Get/set the integral parameter (in machine units).
         Arguments:
-            integ   (float): the integral parameter.
+            integ   (float): the integral parameter (in machine units).
         Returns:
-                    (float): the integral parameter.
+                    (float): the integral parameter (in machine units).
         """
         # setter
         if integ is not None:
@@ -227,11 +227,11 @@ class AMO2Server(SerialDeviceServer, PollingServer):
     @setting(223, 'Locking D', deriv='v', returns='v')
     def lockingD(self, c, deriv=None):
         """
-        Get/set the derivative parameter.
+        Get/set the derivative parameter (in machine units).
         Arguments:
-            deriv   (float): the derivative parameter.
+            deriv   (float): the derivative parameter (in machine units).
         Returns:
-                    (float): the derivative parameter.
+                    (float): the derivative parameter (in machine units).
         """
         # setter
         if deriv is not None:

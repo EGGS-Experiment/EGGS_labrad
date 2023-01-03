@@ -234,7 +234,7 @@ class TektronixMSO2000Wrapper(GPIBDeviceWrapper):
     def measure_setup(self, slot, channel=None, param=None):
         # convert generalized parameters to device specific parameters
         valid_measurement_parameters = {
-            "AMP": "AMP", "FREQ": "FREQ", "MAX": "MAX", "MEAN": "MEAN", "MIN": "MINI", "P2P": "PK2P"
+            "AMP": "AMP", "FREQ": "FREQ", "MAX": "MAX", "MEAN": "MEAN", "MIN": "MINI", "P2P": "PK2P", "RMS": "RMS"
         }
         # setter
         if slot not in (1, 2, 3, 4):

@@ -77,10 +77,11 @@ class AMO1Server(SerialDeviceServer):
     def remote(self, c, remote_status=None):
         """
         Set remote mode of device.
+
         Arguments:
-            remote_status   (bool)  : whether the device accepts serial commands
+            remote_status   (bool)  : whether the device accepts serial commands.
         Returns:
-                            (bool)  : whether the device accepts serial commands
+                            (bool)  : whether the device accepts serial commands.
         """
         if remote_status is not None:
             yield self.ser.acquire()

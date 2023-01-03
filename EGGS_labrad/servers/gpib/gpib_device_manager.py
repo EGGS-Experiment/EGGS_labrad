@@ -38,6 +38,7 @@ from labrad.server import LabradServer, setting, inlineCallbacks, returnValue
 UNKNOWN = '<unknown>'
 # todo: finish implementing regex
 # todo: finish documenting functions and cleaning up
+# todo: write arg/return docstrings
 
 
 def parseIDNResponse(s):

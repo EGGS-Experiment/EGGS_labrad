@@ -42,7 +42,6 @@ EXPSIGNAL_ID = 828173
 DDSSIGNAL_ID = 828172
 RESCUESIGNAL_ID = 828171
 # todo: move all mu stuff to api since api has better access to conversion stuff than we do and can call it in a nonkernel function
-# todo: remove artiq comm stuff from logging
 # todo: use dds name helper to allow board number and channel number to be used for settings
 
 
