@@ -92,15 +92,12 @@ try:
         # set dds frequency
         aq.dds_frequency(dds_name, freq_val_hz)
 
-        # search for amplitude
-        for amp_val in dds_amp_range_pct:
+        # get calibrated asf
+        amp_target_pct = recursion_search(*dds_amp_range_pct)
 
-            # get calibrated asf
-            amp_target_pct = recursion_search(dds_amp_range_pct[0], dds_amp_range_pct[1])
-
-            # add to data vault
-            dv.add(freq_val_hz, amp_target_pct, context=cr)
-            res.append(amp_target_pct)
+        # add to data vault
+        dv.add(freq_val_hz, amp_target_pct, context=cr)
+        res.append(amp_target_pct)
 
 
 except Exception as e:
