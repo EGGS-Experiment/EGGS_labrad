@@ -1,28 +1,29 @@
 """
-Characterize the harmonics of a system.
+Measure values from a spectrum analyzer
 """
 import labrad
-from time import sleep
+from time import time, sleep
+from datetime import datetime
 from numpy import arange, linspace, zeros, mean, amax
 
 
 from EGGS_labrad.clients import createTrunk
 
 # experiment parameters
-name_tmp = 'Signal Harmonic Characterization'
+name_tmp = 'Spectrum Analyzer Measurement'
 
-# function generator parameters
-rf_amp_1_vpp = 2.4000
-rf_freq_1_hz = 19.054 * 1e6
+# polling parameters
+poll_delay_s =          2
 
-rf_amp_2_vpp_list = arange(0.5, 5.0, 0.1)
-rf_freq_2_list_hz = arange(300, 2000, 10) * 1e3
+# spectrum analyzer parameters
+sa_device_num_dj =      2
+sa_att_int_db =         10
+sa_att_ext_db =         10
+sa_span_hz =            100
+sa_bandwidth_hz =       10
+sa_peak_threshold =     -95
 
-# device parameters
-sa_att_int_db = 10
-sa_att_ext_db = 30
-sa_bandwidth_hz = 25000
-sa_peak_threshold = -95
+# todo: do variable number of peaks
 
 
 # main loop
@@ -32,89 +33,61 @@ try:
     print("Connection successful.")
 
     # get servers
-    fg = cxn.function_generator_server
     sa = cxn.spectrum_analyzer_server
     dv = cxn.data_vault
     cr = cxn.context()
     print("Server connection successful.")
 
-    # set up function generator
-    fg.select_device(2)
-    #fg.channel(1)
-    # fg.toggle(1)
-    # fg.amplitude(rf_amp_1_vpp)
-    # fg.frequency(rf_freq_1_hz)
-    # fg.channel(1)
-    fg.gpib_write('VOLT:CH2 {}'.format(rf_amp_1_vpp))
-    fg.gpib_write('FREQ:CH2 {}'.format(rf_freq_1_hz))
-    print("Function generator setup successful.")
-
     # set up spectrum analyzer
-    sa.select_device(3)
+    sa.select_device(sa_device_num_dj)
     sa.attenuation(sa_att_int_db)
+    sa.frequency_span(sa_span_hz)
     sa.bandwidth_resolution(sa_bandwidth_hz)
-    # tmp remove
-    sa.gpib_write('CALC:MARK:PEAK:TABL:STAT 1')
-    sa.gpib_write('CALC:MARK:PEAK:SORT AMPL')
-    sa.gpib_write('CALC:MARK:PEAK:TABL:READ GTDL')
+    sa.marker_toggle(1, True)
     print("Spectrum analyzer setup successful.")
 
     # create dataset
     trunk_tmp = createTrunk(name_tmp)
     dv.cd(trunk_tmp, True, context=cr)
+    dataset_title_tmp = 'Spectrum Analyzer Measurement'
+    dv.new(
+        dataset_title_tmp,
+        [('Time', 's')],
+        [
+            ('Signal Frequency',    'Frequency',    'Hz'),
+            ('Signal Power',        'Power',        'dBm')
+        ],
+        context=cr
+    )
+    dv.add_parameter("spectrum_analyzer_bandwidth",                 sa_bandwidth_hz,    context=cr)
+    dv.add_parameter("spectrum_analyzer_bandwidth",                 sa_bandwidth_hz,    context=cr)
+    dv.add_parameter("spectrum_analyzer_attenuation_internal",      sa_att_int_db,      context=cr)
+    dv.add_parameter("spectrum_analyzer_attenuation_external",      sa_att_ext_db,      context=cr)
     print("Data vault setup successful.")
 
+
     # MAIN LOOP
-    # sweep frequency
-    for amp_val_vpp in rf_amp_2_vpp_list:
+    starttime = time()
+    while True:
 
-        print('starting amp: {}'.format(amp_val_vpp))
+        try:
+            # get signal values
+            sa_pow_dbm = sa.marker_amplitude(1)
+            sa_freq_hz = sa.marker_frequency(1)
 
-        # create dataset
-        dataset_title_tmp = '{}: {} Vpp'.format(name_tmp, str(amp_val_vpp).replace('.', '_'))
-        dv.new(
-            dataset_title_tmp,
-            [('Modulation Amplitude', 'Vpp')],
-            [
-                ('1st Order Harmonic', 'Power', 'dBm'),
-                ('2nd Order Harmonic (Left)', 'Power', 'dBm'), ('2nd Order Harmonic (Right)', 'Power', 'dBm')#,
-                #('3rd Order Harmonic (Left)', 'Power', 'dBm'), ('3rd Order Harmonic (Right)', 'Power', 'dBm')
-            ],
-            context=cr
-        )
-        dv.add_parameter("carrier_frequency_hz", rf_freq_1_hz, context=cr)
-        dv.add_parameter("carrier_amplitude_vpp", rf_amp_1_vpp, context=cr)
-        dv.add_parameter("modulation_amplitude_vpp", amp_val_vpp, context=cr)
-        dv.add_parameter("spectrum_analyzer_bandwidth", sa_bandwidth_hz, context=cr)
-        dv.add_parameter("spectrum_analyzer_attenuation_internal", sa_att_int_db, context=cr)
-        dv.add_parameter("spectrum_analyzer_attenuation_external", sa_att_ext_db, context=cr)
+            # record data into data vault
+            elapsedtime = time() - starttime
+            dv.add(elapsedtime, sa_pow_dbm, sa_freq_hz, context=cr)
 
-        # set amplitude
-        fg.gpib_write('VOLT {}'.format(amp_val_vpp))
+        except Exception as e:
+            # log time and error description
+            error_time = datetime.now()
+            print("{}::\tError: {}".format(error_time.strftime("%m/%d/%Y, %H:%M:%S"), e))
 
-        # sweep modulation frequency
-        for freq_val_hz in rf_freq_2_list_hz:
+        finally:
 
-            # set frequency
-            fg.gpib_write('FREQ {}'.format(freq_val_hz))
-            sleep(0.5)
-
-            # get peaks
-            resp = sa.gpib_query('CALC:DATA1:PEAK? {:d}, 10, AMPL, GTDL'.format(sa_peak_threshold))
-
-            # parse peaks
-            res_list = [float(val) for val in resp.split(',')]
-            #freq_list = res_list[2::2]
-            amp_list = res_list[1::2]
-            amp_list = [amp_val_db + sa_att_ext_db for amp_val_db in amp_list]
-
-            # ensure correct number of peaks
-            if len(amp_list) < 3:
-                print('\tfehler: too few @ {:f} MHz: {}'.format(freq_val_hz/1e6, amp_list))
-                amp_list += [0.0, 0.0, 0.0]
-
-            # record result
-            dv.add([freq_val_hz] + amp_list[:3], context=cr)
+            # wait given time
+            sleep(poll_delay_s)
 
 except Exception as e:
     print("Error:", e)
