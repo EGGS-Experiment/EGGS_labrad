@@ -60,7 +60,6 @@ try:
         context=cr
     )
     dv.add_parameter("spectrum_analyzer_bandwidth",                 sa_bandwidth_hz,    context=cr)
-    dv.add_parameter("spectrum_analyzer_bandwidth",                 sa_bandwidth_hz,    context=cr)
     dv.add_parameter("spectrum_analyzer_attenuation_internal",      sa_att_int_db,      context=cr)
     dv.add_parameter("spectrum_analyzer_attenuation_external",      sa_att_ext_db,      context=cr)
     print("Data vault setup successful.")
@@ -72,12 +71,12 @@ try:
 
         try:
             # get signal values
-            sa_pow_dbm = sa.marker_amplitude(1)
             sa_freq_hz = sa.marker_frequency(1)
+            sa_pow_dbm = sa.marker_amplitude(1)
 
             # record data into data vault
             elapsedtime = time() - starttime
-            dv.add(elapsedtime, sa_pow_dbm, sa_freq_hz, context=cr)
+            dv.add(elapsedtime, sa_freq_hz, sa_pow_dbm, context=cr)
 
         except Exception as e:
             # log time and error description
