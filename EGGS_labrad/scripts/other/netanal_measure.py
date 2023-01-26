@@ -1,5 +1,5 @@
 """
-Measure values from a spectrum analyzer.
+Measure values from a network analyzer.
 """
 import labrad
 from time import time, sleep
@@ -10,17 +10,17 @@ from numpy import arange, linspace, zeros, mean, amax
 from EGGS_labrad.clients import createTrunk
 
 # experiment parameters
-name_tmp = 'Spectrum Analyzer Measurement'
+name_tmp = 'Network Analyzer Measurement'
 
 # polling parameters
 poll_delay_s =          0.75
 
-# spectrum analyzer parameters
-sa_device_num_dj =      3
-sa_att_int_db =         10
-sa_att_ext_db =         11.5
-sa_span_hz =            100
-sa_bandwidth_hz =       10
+# network analyzer parameters
+na_device_num_dj =      3
+na_att_int_db =         10
+na_att_ext_db =         11.5
+na_span_hz =            100
+na_bandwidth_hz =       10
 
 # todo: do variable number of peaks
 
@@ -32,35 +32,39 @@ try:
     print("Connection successful.")
 
     # get servers
-    sa = cxn.spectrum_analyzer_server
+    na = cxn.network_analyzer_server
     dv = cxn.data_vault
     cr = cxn.context()
     print("Server connection successful.")
 
-    # set up spectrum analyzer
-    sa.select_device(sa_device_num_dj)
-    sa.attenuation(sa_att_int_db)
-    sa.frequency_span(sa_span_hz)
-    sa.bandwidth_resolution(sa_bandwidth_hz)
-    sa.marker_toggle(1, True)
-    print("Spectrum analyzer setup successful.")
+    # set up network analyzer
+    na.select_device()
+    na.marker_toggle(1, True)
+    na.gpib_write('CALC1:MARK:FUNC MIN')
+    na.gpib_write('CALC1:MARK:FUNC:TRAC ON')
+    # na.select_device(na_device_num_dj)
+    # na.attenuation(na_att_int_db)
+    # na.frequency_span(na_span_hz)
+    # na.bandwidth_resolution(na_bandwidth_hz)
+    # na.marker_toggle(1, True)
+    # print("Network analyzer setup successful.")
 
     # create dataset
     trunk_tmp = createTrunk(name_tmp)
     dv.cd(trunk_tmp, True, context=cr)
-    dataset_title_tmp = 'Spectrum Analyzer Measurement'
+    dataset_title_tmp = 'Network Analyzer Measurement'
     dv.new(
         dataset_title_tmp,
         [('Time', 's')],
         [
-            ('Signal Frequency',    'Frequency',    'Hz'),
-            ('Signal Power',        'Power',        'dBm')
+            ('Resonance Frequency',    'Frequency',    'Hz'),
+            ('Resonance Power',        'Transmission',  'dB')
         ],
         context=cr
     )
-    dv.add_parameter("spectrum_analyzer_bandwidth",                 sa_bandwidth_hz,    context=cr)
-    dv.add_parameter("spectrum_analyzer_attenuation_internal",      sa_att_int_db,      context=cr)
-    dv.add_parameter("spectrum_analyzer_attenuation_external",      sa_att_ext_db,      context=cr)
+    # dv.add_parameter("network_analyzer_bandwidth",                 na_bandwidth_hz,    context=cr)
+    # dv.add_parameter("network_analyzer_attenuation_internal",      na_att_int_db,      context=cr)
+    # dv.add_parameter("network_analyzer_attenuation_external",      na_att_ext_db,      context=cr)
     print("Data vault setup successful.")
 
 
