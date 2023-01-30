@@ -13,7 +13,7 @@ from EGGS_labrad.clients import createTrunk
 name_tmp = 'Network Analyzer Measurement'
 
 # polling parameters
-poll_delay_s =          0.75
+poll_delay_s =          1.0
 
 # network analyzer parameters
 na_device_num_dj =      3
@@ -33,21 +33,27 @@ try:
 
     # get servers
     na = cxn.network_analyzer_server
+    tec = cxn.amo2_server
     dv = cxn.data_vault
     cr = cxn.context()
     print("Server connection successful.")
 
     # set up network analyzer
     na.select_device()
-    na.marker_toggle(1, True)
-    na.gpib_write('CALC1:MARK:FUNC MIN')
-    na.gpib_write('CALC1:MARK:FUNC:TRAC ON')
+    #na.marker_toggle(1, True)
+    #na.gpib_write('CALC1:MARK:FUNC MIN')
+    #na.gpib_write('CALC1:MARK:FUNC:TRAC ON')
+
+
     # na.select_device(na_device_num_dj)
     # na.attenuation(na_att_int_db)
     # na.frequency_span(na_span_hz)
     # na.bandwidth_resolution(na_bandwidth_hz)
     # na.marker_toggle(1, True)
-    # print("Network analyzer setup successful.")
+    print("Network analyzer setup successful.")
+
+    # set up amo2 server
+    # todo
 
     # create dataset
     trunk_tmp = createTrunk(name_tmp)
@@ -57,8 +63,11 @@ try:
         dataset_title_tmp,
         [('Time', 's')],
         [
-            ('Resonance Frequency',    'Frequency',    'Hz'),
-            ('Resonance Power',        'Transmission',  'dB')
+            ('Resonator Temperature',   'Temperature',      'C'),
+            ('Resonance Power',         'Transmission',     'dB'),
+            ('Resonance Frequency',     'Frequency',        'Hz'),
+            ('Left Bandwidth',          'Frequency',        'Hz'),
+            ('Right Bandwidth',         'Frequency',        'Hz')
         ],
         context=cr
     )
@@ -74,12 +83,14 @@ try:
 
         try:
             # get signal values
-            sa_freq_hz = sa.marker_frequency(1)
-            sa_pow_dbm = sa.marker_amplitude(1)
+            na_res_pow_db = float(na.gpib_query('CALC:MARK1:Y?'))
+            na_res_freq_hz = float(na.gpib_query('CALC:MARK1:X?'))
+            na_left_bw_freq_hz = float(na.gpib_query('CALC:MARK2:X?'))
+            na_right_bw_freq_hz = float(na.gpib_query('CALC:MARK3:X?'))
 
             # record data into data vault
             elapsedtime = time() - starttime
-            dv.add(elapsedtime, sa_freq_hz, sa_pow_dbm, context=cr)
+            dv.add(elapsedtime, na_res_pow_db, na_res_freq_hz, na_left_bw_freq_hz, na_right_bw_freq_hz, context=cr)
 
         except Exception as e:
             # log time and error description
