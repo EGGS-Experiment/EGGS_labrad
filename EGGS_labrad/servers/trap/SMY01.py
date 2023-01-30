@@ -1,4 +1,5 @@
 from numpy import log10
+from time import sleep
 from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 # todo: set am dc modulation correctly
@@ -195,27 +196,38 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         returnValue(float(resp))
 
 
-    # FEEDBACK
-    def feedback_toggle(self, onoff=None):
+    # STABILIZATION
+    def stabilization_lock(self, onoff=None):
         # setter
         if onoff is not None:
+            # get locking status
+            lock_status = False
+            resp = yield self.query('AM?')
+            if resp == 'AM:OFF':
+                resp = True
+
+            # slowly ramp up locking
             if onoff is True:
-                yield self.write('AM:E:D')
+                yield self.write('AM:E:D 10')
+                sleep(0.1)
+                yield self.write('AM:E:D 30')
+                sleep(0.1)
+                yield self.write('AM:E:D 100')
+
+            # slowly turn off locking
             elif onoff is False:
+                yield self.write('AM:E:D 90')
+                sleep(0.1)
+                yield self.write('AM:E:D 50')
+                sleep(0.1)
                 yield self.write('AM:OFF')
+
         # getter
         resp = yield self.query('AM?')
         if resp == 'AM:OFF':
             returnValue(False)
         else:
             returnValue(True)
-
-    def feedback_amplitude_depth(self, depth=None):
-        if depth:
-            yield self.write('AM:E:D {:f}'.format(depth))
-        resp = yield self.query('AM?')
-        resp = self._parse(resp, 'AM:E:D')
-        returnValue(float(resp))
 
 
     # HELPER
