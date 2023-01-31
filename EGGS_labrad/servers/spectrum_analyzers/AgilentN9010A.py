@@ -190,7 +190,8 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
 
 
     # PEAKS ONLY
-    def peakThreshold(self, c, threshold):
+    @inlineCallbacks
+    def peakThreshold(self, threshold):
         if threshold is not None:
             if (threshold > -200) and (threshold < 30):
                 yield self.write(':CALC:MARK:PEAK:THR {:f}'.format(threshold))
@@ -200,7 +201,8 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
         resp = yield self.query(':CALC:MARK:PEAK:THR?')
         returnValue(float(resp))
 
-    def peakExcursion(self, c, excursion):
+    @inlineCallbacks
+    def peakExcursion(self, excursion):
         if excursion is not None:
             if (excursion > 0) and (excursion < 100):
                 yield self.write(':CALC:MARK:PEAK:EXC {:f}'.format(excursion))
@@ -210,7 +212,8 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
         resp = yield self.query(':CALC:MARK:PEAK:EXC?')
         returnValue(float(resp))
 
-    def peakTable(self, c):
+    @inlineCallbacks
+    def peakTable(self):
         # parse response
         resp = yield self.query(':CALC:DATA1:PEAK?')
         resp = [float(val) for val in resp.split(',')]

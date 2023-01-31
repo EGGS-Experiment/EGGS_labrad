@@ -163,7 +163,7 @@ class RFServer(GPIBManagedServer):
     def pm_dev(self, c, dev=None):
         """
         Get/set phase modulation deviation.
-       Arguments:
+        Arguments:
             dev     (float) : the modulation deviation (in rad).
         Returns:
                     (float) : the modulation deviation (in rad).
@@ -171,13 +171,14 @@ class RFServer(GPIBManagedServer):
         return self.selectedDevice(c).pm_dev(dev)
 
 
-    # FEEDBACK
-    # todo: directly relate to locking
-    @setting(411, 'Toggle Feedback Amplitude', status=['b', 'i'], returns='b')
-    def feedback_toggle(self, c, status=None):
+    # STABILIZATION
+    @setting(411, 'Stabilization Lock', status=['b', 'i'], returns='b')
+    def stabilization_lock(self, c, status=None):
         """
-        Toggle amplitude feedback.
+        Enable/disable RF amplitude stabilization.
+
         Uses an external DC signal to adjust the output signal amplitude.
+        Slowly ramps
         """
         if type(status) == int:
             if status not in (0, 1):
@@ -185,19 +186,6 @@ class RFServer(GPIBManagedServer):
             else:
                 status = bool(status)
         return self.selectedDevice(c).feedback_amplitude_toggle(status)
-
-    @setting(412, 'Feedback Amplitude Depth', depth='v', returns='v')
-    def feedback_amplitude_depth(self, c, depth=None):
-        """
-        Get/set amplitude feedback depth.
-        Changes the amount to which a DC feedback signal
-        adjusts the amplitude (i.e. 0-100%).
-        Arguments:
-            depth   (float) : the feedback depth (in %).
-        Returns:
-                    (float) : the feedback depth (in %).
-        """
-        return self.selectedDevice(c).feedback_amplitude_depth(depth)
 
 
 if __name__ == '__main__':

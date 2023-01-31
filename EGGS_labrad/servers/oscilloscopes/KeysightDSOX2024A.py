@@ -85,11 +85,23 @@ class KeysightDSOX2024AWrapper(GPIBDeviceWrapper):
         returnValue(bool(int(resp)))
 
     @inlineCallbacks
+    def channel_offset(self, channel, offset=None):
+        # value is in volts
+        chString = 'CHAN{:d}:OFFS'.format(channel)
+        if offset is not None:
+            if abs(offset) < 1e1:
+                yield self.write(chString + ' ' + str(offset))
+            else:
+                raise Exception('Offset must be less than 10V.')
+        resp = yield self.query(chString + '?')
+        returnValue(float(resp))
+
+    @inlineCallbacks
     def channel_position(self, channel, position=None):
         # value is in divisions
         chString = ':CHAN{:d}:OFFS'.format(channel)
         if position is not None:
-            if (position > 1e-4) and (position < 1e1):
+            if (abs(position) > 1e-4) and (abs(position) < 1e1):
                 position = position * -1
                 yield self.write(chString + ' ' + str(position))
             else:
