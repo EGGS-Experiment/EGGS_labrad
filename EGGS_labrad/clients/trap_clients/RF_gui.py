@@ -35,7 +35,7 @@ class RF_gui(QFrame):
         self.wav_ampl.setKeyboardTracking(False)
 
         self.wav_freq = QDoubleSpinBox()
-        self.wav_freq.setDecimals(3)
+        self.wav_freq.setDecimals(6)
         self.wav_freq.setRange(0.009, 1040.0)
         self.wav_freq.setSingleStep(0.001)
         self.wav_freq.setProperty("value", 9.0)

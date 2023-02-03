@@ -6,14 +6,14 @@ servers = {'amo8': 'DC Server'}
 cxn=labrad.connect()
 dc=cxn.dc_server
 #dc.voltage(23,0)
-dc.voltage(24,0)
+dc.voltage(24,1)
 
 #dc.toggle(23,1)
 dc.toggle(24,1)
 #dc.voltage(23,18+.277)
-dc.voltage(24,15)
+dc.voltage(24,12.75)
 
-time.sleep(.41)
+time.sleep(.21)
 
 #dc.voltage(23,0)
 dc.voltage(24,1)
