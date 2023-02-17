@@ -163,7 +163,7 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     def markerFrequency(self, channel, freq):
         if freq is not None:
             if (freq > 0) and (freq < 1.5e9):
-                yield self.write(':CALC:MARK{:d}:X {:d}'.format(channel, freq))
+                yield self.write(':CALC:MARK{:d}:X {:f}'.format(channel, freq))
             else:
                 raise Exception('Error: marker frequency must be in range: [0, 1.5e9].')
         resp = yield self.query(':CALC:MARK{:d}:X?'.format(channel))
@@ -173,11 +173,12 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
     # MARKER-RELATED PEAK FUNCTIONS
     @inlineCallbacks
     def peakSearch(self, status):
-        # todo: fix, this is wrong
-        if status is not None:
-            yield self.write(':CALC:MARK:CPE:STAT {:d}'.format(status))
-        resp = yield self.query(':CALC:MARK:CPE:STAT?')
-        returnValue(bool(int(resp)))
+        # todo: fix, current implementation is wrong is wrong
+        return NotImplementedError
+        # if status is not None:
+        #     yield self.write(':CALC:MARK:CPE:STAT {:d}'.format(status))
+        # resp = yield self.query(':CALC:MARK:CPE:STAT?')
+        # returnValue(bool(int(resp)))
 
     @inlineCallbacks
     def peakSet(self, channel):
@@ -214,6 +215,7 @@ class AgilentN9010AWrapper(GPIBDeviceWrapper):
 
     @inlineCallbacks
     def peakTable(self):
+        # todo: fix - need to obligately specify excursion and threshold for this measurement
         # parse response
         resp = yield self.query(':CALC:DATA1:PEAK?')
         resp = [float(val) for val in resp.split(',')]
