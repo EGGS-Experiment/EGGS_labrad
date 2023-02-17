@@ -65,9 +65,9 @@ try:
         [
             ('Resonator Temperature',   'Temperature',      'C'),
             ('Resonance Power',         'Transmission',     'dB'),
-            ('Resonance Frequency',     'Frequency',        'Hz'),
-            ('Left Bandwidth',          'Frequency',        'Hz'),
-            ('Right Bandwidth',         'Frequency',        'Hz')
+            ('Resonance Frequency',     'Frequency',        'Hz')
+            #('Left Bandwidth',          'Frequency',        'Hz'),
+            #('Right Bandwidth',         'Frequency',        'Hz')
         ],
         context=cr
     )
@@ -83,14 +83,16 @@ try:
 
         try:
             # get signal values
+            tec_res_temp_c = tec.temperature()
             na_res_pow_db = float(na.gpib_query('CALC:MARK1:Y?'))
             na_res_freq_hz = float(na.gpib_query('CALC:MARK1:X?'))
-            na_left_bw_freq_hz = float(na.gpib_query('CALC:MARK2:X?'))
-            na_right_bw_freq_hz = float(na.gpib_query('CALC:MARK3:X?'))
+            #na_left_bw_freq_hz = float(na.gpib_query('CALC:MARK2:X?'))
+            #na_right_bw_freq_hz = float(na.gpib_query('CALC:MARK3:X?'))
 
             # record data into data vault
             elapsedtime = time() - starttime
-            dv.add(elapsedtime, na_res_pow_db, na_res_freq_hz, na_left_bw_freq_hz, na_right_bw_freq_hz, context=cr)
+            dv.add(elapsedtime, tec_res_temp_c, na_res_pow_db, na_res_freq_hz, context=cr)
+            #dv.add(elapsedtime, tec_res_temp_c, na_res_pow_db, na_res_freq_hz, na_left_bw_freq_hz, na_right_bw_freq_hz, context=cr)
 
         except Exception as e:
             # log time and error description
