@@ -9,7 +9,6 @@ from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
 from EGGS_labrad.clients.wavemeter_client.multiplexer_gui import multiplexer_gui
 
 FREQ_CHANGED_ID =       445566
-ALARM_CHANGED_ID =      445565
 CHANNEL_CHANGED_ID =    143533
 UPDATEEXP_ID =          111221
 LOCK_CHANGED_ID =       549210
@@ -26,9 +25,11 @@ _TRACE_POLLING_RATE = 5
 
 class multiplexer_client(GUIClient):
 
-    name = gethostname() + ' Wavemeter Client'
-    servers = {'wavemeter': 'multiplexerserver'}
-    LABRADHOST = multiplexer_config.ip
+    name =      gethostname() + ' Wavemeter Client'
+    servers =   {'wavemeter': 'multiplexerserver'}
+
+    LABRADHOST =                    multiplexer_config.ip
+    ALARM_THRESHOLD_THZ =           multiplexer_config.alarm_threshold_mhz / 1e6
 
     def getgui(self):
         if self.gui is None:
@@ -53,8 +54,6 @@ class multiplexer_client(GUIClient):
         # connect to device signals
         yield self.wavemeter.signal__frequency_changed(FREQ_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.updateFrequency, source=None, ID=FREQ_CHANGED_ID)
-        yield self.wavemeter.signal__frequency_changed(ALARM_CHANGED_ID)
-        yield self.wavemeter.addListener(listener=self.updateAlarm, source=None, ID=ALARM_CHANGED_ID)
         yield self.wavemeter.signal__selected_channels_changed(CHANNEL_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.toggleMeas, source=None, ID=CHANNEL_CHANGED_ID)
         yield self.wavemeter.signal__update_exp(UPDATEEXP_ID)
@@ -183,23 +182,23 @@ class multiplexer_client(GUIClient):
     # SLOTS
     @inlineCallbacks
     def updateFrequency(self, c, signal):
-        chan, freq = signal
-
         # check whether we care about the updated channel
-        if chan in self.gui.channels.keys():
+        chan, freq = signal
+        if (self.gui is not None) and (chan in self.gui.channels.keys()):
             freq_tmp = float('NaN')
+            widget = self.gui.channels[chan]
 
             # process frequency for special values
-            if not self.gui.channels[chan].measSwitch.isChecked():
-                self.gui.channels[chan].currentfrequency.setText('Not Measured')
+            if not widget.measSwitch.isChecked():
+                widget.currentfrequency.setText('Not Measured')
             elif freq == -3.0:
-                self.gui.channels[chan].currentfrequency.setText('Under Exposed')
+                widget.currentfrequency.setText('Under Exposed')
             elif freq == -4.0:
-                self.gui.channels[chan].currentfrequency.setText('Over Exposed')
+                widget.currentfrequency.setText('Over Exposed')
             elif freq == -17.0:
-                self.gui.channels[chan].currentfrequency.setText('Data Error')
+                widget.currentfrequency.setText('Data Error')
             else:
-                self.gui.channels[chan].currentfrequency.setText('{:.6f}'.format(freq))
+                widget.currentfrequency.setText('{:.6f}'.format(freq))
                 freq_tmp = freq
 
             # check whether recording or not
@@ -213,20 +212,13 @@ class multiplexer_client(GUIClient):
                 except Exception as e:
                     pass
 
-    def updateAlarm(self, c, signal):
-        """
-        Set alarm according to whether lasers are unlocked or not.
-        """
-        chan, freq_current_thz = signal
-
-        # get target channel
-        widget = self.gui.channels[chan]
-        freq_target_thz = widget.spinFreq.value()
-
-        # check if channel is off resonance by > 10 MHz
-        if abs(freq_current_thz - freq_target_thz) > 0.000010:
-            print('yzde: alarm')
-            widget.setStyleSheet('background-color: red;')
+            # set alarm if channel is unlocked
+            freq_target_thz = widget.spinFreq.value()
+            if abs(freq - freq_target_thz) > self.ALARM_THRESHOLD_THZ:
+                widget.channel_header.setStyleSheet('background-color: red;')
+                # todo: make voice?
+            else:
+                widget.channel_header.setStyleSheet('background-color: rgb(241,242,239);')
 
     def updatePIDvoltage(self, c, signal):
         dacPort, value = signal

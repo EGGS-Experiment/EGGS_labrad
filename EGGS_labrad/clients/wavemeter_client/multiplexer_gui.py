@@ -208,21 +208,20 @@ class multiplexer_channel(QFrame):
         self.channel_header = QWidget()
         channel_header_layout = QGridLayout(self.channel_header)
 
-        chanName = QLabel(name)
+        chanName = QLabel(name, parent=self.channel_header)
         chanName.setFont(QFont(shell_font, pointSize=17))
+        chanName.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         chanName.setAlignment(Qt.AlignCenter)
-        channel_label = QLabel("Channel: {:d}".format(wmChannel))
+        channel_label = QLabel("Channel: {:d}".format(wmChannel), parent=self.channel_header)
         channel_label.setFont(QFont(shell_font, pointSize=8))
-        channel_label.setAlignment(Qt.AlignLeft)
-        channel_label.setAlignment(Qt.AlignBottom)
-        dacPort_label = QLabel("DAC Port: {:d}".format(DACPort))
+        channel_label.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
+        dacPort_label = QLabel("DAC Port: {:d}".format(DACPort), parent=self.channel_header)
         dacPort_label.setFont(QFont(shell_font, pointSize=8))
-        dacPort_label.setAlignment(Qt.AlignLeft)
-        dacPort_label.setAlignment(Qt.AlignTop)
+        dacPort_label.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
 
         channel_header_layout.addWidget(channel_label,  0, 0, 1, 1)
         channel_header_layout.addWidget(dacPort_label,  1, 0, 1, 1)
-        channel_header_layout.addWidget(chanName,       0, 0, 3, 1)
+        channel_header_layout.addWidget(chanName,       0, 0, 3, 5)
 
         # display frequency
         currentfrequency_label = QLabel('Measured Frequency (THz):')
