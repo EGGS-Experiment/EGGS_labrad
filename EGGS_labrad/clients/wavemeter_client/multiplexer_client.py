@@ -4,6 +4,15 @@ from socket import gethostname
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
+_PLAYSOUND_ENABLE = False
+try:
+    from playsound import playsound
+    # todo: import unlocked mp3 file
+    _PLAYSOUND_ENABLE = True
+except Exception as e:
+    print('Error: playsound package not installed.')
+
+
 from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
 from EGGS_labrad.clients.wavemeter_client.multiplexer_gui import multiplexer_gui
@@ -216,7 +225,9 @@ class multiplexer_client(GUIClient):
             freq_target_thz = widget.spinFreq.value()
             if abs(freq - freq_target_thz) > self.ALARM_THRESHOLD_THZ:
                 widget.channel_header.setStyleSheet('background-color: red;')
-                # todo: make voice?
+                # play sound if requisite packages are installed
+                if _PLAYSOUND_ENABLE:
+                    pass
             else:
                 widget.channel_header.setStyleSheet('background-color: rgb(241,242,239);')
 
