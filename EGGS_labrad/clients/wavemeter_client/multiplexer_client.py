@@ -8,15 +8,16 @@ from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
 from EGGS_labrad.clients.wavemeter_client.multiplexer_gui import multiplexer_gui
 
-FREQ_CHANGED_ID = 445566
-CHANNEL_CHANGED_ID = 143533
-UPDATEEXP_ID = 111221
-LOCK_CHANGED_ID = 549210
-OUTPUT_CHANGED_ID = 190909
-PID_CHANGED_ID = 102588
-CHAN_LOCK_CHANGED_ID = 148323
-AMPLITUDE_CHANGED_ID = 238883
-PATTERN_CHANGED_ID = 462917
+FREQ_CHANGED_ID =       445566
+ALARM_CHANGED_ID =      445565
+CHANNEL_CHANGED_ID =    143533
+UPDATEEXP_ID =          111221
+LOCK_CHANGED_ID =       549210
+OUTPUT_CHANGED_ID =     190909
+PID_CHANGED_ID =        102588
+CHAN_LOCK_CHANGED_ID =  148323
+AMPLITUDE_CHANGED_ID =  238883
+PATTERN_CHANGED_ID =    462917
 
 # this variable controls how often we
 # get the trace from the wavemeter
@@ -52,6 +53,8 @@ class multiplexer_client(GUIClient):
         # connect to device signals
         yield self.wavemeter.signal__frequency_changed(FREQ_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.updateFrequency, source=None, ID=FREQ_CHANGED_ID)
+        yield self.wavemeter.signal__frequency_changed(ALARM_CHANGED_ID)
+        yield self.wavemeter.addListener(listener=self.updateAlarm, source=None, ID=ALARM_CHANGED_ID)
         yield self.wavemeter.signal__selected_channels_changed(CHANNEL_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.toggleMeas, source=None, ID=CHANNEL_CHANGED_ID)
         yield self.wavemeter.signal__update_exp(UPDATEEXP_ID)
@@ -181,8 +184,12 @@ class multiplexer_client(GUIClient):
     @inlineCallbacks
     def updateFrequency(self, c, signal):
         chan, freq = signal
+
+        # check whether we care about the updated channel
         if chan in self.gui.channels.keys():
             freq_tmp = float('NaN')
+
+            # process frequency for special values
             if not self.gui.channels[chan].measSwitch.isChecked():
                 self.gui.channels[chan].currentfrequency.setText('Not Measured')
             elif freq == -3.0:
@@ -194,6 +201,8 @@ class multiplexer_client(GUIClient):
             else:
                 self.gui.channels[chan].currentfrequency.setText('{:.6f}'.format(freq))
                 freq_tmp = freq
+
+            # check whether recording or not
             record_params = self.record_dict[chan]
             if record_params['status']:
                 starttime = record_params['starttime']
@@ -203,6 +212,21 @@ class multiplexer_client(GUIClient):
                     yield self.dv.add(elapsedtime, freq_tmp, context=cntx)
                 except Exception as e:
                     pass
+
+    def updateAlarm(self, c, signal):
+        """
+        Set alarm according to whether lasers are unlocked or not.
+        """
+        chan, freq_current_thz = signal
+
+        # get target channel
+        widget = self.gui.channels[chan]
+        freq_target_thz = widget.spinFreq.value()
+
+        # check if channel is off resonance by > 10 MHz
+        if abs(freq_current_thz - freq_target_thz) > 0.000010:
+            print('yzde: alarm')
+            widget.setStyleSheet('background-color: red;')
 
     def updatePIDvoltage(self, c, signal):
         dacPort, value = signal
