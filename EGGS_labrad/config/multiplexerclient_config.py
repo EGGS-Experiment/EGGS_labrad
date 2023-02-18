@@ -17,4 +17,4 @@ class multiplexer_config(object):
         '866nm': (13,   '345.999945',   (0, 4), True,   7,  [-4, 4]),
     }
 
-    alarm_threshold_mhz = 1
+    alarm_threshold_mhz = 2

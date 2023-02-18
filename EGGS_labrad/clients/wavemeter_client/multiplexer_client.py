@@ -1,14 +1,17 @@
 import os
-from time import time
 from numpy import linspace
+from time import time, sleep
 from socket import gethostname
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 
 _PLAYSOUND_ENABLE = False
 try:
+    # todo: try to make resource imports programmatic
+    #from inspect import getfile, getmodule
     from playsound import playsound
     from twisted.internet.threads import deferToThread
+    _UNLOCKED_SOUND_PATH = os.path.join(os.environ['EGGS_LABRAD_ROOT'], 'EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked.mp3')
     _PLAYSOUND_ENABLE = True
 except Exception as e:
     print('Error: playsound package not installed.')
@@ -228,9 +231,13 @@ class multiplexer_client(GUIClient):
             if abs(freq - freq_target_thz) > self.ALARM_THRESHOLD_THZ:
                 widget.channel_header.setStyleSheet('background-color: red;')
                 # play sound if requisite packages are installed
-                print(self.__file__)
                 if _PLAYSOUND_ENABLE:
-                    deferToThread(playsound, 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked.mp3')
+                    try:
+                        #sleep(0.1)
+                        deferToThread(playsound, _UNLOCKED_SOUND_PATH)
+                        #deferToThread(playsound, 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked.mp3')
+                    except Exception as e:
+                        pass
             else:
                 widget.channel_header.setStyleSheet('background-color: rgb(241,242,239);')
 
