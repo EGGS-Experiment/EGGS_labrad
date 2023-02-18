@@ -1,3 +1,4 @@
+import os
 from time import time
 from numpy import linspace
 from socket import gethostname
@@ -8,7 +9,6 @@ _PLAYSOUND_ENABLE = False
 try:
     from playsound import playsound
     from twisted.internet.threads import deferToThread
-    # todo: import unlocked mp3 file
     _PLAYSOUND_ENABLE = True
 except Exception as e:
     print('Error: playsound package not installed.')
@@ -40,6 +40,7 @@ class multiplexer_client(GUIClient):
 
     LABRADHOST =                    multiplexer_config.ip
     ALARM_THRESHOLD_THZ =           multiplexer_config.alarm_threshold_mhz / 1e6
+
 
     def getgui(self):
         if self.gui is None:
@@ -227,6 +228,7 @@ class multiplexer_client(GUIClient):
             if abs(freq - freq_target_thz) > self.ALARM_THRESHOLD_THZ:
                 widget.channel_header.setStyleSheet('background-color: red;')
                 # play sound if requisite packages are installed
+                print(self.__file__)
                 if _PLAYSOUND_ENABLE:
                     deferToThread(playsound, 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked.mp3')
             else:
