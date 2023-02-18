@@ -227,7 +227,7 @@ class multiplexer_client(GUIClient):
                 widget.channel_header.setStyleSheet('background-color: red;')
                 # play sound if requisite packages are installed
                 if _PLAYSOUND_ENABLE:
-                    pass
+                    playsound('C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked.mp3')
             else:
                 widget.channel_header.setStyleSheet('background-color: rgb(241,242,239);')
 
