@@ -32,18 +32,25 @@ class GUIClient(ABC):
         gui             (QWidget)           : the gui object associated with the client.
         LABRADHOST      (str)               : the IP address of the LabRAD manager. If left as None,
                                                 it will be set to the LABRADHOST environment variable.
+        LABRADPORT      (int)               : the port of the LabRAD manager. If left as None,
+                                                it will be set to the LABRADPORT environment variable.
+        LABRADUSERNAME  (str)               : the username used to connect to the LabRAD manager. If left as None,
+                                                it will be left as an empty string (i.e. "").
         LABRADPASSWORD  (str)               : the password used to connect to the LabRAD manager. If left as None,
                                                 it will be set to the LABRADHOST environment variable.
         menuCreate      (bool)              : whether a QClientMenuHeader should be added to the Client.
     """
+
     # Client parameters
-    name = None
-    servers = {}
-    gui = None
+    name =                  None
+    servers =               {}
+    gui =                   None
 
     # LabRAD connection parameters
-    LABRADHOST = None
-    LABRADPASSWORD = None
+    LABRADHOST =            None
+    LABRADPORT =            None
+    LABRADUSERNAME =        ""
+    LABRADPASSWORD =        None
 
     # GUI parameters
     # todo: what if we have multiple serial devices in a client?
@@ -105,15 +112,20 @@ class GUIClient(ABC):
         and sets up server connection signals.
         """
         self.logger.info("Connecting to LabRAD..")
+
         # only create connection if we aren't instantiated with one
         if not self.cxn:
-            if self.LABRADHOST is None:
-                self.LABRADHOST = environ['LABRADHOST']
-            if self.LABRADPASSWORD is None:
-                self.LABRADPASSWORD = environ['LABRADPASSWORD']
+
+            # get default labrad connection values
+            if self.LABRADHOST is None:         self.LABRADHOST =       environ['LABRADHOST']
+            if self.LABRADPORT is None:         self.LABRADPORT =       environ['LABRADHOST']
+            if self.LABRADPASSWORD is None:     self.LABRADPASSWORD =   environ['LABRADPASSWORD']
+
+            # create an asynchronous client connection
             from labrad.wrappers import connectAsync
             self.logger.debug("Establishing connection to LabRAD manager @{ip_address:s}...".format(ip_address=self.LABRADHOST))
-            self.cxn = yield connectAsync(self.LABRADHOST, name="{:s} ({:s})".format(self.name, gethostname()), password=self.LABRADPASSWORD)
+            self.cxn = yield connectAsync(self.LABRADHOST, port=7682, name="{:s} ({:s})".format(self.name, gethostname()), username=self.LABRADUSERNAME, password=self.LABRADPASSWORD)
+            # self.cxn = yield connectAsync(self.LABRADHOST, port=self.LABRADPORT, name="{:s} ({:s})".format(self.name, gethostname()), username=self.LABRADUSERNAME, password=self.LABRADPASSWORD, tls_mode='off')
         else:
             self.logger.debug("LabRAD connection already provided.")
 
