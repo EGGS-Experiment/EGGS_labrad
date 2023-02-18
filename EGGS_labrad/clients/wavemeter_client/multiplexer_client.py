@@ -11,7 +11,7 @@ try:
     #from inspect import getfile, getmodule
     from playsound import playsound
     from twisted.internet.threads import deferToThread
-    _UNLOCKED_SOUND_PATH = os.path.join(os.environ['EGGS_LABRAD_ROOT'], 'EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked.mp3')
+    _UNLOCKED_SOUND_PATH = os.path.join(os.environ['EGGS_LABRAD_ROOT'], 'EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked_short.mp3')
     _PLAYSOUND_ENABLE = True
 except Exception as e:
     print('Error: playsound package not installed.')
@@ -233,7 +233,6 @@ class multiplexer_client(GUIClient):
                 # play sound if requisite packages are installed
                 if _PLAYSOUND_ENABLE:
                     try:
-                        #sleep(0.1)
                         deferToThread(playsound, _UNLOCKED_SOUND_PATH)
                         #deferToThread(playsound, 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked.mp3')
                     except Exception as e:
