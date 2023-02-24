@@ -10,17 +10,17 @@ from numpy import arange, linspace, zeros, mean, amax
 from EGGS_labrad.clients import createTrunk
 
 # experiment parameters
-name_tmp = 'Spectrum Analyzer Measurement'
+name_tmp =              'Spectrum Analyzer Measurement'
 
 # polling parameters
-poll_delay_s =          0.75
+poll_delay_s =          1.0
 
 # spectrum analyzer parameters
 sa_device_num_dj =      3
 sa_att_int_db =         10
-sa_att_ext_db =         11.5
-sa_span_hz =            100
-sa_bandwidth_hz =       10
+sa_att_ext_db =         10
+sa_span_hz =            10000
+sa_bandwidth_hz =       100
 
 # todo: do variable number of peaks
 
