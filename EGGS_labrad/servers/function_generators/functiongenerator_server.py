@@ -88,7 +88,8 @@ class FunctionGeneratorServer(GPIBManagedServer):
     @setting(211, 'Function', shape='s', returns='s')
     def function(self, c, shape=None):
         """
-        Get/set the function shape.
+        Get/set the output function type.
+        Shape must be one of (SIN, SQU, RAMP, PULS, NOIS, DC)
         Arguments:
             shape   (str) : the function shape.
         Returns:

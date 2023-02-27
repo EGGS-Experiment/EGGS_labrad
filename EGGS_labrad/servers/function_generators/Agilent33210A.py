@@ -69,7 +69,7 @@ class Agilent33210AWrapper(GPIBDeviceWrapper):
     def offset(self, off):
         # setter
         if off:
-            if (off < 1e1) and (off > 1e-2):
+            if (abs(off) < 1e1) and (abs(off) > 1e-2):
                 yield self.write('VOLT:OFFS {:f}'.format(off))
             else:
                 raise Exception('Error: invalid input. Amplitude offset must be in range [-1e1 Vpp, 1e1 Vpp].')
