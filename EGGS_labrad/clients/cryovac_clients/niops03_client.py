@@ -9,11 +9,11 @@ class niops03_client(GUIClient):
 
     name = 'NIOPS03 Client'
 
-    PRESSUREID = 878352
-    VOLTAGEID = 878353
+    PRESSUREID =    878352
+    VOLTAGEID =     878353
     TEMPERATUREID = 878354
-    IPPOWERID = 878355
-    NPPOWERID = 878356
+    IPPOWERID =     878355
+    NPPOWERID =     878356
 
     servers = {'niops': 'NIOPS03 Server'}
 
@@ -41,8 +41,8 @@ class niops03_client(GUIClient):
         # start device polling
         poll_params = yield self.niops.polling()
         # only start polling if not started
-        if not poll_params[0]:
-            yield self.niops.polling(True, 5.0)
+        # if not poll_params[0]:
+        #     yield self.niops.polling(True, 5.0)
 
     @inlineCallbacks
     def initData(self):
