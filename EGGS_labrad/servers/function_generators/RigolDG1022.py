@@ -113,10 +113,10 @@ class RigolDG1022Wrapper(GPIBDeviceWrapper):
     def offset(self, off):
         # setter
         if off:
-            if (abs(off) < 1e1) and (abs(off) > 1e-2):
+            if ((abs(off) < 1e1) and (abs(off) > 1e-2)) or (off == 0):
                 yield self.write('VOLT:OFFS{} {:f}'.format(self.channel_string, off))
             else:
-                raise Exception('Error: invalid input. Amplitude offset must be in range [-1e1 Vpp, 1e1 Vpp].')
+                raise Exception('Error: invalid input. Amplitude offset must be in range [-1e1 Vpp, 1e1 VDC].')
 
         # getter
         sleep(_RIGOL_DG1022_QUERY_DELAY)

@@ -94,7 +94,7 @@ class RigolDG2052Wrapper(GPIBDeviceWrapper):
     def offset(self, off):
         # setter
         if off:
-            if (abs(off) < 2e1) and (abs(off) > 1e-6):
+            if ((abs(off) < 2e1) and (abs(off) > 1e-6)) or (off == 0):
                 yield self.write(':SOUR{:d}:VOLT:OFFS {:f}'.format(self.channel_num, off))
             else:
                 raise Exception('Error: invalid input. Amplitude offset must be in range [-1e1 Vpp, 1e1 Vpp].')
