@@ -16,19 +16,19 @@ name_tmp = 'Temperature Measurement Calibration'
 
 # dds parameters
 dds_name =                  'urukul1_ch1'
-dds_freq_range_hz =         linspace(80, 140, 25) * 1e6
+dds_freq_range_hz =         linspace(85, 140, 56) * 1e6
 dds_amp_range_pct =         [0, 0.5]
 dds_att_db =                14
 
 # sampler parameters
-pd_channel_sampler =        5
+pd_channel_sampler =        2
 pd_gain_sampler =           100
-pd_sample_rate_hz =         5000
-pd_sample_num =             1000
+pd_sample_rate_hz =         1000
+pd_sample_num =             200
 
 # search parameters
-pd_voltage_target_v =       0.035
-pd_voltage_tolerance_v =    0.007
+pd_voltage_target_v =       0.057
+pd_voltage_tolerance_v =    0.005
 
 
 #  main sequence
@@ -98,7 +98,10 @@ try:
         # add to data vault
         dv.add(freq_val_hz, amp_target_pct, context=cr)
         res.append(amp_target_pct)
+        print('\t{}: {}'.format(freq_val_hz/1e6, amp_target_pct))
 
 
 except Exception as e:
     print('Error:', e)
+
+print(res)
