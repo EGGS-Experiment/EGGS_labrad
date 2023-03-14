@@ -4,17 +4,18 @@ as a function of asf (amplitude scaling factor).
 """
 import labrad
 from time import sleep
-from numpy import linspace
+from numpy import array, arange, linspace
 from EGGS_labrad.clients import createTrunk
 
-name_tmp = 'ASF Calibration'
-dds_channel = 'urukul1_ch1'
-dds_frequency_hz = 110 * 1e6
-dds_attenuation_arr = (15, 16, 17, 18, 19)
-amp_range = linspace(1, 50, 50) / 100
+name_tmp =                      'ASF Calibration'
 
-wav_nm = 400
-num_avgs = 100
+dds_channel =                   'urukul0_ch1'
+dds_frequency_hz =              103.7725 * 1e6
+dds_attenuation_arr =           arange(8, 31.5, 0.5)
+# amp_range = linspace(1, 50, 50) / 100
+
+pm_wavelength_nm =              729
+pm_num_avgs =                   100
 
 
 try:
@@ -36,44 +37,32 @@ try:
 
     # set up power meter
     pm.select_device()
-    pm.configure_wavelength(wav_nm)
+    pm.configure_wavelength(pm_wavelength_nm)
     pm.configure_autoranging(1)
     pm.configure_mode('POW')
-    pm.configure_averaging(num_avgs)
+    pm.configure_averaging(pm_num_avgs)
     print('Power meter setup successful.')
 
     # create dataset
-    dep_vars = [
-        ('{:f} dB'.format(att_dB), 'Attenuation', 'dB')
-        for att_dB in dds_attenuation_arr
-    ]
     dv.cd(createTrunk(name_tmp), True, context=cr)
     dv.new(
-        'ASF Calibration - {:s}'.format(dds_channel),
-        [('ASF', 'Scale')],
-        dep_vars,
+        'DDS Attenuation Calibration - {:s}'.format(dds_channel),
+        [('Attenuation', 'dB')],
+        [('Power', 'Power', 'mW')],
         context=cr
     )
     print('Dataset successfully created.')
 
 
     # MAIN SEQUENCE
-    for amp_val in amp_range:
-        # set asf
-        aq.dds_amplitude(dds_channel, amp_val)
+    for att_val in dds_attenuation_arr:
 
-        # sweep attenuation
-        pow_holder = [amp_val]
-        for att_val in dds_attenuation_arr:
-            # set att
-            aq.dds_attenuation(dds_channel, att_val)
-            sleep(0.1)
-
-            # measure power
-            pow_holder.append(pm.measure())
+        # set attenuation
+        aq.dds_attenuation(dds_channel, att_val)
+        sleep(0.1)
 
         # add data to dataset
-        dv.add(pow_holder, context=cr)
+        dv.add([att_val, pm.measure()], context=cr)
 
 except Exception as e:
     print('Error:', e)
