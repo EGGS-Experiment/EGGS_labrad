@@ -131,12 +131,10 @@ class DC_gui(QFrame):
         # add channel buttons to channel_holder
         self.doubleramp_endcaps = QPushButton("Ramp Both Endcaps")
         self.doubleramp_aramp = QPushButton("Ramp Both Trap Rods")
-        self.triangleramp_aramp = QPushButton("Triangle Ramp Both Trap Rods")
         channel_holder_layout.addWidget(self.doubleramp_endcaps,        0, 0)
         channel_holder_layout.addWidget(self.doubleramp_aramp,          0, 2)
-        channel_holder_layout.addWidget(self.triangleramp_aramp,        1, 2)
 
-        # tmp remove todo
+        # tmp remove todo?
         shift_rows = 2
         for channel_name, channel_params in self.active_channels.items():
             channel_num = channel_params['num']

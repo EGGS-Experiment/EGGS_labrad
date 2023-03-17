@@ -3,9 +3,9 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.trap_clients.DC_gui import DC_gui
 
-TOGGLEID = 374683
-VOLTAGEID = 374682
-HVID = 374861
+TOGGLEID =      374683
+VOLTAGEID =     374682
+HVID =          374861
 
 
 class DC_client(GUIClient):
@@ -28,7 +28,6 @@ class DC_client(GUIClient):
             yield self.amo8.serial_flush()
         except Exception as e:
             pass
-        # todo: get config from registry
         # connect to signals
         yield self.amo8.signal__toggle_update(TOGGLEID)
         yield self.amo8.addListener(listener=self.updateToggle, source=None, ID=TOGGLEID)
@@ -55,16 +54,23 @@ class DC_client(GUIClient):
         self.updateHV(None, hv_status)
 
     def initGUI(self):
+        # get endcap numpbers
+        endcap_channels =   [channel_params['num']
+                            for channel_name, channel_params in self.gui.active_channels.items()
+                            if 'ENDCAP' in channel_name.upper()]
+        aramp_channels =    [channel_params['num']
+                            for channel_name, channel_params in self.gui.active_channels.items()
+                            if 'RAMP' in channel_name.upper()]
+
         # connect global signals
         self.gui.device_global_onswitch.clicked.connect(lambda: self.amo8.toggle_all(True))
         self.gui.device_global_offswitch.clicked.connect(lambda: self.amo8.toggle_all(False))
         self.gui.device_global_clear.clicked.connect(lambda: self.amo8.clear())
-        self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.startRamp([2, 3]))
-        self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.startRamp([6, 1]))
-        self.gui.triangleramp_aramp.clicked.connect(lambda blank: self.startTriangleRamp([6, 1]))
-        #self.gui.doublechange_endcaps.clicked.connect(lambda blank: self.doublechange(1, 2))
-        #self.gui.doublechange_aramp.clicked.connect(lambda blank: self.doublechange(5, 6))
-        # todo: stop using self.gui.amo8_channels and move config to client side
+
+        # connect group channel signals
+        self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.startRamp(endcap_channels))
+        self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.startRamp(aramp_channels))
+
         # connect each channel
         for channel in self.gui.amo8_channels.values():
             channel.dac.valueChanged.connect(lambda value, _channel_num=channel.number: self.amo8.voltage(_channel_num, value))
@@ -150,19 +156,39 @@ class DC_client(GUIClient):
 
     @inlineCallbacks
     def startRamp(self, channel_list):
+        """
+        Starts a voltage ramp for a list of channels.
+            Yields the ramp request to the device, then blocks user input to the
+            ramping channels. finishRamp is called 3 seconds in the future to
+        Arguments:
+            channel_list    list(int):  a list of channels to ramp.
+        """
         # get current values
         end_voltage_list = []
         rate_list = []
+        # todo: make list comprehension?
         for channel_num in channel_list:
             channel_gui = self.gui.amo8_channels[channel_num]
             end_voltage_list.append(channel_gui.ramp_target.value())
             rate_list.append(channel_gui.ramp_rate.value())
             channel_gui.dac.setEnabled(False)
+
+        # submit ramp
         yield self.amo8.ramp_multiple(channel_list, end_voltage_list, rate_list)
+
+        # call ramp finish to reenable
         self.reactor.callLater(3, self.finishRamp, channel_list)
 
     @inlineCallbacks
     def finishRamp(self, channel_list):
+        """
+        Finishes the ramp by reenabling the disabled channels.
+        Arguments:
+            channel_list    list(int):  a list of channels to ramp.
+
+        Returns:
+
+        """
         for channel_num in channel_list:
             voltage_res = yield self.amo8.voltage(channel_num)
             self.gui.amo8_channels[channel_num].dac.setValue(voltage_res)

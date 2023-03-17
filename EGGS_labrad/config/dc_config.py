@@ -21,8 +21,8 @@ class dc_config(object):
     headerLayout = (1, 1)
 
     channeldict = {
-        'E Endcap':     {'num': 28, 'row': 1, 'col': 0},
-        'W Endcap':     {'num': 27, 'row': 2, 'col': 0},
+        'E Endcap':     {'num': 17, 'row': 1, 'col': 0},
+        'W Endcap':     {'num': 18, 'row': 2, 'col': 0},
         'V Shim':       {'num': 20, 'row': 1, 'col': 1},
         'H Shim':       {'num': 25, 'row': 2, 'col': 1},
         'A-Ramp 1':     {'num': 24, 'row': 1, 'col': 2},
