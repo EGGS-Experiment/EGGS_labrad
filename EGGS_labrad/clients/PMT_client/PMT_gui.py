@@ -78,7 +78,7 @@ class PMT_gui(QFrame):
         self.poll_interval.setMinimum(.01)
         self.poll_interval.setMaximum(600)
         self.poll_interval.setSingleStep(1)
-        self.poll_interval.setDecimals(1)
+        self.poll_interval.setDecimals(2)
         self.poll_interval.setAlignment(Qt.AlignRight)
         self.poll_interval.setFont(QFont('MS Shell Dlg 2', pointSize=12))
 

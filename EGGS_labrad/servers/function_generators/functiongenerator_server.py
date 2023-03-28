@@ -34,7 +34,6 @@ class FunctionGeneratorServer(GPIBManagedServer):
         'RIGOL TECHNOLOGIES DG1022A':       RigolDG1022Wrapper,
         'RIGOL TECHNOLOGIES DG2052':        RigolDG2052Wrapper
     # '^RIGOL TECHNOLOGIES DG2([\d\w])+$'
-    # bool(th1.match('rigol technologies dg2052A'))
     }
 
 
@@ -83,6 +82,20 @@ class FunctionGeneratorServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).channel(chan_num)
 
+    @setting(141, 'Impedance', imp='v', returns='v')
+    def impedance(self, c, imp=None):
+        """
+        Get/set the channel load impedance.
+        This function only affects the interface values,
+            and does not change the output range of the
+            function generator.
+        Arguments:
+            imp     (float) : the load impedance.
+        Returns:
+                    (float) : the load impedance.
+        """
+        return self.selectedDevice(c).impedance(imp)
+
 
     # WAVEFORM
     @setting(211, 'Function', shape='s', returns='s')
@@ -129,6 +142,18 @@ class FunctionGeneratorServer(GPIBManagedServer):
                     (float) : the offset (in V).
         """
         return self.selectedDevice(c).offset(off)
+
+    @setting(224, 'Phase', phase='v', returns='v')
+    def phase(self, c, phase=None):
+        """
+        Get/set the function phase. When output is toggled,
+            the waveform will begin with this phase value.
+        Arguments:
+            phase   (float) : the phase (in degrees).
+        Returns:
+                    (float) : the phase (in degrees).
+        """
+        return self.selectedDevice(c).phase(phase)
 
 
     # TRIGGER
@@ -232,6 +257,26 @@ class FunctionGeneratorServer(GPIBManagedServer):
                 status = bool(status)
 
         return self.selectedDevice(c).sync(status)
+
+    @setting(621, 'Clock Reference', source='s', returns='s')
+    def clock_reference(self, c, source=None):
+        """
+        Set the reference clock source.
+        Can be one of:
+            "INT": the function generator's internal clock.
+            "EXT": an external clock source.
+        Arguments:
+            status  (str)  : the source of the reference clock.
+        Returns:
+                    (str)  : the source of the reference clock.
+        """
+        # check valid input
+        if type(source) is str:
+            source = source.upper()
+            if source not in ('INT', 'EXT'):
+                raise Exception('Error: input must be one of ("INT", "EXT").')
+
+        return self.selectedDevice(c).clock_reference(source)
 
 
 if __name__ == '__main__':
