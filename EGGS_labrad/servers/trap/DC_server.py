@@ -25,6 +25,8 @@ from EGGS_labrad.servers import SerialDeviceServer, PollingServer
 
 TERMINATOR = '\r\n'
 
+# *** todo: implement input error checking so we don't have problems downstream
+
 
 class DCServer(SerialDeviceServer, PollingServer):
     """
@@ -87,7 +89,7 @@ class DCServer(SerialDeviceServer, PollingServer):
     def toggle(self, c, channel, power=None):
         """
         Set a channel to be on or off.
-        Args:
+        Arguments:
             channel (int)   : the channel to read/write. -1 does all channels
             power   (bool)  : whether channel is to be on or off
         Returns:
@@ -119,7 +121,7 @@ class DCServer(SerialDeviceServer, PollingServer):
     def toggle_all(self, c, power=None):
         """
         Get/set power state of all channels.
-        Args:
+        Arguments:
             power   (bool)  : whether channels are to be on or off.
         Returns:
                     (*bool) : power state of all channels.
@@ -150,11 +152,11 @@ class DCServer(SerialDeviceServer, PollingServer):
     def voltage(self, c, channel=None, voltage=None):
         """
         Set the voltage of a channel.
-        Args:
-            channel (int)   : the channel to read/write
-            voltage (float)  : the channel voltage to set
+        Arguments:
+            channel (int)   : the channel to read/write.
+            voltage (float) : the channel voltage to set.
         Returns:
-                    (float) : channel voltage
+                    (float) : the channel voltage.
         """
         # setter
         if voltage is not None:
@@ -167,11 +169,33 @@ class DCServer(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         # parse response
-        resp = (resp.strip())[:-1]
+        resp = float((resp.strip())[:-1])
         # send signal to all other listeners
         self.voltage_update((channel, resp), self.getOtherListeners(c))
-        returnValue(float(resp))
+        returnValue(resp)
 
+    @setting(212, 'Voltage Fast', channel='i', voltage='v', returns='v')
+    def voltage_fast(self, c, channel, voltage):
+        """
+        Set the voltage of a channel quickly.
+        Arguments:
+            channel (int)   : the channel to read/write.
+            voltage (float) : the channel voltage to set.
+        Returns:
+                    (float) : the channel voltage.
+        """
+        # quickly write and read response
+        yield self.ser.acquire()
+        yield self.ser.write('vout.w {:d} {:f}\r\n'.format(channel, voltage))
+        resp = yield self.ser.read_line('\n')
+        self.ser.release()
+
+        # parse response
+        resp = float((resp.strip())[:-1])
+
+        # send signal to all other listeners
+        self.voltage_update((channel, resp), self.getOtherListeners(c))
+        returnValue(resp)
 
     @setting(221, 'Voltage All', returns='*v')
     def voltage_all(self, c):
@@ -187,12 +211,13 @@ class DCServer(SerialDeviceServer, PollingServer):
         resp = [float(val[:-1]) for val in resp]
         returnValue(resp)
 
+
     # RAMP
     @setting(311, 'Ramp', channel='i', voltage='v', rate='v', returns='*s')
     def ramp(self, c, channel, voltage, rate):
         """
         Ramps the voltage of a channel at a given rate.
-        Args:
+        Arguments:
             channel (int)   : the channel to read/write
             voltage (float) : the ramp endpoint (in Volts).
             rate    (float) : the rate to ramp at (in Volts/s)

@@ -131,19 +131,8 @@ class FunctionGeneratorServer(GPIBManagedServer):
                     (float) : the amplitude (in V).
         """
         return self.selectedDevice(c).amplitude(ampl)
-    
-    @setting(223, 'Offset', off='v', returns='v')
-    def offset(self, c, off=None):
-        """
-        Get/set the function amplitude offset.
-        Arguments:
-            off     (float) : the offset (in V).
-        Returns:
-                    (float) : the offset (in V).
-        """
-        return self.selectedDevice(c).offset(off)
 
-    @setting(224, 'Phase', phase='v', returns='v')
+    @setting(223, 'Phase', phase='v', returns='v')
     def phase(self, c, phase=None):
         """
         Get/set the function phase. When output is toggled,
@@ -154,6 +143,17 @@ class FunctionGeneratorServer(GPIBManagedServer):
                     (float) : the phase (in degrees).
         """
         return self.selectedDevice(c).phase(phase)
+    
+    @setting(224, 'Offset', off='v', returns='v')
+    def offset(self, c, off=None):
+        """
+        Get/set the function amplitude offset.
+        Arguments:
+            off     (float) : the offset (in V).
+        Returns:
+                    (float) : the offset (in V).
+        """
+        return self.selectedDevice(c).offset(off)
 
 
     # TRIGGER

@@ -104,19 +104,6 @@ class RigolDG2052Wrapper(GPIBDeviceWrapper):
         returnValue(float(resp))
 
     @inlineCallbacks
-    def offset(self, off):
-        # setter
-        if off:
-            if ((abs(off) < 2e1) and (abs(off) > 1e-6)) or (off == 0):
-                yield self.write(':SOUR{:d}:VOLT:OFFS {:f}'.format(self.channel_num, off))
-            else:
-                raise Exception('Error: invalid input. Amplitude offset must be in range [-1e1 Vpp, 1e1 Vpp].')
-
-        # getter
-        resp = yield self.query(':SOUR{:d}:VOLT:OFFS?'.format(self.channel_num))
-        returnValue(float(resp))
-
-    @inlineCallbacks
     def phase(self, phase):
         # setter
         if phase:
@@ -127,6 +114,19 @@ class RigolDG2052Wrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query(':SOUR{:d}:PHAS?'.format(self.channel_num))
+        returnValue(float(resp))
+
+    @inlineCallbacks
+    def offset(self, off):
+        # setter
+        if off:
+            if ((abs(off) < 2e1) and (abs(off) > 1e-6)) or (off == 0):
+                yield self.write(':SOUR{:d}:VOLT:OFFS {:f}'.format(self.channel_num, off))
+            else:
+                raise Exception('Error: invalid input. Amplitude offset must be in range [-1e1 Vpp, 1e1 Vpp].')
+
+        # getter
+        resp = yield self.query(':SOUR{:d}:VOLT:OFFS?'.format(self.channel_num))
         returnValue(float(resp))
 
 
