@@ -31,13 +31,15 @@ class DCServer(SerialDeviceServer, PollingServer):
     Communicates with the AMO8 box for control of all DC voltages.
     """
 
-    name = 'DC Server'
-    regKey = 'DCServer'
-    serNode = 'MongKok'
-    port = 'COM3'
+    name =      'DC Server'
+    regKey =    'DCServer'
+    serNode =   'MongKok'
+    port =      'COM3'
 
-    timeout = WithUnit(5.0, 's')
-    baudrate = 38400
+    timeout =   WithUnit(5.0, 's')
+    baudrate =  38400
+
+    POLL_INTERVAL_ON_STARTUP = 10
 
 
     # SIGNALS

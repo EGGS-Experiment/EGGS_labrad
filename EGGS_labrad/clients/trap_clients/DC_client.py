@@ -38,8 +38,8 @@ class DC_client(GUIClient):
         # start device polling
         poll_params = yield self.amo8.polling()
         # only start polling if not started
-        if not poll_params[0]:
-            yield self.amo8.polling(True, 5.0)
+        # if not poll_params[0]:
+        #     yield self.amo8.polling(True, 5.0)
 
     @inlineCallbacks
     def initData(self):

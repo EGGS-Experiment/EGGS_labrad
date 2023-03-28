@@ -46,7 +46,7 @@ class PMT_gui(QFrame):
         self.sample_time_label = QLabel('Sample Time (us)')
         self.sample_time = QDoubleSpinBox()
         self.sample_time.setMinimum(1)
-        self.sample_time.setMaximum(10000)
+        self.sample_time.setMaximum(5000000)
         self.sample_time.setSingleStep(1)
         self.sample_time.setDecimals(0)
         self.sample_time.setAlignment(Qt.AlignRight)
