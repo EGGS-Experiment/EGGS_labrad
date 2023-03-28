@@ -83,6 +83,40 @@ class DCServer(SerialDeviceServer, PollingServer):
         self.hv_update(inputs)
         returnValue(inputs)
 
+    @setting(13, 'Alarm', status=['b', 'i'], returns='b')
+    def alarm(self, c, status=None):
+        """
+        Set the input alarm status.
+            The input alarms shut off all outputs if
+            the current draw exceeds a threshold value.
+        Arguments:
+            status  (bool)  : whether the input alarms are on/off.
+        Returns:
+                    (bool)  : whether the input alarms are on/off.
+        """
+        # ensure input is of correct type
+        if (type(status) == int) and (status not in (0, 1)):
+            raise Exception('Error: invalid input. Must be a boolean, 0, or 1.')
+
+        # setter
+        yield self.ser.acquire()
+        if status is not None:
+            yield self.ser.write('alarm.w {:d}\r\n'.format(status))
+        else:
+            yield self.ser.write('alarm.r\r\n')
+        # get response
+        resp = yield self.ser.read_line('\n')
+        self.ser.release()
+        resp = resp.strip()
+        # parse response
+        if resp == 'ON':
+            resp = True
+        elif resp == 'OFF':
+            resp = False
+        else:
+            raise Exception('Error: bad readback from device.')
+        returnValue(resp)
+
 
     # ON/OFF
     @setting(111, 'Toggle', channel='i', power=['i','b'], returns='b')
@@ -95,8 +129,11 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                     (bool)  : result
         """
+        # ensure input is of correct type
         if (type(power) == int) and (power not in (0, 1)):
             raise Exception('Error: invalid input. Must be a boolean, 0, or 1.')
+
+        # setter
         yield self.ser.acquire()
         if power is not None:
             yield self.ser.write('out.w {:d} {:d}\r\n'.format(channel, power))
@@ -104,6 +141,7 @@ class DCServer(SerialDeviceServer, PollingServer):
             yield self.ser.write('out.r {:d}\r\n'.format(channel))
         # get response
         resp = yield self.ser.read_line('\n')
+        self.ser.release()
         resp = resp.strip()
         # parse response
         if resp == 'ON':
@@ -112,7 +150,6 @@ class DCServer(SerialDeviceServer, PollingServer):
             resp = False
         else:
             raise Exception('Error: bad readback from device.')
-        self.ser.release()
         # send signal to all other listeners
         self.toggle_update((channel, resp), self.getOtherListeners(c))
         returnValue(resp)
