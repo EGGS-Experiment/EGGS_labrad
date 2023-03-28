@@ -10,7 +10,7 @@ cxn = labrad.connect()
 
 # parameters
 #masses = (1, 2, 3, 4, 5, 6, 14, 18, 28, 32, 37, 38, 39, 40, 44)
-masses = (1, 2, 3, 4)
+masses = (1, 2, 3, 4, 26, 27, 30, 36, 37, 38, 39, 40)
 
 # get servers
 rga = cxn.rga_server

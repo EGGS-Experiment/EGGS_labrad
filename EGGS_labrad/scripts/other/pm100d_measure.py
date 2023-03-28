@@ -5,7 +5,7 @@ from numpy import arange, linspace, zeros, mean, amax
 from EGGS_labrad.clients import createTrunk
 
 name_tmp = "PM100D Measure"
-interval_s = 5
+interval_s = 2
 
 
 cxn = labrad.connect()
@@ -19,6 +19,7 @@ print('Server connection successful.')
 
 # set up power meter
 pm.select_device()
+pm.configure_mode('POW')
 
 
 # create dataset
@@ -27,7 +28,7 @@ dv.cd(trunk_tmp, True, context=cr)
 dv.new(
     name_tmp,
     [('Time', 's')],
-    [('397nm Power', 'Power', 'uW')],
+    [('729nm Power', 'Power', 'mW')],
     context=cr
 )
 print('Data vault successfully setup.')
@@ -40,5 +41,5 @@ starttime = time()
 while True:
     pow = pm.measure()
     elapsedtime = time() - starttime
-    dv.add(elapsedtime, pow, context=cr)
+    dv.add(elapsedtime, pow * 1e3, context=cr)
     sleep(interval_s)

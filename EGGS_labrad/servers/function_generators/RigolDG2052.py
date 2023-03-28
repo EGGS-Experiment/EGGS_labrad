@@ -47,6 +47,19 @@ class RigolDG2052Wrapper(GPIBDeviceWrapper):
         # getter
         return self.channel_num
 
+    @inlineCallbacks
+    def impedance(self, imp):
+        # setter
+        if imp:
+            if (imp <= 5e7) and (imp >= 1):
+                yield self.write(':OUTP{:d}:IMP {:f}'.format(self.channel_num, imp))
+            else:
+                raise Exception('Error: invalid input. Frequency must be in range [1, 1e4] Ohms.')
+
+        # getter
+        resp = yield self.query(':OUTP{:d}:IMP?'.format(self.channel_num))
+        returnValue(float(resp))
+
 
     # WAVEFORM
     @inlineCallbacks
@@ -101,6 +114,19 @@ class RigolDG2052Wrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query(':SOUR{:d}:VOLT:OFFS?'.format(self.channel_num))
+        returnValue(float(resp))
+
+    @inlineCallbacks
+    def phase(self, phase):
+        # setter
+        if phase:
+            if (phase < 360) and (phase >= 0):
+                yield self.write(':SOUR{:d}:PHAS {:f}'.format(self.channel_num, phase))
+            else:
+                raise Exception('Error: invalid input. Phase must be in range [0, 360).')
+
+        # getter
+        resp = yield self.query(':SOUR{:d}:PHAS?'.format(self.channel_num))
         returnValue(float(resp))
 
 
@@ -168,5 +194,24 @@ class RigolDG2052Wrapper(GPIBDeviceWrapper):
             returnValue(True)
         elif resp == 'OFF':
             returnValue(False)
+        else:
+            raise Exception("Error: invalid device response: {}".format(resp))
+
+    @inlineCallbacks
+    def clock_reference(self, source):
+        # setter
+        if source is not None:
+            if source == 'INT':
+                yield self.write(':ROSC:SOUR INT')
+            elif source == 'EXT':
+                yield self.write(':ROSC:SOUR EXT')
+
+        # getter
+        resp = yield self.query(':ROSC:SOUR:CURR?')
+        resp = resp.strip().upper()
+        if resp == 'INT':
+            returnValue('INT')
+        elif resp == 'EXT':
+            returnValue('EXT')
         else:
             raise Exception("Error: invalid device response: {}".format(resp))

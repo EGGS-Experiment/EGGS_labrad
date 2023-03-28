@@ -11,9 +11,9 @@ dc.voltage(24,1)
 #dc.toggle(23,1)
 dc.toggle(24,1)
 #dc.voltage(23,18+.277)
-dc.voltage(24,12.75)
+dc.voltage(24,11.4)
 
-time.sleep(.21)
+time.sleep(.3)
 
 #dc.voltage(23,0)
 dc.voltage(24,1)

@@ -4,7 +4,7 @@ Measure values from a spectrum analyzer.
 import labrad
 from time import time, sleep
 from datetime import datetime
-from numpy import arange, linspace, zeros, mean, amax
+from numpy import array, arange, linspace, zeros, mean, amax
 
 
 from EGGS_labrad.clients import createTrunk
@@ -14,13 +14,17 @@ name_tmp =              'Spectrum Analyzer Measurement'
 
 # polling parameters
 poll_delay_s =          1.0
+record_time_s =         3600
 
 # spectrum analyzer parameters
-sa_device_num_dj =      3
+sa_device_num_dj =      5
 sa_att_int_db =         10
 sa_att_ext_db =         10
-sa_span_hz =            10000
-sa_bandwidth_hz =       100
+sa_span_hz =            400
+sa_bandwidth_hz =       10
+
+# tmp remove
+pow_dj_dbm =            -1
 
 # todo: do variable number of peaks
 
@@ -66,7 +70,8 @@ try:
 
     # MAIN LOOP
     starttime = time()
-    while True:
+    elapsedtime = 0
+    while elapsedtime < record_time_s:
 
         try:
             # get signal values
