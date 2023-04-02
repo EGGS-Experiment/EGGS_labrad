@@ -98,54 +98,76 @@ class multiplexer_client(GUIClient):
                 if chan == chan_params[0]:
                     name_tmp = chan_name
             self.record_dict[chan] = {'status': False, 'context': cntx_chan, 'starttime': None, 'name': name_tmp}
+
         # wavemeter status
         initstartvalue = yield self.wavemeter.get_wlm_output()
         initlockvalue = yield self.wavemeter.get_lock_state()
         self.gui.startSwitch.setChecked(initstartvalue)
         self.gui.lockSwitch.setChecked(initlockvalue)
+
         # set display for each channel
         for channel_name, channel_params in self.chaninfo.items():
+
             # expand parameters and get GUI widget
             wmChannel, frequency, _, _, dacPort, _ = channel_params
             widget = self.gui.channels[wmChannel]
+
             # get channel values
-            lock_frequency = yield self.wavemeter.get_pid_course(dacPort)
-            lock_status = yield self.wavemeter.get_channel_lock(dacPort, wmChannel)
-            exposure_ms = yield self.wavemeter.get_exposure(wmChannel)
-            measure_state = yield self.wavemeter.get_switcher_signal_state(wmChannel)
-            widget.lockChannel.setChecked(bool(lock_status))
+            exposure_ms =           yield self.wavemeter.get_exposure(wmChannel)
+            measure_state =         yield self.wavemeter.get_switcher_signal_state(wmChannel)
+            if dacPort > 0:
+                lock_frequency =    yield self.wavemeter.get_pid_course(dacPort)
+                lock_status =       yield self.wavemeter.get_channel_lock(dacPort, wmChannel)
+
+            # initialize GUI elements
             widget.spinExp.setValue(exposure_ms)
             widget.measSwitch.setChecked(bool(measure_state))
-            widget.spinFreq.setValue(float(lock_frequency))
+            if dacPort > 0:
+                widget.spinFreq.setValue(float(lock_frequency))
+                widget.lockChannel.setChecked(bool(lock_status))
+            else:
+                widget.setPID.setEnabled(False)
+                widget.spinFreq.setEnabled(False)
+                widget.lockChannel.setEnabled(False)
+                widget.lockswitch.setEnabled(False)
+                widget.lockswitch.setChecked(False)
 
     def initGUI(self):
         # global wavemeter settings
         self.gui.lockSwitch.clicked.connect(lambda state: self.wavemeter.set_lock_state(state))
         self.gui.startSwitch.clicked.connect(lambda state: self.wavemeter.set_wlm_output(state))
+
         # channel wavemeter settings
         for channel_name, channel_params in self.chaninfo.items():
+
             # expand parameters and get GUI widget
             wmChannel, frequency, _, _, dacPort, _ = channel_params
             widget = self.gui.channels[wmChannel]
-            # assign slots
+
+            # connect signals to slots
             widget.showTrace.clicked.connect(lambda status, _wmChannel=wmChannel:
                                              self.toggleTrace(status, _wmChannel))
-            widget.setPID.clicked.connect(lambda status, _wmChannel=wmChannel, _dacPort=dacPort:
-                                          self.setupPID(_wmChannel, _dacPort))
             widget.spinExp.valueChanged.connect(lambda exp, _wmChannel=wmChannel:
                                                 self.wavemeter.set_exposure_time(_wmChannel, int(exp)))
             widget.measSwitch.clicked.connect(lambda state, _wmChannel=wmChannel:
                                               self.wavemeter.set_switcher_signal_state(_wmChannel, state))
-            if dacPort != 0:
+
+            # connect locking-related signals if applicable
+            if dacPort > 0:
+                widget.setPID.clicked.connect(lambda status, _wmChannel=wmChannel, _dacPort=dacPort:
+                                              self.setupPID(_wmChannel, _dacPort))
                 widget.spinFreq.valueChanged.connect(lambda freq, _dacPort=dacPort:
                                                      self.wavemeter.set_pid_course(_dacPort, freq))
                 widget.lockChannel.clicked.connect(lambda state, _dacPort=dacPort, _wmChannel=wmChannel:
                                                    self.wavemeter.set_channel_lock(_dacPort, _wmChannel, state))
+
             # lock channels on startup to prevent accidental change of values
             widget.lockswitch.setChecked(False)
+
             # frequency recording
             widget.record_button.toggled.connect(lambda status, _wmChannel=wmChannel: self.record_freq(status, _wmChannel))
-        # finally after everything has been set up, we can start polling wavemeter values
+
+        # after everything has been set up, we can start polling wavemeter values
         self.refresher.start(_TRACE_POLLING_RATE, now=True)
 
     @inlineCallbacks
