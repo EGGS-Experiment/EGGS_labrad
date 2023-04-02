@@ -55,6 +55,7 @@ class AMO8_channel(QFrame):
         self.ramp_rate.setDecimals(1)
         self.ramp_rate.setSingleStep(0.1)
         self.ramp_rate.setRange(0, 1000)
+        self.ramp_rate.setValue(100.0)
         self.ramp_rate.setKeyboardTracking(False)
 
         # buttons
