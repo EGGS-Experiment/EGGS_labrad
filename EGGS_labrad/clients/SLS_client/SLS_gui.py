@@ -56,8 +56,8 @@ class SLS_gui(QFrame):
         off_freq_label = QLabel("Offset Frequency (MHz)")
 
         self.off_freq = QDoubleSpinBox()
-        self.off_freq.setRange(10.0, 35.0)
-        self.off_freq.setSingleStep(0.1)
+        self.off_freq.setRange(10.0, 800.0)
+        self.off_freq.setSingleStep(1.0)
         self.off_lockpoint = QComboBox()
 
         for item_text in ("J(+2)", "J(+1)", "Resonance", "J(-1)", "J(-2)"):
