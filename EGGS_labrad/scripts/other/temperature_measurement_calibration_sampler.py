@@ -16,7 +16,7 @@ name_tmp = 'Temperature Measurement Calibration'
 
 # dds parameters
 dds_name =                  'urukul1_ch1'
-dds_freq_range_hz =         linspace(85, 140, 56) * 1e6
+dds_freq_range_hz =         linspace(90, 130, 56) * 1e6
 dds_amp_range_pct =         [0, 0.5]
 dds_att_db =                14
 
@@ -27,7 +27,7 @@ pd_sample_rate_hz =         1000
 pd_sample_num =             200
 
 # search parameters
-pd_voltage_target_v =       0.057
+pd_voltage_target_v =       0.0512
 pd_voltage_tolerance_v =    0.005
 
 
