@@ -68,20 +68,6 @@ try:
 
 
     # create recursive binary search function
-    def recursion_search(amp_min_pct, amp_max_pct):
-        # set asf and get power
-        amp_tmp_pct = 0.5 * (amp_min_pct + amp_max_pct)
-        aq.dds_amplitude(dds_name, amp_tmp_pct)
-        sleep(0.5)
-        volt_tmp_v = aq.sampler_read([pd_channel_sampler], pd_sample_rate_hz, pd_sample_num)
-
-        # return target value
-        if abs(volt_tmp_v - pd_voltage_target_v) <= pd_voltage_tolerance_v:
-            return amp_tmp_pct
-        elif volt_tmp_v < pd_voltage_target_v:
-            return recursion_search(amp_tmp_pct, amp_max_pct)
-        else:
-            return recursion_search(amp_min_pct, amp_tmp_pct)
 
     # tmp remove
     res = []
@@ -91,6 +77,23 @@ try:
 
         # set dds frequency
         aq.dds_frequency(dds_name, freq_val_hz)
+
+
+        def recursion_search(amp_min_pct, amp_max_pct):
+            # set asf and get power
+            amp_tmp_pct = 0.5 * (amp_min_pct + amp_max_pct)
+            aq.dds_amplitude(dds_name, amp_tmp_pct)
+            sleep(0.5)
+            volt_tmp_v = aq.sampler_read([pd_channel_sampler], pd_sample_rate_hz, pd_sample_num)
+
+            # return target value
+            if abs(volt_tmp_v - pd_voltage_target_v) <= pd_voltage_tolerance_v:
+                return amp_tmp_pct
+            elif volt_tmp_v < pd_voltage_target_v:
+                return recursion_search(amp_tmp_pct, amp_max_pct)
+            else:
+                return recursion_search(amp_min_pct, amp_tmp_pct)
+
 
         # get calibrated asf
         amp_target_pct = recursion_search(*dds_amp_range_pct)
