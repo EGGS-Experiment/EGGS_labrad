@@ -40,9 +40,9 @@ class PMT_client(GUIClient):
 
     def initData(self):
         # set default values
-        self.gui.sample_time.setValue(500)
-        self.gui.sample_num.setValue(100)
-        self.gui.poll_interval.setValue(5)
+        self.gui.sample_time.setValue(3000)
+        self.gui.sample_num.setValue(50)
+        self.gui.poll_interval.setValue(0.5)
 
     def initGUI(self):
         # read buttons
