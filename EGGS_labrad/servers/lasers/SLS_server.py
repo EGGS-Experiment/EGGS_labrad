@@ -52,15 +52,26 @@ class SLSServer(SerialDeviceServer, PollingServer):
             status  (bool): whether autolock is turned on or off.
         """
         chString = 'AutoLockEnable'
+
+        # sanitize input and convert to str
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = str(status)
+        elif type(status) == bool:
+            status = str(int(status))
+
+        # run getter & setter
         resp = yield self._write_and_query(chString, status)
         returnValue(bool(int(resp)))
 
-    @setting(112, 'Autolock Status', returns='(vib)')
+    @setting(112, 'Autolock Status', returns='(vis)')
     def autolock_status(self, c):
         """
         Get autolock status.
         Returns:
-            (v, i, b): the lock time, lock count, and lock state
+            (v, i, s): the lock time, lock count, and lock state
         """
         # query keywords
         chString = ['LockTime', 'LockCount', 'AutoLockState']
@@ -78,7 +89,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
             resp.append(resp_tmp)
 
         # convert string response to numbers
-        resp = (float(resp[0]), int(resp[1]), bool(int(resp[2])))
+        resp = (float(resp[0]), int(resp[1]), resp[2])
         returnValue(resp)
 
     @setting(113, 'Autolock Parameter', param='s', returns='s')

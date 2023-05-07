@@ -43,7 +43,8 @@ class SLS_client(GUIClient):
         self.gui.autolock_time.setText(autolock_time_formatted)
 
         # offset
-        self.gui.off_freq.setValue(float(init_values['OffsetFrequency']))
+        offset_freq_mhz = float(init_values['OffsetFrequency']) / 1e6
+        self.gui.off_freq.setValue(offset_freq_mhz)
         self.gui.off_lockpoint.setCurrentIndex(int(init_values['LockPoint']))
 
         # PDH
@@ -70,6 +71,8 @@ class SLS_client(GUIClient):
         self.gui.PDH_phasemodulation.valueChanged.connect(lambda value: self.changePDHValue('index', value))
         self.gui.PDH_phaseoffset.valueChanged.connect(lambda value: self.changePDHValue('phase', value))
         self.gui.PDH_filter.currentIndexChanged.connect(lambda value: self.changePDHValue('filter', value))
+
+        # todo: offset
 
         # servo
         self.gui.servo_param.currentTextChanged.connect(lambda target: self.changeServoTarget(target))
