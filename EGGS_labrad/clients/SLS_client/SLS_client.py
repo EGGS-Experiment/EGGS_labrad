@@ -33,6 +33,7 @@ class SLS_client(GUIClient):
         # get all values
         values_tmp = yield self.sls.get_values()
         init_values = dict(zip(values_tmp[0], values_tmp[1]))
+
         # autolock
         self.gui.autolock_param.setCurrentIndex(int(init_values['SweepType']))
         self.gui.autolock_toggle.setChecked(bool(init_values['AutoLockEnable']))
@@ -40,15 +41,18 @@ class SLS_client(GUIClient):
         autolock_time = float(init_values['LockTime'])
         autolock_time_formatted = self._dateFormat(autolock_time)
         self.gui.autolock_time.setText(autolock_time_formatted)
+
         # offset
         self.gui.off_freq.setValue(float(init_values['OffsetFrequency']))
         self.gui.off_lockpoint.setCurrentIndex(int(init_values['LockPoint']))
+
         # PDH
         self.gui.PDH_freq.setValue(float(init_values['PDHFrequency']))
         self.gui.PDH_phasemodulation.setValue(float(init_values['PDHPMIndex']))
         self.gui.PDH_phaseoffset.setValue(float(init_values['PDHPhaseOffset']))
         self.gui.PDH_filter.setCurrentIndex(int(init_values['PDHDemodFilter']))
-        # Servo
+
+        # servo
         self.gui.servo_param.setCurrentIndex(0)
         self.gui.servo_set.setValue(float(init_values['CurrentServoSetpoint']))
         self.gui.servo_p.setValue(float(init_values['CurrentServoPropGain']))
@@ -60,11 +64,13 @@ class SLS_client(GUIClient):
         # autolock
         self.gui.autolock_toggle.toggled.connect(lambda status: self.sls.autolock_toggle(status))
         self.gui.autolock_param.currentTextChanged.connect(lambda param: self.sls.autolock_parameter(param.upper()))
-        # pdh
+
+        # PDH
         self.gui.PDH_freq.valueChanged.connect(lambda value: self.changePDHValue('frequency', value))
         self.gui.PDH_phasemodulation.valueChanged.connect(lambda value: self.changePDHValue('index', value))
         self.gui.PDH_phaseoffset.valueChanged.connect(lambda value: self.changePDHValue('phase', value))
         self.gui.PDH_filter.currentIndexChanged.connect(lambda value: self.changePDHValue('filter', value))
+
         # servo
         self.gui.servo_param.currentTextChanged.connect(lambda target: self.changeServoTarget(target))
         self.gui.servo_set.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'set', value))
@@ -72,11 +78,13 @@ class SLS_client(GUIClient):
         self.gui.servo_p.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'p', value))
         self.gui.servo_i.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'i', value))
         self.gui.servo_d.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'd', value))
+
         # lock everything on startup
         self.gui._lock(False, self.gui.autolock_widget)
         self.gui._lock(False, self.gui.off_widget)
         self.gui._lock(False, self.gui.PDH_widget)
         self.gui._lock(False, self.gui.servo_widget)
+
 
     # SIGNALS
     def updateAutolock(self, c, lockstatus):

@@ -68,7 +68,7 @@ server_dict = {
     'gpp':          'gpp3060_server',
 
     # AMO BOXES
-    'amo2': 'amo2_server'
+    'amo2':         'amo2_server'
 }
 
 # create shortcuts

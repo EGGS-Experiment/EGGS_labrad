@@ -44,23 +44,28 @@ class SLSServer(SerialDeviceServer, PollingServer):
 
 
     # AUTOLOCK
-    @setting(111, 'Autolock Toggle', enable='s', returns='s')
-    def autolock_toggle(self, c, enable=None):
+    @setting(111, 'Autolock Toggle', status='b', returns='b')
+    def autolock_toggle(self, c, status=None):
         """
         Toggle autolock.
+        Arguments:
+            status  (bool): whether autolock is turned on or off.
         """
         chString = 'AutoLockEnable'
-        resp = yield self._write_and_query(chString, enable)
-        returnValue(resp)
+        resp = yield self._write_and_query(chString, status)
+        returnValue(bool(int(resp)))
 
-    @setting(112, 'Autolock Status', returns='*s')
+    @setting(112, 'Autolock Status', returns='(vib)')
     def autolock_status(self, c):
         """
         Get autolock status.
         Returns:
-            [v, v, v]: the lock time, lock count, and lock state
+            (v, i, b): the lock time, lock count, and lock state
         """
+        # query keywords
         chString = ['LockTime', 'LockCount', 'AutoLockState']
+
+        # query parameters
         resp = []
         for string in chString:
             # query
@@ -71,6 +76,9 @@ class SLSServer(SerialDeviceServer, PollingServer):
             # parse
             resp_tmp = yield self._parse(resp_tmp, False)
             resp.append(resp_tmp)
+
+        # convert string response to numbers
+        resp = (float(resp[0]), int(resp[1]), bool(int(resp[2])))
         returnValue(resp)
 
     @setting(113, 'Autolock Parameter', param='s', returns='s')
@@ -88,6 +96,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
                 print('Invalid parameter: parameter must be one of [\'OFF\', \'PZT\', \'CURRENT\']')
         resp = yield self._write_and_query(chString, param_tg)
         returnValue(resp)
+
 
     # PDH
     @setting(211, 'PDH', param_name='s', param_val='?', returns='s')
@@ -120,6 +129,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         # return value
         resp = yield self._parse(resp, False)
         returnValue(resp)
+
 
     # OFFSET
     @setting(311, 'Offset Frequency', freq='v', returns='v')
@@ -197,13 +207,17 @@ class SLSServer(SerialDeviceServer, PollingServer):
         Polls the device for locking readout.
         """
         yield self.ser.acquire()
+        # get lock count
         yield self.ser.write('get LockCount' + TERMINATOR)
         lockcount = yield self.ser.read_line(_SLS_EOL)
         lockcount = yield self._parse(lockcount, False)
+        # get lock time
         yield self.ser.write('get LockTime' + TERMINATOR)
         locktime = yield self.ser.read_line(_SLS_EOL)
         locktime = yield self._parse(locktime, False)
         self.ser.release()
+
+        # update clients
         self.autolock_update((int(lockcount), float(locktime)))
 
 
@@ -237,7 +251,8 @@ class SLSServer(SerialDeviceServer, PollingServer):
         Writes parameter to SLS and verifies setting,
         then reads back same parameter.
         """
-        if param:
+        # setter
+        if param is not None:
             # write data and read echo
             yield self.ser.acquire()
             yield self.ser.write('set ' + chstring + ' ' + str(param) + TERMINATOR)
@@ -245,7 +260,8 @@ class SLSServer(SerialDeviceServer, PollingServer):
             self.ser.release()
             # parse
             set_resp = yield self._parse(set_resp, True)
-        # write data and read echo
+
+        # getter
         yield self.ser.acquire()
         yield self.ser.write('get ' + chstring + TERMINATOR)
         resp = yield self.ser.read_line(_SLS_EOL)
