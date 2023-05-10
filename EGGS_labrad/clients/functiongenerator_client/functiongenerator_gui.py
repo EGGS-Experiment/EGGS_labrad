@@ -38,7 +38,7 @@ class functiongenerator_gui(QFrame):
         self.ampl.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.ampl.setDecimals(2)
         self.ampl.setSingleStep(0.01)
-        self.ampl.setRange(0.01, 1e1)
+        self.ampl.setRange(0.01, 2)
         self.ampl.setKeyboardTracking(False)
         # self.att = QDoubleSpinBox()
         # self.att.setFont(QFont('MS Shell Dlg 2', pointSize=13))
