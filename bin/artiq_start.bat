@@ -49,7 +49,7 @@ GOTO EOF
 @ECHO ARTIQ Starter
 @ECHO Optional Arguments:
 @ECHO    -h, --help          show this message and exit
-@ECHO    --ip                bind servers (i.e. artiq_master and artiq_cltmgr) to the given IP address (default: %ARTIQ_HOST%)
+@ECHO    --ip                bind servers (i.e. artiq_master and artiq_ctlmgr) to the given IP address (default: %ARTIQ_HOST%)
 @ECHO    --ddb               device database file (default: "%ARTIQ_DDB%")
 @ECHO
 
