@@ -37,9 +37,9 @@ SET LOGFILENAME=%LOGFILENAME: =0%
 
 
 @REM: Start ARTIQ interface
-START "ARTIQ Master" /min CMD /c " artiq_master -g -r "%ARTIQ_ROOT%/repository" --device-db "%ARTIQ_ROOT%\%ddb_name%" --bind=%ip_addr% --log-file "%HOME%\.labrad\logfiles\artiq\%LOGFILENAME%.log" "
+START "ARTIQ Master" /min CMD /c "artiq_master -g -r "%ARTIQ_ROOT%/repository" --device-db "%ARTIQ_ROOT%\%ddb_name%" --bind=%ip_addr% --log-file "%HOME%\.labrad\logfiles\artiq\%LOGFILENAME%.log" "
 START "ARTIQ Dashboard" /min CMD /c "TIMEOUT 2 && CALL artiq_dashboard"
-START "ARTIQ Controller Manager" /min CMD /k "TIMEOUT 2 && artiq_ctlmgr"
+START "ARTIQ Controller Manager" /min CMD /k "TIMEOUT 2 && artiq_ctlmgr --bind %ip_addr%"
 
 GOTO EOF
 
@@ -49,7 +49,7 @@ GOTO EOF
 @ECHO ARTIQ Starter
 @ECHO Optional Arguments:
 @ECHO    -h, --help          show this message and exit
-@ECHO    --ip                bind the artiq_master to the given IP address (default: %ARTIQ_HOST%)
+@ECHO    --ip                bind servers (i.e. artiq_master and artiq_cltmgr) to the given IP address (default: %ARTIQ_HOST%)
 @ECHO    --ddb               device database file (default: "%ARTIQ_DDB%")
 @ECHO
 

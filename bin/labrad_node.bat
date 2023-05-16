@@ -36,6 +36,7 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://%LABRADHOST%:3000
 
 @REM: ARTIQ Dashboard
+START "ARTIQ MonInj Proxy" /min CMD /k "activate artiq && CALL aqctl_moninj_proxy -s 192.168.1.76"
 START "ARTIQ Dashboard" /min CMD /k "activate artiq && CALL artiq_dashboard -s %LABRADHOST%"
 
 @REM: Clients
