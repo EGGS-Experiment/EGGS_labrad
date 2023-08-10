@@ -78,3 +78,8 @@ for servers in server_dict.items():
         setattr(current_module, servers[0], cxn[servers[1]])
     except Exception as e:
         print("Server unavailable:", e)
+
+# try to import packages for convenience
+# todo: import matplotlib.pyplot as plt
+# todo: import numpy as np
+# todo: import scipy as sp

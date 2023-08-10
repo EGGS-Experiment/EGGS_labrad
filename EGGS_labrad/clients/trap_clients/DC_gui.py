@@ -11,10 +11,11 @@ class AMO8_channel(QFrame):
     GUI for a single AMO8 DAC channel.
     """
 
-    def __init__(self, name=None, num=None, parent=None):
+    def __init__(self, name=None, num=None, max_voltage_v=None, parent=None):
         QWidget.__init__(self, parent)
         self.name = name
         self.number = num
+        self.max_voltage_v = max_voltage_v
         self.setFrameStyle(0x0001 | 0x0030)
         self.setFixedSize(270, 200)
         self.makeLayout(name)
@@ -35,7 +36,11 @@ class AMO8_channel(QFrame):
         self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=14))
         self.dac.setDecimals(1)
         self.dac.setSingleStep(0.1)
-        self.dac.setRange(0, 850)
+        # set max voltage for channel
+        if self.max_voltage_v is None:
+            self.dac.setRange(0, 850)
+        else:
+            self.dac.setRange(0, self.max_voltage_v)
         self.dac.setKeyboardTracking(False)
 
         # ramp
@@ -139,8 +144,9 @@ class DC_gui(QFrame):
         shift_rows = 2
         for channel_name, channel_params in self.active_channels.items():
             channel_num = channel_params['num']
+            channel_max_voltage_v = channel_params['max_voltage_v']
             # initialize GUIs for each channel
-            channel_gui = AMO8_channel(channel_name, channel_num)
+            channel_gui = AMO8_channel(channel_name, channel_num, channel_max_voltage_v)
             # add widget to client list and layout
             self.amo8_channels[channel_num] = channel_gui
             channel_holder_layout.addWidget(channel_gui, channel_params['row'] + shift_rows, channel_params['col'])
