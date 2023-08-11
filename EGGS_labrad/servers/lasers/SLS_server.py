@@ -24,6 +24,8 @@ from EGGS_labrad.servers import PollingServer, SerialDeviceServer
 
 TERMINATOR = '\r\n'
 _SLS_EOL = '>'
+# todo: make bool functions also accept 1 or 0
+
 
 
 class SLSServer(SerialDeviceServer, PollingServer):
@@ -44,12 +46,14 @@ class SLSServer(SerialDeviceServer, PollingServer):
 
 
     # AUTOLOCK
-    @setting(111, 'Autolock Toggle', status='b', returns='b')
+    @setting(111, 'Autolock Toggle', status=['b', 'i'], returns='b')
     def autolock_toggle(self, c, status=None):
         """
         Toggle autolock.
         Arguments:
-            status  (bool): whether autolock is turned on or off.
+            status  (bool, int) : whether autolock is turned on or off.
+        Returns:
+                    (bool)      : whether autolock is turned on or off.
         """
         chString = 'AutoLockEnable'
 
