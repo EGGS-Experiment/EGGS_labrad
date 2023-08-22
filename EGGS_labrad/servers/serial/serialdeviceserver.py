@@ -125,6 +125,9 @@ from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 from labrad.errors import Error
 from labrad.server import LabradServer, setting
 
+# note: we import a reactor here to support error handling in the SerialConnection object
+from twisted.internet import reactor
+
 __all__ = ["SerialDeviceError", "SerialConnectionError", "SerialDeviceServer"]
 
 
@@ -217,9 +220,18 @@ class SerialDeviceServer(LabradServer):
             self.flush_output =             lambda:             ser.flush_output()
             self.debug =                    lambda b=None:      ser.serial_debug(b)
 
+            # create error handler function in case we are unable to acquire comm_lock
+            def acquire_error_handler(failure):
+                self.release()
+                # need to raise an exception here to prevent any downstream serial functions from running
+                raise Exception('\t\tError in ser.acquire(): {}\n'.format(failure))
+
             # comm lock
             self.comm_lock =                DeferredLock()
-            self.acquire =                  lambda:             self.comm_lock.acquire()
+            # note: we don't use the class variable "timeout" since it might be some strange type (e.g. labrad.WithUnit)
+            # and I can't be bothered to implement support/error handling for different types, so I just use
+            # a fixed timeout of 5 seconds for now.
+            self.acquire =                  lambda:             self.comm_lock.acquire().addTimeout(5., reactor).addErrback(acquire_error_handler)
             self.release =                  lambda:             self.comm_lock.release()
 
             # buffer

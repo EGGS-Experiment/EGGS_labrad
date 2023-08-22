@@ -177,11 +177,10 @@ class PollingServer(LabradServer):
 
     @inlineCallbacks
     def _poll_fail(self, failure):
-        print('Polling failed. Flushing serial inputs/outputs.')
+        print('\tPolling failed. Flushing serial inputs/outputs and releasing DeferredLock.')
         yield self.ser.flush_input()
         yield self.ser.flush_output()
         self.ser.release()
-        # self.startRefresher(5)
 
 
 """
