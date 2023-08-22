@@ -164,7 +164,7 @@ class SerialDeviceServer(LabradServer):
     port: Name of serial port (Better to look this up in the registry using regKey and getPortFromReg())
     regKey: Short string used to find port name in registry
     serNode: Name of node running desired serial server.  Used to identify correct serial server.
-    timeOut: Time to wait for response before giving up.
+    timeout: Time to wait for response before giving up.
     """
 
     # node parameters

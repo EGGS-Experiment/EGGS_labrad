@@ -235,6 +235,7 @@ class SerialServer(PollingServer):
         """
         Sets the parity.
         """
+        # todo: make empty call return the current parity
         ser = self.getPort(c)
         parities = ser.PARITIES
         if data is None:
