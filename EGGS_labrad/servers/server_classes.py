@@ -1,5 +1,6 @@
 from twisted.internet.task import LoopingCall
 from labrad.server import LabradServer, setting
+from twisted.internet.defer import inlineCallbacks
 
 
 __all__ = ["ContextServer", "PollingServer", "ARTIQServer"]
@@ -174,12 +175,13 @@ class PollingServer(LabradServer):
         """
         pass
 
+    @inlineCallbacks
     def _poll_fail(self, failure):
-        print('Polling failed. Restarting polling.')
+        print('Polling failed. Flushing serial inputs/outputs.')
         yield self.ser.flush_input()
         yield self.ser.flush_output()
-        self.startRefresher(5)
-        #todo: maybe don't have it auto restart polling
+        self.ser.release()
+        # self.startRefresher(5)
 
 
 """
