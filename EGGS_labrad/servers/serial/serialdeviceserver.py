@@ -120,6 +120,15 @@
 # Added support for FT232 devices via pyft232.
 #===============================================================================
 
+#===============================================================================
+# 2023 - 08 - 21
+#
+# Added error handling (as an errBack) to SerialConnection.acquire().
+# Error handling now calls SerialConnection.release() if SerialConnection.acquire()
+# times out during acquisition of the DeferredLock; timeout period is set by the
+# SerialDeviceServer's timeout class variable.
+#===============================================================================
+
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 
 from labrad.errors import Error
@@ -254,6 +263,7 @@ class SerialDeviceServer(LabradServer):
                 self.port = port
             except Exception as e:
                 print('Unable to find default node and port in registry. Using hard-coded values if they exist.')
+
         # open connection on startup if default node and port are specified
         if self.serNode and self.port:
             print('Default node and port specified. Connecting to device on startup.')
