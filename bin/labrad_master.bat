@@ -7,7 +7,7 @@
 @REM: Set file home
 SET PROG_HOME=%~dp0
 
-@REM: Prepare LabRAD CMD
+@REM: Prepare LabRAD CMD environment
 CALL "%PROG_HOME%\labrad_prepare.bat"
 
 @REM: Parse arguments for server activation
@@ -19,6 +19,7 @@ FOR %%x IN (%*) DO (
     IF "%%x"=="-h" (GOTO HELP)
     IF "%%x"=="--help" (GOTO HELP)
 )
+
 
 @REM: Start core LabRAD tool suite
 IF %raw_flag%==0 (
@@ -33,7 +34,7 @@ IF %raw_flag%==0 (
     @REM: Set up port forwarder to allow access via http
     START "LabRAD Forwarder" /min CMD /k "activate labart && python "%PROG_HOME%\labrad_forwarder.py" 8682:127.0.0.1:7682"
 
-    @REM: ARTIQ
+    @REM: Start core ARTIQ managers
     START /min CMD /c "%PROG_HOME%\artiq_start.bat"
 )
 
@@ -47,14 +48,24 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:3000
 
 @REM: Run all device servers as specified, then open the relevant python shell
 IF %server_flag%==1 (
+    @REM: Start certain LabRAD servers in a local CMD window
     TIMEOUT 8 > NUL && START /min CMD /c "%PROG_HOME%\utils\start_labrad_servers.bat"
+
+    @REM: Start ARTIQ Server (for LabRAD interfacing)
     START "ARTIQ Server" /min CMD "/k activate labart3 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\ARTIQ\artiq_server.py"
+
+    @REM: Start relevant LabRAD clients (e.g. EGGS GUI, RSG Client, DDS Client)
     START /min CMD /c "%PROG_HOME%\utils\start_labrad_clients.bat"
+
+    @REM: Open a command-line python connection to LabRAD
     TIMEOUT 8 > NUL && CALL "%PROG_HOME%\server_cxn.bat"
 ) ELSE ( CALL "%PROG_HOME%\labrad_cxn.bat" )
 
-
+@REM: End of file. Skip the help message unless the -h/--help flag is passed.
 GOTO EOF
+
+
+@REM: Display help message
 :HELP
 @ECHO usage: labrad_master [-h] [-s] [-r]
 @ECHO:
