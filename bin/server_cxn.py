@@ -66,9 +66,11 @@ server_dict = {
     'na':           'network_analyzer_server',
     'pm':           'power_meter_server',
     'gpp':          'gpp3060_server',
+    'ke':           'keithley_2231a_server',
 
     # AMO BOXES
-    'amo2':         'amo2_server'
+    'amo2':         'amo2_server',
+    'amo3':         'amo3_server'
 }
 
 # create shortcuts
