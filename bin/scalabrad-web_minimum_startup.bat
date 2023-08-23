@@ -1,8 +1,8 @@
-@REM: todo: rewrite, clean up, and make proper
+@REM todo: rewrite, clean up, and make proper
 @ECHO OFF
 @SETLOCAL
 
-@REM: todo either change prog_home or add scalabrad packages to this folder
+@REM todo either change prog_home or add scalabrad packages to this folder
 SET CMD_LINE_ARGS=%*
 SET PROG_HOME=%~dp0
 SET JAVA_EXE="%JAVA_HOME%\bin\java.exe"
