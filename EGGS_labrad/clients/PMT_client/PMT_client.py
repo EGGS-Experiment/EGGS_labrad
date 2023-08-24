@@ -136,9 +136,9 @@ class PMT_client(GUIClient):
     @inlineCallbacks
     def flipper_pulse(self):
         # send TTL to flipper mount
-        yield self.aq.ttl_set("ttl23", 1)
+        yield self.aq.ttl_set("ttl15", 1)
         sleep(.2)
-        yield self.aq.ttl_set("ttl23", 0)
+        yield self.aq.ttl_set("ttl15", 0)
 
     @inlineCallbacks
     def record(self, status):
