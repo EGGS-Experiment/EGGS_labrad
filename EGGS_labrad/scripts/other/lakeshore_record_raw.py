@@ -15,7 +15,7 @@ from serial import Serial, PARITY_ODD
 COM_PORT =              'COM7'
 SAVE_FILE_NAME =        'lakeshore_data'
 POLL_INTERVAL_S =       5
-PRINT_INTERVAL_ITER =   1
+PRINT_INTERVAL_ITER =   60
 
 
 '''
