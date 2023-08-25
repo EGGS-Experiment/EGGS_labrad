@@ -48,9 +48,6 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:3000
 
 @REM Run all device servers as specified, then open the relevant python shell
 IF %server_flag%==1 (
-    @REM Start certain LabRAD servers in a local CMD window
-    TIMEOUT 8 > NUL && START /min CMD /c "%PROG_HOME%\utils\start_labrad_servers.bat"
-
     @REM Start ARTIQ Server (for LabRAD interfacing)
     START "ARTIQ Server" /min CMD "/k activate labart3 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\ARTIQ\artiq_server.py"
 

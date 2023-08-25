@@ -23,4 +23,8 @@ class dds_config(object):
         'urukul1_ch1':  {'ftw': 5, 'asf': 1, 'att_mu': 0},
         'urukul1_ch2':  {'ftw': 5, 'asf': 1, 'att_mu': 0},
         'urukul1_ch3':  {'ftw': 5, 'asf': 1, 'att_mu': 0},
+        'urukul2_ch0':  {'ftw': 5, 'asf': 1, 'att_mu': 0},
+        'urukul2_ch1':  {'ftw': 5, 'asf': 1, 'att_mu': 0},
+        'urukul2_ch2':  {'ftw': 5, 'asf': 1, 'att_mu': 0},
+        'urukul2_ch3':  {'ftw': 5, 'asf': 1, 'att_mu': 0}
     }

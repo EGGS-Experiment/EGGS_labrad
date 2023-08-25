@@ -1,5 +1,10 @@
+:: Scalabrad - Manager
+::  Starts the scalabrad manager in a minimalist fashion.
+
+@REM todo: rewrite, clean up, and make proper
 @ECHO OFF
 @SETLOCAL
+
 
 SET CMD_LINE_ARGS=%*
 SET PROG_HOME=%~dp0
