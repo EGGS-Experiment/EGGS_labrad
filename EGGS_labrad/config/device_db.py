@@ -547,15 +547,6 @@ device_db["urukul2_ch3"] = {
     }
 }
 
-# device_db["phaser0"] = {
-#     "type": "local",
-#     "module": "artiq.coredevice.phaser",
-#     "class": "Phaser",
-#     "arguments": {
-#         "channel_base": 0x00002a,
-#         "miso_delay": 1, "gw_rev"=1
-#     }
-# }
 device_db["phaser0"] = {
     "type": "local",
     "module": "artiq.coredevice.phaser",
@@ -566,10 +557,9 @@ device_db["phaser0"] = {
 
         # disable fifo_offset tuning so we can
         # establish deterministic latency
-        "tune_fifo_offset":     False
+        "tune_fifo_offset": False
     }
 }
-
 
 device_db["fastino0"] = {
     "type": "local",
