@@ -101,7 +101,7 @@ class ARTIQ_Server(ContextServer):
             # set up ARTIQ subscriber
             from asyncio import get_event_loop, set_event_loop, Event
             self._exp_running = False
-            self.subscriber_exp = ARTIQ_subscriber(self._process_subscriber_update, self)
+            self.subscriber_exp = ARTIQ_subscriber('schedule', self._process_subscriber_update, self)
             self.subscriber_exp.connect('::1', 3250)
 
             # set up event loop for ARTIQ_subscriber
@@ -130,7 +130,7 @@ class ARTIQ_Server(ContextServer):
         running_exp = None
 
         # check if any experiments are running
-        for rid, exp_params in self.struct_holder.backing_store.items():
+        for rid, exp_params in self.struct_holder_schedule.backing_store.items():
             run_status = exp_params['status']
 
             # send experiment details to clients if experiment is running
