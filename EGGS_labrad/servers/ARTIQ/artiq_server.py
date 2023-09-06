@@ -127,6 +127,7 @@ class ARTIQ_Server(ContextServer):
         Checks if any experiments are running and sends a Signal
         to clients accordingly.
         """
+        # todo: do we actually need this?
         running_exp = None
 
         # check if any experiments are running
