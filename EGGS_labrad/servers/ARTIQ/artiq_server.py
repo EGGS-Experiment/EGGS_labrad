@@ -111,7 +111,9 @@ class ARTIQ_Server(ContextServer):
             # set up thread to run subscriber event loop in background
             from threading import Thread
             def run_in_background(loop):
+                # set event loop for thread to be the passed-in loop
                 set_event_loop(loop)
+                # run loop indefinitely
                 loop.run_until_complete(stop_event.wait())
                 loop.close()
 
