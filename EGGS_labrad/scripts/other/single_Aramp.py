@@ -13,13 +13,13 @@ dc=cxn.dc_server
 #dc.toggle(24,1)
 #dc.voltage(23,18+.277)
 #dc.voltage_fast(27,1)
-dc.voltage_fast(23,6)
+dc.voltage_fast(23,9.4)
 
-time.sleep(.25)
+time.sleep(0.5)
 
 #dc.voltage(23,0)
 #dc.voltage_fast(27,292)
-dc.voltage_fast(23,0)
+dc.voltage_fast(23,1.5)
 #dc.toggle(23,0)
 #dc.toggle(27,1)
 dc.toggle(23,1)
