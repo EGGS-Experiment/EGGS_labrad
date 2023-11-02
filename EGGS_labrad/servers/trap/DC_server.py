@@ -231,6 +231,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         resp = float((resp.strip())[:-1])
 
         # send signal to all other listeners
+        # temporarily removed for speed
         self.voltage_update((channel, resp), self.getOtherListeners(c))
         returnValue(resp)
 
