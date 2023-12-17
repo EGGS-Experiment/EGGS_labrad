@@ -103,7 +103,7 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
     '''
     MOTORS
     '''
-    @setting(111, 'Motor Frequency Forward', motor_num='i', freq_hz='v', returns='')
+    @setting(111, 'Motor Frequency Forward', motor_num='i', freq_hz='v', returns='v')
     def motor_frequency_forward(self, c, motor_num, freq_hz=None):
         """
         Set the forward frequency of a motor.
@@ -134,8 +134,8 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
         freq_hz = 14740000. / int(resp[14: 18], 16)
         returnValue(freq_hz)
 
-    @setting(112, 'Motor Frequency Backward', motor_num='i', freq='v', returns='')
-    def motor_frequency_backward(self, c, motor_num, freq_hz):
+    @setting(112, 'Motor Frequency Backward', motor_num='i', freq_hz='v', returns='v')
+    def motor_frequency_backward(self, c, motor_num, freq_hz=None):
         """
         Set the backward frequency of a motor.
 
@@ -184,7 +184,7 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
     '''
     MOVE
     '''
-    @setting(211, 'Move Home', dir=['b', 'i'], returns='f')
+    @setting(211, 'Move Home', dir=['b', 'i'], returns='v')
     def move_home(self, c, dir=False):
         """
         Moves the elliptec device to the home position.
@@ -205,10 +205,10 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
 
         # convert position in pulses to degrees
         pos_pulses_int = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
-        pos_deg = pos_pulses_int / 262144. * 360.
+        pos_deg = pos_pulses_int / 398.
         returnValue(pos_deg)
 
-    @setting(212, 'Move Absolute', position=['i', 'f'], returns='f')
+    @setting(212, 'Move Absolute', position=['i', 'v'], returns='v')
     def move_absolute(self, c, position):
         """
         Moves the elliptec device to a specified absolute position.
@@ -223,18 +223,18 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
             raise Exception('Error: input must be in range [-360, 360] degrees.')
 
         # convert position in degrees to pulses
-        move_pulses_raw = round(position / 360. * 262144.).to_bytes(4, byteorder='big', signed=True)
-        move_pulses_str = encode_hex(move_pulses_raw)[0]
+        move_pulses_raw = round(position * 398.).to_bytes(4, byteorder='big', signed=True)
+        move_pulses_str = encode_hex(move_pulses_raw)[0].decode()
 
         # setter
-        pos_pulses_str = yield self._query(self.device_num, 'ho', move_pulses_str, cntx=c)
+        pos_pulses_str = yield self._query(self.device_num, 'ma', move_pulses_str, cntx=c)
 
         # convert position in pulses to degrees
         pos_pulses_int = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
-        pos_deg = pos_pulses_int / 262144. * 360.
+        pos_deg = pos_pulses_int / 398.
         returnValue(pos_deg)
 
-    @setting(213, 'Move Relative', position=['i', 'f'], returns='f')
+    @setting(213, 'Move Relative', position=['i', 'v'], returns='v')
     def move_relative(self, c, position):
         """
         Moves the elliptec device relative to the current position.
@@ -249,18 +249,18 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
             raise Exception('Error: input must be in range [-360, 360] degrees.')
 
         # convert position in degrees to pulses
-        move_pulses_raw = round(position / 360. * 262144.).to_bytes(4, byteorder='big', signed=True)
-        move_pulses_str = encode_hex(move_pulses_raw)[0]
+        move_pulses_raw = round(position * 398.).to_bytes(4, byteorder='big', signed=True)
+        move_pulses_str = encode_hex(move_pulses_raw)[0].decode()
 
         # setter
         pos_pulses_str = yield self._query(self.device_num, 'mr', move_pulses_str, cntx=c)
 
         # convert position in pulses to degrees
         pos_pulses_int = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
-        pos_deg = pos_pulses_int / 262144. * 360.
+        pos_deg = pos_pulses_int / 398.
         returnValue(pos_deg)
 
-    @setting(221, 'Move Jog', dir=['b', 'i'], returns='f')
+    @setting(221, 'Move Jog', dir=['b', 'i'], returns='v')
     def move_jog(self, c, dir):
         """
         Moves the motor by a "jog" - a discrete number of steps set
@@ -277,15 +277,15 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
             raise Exception('Error: input must be a boolean, 0, or 1.')
 
         # get appropriate move command word and move
-        cmd_msg = 'fw' if dir is True else 'bw'
+        cmd_msg = 'fw' if bool(dir) is True else 'bw'
         pos_pulses_str = yield self._query(self.device_num, cmd_msg, cntx=c)
 
         # convert position in pulses to degrees
         pos_pulses_int = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
-        pos_deg = pos_pulses_int / 262144. * 360.
+        pos_deg = pos_pulses_int / 398.
         returnValue(pos_deg)
 
-    @setting(222, 'Move Jog Steps', step_size=['i', 'f'], returns='f')
+    @setting(222, 'Move Jog Steps', step_size=['i', 'v'], returns='v')
     def move_jog_steps(self, c, step_size=None):
         """
         Get/set the jog step size. When the setting "Move Jog" is called,
@@ -303,8 +303,8 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
                 raise Exception('Error: input must be in range [-360, 360] degrees.')
 
             # convert position in degrees to pulses
-            jog_steps_raw = round(step_size / 360. * 262144.).to_bytes(4, byteorder='big', signed=True)
-            jog_steps_str = encode_hex(jog_steps_raw)[0]
+            jog_steps_raw = round(step_size * 398.).to_bytes(4, byteorder='big', signed=True)
+            jog_steps_str = encode_hex(jog_steps_raw)[0].decode()
 
             # set jog step size
             yield self._query(self.device_num, 'sj', jog_steps_str, cntx=c)
@@ -313,11 +313,11 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
         jog_steps_str = yield self._query(self.device_num, 'gj', cntx=c)
         # convert step size in pulses to degrees
         jog_steps_int = int.from_bytes(decode_hex(jog_steps_str)[0], byteorder='big', signed=True)
-        jog_steps_deg = jog_steps_int / 262144. * 360.
+        jog_steps_deg = jog_steps_int / 398.
         returnValue(jog_steps_deg)
 
-    @setting(231, 'Move Velocity', velocity='i', returns='i')
-    def move_velocity(self, c, velocity):
+    @setting(231, 'Move Velocity', velocity=['i', 'v'], returns='v')
+    def move_velocity(self, c, velocity=None):
         """
         Get/set the velocity by adjusting the drive power.
         Warning: drive power less than 25% to 45% may result in stalling.
@@ -347,7 +347,7 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
     '''
     POSITION
     '''
-    @setting(311, 'Position', returns='f')
+    @setting(311, 'Position', returns='v')
     def position(self, c):
         """
         Returns the current position of the motor.
@@ -359,10 +359,10 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
 
         # convert position in pulses to degrees
         pos_pulses_int = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
-        pos_deg = pos_pulses_int / 262144. * 360.
+        pos_deg = pos_pulses_int / 398.
         returnValue(pos_deg)
 
-    @setting(312, 'Position Home', position='i', returns='i')
+    @setting(312, 'Position Home', position=['i','v'], returns='v')
     def position_home(self, c, position=None):
         """
         Get/set the home position of the motor.
@@ -388,6 +388,8 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
 
 
     # HELPERS
+    # todo: create function for deg to mu/msg
+    # todo: create function for mu/msg to deg
     @inlineCallbacks
     def _query(self, dev_num, cmd_msg, data_msg='', cntx=None):
         """
@@ -405,8 +407,9 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
         msg = "{dev:x}{cmd:s}{data}\r".format(
             dev=dev_num,
             cmd=cmd_msg,
-            data=data_msg
+            data=data_msg.upper()
         ).encode(_ELL_ENCODING)
+        # print('\tTX: {:}'.format(msg))
 
         # write to device and read response
         yield self.ser.acquire()
@@ -420,7 +423,7 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
         # print('resp: {:s}'.format(resp))
 
         # notify other listeners if we have an error
-        if (resp_header == 'GS') and (resp_msg is not '00'):
+        if (resp_header == 'GS') and (resp_msg != '00'):
             self.notifyOtherListeners(cntx, _ELL_ERRORS_msg[resp_msg], self.error_update)
         # notify other listeners of the updated position
         elif resp_header == 'PO':
@@ -433,6 +436,7 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
             self.notifyOtherListeners(cntx, position_mu, self.position_update)
 
         # return response
+        # print('\t\tRX: {:}'.format(resp_msg))
         returnValue(resp_msg)
 
 
