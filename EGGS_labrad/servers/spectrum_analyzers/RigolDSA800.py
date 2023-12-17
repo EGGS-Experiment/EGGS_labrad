@@ -35,7 +35,7 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def attenuation(self, att):
         if att is not None:
-            if (att > 0) and (att < 30):
+            if (att >= 0) and (att <= 30):
                 yield self.write(':SENS:POW:RF:ATT {:f}'.format(att))
             else:
                 raise Exception('Error: RF attenuation must be in range: [0, 30].')
@@ -47,7 +47,7 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def frequencyStart(self, freq):
         if freq is not None:
-            if (freq > 0) and (freq < 7.5e9):
+            if (freq >= 0) and (freq <= 7.5e9):
                 yield self.write(':SENS:FREQ:STAR {:f}'.format(freq))
             else:
                 raise Exception('Error: start frequency must be in range: [0, 7.5e9].')
@@ -89,7 +89,7 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
     @inlineCallbacks
     def amplitudeReference(self, ampl):
         if ampl is not None:
-            if (ampl > -100) and (ampl < 20):
+            if (ampl >= -100) and (ampl <= 20):
                 yield self.write(':DISP:WIN:TRAC:Y:SCAL:RLEV {:f}'.format(ampl))
             else:
                 raise Exception('Error: display reference value must be in range: [-100, 20].')
@@ -170,7 +170,7 @@ class RigolDSA800Wrapper(GPIBDeviceWrapper):
     def markerFrequency(self, channel, freq):
         if freq is not None:
             if (freq > 0) and (freq < 1.5e9):
-                yield self.write(':CALC:MARK{:d}:X {:d}'.format(channel, freq))
+                yield self.write(':CALC:MARK{:d}:X {:f}'.format(channel, freq))
             else:
                 raise Exception('Error: marker frequency must be in range: [0, 1.5e9].')
         resp = yield self.query(':CALC:MARK{:d}:X?'.format(channel))
