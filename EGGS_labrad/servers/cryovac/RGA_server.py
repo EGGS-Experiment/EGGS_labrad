@@ -28,7 +28,7 @@ _SRS_EOL = '\r'
 _SRS_MAX_PRESSURE = 1e-5
 
 
-class RGA_Server(SerialDeviceServer, PollingServer):
+class RGAServer(SerialDeviceServer, PollingServer):
     """
     Talks to the SRS RGAx00 residual gas analyzer.
     All core device functions which take a numerical parameter can also accept
@@ -642,4 +642,4 @@ class RGA_Server(SerialDeviceServer, PollingServer):
 
 if __name__ == "__main__":
     from labrad import util
-    util.runServer(RGA_Server())
+    util.runServer(RGAServer())
