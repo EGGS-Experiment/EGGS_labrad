@@ -18,6 +18,7 @@ from labrad.server import setting
 from labrad.gpib import GPIBManagedServer
 
 from SMY01 import SMY01Wrapper
+from AgilentE4434B import AgilentE4434BWrapper
 # todo: add notification of listeners & signals
 
 
