@@ -81,48 +81,64 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
 
 
     # ON/OFF
-    @setting(111, 'IP Toggle', power='b', returns='s')
-    def toggle_ip(self, c, power):
+    @setting(111, 'IP Toggle', status=['b', 'i'], returns='s')
+    def toggle_ip(self, c, status):
         """
-        Set ion pump power.
+        Set ion pump power status.
         Arguments:
-            power   (bool)  : whether pump is to be on or off
+            status  (bool)  : ion pump power status.
         Returns:
                     (str)   : response from device
         """
+        # ensure input is bool or valid int
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+
         # setter & getter
         yield self.ser.acquire()
-        if power:
+        if status:
             yield self.ser.write('G' + TERMINATOR)
         else:
             yield self.ser.write('B' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
         self.ser.release()
+
         # parse
         if resp == _NI03_ACK_msg:
-            self.ip_power_update(power, self.getOtherListeners(c))
+            self.ip_power_update(status, self.getOtherListeners(c))
         returnValue(resp)
 
-    @setting(112, 'NP Toggle', power='b', returns='s')
-    def toggle_np(self, c, power):
+    @setting(112, 'NP Toggle', status=['b', 'i'], returns='s')
+    def toggle_np(self, c, status):
         """
-        Set getter power.
+        Set getter power status.
         Arguments:
-            power   (bool)  : getter power status
+            power   (bool)  : getter power status.
         Returns:
                     (str)   : response from device
         """
+        # ensure input is bool or valid int
+        if type(status) == int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+
         # setter
         yield self.ser.acquire()
-        if power:
+        if status:
             yield self.ser.write('GN' + TERMINATOR)
         else:
             yield self.ser.write('BN' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
         self.ser.release()
+
         # parse
         if resp == _NI03_ACK_msg:
-            self.np_power_update(power, self.getOtherListeners(c))
+            self.np_power_update(status, self.getOtherListeners(c))
         returnValue(resp)
 
     @setting(121, 'NP Mode', mode='i', returns='s')

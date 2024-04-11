@@ -12,7 +12,7 @@ timeout = 20
 
 [shutdown]
 message = 987654321
-timeout = 20
+timeout = 10
 ### END NODE INFO
 """
 import os
