@@ -30,7 +30,8 @@ class RFServer(GPIBManagedServer):
     name = 'RF Server'
 
     deviceWrappers = {
-        'ROHDE&SCHWARZ SMY01': SMY01Wrapper,
+        'ROHDE&SCHWARZ SMY01':      SMY01Wrapper,
+        'HEWLETT-PACKARD E4434B':   AgilentE4434BWrapper,
     }
 
 

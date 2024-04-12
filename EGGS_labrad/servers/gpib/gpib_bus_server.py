@@ -80,7 +80,7 @@ class GPIBBusServer(PollingServer):
     """
 
     name = '%LABRADNODE% GPIB Bus'
-    defaultTimeout = WithUnit(3.0, 's')
+    defaultTimeout = WithUnit(10.0, 's')
     POLL_ON_STARTUP = True
 
 

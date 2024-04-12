@@ -13,18 +13,16 @@ from EGGS_labrad.clients import createTrunk
 name_tmp =              'Spectrum Analyzer Measurement'
 
 # polling parameters
-poll_delay_s =          1.0
-record_time_s =         3600
+poll_delay_s =          5.0
+record_time_s =         1000
 
 # spectrum analyzer parameters
-sa_device_num_dj =      5
-sa_att_int_db =         10
-sa_att_ext_db =         10
+sa_device_num_dj =      0
+sa_att_int_db =         0
+sa_att_ext_db =         0
 sa_span_hz =            400
-sa_bandwidth_hz =       10
+sa_bandwidth_hz =       1000
 
-# tmp remove
-pow_dj_dbm =            -1
 
 # todo: do variable number of peaks
 
@@ -43,10 +41,11 @@ try:
 
     # set up spectrum analyzer
     sa.select_device(sa_device_num_dj)
-    sa.attenuation(sa_att_int_db)
-    sa.frequency_span(sa_span_hz)
-    sa.bandwidth_resolution(sa_bandwidth_hz)
-    sa.marker_toggle(1, True)
+    # sa.attenuation(sa_att_int_db)
+    # sa.frequency_span(sa_span_hz)
+    # sa.bandwidth_resolution(sa_bandwidth_hz)
+    # sa.marker_toggle(1, True)
+    sa.gpib_write('DISP:ENAB 0')
     print("Spectrum analyzer setup successful.")
 
     # create dataset
@@ -91,6 +90,9 @@ try:
 
             # wait given time
             sleep(poll_delay_s)
+
+    # re-enable display
+    sa.gpib_write('DISP:ENAB 1')
 
 except Exception as e:
     print("Error:", e)

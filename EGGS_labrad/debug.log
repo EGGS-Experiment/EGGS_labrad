@@ -1,1 +1,2 @@
 [0922/122301.440:ERROR:persistent_memory_allocator.cc(844)] Corruption detected in shared-memory segment.
+[0411/024850.451:ERROR:settings.cc(320)] Settings magic is not 1129342067
