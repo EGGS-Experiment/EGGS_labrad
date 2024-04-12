@@ -88,7 +88,7 @@ class PowerMeterServer(GPIBManagedServer):
         Returns:
                     (bool)  : whether autoranging is on or off.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:

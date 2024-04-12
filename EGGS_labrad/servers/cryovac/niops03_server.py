@@ -91,7 +91,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                     (str)   : response from device
         """
         # ensure input is bool or valid int
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
@@ -121,7 +121,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
                     (str)   : response from device
         """
         # ensure input is bool or valid int
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:

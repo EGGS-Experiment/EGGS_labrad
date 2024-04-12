@@ -71,7 +71,7 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
     @setting(21, "Remote", status=['i', 'b'], returns='')
     def remote(self, c, status):
         # check for valid input
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
 

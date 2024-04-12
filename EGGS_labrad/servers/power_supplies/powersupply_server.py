@@ -63,7 +63,7 @@ class PowerSupplyServer(GPIBManagedServer):
         Returns:
                     (bool)  : the power state of the power supply.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
@@ -82,7 +82,7 @@ class PowerSupplyServer(GPIBManagedServer):
         Returns:
                     (bool)  : the power state of the power supply.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:

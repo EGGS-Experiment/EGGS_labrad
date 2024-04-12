@@ -75,7 +75,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         Returns:
                     (bool): the RF output status.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).powerToggle(status)
@@ -219,7 +219,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         Returns:
                     (bool): whether the marker is on/off.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).markerToggle(channel, status)
@@ -234,7 +234,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         Returns:
                     (bool): whether tracking is enabled.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).markerTracking(channel, status)
@@ -280,7 +280,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         Returns:
                     (bool): the status of signal tracking.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).peakSearch(status)

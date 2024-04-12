@@ -84,7 +84,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         Returns:
                     (bool): the status of the preamplifier.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).preamplifier(status)
@@ -193,7 +193,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         Returns:
                     (bool): whether the marker is on/off.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).markerToggle(channel, status)
@@ -254,7 +254,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         Returns:
                     (bool): the status of signal tracking.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).markerTrack(channel, status)
@@ -301,7 +301,7 @@ class SpectrumAnalyzerServer(GPIBManagedServer):
         Returns:
                     (bool): the status of signal tracking.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
         return self.selectedDevice(c).peakSearch(status)

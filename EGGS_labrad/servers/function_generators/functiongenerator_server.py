@@ -61,7 +61,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
         Returns:
                     (bool)  : whether the function generator is on/off.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
@@ -208,7 +208,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
         Returns:
                     (bool) : the status of burst mode.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
@@ -250,7 +250,7 @@ class FunctionGeneratorServer(GPIBManagedServer):
         Returns:
                     (bool)  : the status of the SYNC output signal.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
