@@ -1,22 +1,9 @@
 from numpy import log10
-from time import sleep
 from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
-# todo: set am dc modulation correctly
-# todo: ensure all modulation functions work
-# todo: round amplitude to correct decimal places
 
 
 class AgilentE4434BWrapper(GPIBDeviceWrapper):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # need to store certain parameters since we can't
-        # change them on the device without activating them
-        self.amplitude_stored = -140
-        self.mod_active = False
-        self.mod_params = {'AM': 0, 'AF': 0, 'FM': 0, 'PHM': 0}
-
 
     # GENERAL
     @inlineCallbacks
@@ -24,16 +11,17 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
         yield self.write('*RST')
 
     @inlineCallbacks
-    def toggle(self, onoff=None):
+    def toggle(self, status=None):
         # setter
-        if onoff is True:
-            yield self.write('LEV {:f} {}'.format(self.amplitude_stored, 'DBM'))
-        elif onoff is False:
-            yield self.write('LEV:OFF')
+        if status is True:
+            yield self.write(':OUTP:ON')
+        elif status is False:
+            yield self.write(':OUTP:OFF')
+
         # getter
-        resp = yield self.query('LEV?')
-        # need to specifically check LEVEL:OFF since there is no LEVEL:ON response
-        if resp == 'LEVEL:OFF':
+        resp = yield self.query(':OUTP?')
+        resp = resp.strip()
+        if resp == 'OFF':
             returnValue(False)
         else:
             returnValue(True)
@@ -42,196 +30,260 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
     # WAVEFORM
     @inlineCallbacks
     def frequency(self, freq):
-        if freq:
-            yield self.write('RF {:f}'.format(freq))
-        resp = yield self.query('RF?')
-        resp = self._parse(resp, 'RF')
+        # setter
+        if freq is not None:
+            yield self.write(':FREQ {:f}'.format(freq))
+
+        # getter
+        resp = yield self.query(':FREQ?')
         returnValue(float(resp))
 
     @inlineCallbacks
     def amplitude(self, ampl, units='DBM'):
         # setter
         if ampl is not None:
-            # check if units are valid, set default to dBm
-            if not units:
-                units = 'DBM'
-            elif units.upper() not in ['DBM', 'V']:
+
+            # verify correct units
+            if units.upper() not in ['DBM', 'VP', 'VPP']:
                 raise Exception('Error: invalid units')
-            elif units.upper() == 'V':
+            elif units.upper() == 'VP':
                 ampl = self._VptoDBM(ampl)
                 units = 'DBM'
-            # check device output status
-            resp = yield self.query('LEV?')
-            # if output is disabled, store amplitude
-            self.amplitude_stored = ampl
-            if resp != 'LEVEL:OFF':
-                yield self.write('LEV {:f} {}'.format(ampl, units.upper()))
+            elif units.upper() == 'VPP':
+                ampl = self._VptoDBM(ampl / 2.)
+                units = 'DBM'
+
+            # send device message
+            yield self.write(':POW {:f} {:s}'.format(ampl, units.upper()))
+
         # getter
-        resp = yield self.query('LEV?')
-        # special case if rf is off
-        if resp == 'LEVEL:OFF':
-            returnValue(self.amplitude_stored)
-        else:
-            resp = self._parse(resp, 'LEVEL')
-            returnValue(float(resp))
-
-
-    # MODULATION
-    @inlineCallbacks
-    def mod_freq(self, freq):
-        if freq:
-            self.mod_params['AF'] = freq
-            # only write to device if modulation is already active
-            if self.mod_active is True:
-                yield self.write('AF {:f}'.format(freq))
-        resp = yield self.query('AF?')
-        resp = self._parse(resp, 'AF')
+        resp = yield self.query(':POW?')
         returnValue(float(resp))
 
     @inlineCallbacks
-    def mod_toggle(self, status):
-        if status:
-            # get stored modulation frequency
-            freq = self.mod_params['AF']
-            if self.mod_active is True:
-                yield self.write('AF {:f}'.format(freq))
-        resp = yield self.query('AF?')
-        resp = resp.split('AF')[1]
-        if resp == ':OFF':
+    def att_hold(self, status):
+        # setter
+        if status is True:
+            yield self.write(':POW:ATT:AUTO ON')
+        elif status is False:
+            yield self.write(':POW:ATT:AUTO OFF')
+
+        # getter
+        resp = yield self.query(':POW:ATT:AUTO?')
+        resp = resp.strip()
+        if resp == 'OFF':
             returnValue(False)
         else:
             returnValue(True)
 
     @inlineCallbacks
-    def am_toggle(self, onoff):
+    def alc_toggle(self, status):
         # setter
-        if onoff is not None:
-            self.mod_active = True
-            if onoff is True:
-                # activate with updated parameter
-                mod_freq = self.mod_params['AF']
-                param = self.mod_params['AM']
-                yield self.write('AF {:f}'.format(mod_freq))
-                yield self.write('AM:I {}'.format(param))
-            elif onoff is False:
-                yield self.write('AM:OFF')
+        if status is True:
+            yield self.write(':POW:ALC:STAT ON')
+        elif status is False:
+            yield self.write(':POW:ALC:STAT OFF')
+
         # getter
-        resp = yield self.query('AM?')
-        if resp == 'AM:OFF':
+        resp = yield self.query(':POW:ALC:STAT?')
+        resp = resp.strip()
+        if resp == 'OFF':
+            returnValue(False)
+        else:
+            returnValue(True)
+
+    @inlineCallbacks
+    def alc_auto_toggle(self, status):
+        # setter
+        if status is True:
+            yield self.write(':POW:ALC:SEAR ON')
+        elif status is False:
+            yield self.write(':POW:ALC:SEAR OFF')
+
+        # getter
+        resp = yield self.query(':POW:ALC:SEAR?')
+        resp = resp.strip()
+        if resp == 'OFF':
+            returnValue(False)
+        else:
+            returnValue(True)
+
+    @inlineCallbacks
+    def alc_search(self):
+        yield self.write(':POW:ALC:SEAR ONCE')
+
+
+    '''
+    MODULATION
+    '''
+    # GENERAL MODULATION
+    @inlineCallbacks
+    def mod_frequency(self, freq):
+        raise NotImplementedError
+
+    @inlineCallbacks
+    def mod_toggle(self, status):
+        # setter
+        if status is True:
+            yield self.write(':OUTP:MOD ON')
+        elif status is False:
+            yield self.write(':OUTP:MOD OFF')
+
+        # getter
+        resp = yield self.query(':OUTP:MOD?')
+        resp = resp.strip()
+        if resp == 'OFF':
+            returnValue(False)
+        else:
+            returnValue(True)
+
+
+    # AMPLITUDE MODULATION
+    @inlineCallbacks
+    def am_toggle(self, status):
+        # setter
+        if status is True:
+            yield self.write(':AM:STAT ON')
+        elif status is False:
+            yield self.write(':AM:STAT OFF')
+
+        # getter
+        resp = yield self.query(':AM:STAT?')
+        resp = resp.strip()
+        if resp == 'OFF':
             returnValue(False)
         else:
             returnValue(True)
 
     @inlineCallbacks
     def am_depth(self, depth):
-        if depth:
-            self.mod_params['AM'] = depth
-            # only write to device if modulation is already active
-            if self.mod_active is True:
-                yield self.write('AM {:f}'.format(depth))
-        resp = yield self.query('AM?')
-        resp = self._parse(resp, 'AM:INT')
+        # setter
+        if depth is not None:
+            # ensure depth is valid
+            if (depth < 0.1) or (depth > 100.):
+                raise Exception("Error: AM depth must be between 0.1% and 100%")
+
+            # send device message
+            yield self.write(':AM:DEPT {:f}'.format(depth))
+
+        # getter
+        resp = yield self.query(':AM:DEPT?')
         returnValue(float(resp))
 
     @inlineCallbacks
-    def fm_toggle(self, onoff):
+    def am_frequency(self, freq):
         # setter
-        if onoff is not None:
-            self.mod_active = True
-            if onoff is True:
-                # activate with updated parameter
-                mod_freq = self.mod_params['AF']
-                param = self.mod_params['FM']
-                yield self.write('AF {:f}'.format(mod_freq))
-                yield self.write('FM:I {}'.format(param))
-            elif onoff is False:
-                yield self.write('FM:OFF')
+        if freq is not None:
+            # ensure frequency is within valid range
+            if (freq < 0.1) or (freq > 5e4):
+                raise Exception("Error: AM frequency must be between 0.1 Hz and 50 kHz.")
+
+            # send device message
+            yield self.write(':AM:INT:FREQ {:f}'.format(freq))
+
         # getter
-        resp = yield self.query('FM?')
-        if resp == 'FM:OFF':
+        resp = yield self.query(':AM:INT:FREQ?')
+        returnValue(float(resp))
+
+
+    # FREQUENCY MODULATION
+    @inlineCallbacks
+    def fm_toggle(self, status):
+        # setter
+        if status is True:
+            yield self.write(':FM:STAT ON')
+        elif status is False:
+            yield self.write(':FM:STAT OFF')
+
+        # getter
+        resp = yield self.query(':FM:STAT?')
+        resp = resp.strip()
+        if resp == 'OFF':
             returnValue(False)
         else:
             returnValue(True)
 
     @inlineCallbacks
-    def fm_dev(self, dev):
-        if dev:
-            self.mod_params['FM'] = dev
-            # only write to device if modulation is already active
-            if self.mod_active is True:
-                yield self.write('FM {:f}'.format(dev))
-        resp = yield self.query('FM?')
-        resp = self._parse(resp, 'FM:INT')
+    def fm_deviation(self, dev):
+        # setter
+        if dev is not None:
+            # ensure deviation is valid
+            if (dev < 0.1) or (dev > 100.):
+                raise Exception("Error: FM deviation must be between 1kHz and 20 MHz.")
+
+            # send device message
+            yield self.write(':FM:DEV {:f}'.format(dev))
+
+        # getter
+        resp = yield self.query(':FM:DEV?')
         returnValue(float(resp))
 
     @inlineCallbacks
-    def pm_toggle(self, onoff):
+    def fm_frequency(self, freq):
         # setter
-        if onoff is not None:
-            self.mod_active = True
-            if onoff is True:
-                # activate with updated parameter
-                mod_freq = self.mod_params['AF']
-                param = self.mod_params['PHM']
-                yield self.write('AF {:f}'.format(mod_freq))
-                yield self.write('PHM:I {}'.format(param))
-            elif onoff is False:
-                yield self.write('PHM:OFF')
+        if freq is not None:
+            # ensure frequency is within valid range
+            if (freq < 0.1) or (freq > 5e4):
+                raise Exception("Error: FM frequency must be between 0.1 Hz and 50 kHz.")
+
+            # send device message
+            yield self.write(':FM:INT:FREQ {:f}'.format(freq))
+
         # getter
-        resp = yield self.query('PHM?')
-        if resp == 'PHM:OFF':
+        resp = yield self.query(':FM:INT:FREQ?')
+        returnValue(float(resp))
+
+
+    # PHASE MODULATION
+    @inlineCallbacks
+    def pm_toggle(self, status):
+        # setter
+        if status is True:
+            yield self.write(':PM:STAT ON')
+        elif status is False:
+            yield self.write(':PM:STAT OFF')
+
+        # getter
+        resp = yield self.query(':PM:STAT?')
+        resp = resp.strip()
+        if resp == 'OFF':
             returnValue(False)
         else:
             returnValue(True)
 
     @inlineCallbacks
-    def pm_dev(self, dev):
-        if dev:
-            self.mod_params['PHM'] = dev
-            # only write to device if modulation is already active
-            if self.mod_active is True:
-                yield self.write('PHM {:f}'.format(dev))
-        resp = yield self.query('PHM?')
-        resp = self._parse(resp, 'PHM:INT')
+    def pm_deviation(self, dev):
+        # setter
+        if dev is not None:
+            # ensure deviation is valid
+            if (dev < 0.) or (dev > 10.):
+                raise Exception("Error: PM deviation must be between 0. and 20 rad.")
+
+            # send device message
+            yield self.write(':PM:DEV {:f}'.format(dev))
+
+        # getter
+        resp = yield self.query(':PM:DEV?')
+        returnValue(float(resp))
+
+    @inlineCallbacks
+    def pm_frequency(self, freq):
+        # setter
+        if freq is not None:
+            # ensure frequency is within valid range
+            if (freq < 0.1) or (freq > 5e4):
+                raise Exception("Error: PM frequency must be between 0.1 Hz and 50 kHz.")
+
+            # send device message
+            yield self.write(':PM:INT:FREQ {:f}'.format(freq))
+
+        # getter
+        resp = yield self.query(':PM:INT:FREQ?')
         returnValue(float(resp))
 
 
-    # STABILIZATION
-    def stabilization_lock(self, onoff=None):
-        # setter
-        if onoff is not None:
-            # get locking status
-            lock_status = False
-            resp = yield self.query('AM?')
-            if resp == 'AM:OFF':
-                resp = True
-
-            # slowly ramp up locking
-            if onoff is True:
-                yield self.write('AM:E:D 10')
-                sleep(0.1)
-                yield self.write('AM:E:D 30')
-                sleep(0.1)
-                yield self.write('AM:E:D 100')
-
-            # slowly turn off locking
-            elif onoff is False:
-                yield self.write('AM:E:D 90')
-                sleep(0.1)
-                yield self.write('AM:E:D 50')
-                sleep(0.1)
-                yield self.write('AM:OFF')
-
-        # getter
-        resp = yield self.query('AM?')
-        if resp == 'AM:OFF':
-            returnValue(False)
-        else:
-            returnValue(True)
-
-
-    # HELPER
-    _VptoDBM = lambda self, volts_p: 10 * log10(volts_p ** 2 * 10)
+    # HELPER FUNCTIONS
+    _VptoDBM = lambda self, volts_p: 10. * log10(volts_p ** 2. * 10.)
 
     def _parse(self, resp, text):
         """
@@ -241,9 +293,11 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
         """
         result = resp.split(text)[-1]
         result = result.strip()
+
         # in case device is off
         try:
             result = float(result)
         except Exception as e:
             result = 0
+
         return result

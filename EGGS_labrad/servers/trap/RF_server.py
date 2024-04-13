@@ -48,7 +48,7 @@ class RFServer(GPIBManagedServer):
         """
         Turn the signal generator on/off.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
@@ -56,7 +56,7 @@ class RFServer(GPIBManagedServer):
         return self.selectedDevice(c).toggle(status)
 
 
-    # WAVEFORM
+    # FREQUENCY
     @setting(211, 'Frequency', freq='v', returns='v')
     def frequency(self, c, freq=None):
         """
@@ -68,21 +68,84 @@ class RFServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).frequency(freq)
 
-    @setting(212, 'Amplitude', ampl='v', units='s', returns='v')
+
+    # AMPLITUDE
+    @setting(311, 'Amplitude', ampl='v', units='s', returns='v')
     def amplitude(self, c, ampl=None, units=None):
         """
         Set/get the signal generator amplitude.
         Arguments:
-            ampl    (float) : the amplitude (units to be specified).
+            ampl    (float) :   the amplitude.
+            units   (str)   :   the amplitude units.
+                                Can be one of ['DBM', 'VP', or 'VPP'].
         Returns:
                     (float or str) : the amplitude (in dBm).
         """
         return self.selectedDevice(c).amplitude(ampl, units)
 
+    @setting(312, 'Attenuator Hold', status=['b', 'i'], returns='b')
+    def att_hold(self, c, status=None):
+        """
+        Set/get the status of Attenuator Hold.
+        Attenuator hold allows for no-glitch amplitude adjustment over a limited range.
+        Arguments:
+            status  (bool) : the Attenuator Hold status.
+        Returns:
+                    (bool) : the Attenuator Hold status.
+        """
+        if type(status) is int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).att_hold(status)
 
-    # MODULATION
-    @setting(311, 'Modulation Frequency', freq='v', returns='v')
-    def mod_freq(self, c, freq=None):
+    @setting(321, 'ALC Toggle', status=['b', 'i'], returns='b')
+    def alc_toggle(self, c, status=None):
+        """
+        Set/get the status of Automatic Level Control (ALC).
+        Arguments:
+            status  (bool) : the ALC status.
+        Returns:
+                    (bool) : the ALC status.
+        """
+        if type(status) is int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).alc_toggle(status)
+
+    @setting(322, 'ALC Auto Toggle', status=['b', 'i'], returns='b')
+    def alc_auto_toggle(self, c, status=None):
+        """
+        Set/get the status of Automatic Search for ALC.
+        Arguments:
+            status  (bool) : the Automatic Search status.
+        Returns:
+                    (bool) : the Automatic Search status.
+        """
+        if type(status) is int:
+            if status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+            else:
+                status = bool(status)
+        return self.selectedDevice(c).alc_auto_toggle(status)
+
+    @setting(323, 'ALC Search', returns='')
+    def alc_search(self, c):
+        """
+        Run power search for Automatic Level Control (ALC).
+        Note: ALC must be off for the search to run.
+        """
+        self.selectedDevice(c).alc_search()
+
+
+    '''
+    MODULATION
+    '''
+    @setting(411, 'Modulation Frequency', freq='v', returns='v')
+    def mod_frequency(self, c, freq=None):
         """
         Get/set modulation frequency.
         Arguments:
@@ -90,9 +153,9 @@ class RFServer(GPIBManagedServer):
         Returns:
                     (float) : the modulation frequency (in Hz).
         """
-        return self.selectedDevice(c).mod_freq(freq)
+        return self.selectedDevice(c).mod_frequency(freq)
 
-    @setting(312, 'Toggle Modulation', status=['b', 'i'], returns='b')
+    @setting(412, 'Modulation Toggle', status=['b', 'i'], returns='b')
     def mod_toggle(self, c, status=None):
         """
         Toggle modulation.
@@ -103,19 +166,21 @@ class RFServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).mod_toggle(status)
 
-    @setting(321, 'Toggle AM', status=['b', 'i'], returns='b')
+
+    # AMPLITUDE MODULATION
+    @setting(421, 'AM Toggle', status=['b', 'i'], returns='b')
     def am_toggle(self, c, status=None):
         """
         Toggle amplitude modulation.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
                 status = bool(status)
         return self.selectedDevice(c).am_toggle(status)
 
-    @setting(322, 'Modulation AM Depth', depth='v', returns='v')
+    @setting(422, 'AM Depth', depth='v', returns='v')
     def am_depth(self, c, depth=None):
         """
         Get/set amplitude modulation depth.
@@ -126,20 +191,33 @@ class RFServer(GPIBManagedServer):
         """
         return self.selectedDevice(c).am_depth(depth)
 
-    @setting(331, 'Toggle FM', status='b', returns='b')
+    @setting(423, 'AM Frequency', freq='v', returns='v')
+    def am_frequency(self, c, freq=None):
+        """
+        Get/set the amplitude modulation frequency.
+        Arguments:
+            freq    (float) : the modulation frequency (in Hz).
+        Returns:
+                    (float) : the modulation frequency (in Hz).
+        """
+        return self.selectedDevice(c).am_frequency(freq)
+
+
+    # FREQUENCY MODULATION
+    @setting(431, 'FM Toggle', status=['b', 'i'], returns='b')
     def fm_toggle(self, c, status=None):
         """
         Toggle frequency modulation.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
                 status = bool(status)
         return self.selectedDevice(c).fm_toggle(status)
 
-    @setting(332, 'Modulation FM Deviation', dev='v', returns='v')
-    def fm_dev(self, c, dev=None):
+    @setting(432, 'FM Deviation', dev='v', returns='v')
+    def fm_deviation(self, c, dev=None):
         """
         Get/set frequency modulation deviation.
         Arguments:
@@ -147,22 +225,35 @@ class RFServer(GPIBManagedServer):
         Returns:
                     (float) : the modulation deviation (in Hz).
         """
-        return self.selectedDevice(c).fm_dev(dev)
+        return self.selectedDevice(c).fm_deviation(dev)
 
-    @setting(341, 'Toggle PM', status=['b', 'i'], returns='b')
+    @setting(433, 'FM Frequency', freq='v', returns='v')
+    def fm_frequency(self, c, freq=None):
+        """
+        Get/set the frequency modulation frequency.
+        Arguments:
+            freq    (float) : the modulation frequency (in Hz).
+        Returns:
+                    (float) : the modulation frequency (in Hz).
+        """
+        return self.selectedDevice(c).fm_frequency(freq)
+
+
+    # PHASE MODULATION
+    @setting(441, 'PM Toggle', status=['b', 'i'], returns='b')
     def pm_toggle(self, c, status=None):
         """
         Toggle phase modulation.
         """
-        if type(status) == int:
+        if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
             else:
                 status = bool(status)
         return self.selectedDevice(c).pm_toggle(status)
 
-    @setting(342, 'Modulation PM Deviation', dev='v', returns='v')
-    def pm_dev(self, c, dev=None):
+    @setting(442, 'PM Deviation', dev='v', returns='v')
+    def pm_deviation(self, c, dev=None):
         """
         Get/set phase modulation deviation.
         Arguments:
@@ -170,24 +261,18 @@ class RFServer(GPIBManagedServer):
         Returns:
                     (float) : the modulation deviation (in rad).
         """
-        return self.selectedDevice(c).pm_dev(dev)
+        return self.selectedDevice(c).pm_deviation(dev)
 
-
-    # STABILIZATION
-    @setting(411, 'Stabilization Lock', status=['b', 'i'], returns='b')
-    def stabilization_lock(self, c, status=None):
+    @setting(443, 'PM Frequency', freq='v', returns='v')
+    def pm_frequency(self, c, freq=None):
         """
-        Enable/disable RF amplitude stabilization.
-
-        Uses an external DC signal to adjust the output signal amplitude.
-        Slowly ramps
+        Get/set the phase modulation frequency.
+        Arguments:
+            freq    (float) : the modulation frequency (in Hz).
+        Returns:
+                    (float) : the modulation frequency (in Hz).
         """
-        if type(status) == int:
-            if status not in (0, 1):
-                raise Exception('Error: input must be a boolean, 0, or 1.')
-            else:
-                status = bool(status)
-        return self.selectedDevice(c).feedback_amplitude_toggle(status)
+        return self.selectedDevice(c).pm_frequency(freq)
 
 
 if __name__ == '__main__':

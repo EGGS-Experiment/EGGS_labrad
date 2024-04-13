@@ -95,7 +95,7 @@ class DCServer(SerialDeviceServer, PollingServer):
                     (bool)  : whether the input alarms are on/off.
         """
         # ensure input is of correct type
-        if (type(status) == int) and (status not in (0, 1)):
+        if (type(status) is int) and (status not in (0, 1)):
             raise Exception('Error: invalid input. Must be a boolean, 0, or 1.')
 
         # setter
