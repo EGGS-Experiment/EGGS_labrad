@@ -37,7 +37,7 @@ class AD9910_channel(QFrame):
         # editable fields
         self.freq = QDoubleSpinBox()
         self.freq.setFont(QFont('MS Shell Dlg 2', pointSize=13))
-        self.freq.setDecimals(3)
+        self.freq.setDecimals(4)
         self.freq.setSingleStep(0.001)
         self.freq.setRange(0.0, 400.0)
         self.freq.setKeyboardTracking(False)
