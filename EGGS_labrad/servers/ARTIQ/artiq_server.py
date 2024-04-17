@@ -22,7 +22,7 @@ from labrad.server import LabradServer, setting, Signal
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import DeferredLock, inlineCallbacks, returnValue
 
-from artiq_api import ARTIQ_api
+from artiq_api import ARTIQ_API
 from artiq_subscriber import ARTIQ_subscriber
 from EGGS_labrad.servers import ContextServer
 from EGGS_labrad.config import device_db as device_db_module
@@ -77,12 +77,11 @@ class ARTIQ_Server(ContextServer):
         #     print('logger_name: {}\t\tlogger_obj: {}'.format(logger_name, logger_object))
 
         # set up ARTIQ stuff
-        self.api = ARTIQ_api(device_db_module.__file__)
+        self.api = ARTIQ_API(device_db_module.__file__)
         yield self._setClients()
         yield self._setVariables()
         yield self._setDevices()
 
-    #@inlineCallbacks
     def _setClients(self):
         """
         Create clients to ARTIQ master.
@@ -150,25 +149,27 @@ class ARTIQ_Server(ContextServer):
         """
         # used to ensure atomicity
         self.inCommunication = DeferredLock()
-        # pulse sequencer variables
-        self.ps_rid = None
+
         # conversions
         # DDS - val to mu
         self.dds_frequency_to_ftw = lambda freq: np.int32(freq * 4.294967295) # 0xFFFFFFFF / 1GHz
         self.dds_amplitude_to_asf = lambda ampl: np.int32(ampl * 0x3fff)
-        self.dds_turns_to_pow = lambda phase: np.int32(phase * 0xffff)
-        self.dds_att_to_mu = lambda dbm: np.int32(0xff) - np.int32(round(dbm * 8))
+        self.dds_turns_to_pow =     lambda phase: np.int32(phase * 0xffff)
+        self.dds_att_to_mu =        lambda dbm: np.int32(0xff) - np.int32(round(dbm * 8))
+
         # DDS - mu to val
         self.dds_ftw_to_frequency = lambda freq: freq / 4.2949673
         self.dds_asf_to_amplitude = lambda ampl: ampl / 0x3fff
-        self.dds_pow_to_turns = lambda phase: phase / 0xffff
-        self.dds_mu_to_att = lambda mu: (255 - (mu & 0xff)) / 8
+        self.dds_pow_to_turns =     lambda phase: phase / 0xffff
+        self.dds_mu_to_att =        lambda mu: (255 - (mu & 0xff)) / 8
+
         # DAC
         from artiq.coredevice.ad53xx import voltage_to_mu
-        self.dac_voltage_to_mu = voltage_to_mu
+        self.dac_voltage_to_mu =    voltage_to_mu
+
         # ADC
         from artiq.coredevice.sampler import adc_mu_to_volt
-        self.adc_mu_to_volt = adc_mu_to_volt
+        self.adc_mu_to_volt =       adc_mu_to_volt
 
     def _setDevices(self):
         """
@@ -762,26 +763,6 @@ class ARTIQ_Server(ContextServer):
         # convert mu to volts
         samples_volts = np.array([self.adc_mu_to_volt(samples_mu[i], gain_arr_mu[i]) for i in range(len(channels))])
         returnValue(samples_volts)
-
-
-    # OTHER
-    @setting(611, "Rescue Ion", returns='')
-    def rescueIon(self, c):
-        """
-        Rescues the ion by red-detuning the 397nm cooling beam and maxing out power.
-        """
-        # todo: speed up
-        # turn off dds to prevent power surge
-        self.api.setDDSsw('urukul1_ch1', False)
-
-        # set cooling waveform
-        self.api.setDDS('urukul1_ch1', 'ftw', 0x170A3D70)
-        self.api.setDDS('urukul1_ch1', 'asf', 0x2000)
-        self.api.setDDSatt('urukul1_ch1', 0x8F)
-
-        # switch on dds
-        self.api.setDDSsw('urukul1_ch1', True)
-        self.rescueSignal(True)
 
 
 if __name__ == '__main__':

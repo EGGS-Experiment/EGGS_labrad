@@ -25,7 +25,7 @@ from artiq.master.worker_db import DeviceManager
 from EGGS_labrad.config import device_db as device_db_module
 
 
-class ARTIQ_api_Simple(object):
+class ARTIQ_API_Simple(object):
     """
     A simple API for the ARTIQ box, with only the DAC (zotino) functions.
     Directly accesses the hardware on the box without having to use artiq_master.
@@ -175,7 +175,7 @@ class ARTIQ_Server_Simple(LabradServer):
         # Initialize the ARTIQ api and set it as an instance
         # variable so we can use it later on.
         ddb_filepath = device_db_module.__file__
-        self.api = ARTIQ_api_Simple(ddb_filepath)
+        self.api = ARTIQ_API_Simple(ddb_filepath)
         # This tries to create connections to the ARTIQ Master
         # to use its experiment scheduler and dataset manager.
         # Error handling in _setClients handles the case where we

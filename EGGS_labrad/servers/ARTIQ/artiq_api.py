@@ -9,9 +9,9 @@ from artiq.coredevice.urukul import urukul_sta_rf_sw, CFG_PROFILE
 from builtins import ConnectionAbortedError, ConnectionResetError
 
 
-class ARTIQ_api(object):
+class ARTIQ_API(object):
     """
-    An API for the ARTIQ box.
+    An API for ARTIQ hardware.
     Directly accesses the hardware on the box without having to use artiq_master.
     # todo: set version so we know what we're compatible with
     # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
@@ -152,54 +152,9 @@ class ARTIQ_api(object):
             setattr(self, dev_name, self.device_manager.get(dev_name))
 
 
-    # PULSE SEQUENCING
-    @kernel
-    def record(self, sequencename):
-        self.core.reset()
-        with self.core_dma.record(sequencename):
-            for i in range(50):
-                with parallel:
-                    self.ttlout_dict[0].pulse(1*ms)
-                    self.ttlout_dict[1].pulse(1*ms)
-                delay(1.0 * ms)
-
-    def record2(self, ttl_seq, dds_seq, sequencename):
-        """
-        Processes the TTL and DDS sequence into a format
-        more easily readable and processable by ARTIQ.
-        """
-        # TTL
-        ttl_times = list(ttl_seq.keys())
-        ttl_commands = list(ttl_seq.values())
-        # DDS
-        dds_times = list(dds_seq.keys())
-        dds_commands = list(dds_seq.values())
-        # send to kernel
-        self._record(ttl_times, ttl_commands, dds_times, dds_commands, sequencename)
-
-    @kernel
-    def eraseSequence(self, sequencename):
-        """
-        Erase the given pulse sequence from DMA.
-        """
-        self.core.reset()
-        self.core_dma.erase(sequencename)
-
-
-    # DMA
-    @autoreload
-    def runDMA(self, handle_name):
-        handle = self.core_dma.get_handle(handle_name)
-        self._runDMA(handle)
-
-    @kernel
-    def _runDMA(self, handle):
-        self.core.break_realtime()
-        self.core_dma.playback_handle(handle)
-        self.core.break_realtime()
-
-
-    # TTL
+    '''
+    TTL FUNCTIONS
+    '''
     @autoreload
     def setTTL(self, ttlname, state):
         """
@@ -212,8 +167,8 @@ class ARTIQ_api(object):
         self._setTTL(dev, state)
 
     @kernel
-    def _setTTL(self, dev, state):
-        self.core.reset()
+    def _setTTL(self, dev, state: TInt32):
+        self.core.break_realtime()
         if state:
             dev.on()
         else:
@@ -231,7 +186,7 @@ class ARTIQ_api(object):
 
     @kernel
     def _getTTL(self, dev):
-        self.core.reset()
+        self.core.break_realtime()
         return dev.sample_get_nonrt()
 
     @autoreload
@@ -257,6 +212,7 @@ class ARTIQ_api(object):
     @kernel
     def _counterTTL(self, dev, time_mu, trials):
         self.core.break_realtime()
+
         for i in range(trials):
             self.core.break_realtime()
             dev.gate_rising_mu(time_mu)
@@ -269,7 +225,10 @@ class ARTIQ_api(object):
         """
         self.ttl_counts_array[index] = value
 
-    # DDS
+
+    '''
+    DDS FUNCTIONS
+    '''
     @autoreload
     def initializeDDSAll(self):
         # initialize urukul cplds as well as dds channels
@@ -284,7 +243,7 @@ class ARTIQ_api(object):
 
     @kernel
     def _initializeDDS(self, dev):
-        self.core.reset()
+        self.core.break_realtime()
         dev.init()
 
     @autoreload
@@ -321,7 +280,7 @@ class ARTIQ_api(object):
 
     @kernel
     def _setDDSsw(self, cpld, state):
-        self.core.reset()
+        self.core.break_realtime()
         cpld.cfg_switches(state)
 
     @autoreload
@@ -360,7 +319,7 @@ class ARTIQ_api(object):
 
     @kernel
     def _setDDS(self, dev, ftw, asf, pow):
-        self.core.reset()
+        self.core.break_realtime()
         dev.set_mu(ftw, pow_=pow, asf=asf)
 
     @autoreload
@@ -387,7 +346,7 @@ class ARTIQ_api(object):
 
     @kernel
     def _setDDSatt(self, cpld, channel_num, att_mu):
-        self.core.reset()
+        self.core.break_realtime()
         cpld.bus.set_config_mu(0x0C, 32, 16, 2)
 
         # shift in zeros, shift out current value
@@ -420,17 +379,17 @@ class ARTIQ_api(object):
 
     @kernel
     def _readDDS16(self, dev, reg):
-        self.core.reset()
+        self.core.break_realtime()
         return dev.read16(reg)
 
     @kernel
     def _readDDS32(self, dev, reg):
-        self.core.reset()
+        self.core.break_realtime()
         return dev.read32(reg)
 
     @kernel
     def _readDDS64(self, dev, reg):
-        self.core.reset()
+        self.core.break_realtime()
         return dev.read64(reg)
 
 
@@ -524,8 +483,9 @@ class ARTIQ_api(object):
     #     # self.bus.write(cfg << 8)
     #     # self.cfg_reg = cfg
 
-
-    # URUKUL
+    '''
+    URUKUL FUNCTIONS
+    '''
     @autoreload
     def initializeUrukul(self, urukul_name):
         """
@@ -536,7 +496,7 @@ class ARTIQ_api(object):
 
     @kernel
     def _initializeUrukul(self, dev):
-        self.core.reset()
+        self.core.break_realtime()
         dev.init()
 
     @kernel
@@ -544,7 +504,7 @@ class ARTIQ_api(object):
         """
         Get the status register of an Urukul board.
         """
-        self.core.reset()
+        self.core.break_realtime()
         return cpld.sta_read()
 
     @kernel
@@ -552,7 +512,7 @@ class ARTIQ_api(object):
         """
         Get the attenuation register of an Urukul board.
         """
-        self.core.reset()
+        self.core.break_realtime()
         return cpld.get_att_mu()
 
     # @kernel
@@ -560,21 +520,23 @@ class ARTIQ_api(object):
     #     """
     #     Get the profile register of an Urukul board.
     #     """
-    #     self.core.reset()
+    #     self.core.break_realtime()
     #     return (cpld.cfg_reg >> CFG_PROFILE) & 0x8
 
 
-    # DAC/ZOTINO
+    '''
+    DAC/ZOTINO FUNCTIONS
+    '''
     @autoreload
     def initializeDAC(self):
         self._initializeDAC()
 
-    @kernel
+    @precompile
     def _initializeDAC(self):
         """
         Initialize the DAC.
         """
-        self.core.reset()
+        self.core.break_realtime()
         self.zotino.init()
 
     @autoreload
@@ -586,7 +548,7 @@ class ARTIQ_api(object):
         """
         Set the voltage of a DAC register.
         """
-        self.core.reset()
+        self.core.break_realtime()
         self.zotino.write_dac_mu(channel_num, volt_mu)
         self.zotino.load()
 
@@ -599,7 +561,7 @@ class ARTIQ_api(object):
         """
         Set the gain of a DAC channel.
         """
-        self.core.reset()
+        self.core.break_realtime()
         self.zotino.write_gain_mu(channel_num, gain_mu)
         self.zotino.load()
 
@@ -612,7 +574,7 @@ class ARTIQ_api(object):
         """
         Set the voltage of a DAC offset register.
         """
-        self.core.reset()
+        self.core.break_realtime()
         self.zotino.write_offset_mu(channel_num, volt_mu)
         self.zotino.load()
 
@@ -625,7 +587,7 @@ class ARTIQ_api(object):
         """
         Set the OFSx registers on the AD5372.
         """
-        self.core.reset()
+        self.core.break_realtime()
         self.zotino.write_offset_dacs_mu(word)
 
     @autoreload
@@ -640,17 +602,19 @@ class ARTIQ_api(object):
         :param address: Register to read from
         :return: the value of the register
         """
-        self.core.reset()
+        self.core.break_realtime()
         reg_val = self.zotino.read_reg(channel_num, address)
         return reg_val
 
 
-    # FASTINO
+    '''
+    FASTINO FUNCTIONS
+    '''
     @autoreload
     def initializeFastino(self):
         self._initializeFastino()
 
-    @kernel
+    @precompile
     def _initializeFastino(self):
         """
         Initialize the Fastino.
@@ -667,7 +631,7 @@ class ARTIQ_api(object):
         """
         Set the voltage of a Fastino register.
         """
-        self.core.reset()
+        self.core.break_realtime()
         self.fastino.set_dac_mu(channel_num, volt_mu)
         self.fastino.update(1 << channel_num)
         self.core.break_realtime()
@@ -693,10 +657,10 @@ class ARTIQ_api(object):
         self.core.break_realtime()
         self.fastino.set_continuous(1 << channel_num)
 
-    # todo: fastino interpolating/CIC
 
-
-    # SAMPLER
+    '''
+    SAMPLER
+    '''
     @autoreload
     def initializeSampler(self):
         """
@@ -704,12 +668,12 @@ class ARTIQ_api(object):
         """
         self._initializeSampler()
 
-    @kernel
+    @precompile
     def _initializeSampler(self):
         """
         Initialize the Sampler.
         """
-        self.core.reset()
+        self.core.break_realtime()
         self.sampler.init()
 
     @autoreload
@@ -724,7 +688,7 @@ class ARTIQ_api(object):
 
     @kernel
     def _setSamplerGain(self, channel_num, gain_mu):
-        self.core.reset()
+        self.core.break_realtime()
         self.sampler.set_gain_mu(channel_num, gain_mu)
 
     @autoreload
@@ -745,7 +709,7 @@ class ARTIQ_api(object):
         Get the gain of all sampler channels.
         :return: the sample channel gains.
         """
-        self.core.reset()
+        self.core.break_realtime()
         return self.sampler.gains
 
     @autoreload
@@ -765,7 +729,8 @@ class ARTIQ_api(object):
 
     @kernel
     def _readSampler(self, time_delay_mu, samples):
-        self.core.reset()
+        self.core.break_realtime()
+
         for i in range(samples):
             with parallel:
                 with sequential:
@@ -780,30 +745,3 @@ class ARTIQ_api(object):
         """
         self.sampler_dataset[i] = value_arr
 
-
-    # OTHER
-    # @autoreload
-    # def rescueIon(self):
-    #     # get relevant devices
-    #     dds_cooling = self.dds_dict['urukul1_ch1']
-    #
-    #     # rescue ion
-    #     self._rescueIon(dds_cooling, cpld_qubit)
-    #
-    #
-    # @kernel
-    # def _rescueIon(self, dds_cooling, cpld_qubit):
-    #     # turn all channels off except cooling repump
-    #     dds_cooling.cpld.cfg_switches(0b0100)
-    #     cpld_qubit.cfg_switches(0b0000)
-    #
-    #     # set waveform: 90MHz, 50% amplitude
-    #     dds_cooling.set_mu(0x170A3D70, asf=0x2000)
-    #
-    #     # set attenuations
-    #     att_tmp = dds_cooling.cpld.get_att_mu()
-    #     # todo: adjust att
-    #     dds_cooling.cpld.set_att_mu(att_tmp)
-    #
-    #     # switch on cooling & cooling repump
-    #     dds_cooling.cpld.cfg_switches(0b0110)
