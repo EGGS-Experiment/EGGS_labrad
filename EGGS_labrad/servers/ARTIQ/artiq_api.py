@@ -5,6 +5,7 @@ from artiq.coredevice import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
 from artiq.coredevice.urukul import urukul_sta_rf_sw, CFG_PROFILE
+from artiq.coredevice.ad9910 import _AD9910_REG_PROFILE0
 
 from builtins import ConnectionAbortedError, ConnectionResetError
 
@@ -17,6 +18,9 @@ class ARTIQ_API(object):
     # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
     """
 
+    '''
+    AUTORELOAD DECORATOR
+    '''
     def autoreload(func):
         """
         A decorator for non-kernel functions that attempts to reset
@@ -66,12 +70,23 @@ class ARTIQ_API(object):
         return inner
 
 
+    '''
+    INITIALIZATION
+    '''
     def __init__(self, ddb_filepath):
-        devices = DeviceDB(ddb_filepath)
-        self.ddb_filepath = ddb_filepath
-        self.device_manager = DeviceManager(devices)
-        self.device_db = devices.get_device_db()
+        # get devices and device manager
+        devices =               DeviceDB(ddb_filepath)
+        self.ddb_filepath =     ddb_filepath
+        self.device_manager =   DeviceManager(devices)
+        self.device_db =        devices.get_device_db()
         self._getDevices()
+
+        # precompile hardware functions
+        dev_dj = self.dds_dict['urukul1_ch2']
+        self._precompile_func = self.core.precompile(self._setDDSFastFTW, dev_dj)
+        # todo
+        # todo: create hardware functions assigned to each device
+        # todo: create variable storage assigned to each device
 
     def stopAPI(self):
         """
@@ -89,7 +104,9 @@ class ARTIQ_API(object):
         self._getDevices()
 
 
-    # SETUP
+    '''
+    SETUP
+    '''
     def _getDevices(self):
         """
         Gets necessary device objects.
@@ -291,7 +308,7 @@ class ARTIQ_API(object):
         """
         dev = self.dds_dict[dds_name]
         # read in waveform values
-        profiledata = self._readDDS64(dev, 0x0E)
+        profiledata = self._readDDS64(dev, _AD9910_REG_PROFILE0)
         # separate register values into ftw, asf, and pow
         ftw = profiledata & 0xFFFFFFFF
         pow = (profiledata >> 32) & 0xFFFF
@@ -310,7 +327,7 @@ class ARTIQ_API(object):
         """
         dev = self.dds_dict[dds_name]
         # read in current parameters
-        profiledata = self._readDDS64(dev, 0x0E)
+        profiledata = self._readDDS64(dev, _AD9910_REG_PROFILE0)
         ftw = val if param == 'ftw' else (profiledata & 0xFFFFFFFF)
         asf = val if param == 'asf' else ((profiledata >> 48) & 0x3FFF)
         pow = val if param == 'pow' else ((profiledata >> 32) & 0xFFFF)
@@ -321,6 +338,40 @@ class ARTIQ_API(object):
     def _setDDS(self, dev, ftw, asf, pow):
         self.core.break_realtime()
         dev.set_mu(ftw, pow_=pow, asf=asf)
+
+
+    '''new faster functions meant to be used with precompile'''
+    @autoreload
+    def setDDSFastFTW(self, dds_name, freq_ftw):
+        """
+        todo:document
+        """
+        # todo: store parameter in device storage
+        self._ftw_tmp = freq_ftw
+        self._precompile_func()
+
+    @kernel
+    def _setDDSFastFTW(self, dev):
+        self.core.break_realtime()
+
+        # get existing waveform from device
+        ftw_curr, pow_curr, asf_cur = dev.get_mu(_AD9910_REG_PROFILE0)
+        self.core.break_realtime()
+
+        # get new ftw via rpc
+        ftw_update = self._return_setter_dds_ftw()
+        self.core.break_realtime()
+
+        # update device profile
+        dev.set_mu(ftw_update, pow_=pow_curr, asf=asf_cur,
+                   profile=_AD9910_REG_PROFILE0)
+
+    @rpc
+    def _return_setter_dds_ftw(self) -> TInt32:
+        return self._ftw_tmp
+    '''new faster functions meant to be used with precompile'''
+
+
 
     @autoreload
     def getDDSatt(self, dds_name):
@@ -444,7 +495,7 @@ class ARTIQ_API(object):
 
         # read channel parameters
         for dev_ad9910 in self._dds_channels:
-            self._recordParamsChannel(dev_ad9910.read64(0x0E))
+            self._recordParamsChannel(dev_ad9910.read64(_AD9910_REG_PROFILE0))
             self.core.break_realtime()
 
         # read board parameters
@@ -531,7 +582,7 @@ class ARTIQ_API(object):
     def initializeDAC(self):
         self._initializeDAC()
 
-    @precompile
+    @kernel
     def _initializeDAC(self):
         """
         Initialize the DAC.
@@ -614,7 +665,7 @@ class ARTIQ_API(object):
     def initializeFastino(self):
         self._initializeFastino()
 
-    @precompile
+    @kernel
     def _initializeFastino(self):
         """
         Initialize the Fastino.
@@ -668,7 +719,7 @@ class ARTIQ_API(object):
         """
         self._initializeSampler()
 
-    @precompile
+    @kernel
     def _initializeSampler(self):
         """
         Initialize the Sampler.
