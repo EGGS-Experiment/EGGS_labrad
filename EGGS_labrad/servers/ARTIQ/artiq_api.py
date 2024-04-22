@@ -342,7 +342,7 @@ class ARTIQ_API(object):
 
     '''new faster functions meant to be used with precompile'''
     @autoreload
-    def setDDSFastFTW(self, dds_name, freq_ftw):
+    def setDDSFastFTW(self, freq_ftw):
         """
         todo:document
         """
@@ -368,6 +368,7 @@ class ARTIQ_API(object):
 
     @rpc
     def _return_setter_dds_ftw(self) -> TInt32:
+        print(self._ftw_tmp)
         return self._ftw_tmp
     '''new faster functions meant to be used with precompile'''
 
