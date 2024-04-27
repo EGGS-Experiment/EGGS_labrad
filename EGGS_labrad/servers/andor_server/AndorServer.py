@@ -32,6 +32,7 @@ TEMPERATURE_UPDATED_SIGNAL = 142315
 # todo: finish moving all to run
 # todo: add binning
 # todo: spice up documentation
+# todo: make signal updates use send to other listeners
 
 
 class AndorServer(PollingServer):
@@ -157,7 +158,7 @@ class AndorServer(PollingServer):
         Returns:
                     (float) : the current temperature (in Celsius).
         """
-        temp = yield self._run('temperature', 'get_temperature', 'set_temperature', temp)
+        temp = yield self._run('temperature', 'get_temperature_actual')
         self.temperature_updated(temp)
         returnValue(temp)
 

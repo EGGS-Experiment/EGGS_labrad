@@ -71,10 +71,12 @@ class AndorAPI(object):
             # set image to full size with default binning
             self.set_image(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)
 
+            # get default temperature config
             self.set_cooler_state(True)
-            self.set_temperature(config.set_temperature)
+            self.set_temperature_setpoint(config.set_temperature)
             self.get_cooler_state()
-            self.get_temperature()
+            self.get_temperature_setpoint()
+            self.get_temperature_current()
 
         except Exception as e:
             print('Error Initializing Camera:', e)
@@ -210,14 +212,7 @@ class AndorAPI(object):
             raise Exception(ERROR_CODE[error])
 
     def get_temperature_setpoint(self):
-        # todo: implement
-        temperature = c.c_int()
-        error = self.dll.GetTemperature(c.byref(temperature))
-        if ERROR_CODE[error] in ('DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
-            self.info.temperature = temperature.value
-            return temperature.value
-        else:
-            raise Exception(ERROR_CODE[error])
+        return self.info.temperature_setpoint
 
     def set_temperature_setpoint(self, temperature):
         temperature = c.c_int(int(temperature))
@@ -249,25 +244,6 @@ class AndorAPI(object):
         else:
             error = self.dll.CoolerOFF()
         if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
-            raise Exception(ERROR_CODE[error])
-
-    def get_fan_mode(self):
-        # todo: implement & document
-        temperature = c.c_int()
-        error = self.dll.GetTemperature(c.byref(temperature))
-        if ERROR_CODE[error] in ('DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
-            self.info.temperature = temperature.value
-            return temperature.value
-        else:
-            raise Exception(ERROR_CODE[error])
-
-    def set_fan_mode(self, fan_mode):
-        # todo: implement & document
-        temperature = c.c_int(int(fan_mode))
-        error = self.dll.SetFanMode(temperature)
-        if ERROR_CODE[error] == 'DRV_SUCCESS':
-            self.info.temperature_setpoint = temperature.value
-        else:
             raise Exception(ERROR_CODE[error])
 
 
