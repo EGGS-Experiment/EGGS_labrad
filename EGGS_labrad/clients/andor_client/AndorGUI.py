@@ -42,6 +42,8 @@ class AndorGUI(QWidget):
 
     def _makeLayout(self):
         layout = QGridLayout(self)
+
+        # set up image display
         self.plt = pg.PlotItem()
         self.img_view = pg.ImageView(view=self.plt)
         self.plt.showAxis('top')
@@ -67,6 +69,7 @@ class AndorGUI(QWidget):
         self.emccd.setKeyboardTracking(False)
 
         # display
+        # todo: make it change text
         self.live_button = QPushButton("Acquisition Start")
         self.live_button.setCheckable(True)
         self.set_image_region_button = QPushButton("Set Image Region")
@@ -125,7 +128,9 @@ class AndorGUI(QWidget):
         self.view_all_button.clicked.connect(lambda checked: self.img_view.autoRange())
 
 
-    # SLOTS
+    """
+    SLOTS
+    """
     def mouse_clicked(self, event):
         """
         Draws the cross at the position of a double click.

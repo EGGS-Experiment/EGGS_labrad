@@ -38,13 +38,13 @@ class TEC_client(GUIClient):
     @inlineCallbacks
     def initData(self):
         # get data
-        status = yield self.tec.toggle()
-        curr = yield self.tec.current()
-        temp = yield self.tec.temperature()
-        lock_set = yield self.tec.locking_setpoint()
-        lock_P = yield self.tec.locking_p()
-        lock_I = yield self.tec.locking_i()
-        lock_D = yield self.tec.locking_d()
+        status =    yield self.tec.toggle()
+        curr =      yield self.tec.current()
+        temp =      yield self.tec.temperature()
+        lock_set =  yield self.tec.locking_setpoint()
+        lock_P =    yield self.tec.locking_p()
+        lock_I =    yield self.tec.locking_i()
+        lock_D =    yield self.tec.locking_d()
         # set GUI
         self.gui.toggle_button.setChecked(status)
         self.gui.displayCurr.setText(str(curr))

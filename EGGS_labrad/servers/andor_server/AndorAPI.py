@@ -15,35 +15,35 @@ class AndorInfo(object):
     """
 
     def __init__(self):
-        self.width = None
-        self.height = None
-        self.min_temp = None
-        self.max_temp = None
-        self.cooler_state = None
-        self.temperature_setpoint = None
-        self.temperature = None
-        self.serial_number = None
-        self.min_gain = None
-        self.max_gain = None
-        self.emccd_gain = None
-        self.read_mode = None
-        self.acquisition_mode = None
-        self.trigger_mode = None
-        self.exposure_time = None
-        self.accumulate_cycle_time = None
-        self.kinetic_cycle_time = None
-        self.image_region = None
-        self.number_kinetics = None
-        self.shutter_mode = None
+        self.width =                    None
+        self.height =                   None
+        self.min_temp =                 None
+        self.max_temp =                 None
+        self.cooler_state =             None
+        self.temperature_setpoint =     None
+        self.temperature =              None
+        self.serial_number =            None
+        self.min_gain =                 None
+        self.max_gain =                 None
+        self.emccd_gain =               None
+        self.read_mode =                None
+        self.acquisition_mode =         None
+        self.trigger_mode =             None
+        self.exposure_time =            None
+        self.accumulate_cycle_time =    None
+        self.kinetic_cycle_time =       None
+        self.image_region =             None
+        self.number_kinetics =          None
+        self.shutter_mode =             None
 
 
 class AndorAPI(object):
     """
-    Andor class which is meant to provide the Python version of the same
-    functions that are defined in the Andor's SDK. Since Python does not
-    have pass by reference for immutable variables, some of these variables
-    are actually stored in the class instance. For example the temperature,
-    gain, gainRange, status etc. are stored in the class.
+    Andor class to provide a Python interface for the
+    functions that are defined in the Andor's SDK.
+    Since Python does not have pass by reference for
+    immutable variables, some of these variables are actually stored in the class instance.
+    For example the temperature, gain, gainRange, status etc. are stored in the class.
     """
 
     def __init__(self):
@@ -53,7 +53,7 @@ class AndorAPI(object):
             self.dll = c.windll.LoadLibrary(config.path_to_dll)
             print('Initializing Camera...')
             error = self.dll.Initialize(os.path.dirname(__file__))
-            print('Done Initializing: {}'.format(ERROR_CODE[error]))
+            print('Initializing Complete: {}'.format(ERROR_CODE[error]))
 
             # get camera parameters
             self.info = AndorInfo()
@@ -68,19 +68,21 @@ class AndorAPI(object):
             self.set_exposure_time(config.exposure_time)
             self.set_shutter_mode(config.shutter_mode)
 
-            # set image to full size with the default binning
+            # set image to full size with default binning
             self.set_image(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)
+
             self.set_cooler_state(True)
             self.set_temperature(config.set_temperature)
             self.get_cooler_state()
             self.get_temperature()
+
         except Exception as e:
             print('Error Initializing Camera:', e)
             raise Exception(e)
 
 
     """
-    General
+    GENERAL/INFO
     """
     def print_get_software_version(self):
         """
@@ -104,22 +106,22 @@ class AndorAPI(object):
 
     def print_get_capabilities(self):
         """
-        Gets the exact capabilities of the camera
+        Gets the exact capabilities of the connected Andor camera.
         """
 
         class AndorCapabilities(c.Structure):
-            _fields_ = [('ulSize', c.c_ulong),
-                        ('ulAcqModes', c.c_ulong),
-                        ('ulReadModes', c.c_ulong),
-                        ('ulTriggerModes', c.c_ulong),
-                        ('ulCameraType', c.c_ulong),
-                        ('ulPixelMode', c.c_ulong),
-                        ('ulSetFunctions', c.c_ulong),
-                        ('ulGetFunctions', c.c_ulong),
-                        ('ulFeatures', c.c_ulong),
-                        ('ulPCICard', c.c_ulong),
-                        ('ulEMGainCapability', c.c_ulong),
-                        ('ulFTReadModes', c.c_ulong),
+            _fields_ = [('ulSize',              c.c_ulong),
+                        ('ulAcqModes',          c.c_ulong),
+                        ('ulReadModes',         c.c_ulong),
+                        ('ulTriggerModes',      c.c_ulong),
+                        ('ulCameraType',        c.c_ulong),
+                        ('ulPixelMode',         c.c_ulong),
+                        ('ulSetFunctions',      c.c_ulong),
+                        ('ulGetFunctions',      c.c_ulong),
+                        ('ulFeatures',          c.c_ulong),
+                        ('ulPCICard',           c.c_ulong),
+                        ('ulEMGainCapability',  c.c_ulong),
+                        ('ulFTReadModes',       c.c_ulong),
                         ]
 
         caps = AndorCapabilities()
@@ -139,7 +141,9 @@ class AndorAPI(object):
 
     def get_detector_dimensions(self):
         """
-        Gets the dimensions of the detector.
+        Returns the dimensions of the detector.
+        Returns:
+            (int, int)  : the width and height (in pixels).
         """
         detector_width, detector_height = c.c_int(), c.c_int()
         self.dll.GetDetector(c.byref(detector_width), c.byref(detector_height))
@@ -148,6 +152,11 @@ class AndorAPI(object):
         return [self.info.width, self.info.height]
 
     def acquire_camera_serial_number(self):
+        """
+        Acquire the camera's serial number and set it as a
+        class attribute.
+        Should only be called during initialization.
+        """
         serial_number = c.c_int()
         error = self.dll.GetCameraSerialNumber(c.byref(serial_number))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
@@ -156,6 +165,11 @@ class AndorAPI(object):
             raise Exception(ERROR_CODE[error])
 
     def get_camera_serial_number(self):
+        """
+        Returns the camera's serial number.
+        Returns:
+            int :   the camera's serial number.
+        """
         return self.info.serial_number
 
     def get_status(self):
@@ -166,19 +180,52 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
+    def shut_down(self):
+        error = self.dll.ShutDown()
+        return ERROR_CODE[error]
+
 
     """
-    Temperature-Related Settings
+    TEMPERATURE-RELATED
     """
     def get_temperature_range(self):
         """
         Gets the range of available temperatures.
+        Returns:
+            (int, int): the min and max camera temperatures (in Celsius).
         """
         min_temp, max_temp = c.c_int(), c.c_int()
         self.dll.GetTemperatureRange(c.byref(min_temp), c.byref(max_temp))
         self.info.min_temp = min_temp.value
         self.info.max_temp = max_temp.value
         return [self.info.min_temp, self.info.max_temp]
+
+    def get_temperature_current(self):
+        temperature = c.c_int()
+        error = self.dll.GetTemperature(c.byref(temperature))
+        if ERROR_CODE[error] in ('DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
+            self.info.temperature = temperature.value
+            return temperature.value
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_temperature_setpoint(self):
+        # todo: implement
+        temperature = c.c_int()
+        error = self.dll.GetTemperature(c.byref(temperature))
+        if ERROR_CODE[error] in ('DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
+            self.info.temperature = temperature.value
+            return temperature.value
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def set_temperature_setpoint(self, temperature):
+        temperature = c.c_int(int(temperature))
+        error = self.dll.SetTemperature(temperature)
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.temperature_setpoint = temperature.value
+        else:
+            raise Exception(ERROR_CODE[error])
 
     def get_cooler_state(self):
         """
@@ -204,7 +251,8 @@ class AndorAPI(object):
         if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
             raise Exception(ERROR_CODE[error])
 
-    def get_temperature(self):
+    def get_fan_mode(self):
+        # todo: implement & document
         temperature = c.c_int()
         error = self.dll.GetTemperature(c.byref(temperature))
         if ERROR_CODE[error] in ('DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
@@ -213,9 +261,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    def set_temperature(self, temperature):
-        temperature = c.c_int(int(temperature))
-        error = self.dll.SetTemperature(temperature)
+    def set_fan_mode(self, fan_mode):
+        # todo: implement & document
+        temperature = c.c_int(int(fan_mode))
+        error = self.dll.SetFanMode(temperature)
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.temperature_setpoint = temperature.value
         else:
@@ -223,7 +272,7 @@ class AndorAPI(object):
 
 
     """
-    EMCCD Gain Settings
+    EMCCD GAIN
     """
     def get_camera_em_gain_range(self):
         min_gain = c.c_int()
@@ -254,7 +303,7 @@ class AndorAPI(object):
 
 
     """
-    Read Mode
+    READ MODE
     """
     def set_read_mode(self, mode):
         try:
@@ -272,7 +321,7 @@ class AndorAPI(object):
 
 
     """
-    Shutter Mode
+    SHUTTER MODE
     """
     def set_shutter_mode(self, mode):
         try:
@@ -290,7 +339,7 @@ class AndorAPI(object):
 
 
     """
-    Acquisition Mode
+    ACQUISITION MODE
     """
     def set_acquisition_mode(self, mode):
         try:
@@ -306,9 +355,21 @@ class AndorAPI(object):
     def get_acquisition_mode(self):
         return self.info.acquisition_mode
 
+    def get_acquisition_timings(self):
+        exposure = c.c_float()
+        accumulate = c.c_float()
+        kinetic = c.c_float()
+        error = self.dll.GetAcquisitionTimings(c.byref(exposure), c.byref(accumulate), c.byref(kinetic))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.exposure_time = exposure.value
+            self.info.accumulate_cycle_time = accumulate.value
+            self.info.kinetic_cycle_time = kinetic.value
+        else:
+            raise Exception(ERROR_CODE[error])
+
 
     """
-    Trigger Mode
+    TRIGGER
     """
     def set_trigger_mode(self, mode):
         try:
@@ -326,7 +387,7 @@ class AndorAPI(object):
 
 
     """
-    Exposure Time
+    EXPOSURE TIME
     """
     def set_exposure_time(self, time):
         error = self.dll.SetExposureTime(c.c_float(time))
@@ -338,21 +399,9 @@ class AndorAPI(object):
     def get_exposure_time(self):
         return self.info.exposure_time
 
-    def get_acquisition_timings(self):
-        exposure = c.c_float()
-        accumulate = c.c_float()
-        kinetic = c.c_float()
-        error = self.dll.GetAcquisitionTimings(c.byref(exposure), c.byref(accumulate), c.byref(kinetic))
-        if ERROR_CODE[error] == 'DRV_SUCCESS':
-            self.info.exposure_time = exposure.value
-            self.info.accumulate_cycle_time = accumulate.value
-            self.info.kinetic_cycle_time = kinetic.value
-        else:
-            raise Exception(ERROR_CODE[error])
-
 
     """
-    Image Region
+    IMAGE REGION
     """
     def get_image(self):
         return self.info.image_region
@@ -368,7 +417,7 @@ class AndorAPI(object):
 
 
     """
-    Acquisition
+    ACQUISITION - RUN
     """
     def prepare_acqusition(self):
         error = self.dll.PrepareAcquisition()
@@ -400,7 +449,7 @@ class AndorAPI(object):
 
 
     """
-    Images
+    ACQUISITION - DATA
     """
     def get_acquired_data(self, num_images):
         hbin, vbin, hstart, hend, vstart, vend = self.info.image_region
@@ -431,6 +480,10 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
+
+    """
+    KINETIC SERIES
+    """
     def set_number_kinetics(self, numKin):
         error = self.dll.SetNumberKinetics(c.c_int(int(numKin)))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
@@ -450,10 +503,11 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    def shut_down(self):
-        error = self.dll.ShutDown()
-        return ERROR_CODE[error]
 
+
+"""
+HARDWARE STATUS CODES
+"""
 
 ERROR_CODE = {
     20001: "DRV_ERROR_CODES",

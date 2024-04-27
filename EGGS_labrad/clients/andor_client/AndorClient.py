@@ -9,6 +9,8 @@ from EGGS_labrad.config.andor_config import AndorConfig as config
 from EGGS_labrad.clients.andor_client.AndorGUI import AndorGUI
 from EGGS_labrad.clients.andor_client.image_region_selection import image_region_selection_dialog
 # todo: document
+# todo: single camera image mode
+# todo: continual camera polling
 
 
 class AndorClient(GUIClient):
@@ -16,11 +18,12 @@ class AndorClient(GUIClient):
     A client for Andor iXon cameras.
     """
 
+    name = "Andor Client"
     servers = {'cam': 'Andor Server', 'dv': 'Data Vault'}
-    IMAGE_UPDATED_ID = 8649321
-    MODE_UPDATED_ID = 8649322
-    ACQUISITION_UPDATED_ID = 8649323
-    TEMPERATURE_UPDATED_ID = 8649324
+    IMAGE_UPDATED_ID =          8649321
+    MODE_UPDATED_ID =           8649322
+    ACQUISITION_UPDATED_ID =    8649323
+    TEMPERATURE_UPDATED_ID =    8649324
 
     def getgui(self):
         if self.gui is None:
@@ -39,24 +42,32 @@ class AndorClient(GUIClient):
         yield self.cam.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATURE_UPDATED_ID)
 
         # get attributes from config
-        self.saved_data = None
-        self.save_images = False
-        self.update_display = False
+        self.saved_data =       None
+        self.save_images =      False
+        self.update_display =   False
 
+        # get save path
         for attribute_name in ('image_path', 'save_in_sub_dir', 'save_format', 'save_header'):
             try:
                 attribute = getattr(config, attribute_name)
                 setattr(self, attribute_name, attribute)
             except Exception as e:
-                print("{:s} not found in config.".format(attribute_name))
+                print("Warning: {:s} not found in config.".format(attribute_name))
 
     @inlineCallbacks
     def initData(self):
-        gain = yield self.cam.emccd_gain()
-        gain_min, gain_max = yield self.cam.emccd_range()
-        exposure = yield self.cam.exposure_time(None)
-        trigger_mode = yield self.cam.mode_trigger(None)
-        acquisition_mode = yield self.cam.mode_acquisition(None)
+        # get core camera configuration
+        detector_dimensions =   yield self.cam.info_detector_dimensions()
+        gain_min, gain_max =    yield self.cam.info_emccd_range()
+
+        trigger_mode =          yield self.cam.mode_trigger(None)
+        acquisition_mode =      yield self.cam.mode_acquisition(None)
+
+        gain =                  yield self.cam.setup_emccd_gain()
+        exposure =              yield self.cam.setup_exposure_time(None)
+
+        # configure camera gui
+        self.gui.plt.setLimits(xMin=0, xMax=detector_dimensions[0], yMin=0, yMax=detector_dimensions[1])
         self.gui.emccd.setValue(gain)
         self.gui.emccd.setRange(0, gain_max)
         self.gui.exposure.setValue(exposure)
@@ -67,12 +78,14 @@ class AndorClient(GUIClient):
         self.gui.set_image_region_button.clicked.connect(self.on_set_image_region)
         self.gui.exposure.valueChanged.connect(lambda value: self.set_exposure(value))
         # todo: create emccd gain function as well?
-        self.gui.emccd.valueChanged.connect(lambda gain: self.cam.emccd_gain(gain))
+        self.gui.emccd.valueChanged.connect(lambda gain: self.cam.setup_emccd_gain(gain))
         self.gui.live_button.toggled.connect(lambda status: self.update_start(status))
         self.gui.save_images_button.stateChanged.connect(lambda state: setattr(self, 'save_images', state))
 
 
-    # SLOTS
+    """
+    SLOTS
+    """
     def on_set_image_region(self, checked):
         # displays a non-modal dialog
         dialog = image_region_selection_dialog(self, self.cam)
@@ -116,7 +129,9 @@ class AndorClient(GUIClient):
         # todo
 
 
-    # IMAGE UPDATING
+    """
+    IMAGE UPDATING
+    """
     @inlineCallbacks
     def update_start(self, status):
         """
@@ -145,7 +160,6 @@ class AndorClient(GUIClient):
             yield self.cam.mode_shutter('Close')
         stat = yield self.cam.acquisition_status()
         print('displaying:', self.update_display and stat)
-
 
     @inlineCallbacks
     def update_image(self, c, image_data):
@@ -190,6 +204,10 @@ class AndorClient(GUIClient):
             else:
                 np.savetxt(path + ".tsv", saved_data_in_int, fmt='%i', header=header)
 
+
+    """
+    HELPER FUNCTIONS
+    """
     def datetime_to_str_list(self):
         # todo: remove/consolidate
         dt = datetime.now()
