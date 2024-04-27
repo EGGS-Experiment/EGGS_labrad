@@ -76,7 +76,7 @@ class AndorAPI(object):
             self.set_temperature_setpoint(config.set_temperature)
             self.get_cooler_state()
             self.get_temperature_setpoint()
-            self.get_temperature_current()
+            self.get_temperature_actual()
 
         except Exception as e:
             print('Error Initializing Camera:', e)
@@ -202,7 +202,7 @@ class AndorAPI(object):
         self.info.max_temp = max_temp.value
         return [self.info.min_temp, self.info.max_temp]
 
-    def get_temperature_current(self):
+    def get_temperature_actual(self):
         temperature = c.c_int()
         error = self.dll.GetTemperature(c.byref(temperature))
         if ERROR_CODE[error] in ('DRV_TEMP_STABILIZED', 'DRV_TEMP_NOT_REACHED', 'DRV_TEMP_DRIFT', 'DRV_TEMP_NOT_STABILIZED'):
