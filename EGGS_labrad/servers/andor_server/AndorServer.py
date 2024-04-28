@@ -24,12 +24,12 @@ from labrad.server import setting, Signal
 from EGGS_labrad.servers import PollingServer
 from EGGS_labrad.servers.andor_server.AndorAPI import AndorAPI
 
-IMAGE_UPDATED_SIGNAL = 142312
-MODE_UPDATED_SIGNAL = 142313
-ACQUISITION_UPDATED_SIGNAL = 142314
-TEMPERATURE_UPDATED_SIGNAL = 142315
+IMAGE_UPDATED_SIGNAL =          142312
+MODE_UPDATED_SIGNAL =           142313
+ACQUISITION_UPDATED_SIGNAL =    142314
+TEMPERATURE_UPDATED_SIGNAL =    142315
 # todo: stop using reactor.callLater/wait function
-# todo: finish moving all to run
+# todo: finish moving all to _run helper function
 # todo: add binning
 # todo: spice up documentation
 # todo: make signal updates use send to other listeners
@@ -106,24 +106,17 @@ class AndorServer(PollingServer):
         """
         return self.camera.get_camera_serial_number()
 
-    @setting(12, "Info Detector Dimensions", returns='ww')
+    @setting(12, "Info Detector Dimensions", returns='(ii)')
     def infoDetectorDimensions(self, c):
         """
         Gets the dimensions of the camera's detector.
         Returns:
             (ww)   : the dimensions of the camera's detector.
         """
-        print('acquiring: {}'.format(self.detectorDimensions.__name__))
-        yield self.lock.acquire()
-        try:
-            print('acquired : {}'.format(self.detectorDimensions.__name__))
-            dimensions = yield deferToThread(self.camera.get_detector_dimensions)
-        finally:
-            print('releasing: {}'.format(self.detectorDimensions.__name__))
-            self.lock.release()
-        returnValue(dimensions)
+        return self.camera.get_detector_dimensions()
 
-    @setting(221, "Info EMCCD Range", returns='(ii)')
+
+    @setting(13, "Info EMCCD Range", returns='(ii)')
     def infoEMCCDRange(self, c):
         """
         Get the EMCCD gain range.
@@ -131,6 +124,15 @@ class AndorServer(PollingServer):
             (int, int)  : the minimum and maximum EMCCD gain values.
         """
         return self.camera.get_camera_em_gain_range()
+
+    @setting(21, "Get Status", returns='s')
+    def getStatus(self, c):
+        """
+        Gets the camera status.
+        Returns:
+            (str)   : the camera status.
+        """
+        return self.camera.get_status()
 
 
     """
@@ -146,7 +148,6 @@ class AndorServer(PollingServer):
                     (float) : the current temperature (in Celsius).
         """
         temp = yield self._run('temperature_setpoint', 'get_temperature_setpoint', 'set_temperature_setpoint', temp)
-        self.temperature_updated(temp)
         returnValue(temp)
 
     @setting(112, "Temperature Actual", returns='v')
@@ -159,7 +160,7 @@ class AndorServer(PollingServer):
                     (float) : the current temperature (in Celsius).
         """
         temp = yield self._run('temperature', 'get_temperature_actual')
-        self.temperature_updated(temp)
+        self.notifyOtherListeners(c, temp, self.temperature_updated)
         returnValue(temp)
 
     @setting(121, "Cooler", state=['b', 'i'], returns='b')
@@ -283,7 +284,7 @@ class AndorServer(PollingServer):
         Returns:
             [binx, biny, startx, stopx, starty, stopy]
         """
-        return self.camera.get_image()
+        return self.camera.get_image_region()
 
     @setting(412, "Image Region Set",
              horizontalBinning='i', verticalBinning='i',
@@ -308,14 +309,45 @@ class AndorServer(PollingServer):
         yield self.lock.acquire()
         try:
             print('acquired : {}'.format(self.setImageRegion.__name__))
-            yield deferToThread(self.camera.set_image, horizontalBinning, verticalBinning, horizontalStart,
+            yield deferToThread(self.camera.set_image_region, horizontalBinning, verticalBinning, horizontalStart,
                                 horizontalEnd, verticalStart, verticalEnd)
         finally:
             print('releasing: {}'.format(self.setImageRegion.__name__))
             self.lock.release()
 
-    # todo: image rotate
-    # todo: image processing filters
+    @setting(411, "Image Region Get", returns='*i')
+    def getImageRegion(self, c):
+        """
+        Gets the current image region.
+        Returns:
+            [binx, biny, startx, stopx, starty, stopy]
+        """
+        return self.camera.get_image_region()
+
+    @setting(421, "Image Rotate", rotation='s', returns='')
+    def imageRotate(self, c, rotation=None):
+        """
+        Get/set the rotation state of the camera image (90 degrees).
+        Arguments:
+            rotation    (str)   : the image rotation state. Can be one of ('None', 'Clockwise', 'Anticlockwise').
+        Returns:
+                        (str)   : the rotation state.
+        """
+        rotation_state = yield self._run('Image Rotate', 'get_image_rotate', 'set_image_rotate', rotation)
+        returnValue(rotation_state)
+
+    @setting(422, "Image Flip", flip_status='(bb)', returns='(bb)')
+    def imageFlip(self, c, flip_status=None):
+        """
+        Get/set the rotation state of the camera image (90 degrees).
+        Arguments:
+            rotation    (bool, bool)    : horizontal and vertical image flip, respectively.
+        Returns:
+                        (bool, bool)    : horizontal and vertical image flip, respectively.
+        """
+        flip_status = yield self._run('Image Flip', 'get_image_flip', 'set_image_flip', flip_status)
+        returnValue(flip_status)
+
 
     """
     Kinetic Series
@@ -364,7 +396,7 @@ class AndorServer(PollingServer):
 
 
     """
-    ACQUISITION
+    ACQUISITION - RUN
     """
     @setting(611, "Acquisition Start", returns='')
     def acquisitionStart(self, c):
@@ -404,16 +436,7 @@ class AndorServer(PollingServer):
             print('releasing: {}'.format(self.acquisitionStop.__name__))
             self.lock.release()
 
-    @setting(613, "Acquisition Status", returns='b')
-    def acquisitionStatus(self, c):
-        """
-        Get acquisition status.
-        Returns:
-            (bool): whether acquisition is stopped or started.
-        """
-        return self.acquisition_running
-
-    @setting(621, "Acquisition Wait", returns='')
+    @setting(613, "Acquisition Wait", returns='')
     def acquisitionWait(self, c):
         """
         Wait for acquisition.
@@ -427,7 +450,39 @@ class AndorServer(PollingServer):
             print('releasing: {}'.format(self.acquisitionWait.__name__))
             self.lock.release()
 
-    @setting(631, "Acquire Data", num_images='i', returns='*i')
+    @setting(621, "Acquisition Status", returns='b')
+    def acquisitionStatus(self, c):
+        """
+        Get acquisition status.
+        Returns:
+            (bool): whether acquisition is stopped or started.
+        """
+        return self.acquisition_running
+
+    @setting(631, "Buffer Size", returns='i')
+    def buffer_size(self, c):
+        """
+        Get the maximum number of images that the circular buffer can store
+        based on the current settings.
+        Returns:
+            int: the maximum number of images that can be stored.
+        """
+        return self.camera.get_size_of_circular_buffer()
+
+    @setting(632, "Buffer New Images", returns='(ii)')
+    def buffer_new_images(self, c):
+        """
+        Get the total number of new images in the buffer.
+        Returns:
+            (int, int): the indices of the first and last new image, respectively.
+        """
+        return self.camera.get_number_new_images()
+
+
+    """
+    ACQUISITION - DATA
+    """
+    @setting(721, "Acquire Data", num_images='i', returns='*i')
     def acquireData(self, c, num_images=1):
         """
         Get the acquired images.
@@ -446,7 +501,7 @@ class AndorServer(PollingServer):
             self.lock.release()
         returnValue(image)
 
-    @setting(632, "Acquire Data Summed", num_images='i', returns='*i')
+    @setting(722, "Acquire Data Summed", num_images='i', returns='*i')
     def acquireDataSummed(self, c, num_images=1):
         """
         Get the counts with the vertical axis summed over.
@@ -463,7 +518,7 @@ class AndorServer(PollingServer):
             images = yield deferToThread(self.camera.get_acquired_data, num_images)
 
             # sum image pixels
-            hbin, vbin, hstart, hend, vstart, vend = self.camera.get_image()
+            hbin, vbin, hstart, hend, vstart, vend = self.camera.get_image_region()
             x_pixels = int((hend - hstart + 1.) / (hbin))
             y_pixels = int(vend - vstart + 1.) / (vbin)
 
@@ -475,12 +530,11 @@ class AndorServer(PollingServer):
             self.lock.release()
         returnValue(images.tolist())
 
-    @setting(641, "Acquire Image Recent", returns='*i')
+    @setting(731, "Acquire Image Recent", returns='*i')
     def acquireImageRecent(self, c):
         """
         Returns the most recent image from the circular buffer.
         """
-        # get data
         # print('acquiring: {}'.format(self.getMostRecentImage.__name__))
         yield self.lock.acquire()
         try:
@@ -490,18 +544,34 @@ class AndorServer(PollingServer):
             # print('releasing: {}'.format(self.getMostRecentImage.__name__))
             self.lock.release()
 
-        # update image via signal
-        # todo: maybe this is source of error
-        if image_data != self.last_image:
+        # update listeners
+        if np.all(image_data != self.last_image):
             self.last_image = image_data
-            yield self.image_updated(image_data)
+            self.notifyOtherListeners(c, image_data, self.image_updated)
         returnValue(image_data)
 
+    @setting(732, "Acquire Image Oldest", returns='*i')
+    def acquireImageOldest(self, c):
+        """
+        Returns the oldest image from the circular buffer.
+        Image will no longer be available after retrieval.
+        """
+        # get data
+        # print('acquiring: {}'.format(self.getMostRecentImage.__name__))
+        yield self.lock.acquire()
+        try:
+            # print('acquired : {}'.format(self.getMostRecentImage.__name__))
+            image_data = yield deferToThread(self.camera.get_oldest_image)
+        finally:
+            # print('releasing: {}'.format(self.getMostRecentImage.__name__))
+            self.lock.release()
 
-    # todo: get number new images
-    # todo: get size of circular buffer
-    # todo: acquire image oldest
-    # todo: get images
+        # update listeners
+        if np.all(image_data != self.last_image):
+            self.last_image = image_data
+            self.notifyOtherListeners(c, image_data, self.image_updated)
+        returnValue(image_data)
+
 
     """
     POLLING
@@ -541,7 +611,7 @@ class AndorServer(PollingServer):
         Runs a getter/setter combo.
         """
         # setter
-        if setter_val is not None:
+        if (setter_val is not None) and (setter is not None):
             # print('acquiring: {}'.format(function_name))
             yield self.lock.acquire()
             try:
@@ -563,6 +633,7 @@ class AndorServer(PollingServer):
         finally:
             # print('releasing: {}'.format(function_name))
             self.lock.release()
+
         if resp is not None:
             returnValue(resp)
 

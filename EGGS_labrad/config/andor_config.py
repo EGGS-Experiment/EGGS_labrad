@@ -17,8 +17,15 @@ class AndorConfig(object):
     # readout setup
     exposure_time =     0.100   # seconds
     binning =           [1, 1]  # numbers of pixels for horizontal and vertical binning
+    vertical_shift_amplitude =      0
+    vertical_shift_speed =          0
 
-    # image saving
+    # image setup
+    image_rotate =          "Clockwise"
+    image_flip_vertical =   1
+    image_flip_horizontal = 0
+
+    # saving
     image_path =        ('C:\\Users\\Elizabeth\\Documents\\Code\\iXonImages')
     save_in_sub_dir =   True
     save_format =       "tsv"

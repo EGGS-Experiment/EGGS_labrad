@@ -6,7 +6,7 @@ import os
 import ctypes as c
 
 from EGGS_labrad.config.andor_config import AndorConfig as config
-# todo: add binning
+# todo: migrate the text-to-value dicts to enums; also supports reverse lookup
 
 
 class AndorInfo(object):
@@ -15,35 +15,47 @@ class AndorInfo(object):
     """
 
     def __init__(self):
+        self.serial_number =            None
         self.width =                    None
         self.height =                   None
+
         self.min_temp =                 None
         self.max_temp =                 None
         self.cooler_state =             None
         self.temperature_setpoint =     None
         self.temperature =              None
-        self.serial_number =            None
+
         self.min_gain =                 None
         self.max_gain =                 None
         self.emccd_gain =               None
+
+        self.vertical_shift_amplitude = None
+        self.vertical_shift_speed =     None
+        # self.horizontal_shift_speed =   None
+        # self.preamp_gain =     None
+
         self.read_mode =                None
         self.acquisition_mode =         None
         self.trigger_mode =             None
+        self.shutter_mode =             None
+
         self.exposure_time =            None
         self.accumulate_cycle_time =    None
         self.kinetic_cycle_time =       None
-        self.image_region =             None
         self.number_kinetics =          None
-        self.shutter_mode =             None
+
+        self.image_region =             None
+        self.image_rotate =             None
+        self.image_flip_vertical =      None
+        self.image_flip_horizontal =    None
+
 
 
 class AndorAPI(object):
     """
-    Andor class to provide a Python interface for the
-    functions that are defined in the Andor's SDK.
-    Since Python does not have pass by reference for
-    immutable variables, some of these variables are actually stored in the class instance.
-    For example the temperature, gain, gainRange, status etc. are stored in the class.
+    Python interface for functions defined in Andor's SDK2.
+    Since Python lacks pass by reference for immutable variables, some of these variables are stored as class members.
+    For example, the temperature, gain, gainRange, status etc. are stored in the class.
     """
 
     def __init__(self):
@@ -57,19 +69,29 @@ class AndorAPI(object):
 
             # get camera parameters
             self.info = AndorInfo()
+            # todo: who should be andorinfo and who should simply be returned?
+            # note: seems like settings that map text-to-num are stored to avoid
+            # difficulty of reversing the conversion dict
             self.get_detector_dimensions()
             self.get_temperature_range()
             self.acquire_camera_serial_number()
             self.get_camera_em_gain_range()
-            self.get_emccd_gain()
+
             self.set_read_mode(config.read_mode)
             self.set_acquisition_mode(config.acquisition_mode)
             self.set_trigger_mode(config.trigger_mode)
-            self.set_exposure_time(config.exposure_time)
             self.set_shutter_mode(config.shutter_mode)
+
+            self.get_emccd_gain()
+            self.set_exposure_time(config.exposure_time)
+            self.set_vertical_shift_amplitude(config.vertical_shift_amplitude)
+            self.set_vertical_shift_speed(config.vertical_shift_speed)
+
 
             # set image to full size with default binning
             self.set_image(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)
+            self.set_image_rotate(config.image_rotate)
+            self.set_image_flip(config.image_flip_horizontal, config.image_flip_vertical)
 
             # get default temperature config
             self.set_cooler_state(True)
@@ -211,15 +233,26 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    def get_temperature_setpoint(self):
-        return self.info.temperature_setpoint
-
     def set_temperature_setpoint(self, temperature):
-        temperature = c.c_int(int(temperature))
-        error = self.dll.SetTemperature(temperature)
+        error = self.dll.SetTemperature(c.c_int(int(temperature)))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.temperature_setpoint = temperature.value
         else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_temperature_setpoint(self):
+        return self.info.temperature_setpoint
+
+    def set_cooler_state(self, state):
+        """
+        Sets state of the camera's TEC cooler.
+        """
+        error = None
+        if state:
+            error = self.dll.CoolerON()
+        else:
+            error = self.dll.CoolerOFF()
+        if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
             raise Exception(ERROR_CODE[error])
 
     def get_cooler_state(self):
@@ -232,18 +265,6 @@ class AndorAPI(object):
             self.info.cooler_state = bool(cooler_state)
             return self.info.cooler_state
         else:
-            raise Exception(ERROR_CODE[error])
-
-    def set_cooler_state(self, state):
-        """
-        Sets cooling.
-        """
-        error = None
-        if state:
-            error = self.dll.CoolerON()
-        else:
-            error = self.dll.CoolerOFF()
-        if not (ERROR_CODE[error] == 'DRV_SUCCESS'):
             raise Exception(ERROR_CODE[error])
 
 
@@ -261,6 +282,13 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
+    def set_emccd_gain(self, gain):
+        error = self.dll.SetEMCCDGain(c.c_int(int(gain)))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.emccd_gain = gain
+        else:
+            raise Exception(ERROR_CODE[error])
+
     def get_emccd_gain(self):
         gain = c.c_int()
         error = self.dll.GetEMCCDGain(c.byref(gain))
@@ -270,30 +298,27 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    def set_emccd_gain(self, gain):
-        error = self.dll.SetEMCCDGain(c.c_int(int(gain)))
-        if ERROR_CODE[error] == 'DRV_SUCCESS':
-            self.info.emccd_gain = gain
-        else:
-            raise Exception(ERROR_CODE[error])
+    # todo: em gain enable
+    # todo: advanced
 
 
     """
     READ MODE
     """
+    def get_read_mode(self):
+        return self.info.read_mode
+
     def set_read_mode(self, mode):
         try:
             mode_number = READ_MODE[mode]
         except KeyError:
             raise Exception("Incorrect read mode {}".format(mode))
+
         error = self.dll.SetReadMode(c.c_int(mode_number))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.read_mode = mode
         else:
             raise Exception(ERROR_CODE[error])
-
-    def get_read_mode(self):
-        return self.info.read_mode
 
 
     """
@@ -301,9 +326,10 @@ class AndorAPI(object):
     """
     def set_shutter_mode(self, mode):
         try:
-            mode_number = ShutterMode[mode]
+            mode_number = SHUTTER_MODE[mode]
         except KeyError:
             raise Exception("Incorrect shutter mode {}".format(mode))
+
         error = self.dll.SetShutter(c.c_int(1), c.c_int(mode_number), c.c_int(0), c.c_int(0))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.shutter_mode = mode
@@ -319,9 +345,10 @@ class AndorAPI(object):
     """
     def set_acquisition_mode(self, mode):
         try:
-            mode_number = AcquisitionMode[mode]
+            mode_number = ACQUISITION_MODE[mode]
         except KeyError:
             raise Exception("Incorrect acquisition mode {}".format(mode))
+
         error = self.dll.SetAcquisitionMode(c.c_int(mode_number))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.acquisition_mode = mode
@@ -345,13 +372,14 @@ class AndorAPI(object):
 
 
     """
-    TRIGGER
+    TRIGGER MODE
     """
     def set_trigger_mode(self, mode):
         try:
-            mode_number = TriggerMode[mode]
+            mode_number = TRIGGER_MODE[mode]
         except KeyError:
             raise Exception("Incorrect trigger mode {}".format(mode))
+
         error = self.dll.SetTriggerMode(c.c_int(mode_number))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.trigger_mode = mode
@@ -377,12 +405,37 @@ class AndorAPI(object):
 
 
     """
+    SHIFTING - VERTICAL/HORIZONTAL
+    """
+    def set_vertical_shift_amplitude(self, amplitude_voltage):
+        error = self.dll.SetVSAmplitude(c.c_int(int(amplitude_voltage)))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.vertical_shift_amplitude = int(amplitude_voltage)
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_vertical_shift_amplitude(self):
+        return self.info.vertical_shift_amplitude
+
+    def set_vertical_shift_speed(self, speed_index):
+        error = self.dll.SetVSSpeed(c.c_int(int(speed_index)))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.vertical_shift_speed = int(speed_index)
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_vertical_shift_speed(self):
+        return self.info.vertical_shift_speed
+
+    # todo: horiz read rate
+    # todo: horiz preamp gain
+    # todo: horiz outut amp
+
+
+    """
     IMAGE REGION
     """
-    def get_image(self):
-        return self.info.image_region
-
-    def set_image(self, hbin, vbin, hstart, hend, vstart, vend):
+    def set_image_region(self, hbin, vbin, hstart, hend, vstart, vend):
         hbin, vbin, hstart, hend, vstart, vend = map(int, (hbin, vbin, hstart, hend, vstart, vend))
         error = self.dll.SetImage(c.c_int(hbin), c.c_int(vbin), c.c_int(hstart),
                                   c.c_int(hend), c.c_int(vstart), c.c_int(vend))
@@ -390,6 +443,47 @@ class AndorAPI(object):
             self.info.image_region = [hbin, vbin, hstart, hend, vstart, vend]
         else:
             raise Exception(ERROR_CODE[error])
+
+    def get_image_region(self):
+        return self.info.image_region
+
+    def set_image_rotate(self, state):
+        """
+        Set the image rotation status.
+        """
+        try:
+            state_number = ROTATION_SETTING[state]
+        except KeyError:
+            raise Exception("Incorrect rotation state {}".format(mode))
+
+        error = self.dll.SetImageRotate(c.c_int(state_number))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.image_rotate = state
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_image_rotate(self):
+        """
+        Get the image rotation status.
+        """
+        return self.info.image_rotate
+
+    def set_image_flip(self, flip_horizontal, flip_vertical):
+        """
+        Set the image flip status.
+        """
+        error = self.dll.SetImageRotate(c.c_int(flip_horizontal), c.c_int(flip_vertical))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.image_flip_horizontal = bool(flip_horizontal)
+            self.info.image_flip_vertical = bool(flip_vertical)
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_image_flip(self):
+        """
+        Get the image flip status (horizontal, vertical).
+        """
+        return (self.info.image_flip_horizontal, self.info.image_flip_vertical)
 
 
     """
@@ -427,13 +521,40 @@ class AndorAPI(object):
     """
     ACQUISITION - DATA
     """
+    def get_size_of_circular_buffer(self):
+        index = c.c_long()
+        error = self.dll.GetSizeOfCircularBuffer(c.byref(index))
+        if ERROR_CODE[error] == "DRV_SUCCESS":
+            return index.value
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_total_number_images_acquired(self):
+        index = c.c_long()
+        error = self.dll.GetTotalNumberImagesAcquired(c.byref(index))
+        if ERROR_CODE[error] == "DRV_SUCCESS":
+            return index.value
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_number_new_images(self):
+        first = c.c_long()
+        last = c.c_long()
+        error = self.dll.GetNumberNewImages(c.byref(first), c.byref(last))
+        if ERROR_CODE[error] == "DRV_SUCCESS":
+            return first.value, last.value
+        else:
+            raise Exception(ERROR_CODE[error])
+
     def get_acquired_data(self, num_images):
         hbin, vbin, hstart, hend, vstart, vend = self.info.image_region
         dim = (hend - hstart + 1) * (vend - vstart + 1) / float(hbin * vbin)
         dim = int(num_images * dim)
+
         image_struct = c.c_int * dim
         image = image_struct()
         error = self.dll.GetAcquiredData(c.pointer(image), dim)
+
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             image = image[:]
             return image
@@ -444,12 +565,26 @@ class AndorAPI(object):
         hbin, vbin, hstart, hend, vstart, vend = self.info.image_region
         dim = (hend - hstart + 1) * (vend - vstart + 1) / float(hbin * vbin)
         dim = int(dim)
+
         image_struct = c.c_uint32 * dim
         image = image_struct()
         error = self.dll.GetMostRecentImage(c.pointer(image), dim)
-        # todo: print getnumbernewimages
-        # todo: print size of ciruclar buffer
-        # todo: look at pixel shift settings
+
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            image = image[:]
+            return image
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_oldest_image(self):
+        hbin, vbin, hstart, hend, vstart, vend = self.info.image_region
+        dim = (hend - hstart + 1) * (vend - vstart + 1) / float(hbin * vbin)
+        dim = int(dim)
+
+        image_struct = c.c_uint32 * dim
+        image = image_struct()
+        error = self.dll.GetOldestImage(c.pointer(image), dim)
+
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             image = image[:]
             return image
@@ -484,7 +619,7 @@ class AndorAPI(object):
 """
 HARDWARE STATUS CODES
 """
-
+# todo: migrate this stupid fucking implementation to a fucking enum
 ERROR_CODE = {
     20001: "DRV_ERROR_CODES",
     20002: "DRV_SUCCESS",
@@ -527,33 +662,40 @@ ERROR_CODE = {
 }
 
 READ_MODE = {
-    'Full Vertical Binning': 0,
-    'Multi-Track': 1,
-    'Random-Track': 2,
-    'Single-Track': 3,
-    'Image': 4
+    'Full Vertical Binning':    0,
+    'Multi-Track':              1,
+    'Random-Track':             2,
+    'Single-Track':             3,
+    'Image':                    4
 }
 
-AcquisitionMode = {
-    'Single Scan': 1,
-    'Accumulate': 2,
-    'Kinetics': 3,
-    'Fast Kinetics': 4,
-    'Run till abort': 5
+ACQUISITION_MODE = {
+    'Single Scan':      1,
+    'Accumulate':       2,
+    'Kinetics':         3,
+    'Fast Kinetics':    4,
+    'Run till abort':   5
 }
 
-TriggerMode = {
-    'Internal': 0,
-    'External': 1,
-    'External Start': 6,
-    'External Exposure': 7,
-    'External FVB EM': 9,
-    'Software Trigger': 10,
+TRIGGER_MODE = {
+    'Internal':                 0,
+    'External':                 1,
+    'External Start':           6,
+    'External Exposure':        7,
+    'External FVB EM':          9,
+    'Software Trigger':         10,
     'External Charge Shifting': 12
 }
 
-ShutterMode = {
-    'Auto': 0,
-    'Open': 1,
-    'Close': 2
+SHUTTER_MODE = {
+    'Auto':     0,
+    'Open':     1,
+    'Close':    2
 }
+
+ROTATION_SETTING = {
+    'None':             0,
+    'Clockwise':        1,
+    'Anticlockwise':    2
+}
+

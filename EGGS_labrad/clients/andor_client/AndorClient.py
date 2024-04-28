@@ -95,7 +95,6 @@ class AndorClient(GUIClient):
 
     @inlineCallbacks
     def set_exposure(self, exposure):
-        print('set exposure called')
         acquisition_running = yield self.cam.acquisition_status()
         if acquisition_running:
             yield self.update_start(False)
@@ -158,6 +157,7 @@ class AndorClient(GUIClient):
             # todo: tell server to stop updating if it doesn't have any listeners
             yield self.cam.acquisition_stop()
             yield self.cam.mode_shutter('Close')
+
         stat = yield self.cam.acquisition_status()
         print('displaying:', self.update_display and stat)
 

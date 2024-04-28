@@ -5,7 +5,7 @@ from twisted.internet.defer import inlineCallbacks
 
 
 class image_region_selection_dialog(QDialog):
-    def __init__(self, parent, server):
+    def __init__(self, parent=None, server=None):
         super(image_region_selection_dialog, self).__init__(parent)
         self.server = server
         self.parent = parent
@@ -108,3 +108,7 @@ class image_region_selection_dialog(QDialog):
 
     def on_cancel(self, clicked):
         self.close()
+
+if __name__ == "__main__":
+    from EGGS_labrad.clients import runGUI
+    runGUI(image_region_selection_dialog)
