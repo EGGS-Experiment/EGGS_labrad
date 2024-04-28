@@ -68,11 +68,15 @@ class AndorClient(GUIClient):
 
         # configure camera gui
         self.gui.plt.setLimits(xMin=0, xMax=detector_dimensions[0], yMin=0, yMax=detector_dimensions[1])
+        self.gui.emccd.setRange(gain_min, gain_max)
         self.gui.emccd.setValue(gain)
-        self.gui.emccd.setRange(0, gain_max)
         self.gui.exposure.setValue(exposure)
-        self.gui.trigger_mode.setText(trigger_mode)
-        self.gui.acquisition_mode.setText(acquisition_mode)
+
+        trigger_mode_ind = self.gui.trigger_mode.findText(trigger_mode)
+        self.gui.trigger_mode.setCurrentIndex(trigger_mode_ind)
+
+        acquisition_mode_ind = self.gui.acquisition_mode.findText(acquisition_mode)
+        self.gui.acquisition_mode.setCurrentIndex(acquisition_mode_ind)
 
     def initGUI(self):
         # camera configuration buttons
@@ -81,7 +85,7 @@ class AndorClient(GUIClient):
 
         # self.gui.set_image_region_button.clicked.connect(self.on_set_image_region)
 
-        self.gui.live_button.toggled.connect(lambda status: self.update_start(status))
+        self.gui.start_button.toggled.connect(lambda status: self.update_start(status))
         # self.gui.save_images_button.stateChanged.connect(lambda state: setattr(self, 'save_images', state))
 
 
@@ -144,7 +148,6 @@ class AndorClient(GUIClient):
         Configures acquisition settings if server isn't already acquiring images,
         then allows received images to be updated to the display.
         """
-        # todo: set polling
         self.update_display = status
         if status:
             # todo: lock all camera configuration widgets
@@ -156,12 +159,12 @@ class AndorClient(GUIClient):
             yield self.cam.acquisition_start()
 
             # set image region
-            self.binx, self.biny, self.startx, self.stopx, self.starty, self.stopy = yield self.cam.getImageRegion(None)
+            self.binx, self.biny, self.startx, self.stopx, self.starty, self.stopy = yield self.cam.image_region_get()
             self.pixels_x = int((self.stopx - self.startx + 1) / self.binx)
             self.pixels_y = int((self.stopy - self.starty + 1) / self.biny)
 
             # tell camera to start polling
-            yield self.cam.polling(True, 0.2)
+            yield self.cam.polling(True, 1.5)
 
         else:
             # todo: tell server to stop updating if it doesn't have any listeners
@@ -169,20 +172,18 @@ class AndorClient(GUIClient):
             yield self.cam.mode_shutter('Close')
             yield self.cam.polling(False)
 
-    @inlineCallbacks
     def update_image(self, c, image_data):
         """
         Processes images received from the server.
         """
         if self.update_display:
             # process & update image
-            # todo: fix bug where no self.pixels_x
             image_data = np.reshape(image_data, (self.pixels_y, self.pixels_x))
             self.gui.img_view.setImage(image_data.transpose(), autoRange=False, autoLevels=False,
                                        pos=[self.startx, self.starty], scale=[self.binx, self.biny], autoHistogramRange=False)
 
             # save image
-            if self.save_images: self.save_image(image_data)
+            # if self.save_images: self.save_image(image_data)
 
     def save_image(self, image_data):
         # format data

@@ -52,11 +52,13 @@ class AndorGUI(QWidget):
         # image display
         self.plt = pg.PlotItem()
         self.img_view = pg.ImageView(view=self.plt)
-        # self.plt.scale(-1, -1)
         self.plt.showAxis('top')
         self.plt.hideAxis('bottom')
         self.plt.setAspectLocked(True)
         self.img_view.getHistogramWidget().setHistogramRange(0, 1000)
+
+        # tmp remove: set origin to bottom left
+
 
         # set up viewbox
         # note: not sure why this fixes the mousemoved problem (previously using self.plt)
@@ -79,7 +81,7 @@ class AndorGUI(QWidget):
         display_helper_widget_layout.addWidget(self.display_auto_level_button)
 
         # display
-        self.start_button = TextChangingButton(("Start Acquisition", "Stop Acquisition"))
+        self.start_button = TextChangingButton(("Stop Acquisition", "Start Acquisition"))
         self.set_image_region_button = QPushButton("Set Image Region")
 
         # image saving

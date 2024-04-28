@@ -90,7 +90,8 @@ class AndorServer(PollingServer):
         Notifies all listeners except the one in the given context, executing function f.
         """
         notified = self.listeners.copy()
-        notified.remove(context.ID)
+        if context is not None:
+            notified.remove(context.ID)
         f(message, notified)
 
 
@@ -590,7 +591,7 @@ class AndorServer(PollingServer):
         Polls the camera for image readout.
         """
         try:
-            data = yield self.acquireImageRecent(None)
+            data = yield self.acquireImageRecent()
             #temp = yield self.temperature(None)
         except Exception as e:
             print('poll failure')
