@@ -89,7 +89,7 @@ class AndorAPI(object):
 
 
             # set image to full size with default binning
-            self.set_image(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)
+            self.set_image_region(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)
             self.set_image_rotate(config.image_rotate)
             self.set_image_flip(config.image_flip_horizontal, config.image_flip_vertical)
 
@@ -236,7 +236,7 @@ class AndorAPI(object):
     def set_temperature_setpoint(self, temperature):
         error = self.dll.SetTemperature(c.c_int(int(temperature)))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
-            self.info.temperature_setpoint = temperature.value
+            self.info.temperature_setpoint = int(temperature)
         else:
             raise Exception(ERROR_CODE[error])
 
@@ -603,6 +603,7 @@ class AndorAPI(object):
             raise Exception(ERROR_CODE[error])
 
     def get_number_kinetics(self):
+        # todo - bug: needs to have been set before first call
         return self.info.number_kinetics
 
     def get_series_progress(self):

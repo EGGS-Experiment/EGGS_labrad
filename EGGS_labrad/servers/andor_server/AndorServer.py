@@ -18,7 +18,7 @@ from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import returnValue, DeferredLock, Deferred, inlineCallbacks
 
-from numpy import reshape, ravel
+import numpy as np
 from labrad.server import setting, Signal
 
 from EGGS_labrad.servers import PollingServer
@@ -269,10 +269,10 @@ class AndorServer(PollingServer):
         returnValue(time)
 
     # todo: frame transfer
-    # todo: preamp gain
     # todo: vertical clock speed
     # todo: vertical clock voltage
     # todo: horizontal clock speed
+    # todo: preamp gain
 
     """
     IMAGE REGION
@@ -324,7 +324,7 @@ class AndorServer(PollingServer):
         """
         return self.camera.get_image_region()
 
-    @setting(421, "Image Rotate", rotation='s', returns='')
+    @setting(421, "Image Rotate", rotation='s', returns='s')
     def imageRotate(self, c, rotation=None):
         """
         Get/set the rotation state of the camera image (90 degrees).
@@ -523,8 +523,8 @@ class AndorServer(PollingServer):
             y_pixels = int(vend - vstart + 1.) / (vbin)
 
             # idk, todo: document
-            images = reshape(images, (num_images, y_pixels, x_pixels)).sum(axis=1)
-            images = ravel(images, order='C')
+            images = np.reshape(images, (num_images, y_pixels, x_pixels)).sum(axis=1)
+            images = np.ravel(images, order='C')
         finally:
             print('releasing: {}'.format(self.acquireDataSummed.__name__))
             self.lock.release()

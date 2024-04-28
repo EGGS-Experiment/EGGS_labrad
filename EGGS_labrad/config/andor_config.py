@@ -12,7 +12,7 @@ class AndorConfig(object):
     read_mode =         'Image'
     acquisition_mode =  'Single Scan'
     trigger_mode =      'Internal'
-    shutter_mode =      'Auto'
+    shutter_mode =      'Open'
 
     # readout setup
     exposure_time =     0.100   # seconds
