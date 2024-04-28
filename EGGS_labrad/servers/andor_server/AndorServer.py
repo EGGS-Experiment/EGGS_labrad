@@ -198,7 +198,7 @@ class AndorServer(PollingServer):
         """
         Get/set the current read mode.
         Can be one of   ('Full Vertical Binning', 'Multi-Track',
-                        'Random-Track', 'Single-Track', Image').
+                        'Random-Track', 'Single-Track', 'Image').
         Arguments:
             mode    (str)   : the current read mode.
         Returns:

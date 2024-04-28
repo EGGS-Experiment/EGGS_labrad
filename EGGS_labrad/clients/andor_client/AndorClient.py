@@ -75,17 +75,20 @@ class AndorClient(GUIClient):
         self.gui.acquisition_mode.setText(acquisition_mode)
 
     def initGUI(self):
-        self.gui.set_image_region_button.clicked.connect(self.on_set_image_region)
-        self.gui.exposure.valueChanged.connect(lambda value: self.set_exposure(value))
-        # todo: create emccd gain function as well?
+        # camera configuration buttons
+        self.gui.exposure.valueChanged.connect(lambda value: self.set_exposure_time(value))
         self.gui.emccd.valueChanged.connect(lambda gain: self.cam.setup_emccd_gain(gain))
+
+        # self.gui.set_image_region_button.clicked.connect(self.on_set_image_region)
+
         self.gui.live_button.toggled.connect(lambda status: self.update_start(status))
-        self.gui.save_images_button.stateChanged.connect(lambda state: setattr(self, 'save_images', state))
+        # self.gui.save_images_button.stateChanged.connect(lambda state: setattr(self, 'save_images', state))
 
 
     """
     SLOTS
     """
+    # todo: implement or whatever
     def on_set_image_region(self, checked):
         # displays a non-modal dialog
         dialog = image_region_selection_dialog(self, self.cam)
@@ -94,34 +97,38 @@ class AndorClient(GUIClient):
         three = dialog.raise_()
 
     @inlineCallbacks
-    def set_exposure(self, exposure):
+    def set_exposure_time(self, exposure_time_s):
         acquisition_running = yield self.cam.acquisition_status()
-        if acquisition_running:
-            yield self.update_start(False)
-            yield self.cam.exposure_time(exposure)
-            yield self.update_start(True)
-        else:
-            yield self.cam.exposure_time(exposure)
+        if not acquisition_running:
+            yield self.cam.setup_exposure_time(exposure_time_s)
+
+    @inlineCallbacks
+    def set_emccd_gain(self, emccd_gain):
+        acquisition_running = yield self.cam.acquisition_status()
+        if not acquisition_running:
+            yield self.cam.setup_emccd_gain(emccd_gain)
 
     def updateMode(self, c, data):
-        parameter_name, parameter_value = data
-        if parameter_name == "read":
-            pass
-            #self.gui.read_mode.setText(parameter_value)
-        elif parameter_name == "shutter":
-            pass
-            #self.gui.shutter_mode.setText(parameter_value)
-        elif parameter_name == "acquisition":
-            self.gui.acquisition_mode.setText(parameter_value)
-        elif parameter_name == "trigger":
-            self.gui.trigger_mode.setText(parameter_value)
+        print('\tSignal received: {}'.format(data))
+        # parameter_name, parameter_value = data
+        # if parameter_name == "read":
+        #     pass
+        #     #self.gui.read_mode.setText(parameter_value)
+        # elif parameter_name == "shutter":
+        #     pass
+        #     #self.gui.shutter_mode.setText(parameter_value)
+        # elif parameter_name == "acquisition":
+        #     self.gui.acquisition_mode.setText(parameter_value)
+        # elif parameter_name == "trigger":
+        #     self.gui.trigger_mode.setText(parameter_value)
 
     def updateAcquisition(self, c, data):
-        parameter_name, parameter_value = data
-        if parameter_name == "emccd_gain":
-            self.gui.emccd.setValue(int(parameter_value))
-        elif parameter_name == "exposure_time":
-            self.gui.exposure.setValue(parameter_value)
+        print('\tSignal received: {}'.format(data))
+        # parameter_name, parameter_value = data
+        # if parameter_name == "emccd_gain":
+        #     self.gui.emccd.setValue(int(parameter_value))
+        # elif parameter_name == "exposure_time":
+        #     self.gui.exposure.setValue(parameter_value)
 
     def updateTemperature(self, c, temp):
         pass
@@ -140,6 +147,8 @@ class AndorClient(GUIClient):
         # todo: set polling
         self.update_display = status
         if status:
+            # todo: lock all camera configuration widgets
+
             # set up acquisition
             yield self.cam.mode_trigger('Internal')
             yield self.cam.mode_acquisition('Run till abort')
@@ -151,22 +160,20 @@ class AndorClient(GUIClient):
             self.pixels_x = int((self.stopx - self.startx + 1) / self.binx)
             self.pixels_y = int((self.stopy - self.starty + 1) / self.biny)
 
-            # todo: start updating
-            yield self.cam.waitForAcquisition()
+            # tell camera to start polling
+            yield self.cam.polling(True, 0.2)
+
         else:
             # todo: tell server to stop updating if it doesn't have any listeners
             yield self.cam.acquisition_stop()
             yield self.cam.mode_shutter('Close')
-
-        stat = yield self.cam.acquisition_status()
-        print('displaying:', self.update_display and stat)
+            yield self.cam.polling(False)
 
     @inlineCallbacks
     def update_image(self, c, image_data):
         """
-        Processes received images from the server.
+        Processes images received from the server.
         """
-        print('received image')
         if self.update_display:
             # process & update image
             # todo: fix bug where no self.pixels_x
