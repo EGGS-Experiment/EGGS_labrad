@@ -74,14 +74,6 @@
 #        error = self.dll.SetEMAdvanced(gainAdvanced)
 #        self.verbose(ERROR_CODE[error], sys._getframe().f_code.co_name)
 #        return ERROR_CODE[error]
-#
-#    def GetEMGainRange(self):
-#        low = c_int()
-#        high = c_int()
-#        error = self.dll.GetEMGainRange(byref(low),byref(high))
-#        self.gainRange = (low.value, high.value)
-#        self.verbose(ERROR_CODE[error], sys._getframe().f_code.co_name)
-#        return ERROR_CODE[error]
 #      
 #    def GetNumberADChannels(self):
 #        noADChannels = c_int()

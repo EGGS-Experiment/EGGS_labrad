@@ -47,7 +47,7 @@ class TEC_gui(QFrame):
         displayWidget_layout.addWidget(self.displayCurr, 1, 2, 2, 2)
         displayWidget_grouped = QCustomGroupBox(displayWidget, "Locking")
 
-        # locking
+        # programmatically create widgets for PID
         self.toggle_button = TextChangingButton(('On', 'Off'))
         for widget_name in ("lock_set", "lock_P", "lock_I", "lock_D"):
             widget = QDoubleSpinBox()
@@ -59,14 +59,16 @@ class TEC_gui(QFrame):
             widget.setAlignment(Qt.AlignRight)
             setattr(self, widget_name, widget)
 
-        lock_set_label = QLabel("Setpoint (C)")
-        lock_P_label = QLabel("Prop.")
-        lock_I_label = QLabel("Int.")
-        lock_D_label = QLabel("Deriv.")
+        lock_set_label =    QLabel("Setpoint (C)")
+        lock_P_label =      QLabel("Prop.")
+        lock_I_label =      QLabel("Int.")
+        lock_D_label =      QLabel("Deriv.")
 
-        # adjust range for setpoint
+        # extra configuration for the setpoint
         self.lock_set.setRange(10, 35)
+        self.lock_set.setDecimals(2)
 
+        # lay out locking widget
         lockingWidget = QWidget()
         lockingWidget_layout = QGridLayout(lockingWidget)
         lockingWidget_layout.addWidget(lock_set_label, 0, 3, 1, 3)
@@ -80,7 +82,7 @@ class TEC_gui(QFrame):
         lockingWidget_layout.addWidget(self.lock_D, 3, 4, 1, 2)
         lockingWidget_grouped = QCustomGroupBox(lockingWidget, "Status")
 
-        # layout
+        # lay out overall widget
         layout.addWidget(title, 1, 0, 1, 4)
         layout.addWidget(displayWidget_grouped, 2, 0, 3, 4)
         layout.addWidget(lockingWidget_grouped, 5, 0, 3, 4)

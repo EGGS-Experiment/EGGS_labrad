@@ -15,18 +15,21 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+# codecs necessary to convert device messages
 import codecs
+encode_hex = codecs.getencoder("hex_codec")
+decode_hex = codecs.getdecoder("hex_codec")
+
 from labrad.units import WithUnit
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-encode_hex = codecs.getencoder("hex_codec")
-decode_hex = codecs.getdecoder("hex_codec")
 from EGGS_labrad.servers import SerialDeviceServer, ContextServer
 
-_ELL_EOL = '\r'
-_ELL_ENCODING = 'ASCII'
 
+_ELL_EOL =      '\r'
+_ELL_ENCODING = 'ASCII'
+# todo: migrate to enum
 _ELL_ERRORS_msg = {
     '00': "OK, no error",
     '01': "Communication time out",
@@ -52,10 +55,10 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
     name =      'Elliptec Server'
     regKey =    'ElliptecServer'
     serNode =   'lahaina'
-    port =      'COM4'
+    port =      'COM5'
 
-    timeout = WithUnit(5.0, 's')
-    baudrate = 9600
+    timeout =   WithUnit(5.0, 's')
+    baudrate =  9600
 
 
     # SIGNALS
@@ -65,8 +68,11 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
     # INIT
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # instantiate class variable device_num
-        self.device_num = 0
+
+        # instantiate class variable address number
+        # used to select the hardware
+        self.address_num = 0
+
 
     '''
     STATUS
@@ -79,25 +85,61 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
             (str): the error message.
         """
         # query device and extract status from response
-        resp = yield self._query(self.device_num, 'gs', cntx=c)
+        resp = yield self._query(self.address_num, 'gs', cntx=c)
         status_response = _ELL_ERRORS_msg[resp]
         returnValue(status_response)
 
-    @setting(21, 'Device Number', device_num='i', returns='i')
-    def device_number(self, c, device_num=None):
+    @setting(21, 'Address Number', address_num='i', returns='i')
+    def address_number(self, c, address_num=None):
         """
-        Get/set the device number.
-
+        Get/set the device number for the Elliptec controller to address.
+        Must be in range [0, 15].
         Arguments:
-            device_num  (int): the device number.
+            address_num (int): the device address number.
         Returns:
-                        (int): the device number.
+                        (int): the device address number.
         """
         # setter
-        if (device_num is not None) and ((device_num >= 0x0) and (device_num <= 0x0F)):
-            self.device_num = device_num
+        # ensure device number is within range
+        if (address_num is not None) and ((address_num >= 0x0) and (address_num <= 0x0F)):
+            self.address_num = address_num
+
         # get status
-        return self.device_num
+        return self.address_num
+
+    @setting(22, 'Address Information', address_num='i', returns='(isisvi)')
+    def address_information(self, c, address_num=None):
+        """
+        Get information about the device at the given address number.
+
+        Arguments:
+            address_num (int)   :   the device address number.
+        Returns:
+                        (tuple) :   (device_model, serial_number,
+                                    manufacture_year, firmware_version,
+                                    travel_range, pulses_per_position)
+        """
+        # ensure device address number is valid
+        addr_num = self.address_num
+        if address_num is not None:
+            if (address_num >= 0x0) and (address_num <= 0x0F):
+                addr_num = address_num
+            else:
+                raise Exception("Error: invalid device address number. Must be in range [0, 15]")
+
+        # getter
+        resp = yield self._query(addr_num, 'in')
+
+        # extract information from response
+        dev_info = (
+            int(resp[0: 2], 16),
+            resp[2: 10],
+            int(resp[10: 14]),
+            resp[14: 15],
+            int(resp[18: 22], 16),
+            int(resp[22: 30], 16),
+        )
+        returnValue(dev_info)
 
 
     '''
@@ -127,10 +169,10 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
             period_msg = '{:04X}'.format(round(14740000 / freq_hz))
 
             # prepare device messages
-            yield self._query(self.device_num, 'f{:d}'.format(motor_num), period_msg)
+            yield self._query(self.address_num, 'f{:d}'.format(motor_num), period_msg)
 
         # getter
-        resp = yield self._query(self.device_num, 'i{:d}'.format(motor_num))
+        resp = yield self._query(self.address_num, 'i{:d}'.format(motor_num))
         freq_hz = 14740000. / int(resp[14: 18], 16)
         returnValue(freq_hz)
 
@@ -158,10 +200,10 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
             period_msg = '{:04X}'.format(round(14740000 / freq_hz))
 
             # prepare device messages
-            yield self._query(self.device_num, 'b{:d}'.format(motor_num), period_msg)
+            yield self._query(self.address_num, 'b{:d}'.format(motor_num), period_msg)
 
         # getter
-        resp = yield self._query(self.device_num, 'i{:d}'.format(motor_num))
+        resp = yield self._query(self.address_num, 'i{:d}'.format(motor_num))
         freq_hz = 14740000. / int(resp[18: 23], 16)
         returnValue(freq_hz)
 
@@ -174,17 +216,17 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
         Arguments:
             motor_num   (int)   : the motor to set.
         """
+        # todo: implement
         if motor_num not in (1, 2):
             raise Exception("Error: invalid motor number. Must be one of (1, 2).")
-        # prepare device messages
-        cmd_msg = "s{:d}".format(motor_num)
-        yield self._setter(c, cmd_msg, 'status')
+
+        raise NotImplementedError
 
 
     '''
     MOVE
     '''
-    @setting(211, 'Move Home', dir=['b', 'i'], returns='v')
+    @setting(211, 'Move Home', dir=['b', 'i'], returns='i')
     def move_home(self, c, dir=False):
         """
         Moves the elliptec device to the home position.
@@ -194,73 +236,72 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
                                 True is clockwise, False is counterclockwise.
                                 Default is False.
         Returns:
-                    (float) :   the absolute position (in degrees).
+                    (int) :     the absolute position (in machine units).
         """
-        # ensure rotation direction is valid
+        # ensure movement direction is valid
         if (type(dir) is int) and (dir not in (0, 1)):
             raise Exception('Error: input must be a boolean, 0, or 1.')
 
         # setter
-        pos_pulses_str = yield self._query(self.device_num, 'ho', '{:d}'.format(dir), cntx=c)
+        pos_pulses_str = yield self._query(self.address_num, 'ho', '{:d}'.format(dir), cntx=c)
 
         # convert position in pulses to degrees
-        pos_pulses_int = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
-        pos_deg = pos_pulses_int / 398.
-        returnValue(pos_deg)
+        pos_pulses_mu = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
+        returnValue(pos_pulses_mu)
 
-    @setting(212, 'Move Absolute', position=['i', 'v'], returns='v')
+    @setting(212, 'Move Absolute', position=['i', 'v'], returns='i')
     def move_absolute(self, c, position):
         """
         Moves the elliptec device to a specified absolute position.
 
         Arguments:
-            position    (float) : the absolute position to move to (in degrees).
+            position    (int) : the absolute position to move to (in machine units).
         Returns:
-                        (float) : the absolute position to move to (in degrees).
+                        (int) : the current absolute position (in machine units).
         """
-        # ensure position is within +/- 360 degrees
-        if (position < -360) or (position > 360):
-            raise Exception('Error: input must be in range [-360, 360] degrees.')
+        # todo: sanitize input
+        # # ensure position is within +/- 360 degrees
+        # if (position < -360) or (position > 360):
+        #     raise Exception('Error: input must be in range [-360, 360] degrees.')
 
-        # convert position in degrees to pulses
-        move_pulses_raw = round(position * 398.).to_bytes(4, byteorder='big', signed=True)
+        # convert position to hex message
+        move_pulses_raw = round(position).to_bytes(4, byteorder='big', signed=True)
         move_pulses_str = encode_hex(move_pulses_raw)[0].decode()
 
         # setter
-        pos_pulses_str = yield self._query(self.device_num, 'ma', move_pulses_str, cntx=c)
+        pos_pulses_str = yield self._query(self.address_num, 'ma', move_pulses_str, cntx=c)
 
         # convert position in pulses to degrees
-        pos_pulses_int = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
-        pos_deg = pos_pulses_int / 398.
-        returnValue(pos_deg)
+        pos_pulses_mu = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
+        returnValue(pos_pulses_mu)
 
-    @setting(213, 'Move Relative', position=['i', 'v'], returns='v')
+    @setting(213, 'Move Relative', position=['i', 'v'], returns='i')
     def move_relative(self, c, position):
         """
         Moves the elliptec device relative to the current position.
 
         Arguments:
-            position    (float) : the relative position to move (in degrees).
+            position    (int) : the relative position to move (in degrees).
         Returns:
-                        (float) : the absolute position to move to (in degrees).
+                        (int) : the current absolute position (in machine units).
         """
-        # ensure position is within +/- 360 degrees
-        if (position < -360) or (position > 360):
-            raise Exception('Error: input must be in range [-360, 360] degrees.')
+        # todo: sanitize input
+        # # ensure position is within +/- 360 degrees
+        # if (position < -360) or (position > 360):
+        #     raise Exception('Error: input must be in range [-360, 360] degrees.')
 
-        # convert position in degrees to pulses
-        move_pulses_raw = round(position * 398.).to_bytes(4, byteorder='big', signed=True)
+        # convert position to hex message
+        move_pulses_raw = round(position).to_bytes(4, byteorder='big', signed=True)
         move_pulses_str = encode_hex(move_pulses_raw)[0].decode()
 
         # setter
-        pos_pulses_str = yield self._query(self.device_num, 'mr', move_pulses_str, cntx=c)
+        pos_pulses_str = yield self._query(self.address_num, 'mr', move_pulses_str, cntx=c)
 
         # convert position in pulses to degrees
-        pos_pulses_int = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
-        pos_deg = pos_pulses_int / 398.
-        returnValue(pos_deg)
+        pos_pulses_mu = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
+        returnValue(pos_pulses_mu)
 
-    @setting(221, 'Move Jog', dir=['b', 'i'], returns='v')
+    @setting(221, 'Move Jog', dir=['b', 'i'], returns='i')
     def move_jog(self, c, dir):
         """
         Moves the motor by a "jog" - a discrete number of steps set
@@ -270,7 +311,7 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
             dir     (bool)  :   the direction to rotate.
                                 True is forward, False is backward.
         Returns:
-                    (float) :   the absolute position (in degrees).
+                    (int)   :   the current absolute position (in machine units).
         """
         # ensure rotation direction is valid
         if (type(dir) is int) and (dir not in (0, 1)):
@@ -278,43 +319,42 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
 
         # get appropriate move command word and move
         cmd_msg = 'fw' if bool(dir) is True else 'bw'
-        pos_pulses_str = yield self._query(self.device_num, cmd_msg, cntx=c)
+        pos_pulses_str = yield self._query(self.address_num, cmd_msg, cntx=c)
 
         # convert position in pulses to degrees
-        pos_pulses_int = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
-        pos_deg = pos_pulses_int / 398.
-        returnValue(pos_deg)
+        pos_pulses_mu = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
+        returnValue(pos_pulses_mu)
 
-    @setting(222, 'Move Jog Steps', step_size=['i', 'v'], returns='v')
+    @setting(222, 'Move Jog Steps', step_size=['i', 'v'], returns='i')
     def move_jog_steps(self, c, step_size=None):
         """
         Get/set the jog step size. When the setting "Move Jog" is called,
         the motor will move by the number of steps specified here.
 
         Arguments:
-            step_size   (float) : the amount to move per jog (in degrees).
+            step_size   (int)   :   the amount to move per jog (in machine units).
         Returns:
-                        (float) : the amount to move per jog (in degrees).
+                        (int)   :   the amount to move per jog (in machine units).
         """
         # setter
         if step_size is not None:
-            # ensure step size is within +/- 360 degrees
-            if (step_size < -360) or (step_size > 360):
-                raise Exception('Error: input must be in range [-360, 360] degrees.')
+            # todo: sanitize input
+            # # ensure step size is within +/- 360 degrees
+            # if (step_size < -360) or (step_size > 360):
+            #     raise Exception('Error: input must be in range [-360, 360] degrees.')
 
             # convert position in degrees to pulses
-            jog_steps_raw = round(step_size * 398.).to_bytes(4, byteorder='big', signed=True)
+            jog_steps_raw = round(step_size).to_bytes(4, byteorder='big', signed=True)
             jog_steps_str = encode_hex(jog_steps_raw)[0].decode()
 
             # set jog step size
-            yield self._query(self.device_num, 'sj', jog_steps_str, cntx=c)
+            yield self._query(self.address_num, 'sj', jog_steps_str, cntx=c)
 
         # getter
-        jog_steps_str = yield self._query(self.device_num, 'gj', cntx=c)
-        # convert step size in pulses to degrees
-        jog_steps_int = int.from_bytes(decode_hex(jog_steps_str)[0], byteorder='big', signed=True)
-        jog_steps_deg = jog_steps_int / 398.
-        returnValue(jog_steps_deg)
+        jog_steps_str = yield self._query(self.address_num, 'gj', cntx=c)
+        # process device response
+        jog_steps_mu = int.from_bytes(decode_hex(jog_steps_str)[0], byteorder='big', signed=True)
+        returnValue(jog_steps_mu)
 
     @setting(231, 'Move Velocity', velocity=['i', 'v'], returns='v')
     def move_velocity(self, c, velocity=None):
@@ -328,41 +368,43 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
         Returns:
                         (int)   : the velocity as a percentage of max power.
         """
-        # setter
-        if velocity is not None:
-            if (velocity <= 0) or (velocity > 100):
-                raise Exception("Error: invalid step size. Must be in (1, 100].")
-            # prepare device messages
-            cmd_msg = "sv"
-            data_msg = "{:02x}".format(velocity)
-            yield self._setter(c, cmd_msg, data_msg=data_msg)
-        # getter
-        cmd_msg = "gv"
-        resp = yield self._setter(c, cmd_msg)
-        # convert message to integer
-        resp = int(resp, 16)
-        returnValue(resp)
+        # todo: implement
+        raise NotImplementedError
+        # # setter
+        # if velocity is not None:
+        #     if (velocity <= 0) or (velocity > 100):
+        #         raise Exception("Error: invalid step size. Must be in (1, 100].")
+        #     # prepare device messages
+        #     cmd_msg = "sv"
+        #     data_msg = "{:02x}".format(velocity)
+        #     yield self._setter(c, cmd_msg, data_msg=data_msg)
+        #
+        # # getter
+        # cmd_msg = "gv"
+        # resp = yield self._setter(c, cmd_msg)
+        # # convert message to integer
+        # resp = int(resp, 16)
+        # returnValue(resp)
 
 
     '''
     POSITION
     '''
-    @setting(311, 'Position', returns='v')
+    @setting(311, 'Position', returns='i')
     def position(self, c):
         """
         Returns the current position of the motor.
         Returns:
-            (float)   : the current position (in degrees).
+            (int)   : the current absolute position (in machine units).
         """
         # getter
-        pos_pulses_str = yield self._query(self.device_num, 'gp', cntx=c)
+        pos_pulses_str = yield self._query(self.address_num, 'gp', cntx=c)
 
-        # convert position in pulses to degrees
-        pos_pulses_int = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
-        pos_deg = pos_pulses_int / 398.
-        returnValue(pos_deg)
+        # process device response
+        pos_pulses_mu = int.from_bytes(decode_hex(pos_pulses_str)[0], byteorder='big', signed=True)
+        returnValue(pos_pulses_mu)
 
-    @setting(312, 'Position Home', position=['i','v'], returns='v')
+    @setting(312, 'Position Home', position=['i','v'], returns='i')
     def position_home(self, c, position=None):
         """
         Get/set the home position of the motor.
@@ -372,24 +414,26 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
         Arguments:
             position    (int)   : the new home position. Must be in [1, 4].
         Returns:
-                        (int)   : the home position.
+                        (int)   : the home position (in machine units).
         """
-        # setter
-        if position is not None:
-            if position not in range(1, 5):
-                raise Exception("Error: invalid position. Must be in [1, 4].")
-            # prepare device messages
-            cmd_msg = "so"
-            data_msg = "{:02x}".format(position)
-            yield self._setter(c, cmd_msg, data_msg=data_msg)
-        # getter
-        resp = yield self._setter(c, "go")
-        returnValue(resp)
+        raise NotImplementedError
+        # # setter
+        # if position is not None:
+        #     if position not in range(1, 5):
+        #         raise Exception("Error: invalid position. Must be in [1, 4].")
+        #     # prepare device messages
+        #     cmd_msg = "so"
+        #     data_msg = "{:02x}".format(position)
+        #     yield self._setter(c, cmd_msg, data_msg=data_msg)
+        #
+        # # getter
+        # resp = yield self._setter(c, "go")
+        # returnValue(resp)
 
 
-    # HELPERS
-    # todo: create function for deg to mu/msg
-    # todo: create function for mu/msg to deg
+    '''
+    HELPERS
+    '''
     @inlineCallbacks
     def _query(self, dev_num, cmd_msg, data_msg='', cntx=None):
         """

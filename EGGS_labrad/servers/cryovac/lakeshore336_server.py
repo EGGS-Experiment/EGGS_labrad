@@ -40,8 +40,8 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
 
     name = 'Lakeshore336 Server'
     regKey = 'Lakeshore336 Server'
-    serNode = 'MongKok'
-    port = 'COM24'
+    serNode = 'CausewayBay'
+    port = 'COM7'
 
     timeout = WithUnit(5.0, 's')
     baudrate = 57600

@@ -20,7 +20,7 @@ poll_delay_s =          60
 # network analyzer parameters
 na_device_num_dj =      0
 na_att_int_db =         10
-na_att_ext_db =         20
+na_att_ext_db =         0
 na_span_hz =            1000000
 na_bandwidth_hz =       1000
 
@@ -56,7 +56,7 @@ try:
     independents = [('Elapsed Time', [1], 'v', 's')]
     dependents = [
         ('Signal Frequency', 'Frequency', [num_points],'v', 'Hz'),
-        ('Signal Power', 'Power', [num_points], 'v', 'dBm')
+        ('Signal Power', 'Power', [num_points], 'v', 'dBm'),
         ('Notch ', 'Power', [num_points], 'v', 'dBm')
     ]
     dv.new_ex(dataset_title_tmp, independents, dependents, context=cr)
