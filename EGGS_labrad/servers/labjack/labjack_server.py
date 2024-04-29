@@ -36,8 +36,7 @@ class LabJackServer(LabradServer):
 
     name =              'LabJack Server'
     regKey =            'LabJack Server'
-    # port =              'COM48'
-    device_address =    '192.168.1.78'
+    # device_address =    '192.168.1.78'
 
     # timeout = WithUnit(5.0, 's')
     # baudrate = 28800
@@ -49,7 +48,7 @@ class LabJackServer(LabradServer):
     # buffer_update = Signal(999999, 'signal: buffer_update', '(ss)')
 
     def __init__(self, *args, **kwargs):
-        super().__init__(args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # create instance variables
         self.device_handle =    None
@@ -128,7 +127,7 @@ class LabJackServer(LabradServer):
         Get a list of available devices.
         """
         detected_devices = ljm.listAll(ljm.constants.dtTSERIES, ljm.constants.ctTCP)
-        dev_models, dev_cxns, dev_serialnums = detected_devices[1: 3]
+        dev_models, dev_cxns, dev_serialnums = detected_devices[1: 4]
         device_list = list(zip(dev_models, dev_cxns, dev_serialnums))
         return device_list
 
@@ -139,11 +138,11 @@ class LabJackServer(LabradServer):
         """
         # do nothing if a device is already selected
         if self.device_handle is not None:
-            Exception('A serial device is already opened.')
+            raise Exception('A device connection is already opened.')
 
         # open connection to device
         try:
-            device_handle = ljm.open(*dev_handle)
+            device_handle = ljm.open(*dev_specs)
         except Exception as e:
             print('Error: unable to connect to device: {}'.format(repr(e)))
             device_handle = -1
@@ -185,7 +184,7 @@ class LabJackServer(LabradServer):
         """
         Read a value from a named register on the LabJack.
         """
-        value = yield ljm.eReadName(self.handle, name)
+        value = yield ljm.eReadName(self.device_handle, name)
         returnValue(value)
 
     @inlineCallbacks
@@ -194,7 +193,7 @@ class LabJackServer(LabradServer):
         """
         Read a value from a register on the LabJack.
         """
-        value = yield ljm.eReadAddress(self.handle, address)
+        value = yield ljm.eReadAddress(self.device_handle, address)
         returnValue(value)
 
     @inlineCallbacks
@@ -203,7 +202,7 @@ class LabJackServer(LabradServer):
         """
         Read values from multiple named registers on the LabJack.
         """
-        values = yield ljm.eReadNames(self.handle, len(names), names)
+        values = yield ljm.eReadNames(self.device_handle, len(names), names)
         returnValue(values)
 
     @inlineCallbacks
@@ -212,7 +211,7 @@ class LabJackServer(LabradServer):
         """
         Read values from multiple registers on the LabJack.
         """
-        values = yield ljm.eReadAddresses(self.handle, len(addresses), addresses)
+        values = yield ljm.eReadAddresses(self.device_handle, len(addresses), addresses)
         returnValue(values)
 
 
@@ -225,7 +224,7 @@ class LabJackServer(LabradServer):
         """
         Write a value to a named register on the LabJack.
         """
-        ljm.eWriteName(self.handle, name, value)
+        ljm.eWriteName(self.device_handle, name, value)
 
     @inlineCallbacks
     @setting(12, address='i', value='v')
@@ -233,7 +232,7 @@ class LabJackServer(LabradServer):
         """
         Write a value to a register on the LabJack.
         """
-        ljm.eWriteAddress(self.handle, address, value)
+        ljm.eWriteAddress(self.device_handle, address, value)
 
     @inlineCallbacks
     @setting(14, names='*s', values='*v')
@@ -241,7 +240,7 @@ class LabJackServer(LabradServer):
         """
         Write values to multiple named registers on the LabJack.
         """
-        ljm.eWriteNames(self.handle, len(names), names, values)
+        ljm.eWriteNames(self.device_handle, len(names), names, values)
 
     @inlineCallbacks
     @setting(16, addresses='*i', values='*v')
@@ -249,7 +248,7 @@ class LabJackServer(LabradServer):
         """
         Write values to multiple registers on the LabJack.
         """
-        ljm.eWriteAddresses(self.handle, len(addresses), addresses, values)
+        ljm.eWriteAddresses(self.device_handle, len(addresses), addresses, values)
 
 
 if __name__ == "__main__":
