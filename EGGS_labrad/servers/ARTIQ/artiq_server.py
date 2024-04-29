@@ -386,7 +386,7 @@ class ARTIQ_Server(ContextServer):
             if (freq > 4e8) or (freq < 0):
                 raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
             ftw = self.dds_frequency_to_ftw(freq)
-            yield self.api.setDDSFastFTW(ftw)
+            self.api.setDDSFastFTW(ftw)
 
     @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='i')
     def DDSampl(self, c, dds_name, ampl=None):

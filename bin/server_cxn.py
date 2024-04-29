@@ -54,10 +54,11 @@ server_dict = {
     'dc':           'dc_server',
     'aq':           'artiq_server',
 
-    # IMAGING
+    # IMAGING/OPTICS
     'sls':          'sls_server',
     'to':           'toptica_server',
     'cam':          'andor_server',
+    'ell':          'elliptec_server',
 
     # TEST & MEASUREMENT
     'os':           'oscilloscope_server',

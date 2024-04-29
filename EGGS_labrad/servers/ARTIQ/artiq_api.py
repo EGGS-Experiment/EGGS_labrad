@@ -347,16 +347,32 @@ class ARTIQ_API(object):
         todo:document
         """
         # todo: store parameter in device storage
-        self._ftw_tmp = freq_ftw
+        self._ftw_tmp = np.int32(freq_ftw)
         self._precompile_func()
 
     @kernel
     def _setDDSFastFTW(self, dev):
         self.core.break_realtime()
 
+        # tmp remove
+        dev.cpld.set_profile(0)
+        self.core.break_realtime()
+
         # get existing waveform from device
         ftw_curr, pow_curr, asf_cur = dev.get_mu(_AD9910_REG_PROFILE0)
         self.core.break_realtime()
+
+        # tmp remove
+        self.core.break_realtime()
+        print(ftw_curr)
+        self.core.break_realtime()
+        self.core.break_realtime()
+        print(pow_curr)
+        self.core.break_realtime()
+        self.core.break_realtime()
+        print(asf_cur)
+        self.core.break_realtime()
+        # tmp remove
 
         # get new ftw via rpc
         ftw_update = self._return_setter_dds_ftw()
@@ -368,7 +384,7 @@ class ARTIQ_API(object):
 
     @rpc
     def _return_setter_dds_ftw(self) -> TInt32:
-        print(self._ftw_tmp)
+        # print(self._ftw_tmp)
         return self._ftw_tmp
     '''new faster functions meant to be used with precompile'''
 
