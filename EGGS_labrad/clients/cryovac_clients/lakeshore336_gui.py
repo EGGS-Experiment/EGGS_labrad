@@ -80,7 +80,7 @@ class lakeshore336_gui(QFrame):
         heat2_mode_label = QLabel("Mode")
         heat2_res_label = QLabel("Resistance (\u03A9)")
         heat2_in_label = QLabel("Input")
-        heat2_curr_label = QLabel("Max. Current (mA)")
+        heat2_curr_label = QLabel("Max. Current (A)")
         heat2_range_label = QLabel("Range (% max)")
         heat2_p1_label = QLabel("Current (% max allowed)")
         heat2_set_label = QLabel("Setpoint (K)")

@@ -129,9 +129,11 @@ class ARTIQ_API(object):
 
         # assign names and devices
         for name, params in self.device_db.items():
+
             # only get devices with named class
             if 'class' not in params:
                 continue
+
             # set device as attribute
             devicetype = params['class']
             device = self.device_manager.get(name)
@@ -368,7 +370,7 @@ class ARTIQ_API(object):
 
     @rpc
     def _return_setter_dds_ftw(self) -> TInt32:
-        print(self._ftw_tmp)
+        # print(self._ftw_tmp)
         return self._ftw_tmp
     '''new faster functions meant to be used with precompile'''
 
