@@ -16,7 +16,11 @@ EXPID = 564324
 class PMT_client(GUIClient):
 
     name = 'PMT Client'
-    servers = {'aq': 'ARTIQ Server', 'dv': 'Data Vault'}
+    servers = {
+        'aq': 'ARTIQ Server',
+        'dv': 'Data Vault',
+        'ell': 'Elliptec Server'
+    }
 
     def getgui(self):
         if self.gui is None:
@@ -45,17 +49,20 @@ class PMT_client(GUIClient):
         self.gui.poll_interval.setValue(0.5)
 
     def initGUI(self):
+        # general
+        self.gui.record_button.clicked.connect(lambda status: self.record(status))
+        self.gui.lockswitch.clicked.connect(lambda status: self._lock(status))
         # read buttons
         self.gui.read_once_switch.clicked.connect(lambda: self.update_counts_once())
         self.gui.read_cont_switch.toggled.connect(lambda status: self.toggle_polling(status))
+        # imaging utilities
         self.gui.flip.clicked.connect(lambda: self.flipper_pulse())
-        # recording
-        self.gui.record_button.clicked.connect(lambda status: self.record(status))
-        # lock
-        self.gui.lockswitch.clicked.connect(lambda status: self._lock(status))
+        self.gui.aperture_button.toggled.connect(lambda status: self.aperture_toggle(status))
 
 
-    # SLOTS
+    """
+    SLOTS
+    """
     @inlineCallbacks
     def update_counts_once(self):
         """
@@ -109,18 +116,21 @@ class PMT_client(GUIClient):
 
     def toggle_polling(self, status):
         # start if not running
-        if status and (not self.refresher.running):
+        if (status) and (not self.refresher.running):
             # get timing values
             poll_interval_s = self.gui.poll_interval.value()
             self.sample_time_us = int(self.gui.sample_time.value())
             self.num_samples = int(self.gui.sample_num.value())
             time_per_data = self.sample_time_us * self.num_samples * 1e-6
+
             # ensure valid timing
             if (time_per_data > poll_interval_s) or (time_per_data > 1):
                 raise Exception("Error: invalid timing.")
+
             # set up display and start polling
             self.gui.count_display.setStyleSheet('color: green')
             self.refresher.start(poll_interval_s, now=True)
+
         # stop if running
         elif (not status) and (self.refresher.running):
             self.refresher.stop()
@@ -137,8 +147,16 @@ class PMT_client(GUIClient):
     def flipper_pulse(self):
         # send TTL to flipper mount
         yield self.aq.ttl_set("ttl15", 1)
-        sleep(.2)
+        sleep(.1)
         yield self.aq.ttl_set("ttl15", 0)
+
+    @inlineCallbacks
+    def aperture_toggle(self, status):
+        # open/close the aperture
+        if status:
+            yield self.ell.move_home()
+        else:
+            yield self.ell.move_absolute(2888)
 
     @inlineCallbacks
     def record(self, status):
@@ -163,6 +181,7 @@ class PMT_client(GUIClient):
         self.gui.artiq_monitor.setStatus(msg)
 
     def _lock(self, status):
+        # note: don't lock aperture since we may need to open it partway through
         self.gui.read_once_switch.setEnabled(status)
         self.gui.read_cont_switch.setEnabled(status)
         self.gui.sample_time.setEnabled(status)

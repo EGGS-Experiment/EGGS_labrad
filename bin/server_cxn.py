@@ -54,13 +54,13 @@ server_dict = {
     'dc':           'dc_server',
     'aq':           'artiq_server',
 
-    # IMAGING/OPTICS
+    # LASERS/IMAGING/OPTICS
     'sls':          'sls_server',
     'to':           'toptica_server',
     'cam':          'andor_server',
     'ell':          'elliptec_server',
 
-    # TEST & MEASUREMENT
+    # TEST & MEASUREMENT/DAQ
     'os':           'oscilloscope_server',
     'fg':           'function_generator_server',
     'sa':           'spectrum_analyzer_server',
@@ -68,6 +68,7 @@ server_dict = {
     'pm':           'power_meter_server',
     'gpp':          'gpp3060_server',
     'ke':           'keithley_2231a_server',
+    'lj':           'labjack_server',
 
     # AMO BOXES
     'amo2':         'amo2_server',
