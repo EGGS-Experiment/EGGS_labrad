@@ -591,7 +591,7 @@ class AndorServer(PollingServer):
         Polls the camera for image readout.
         """
         try:
-            data = yield self.acquireImageRecent()
+            data = yield self.acquireImageRecent(None)
             #temp = yield self.temperature(None)
         except Exception as e:
             print('poll failure')
