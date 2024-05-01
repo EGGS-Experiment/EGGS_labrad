@@ -82,16 +82,16 @@ class AndorAPI(object):
             self.set_trigger_mode(config.trigger_mode)
             self.set_shutter_mode(config.shutter_mode)
 
+            self.set_emccd_gain(config.emccd_gain)
             self.get_emccd_gain()
             self.set_exposure_time(config.exposure_time)
-            self.set_vertical_shift_amplitude(config.vertical_shift_amplitude)
-            self.set_vertical_shift_speed(config.vertical_shift_speed)
-
+            # self.set_vertical_shift_amplitude(config.vertical_shift_amplitude)
+            # self.set_vertical_shift_speed(config.vertical_shift_speed)
 
             # set image to full size with default binning
             self.set_image_region(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)
             self.set_image_rotate(config.image_rotate)
-            self.set_image_flip(config.image_flip_horizontal, config.image_flip_vertical)
+            self.set_image_flip((config.image_flip_horizontal, config.image_flip_vertical))
 
             # get default temperature config
             self.set_cooler_state(True)
@@ -468,11 +468,12 @@ class AndorAPI(object):
         """
         return self.info.image_rotate
 
-    def set_image_flip(self, flip_horizontal, flip_vertical):
+    def set_image_flip(self, flip_status):
         """
         Set the image flip status.
         """
-        error = self.dll.SetImageRotate(c.c_int(flip_horizontal), c.c_int(flip_vertical))
+        flip_horizontal, flip_vertical = flip_status
+        error = self.dll.SetImageFlip(c.c_int(flip_horizontal), c.c_int(flip_vertical))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
             self.info.image_flip_horizontal = bool(flip_horizontal)
             self.info.image_flip_vertical = bool(flip_vertical)
