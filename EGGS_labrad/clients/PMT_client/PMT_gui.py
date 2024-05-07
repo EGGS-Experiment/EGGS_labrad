@@ -44,7 +44,7 @@ class PMT_gui(QFrame):
         # count display
         self.count_display_label = QLabel("Counts")
         self.count_display_label.setFont(QFont('MS Shell Dlg 2', pointSize=15))
-        self.count_display_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.count_display_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.count_display = QLabel("0.000")
         self.count_display.setStyleSheet('color: red')
         self.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=23, weight=QFont.Medium))
