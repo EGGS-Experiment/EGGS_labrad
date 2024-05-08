@@ -171,7 +171,7 @@ class ARTIQ_API(object):
         # get existing waveform from device
         profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
         self._store_getter_dds_data(profile_data_mu)
-        self.core.break_realtime()
+        # self.core.break_realtime()
 
     @kernel(flags={"fast-math"})
     def _setDDSFastFTW(self) -> TNone:
@@ -186,7 +186,7 @@ class ARTIQ_API(object):
         # set default profile
         dds_dev.cpld.set_profile(DEFAULT_PROFILE)
         dds_dev.cpld.io_update.pulse_mu(64)
-        self.core.break_realtime()
+        # self.core.break_realtime()
 
         # read ASF of current profile
         profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
@@ -199,7 +199,7 @@ class ARTIQ_API(object):
 
         # update device profile
         dds_dev.set_mu(ftw_update, asf=ampl_curr_asf, profile=DEFAULT_PROFILE)
-        self.core.break_realtime()
+        # self.core.break_realtime()
 
     @kernel(flags={"fast-math"})
     def _setDDSFastASF(self) -> TNone:
@@ -214,7 +214,7 @@ class ARTIQ_API(object):
         # set default profile
         dds_dev.cpld.set_profile(DEFAULT_PROFILE)
         dds_dev.cpld.io_update.pulse_mu(64)
-        self.core.break_realtime()
+        # self.core.break_realtime()
 
         # read FTW of current profile
         profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
@@ -227,7 +227,7 @@ class ARTIQ_API(object):
 
         # update device profile
         dds_dev.set_mu(freq_curr_ftw, asf=asf_update, profile=DEFAULT_PROFILE)
-        self.core.break_realtime()
+        # self.core.break_realtime()
 
 
     """
