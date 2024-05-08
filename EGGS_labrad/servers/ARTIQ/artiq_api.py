@@ -17,6 +17,9 @@ class ARTIQ_API(object):
     # todo: set version so we know what we're compatible with
     # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
     """
+    kernel_invariants = {
+
+    }
 
     '''
     AUTORELOAD DECORATOR
@@ -84,7 +87,6 @@ class ARTIQ_API(object):
         # precompile hardware functions
         dev_dj = self.dds_dict['urukul1_ch2']
         self._precompile_func = self.core.precompile(self._setDDSFastFTW, dev_dj)
-        # todo
         # todo: create hardware functions assigned to each device
         # todo: create variable storage assigned to each device
 
@@ -174,8 +176,9 @@ class ARTIQ_API(object):
     '''
     TTL FUNCTIONS
     '''
+    # todo: move ttl functions to core moninj
     @autoreload
-    def setTTL(self, ttlname, state):
+    def setTTL(self, ttlname, state) -> TNone:
         """
         Manually set the state of a TTL.
         """
@@ -353,9 +356,10 @@ class ARTIQ_API(object):
         self._precompile_func()
 
     @kernel
-    def _setDDSFastFTW(self, dev):
+    def _setDDSFastFTW(self, num: TInt32) -> TNone:
         self.core.break_realtime()
 
+        # todo: instead get dev from a list
         # tmp remove
         dev.cpld.set_profile(0)
         self.core.break_realtime()
