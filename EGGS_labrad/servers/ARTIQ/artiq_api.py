@@ -91,14 +91,22 @@ class ARTIQ_API(object):
         """
         todo: document
         """
+        # set holder variables for DDS data getter
+        self._dds_freq_get_ftw =    np.int32(0)
+        self._dds_ampl_get_asf =    np.int32(0)
+
+        # set holder variables for DDS data setter
+        self._dds_num =             np.int32(0)
+        self._dds_freq_set_ftw =    np.int32(0)
+        self._dds_ampl_set_asf =    np.int32(0)
+
         # precompile hardware functions
-        # tmp remove
-        self._precompile_func_set = self.core.precompile(self._setDDSFastFTW)
-        self._precompile_func_get = self.core.precompile(self._getDDSFastFTW)
-        # tmp remove
+        self._precompile_func_set_freq =    self.core.precompile(self._setDDSFastFTW)
+        self._precompile_func_set_ampl =    self.core.precompile(self._setDDSFastASF)
+        self._precompile_func_get_all =     self.core.precompile(self._getDDSFastAll)
 
     @autoreload
-    def getDDSFastFTW(self, device_name: TStr) -> TNone:
+    def getDDSFastAll(self, device_name: TStr) -> TTuple([TInt32, TInt32]):
         """
         todo:document
         """
@@ -109,7 +117,10 @@ class ARTIQ_API(object):
             raise Exception("Error: desired device not found.")
 
         # call precompiled DDS waveform getter
-        self._precompile_func_get()
+        self._precompile_func_get_all()
+
+        # return waveform values
+        return self._dds_freq_get_ftw, self._dds_ampl_get_asf
 
     @autoreload
     def setDDSFastFTW(self, device_name: TStr, freq_ftw: TInt32) -> TNone:
@@ -122,13 +133,33 @@ class ARTIQ_API(object):
         except KeyError:
             raise Exception("Error: desired device not found.")
 
-        # set ftw as a class variable for RPC retrieval
-        self._ftw_tmp = np.int32(freq_ftw)
+        # set ftw as class variable for RPC retrieval
+        self._dds_freq_set_ftw = np.int32(freq_ftw)
         # call precompiled DDS frequency setter
-        self._precompile_func_set()
+        self._precompile_func_set_freq()
 
+    @autoreload
+    def setDDSFastASF(self, device_name: TStr, ampl_asf: TInt32) -> TNone:
+        """
+        todo:document
+        """
+        # get index of the desired dds within _dds_channels
+        try:
+            self._dds_num = self.dds_dict_search_num[device_name]
+        except KeyError:
+            raise Exception("Error: desired device not found.")
+
+        # set ftw as class variable for RPC retrieval
+        self._dds_ampl_set_asf = np.int32(ampl_asf)
+        # call precompiled DDS frequency setter
+        self._precompile_func_set_ampl()
+
+
+    """
+    FAST - KERNEL FUNCTIONS
+    """
     @kernel(flags={"fast-math"})
-    def _getDDSFastFTW(self) -> TNone:
+    def _getDDSFastAll(self) -> TNone:
         self.core.break_realtime()
 
         # get device
@@ -139,18 +170,8 @@ class ARTIQ_API(object):
 
         # get existing waveform from device
         profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
-        self._fastprint(profile_data_mu)
+        self._store_getter_dds_data(profile_data_mu)
         self.core.break_realtime()
-
-    @rpc(flags={"async"})
-    def _fastprint(self, profile_data_mu: TInt64) -> TNone:
-        ftw_tmp = np.int32(profile_data_mu & 0xFFFFFFFF)
-        pow_tmp = np.int32((profile_data_mu >> 32) & 0xFFFF)
-        asf_tmp = np.int32((profile_data_mu >> 48) & 0x3FFF)
-        # todo: store values in parent
-        print(ftw_tmp)
-        print(pow_tmp)
-        print(asf_tmp)
 
     @kernel(flags={"fast-math"})
     def _setDDSFastFTW(self) -> TNone:
@@ -169,7 +190,7 @@ class ARTIQ_API(object):
 
         # read ASF of current profile
         profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
-        asf_curr_mu = np.int32((profile_data_mu >> 48) & 0x3FFF)
+        ampl_curr_asf = np.int32((profile_data_mu >> 48) & 0x3FFF)
         self.core.break_realtime()
 
         # get new ftw via rpc
@@ -177,16 +198,58 @@ class ARTIQ_API(object):
         self.core.break_realtime()
 
         # update device profile
-        dds_dev.set_mu(ftw_update, asf=asf_curr_mu, profile=DEFAULT_PROFILE)
+        dds_dev.set_mu(ftw_update, asf=ampl_curr_asf, profile=DEFAULT_PROFILE)
         self.core.break_realtime()
 
-    @rpc
-    def _return_setter_dds_ftw(self) -> TInt32:
-        return self._ftw_tmp
+    @kernel(flags={"fast-math"})
+    def _setDDSFastASF(self) -> TNone:
+        self.core.break_realtime()
+
+        # get device
+        index_dds = self._return_dds_num()
+        self.core.break_realtime()
+        dds_dev = self._dds_channels[index_dds]
+        self.core.break_realtime()
+
+        # set default profile
+        dds_dev.cpld.set_profile(DEFAULT_PROFILE)
+        dds_dev.cpld.io_update.pulse_mu(64)
+        self.core.break_realtime()
+
+        # read FTW of current profile
+        profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
+        freq_curr_ftw = np.int32(profile_data_mu & 0xFFFFFFFF)
+        self.core.break_realtime()
+
+        # get new asf via rpc
+        asf_update = self._return_setter_dds_asf()
+        self.core.break_realtime()
+
+        # update device profile
+        dds_dev.set_mu(freq_curr_ftw, asf=asf_update, profile=DEFAULT_PROFILE)
+        self.core.break_realtime()
+
+
+    """
+    FAST - HOST-KERNEL COMMUNICATION RPCs
+    """
+    @rpc(flags={"async"})
+    def _store_getter_dds_data(self, profile_data_mu: TInt64) -> TNone:
+        self._dds_freq_get_ftw =    np.int32(profile_data_mu & 0xFFFFFFFF)
+        # self._dds_phase_get_pow =   np.int32((profile_data_mu >> 32) & 0xFFFF)
+        self._dds_ampl_get_asf =    np.int32((profile_data_mu >> 48) & 0x3FFF)
 
     @rpc
     def _return_dds_num(self) -> TInt32:
         return self._dds_num
+
+    @rpc
+    def _return_setter_dds_ftw(self) -> TInt32:
+        return self._dds_freq_set_ftw
+
+    @rpc
+    def _return_setter_dds_asf(self) -> TInt32:
+        return self._dds_ampl_set_asf
     '''new faster functions meant to be used with precompile'''
 
 
@@ -204,9 +267,13 @@ class ARTIQ_API(object):
         self.device_manager = DeviceManager(devices)
         self.device_db = devices.get_device_db()
         # self._getDevices()
+
         # note: only the core needs to be re-acquired
         # since the kernel decorator looks for only it inside the class object
         self.core = self.device_manager.get("core")
+
+        # re-precompile relevant functions
+        self._getPrecompiledFunctions()
 
 
 

@@ -360,12 +360,14 @@ class ARTIQ_Server(ContextServer):
         """
         if dds_name not in self.api.dds_dict:
             raise Exception('Error: device does not exist.')
+
         # setter
         if freq is not None:
             if (freq > 4e8) or (freq < 0):
                 raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
             ftw = self.dds_frequency_to_ftw(freq)
             yield self.api.setDDS(dds_name, 'ftw', ftw)
+
         # getter
         ftw, _, _ = yield self.api.getDDS(dds_name)
         self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
@@ -374,8 +376,8 @@ class ARTIQ_Server(ContextServer):
     '''
     PRECOMPILE TESTING
     '''
-    @setting(88888, "DDS Frequency Set Fast", device_name='s', freq='v', returns='')
-    def DDSfreqset(self, c, device_name, freq):
+    @setting(88888, "DDS Frequency Fast", dds_name='s', freq='v', returns='')
+    def DDSfreqFast(self, c, dds_name, freq):
         """
         Manually set the frequency of a DDS.
         Arguments:
@@ -384,24 +386,47 @@ class ARTIQ_Server(ContextServer):
         Returns:
                         (int)   : the 32-bit frequency tuning word.
         """
+        # check device is valid
+        if dds_name not in self.api.dds_dict:
+            raise Exception('Error: device does not exist.')
+
         # setter
         if freq is not None:
             if (freq > 4e8) or (freq < 0):
                 raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
             ftw = self.dds_frequency_to_ftw(freq)
-            self.api.setDDSFastFTW(device_name, ftw)
+            self.api.setDDSFastFTW(dds_name, ftw)
 
-    @setting(88889, "DDS Frequency Get Fast", device_name='s', returns='')
-    def DDSfreqget(self, c, device_name):
+        # getter
+        ftw, asf = yield self.api.getDDSFastAll(dds_name)
+        self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
+        returnValue(np.int32(ftw))
+
+    @setting(88889, "DDS Amplitude Fast", dds_name='s', ampl='v', returns='i')
+    def DDSamplFast(self, c, dds_name, ampl=None):
         """
-        Manually set the frequency of a DDS.
+        Manually set the amplitude of a DDS.
         Arguments:
             dds_name    (str)   : the name of the DDS.
-            freq        (float) : the frequency (in Hz).
+            ampl        (float) : the fractional amplitude.
         Returns:
-                        (int)   : the 32-bit frequency tuning word.
+                        (int)   : the 14-bit amplitude scaling factor.
         """
-        self.api.getDDSFastFTW(device_name)
+        # check device is valid
+        if dds_name not in self.api.dds_dict:
+            raise Exception('Error: device does not exist.')
+
+        # setter
+        if ampl is not None:
+            if (ampl > 1.) or (ampl < 0.):
+                raise Exception('Error: amplitude must be within [0, 1].')
+            asf = self.dds_amplitude_to_asf(ampl)
+            self.api.setDDSFastASF(dds_name, asf)
+
+        # getter
+        ftw, asf = yield self.api.getDDSFastAll(dds_name)
+        self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
+        returnValue(np.int32(asf))
     '''
     PRECOMPILE TESTING
     '''
