@@ -371,8 +371,11 @@ class ARTIQ_Server(ContextServer):
         self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
         returnValue(np.int32(ftw))
 
-    @setting(88888, "DDS Frequency Fast", freq='v', returns='')
-    def DDSfreqset(self, c, freq):
+    '''
+    PRECOMPILE TESTING
+    '''
+    @setting(88888, "DDS Frequency Set Fast", device_name='s', freq='v', returns='')
+    def DDSfreqset(self, c, device_name, freq):
         """
         Manually set the frequency of a DDS.
         Arguments:
@@ -386,7 +389,23 @@ class ARTIQ_Server(ContextServer):
             if (freq > 4e8) or (freq < 0):
                 raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
             ftw = self.dds_frequency_to_ftw(freq)
-            self.api.setDDSFastFTW(ftw)
+            self.api.setDDSFastFTW(device_name, ftw)
+
+    @setting(88889, "DDS Frequency Get Fast", device_name='s', returns='')
+    def DDSfreqget(self, c, device_name):
+        """
+        Manually set the frequency of a DDS.
+        Arguments:
+            dds_name    (str)   : the name of the DDS.
+            freq        (float) : the frequency (in Hz).
+        Returns:
+                        (int)   : the 32-bit frequency tuning word.
+        """
+        self.api.getDDSFastFTW(device_name)
+    '''
+    PRECOMPILE TESTING
+    '''
+
 
     @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='i')
     def DDSampl(self, c, dds_name, ampl=None):

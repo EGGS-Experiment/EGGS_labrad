@@ -4,8 +4,8 @@ from artiq.language import *
 from artiq.coredevice import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
-from artiq.coredevice.urukul import urukul_sta_rf_sw, CFG_PROFILE
-from artiq.coredevice.ad9910 import _AD9910_REG_PROFILE0
+from artiq.coredevice.urukul import urukul_sta_rf_sw, CFG_PROFILE, DEFAULT_PROFILE
+from artiq.coredevice.ad9910 import _AD9910_REG_PROFILE0, _AD9910_REG_PROFILE1, _AD9910_REG_PROFILE2, _AD9910_REG_PROFILE3, _AD9910_REG_PROFILE4, _AD9910_REG_PROFILE5, _AD9910_REG_PROFILE6, _AD9910_REG_PROFILE7
 
 from builtins import ConnectionAbortedError, ConnectionResetError
 
@@ -46,6 +46,7 @@ class ARTIQ_API(object):
                     res = func(self, *args, **kwargs)
                     return res
                 except Exception as e:
+                    print(repr(e))
                     raise e
 
             # handle RTIOUnderflows
@@ -81,12 +82,113 @@ class ARTIQ_API(object):
         self.device_db =        devices.get_device_db()
         self._getDevices()
 
+        # get precompiled functions
+        self._getPrecompiledFunctions()
+
+
+    '''new faster functions meant to be used with precompile'''
+    def _getPrecompiledFunctions(self) -> TNone:
+        """
+        todo: document
+        """
         # precompile hardware functions
-        dev_dj = self.dds_dict['urukul1_ch2']
-        self._precompile_func = self.core.precompile(self._setDDSFastFTW, dev_dj)
-        # todo
-        # todo: create hardware functions assigned to each device
-        # todo: create variable storage assigned to each device
+        # tmp remove
+        self._precompile_func_set = self.core.precompile(self._setDDSFastFTW)
+        self._precompile_func_get = self.core.precompile(self._getDDSFastFTW)
+        # tmp remove
+
+    @autoreload
+    def getDDSFastFTW(self, device_name: TStr) -> TNone:
+        """
+        todo:document
+        """
+        # get index of the desired dds within _dds_channels
+        try:
+            self._dds_num = self.dds_dict_search_num[device_name]
+        except KeyError:
+            raise Exception("Error: desired device not found.")
+
+        # call precompiled DDS waveform getter
+        self._precompile_func_get()
+
+    @autoreload
+    def setDDSFastFTW(self, device_name: TStr, freq_ftw: TInt32) -> TNone:
+        """
+        todo:document
+        """
+        # get index of the desired dds within _dds_channels
+        try:
+            self._dds_num = self.dds_dict_search_num[device_name]
+        except KeyError:
+            raise Exception("Error: desired device not found.")
+
+        # set ftw as a class variable for RPC retrieval
+        self._ftw_tmp = np.int32(freq_ftw)
+        # call precompiled DDS frequency setter
+        self._precompile_func_set()
+
+    @kernel(flags={"fast-math"})
+    def _getDDSFastFTW(self) -> TNone:
+        self.core.break_realtime()
+
+        # get device
+        index_dds = self._return_dds_num()
+        self.core.break_realtime()
+        dds_dev = self._dds_channels[index_dds]
+        self.core.break_realtime()
+
+        # get existing waveform from device
+        profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
+        self._fastprint(profile_data_mu)
+        self.core.break_realtime()
+
+    @rpc(flags={"async"})
+    def _fastprint(self, profile_data_mu: TInt64) -> TNone:
+        ftw_tmp = np.int32(profile_data_mu & 0xFFFFFFFF)
+        pow_tmp = np.int32((profile_data_mu >> 32) & 0xFFFF)
+        asf_tmp = np.int32((profile_data_mu >> 48) & 0x3FFF)
+        # todo: store values in parent
+        print(ftw_tmp)
+        print(pow_tmp)
+        print(asf_tmp)
+
+    @kernel(flags={"fast-math"})
+    def _setDDSFastFTW(self) -> TNone:
+        self.core.break_realtime()
+
+        # get device
+        index_dds = self._return_dds_num()
+        self.core.break_realtime()
+        dds_dev = self._dds_channels[index_dds]
+        self.core.break_realtime()
+
+        # set default profile
+        dds_dev.cpld.set_profile(DEFAULT_PROFILE)
+        dds_dev.cpld.io_update.pulse_mu(64)
+        self.core.break_realtime()
+
+        # read ASF of current profile
+        profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
+        asf_curr_mu = np.int32((profile_data_mu >> 48) & 0x3FFF)
+        self.core.break_realtime()
+
+        # get new ftw via rpc
+        ftw_update = self._return_setter_dds_ftw()
+        self.core.break_realtime()
+
+        # update device profile
+        dds_dev.set_mu(ftw_update, asf=asf_curr_mu, profile=DEFAULT_PROFILE)
+        self.core.break_realtime()
+
+    @rpc
+    def _return_setter_dds_ftw(self) -> TInt32:
+        return self._ftw_tmp
+
+    @rpc
+    def _return_dds_num(self) -> TInt32:
+        return self._dds_num
+    '''new faster functions meant to be used with precompile'''
+
 
     def stopAPI(self):
         """
@@ -101,7 +203,11 @@ class ARTIQ_API(object):
         devices = DeviceDB(self.ddb_filepath)
         self.device_manager = DeviceManager(devices)
         self.device_db = devices.get_device_db()
-        self._getDevices()
+        # self._getDevices()
+        # note: only the core needs to be re-acquired
+        # since the kernel decorator looks for only it inside the class object
+        self.core = self.device_manager.get("core")
+
 
 
     '''
@@ -127,6 +233,11 @@ class ARTIQ_API(object):
         self.sampler =              None
         self.phaser =               None
 
+        # tmp remove
+        _dds_dict_search_counter =  0
+        self.dds_dict_search_num =  dict()
+        # tmp remove
+
         # assign names and devices
         for name, params in self.device_db.items():
 
@@ -143,6 +254,12 @@ class ARTIQ_API(object):
                 self.ttlout_dict[name] = device
             elif devicetype == 'AD9910':
                 self.dds_dict[name] = device
+
+                # tmp remove
+                self.dds_dict_search_num[name] = _dds_dict_search_counter
+                _dds_dict_search_counter += 1
+                # tmp remove
+
             elif devicetype == 'CPLD':
                 self.urukul_dict[name] = device
             elif devicetype == 'Zotino':
@@ -167,6 +284,7 @@ class ARTIQ_API(object):
         self._dds_channels =    list(self.dds_dict.values())
         self._dds_boards =      list(self.urukul_dict.values())
 
+        # set all DDSs and Urukuls as class attributes
         for dev_name in (list(self.dds_dict.keys()) + list(self.urukul_dict.keys())):
             setattr(self, dev_name, self.device_manager.get(dev_name))
 
@@ -185,7 +303,7 @@ class ARTIQ_API(object):
             raise Exception('Invalid device name.')
         self._setTTL(dev, state)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _setTTL(self, dev, state: TInt32):
         self.core.break_realtime()
         if state:
@@ -203,7 +321,7 @@ class ARTIQ_API(object):
             raise Exception('Invalid device name.')
         self._getTTL(dev)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _getTTL(self, dev):
         self.core.break_realtime()
         return dev.sample_get_nonrt()
@@ -228,7 +346,7 @@ class ARTIQ_API(object):
         delattr(self, "ttl_counts_array")
         return tmp_arr
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _counterTTL(self, dev, time_mu, trials):
         self.core.break_realtime()
 
@@ -260,7 +378,7 @@ class ARTIQ_API(object):
         dev = self.dds_dict[dds_name]
         self._initializeDDS(dev)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _initializeDDS(self, dev):
         self.core.break_realtime()
         dev.init()
@@ -297,7 +415,7 @@ class ARTIQ_API(object):
         # set switch status for whole board
         self._setDDSsw(dev.cpld, sw_reg)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _setDDSsw(self, cpld, state):
         self.core.break_realtime()
         cpld.cfg_switches(state)
@@ -336,60 +454,10 @@ class ARTIQ_API(object):
         # set DDS
         self._setDDS(dev, np.int32(ftw), np.int32(asf), np.int32(pow))
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _setDDS(self, dev, ftw, asf, pow):
         self.core.break_realtime()
         dev.set_mu(ftw, pow_=pow, asf=asf)
-
-
-    '''new faster functions meant to be used with precompile'''
-    @autoreload
-    def setDDSFastFTW(self, freq_ftw):
-        """
-        todo:document
-        """
-        # todo: store parameter in device storage
-        self._ftw_tmp = np.int32(freq_ftw)
-        self._precompile_func()
-
-    @kernel
-    def _setDDSFastFTW(self, dev):
-        self.core.break_realtime()
-
-        # tmp remove
-        dev.cpld.set_profile(0)
-        self.core.break_realtime()
-
-        # get existing waveform from device
-        ftw_curr, pow_curr, asf_cur = dev.get_mu(_AD9910_REG_PROFILE0)
-        self.core.break_realtime()
-
-        # tmp remove
-        self.core.break_realtime()
-        print(ftw_curr)
-        self.core.break_realtime()
-        self.core.break_realtime()
-        print(pow_curr)
-        self.core.break_realtime()
-        self.core.break_realtime()
-        print(asf_cur)
-        self.core.break_realtime()
-        # tmp remove
-
-        # get new ftw via rpc
-        ftw_update = self._return_setter_dds_ftw()
-        self.core.break_realtime()
-
-        # update device profile
-        dev.set_mu(ftw_update, pow_=pow_curr, asf=asf_cur,
-                   profile=_AD9910_REG_PROFILE0)
-
-    @rpc
-    def _return_setter_dds_ftw(self) -> TInt32:
-        # print(self._ftw_tmp)
-        return self._ftw_tmp
-    '''new faster functions meant to be used with precompile'''
-
 
 
     @autoreload
@@ -414,7 +482,7 @@ class ARTIQ_API(object):
         channel_num = dev.chip_select - 4
         att_reg = self._setDDSatt(dev.cpld, channel_num, att_mu)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _setDDSatt(self, cpld, channel_num, att_mu):
         self.core.break_realtime()
         cpld.bus.set_config_mu(0x0C, 32, 16, 2)
@@ -447,17 +515,17 @@ class ARTIQ_API(object):
         elif length == 64:
             return self._readDDS64(dev, reg)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _readDDS16(self, dev, reg):
         self.core.break_realtime()
         return dev.read16(reg)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _readDDS32(self, dev, reg):
         self.core.break_realtime()
         return dev.read32(reg)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _readDDS64(self, dev, reg):
         self.core.break_realtime()
         return dev.read64(reg)
@@ -508,7 +576,7 @@ class ARTIQ_API(object):
 
         return dds_params_processed
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _getDDSAll(self):
         self.core.break_realtime()
 
@@ -564,12 +632,12 @@ class ARTIQ_API(object):
         dev = self.urukul_dict[urukul_name]
         self._initializeUrukul(dev)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _initializeUrukul(self, dev):
         self.core.break_realtime()
         dev.init()
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _getUrukulStatus(self, cpld):
         """
         Get the status register of an Urukul board.
@@ -577,7 +645,7 @@ class ARTIQ_API(object):
         self.core.break_realtime()
         return cpld.sta_read()
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _getUrukulAtt(self, cpld):
         """
         Get the attenuation register of an Urukul board.
@@ -601,7 +669,7 @@ class ARTIQ_API(object):
     def initializeDAC(self):
         self._initializeDAC()
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _initializeDAC(self):
         """
         Initialize the DAC.
@@ -613,7 +681,7 @@ class ARTIQ_API(object):
     def setZotino(self, channel_num, volt_mu):
         self._setZotino(channel_num, volt_mu)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _setZotino(self, channel_num, volt_mu):
         """
         Set the voltage of a DAC register.
@@ -626,7 +694,7 @@ class ARTIQ_API(object):
     def setZotinoGain(self, channel_num, gain_mu):
         self._setZotinoGain(channel_num, gain_mu)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _setZotinoGain(self, channel_num, gain_mu):
         """
         Set the gain of a DAC channel.
@@ -639,7 +707,7 @@ class ARTIQ_API(object):
     def setZotinoOffset(self, channel_num, volt_mu):
         self._setZotinoOffset(channel_num, volt_mu)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _setZotinoOffset(self, channel_num, volt_mu):
         """
         Set the voltage of a DAC offset register.
@@ -652,7 +720,7 @@ class ARTIQ_API(object):
     def setZotinoGlobal(self, word):
         self._setZotinoGlobal(word)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _setZotinoGlobal(self, word):
         """
         Set the OFSx registers on the AD5372.
@@ -664,7 +732,7 @@ class ARTIQ_API(object):
     def readZotino(self, channel_num, address):
         return self._setZotinoGlobal(channel_num, address)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _readZotino(self, channel_num, address):
         """
         Read the value of one of the DAC registers.
@@ -684,7 +752,7 @@ class ARTIQ_API(object):
     def initializeFastino(self):
         self._initializeFastino()
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _initializeFastino(self):
         """
         Initialize the Fastino.
@@ -696,7 +764,7 @@ class ARTIQ_API(object):
     def setFastino(self, channel_num, volt_mu):
         self._setFastino(channel_num, volt_mu)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _setFastino(self, channel_num, volt_mu):
         """
         Set the voltage of a Fastino register.
@@ -710,7 +778,7 @@ class ARTIQ_API(object):
     def readFastino(self, addr):
         return self._readFastino(addr)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _readFastino(self, addr):
         self.core.break_realtime()
         return self.fastino.read(addr)
@@ -719,7 +787,7 @@ class ARTIQ_API(object):
     def continuousFastino(self, channel_num):
         self._continuousFastino(channel_num)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _continuousFastino(self, channel_num):
         """
         Allows a Fastino channel to be updated continuously regardless of incoming data.
@@ -738,7 +806,7 @@ class ARTIQ_API(object):
         """
         self._initializeSampler()
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _initializeSampler(self):
         """
         Initialize the Sampler.
@@ -756,7 +824,7 @@ class ARTIQ_API(object):
         """
         self._setSamplerGain(channel_num, gain_mu)
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _setSamplerGain(self, channel_num, gain_mu):
         self.core.break_realtime()
         self.sampler.set_gain_mu(channel_num, gain_mu)
@@ -773,7 +841,7 @@ class ARTIQ_API(object):
         gain_status_tmp = gain_status_tmp[::-1]
         return gain_status_tmp
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _getSamplerGains(self):
         """
         Get the gain of all sampler channels.
@@ -797,7 +865,7 @@ class ARTIQ_API(object):
         delattr(self, "sampler_holder")
         return tmp_arr
 
-    @kernel
+    @kernel(flags={"fast-math"})
     def _readSampler(self, time_delay_mu, samples):
         self.core.break_realtime()
 
