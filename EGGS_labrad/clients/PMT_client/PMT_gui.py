@@ -7,7 +7,7 @@ from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomA
 
 class PMT_gui(QFrame):
     """
-    GUI for the Hamamatsu PMT via ARTIQ.
+    GUI for a TTL PMT counter via ARTIQ.
     """
 
     def __init__(self, name=None, parent=None):
@@ -21,14 +21,16 @@ class PMT_gui(QFrame):
         self.show()
 
     def makeWidgets(self):
-        '''
-        GENERAL
-        '''
+        """
+        General widget creation.
+        """
+        # set up main widgets
         self.setWindowTitle(self.name)
         self.lockswitch = Lockswitch()
         self.read_once_switch = QPushButton("Read Once")
         self.read_once_switch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.read_cont_switch = TextChangingButton(("Stop", "Loop"))
+
         # title display
         self.title = QLabel(self.name)
         self.title.setFont(QFont('MS Shell Dlg 2', pointSize=20, weight=QFont.Medium))

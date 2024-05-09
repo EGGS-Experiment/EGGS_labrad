@@ -22,12 +22,12 @@ class QCustomARTIQMonitor(QFrame):
 
         # widgets
         title = QLabel("Exp. Status")
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=10))
-        title.setAlignment(Qt.AlignLeft)
-        self.status_display = QLabel('Clear')
+        title.setFont(QFont('MS Shell Dlg 2', pointSize=11))
+        title.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+        self.status_display = QLabel('CLEAR')
         self.status_display.setStyleSheet('background-color: green; color: white')
-        self.status_display.setAlignment(Qt.AlignCenter)
-        self.status_display.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        self.status_display.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+        self.status_display.setFont(QFont('MS Shell Dlg 2', pointSize=13))
 
         # lay out
         layout.addWidget(title,                 0, 0, 1, 1)
@@ -36,15 +36,16 @@ class QCustomARTIQMonitor(QFrame):
     def setStatus(self, msg):
         """
         Enables/disables the GUI and sets the display.
-        Args:
+        Arguments:
             msg  (bool, int): the run status and experiment RID (if running).
         """
         status, rid = msg
         if status:
             self.status_display.setText('RID: {}'.format(rid))
             self.status_display.setStyleSheet('background-color: red')
+            self.status_display.adjustSize()
             self.parent.setDisabled(status)
         else:
             self.parent.setDisabled(status)
-            self.status_display.setText('Clear')
+            self.status_display.setText('CLEAR')
             self.status_display.setStyleSheet('background-color: green')
