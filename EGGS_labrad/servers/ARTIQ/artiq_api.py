@@ -124,7 +124,7 @@ class ARTIQ_API(object):
         # get index of the desired dds within _dds_channels
         try:
             self._dds_num = self.dds_dict_search_num[device_name]
-        except KeyError:
+        except Exception as e:
             raise Exception("Error: desired device not found.")
 
         # call precompiled DDS waveform getter
@@ -141,14 +141,14 @@ class ARTIQ_API(object):
         # get index of the desired dds within _dds_channels
         try:
             self._dds_num = self.dds_dict_search_num[device_name]
-        except KeyError:
+        except Exception as e:
             raise Exception("Error: desired device not found.")
 
         # call precompiled DDS waveform getter
         self._precompile_func_get_att()
 
         # return waveform values
-        return self._dds_freq_get_att
+        return self._dds_att_get_mu
 
     @autoreload
     def setDDSFastFTW(self, device_name: TStr, freq_ftw: TInt32) -> TNone:
@@ -158,7 +158,7 @@ class ARTIQ_API(object):
         # get index of the desired dds within _dds_channels
         try:
             self._dds_num = self.dds_dict_search_num[device_name]
-        except KeyError:
+        except Exception as e:
             raise Exception("Error: desired device not found.")
 
         # set ftw as class variable for RPC retrieval
@@ -174,7 +174,7 @@ class ARTIQ_API(object):
         # get index of the desired dds within _dds_channels
         try:
             self._dds_num = self.dds_dict_search_num[device_name]
-        except KeyError:
+        except Exception as e:
             raise Exception("Error: desired device not found.")
 
         # set ftw as class variable for RPC retrieval
@@ -190,7 +190,7 @@ class ARTIQ_API(object):
         # get index of the desired dds within _dds_channels
         try:
             self._dds_num = self.dds_dict_search_num[device_name]
-        except KeyError:
+        except Exception as e:
             raise Exception("Error: desired device not found.")
 
         # set att as class variable for RPC retrieval
@@ -215,6 +215,21 @@ class ARTIQ_API(object):
         # get existing waveform from device
         profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
         self._store_getter_dds_data(profile_data_mu)
+        # self.core.break_realtime()
+
+    @kernel(flags={"fast-math"})
+    def _getDDSFastATT(self) -> TNone:
+        self.core.break_realtime()
+
+        # get device
+        index_dds = self._return_dds_num()
+        self.core.break_realtime()
+        dds_dev = self._dds_channels[index_dds]
+        self.core.break_realtime()
+
+        # get existing waveform from device
+        dds_att_mu = dds_dev.get_att_mu()
+        self._store_getter_dds_att(dds_att_mu)
         # self.core.break_realtime()
 
     @kernel(flags={"fast-math"})
@@ -340,7 +355,7 @@ class ARTIQ_API(object):
         return (sw_reg >> channel_num) & 0x1
 
     @autoreload
-    def setDDSsw(self, dds_name: TStr, state: TBool) -> TNone:
+    def setDDSsw(self, dds_name: TStr, state) -> TNone:
         """
         Set the RF switch of a DDS channel.
         """
@@ -374,6 +389,10 @@ class ARTIQ_API(object):
         self._dds_freq_get_ftw =    np.int32(profile_data_mu & 0xFFFFFFFF)
         # self._dds_phase_get_pow =   np.int32((profile_data_mu >> 32) & 0xFFFF)
         self._dds_ampl_get_asf =    np.int32((profile_data_mu >> 48) & 0x3FFF)
+
+    @rpc(flags={"async"})
+    def _store_getter_dds_att(self, att_mu: TInt32) -> TNone:
+        self._dds_att_get_mu = att_mu
 
     @rpc
     def _return_dds_num(self) -> TInt32:
@@ -506,8 +525,9 @@ class ARTIQ_API(object):
         """
         try:
             dev = self.ttlout_dict[ttlname]
-        except KeyError:
+        except Exception as e:
             raise Exception('Invalid device name.')
+
         self._setTTL(dev, state)
 
     @kernel(flags={"fast-math"})
@@ -524,7 +544,7 @@ class ARTIQ_API(object):
         """
         try:
             dev = self.ttlin_dict[ttlname]
-        except KeyError:
+        except Exception as e:
             raise Exception('Invalid device name.')
         self._getTTL(dev)
 
@@ -534,14 +554,15 @@ class ARTIQ_API(object):
         return dev.sample_get_nonrt()
 
     @autoreload
-    def counterTTL(self, ttlname: TStr, time_us: TInt64, trials: TInt32) -> TArray(TInt64, 1):
+    def counterTTL(self, ttlname: TStr, time_us: TFloat, trials: TInt32) -> TArray(TInt64, 1):
         """
         Get the number of TTL input events for a given time, averaged over a number of trials.
         """
         try:
             dev = self.ttlcounter_dict[ttlname]
-        except KeyError:
+        except Exception as e:
             raise Exception('Error: Invalid device name.')
+
         # convert us to mu
         time_mu = self.core.seconds_to_mu(time_us * us)
         # create holding structures for counts
@@ -625,7 +646,7 @@ class ARTIQ_API(object):
         self._setDDSsw(dev.cpld, sw_reg)
 
     @kernel(flags={"fast-math"})
-    def _setDDSsw(self, cpld, state: TBool) -> TNone:
+    def _setDDSsw(self, cpld, state) -> TNone:
         self.core.break_realtime()
         cpld.cfg_switches(state)
 
@@ -847,7 +868,7 @@ class ARTIQ_API(object):
         dev.init()
 
     @kernel(flags={"fast-math"})
-    def _getUrukulStatus(self, cpld) -> TNone:
+    def _getUrukulStatus(self, cpld):
         """
         Get the status register of an Urukul board.
         """

@@ -450,10 +450,12 @@ class ARTIQ_Server(ContextServer):
             if (att < 0) or (att > 31.5):
                 raise Exception('Error: attenuation must be within [0, 31.5].')
             att_mu = self.dds_att_to_mu(att)
-            self.api.setDDSFastATT(dds_name, int(att_mu))
+            # self.api.setDDSFastATT(dds_name, int(att_mu))
+            self.api.setDDSatt(dds_name, int(att_mu))
 
         # getter
-        att_mu = self.api.getDDSFastATT(dds_name)
+        # att_mu = self.api.getDDSFastATT(dds_name)
+        att_mu = self.api.getDDSatt(dds_name)
         self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
         return att_mu
 
