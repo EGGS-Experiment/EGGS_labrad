@@ -95,18 +95,29 @@ class ARTIQ_API(object):
         self._dds_freq_get_ftw =    np.int32(0)
         self._dds_ampl_get_asf =    np.int32(0)
 
+        self._dds_att_get_mu =      np.int32(0)
+
         # set holder variables for DDS data setter
         self._dds_num =             np.int32(0)
+
         self._dds_freq_set_ftw =    np.int32(0)
         self._dds_ampl_set_asf =    np.int32(0)
 
-        # precompile hardware functions
+        self._dds_sw_set_status =   np.int32(0)
+        self._dds_att_set_mu =      np.int32(0)
+
+        ## precompile hardware functions - DDS
+        # getters
+        self._precompile_func_get_wave =    self.core.precompile(self._getDDSFastWave)
+        self._precompile_func_get_att =     self.core.precompile(self._getDDSFastATT)
+
+        # setters
         self._precompile_func_set_freq =    self.core.precompile(self._setDDSFastFTW)
         self._precompile_func_set_ampl =    self.core.precompile(self._setDDSFastASF)
-        self._precompile_func_get_all =     self.core.precompile(self._getDDSFastAll)
+        self._precompile_func_set_att =     self.core.precompile(self._setDDSFastATT)
 
     @autoreload
-    def getDDSFastAll(self, device_name: TStr) -> TTuple([TInt32, TInt32]):
+    def getDDSFastWave(self, device_name: TStr) -> TTuple([TInt32, TInt32]):
         """
         todo:document
         """
@@ -117,10 +128,27 @@ class ARTIQ_API(object):
             raise Exception("Error: desired device not found.")
 
         # call precompiled DDS waveform getter
-        self._precompile_func_get_all()
+        self._precompile_func_get_wave()
 
         # return waveform values
         return self._dds_freq_get_ftw, self._dds_ampl_get_asf
+
+    @autoreload
+    def getDDSFastATT(self, device_name: TStr) -> TInt32:
+        """
+        todo:document
+        """
+        # get index of the desired dds within _dds_channels
+        try:
+            self._dds_num = self.dds_dict_search_num[device_name]
+        except KeyError:
+            raise Exception("Error: desired device not found.")
+
+        # call precompiled DDS waveform getter
+        self._precompile_func_get_att()
+
+        # return waveform values
+        return self._dds_freq_get_att
 
     @autoreload
     def setDDSFastFTW(self, device_name: TStr, freq_ftw: TInt32) -> TNone:
@@ -154,12 +182,28 @@ class ARTIQ_API(object):
         # call precompiled DDS frequency setter
         self._precompile_func_set_ampl()
 
+    @autoreload
+    def setDDSFastATT(self, device_name: TStr, att_mu: TInt32) -> TNone:
+        """
+        todo:document
+        """
+        # get index of the desired dds within _dds_channels
+        try:
+            self._dds_num = self.dds_dict_search_num[device_name]
+        except KeyError:
+            raise Exception("Error: desired device not found.")
+
+        # set att as class variable for RPC retrieval
+        self._dds_att_set_mu = np.int32(att_mu)
+        # call precompiled DDS attenuation setter
+        self._precompile_func_set_att()
+
 
     """
     FAST - KERNEL FUNCTIONS
     """
     @kernel(flags={"fast-math"})
-    def _getDDSFastAll(self) -> TNone:
+    def _getDDSFastWave(self) -> TNone:
         self.core.break_realtime()
 
         # get device
@@ -229,6 +273,98 @@ class ARTIQ_API(object):
         dds_dev.set_mu(freq_curr_ftw, asf=asf_update, profile=DEFAULT_PROFILE)
         # self.core.break_realtime()
 
+    @kernel(flags={"fast-math"})
+    def _setDDSFastASF(self) -> TNone:
+        self.core.break_realtime()
+
+        # get device
+        index_dds = self._return_dds_num()
+        self.core.break_realtime()
+        dds_dev = self._dds_channels[index_dds]
+        self.core.break_realtime()
+
+        # set default profile
+        dds_dev.cpld.set_profile(DEFAULT_PROFILE)
+        dds_dev.cpld.io_update.pulse_mu(64)
+        # self.core.break_realtime()
+
+        # read FTW of current profile
+        profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
+        freq_curr_ftw = np.int32(profile_data_mu & 0xFFFFFFFF)
+        self.core.break_realtime()
+
+        # get new asf via rpc
+        asf_update = self._return_setter_dds_asf()
+        self.core.break_realtime()
+
+        # update device profile
+        dds_dev.set_mu(freq_curr_ftw, asf=asf_update, profile=DEFAULT_PROFILE)
+        # self.core.break_realtime()
+
+    @kernel(flags={"fast-math"})
+    def _setDDSFastATT(self) -> TNone:
+        self.core.break_realtime()
+
+        # get device
+        index_dds = self._return_dds_num()
+        self.core.break_realtime()
+        dds_dev = self._dds_channels[index_dds]
+        self.core.break_realtime()
+
+        # read CPLD attenuation register
+        # note: necessary to ensure existing attenuations are stored
+        att_curr = dds_dev.get_att_mu()
+        self.core.break_realtime()
+
+        # get new att via rpc
+        att_update = self._return_setter_dds_att()
+        self.core.break_realtime()
+
+        # update device attenuation
+        dds_dev.set_att_mu(att_update)
+
+
+    ### TMP REMOVE ###
+    @autoreload
+    def getDDSsw(self, dds_name: TStr) -> TInt32:
+        """
+        Get the RF switch status of a DDS channel.
+        """
+        dev = self.dds_dict[dds_name]
+        # get channel number of dds
+        channel_num = dev.chip_select - 4
+        # get board status register
+        urukul_cfg = self._getUrukulStatus(dev.cpld)
+        # extract switch register from status register
+        sw_reg = urukul_sta_rf_sw(urukul_cfg)
+        return (sw_reg >> channel_num) & 0x1
+
+    @autoreload
+    def setDDSsw(self, dds_name: TStr, state: TBool) -> TNone:
+        """
+        Set the RF switch of a DDS channel.
+        """
+        # get channel number of dds on urukul
+        dev = self.dds_dict[dds_name]
+        channel_num = dev.chip_select - 4
+
+        # extract switch register from urukul status register
+        urukul_cfg = self._getUrukulStatus(dev.cpld)
+        sw_reg = urukul_sta_rf_sw(urukul_cfg)
+
+        # insert new switch status
+        sw_reg &= ~(0x1 << channel_num)
+        sw_reg |= (state << channel_num)
+
+        # set switch status for whole board
+        self._setDDSsw(dev.cpld, sw_reg)
+
+    @kernel(flags={"fast-math"})
+    def _setDDSsw(self, cpld, state: TBool) -> TNone:
+        self.core.break_realtime()
+        cpld.cfg_switches(state)
+    ### TMP REMOVE ###
+
 
     """
     FAST - HOST-KERNEL COMMUNICATION RPCs
@@ -250,6 +386,10 @@ class ARTIQ_API(object):
     @rpc
     def _return_setter_dds_asf(self) -> TInt32:
         return self._dds_ampl_set_asf
+
+    @rpc
+    def _return_setter_dds_att(self) -> TInt32:
+        return self._dds_att_set_mu
     '''new faster functions meant to be used with precompile'''
 
 
@@ -360,7 +500,7 @@ class ARTIQ_API(object):
     TTL FUNCTIONS
     '''
     @autoreload
-    def setTTL(self, ttlname, state):
+    def setTTL(self, ttlname: TStr, state: TBool) -> TNone:
         """
         Manually set the state of a TTL.
         """
@@ -371,7 +511,7 @@ class ARTIQ_API(object):
         self._setTTL(dev, state)
 
     @kernel(flags={"fast-math"})
-    def _setTTL(self, dev, state: TInt32):
+    def _setTTL(self, dev, state: TInt32) -> TNone:
         self.core.break_realtime()
         if state:
             dev.on()
@@ -389,19 +529,19 @@ class ARTIQ_API(object):
         self._getTTL(dev)
 
     @kernel(flags={"fast-math"})
-    def _getTTL(self, dev):
+    def _getTTL(self, dev) -> TNone:
         self.core.break_realtime()
         return dev.sample_get_nonrt()
 
     @autoreload
-    def counterTTL(self, ttlname, time_us, trials):
+    def counterTTL(self, ttlname: TStr, time_us: TInt64, trials: TInt32) -> TArray(TInt64, 1):
         """
         Get the number of TTL input events for a given time, averaged over a number of trials.
         """
         try:
             dev = self.ttlcounter_dict[ttlname]
         except KeyError:
-            raise Exception('Invalid device name.')
+            raise Exception('Error: Invalid device name.')
         # convert us to mu
         time_mu = self.core.seconds_to_mu(time_us * us)
         # create holding structures for counts
@@ -414,7 +554,7 @@ class ARTIQ_API(object):
         return tmp_arr
 
     @kernel(flags={"fast-math"})
-    def _counterTTL(self, dev, time_mu, trials):
+    def _counterTTL(self, dev, time_mu: TInt64, trials: TInt32) -> TNone:
         self.core.break_realtime()
 
         for i in range(trials):
@@ -423,35 +563,35 @@ class ARTIQ_API(object):
             self._recordTTLCounts(dev.fetch_count(), i)
 
     @rpc(flags={"async"})
-    def _recordTTLCounts(self, value, index):
+    def _recordTTLCounts(self, time_value_mu: TInt64, index: TInt32) -> TNone:
         """
         Records values via rpc to minimize kernel overhead.
         """
-        self.ttl_counts_array[index] = value
+        self.ttl_counts_array[index] = time_value_mu
 
 
     '''
     DDS FUNCTIONS
     '''
     @autoreload
-    def initializeDDSAll(self):
+    def initializeDDSAll(self) -> TNone:
         # initialize urukul cplds as well as dds channels
         device_list = list(self.urukul_dict.values())
         for device in device_list:
             self._initializeDDS(device)
 
     @autoreload
-    def initializeDDS(self, dds_name):
+    def initializeDDS(self, dds_name: TStr) -> TNone:
         dev = self.dds_dict[dds_name]
         self._initializeDDS(dev)
 
     @kernel(flags={"fast-math"})
-    def _initializeDDS(self, dev):
+    def _initializeDDS(self, dev) -> TNone:
         self.core.break_realtime()
         dev.init()
 
     @autoreload
-    def getDDSsw(self, dds_name):
+    def getDDSsw(self, dds_name: TStr) -> TInt32:
         """
         Get the RF switch status of a DDS channel.
         """
@@ -465,30 +605,32 @@ class ARTIQ_API(object):
         return (sw_reg >> channel_num) & 0x1
 
     @autoreload
-    def setDDSsw(self, dds_name, state):
+    def setDDSsw(self, dds_name: TStr, state: TBool) -> TNone:
         """
         Set the RF switch of a DDS channel.
         """
+        # get channel number of dds on urukul
         dev = self.dds_dict[dds_name]
-        # get channel number of dds
         channel_num = dev.chip_select - 4
-        # get board status register
+
+        # extract switch register from urukul status register
         urukul_cfg = self._getUrukulStatus(dev.cpld)
-        # extract switch register from status register
         sw_reg = urukul_sta_rf_sw(urukul_cfg)
+
         # insert new switch status
         sw_reg &= ~(0x1 << channel_num)
         sw_reg |= (state << channel_num)
+
         # set switch status for whole board
         self._setDDSsw(dev.cpld, sw_reg)
 
     @kernel(flags={"fast-math"})
-    def _setDDSsw(self, cpld, state):
+    def _setDDSsw(self, cpld, state: TBool) -> TNone:
         self.core.break_realtime()
         cpld.cfg_switches(state)
 
     @autoreload
-    def getDDS(self, dds_name):
+    def getDDS(self, dds_name: TStr) -> TTuple([TInt32, TInt32, TInt32]):
         """
         Get the frequency, amplitude, and phase values
         (in machine units) of a DDS channel.
@@ -644,7 +786,7 @@ class ARTIQ_API(object):
         return dds_params_processed
 
     @kernel(flags={"fast-math"})
-    def _getDDSAll(self):
+    def _getDDSAll(self) -> TNone:
         self.core.break_realtime()
 
         # read channel parameters
@@ -661,11 +803,11 @@ class ARTIQ_API(object):
             self.core.break_realtime()
 
     @rpc(flags={"async"})
-    def _recordParamsChannel(self, profiledata):
+    def _recordParamsChannel(self, profiledata) -> TNone:
         self.channel_profiledata.append(profiledata)
 
     @rpc(flags={"async"})
-    def _recordParamsBoard(self, sw_state, att_state):
+    def _recordParamsBoard(self, sw_state, att_state) -> TNone:
         self.board_sw.append(urukul_sta_rf_sw(sw_state))
         self.board_att.append(np.uintc(att_state))
 
@@ -692,7 +834,7 @@ class ARTIQ_API(object):
     URUKUL FUNCTIONS
     '''
     @autoreload
-    def initializeUrukul(self, urukul_name):
+    def initializeUrukul(self, urukul_name: TStr) -> TNone:
         """
         Initialize an Urukul board.
         """
@@ -700,12 +842,12 @@ class ARTIQ_API(object):
         self._initializeUrukul(dev)
 
     @kernel(flags={"fast-math"})
-    def _initializeUrukul(self, dev):
+    def _initializeUrukul(self, dev) -> TNone:
         self.core.break_realtime()
         dev.init()
 
     @kernel(flags={"fast-math"})
-    def _getUrukulStatus(self, cpld):
+    def _getUrukulStatus(self, cpld) -> TNone:
         """
         Get the status register of an Urukul board.
         """
@@ -733,11 +875,11 @@ class ARTIQ_API(object):
     DAC/ZOTINO FUNCTIONS
     '''
     @autoreload
-    def initializeDAC(self):
+    def initializeDAC(self) -> TNone:
         self._initializeDAC()
 
     @kernel(flags={"fast-math"})
-    def _initializeDAC(self):
+    def _initializeDAC(self) -> TNone:
         """
         Initialize the DAC.
         """
@@ -749,7 +891,7 @@ class ARTIQ_API(object):
         self._setZotino(channel_num, volt_mu)
 
     @kernel(flags={"fast-math"})
-    def _setZotino(self, channel_num, volt_mu):
+    def _setZotino(self, channel_num: TInt32, volt_mu: TInt32) -> TNone:
         """
         Set the voltage of a DAC register.
         """
@@ -758,11 +900,11 @@ class ARTIQ_API(object):
         self.zotino.load()
 
     @autoreload
-    def setZotinoGain(self, channel_num, gain_mu):
+    def setZotinoGain(self, channel_num: TInt32, gain_mu: TInt32) -> TNone:
         self._setZotinoGain(channel_num, gain_mu)
 
     @kernel(flags={"fast-math"})
-    def _setZotinoGain(self, channel_num, gain_mu):
+    def _setZotinoGain(self, channel_num: TInt32, gain_mu: TInt32) -> TNone:
         """
         Set the gain of a DAC channel.
         """
@@ -771,11 +913,11 @@ class ARTIQ_API(object):
         self.zotino.load()
 
     @autoreload
-    def setZotinoOffset(self, channel_num, volt_mu):
+    def setZotinoOffset(self, channel_num: TInt32, volt_mu: TInt32) -> TNone:
         self._setZotinoOffset(channel_num, volt_mu)
 
     @kernel(flags={"fast-math"})
-    def _setZotinoOffset(self, channel_num, volt_mu):
+    def _setZotinoOffset(self, channel_num: TInt32, volt_mu: TInt32) -> TNone:
         """
         Set the voltage of a DAC offset register.
         """
@@ -816,11 +958,11 @@ class ARTIQ_API(object):
     FASTINO FUNCTIONS
     '''
     @autoreload
-    def initializeFastino(self):
+    def initializeFastino(self) -> TNone:
         self._initializeFastino()
 
     @kernel(flags={"fast-math"})
-    def _initializeFastino(self):
+    def _initializeFastino(self) -> TNone:
         """
         Initialize the Fastino.
         """
@@ -828,11 +970,11 @@ class ARTIQ_API(object):
         self.fastino.init()
 
     @autoreload
-    def setFastino(self, channel_num, volt_mu):
+    def setFastino(self, channel_num: TInt32, volt_mu: TInt32) -> TNone:
         self._setFastino(channel_num, volt_mu)
 
     @kernel(flags={"fast-math"})
-    def _setFastino(self, channel_num, volt_mu):
+    def _setFastino(self, channel_num: TInt32, volt_mu: TInt32) -> TNone:
         """
         Set the voltage of a Fastino register.
         """
@@ -851,11 +993,11 @@ class ARTIQ_API(object):
         return self.fastino.read(addr)
 
     @autoreload
-    def continuousFastino(self, channel_num):
+    def continuousFastino(self, channel_num: TInt32) -> TNone:
         self._continuousFastino(channel_num)
 
     @kernel(flags={"fast-math"})
-    def _continuousFastino(self, channel_num):
+    def _continuousFastino(self, channel_num: TInt32) -> TNone:
         """
         Allows a Fastino channel to be updated continuously regardless of incoming data.
         """
@@ -867,14 +1009,14 @@ class ARTIQ_API(object):
     SAMPLER
     '''
     @autoreload
-    def initializeSampler(self):
+    def initializeSampler(self) -> TNone:
         """
         Initialize the Sampler.
         """
         self._initializeSampler()
 
     @kernel(flags={"fast-math"})
-    def _initializeSampler(self):
+    def _initializeSampler(self) -> TNone:
         """
         Initialize the Sampler.
         """
@@ -882,7 +1024,7 @@ class ARTIQ_API(object):
         self.sampler.init()
 
     @autoreload
-    def setSamplerGain(self, channel_num, gain_mu):
+    def setSamplerGain(self, channel_num: TInt32, gain_mu: TInt32) -> TNone:
         """
         Set the gain for a sampler channel.
         :param channel_num: Channel to set
@@ -892,7 +1034,7 @@ class ARTIQ_API(object):
         self._setSamplerGain(channel_num, gain_mu)
 
     @kernel(flags={"fast-math"})
-    def _setSamplerGain(self, channel_num, gain_mu):
+    def _setSamplerGain(self, channel_num: TInt32, gain_mu: TInt32) -> TNone:
         self.core.break_realtime()
         self.sampler.set_gain_mu(channel_num, gain_mu)
 
@@ -918,7 +1060,7 @@ class ARTIQ_API(object):
         return self.sampler.gains
 
     @autoreload
-    def readSampler(self, rate_hz, samples):
+    def readSampler(self, rate_hz: TFloat, samples: TInt32) -> TArray(TInt32, 1):
         # create structures to hold results
         setattr(self, "sampler_dataset", np.zeros((samples, 8), dtype=np.int32))
         setattr(self, "sampler_holder", np.zeros(8, dtype=np.int32))
@@ -933,7 +1075,7 @@ class ARTIQ_API(object):
         return tmp_arr
 
     @kernel(flags={"fast-math"})
-    def _readSampler(self, time_delay_mu, samples):
+    def _readSampler(self, time_delay_mu: TInt64, samples: TInt32) -> TNone:
         self.core.break_realtime()
 
         for i in range(samples):
@@ -944,7 +1086,7 @@ class ARTIQ_API(object):
                 delay_mu(time_delay_mu)
 
     @rpc(flags={"async"})
-    def _recordSamplerValues(self, i, value_arr):
+    def _recordSamplerValues(self, i: TInt32, value_arr: TArray(TInt32, 1)) -> TNone:
         """
         Records values via rpc to minimize kernel overhead.
         """

@@ -153,15 +153,15 @@ class ARTIQ_Server(ContextServer):
         # conversions
         # DDS - val to mu
         self.dds_frequency_to_ftw = lambda freq: np.int32(freq * 4.294967295) # 0xFFFFFFFF / 1GHz
-        self.dds_amplitude_to_asf = lambda ampl: np.int32(ampl * 0x3fff)
-        self.dds_turns_to_pow =     lambda phase: np.int32(phase * 0xffff)
-        self.dds_att_to_mu =        lambda dbm: np.int32(0xff) - np.int32(round(dbm * 8))
+        self.dds_amplitude_to_asf = lambda ampl: np.int32(ampl * 0x3FFF)
+        self.dds_turns_to_pow =     lambda phase: np.int32(phase * 0xFFFF)
+        self.dds_att_to_mu =        lambda dbm: np.int32(0xFF) - np.int32(round(dbm * 8))
 
         # DDS - mu to val
         self.dds_ftw_to_frequency = lambda freq: freq / 4.2949673
-        self.dds_asf_to_amplitude = lambda ampl: ampl / 0x3fff
-        self.dds_pow_to_turns =     lambda phase: phase / 0xffff
-        self.dds_mu_to_att =        lambda mu: (255 - (mu & 0xff)) / 8
+        self.dds_asf_to_amplitude = lambda ampl: ampl / 0x3FFF
+        self.dds_pow_to_turns =     lambda phase: phase / 0xFFFF
+        self.dds_mu_to_att =        lambda mu: (255 - (mu & 0xFF)) / 8
 
         # DAC
         from artiq.coredevice.ad53xx import voltage_to_mu
@@ -338,40 +338,17 @@ class ARTIQ_Server(ContextServer):
         """
         if dds_name not in self.api.dds_dict:
             raise Exception('Error: device does not exist.')
+
         # setter
         if state is not None:
             if (type(state) == int) and (state not in (0, 1)):
                 raise Exception('Error: invalid input. Value must be a boolean, 0, or 1.')
             yield self.api.setDDSsw(dds_name, state)
+
         # getter
         state = yield self.api.getDDSsw(dds_name)
         self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
         returnValue(bool(state))
-
-    # @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='i')
-    # def DDSfreq(self, c, dds_name, freq=None):
-    #     """
-    #     Manually set the frequency of a DDS.
-    #     Arguments:
-    #         dds_name    (str)   : the name of the DDS.
-    #         freq        (float) : the frequency (in Hz).
-    #     Returns:
-    #                     (int)   : the 32-bit frequency tuning word.
-    #     """
-    #     if dds_name not in self.api.dds_dict:
-    #         raise Exception('Error: device does not exist.')
-    #
-    #     # setter
-    #     if freq is not None:
-    #         if (freq > 4e8) or (freq < 0):
-    #             raise Exception('Error: frequency must be within [0 Hz, 400 MHz].')
-    #         ftw = self.dds_frequency_to_ftw(freq)
-    #         yield self.api.setDDS(dds_name, 'ftw', ftw)
-    #
-    #     # getter
-    #     ftw, _, _ = yield self.api.getDDS(dds_name)
-    #     self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
-    #     returnValue(np.int32(ftw))
 
     '''
     PRECOMPILE TESTING
@@ -433,30 +410,6 @@ class ARTIQ_Server(ContextServer):
     PRECOMPILE TESTING
     '''
 
-
-    # @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='i')
-    # def DDSampl(self, c, dds_name, ampl=None):
-    #     """
-    #     Manually set the amplitude of a DDS.
-    #     Arguments:
-    #         dds_name    (str)   : the name of the DDS.
-    #         ampl        (float) : the fractional amplitude.
-    #     Returns:
-    #                     (int)   : the 14-bit amplitude scaling factor.
-    #     """
-    #     if dds_name not in self.api.dds_dict:
-    #         raise Exception('Error: device does not exist.')
-    #     # setter
-    #     if ampl is not None:
-    #         if (ampl > 1) or (ampl < 0):
-    #             raise Exception('Error: amplitude must be within [0, 1].')
-    #         asf = self.dds_amplitude_to_asf(ampl)
-    #         yield self.api.setDDS(dds_name, 'asf', asf)
-    #     # getter
-    #     _, asf, _ = yield self.api.getDDS(dds_name)
-    #     self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
-    #     returnValue(np.int32(asf))
-
     @setting(325, "DDS Phase", dds_name='s', phase='v', returns='i')
     def DDSphase(self, c, dds_name, phase=None):
         """
@@ -491,16 +444,18 @@ class ARTIQ_Server(ContextServer):
         """
         if dds_name not in self.api.dds_dict:
             raise Exception('Error: device does not exist.')
+
         # setter
         if att is not None:
             if (att < 0) or (att > 31.5):
                 raise Exception('Error: attenuation must be within [0, 31.5].')
             att_mu = self.dds_att_to_mu(att)
-            yield self.api.setDDSatt(dds_name, int(att_mu))
+            self.api.setDDSFastATT(dds_name, int(att_mu))
+
         # getter
-        att_mu = yield self.api.getDDSatt(dds_name)
+        att_mu = self.api.getDDSFastATT(dds_name)
         self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
-        returnValue(att_mu)
+        return att_mu
 
     @setting(331, "DDS Read", dds_name='s', addr='i', length='i', returns=['i', '(ii)'])
     def DDSread(self, c, dds_name, addr, length):
@@ -540,38 +495,6 @@ class ARTIQ_Server(ContextServer):
         """
         dds_data = yield self.api.getDDSAll()
         returnValue(dds_data)
-
-    '''
-    @setting(341, "DDS Profile ", dds_name='s', profile='i', returns='(iii)')
-    def DDSProfile(self, c, dds_name, profile=None):
-        """
-        Set profile of a DDS channel.
-            Frequency and amplitude will be set to whatever parameters are stored for the selected profile.
-        Arguments:
-            profile     (int): the profile channel (must be between [0, 7]).
-        Returns:
-                        tuple(int, int, int): a tuple of (profile number, ftw, asf).
-        """
-        # setter
-        # getter
-        #dds_data = yield self.api.getDDSAll()
-        #self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
-        dds_profile = yield self.api.getDDSProfile()
-        # todo: get ftw and asf
-        returnValue()
-
-    @setting(351, "DDS RAM Setup", dds_name='s', mode='s', returns='s')
-    def ddsRAMSetup(self, dds_name, mode=None):
-        """
-        """
-        pass
-
-    @setting(352, "DDS RAM Program", dds_name='s', data=['*i','*v'], returns='s')
-    def ddsRAMSetup(self, dds_name, data):
-        """
-        """
-        pass
-    '''
 
     def _ddsNameHelper(self, dds_name):
         """
