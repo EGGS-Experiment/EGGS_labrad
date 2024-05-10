@@ -31,9 +31,11 @@ from artiq.coredevice.ad53xx import AD53XX_READ_X1A, AD53XX_READ_X1B, AD53XX_REA
                                     AD53XX_READ_GAIN, AD53XX_READ_OFS0, AD53XX_READ_OFS1,\
                                     AD53XX_READ_AB0, AD53XX_READ_AB1, AD53XX_READ_AB2, AD53XX_READ_AB3
 
-AD53XX_REGISTERS = {'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53XX_READ_OFFSET,
-                    'GAIN': AD53XX_READ_GAIN, 'OFS0': AD53XX_READ_OFS1, 'OFS1': AD53XX_READ_OFS1,
-                    'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2, 'AB3': AD53XX_READ_AB3}
+AD53XX_REGISTERS = {
+    'X1A': AD53XX_READ_X1A, 'X1B': AD53XX_READ_X1B, 'OFF': AD53XX_READ_OFFSET,
+    'GAIN': AD53XX_READ_GAIN, 'OFS0': AD53XX_READ_OFS1, 'OFS1': AD53XX_READ_OFS1,
+    'AB0': AD53XX_READ_AB0, 'AB1': AD53XX_READ_AB1, 'AB2': AD53XX_READ_AB2, 'AB3': AD53XX_READ_AB3
+}
 
 TTLSIGNAL_ID = 828176
 DACSIGNAL_ID = 828175
@@ -51,7 +53,6 @@ class ARTIQ_Server(ContextServer):
     Allows us to easily incorporate ARTIQ into LabRAD for most things.
     Can run without the existence of an ARTIQ Master.
     """
-
     name = 'ARTIQ Server'
     regKey = 'ARTIQ Server'
 
@@ -354,8 +355,8 @@ class ARTIQ_Server(ContextServer):
     PRECOMPILE TESTING
     '''
     # @setting(88888, "DDS Frequency Fast", dds_name='s', freq='v', returns='i')
-    @setting(88888, "DDS Frequency", dds_name='s', freq='v', returns='i')
-    def DDSfreqFast(self, c, dds_name, freq):
+    @setting(323, "DDS Frequency", dds_name='s', freq='v', returns='i')
+    def DDSfrequency(self, c, dds_name, freq=None):
         """
         Manually set the frequency of a DDS.
         Arguments:
@@ -376,13 +377,13 @@ class ARTIQ_Server(ContextServer):
             self.api.setDDSFastFTW(dds_name, ftw)
 
         # getter
-        ftw, asf = self.api.getDDSFastAll(dds_name)
+        ftw, asf = self.api.getDDSFastWave(dds_name)
         self.notifyOtherListeners(c, (dds_name, 'ftw', ftw), self.ddsChanged)
         return np.int32(ftw)
 
     # @setting(88889, "DDS Amplitude Fast", dds_name='s', ampl='v', returns='i')
-    @setting(88889, "DDS Amplitude", dds_name='s', ampl='v', returns='i')
-    def DDSamplFast(self, c, dds_name, ampl=None):
+    @setting(324, "DDS Amplitude", dds_name='s', ampl='v', returns='i')
+    def DDSamplitude(self, c, dds_name, ampl=None):
         """
         Manually set the amplitude of a DDS.
         Arguments:
@@ -403,7 +404,7 @@ class ARTIQ_Server(ContextServer):
             self.api.setDDSFastASF(dds_name, asf)
 
         # getter
-        ftw, asf = self.api.getDDSFastAll(dds_name)
+        ftw, asf = self.api.getDDSFastWave(dds_name)
         self.notifyOtherListeners(c, (dds_name, 'asf', asf), self.ddsChanged)
         return np.int32(asf)
     '''
@@ -450,12 +451,12 @@ class ARTIQ_Server(ContextServer):
             if (att < 0) or (att > 31.5):
                 raise Exception('Error: attenuation must be within [0, 31.5].')
             att_mu = self.dds_att_to_mu(att)
-            # self.api.setDDSFastATT(dds_name, int(att_mu))
-            self.api.setDDSatt(dds_name, int(att_mu))
+            self.api.setDDSFastATT(dds_name, int(att_mu))
+            # self.api.setDDSatt(dds_name, int(att_mu))
 
         # getter
-        # att_mu = self.api.getDDSFastATT(dds_name)
-        att_mu = self.api.getDDSatt(dds_name)
+        att_mu = self.api.getDDSFastATT(dds_name)
+        # att_mu = self.api.getDDSatt(dds_name)
         self.notifyOtherListeners(c, (dds_name, 'att', att_mu), self.ddsChanged)
         return att_mu
 

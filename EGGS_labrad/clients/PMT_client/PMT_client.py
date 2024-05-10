@@ -30,14 +30,16 @@ class PMT_client(GUIClient):
     @inlineCallbacks
     def initClient(self):
         # set recording stuff
-        self.c_record = self.cxn.context()
-        self.recording = False
-        self.starttime = 0
+        self.c_record =     self.cxn.context()
+        self.recording =    False
+        self.starttime =    0
+
         # create polling loop
-        self.refresher = LoopingCall(self.update_counts_continually)
-        self._sample_time_us = 0
-        self._num_samples = 0
-        self._time_per_data = 0
+        self.refresher =        LoopingCall(self.update_counts_continually)
+        self._sample_time_us =  0
+        self._num_samples =     0
+        self._time_per_data =   0
+
         # connect to signals
         yield self.aq.signal__exp_running(EXPID)
         yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID)
@@ -170,7 +172,10 @@ class PMT_client(GUIClient):
             self.starttime = time()
             trunk = createTrunk(self.name)
             yield self.dv.cd(trunk, True, context=self.c_record)
-            yield self.dv.new('PMT', [('Elapsed time', 't')], [('PMT Counts', 'Counts', 'Number')], context=self.c_record)
+            yield self.dv.new('PMT',
+                              [('Elapsed time', 't')],
+                              [('PMT Counts', 'Counts', 'Number')],
+                              context=self.c_record)
 
     def experimentRunning(self, c, msg):
         # stop polling
