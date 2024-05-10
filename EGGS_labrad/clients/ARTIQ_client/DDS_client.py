@@ -38,6 +38,7 @@ class DDS_client(GUIClient):
         yield self.aq.addListener(listener=self.rescueIon, source=None, ID=RESCUEID)
 
     def _getDevices(self, device_db):
+        # note: this part may be causing problems when we reestablish the artiq server cxn
         # get devices
         for name, params in device_db.items():
             if 'class' not in params:

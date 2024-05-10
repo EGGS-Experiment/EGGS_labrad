@@ -2,7 +2,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox, QCustomEditableLabel, QCustomARTIQMonitor
+from EGGS_labrad.clients.Widgets import (TextChangingButton, QCustomGroupBox, QCustomEditableLabel,
+                                         QCustomARTIQMonitor, QCustomUnscrollableSpinBox)
 
 
 class AD9910_channel(QFrame):
@@ -30,33 +31,36 @@ class AD9910_channel(QFrame):
         title.setAlignment(Qt.AlignCenter)
 
         # labels
-        freqlabel = QLabel('Frequency (MHz)')
-        powerlabel = QLabel('Amplitude (%)')
-        attlabel = QLabel('Attenuation (dB)')
+        freqlabel =     QLabel('Frequency (MHz)')
+        powerlabel =    QLabel('Amplitude (%)')
+        attlabel =      QLabel('Attenuation (dB)')
 
         # editable fields
-        self.freq = QDoubleSpinBox()
+        self.freq = QCustomUnscrollableSpinBox()
         self.freq.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.freq.setDecimals(4)
         self.freq.setSingleStep(0.001)
         self.freq.setRange(0.0, 400.0)
         self.freq.setKeyboardTracking(False)
-        self.ampl = QDoubleSpinBox()
+
+        self.ampl = QCustomUnscrollableSpinBox()
         self.ampl.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.ampl.setDecimals(2)
         self.ampl.setSingleStep(1)
         self.ampl.setRange(0.0, 100.0)
         self.ampl.setKeyboardTracking(False)
-        self.att = QDoubleSpinBox()
+
+        self.att = QCustomUnscrollableSpinBox()
         self.att.setFont(QFont('MS Shell Dlg 2', pointSize=13))
         self.att.setDecimals(1)
         self.att.setSingleStep(1)
         self.att.setRange(0, 31.5)
         self.att.setValue(31.5)
         self.att.setKeyboardTracking(False)
-        self.initbutton = QPushButton('Initialize')
-        self.rfswitch = TextChangingButton(("On", "Off"))
-        self.lockswitch = TextChangingButton(("Unlocked", "Locked"))
+
+        self.initbutton =   QPushButton('Initialize')
+        self.rfswitch =     TextChangingButton(("On", "Off"))
+        self.lockswitch =   TextChangingButton(("Unlocked", "Locked"))
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
         # add widgets to layout

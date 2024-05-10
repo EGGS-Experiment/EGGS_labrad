@@ -4,7 +4,7 @@ from artiq.language import *
 from artiq.coredevice import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
-from artiq.coredevice.urukul import urukul_sta_rf_sw, CFG_PROFILE, DEFAULT_PROFILE
+from artiq.coredevice.urukul import urukul_sta_rf_sw, CFG_PROFILE, CFG_RF_SW, DEFAULT_PROFILE
 from artiq.coredevice.ad9910 import (_AD9910_REG_PROFILE0, _AD9910_REG_PROFILE1, _AD9910_REG_PROFILE2,
                                      _AD9910_REG_PROFILE3, _AD9910_REG_PROFILE4, _AD9910_REG_PROFILE5,
                                      _AD9910_REG_PROFILE6, _AD9910_REG_PROFILE7)
@@ -19,6 +19,7 @@ class ARTIQ_API(object):
     # todo: set version so we know what we're compatible with
     # todo: experiment with kernel invariants, fast-math, host_only, rpc, portable
     """
+    kernel_invariants = set()
 
     '''
     AUTORELOAD DECORATOR
@@ -93,30 +94,46 @@ class ARTIQ_API(object):
         """
         todo: document
         """
+        '''
+        DDS PRECOMPILE
+        '''
         # set holder variables for DDS data getter
         self._dds_freq_get_ftw =    np.int32(0)
         self._dds_ampl_get_asf =    np.int32(0)
-
         self._dds_att_get_mu =      np.int32(0)
+        self._dds_sw_get_status =   np.int32(0)
 
         # set holder variables for DDS data setter
         self._dds_num =             np.int32(0)
-
         self._dds_freq_set_ftw =    np.int32(0)
         self._dds_ampl_set_asf =    np.int32(0)
-
-        self._dds_sw_set_status =   np.int32(0)
         self._dds_att_set_mu =      np.int32(0)
+        self._dds_sw_set_status =   np.int32(0)
 
         ## precompile hardware functions - DDS
         # getters
         self._precompile_func_get_wave =    self.core.precompile(self._getDDSFastWave)
         self._precompile_func_get_att =     self.core.precompile(self._getDDSFastATT)
-
         # setters
         self._precompile_func_set_freq =    self.core.precompile(self._setDDSFastFTW)
         self._precompile_func_set_ampl =    self.core.precompile(self._setDDSFastASF)
         self._precompile_func_set_att =     self.core.precompile(self._setDDSFastATT)
+
+        '''
+        TTL PRECOMPILE
+        '''
+        # set holder variables for TTLCounter data getter
+        self._ttlcount_time_get_mu =    np.int32(0)
+        self._ttlcount_samples_get_mu = np.int32(0)
+
+        # set holder variables for TTLCounter data setter
+        self._ttlcount_num =            np.int32(0)
+        self._ttlcount_time_set_mu =    np.int32(0)
+        self._ttlcount_samples_set_mu = np.int32(0)
+
+        ## precompile hardware functions
+        # getters
+        # self._precompile_func_get_ttlcounts =   self.core.precompile(self._getDDSFastWave)
 
     @autoreload
     def getDDSFastWave(self, device_name: TStr) -> TTuple([TInt32, TInt32]):
@@ -238,17 +255,30 @@ class ARTIQ_API(object):
     def _setDDSFastFTW(self) -> TNone:
         self.core.break_realtime()
 
-        # get device
+        ## get device
         index_dds = self._return_dds_num()
         self.core.break_realtime()
         dds_dev = self._dds_channels[index_dds]
+        dds_cpld = dds_dev.cpld
         self.core.break_realtime()
 
-        # set default profile
-        dds_dev.cpld.set_profile(DEFAULT_PROFILE)
-        dds_dev.cpld.io_update.pulse_mu(64)
-        # self.core.break_realtime()
+        ## set default profile
+        # extract current switch register status from urukul status register
+        # note: necessary to prevent overwriting of existing switch configuration
+        reg_sw = urukul_sta_rf_sw(dds_cpld.sta_read())
+        reg_cfg_current = (dds_cpld.cfg_reg & ~0xF) | reg_sw
+        # note: the following core.break_realtime is CRITICAL to ensuring
+        # that we actually read the switch register correctly
+        self.core.break_realtime()
 
+        # update current configuration register with desired profile
+        reg_cfg_update = reg_cfg_current & ~(7 << CFG_PROFILE)
+        reg_cfg_update |= (DEFAULT_PROFILE & 7) << CFG_PROFILE
+        dds_cpld.cfg_write(reg_cfg_update)
+        dds_cpld.io_update.pulse_mu(64)
+        self.core.break_realtime()
+
+        ## update waveform
         # read ASF of current profile
         profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
         ampl_curr_asf = np.int32((profile_data_mu >> 48) & 0x3FFF)
@@ -260,7 +290,7 @@ class ARTIQ_API(object):
 
         # update device profile
         dds_dev.set_mu(ftw_update, asf=ampl_curr_asf, profile=DEFAULT_PROFILE)
-        # self.core.break_realtime()
+        # self._tmpremoveidk()
 
     @kernel(flags={"fast-math"})
     def _setDDSFastASF(self) -> TNone:
@@ -270,13 +300,26 @@ class ARTIQ_API(object):
         index_dds = self._return_dds_num()
         self.core.break_realtime()
         dds_dev = self._dds_channels[index_dds]
+        dds_cpld = dds_dev.cpld
         self.core.break_realtime()
 
-        # set default profile
-        dds_dev.cpld.set_profile(DEFAULT_PROFILE)
-        dds_dev.cpld.io_update.pulse_mu(64)
-        # self.core.break_realtime()
+        ## set default profile
+        # extract current switch register status from urukul status register
+        # note: necessary to prevent overwriting of existing switch configuration
+        reg_sw = urukul_sta_rf_sw(dds_cpld.sta_read())
+        reg_cfg_current = (dds_cpld.cfg_reg & ~0xF) | reg_sw
+        # note: the following core.break_realtime is CRITICAL to ensuring
+        # that we actually read the switch register correctly
+        self.core.break_realtime()
 
+        # update current configuration register with desired profile
+        reg_cfg_update = reg_cfg_current & ~(7 << CFG_PROFILE)
+        reg_cfg_update |= (DEFAULT_PROFILE & 7) << CFG_PROFILE
+        dds_cpld.cfg_write(reg_cfg_update)
+        dds_cpld.io_update.pulse_mu(64)
+        self.core.break_realtime()
+
+        ## update waveform
         # read FTW of current profile
         profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
         freq_curr_ftw = np.int32(profile_data_mu & 0xFFFFFFFF)
@@ -288,35 +331,6 @@ class ARTIQ_API(object):
 
         # update device profile
         dds_dev.set_mu(freq_curr_ftw, asf=asf_update, profile=DEFAULT_PROFILE)
-        # self.core.break_realtime()
-
-    @kernel(flags={"fast-math"})
-    def _setDDSFastASF(self) -> TNone:
-        self.core.break_realtime()
-
-        # get device
-        index_dds = self._return_dds_num()
-        self.core.break_realtime()
-        dds_dev = self._dds_channels[index_dds]
-        self.core.break_realtime()
-
-        # set default profile
-        dds_dev.cpld.set_profile(DEFAULT_PROFILE)
-        dds_dev.cpld.io_update.pulse_mu(64)
-        # self.core.break_realtime()
-
-        # read FTW of current profile
-        profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
-        freq_curr_ftw = np.int32(profile_data_mu & 0xFFFFFFFF)
-        self.core.break_realtime()
-
-        # get new asf via rpc
-        asf_update = self._return_setter_dds_asf()
-        self.core.break_realtime()
-
-        # update device profile
-        dds_dev.set_mu(freq_curr_ftw, asf=asf_update, profile=DEFAULT_PROFILE)
-        # self.core.break_realtime()
 
     @kernel(flags={"fast-math"})
     def _setDDSFastATT(self) -> TNone:
@@ -356,32 +370,6 @@ class ARTIQ_API(object):
         sw_reg = urukul_sta_rf_sw(urukul_cfg)
         return (sw_reg >> channel_num) & 0x1
 
-    @autoreload
-    def setDDSsw(self, dds_name: TStr, state) -> TNone:
-        """
-        Set the RF switch of a DDS channel.
-        """
-        # get channel number of dds on urukul
-        dev = self.dds_dict[dds_name]
-        channel_num = dev.chip_select - 4
-
-        # extract switch register from urukul status register
-        urukul_cfg = self._getUrukulStatus(dev.cpld)
-        sw_reg = urukul_sta_rf_sw(urukul_cfg)
-
-        # insert new switch status
-        sw_reg &= ~(0x1 << channel_num)
-        sw_reg |= (state << channel_num)
-
-        # set switch status for whole board
-        self._setDDSsw(dev.cpld, sw_reg)
-
-    @kernel(flags={"fast-math"})
-    def _setDDSsw(self, cpld, state: TBool) -> TNone:
-        self.core.break_realtime()
-        cpld.cfg_switches(state)
-    ### TMP REMOVE ###
-
 
     """
     FAST - HOST-KERNEL COMMUNICATION RPCs
@@ -411,8 +399,55 @@ class ARTIQ_API(object):
     @rpc
     def _return_setter_dds_att(self) -> TInt32:
         return self._dds_att_set_mu
+
+    @rpc(flags={"async"})
+    def _debug_print(self, data) -> TNone:
+        print('\n\t\tdebug: {}'.format(data))
+
+    @rpc(flags={"async"})
+    def _tmpremoveidk(self) -> TNone:
+        pass
     '''new faster functions meant to be used with precompile'''
 
+    '''ttl precompile functions'''
+    #
+    # @autoreload
+    # def counterTTL(self, ttlname: TStr, time_us: TFloat, trials: TInt32) -> TArray(TInt64, 1):
+    #     """
+    #     Get the number of TTL input events for a given time, averaged over a number of trials.
+    #     """
+    #     try:
+    #         dev = self.ttlcounter_dict[ttlname]
+    #     except Exception as e:
+    #         raise Exception('Error: Invalid device name.')
+    #
+    #     # convert us to mu
+    #     time_mu = self.core.seconds_to_mu(time_us * us)
+    #     # create holding structures for counts
+    #     setattr(self, "ttl_counts_array", np.zeros(trials))
+    #     # get counts
+    #     self._counterTTL(dev, time_mu, trials)
+    #     # delete holding structure
+    #     tmp_arr = self.ttl_counts_array
+    #     delattr(self, "ttl_counts_array")
+    #     return tmp_arr
+    #
+    # @kernel(flags={"fast-math"})
+    # def _counterTTL(self, dev, time_mu: TInt64, trials: TInt32) -> TNone:
+    #     self.core.break_realtime()
+    #
+    #     for i in range(trials):
+    #         self.core.break_realtime()
+    #         dev.gate_rising_mu(time_mu)
+    #         self._recordTTLCounts(dev.fetch_count(), i)
+    #
+    # @rpc(flags={"async"})
+    # def _recordTTLCounts(self, time_value_mu: TInt64, index: TInt32) -> TNone:
+    #     """
+    #     Records values via rpc to minimize kernel overhead.
+    #     """
+    #     self.ttl_counts_array[index] = time_value_mu
+    '''ttl precompile functions'''
 
     def stopAPI(self):
         """
@@ -427,11 +462,11 @@ class ARTIQ_API(object):
         devices = DeviceDB(self.ddb_filepath)
         self.device_manager = DeviceManager(devices)
         self.device_db = devices.get_device_db()
-        # self._getDevices()
+        self._getDevices()
 
-        # note: only the core needs to be re-acquired
-        # since the kernel decorator looks for only it inside the class object
-        self.core = self.device_manager.get("core")
+        # # note: only the core needs to be re-acquired
+        # # since the kernel decorator looks for only it inside the class object
+        # self.core = self.device_manager.get("core")
 
         # re-precompile relevant functions
         self._getPrecompiledFunctions()
