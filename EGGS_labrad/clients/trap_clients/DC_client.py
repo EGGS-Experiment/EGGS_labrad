@@ -28,6 +28,7 @@ class DC_client(GUIClient):
             yield self.amo8.serial_flush()
         except Exception as e:
             pass
+
         # connect to signals
         yield self.amo8.signal__toggle_update(TOGGLEID)
         yield self.amo8.addListener(listener=self.updateToggle, source=None, ID=TOGGLEID)
@@ -35,6 +36,7 @@ class DC_client(GUIClient):
         yield self.amo8.addListener(listener=self.updateVoltage, source=None, ID=VOLTAGEID)
         yield self.amo8.signal__hv_update(HVID)
         yield self.amo8.addListener(listener=self.updateHV, source=None, ID=HVID)
+
         # start device polling
         poll_params = yield self.amo8.polling()
         # only start polling if not started
@@ -44,8 +46,8 @@ class DC_client(GUIClient):
     @inlineCallbacks
     def initData(self):
         # get voltages and power states
-        voltage_list = yield self.amo8.voltage_all()
-        toggle_list = yield self.amo8.toggle_all()
+        voltage_list =  yield self.amo8.voltage_all()
+        toggle_list =   yield self.amo8.toggle_all()
         for channel_num, channel_widget in self.gui.amo8_channels.items():
             channel_widget.dac.setValue(voltage_list[channel_num - 1])
             channel_widget.toggleswitch.setChecked(bool(toggle_list[channel_num - 1]))
@@ -125,9 +127,9 @@ class DC_client(GUIClient):
     @inlineCallbacks
     def startTriangleRamp(self, channel_list):
         # get current values
-        end_voltage_list = []
-        rate_list = []
-        initial_vals = []
+        end_voltage_list =  []
+        rate_list =         []
+        initial_vals =      []
         for channel_num in channel_list:
             channel_gui = self.gui.amo8_channels[channel_num]
             end_voltage_list.append(channel_gui.ramp_target.value())
@@ -136,7 +138,7 @@ class DC_client(GUIClient):
             channel_gui.dac.setEnabled(False)
             channel_gui.ramp_rate.setEnabled(False)
             channel_gui.ramp_target.setEnabled(False)
-        print('initial vals:', initial_vals)
+
         yield self.amo8.ramp_multiple(channel_list, end_voltage_list, rate_list)
         self.reactor.callLater(3, self.finishTriangleRamp, channel_list, initial_vals)
 
@@ -164,9 +166,8 @@ class DC_client(GUIClient):
             channel_list    list(int):  a list of channels to ramp.
         """
         # get current values
-        end_voltage_list = []
-        rate_list = []
-        # todo: make list comprehension?
+        end_voltage_list =  []
+        rate_list =         []
         for channel_num in channel_list:
             channel_gui = self.gui.amo8_channels[channel_num]
             end_voltage_list.append(channel_gui.ramp_target.value())
@@ -185,9 +186,6 @@ class DC_client(GUIClient):
         Finishes the ramp by reenabling the disabled channels.
         Arguments:
             channel_list    list(int):  a list of channels to ramp.
-
-        Returns:
-
         """
         for channel_num in channel_list:
             voltage_res = yield self.amo8.voltage(channel_num)

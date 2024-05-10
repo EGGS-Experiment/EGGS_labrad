@@ -276,19 +276,22 @@ class ARTIQ_Server(ContextServer):
         Returns:
                         (float) : averaged number of ttl counts
         """
+        # check device is valid
         if ttl_name not in self.api.ttlcounter_dict:
             raise Exception('Error: device does not exist.')
+
         # ensure we don't count for too long or too short
         if (time_us * 1e-6 * trials > 20) or (time_us < 10):
             raise Exception('Error: invalid total counting time.')
+
         counts_list = yield self.api.counterTTL(ttl_name, time_us, trials)
         returnValue(np.mean(counts_list))
 
     @setting(232, "TTL Count List", ttl_name='s', time_us='i', trials='i', returns='*v')
-    def ttlCountList(self, c, ttl_name, time_us=100, trials=100):
+    def ttlCountList(self, c, ttl_name, time_us=3000, trials=10):
         """
-        Read the number of counts from a TTL in a given time for a number of trials and
-            returns the raw data.
+        Read the number of counts from a TTL in a given time
+            for a number of trials and returns the raw data.
             TTL must be of class EdgeCounter.
         Arguments:
             ttl_name    (str)   : name of the ttl
@@ -297,13 +300,16 @@ class ARTIQ_Server(ContextServer):
         Returns:
                         (list(float)) : raw ttl counts for each trial
         """
+        # check device is valid
         if ttl_name not in self.api.ttlcounter_dict:
             raise Exception('Error: device does not exist.')
+
         # ensure we don't count for too long or too short
         if (time_us * 1e-6 * trials > 20) or (time_us < 10):
             raise Exception('Error: invalid total counting time.')
-        counts_list = yield self.api.counterTTL(ttl_name, time_us, trials)
-        returnValue(counts_list)
+
+        counts_list = self.api.getTTLCountFastCounts(ttl_name, time_us, trials)
+        return counts_list
 
 
     # DDS

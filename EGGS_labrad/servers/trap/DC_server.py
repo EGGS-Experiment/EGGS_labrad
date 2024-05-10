@@ -45,9 +45,9 @@ class DCServer(SerialDeviceServer, PollingServer):
 
 
     # SIGNALS
-    toggle_update = Signal(999997, 'signal: toggle update', '(ib)')
-    voltage_update = Signal(999999, 'signal: voltage update', '(iv)')
-    hv_update = Signal(999998, 'signal: hv update', '(vv)')
+    toggle_update =     Signal(999997, 'signal: toggle update', '(ib)')
+    voltage_update =    Signal(999999, 'signal: voltage update', '(iv)')
+    hv_update =         Signal(999998, 'signal: hv update', '(vv)')
 
 
     # GENERAL
@@ -71,15 +71,16 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
             (vv): (HVin1, Iin1)
         """
+        # getter
         yield self.ser.acquire()
         yield self.ser.write('HVin.r\r\n')
         sleep(0.2)
         v1 = yield self.ser.read_line('\n')
         i1 = yield self.ser.read_line('\n')
         self.ser.release()
+
         # parse input
-        inputs = [float((tmpval.strip().split(':'))[1]) for tmpval in (v1, i1)]
-        inputs = tuple(inputs)
+        inputs = tuple([float((tmpval.strip().split(':'))[1]) for tmpval in (v1, i1)])
         self.hv_update(inputs)
         returnValue(inputs)
 
@@ -104,10 +105,12 @@ class DCServer(SerialDeviceServer, PollingServer):
             yield self.ser.write('alarm.w {:d}\r\n'.format(status))
         else:
             yield self.ser.write('alarm.r\r\n')
+
         # get response
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         resp = resp.strip()
+
         # parse response
         if resp == 'ON':
             resp = True
@@ -139,10 +142,12 @@ class DCServer(SerialDeviceServer, PollingServer):
             yield self.ser.write('out.w {:d} {:d}\r\n'.format(channel, power))
         else:
             yield self.ser.write('out.r {:d}\r\n'.format(channel))
+
         # get response
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         resp = resp.strip()
+
         # parse response
         if resp == 'ON':
             resp = True
@@ -150,6 +155,7 @@ class DCServer(SerialDeviceServer, PollingServer):
             resp = False
         else:
             raise Exception('Error: bad readback from device.')
+
         # send signal to all other listeners
         self.toggle_update((channel, resp), self.getOtherListeners(c))
         returnValue(resp)

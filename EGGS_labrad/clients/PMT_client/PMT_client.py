@@ -72,9 +72,9 @@ class PMT_client(GUIClient):
         Gets values once per button press.
         """
         # get values from GUI
-        sample_time_us = int(self.gui.sample_time.value())
-        num_samples = int(self.gui.sample_num.value())
-        time_per_data = sample_time_us * num_samples * 1e-6
+        sample_time_us =    int(self.gui.sample_time.value())
+        num_samples =       int(self.gui.sample_num.value())
+        time_per_data =     (sample_time_us * 1e-6) * num_samples
 
         # ensure valid timing
         if (time_per_data > self.gui.poll_interval.value()) or (time_per_data > 10):
@@ -86,7 +86,7 @@ class PMT_client(GUIClient):
             count_list = yield self.aq.ttl_count_list('ttl{:d}_counter'.format(0), sample_time_us, num_samples)
         except Exception as e:
             print("Error while getting values:")
-            print(e)
+            print(repr(e))
         finally:
             self._lock(True)
 
@@ -118,12 +118,12 @@ class PMT_client(GUIClient):
 
     def toggle_polling(self, status):
         # start if not running
-        if (status) and (not self.refresher.running):
+        if status and (not self.refresher.running):
             # get timing values
-            poll_interval_s = self.gui.poll_interval.value()
-            self.sample_time_us = int(self.gui.sample_time.value())
-            self.num_samples = int(self.gui.sample_num.value())
-            time_per_data = self.sample_time_us * self.num_samples * 1e-6
+            poll_interval_s =       self.gui.poll_interval.value()
+            self.sample_time_us =   int(self.gui.sample_time.value())
+            self.num_samples =      int(self.gui.sample_num.value())
+            time_per_data =         (self.sample_time_us * 1e-6) * self.num_samples
 
             # ensure valid timing
             if (time_per_data > poll_interval_s) or (time_per_data > 1):

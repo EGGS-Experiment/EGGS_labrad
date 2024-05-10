@@ -485,7 +485,7 @@ class ARTIQ_API(object):
 
         # # note: only the core needs to be re-acquired
         # # since the kernel decorator looks for only it inside the class object
-        # self.core = self.device_manager.get("core")
+        self.core = self.device_manager.get("core")
 
         # re-precompile relevant functions
         self._getPrecompiledFunctions()
@@ -500,8 +500,9 @@ class ARTIQ_API(object):
         Gets necessary device objects.
         """
         # get core
-        self.core = self.device_manager.get("core")
-        self.core_dma = self.device_manager.get("core_dma")
+        self.core =         self.device_manager.get("core")
+        self.core_dma =     self.device_manager.get("core_dma")
+
         # store devices in dictionary where device
         # name is key and device itself is value
         self.ttlout_dict =          dict()
@@ -597,7 +598,8 @@ class ARTIQ_API(object):
 
         self._setTTL(dev, state)
 
-    @kernel(flags={"fast-math"})
+    # @kernel(flags={"fast-math"})
+    @kernel
     def _setTTL(self, dev, state: TInt32) -> TNone:
         self.core.break_realtime()
         if state:
