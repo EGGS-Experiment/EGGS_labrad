@@ -5,7 +5,9 @@ from artiq.coredevice import *
 from artiq.master.databases import DeviceDB
 from artiq.master.worker_db import DeviceManager
 from artiq.coredevice.urukul import urukul_sta_rf_sw, CFG_PROFILE, DEFAULT_PROFILE
-from artiq.coredevice.ad9910 import _AD9910_REG_PROFILE0, _AD9910_REG_PROFILE1, _AD9910_REG_PROFILE2, _AD9910_REG_PROFILE3, _AD9910_REG_PROFILE4, _AD9910_REG_PROFILE5, _AD9910_REG_PROFILE6, _AD9910_REG_PROFILE7
+from artiq.coredevice.ad9910 import (_AD9910_REG_PROFILE0, _AD9910_REG_PROFILE1, _AD9910_REG_PROFILE2,
+                                     _AD9910_REG_PROFILE3, _AD9910_REG_PROFILE4, _AD9910_REG_PROFILE5,
+                                     _AD9910_REG_PROFILE6, _AD9910_REG_PROFILE7)
 
 from builtins import ConnectionAbortedError, ConnectionResetError
 
