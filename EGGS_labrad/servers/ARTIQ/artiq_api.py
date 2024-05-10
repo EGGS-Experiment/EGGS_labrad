@@ -110,7 +110,7 @@ class ARTIQ_API(object):
         self._dds_att_set_mu =      np.int32(0)
         self._dds_sw_set_status =   np.int32(0)
 
-        ## precompile hardware functions - DDS
+        ## precompile hardware functions
         # getters
         self._precompile_func_get_wave =    self.core.precompile(self._getDDSFastWave)
         self._precompile_func_get_att =     self.core.precompile(self._getDDSFastATT)
@@ -123,8 +123,7 @@ class ARTIQ_API(object):
         TTL PRECOMPILE
         '''
         # set holder variables for TTLCounter data getter
-        self._ttlcount_time_get_mu =    np.int32(0)
-        self._ttlcount_samples_get_mu = np.int32(0)
+        self._ttlcount_get_counts =     np.zeros(0, dtype=np.int32)
 
         # set holder variables for TTLCounter data setter
         self._ttlcount_num =            np.int32(0)
@@ -133,7 +132,7 @@ class ARTIQ_API(object):
 
         ## precompile hardware functions
         # getters
-        # self._precompile_func_get_ttlcounts =   self.core.precompile(self._getDDSFastWave)
+        self._precompile_func_get_ttlcounts =   self.core.precompile(self._getTTLCountFastCounts)
 
     @autoreload
     def getDDSFastWave(self, device_name: TStr) -> TTuple([TInt32, TInt32]):
@@ -182,6 +181,7 @@ class ARTIQ_API(object):
 
         # set ftw as class variable for RPC retrieval
         self._dds_freq_set_ftw = np.int32(freq_ftw)
+
         # call precompiled DDS frequency setter
         self._precompile_func_set_freq()
 
@@ -198,6 +198,7 @@ class ARTIQ_API(object):
 
         # set ftw as class variable for RPC retrieval
         self._dds_ampl_set_asf = np.int32(ampl_asf)
+
         # call precompiled DDS frequency setter
         self._precompile_func_set_ampl()
 
@@ -214,6 +215,7 @@ class ARTIQ_API(object):
 
         # set att as class variable for RPC retrieval
         self._dds_att_set_mu = np.int32(att_mu)
+
         # call precompiled DDS attenuation setter
         self._precompile_func_set_att()
 
@@ -290,7 +292,6 @@ class ARTIQ_API(object):
 
         # update device profile
         dds_dev.set_mu(ftw_update, asf=ampl_curr_asf, profile=DEFAULT_PROFILE)
-        # self._tmpremoveidk()
 
     @kernel(flags={"fast-math"})
     def _setDDSFastASF(self) -> TNone:
@@ -403,50 +404,68 @@ class ARTIQ_API(object):
     @rpc(flags={"async"})
     def _debug_print(self, data) -> TNone:
         print('\n\t\tdebug: {}'.format(data))
-
-    @rpc(flags={"async"})
-    def _tmpremoveidk(self) -> TNone:
-        pass
     '''new faster functions meant to be used with precompile'''
 
     '''ttl precompile functions'''
-    #
-    # @autoreload
-    # def counterTTL(self, ttlname: TStr, time_us: TFloat, trials: TInt32) -> TArray(TInt64, 1):
-    #     """
-    #     Get the number of TTL input events for a given time, averaged over a number of trials.
-    #     """
-    #     try:
-    #         dev = self.ttlcounter_dict[ttlname]
-    #     except Exception as e:
-    #         raise Exception('Error: Invalid device name.')
-    #
-    #     # convert us to mu
-    #     time_mu = self.core.seconds_to_mu(time_us * us)
-    #     # create holding structures for counts
-    #     setattr(self, "ttl_counts_array", np.zeros(trials))
-    #     # get counts
-    #     self._counterTTL(dev, time_mu, trials)
-    #     # delete holding structure
-    #     tmp_arr = self.ttl_counts_array
-    #     delattr(self, "ttl_counts_array")
-    #     return tmp_arr
-    #
-    # @kernel(flags={"fast-math"})
-    # def _counterTTL(self, dev, time_mu: TInt64, trials: TInt32) -> TNone:
-    #     self.core.break_realtime()
-    #
-    #     for i in range(trials):
-    #         self.core.break_realtime()
-    #         dev.gate_rising_mu(time_mu)
-    #         self._recordTTLCounts(dev.fetch_count(), i)
-    #
-    # @rpc(flags={"async"})
-    # def _recordTTLCounts(self, time_value_mu: TInt64, index: TInt32) -> TNone:
-    #     """
-    #     Records values via rpc to minimize kernel overhead.
-    #     """
-    #     self.ttl_counts_array[index] = time_value_mu
+
+    @autoreload
+    def getTTLCountFastCounts(self, ttlcount_name: TStr, time_count_us: TFloat, num_samples: TInt32) -> TArray(TInt32, 1):
+        """
+        Get the number of TTL input events for a given time, averaged over a number of trials.
+        """
+        # get index of the desired TTL EdgeCounter within _ttlcount_channels
+        try:
+            self._ttlcount_num = self.ttlcount_dict_search_num[ttlcount_name]
+        except Exception as e:
+            raise Exception('Error: Invalid device name.')
+
+        # set counting variables as class variables for RPC retrieval
+        self._ttlcount_samples_set_mu = num_samples
+        self._ttlcount_time_set_mu = self.core.seconds_to_mu(time_count_us * us)
+
+        # call precompiled ttl counting function
+        self._precompile_func_get_ttlcounts()
+
+        # return count list
+        return self._ttlcount_get_counts
+
+    @kernel(flags={"fast-math"})
+    def _getTTLCountFastCounts(self) -> TNone:
+        self.core.break_realtime()
+
+        # get device
+        index_ttlcount = self._return_ttlcount_num()
+        self.core.break_realtime()
+        ttlcount_dev = self._ttlcount_channels[index_ttlcount]
+        self.core.break_realtime()
+
+        # get counting parameters via rpc
+        num_samples, time_count_mu = self._return_setter_ttlcount_params()
+        self.core.break_realtime()
+
+        # create count storage array
+        _count_store = [0] * num_samples
+
+        # count!
+        for i in range(num_samples):
+            ttlcount_dev.gate_rising_mu(time_count_mu)
+            _count_store[i] = ttlcount_dev.fetch_count()
+            self.core.break_realtime()
+
+        # get existing waveform from device
+        self._store_getter_ttlcount_counts(_count_store)
+
+    @rpc(flags={"async"})
+    def _store_getter_ttlcount_counts(self, count_list: TList(TInt32)) -> TNone:
+        self._ttlcount_get_counts = np.array(count_list)
+
+    @rpc
+    def _return_ttlcount_num(self) -> TInt32:
+        return self._ttlcount_num
+
+    @rpc
+    def _return_setter_ttlcount_params(self) -> TTuple([TInt32, TInt64]):
+        return self._ttlcount_samples_set_mu, self._ttlcount_time_set_mu
     '''ttl precompile functions'''
 
     def stopAPI(self):
@@ -497,8 +516,11 @@ class ARTIQ_API(object):
         self.phaser =               None
 
         # tmp remove
-        _dds_dict_search_counter =  0
-        self.dds_dict_search_num =  dict()
+        _dds_dict_search_counter =      0
+        self.dds_dict_search_num =      dict()
+
+        _ttlcount_dict_search_counter = 0
+        self.ttlcount_dict_search_num = dict()
         # tmp remove
 
         # assign names and devices
@@ -512,9 +534,17 @@ class ARTIQ_API(object):
             devicetype = params['class']
             device = self.device_manager.get(name)
             if devicetype == 'TTLInOut':
-                self.ttlin_dict[name] = device
+                self.ttlin_dict[name] =     device
             elif devicetype == 'TTLOut':
-                self.ttlout_dict[name] = device
+                self.ttlout_dict[name] =    device
+            elif devicetype == 'EdgeCounter':
+                self.ttlcounter_dict[name] = device
+
+                # tmp remove
+                self.ttlcount_dict_search_num[name] = _ttlcount_dict_search_counter
+                _ttlcount_dict_search_counter += 1
+                # tmp remove
+
             elif devicetype == 'AD9910':
                 self.dds_dict[name] = device
 
@@ -528,24 +558,24 @@ class ARTIQ_API(object):
             elif devicetype == 'Zotino':
                 # need to specify both device types since
                 # all kernel functions need to be valid
-                self.zotino = device
-                self.fastino = device
-                self.dacType = devicetype
+                self.zotino =   device
+                self.fastino =  device
+                self.dacType =  devicetype
             elif devicetype == 'Fastino':
-                self.fastino = device
-                self.zotino = device
-                self.dacType = devicetype
+                self.fastino =  device
+                self.zotino =   device
+                self.dacType =  devicetype
             elif devicetype == 'Sampler':
-                self.sampler = device
+                self.sampler =  device
             elif devicetype == 'Phaser':
-                self.phaser = device
-            elif devicetype == 'EdgeCounter':
-                self.ttlcounter_dict[name] = device
+                self.phaser =   device
 
         # holder objects for dds channels
         # these are needed so we can iterate devices in kernel functions
+        # todo: ensure somehow that values still correspond to their index
         self._dds_channels =    list(self.dds_dict.values())
         self._dds_boards =      list(self.urukul_dict.values())
+        self._ttlcount_channels =   list(self.ttlcounter_dict.values())
 
         # set all DDSs and Urukuls as class attributes
         for dev_name in (list(self.dds_dict.keys()) + list(self.urukul_dict.keys())):
