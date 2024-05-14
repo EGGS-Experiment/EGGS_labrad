@@ -263,8 +263,8 @@ class ARTIQ_Server(ContextServer):
         state = yield self.api.getTTL(ttl_name)
         returnValue(bool(state))
 
-    @setting(231, "TTL Counts", ttl_name='s', time_us='i', trials='i', returns='v')
-    def ttlCounts(self, c, ttl_name, time_us=100, trials=100):
+    @setting(231, "TTL Counts", ttl_name='s', time_us='i', trials='i', returns='(vv)')
+    def ttlCounts(self, c, ttl_name, time_us=3000, trials=10):
         """
         Read the number of counts from a TTL in a given time and
             averages it over a number of trials.
@@ -274,7 +274,7 @@ class ARTIQ_Server(ContextServer):
             time_us     (int)   : number of seconds to count for
             trials      (int)   : number of trials to average counts over
         Returns:
-                        (float) : averaged number of ttl counts
+                        (float, float) : the mean and stdev of the TTL counts.
         """
         # check device is valid
         if ttl_name not in self.api.ttlcounter_dict:
@@ -284,8 +284,8 @@ class ARTIQ_Server(ContextServer):
         if (time_us * 1e-6 * trials > 20) or (time_us < 10):
             raise Exception('Error: invalid total counting time.')
 
-        counts_list = yield self.api.counterTTL(ttl_name, time_us, trials)
-        returnValue(np.mean(counts_list))
+        counts_list = self.api.getTTLCountFastCounts(ttl_name, time_us, trials)
+        return (np.mean(counts_list), np.std(counts_list))
 
     @setting(232, "TTL Count List", ttl_name='s', time_us='i', trials='i', returns='*v')
     def ttlCountList(self, c, ttl_name, time_us=3000, trials=10):

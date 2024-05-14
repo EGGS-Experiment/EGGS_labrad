@@ -83,7 +83,7 @@ class PMT_client(GUIClient):
         # get counts
         try:
             self._lock(False)
-            count_list = yield self.aq.ttl_count_list('ttl{:d}_counter'.format(0), sample_time_us, num_samples)
+            counts_avg, counts_std = yield self.aq.ttl_counts('ttl{:d}_counter'.format(0), sample_time_us, num_samples)
         except Exception as e:
             print("Error while getting values:")
             print(repr(e))
@@ -92,9 +92,9 @@ class PMT_client(GUIClient):
 
         # update display
         if self.gui.sample_std_off.isChecked():
-            self.gui.count_display.setText("{:.3f}".format(mean(count_list)))
+            self.gui.count_display.setText("{:.3f}".format(counts_avg))
         else:
-            self.gui.count_display.setText("{:.3f} \u00B1 {:.3f}".format(mean(count_list), std(count_list)))
+            self.gui.count_display.setText("{:.3f} \u00B1 {:.3f}".format(counts_avg, counts_std))
 
     @inlineCallbacks
     def update_counts_continually(self):
@@ -103,18 +103,18 @@ class PMT_client(GUIClient):
         Gets values continually.
         """
         # get counts
-        count_list = yield self.aq.ttl_count_list('ttl{:d}_counter'.format(0), self.sample_time_us, self.num_samples)
+        counts_avg, counts_std = yield self.aq.ttl_counts('ttl{:d}_counter'.format(0), self.sample_time_us, self.num_samples)
 
         # update display
         if self.gui.sample_std_off.isChecked():
-            self.gui.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=19))
-            self.gui.count_display.setText("{:.3f}".format(mean(count_list)))
+            self.gui.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=23))
+            self.gui.count_display.setText("{:.2f}".format(counts_avg))
         else:
-            self.gui.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=17))
-            self.gui.count_display.setText("{:.3f} \u00B1 {:.3f}".format(mean(count_list), std(count_list)))
+            self.gui.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=19))
+            self.gui.count_display.setText("{:.2f} \u00B1 {:.2f}".format(counts_avg, counts_std))
         # store data if recording
         if self.recording:
-            yield self.dv.add(time() - self.starttime, mean(count_list), context=self.c_record)
+            yield self.dv.add(time() - self.starttime, counts_avg, context=self.c_record)
 
     def toggle_polling(self, status):
         # start if not running
