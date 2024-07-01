@@ -712,12 +712,19 @@ class ARTIQ_API(object):
         sw_reg |= (state << channel_num)
 
         # set switch status for whole board
-        self._setDDSsw(dev.cpld, sw_reg)
+        self._setDDSsw(dev, state, sw_reg)
 
     @kernel(flags={"fast-math"})
-    def _setDDSsw(self, cpld, state) -> TNone:
+    def _setDDSsw(self, dds_dev, state, sw_reg) -> TNone:
         self.core.break_realtime()
-        cpld.cfg_switches(state)
+        # set switches via configuration register
+        dds_dev.cpld.cfg_switches(sw_reg)
+        # set switches via DDS TTL
+        if state is True:
+            dds_dev.sw.on()
+        elif state is False:
+            dds_dev.sw.off()
+
 
     @autoreload
     def getDDS(self, dds_name: TStr) -> TTuple([TInt32, TInt32, TInt32]):
