@@ -55,8 +55,8 @@ try:
 
     independents = [('Elapsed Time', [1], 'v', 's')]
     dependents = [
-        ('Signal Frequency', 'Frequency', [num_points],'v', 'Hz'),
-        ('Signal Power', 'Power', [num_points], 'v', 'dBm')
+        ('Signal Frequency',    'Frequency',    [num_points],   'v',    'Hz'),
+        ('Signal Power',        'Power',        [num_points],   'v',    'dBm')
     ]
     dv.new_ex(dataset_title_tmp, independents, dependents, context=cr)
 
@@ -69,16 +69,16 @@ try:
     # MAIN LOOP
     starttime = time()
     #while True:
-    for x in range(1,900,1):
+    for x in range(1, 900, 1):
 
         try:
             # get signal values
             sa_freq_hz = sa.marker_frequency(1)
             sa_pow_dbm = sa.marker_amplitude(1)
 
-            sa_trace=sa.trace(1)
-            freq = sa_trace[0].transpose()
-            amp = sa_trace[1].transpose()
+            sa_trace =  sa.trace(1)
+            freq =      sa_trace[0].transpose()
+            amp =       sa_trace[1].transpose()
 
             # record data into data vault
             elapsedtime = time() - starttime

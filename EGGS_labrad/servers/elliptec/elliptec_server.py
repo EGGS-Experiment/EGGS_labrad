@@ -54,8 +54,8 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
 
     name =      'Elliptec Server'
     regKey =    'ElliptecServer'
-    serNode =   'lahaina'
-    port =      'COM5'
+    serNode =   'mongkok'
+    port =      'COM18'
 
     timeout =   WithUnit(5.0, 's')
     baudrate =  9600
