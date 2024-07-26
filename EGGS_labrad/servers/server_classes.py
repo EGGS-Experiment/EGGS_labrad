@@ -147,7 +147,7 @@ class PollingServer(LabradServer):
         # ensure interval is valid
         if interval is None:
             interval = 5.0
-        elif (interval < 1) or (interval > 60):
+        elif (interval < 0.35) or (interval > 60):
             raise Exception('Invalid polling interval.')
 
         # start polling if we are stopped

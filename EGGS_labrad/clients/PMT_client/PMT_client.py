@@ -92,9 +92,9 @@ class PMT_client(GUIClient):
 
         # update display
         if self.gui.sample_std_off.isChecked():
-            self.gui.count_display.setText("{:.3f}".format(counts_avg))
+            self.gui.count_display.setText("{:.2f}".format(counts_avg))
         else:
-            self.gui.count_display.setText("{:.3f} \u00B1 {:.3f}".format(counts_avg, counts_std))
+            self.gui.count_display.setText("{:.2f} \u00B1 {:.2f}".format(counts_avg, counts_std))
 
     @inlineCallbacks
     def update_counts_continually(self):
@@ -184,6 +184,8 @@ class PMT_client(GUIClient):
 
         # set artiq monitor status
         self.gui.artiq_monitor.setStatus(msg)
+        # enable aperture in case we need to quickly open it
+        # todo
 
     def _lock(self, status):
         # note: don't lock aperture since we may need to open it partway through
