@@ -229,7 +229,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         """
         # quickly write and read response
         yield self.ser.acquire()
-        yield self.ser.write('vout.w {:d} {:f}\r\n'.format(channel, voltage))
+        yield self.ser.write('vf.w {:d} {:f}\r\n'.format(channel, voltage))
         resp = yield self.ser.read_line('\n')
         self.ser.release()
 
@@ -237,8 +237,8 @@ class DCServer(SerialDeviceServer, PollingServer):
         resp = float((resp.strip())[:-1])
 
         # send signal to all other listeners
-        # temporarily removed for speed
-        self.voltage_update((channel, resp), self.getOtherListeners(c))
+        # note: temporarily removed voltage updating for speed
+        # self.voltage_update((channel, resp), self.getOtherListeners(c))
         returnValue(resp)
 
     @setting(221, 'Voltage All', returns='*v')
