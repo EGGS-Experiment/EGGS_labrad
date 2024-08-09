@@ -74,13 +74,14 @@ class DCServer(SerialDeviceServer, PollingServer):
         # getter
         yield self.ser.acquire()
         yield self.ser.write('HVin.r\r\n')
+        # todo: should we yield this somehow
         sleep(0.2)
         v1 = yield self.ser.read_line('\n')
         i1 = yield self.ser.read_line('\n')
         self.ser.release()
 
         # parse input
-        inputs = tuple([float((tmpval.strip().split(':'))[1]) for tmpval in (v1, i1)])
+        inputs = tuple([float((hv_val.strip().split(':'))[1]) for hv_val in (v1, i1)])
         self.hv_update(inputs)
         returnValue(inputs)
 
@@ -119,6 +120,33 @@ class DCServer(SerialDeviceServer, PollingServer):
         else:
             raise Exception('Error: bad readback from device.')
         returnValue(resp)
+
+    @setting(14, 'Remote', remote_status='b')
+    def remote(self, c, remote_status=None):
+        """
+        Set remote mode of device.
+        Arguments:
+            remote_status   (bool)  : whether the device accepts serial commands
+        Returns:
+                            (bool)  : whether the device accepts serial commands
+        """
+        # setter
+        if remote_status is not None:
+            yield self.ser.acquire()
+            yield self.ser.write('remote.w {:d}\r\n'.format(remote_status))
+            yield self.ser.read_line('\n')
+            self.ser.release()
+
+        # getter
+        yield self.ser.acquire()
+        yield self.ser.write('remote.r\r\n')
+        resp = yield self.ser.read_line('\n')
+        self.ser.release()
+
+        # parse
+        resp = bool(int(resp.strip()))
+        returnValue(resp)
+
 
 
     # ON/OFF
@@ -191,7 +219,7 @@ class DCServer(SerialDeviceServer, PollingServer):
 
 
     # VOLTAGE
-    @setting(211, 'Voltage', channel='i', voltage='v', returns='v')
+    @setting(211, 'Voltage', channel='i', voltage=['v', 'i'], returns='v')
     def voltage(self, c, channel=None, voltage=None):
         """
         Set the voltage of a channel.
@@ -217,7 +245,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         self.voltage_update((channel, resp), self.getOtherListeners(c))
         returnValue(resp)
 
-    @setting(212, 'Voltage Fast', channel='i', voltage='v', returns='v')
+    @setting(212, 'Voltage Fast', channel='i', voltage=['v', 'i'], returns='v')
     def voltage_fast(self, c, channel, voltage):
         """
         Set the voltage of a channel quickly.
@@ -257,7 +285,7 @@ class DCServer(SerialDeviceServer, PollingServer):
 
 
     # RAMP
-    @setting(311, 'Ramp', channel='i', voltage='v', rate='v', returns='*s')
+    @setting(311, 'Ramp', channel='i', voltage=['v', 'i'], rate=['v', 'i'], returns='*s')
     def ramp(self, c, channel, voltage, rate):
         """
         Ramps the voltage of a channel at a given rate.
@@ -275,9 +303,10 @@ class DCServer(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         resp = resp.strip().split(', ')
+        # todo: process response
         returnValue(resp)
 
-    @setting(312, 'Ramp Multiple', channels='*i', voltages='*v', rates='*v', returns='*s')
+    @setting(312, 'Ramp Multiple', channels='*i', voltages=['*v', '*i'], rates=['*v', '*i'], returns='*s')
     def rampMultiple(self, c, channels, voltages, rates):
         """
         Simultaneously ramps the voltage of multiple channels.
@@ -293,16 +322,19 @@ class DCServer(SerialDeviceServer, PollingServer):
             raise Exception('Error: all parameters must be specified for all channels.')
         # reformat the input parameters
         param_list = zip(channels, voltages, rates)
+
         # send commands to device
         resp = []
         yield self.ser.acquire()
         for channel, voltage, rate in param_list:
+            # create and write message
             msg = 'ramp.w {:d} {:f} {:f}\r\n'.format(channel, voltage, rate)
             yield self.ser.write(msg)
+            # process response
             resp_tmp = yield self.ser.read_line('\n')
             resp.append(resp_tmp)
         self.ser.release()
-        # todo: fix for better responses
+        # todo: process response
         #resp_processing_func = lambda resp_tmp: resp_tmp.strip().split(': ')
         #resp = list((resp_processing_func, resp))
         #resp = [resp[0] for strings in resp]

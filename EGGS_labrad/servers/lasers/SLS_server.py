@@ -33,10 +33,10 @@ class SLSServer(SerialDeviceServer, PollingServer):
     Connects to the 729nm SLS Laser.
     """
 
-    name = 'SLS Server'
-    regKey = 'SLS Server'
-    serNode = 'lahaina'
-    port = 'COM3'
+    name =      'SLS Server'
+    regKey =    'SLS Server'
+    serNode =   'lahaina'
+    port =      'COM3'
 
     baudrate = 115200
     timeout = Value(5.0, 's')

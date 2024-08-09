@@ -79,6 +79,32 @@ class AMO8Server(SerialDeviceServer, PollingServer):
         self.hv_update(inputs)
         returnValue(inputs)
 
+    @setting(13, 'Remote', remote_status='b')
+    def remote(self, c, remote_status=None):
+        """
+        Set remote mode of device.
+        Arguments:
+            remote_status   (bool)  : whether the device accepts serial commands
+        Returns:
+                            (bool)  : whether the device accepts serial commands
+        """
+        # setter
+        if remote_status is not None:
+            yield self.ser.acquire()
+            yield self.ser.write('remote.w {:d}\r\n'.format(remote_status))
+            yield self.ser.read_line('\n')
+            self.ser.release()
+
+        # getter
+        yield self.ser.acquire()
+        yield self.ser.write('remote.r\r\n')
+        resp = yield self.ser.read_line('\n')
+        self.ser.release()
+
+        # parse
+        resp = bool(int(resp.strip()))
+        returnValue(resp)
+
 
     # ON/OFF
     @setting(111, 'Toggle', channel='i', power=['i','b'], returns='b')
