@@ -4,14 +4,12 @@ from twisted.internet.defer import inlineCallbacks
 
 
 __all__ = ["ContextServer", "PollingServer", "ARTIQServer"]
-# todo: make polling server subclass from contextserver
 # todo: use contextserver more widely
 
 
 """
 Context Server
 """
-
 
 class ContextServer(LabradServer):
     """
@@ -21,6 +19,8 @@ class ContextServer(LabradServer):
     # STARTUP
     def initServer(self):
         super().initServer()
+
+        # create listeners set to hold all clients who want to receive updates
         self.listeners = set()
 
 
@@ -31,8 +31,8 @@ class ContextServer(LabradServer):
         Arguments:
             c (context): the context object of the caller.
         """
-        super().initContext(c)
         self.listeners.add(c.ID)
+        super().initContext(c)
 
     def expireContext(self, c):
         # tmp remove
@@ -53,7 +53,8 @@ class ContextServer(LabradServer):
             f           (function)  : the function to execute.
         """
         notified = self.listeners.copy()
-        notified.remove(c.ID)
+        if c is not None:
+            notified.remove(c.ID)
         f(message, notified)
 
     def getOtherListeners(self, c):
@@ -70,23 +71,19 @@ class ContextServer(LabradServer):
 """
 Polling Server
 """
-# todo: remove context stuff and subclass contextserver instead
-class PollingServer(LabradServer):
+class PollingServer(ContextServer):
     """
     Holds all the functionality needed to run polling loops on the server.
     Also contains functionality for Signals.
     """
-
     # tells server whether to start polling upon startup
     POLL_ON_STARTUP = False
     POLL_INTERVAL_ON_STARTUP = 5
 
     # STARTUP
     def initServer(self):
-        # call parent initserver to support further subclassing
         super().initServer()
-        # signal stuff
-        self.listeners = set()
+
         # create refresher for polling
         self.refresher = LoopingCall(self._poll)
         # set startup polling
@@ -102,43 +99,28 @@ class PollingServer(LabradServer):
 
 
     # CONTEXT
-    def initContext(self, c):
-        """
-        Initialize a new context object.
-        """
-        self.listeners.add(c.ID)
-
     def expireContext(self, c):
         """
-        Remove a context object and stop polling if there are no more listeners.
+        Stop polling if there are no more listeners.
         """
-        self.listeners.remove(c.ID)
+        super.expireContext(c)
+
+        # stop polling if there are no more listeners
         if len(self.listeners) == 0:
             self.refresher.stop()
             print('Stopped polling due to lack of listeners.')
 
-    def getOtherListeners(self, c):
-        """
-        Get all listeners except for the context owner.
-        """
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
-
-    def notifyOtherListeners(self, context, message, f):
-        """
-        Notifies all listeners except the one in the given context, executing function f
-        """
-        notified = self.listeners.copy()
-        notified.remove(context.ID)
-        f(message, notified)
-
 
     # POLLING
-    @setting(911, 'Polling', status='b', interval='v', returns='(bv)')
+    @setting(911, 'Polling', status='b', interval=['v', 'i'], returns='(bv)')
     def Polling(self, c, status=None, interval=None):
         """
-        Configure polling of device for values.
+        Configure server polling
+        Arguments:
+            status      (str, optional):    Whether polling is enabled.
+            interval    (int, float):       The polling interval in seconds.
+        Returns:
+            (bool, str):   a tuple of (pollingStatus, pollInterval)
         """
         # empty call returns getter
         if (status is None) and (interval is None):
@@ -148,7 +130,7 @@ class PollingServer(LabradServer):
         if interval is None:
             interval = 5.0
         elif (interval < 0.35) or (interval > 60):
-            raise Exception('Invalid polling interval.')
+            raise Exception('Error in polling: Invalid polling interval.')
 
         # start polling if we are stopped
         if status and (not self.refresher.running):
@@ -164,6 +146,8 @@ class PollingServer(LabradServer):
     def startRefresher(self, interval=None):
         """
         Starts the polling loop and calls errbacks.
+        Arguments:
+            interval: the polling interval.
         """
         d = self.refresher.start(interval, now=False)
         d.addErrback(self._poll_fail)
@@ -177,10 +161,13 @@ class PollingServer(LabradServer):
 
     @inlineCallbacks
     def _poll_fail(self, failure):
-        print('\tPolling failed. Flushing serial inputs/outputs and releasing DeferredLock.')
-        yield self.ser.flush_input()
-        yield self.ser.flush_output()
-        self.ser.release()
+        # todo: why is this here and not in serial places?
+        # todo: b/c serialdeviceserver class is not a pollingserver - fix somehow
+        if self.ser is not None:
+            print('\tError in polling: polling failed.\n\tFlushing serial inputs/outputs and releasing DeferredLock.')
+            yield self.ser.flush_input()
+            yield self.ser.flush_output()
+            self.ser.release()
 
 
 """
@@ -264,19 +251,3 @@ class ARTIQServer(LabradServer):
         """
         return self.datasetdb_client.get(dataset_name)
 
-
-"""
-Arduino Server
-TODO: actually write this lol
-"""
-
-from EGGS_labrad.servers import SerialDeviceServer
-
-
-class ArduinoServer(SerialDeviceServer):
-    """
-    A server that breaks out an Arduino.
-    """
-
-    # todo
-    arduino_pins = {}

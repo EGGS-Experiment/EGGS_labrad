@@ -22,14 +22,14 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from EGGS_labrad.servers import PollingServer
 
 
-UPDATEEXP = 122387
-CHANSIGNAL = 122485
-FREQSIGNAL = 122456
-LOCKSIGNAL = 112456
+UPDATEEXP =     122387
+CHANSIGNAL =    122485
+FREQSIGNAL =    122456
+LOCKSIGNAL =    112456
 OUTPUTCHANGED = 121212
-PIDVOLTAGE = 902484
-CHANNELLOCK = 282388
-AMPCHANGED = 142308
+PIDVOLTAGE =    902484
+CHANNELLOCK =   282388
+AMPCHANGED =    142308
 UPDATEPATTERN = 462916
 
 
@@ -39,21 +39,22 @@ class MultiplexerServer(PollingServer):
     A DLL is required to run this server.
     See initServer for the path location for the library.
     """
-
     name = 'multiplexerserver'
 
-    # SIGNALS
-    channel_text = 'signal: selected channels changed'
-    measuredchanged = Signal(CHANSIGNAL, channel_text, '(ib)')
-    freqchanged = Signal(FREQSIGNAL, 'signal: frequency changed', '(iv)')
-    updateexp = Signal(UPDATEEXP, 'signal: update exp', '(ii)')
-    lockchanged = Signal(LOCKSIGNAL, 'signal: lock changed', 'b')
-    outputchanged = Signal(OUTPUTCHANGED, 'signal: output changed', 'b')
-    voltage_text = 'signal: pidvoltage changed'
+    # SIGNALS - CHANNEL VALUES
+    channel_text =      'signal: selected channels changed'
+    measuredchanged =   Signal(CHANSIGNAL, channel_text, '(ib)')
+    freqchanged =       Signal(FREQSIGNAL, 'signal: frequency changed', '(iv)')
+    updateexp =         Signal(UPDATEEXP, 'signal: update exp', '(ii)')
+    lockchanged =       Signal(LOCKSIGNAL, 'signal: lock changed', 'b')
+    outputchanged =     Signal(OUTPUTCHANGED, 'signal: output changed', 'b')
+
+    # SIGNALS - PID LOCKING VALUES
+    voltage_text =      'signal: pidvoltage changed'
     pidvoltagechanged = Signal(PIDVOLTAGE, voltage_text, '(iv)')
-    channellock = Signal(CHANNELLOCK, 'signal: channel lock changed', '(wwb)')
-    ampchanged = Signal(AMPCHANGED, 'signal: amplitude changed', '(wv)')
-    patternchanged = Signal(UPDATEPATTERN, 'signal: pattern changed', '(i*v)')
+    channellock =       Signal(CHANNELLOCK, 'signal: channel lock changed', '(wwb)')
+    ampchanged =        Signal(AMPCHANGED, 'signal: amplitude changed', '(wv)')
+    patternchanged =    Signal(UPDATEPATTERN, 'signal: pattern changed', '(i*v)')
 
 
     # STARTUP

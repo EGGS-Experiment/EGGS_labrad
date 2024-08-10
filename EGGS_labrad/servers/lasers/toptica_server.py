@@ -21,9 +21,9 @@ from toptica.lasersdk.client import Client, NetworkConnection
 import logging
 from EGGS_labrad.servers import PollingServer
 
-CURRENTSIGNAL = 913548
-TEMPERATURESIGNAL = 913549
-PIEZOSIGNAL = 913550
+CURRENTSIGNAL =         913548
+TEMPERATURESIGNAL =     913549
+PIEZOSIGNAL =           913550
 # todo: send signal when values change
 # todo: subscribe to when values change
 
@@ -55,21 +55,26 @@ class TopticaServer(PollingServer):
         ip_addresses = {}
 
         try:
-            tmp = yield reg.cd()
+            # attempt to access the registry files for the toptica server
+            conf_dir = yield reg.cd()
             yield reg.cd(['', 'Servers', self.regKey])
             _, ip_address_list = yield reg.dir()
+
             # get DLC Pro ip addresses
             for key in ip_address_list:
                 ip_addresses[key] = yield reg.get(key)
+
             # get channel parameters
             yield reg.cd(['Channels'])
             _, channel_list = yield reg.dir()
             for channel_num in channel_list:
                 dev_params = yield reg.get(channel_num)
                 self.channels[int(channel_num)] = {'dev_params': dev_params}
-            yield reg.cd(tmp)
+            yield reg.cd(conf_dir)
+
         except Exception as e:
-            yield reg.cd(tmp)
+            # otherwise, simply access the root directory
+            yield reg.cd(conf_dir)
 
         # create DLC Pro device objects
         for name, ip_address in ip_addresses.items():
@@ -80,17 +85,20 @@ class TopticaServer(PollingServer):
             except Exception as e:
                 print(e)
 
-        # get laser parameters
+        # attempt to get parameters for all lasers
         for chan_num in self.channels.keys():
             try:
                 chan_num = int(chan_num)
+
+                # retrieve and store laser factory settings
                 fac_params = yield self._read(chan_num, 'dl:factory-settings')
                 self.channels[chan_num]['name'] = yield self._read(chan_num, 'product-name')
-                self.channels[chan_num]['wavelength'] = fac_params[0]
-                self.channels[chan_num]['current_threshold'] = fac_params[1]
-                self.channels[chan_num]['current_max'] = fac_params[3][2]
-                self.channels[chan_num]['temp_min'] = fac_params[4][0]
-                self.channels[chan_num]['temp_max'] = fac_params[4][1]
+                self.channels[chan_num]['wavelength'] =         fac_params[0]
+                self.channels[chan_num]['current_threshold'] =  fac_params[1]
+                self.channels[chan_num]['current_max'] =        fac_params[3][2]
+                self.channels[chan_num]['temp_min'] =           fac_params[4][0]
+                self.channels[chan_num]['temp_max'] =           fac_params[4][1]
+
             except Exception as e:
                 print('Channel {}: {}'.format(chan_num, ':', e))
 

@@ -104,6 +104,7 @@ class GPIBBusServer(PollingServer):
                 print("Error on closing: {}".format(e))
 
     def initContext(self, c):
+        # todo: do I have to call parent's initContext to add c to listeners?
         c['timeout'] = self.defaultTimeout
 
     def _poll(self):
@@ -181,6 +182,12 @@ class GPIBBusServer(PollingServer):
             raise e
 
     def sendDeviceMessage(self, msg, addr):
+        """
+        Sends a message to the console regarding device activity
+        Args:
+            msg     (str):  Message to send.
+            addr    (idk):  the device address.
+        """
         # todo: document this lmao
         print('{}: {}'.format(msg, addr))
         self.client.manager.send_named_message(msg, (self.name, addr))

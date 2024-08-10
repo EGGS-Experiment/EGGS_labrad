@@ -52,7 +52,7 @@ class AndorServer(PollingServer):
     """
     def initServer(self):
         super().initServer()
-        self.listeners =            set()
+        # create camera-related objects
         self.lock =                 DeferredLock()
         self.camera =               AndorAPI()
         self.last_image =           None
@@ -73,26 +73,6 @@ class AndorServer(PollingServer):
         except Exception as e:
             print(e)
             pass
-
-    def initContext(self, c):
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        self.listeners.remove(c.ID)
-
-    def getOtherListeners(self, c):
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
-
-    def notifyOtherListeners(self, context, message, f):
-        """
-        Notifies all listeners except the one in the given context, executing function f.
-        """
-        notified = self.listeners.copy()
-        if context is not None:
-            notified.remove(context.ID)
-        f(message, notified)
 
 
     """
