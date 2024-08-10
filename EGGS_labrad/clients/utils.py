@@ -3,7 +3,14 @@ Contains functions useful for LabRAD clients.
 """
 from PyQt5.QtWidgets import QApplication
 
-__all__ = ["runGUI", "runClient", "createTrunk", "wav2RGB"]
+__all__ = [
+    "SHELL_FONT",
+    "runGUI", "runClient", "createTrunk", "wav2RGB"
+]
+
+
+# GUI formatting helpers
+SHELL_FONT = 'MS Shell Dlg 2'
 
 
 # run functions

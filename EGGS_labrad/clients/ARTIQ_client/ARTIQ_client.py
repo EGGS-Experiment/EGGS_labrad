@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout
 
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients.Widgets import QDetachableTabWidget
