@@ -121,8 +121,9 @@ class DCServer(SerialDeviceServer, PollingServer):
             raise Exception('Error: bad readback from device.')
         returnValue(resp)
 
-    @setting(14, 'Remote', remote_status='b')
-    def remote(self, c, remote_status=None):
+    # todo: reflash amo8 to have remote readback and flash
+    @setting(14, 'Remote', remote_status=['b', 'i'])
+    def remote(self, c, remote_status):
         """
         Set remote mode of device.
         Arguments:
@@ -130,6 +131,11 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                             (bool)  : whether the device accepts serial commands
         """
+        # ensure input has correct type/value
+        if type(remote_status) is int:
+            if remote_status not in (0, 1):
+                raise Exception('Error: input must be a boolean, 0, or 1.')
+
         # setter
         if remote_status is not None:
             yield self.ser.acquire()
@@ -137,16 +143,19 @@ class DCServer(SerialDeviceServer, PollingServer):
             yield self.ser.read_line('\n')
             self.ser.release()
 
-        # getter
-        yield self.ser.acquire()
-        yield self.ser.write('remote.r\r\n')
-        resp = yield self.ser.read_line('\n')
-        self.ser.release()
-
-        # parse
-        resp = bool(int(resp.strip()))
-        returnValue(resp)
-
+        # # getter
+        # yield self.ser.acquire()
+        # yield self.ser.write('remote.r\r\n')
+        # resp = yield self.ser.read_line('\n')
+        # self.ser.release()
+        #
+        # # parse response
+        # resp = resp.strip()
+        # if resp == 'ON':
+        #     resp = True
+        # elif resp == 'OFF':
+        #     resp = False
+        # returnValue(resp)
 
 
     # ON/OFF
