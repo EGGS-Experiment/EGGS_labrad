@@ -138,7 +138,7 @@ class LabJackServer(LabradServer):
         """
         # do nothing if a device is already selected
         if self.device_handle is not None:
-            raise Exception('A device connection is already opened.')
+            raise Exception('Error: A device connection is already opened.')
 
         # open connection to device
         try:
@@ -163,13 +163,13 @@ class LabJackServer(LabradServer):
             raise Exception('No device selected.')
 
     @setting(4, 'Device Info', returns='i')
-    def deviceInfo(self, c):
+    def device_info(self, c):
         """
         Returns the currently connected device's handle.
         Returns:
             (int)   : the connected device's handle.
         """
-        if self.device_handle:
+        if self.device_handle is not None:
             return self.device_handle
         else:
             return -1
