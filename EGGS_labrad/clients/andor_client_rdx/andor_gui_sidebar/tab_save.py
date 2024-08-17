@@ -11,9 +11,9 @@ from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox
 _ANDOR_ALIGNMENT = (Qt.AlignRight | Qt.AlignVCenter)
 
 
-class SidebarTabImage(QWidget):
+class SidebarTabSave(QWidget):
     """
-    Image setup widget for Andor GUI.
+    Save setup widget for Andor GUI.
     Intended for use as a sidebar widget.
     """
 
@@ -90,10 +90,10 @@ class SidebarTabImage(QWidget):
         # lay out section
         display_widget_layout.addWidget(flip_vertical_label,        0, 0, 1, 1)
         display_widget_layout.addWidget(self.flip_vertical,         0, 1, 1, 1)
-        display_widget_layout.addWidget(flip_horizontal_label,      1, 0, 1, 1)
-        display_widget_layout.addWidget(self.flip_horizontal,       1, 1, 1, 1)
-        display_widget_layout.addWidget(rotation_label,             2, 0, 1, 1)
-        display_widget_layout.addWidget(self.rotation,              2, 1, 1, 1)
+        display_widget_layout.addWidget(flip_horizontal_label,      0, 0, 1, 1)
+        display_widget_layout.addWidget(self.flip_horizontal,       0, 1, 1, 1)
+        display_widget_layout.addWidget(rotation_label,             1, 0, 1, 1)
+        display_widget_layout.addWidget(self.rotation,              1, 1, 1, 1)
         # enclose section in a QGroupBox
         display_widget = QCustomGroupBox(display_holder, "Display")
 
@@ -109,4 +109,4 @@ class SidebarTabImage(QWidget):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
-    runGUI(SidebarTabImage)
+    runGUI(SidebarTabSave)

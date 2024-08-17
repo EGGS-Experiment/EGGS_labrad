@@ -1,10 +1,10 @@
 import pyqtgraph as pg
 
-from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (QFrame, QWidget, QGridLayout, QLabel, QDoubleSpinBox, QSpinBox,
-                             QPushButton, QCheckBox, QSizePolicy, QComboBox, QHBoxLayout)
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QLabel, QDoubleSpinBox,
+                             QPushButton, QCheckBox, QSizePolicy, QComboBox,
+                             QLayout)
 
 
 from EGGS_labrad.clients import SHELL_FONT
@@ -12,12 +12,13 @@ from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox, QCu
 
 _ANDOR_ALIGNMENT = (Qt.AlignRight | Qt.AlignVCenter)
 
-# tmp remove
-from andor_gui_sidebar import SidebarWidget
-# tmp remove
+
+# from andor_gui_sidebar import SidebarWidget
+from EGGS_labrad.clients.andor_client_rdx.andor_gui_sidebar.sidebar_widget import SidebarWidget
 
 
-class CameraDisplay(QWidget):
+
+class AndorGUI(QWidget):
     """
     Main camera display window for Andor GUI.
     Intended for use as a sidebar display.
@@ -25,7 +26,7 @@ class CameraDisplay(QWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setWindowTitle("Camera Window")
+        self.setWindowTitle("Andor GUI")
         self._makeLayout()
         self._connectLayout()
 
@@ -74,25 +75,30 @@ class CameraDisplay(QWidget):
 
         '''CREATE DISPLAY HELPER'''
         # cursor readout
-        cursor_coordinates_label = QLabel("Cursor")
-        self.cursor_coordinates = QLabel('(x, y):')
+        cursor_coordinates_label = QLabel("Cursor:")
+        self.cursor_coordinates = QLabel('(x, y)')
         self.cursor_coordinates.setFont(QFont(SHELL_FONT, pointSize=12))
         self.cursor_coordinates.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        # self.cursor_coordinates.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        cursor_signal_label = QLabel("Counts")
-        self.cursor_signal = QLabel('1000')
+        cursor_signal_label = QLabel("Counts:")
+        self.cursor_signal = QLabel('0')
         self.cursor_signal.setFont(QFont(SHELL_FONT, pointSize=12))
         self.cursor_signal.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        # self.cursor_signal.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         # box up cursor readout widget
         cursor_readout_holder = QWidget(self)
+        # cursor_readout_holder.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         cursor_readout_widget_layout = QGridLayout(cursor_readout_holder)
+        # cursor_readout_widget_layout.setSizeConstraint(QLayout.SetFixedSize)
         cursor_readout_widget_layout.addWidget(cursor_coordinates_label,    0, 0, 1, 1)
         cursor_readout_widget_layout.addWidget(self.cursor_coordinates,     1, 0, 1, 1)
         cursor_readout_widget_layout.addWidget(cursor_signal_label,         0, 1, 1, 1)
         cursor_readout_widget_layout.addWidget(self.cursor_signal,          1, 1, 1, 1)
         # enclose section in a QGroupBox
         cursor_readout_widget = QCustomGroupBox(cursor_readout_holder, "Cursor")
+        # cursor_readout_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
 
         # ROI statistics readout
@@ -166,9 +172,9 @@ class CameraDisplay(QWidget):
 
         # todo: lay out
 
-        # tmp remove - create sidebar widget
+
+        '''SET UP USER SETUP INTERFACE'''
         self.sidebar = SidebarWidget(self)
-        # tmp remove - create sidebar widegt
 
 
         '''lay out GUI elements'''
@@ -223,9 +229,13 @@ class CameraDisplay(QWidget):
         self.cursor_coordinates.setText("({:.4g},\t{:.4g})".format(pos_view.x(), pos_view.y()))
 
         # todo: check if coords are in valid range
-        # todo: get counts at that position
+        # get pixel value at cursor position
+        if self.image.image is not None:
+            image_data = self.image.image
+            cursor_signal = image_data[round(pos_view.x()), round(pos_view.y())]
+            self.cursor_signal.setText("{:.4g}".format(cursor_signal))
 
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
-    runGUI(CameraDisplay)
+    runGUI(AndorGUI)

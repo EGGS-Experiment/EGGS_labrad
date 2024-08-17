@@ -29,10 +29,11 @@ class RGA_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
+        # link GUI elements to corresponding signal from server
         self.gui_elements = {
-            'EE': self.gui.ionizer_ee, 'IE': self.gui.ionizer_ie, 'FL': self.gui.ionizer_fl,
-            'VF': self.gui.ionizer_vf, 'HV': self.gui.detector_hv, 'NF': self.gui.detector_nf,
-            'SA': self.gui.scan_sa, 'MI': self.gui.scan_mi, 'MF': self.gui.scan_mf
+            'EE': self.gui.ionizer_ee,  'IE': self.gui.ionizer_ie,  'FL': self.gui.ionizer_fl,
+            'VF': self.gui.ionizer_vf,  'HV': self.gui.detector_hv, 'NF': self.gui.detector_nf,
+            'SA': self.gui.scan_sa,     'MI': self.gui.scan_mi,     'MF': self.gui.scan_mf
         }
         self.gui.buffer_readout.appendPlainText('Initializing client...')
         # ionizer

@@ -9,8 +9,8 @@ import labrad
 cxn = labrad.connect()
 
 # connect to wavemeter labrad
-cxn_wm = labrad.connect('10.97.111.8', password='lab')
-wm = cxn_wm.multiplexerserver
+# cxn_wm = labrad.connect('10.97.111.8', password='lab')
+# wm = cxn_wm.multiplexerserver
 
 # list of servers we want and their shorthand names
 server_dict = {

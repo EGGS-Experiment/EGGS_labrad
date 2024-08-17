@@ -42,7 +42,7 @@ class AndorServer(PollingServer):
     name = "Andor Server"
     image_updated =         Signal(IMAGE_UPDATED_SIGNAL,        'signal: image updated', '*i')
     mode_updated =          Signal(MODE_UPDATED_SIGNAL,         'signal: mode updated', '(ss)')
-    parameter_updated =     Signal(PARAMETER_UPDATED_SIGNAL,    'signal: parameter updated', '(sv)')
+    parameter_updated =     Signal(PARAMETER_UPDATED_SIGNAL,    'signal: parameter updated', '(ss)')
 
 
     """
@@ -163,7 +163,7 @@ class AndorServer(PollingServer):
                     (float) : the current temperature (in Celsius).
         """
         temp = yield self._run('temperature_setpoint', 'get_temperature_setpoint', 'set_temperature_setpoint', temp)
-        self.notifyOtherListeners(c, ("temp_set", temp), self.parameter_updated)
+        self.notifyOtherListeners(c, ("temp_set", str(temp)), self.parameter_updated)
         returnValue(temp)
 
     @setting(112, "Temperature Actual", returns='v')
@@ -176,7 +176,7 @@ class AndorServer(PollingServer):
                     (float) : the current temperature (in Celsius).
         """
         temp = yield self._run('temperature', 'get_temperature_actual')
-        self.notifyOtherListeners(c, ("temp_actual", temp), self.parameter_updated)
+        self.notifyOtherListeners(c, ("temp_actual", str(temp)), self.parameter_updated)
         returnValue(temp)
 
     @setting(121, "Cooler", state=['b', 'i'], returns='b')
@@ -268,7 +268,7 @@ class AndorServer(PollingServer):
                     (int)   : the EMCCD gain.
         """
         gain = yield self._run('EMCCD Gain', 'get_emccd_gain', 'set_emccd_gain', gain)
-        self.notifyOtherListeners(c, ("emccd_gain", gain), self.parameter_updated)
+        self.notifyOtherListeners(c, ("emccd_gain", str(gain)), self.parameter_updated)
         returnValue(gain)
 
     @setting(231, "Setup Exposure Time", time='v', returns='v')
@@ -281,7 +281,7 @@ class AndorServer(PollingServer):
                     (float) : the current exposure time in seconds.
         """
         time = yield self._run('Exposure Time', 'get_exposure_time', 'set_exposure_time', time)
-        self.notifyOtherListeners(c, ("exposure_time", time), self.parameter_updated)
+        self.notifyOtherListeners(c, ("exposure_time", str(time)), self.parameter_updated)
         returnValue(time)
 
     @setting(241, "Setup Vertical Shift Speed", idx_speed='i', returns='i')
@@ -298,7 +298,7 @@ class AndorServer(PollingServer):
         idx_speed = yield self._run('Vertical Shift Speed',
                                    'get_vertical_shift_speed', 'set_vertical_shift_speed',
                                    idx_speed)
-        self.notifyOtherListeners(c, ("vs_speed", idx_speed), self.parameter_updated)
+        self.notifyOtherListeners(c, ("vs_speed", str(idx_speed)), self.parameter_updated)
         returnValue(idx_speed)
 
     @setting(242, "Setup Vertical Shift Amplitude", idx_ampl='i', returns='i')
@@ -315,7 +315,7 @@ class AndorServer(PollingServer):
         idx_ampl = yield self._run('Vertical Shift Amplitude',
                                    'get_vertical_shift_amplitude', 'set_vertical_shift_amplitude',
                                    idx_ampl)
-        self.notifyOtherListeners(c, ("vs_ampl", idx_ampl), self.parameter_updated)
+        self.notifyOtherListeners(c, ("vs_ampl", str(idx_ampl)), self.parameter_updated)
         returnValue(idx_ampl)
 
     @setting(243, "Setup Horizontal Shift Speed", idx_speed='i', returns='i')
@@ -332,7 +332,7 @@ class AndorServer(PollingServer):
         idx_speed = yield self._run('Horizontal Shift Amplitude',
                                    'get_horizontal_shift_speed', 'set_horizontal_shift_speed',
                                    idx_speed)
-        self.notifyOtherListeners(c, ("hs_speed", idx_speed), self.parameter_updated)
+        self.notifyOtherListeners(c, ("hs_speed", str(idx_speed)), self.parameter_updated)
         returnValue(idx_speed)
 
     @setting(244, "Setup Horizontal Shift Preamp Gain", idx_gain='i', returns='i')
@@ -349,7 +349,7 @@ class AndorServer(PollingServer):
         idx_gain = yield self._run('Horizontal Shift Preamp Gain',
                                    'get_horizontal_shift_preamp_gain', 'set_horizontal_shift_preamp_gain',
                                    idx_gain)
-        self.notifyOtherListeners(c, ("hs_preampgain", idx_gain), self.parameter_updated)
+        self.notifyOtherListeners(c, ("hs_preampgain", str(idx_gain)), self.parameter_updated)
         returnValue(idx_gain)
     # todo: frame transfer
 
@@ -414,18 +414,20 @@ class AndorServer(PollingServer):
                         (str)   : the rotation state.
         """
         rotation_state = yield self._run('Image Rotate', 'get_image_rotate', 'set_image_rotate', rotation)
+        # todo: notify other listeners
         returnValue(rotation_state)
 
     @setting(422, "Image Flip", flip_status='(bb)', returns='(bb)')
     def imageFlip(self, c, flip_status=None):
         """
-        Get/set the rotation state of the camera image (90 degrees).
+        Get/set whether the camera image is flipped (90 degrees).
         Arguments:
             rotation    (bool, bool)    : horizontal and vertical image flip, respectively.
         Returns:
                         (bool, bool)    : horizontal and vertical image flip, respectively.
         """
         flip_status = yield self._run('Image Flip', 'get_image_flip', 'set_image_flip', flip_status)
+        # todo: notify other listeners
         returnValue(flip_status)
 
 

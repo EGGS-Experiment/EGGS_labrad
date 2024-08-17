@@ -64,7 +64,7 @@ class SidebarTabAcquisition(QWidget):
         self.shift_speed = QComboBox()
         self.shift_speed.setFont(QFont(SHELL_FONT, pointSize=12))
         self.shift_speed.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.shift_speed.addItems(['todo: idk'])
+        # self.shift_speed.addItems(['todo: idk'])
 
         # clock voltage
         clock_voltage_label = QLabel("Clock Voltage (V):")
@@ -72,7 +72,7 @@ class SidebarTabAcquisition(QWidget):
         self.clock_voltage = QComboBox()
         self.clock_voltage.setFont(QFont(SHELL_FONT, pointSize=12))
         self.clock_voltage.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.clock_voltage.addItems(['todo: idk'])
+        # self.clock_voltage.addItems(['todo: idk'])
 
         # create section widget
         vertical_shift_holder = QWidget()
@@ -88,12 +88,12 @@ class SidebarTabAcquisition(QWidget):
 
         '''Setup - Horizontal Shift'''
         # readout rate
-        readout_rate_label = QLabel("Readout Rate:")
+        readout_rate_label = QLabel("Horizontal Readout Rate (MHz):")
         readout_rate_label.setAlignment(_ANDOR_ALIGNMENT)
         self.readout_rate = QComboBox()
         self.readout_rate.setFont(QFont(SHELL_FONT, pointSize=12))
         self.readout_rate.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.readout_rate.addItems(['todo: idk'])
+        # self.readout_rate.addItems(['todo: idk'])
 
         # preamplifier gain
         preamplifier_gain_label = QLabel("Preamplifier Gain:")
@@ -101,7 +101,7 @@ class SidebarTabAcquisition(QWidget):
         self.preamplifier_gain = QComboBox()
         self.preamplifier_gain.setFont(QFont(SHELL_FONT, pointSize=12))
         self.preamplifier_gain.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.preamplifier_gain.addItems(['todo: idk'])
+        # self.preamplifier_gain.addItems(['todo: idk'])
 
         # create section widget
         horizontal_shift_holder = QWidget()

@@ -103,7 +103,7 @@ class PollingServer(ContextServer):
         """
         Stop polling if there are no more listeners.
         """
-        super.expireContext(c)
+        super().expireContext(c)
 
         # stop polling if there are no more listeners
         if len(self.listeners) == 0:
