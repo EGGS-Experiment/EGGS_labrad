@@ -32,8 +32,8 @@ class AndorGUI(QWidget):
     A GUI for Andor iXon cameras.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.setWindowTitle("Andor Client")
         self._makeLayout()
         self._connectLayout()
@@ -75,7 +75,7 @@ class AndorGUI(QWidget):
         # self.pw.scene().sigMouseMoved.connect(self.mouseMoved)
         display_helper_widget = QWidget()
         display_helper_widget_layout = QHBoxLayout(display_helper_widget)
-        self.display_coordinates = QLabel('')
+        self.display_coordinates = QLabel('Raw:\t(x, y)\nScene:\t(x, y)\nView:\t(x, y)\nItem:\t(x, y)')
         self.display_view_all_button = QPushButton("View All")
         self.display_auto_level_button = QPushButton("Auto Level")
         display_helper_widget_layout.addWidget(self.display_coordinates)
@@ -194,6 +194,12 @@ class AndorGUI(QWidget):
                 self.vLine.setPos(mousePoint.x())
                 self.hLine.setPos(mousePoint.y())
 
+                print('\n\nraw: ({:}, {:}'.format(event.pos().x(), event.pos().y()))
+                print('rdx: ({:}, {:}\n'.format(pos().x(), pos().y()))
+                print(self.plt.sceneBoundingRect())
+                print(mousePoint.x())
+                print(mousePoint.y())
+
         except Exception as e:
             pass
 
@@ -201,9 +207,37 @@ class AndorGUI(QWidget):
         """
         Display the coordinates at the mouse location.
         """
-        pnt = self.img.mapFromScene(pos)
-        string = "({:.4g},\t{:.4g})".format(pnt.x(), pnt.y())
-        self.display_coordinates.setText(string)
+        # pnt = self.img.mapFromScene(pos)
+        # string = "({:.4g},\t{:.4g})".format(pnt.x(), pnt.y())
+        # self.display_coordinates.setText(string)
+        try:
+            # pnt_raw =       pos
+            # pnt_imgview =   self.plt.vb.mapFromScene(pos)
+            # pnt_plt =       self.plt.mapFromScene(pos)
+            # pnt_vb =        self.img.mapFromScene(pos) # good
+            # pnt_vbmapped =  self.plt.vb.mapToView(pos)
+            # pnt_vbmapped2 =  self.plt.vb.mapSceneToView(pos) # good
+            # pnt_pltmapped = self.plt.mapToView(pos) # good
+            #
+            # # string = "({:.4g},\t{:.4g})".format(pnt.x(), pnt.y())
+            # pos_string = 'Raw:\t\t({:.4f}, {:.4f})\nplt.vb:\t\t({:.4f}, {:.4f})\nplt:\t\t({:.4f}, {:.4f})\nplt.vb.img:\t({:.4f}, {:.4f})\nplt.map:\t\t({:.4f}, {:.4f})\nplt.vb.map:\t({:.4f}, {:.4f})'.format(
+            #     pnt_raw.x(), pnt_raw.y(),
+            #     pnt_imgview.x(), pnt_imgview.y(),
+            #     pnt_plt.x(), pnt_plt.y(),
+            #     pnt_vb.x(), pnt_vb.y(),
+            #     pnt_pltmapped.x(), pnt_pltmapped.y(),
+            #     pnt_vbmapped.x(), pnt_vbmapped.y()
+            # )
+            # self.display_coordinates.setText(pos_string)
+
+            pnt_vbmapped =  self.plt.vb.mapSceneToView(pos)
+
+            pos_string = 'Raw:\t\t({:.4f}, {:.4f})'.format(pnt_vbmapped.x(), pnt_vbmapped.y())
+            self.display_coordinates.setText(pos_string)
+
+        except Exception as e:
+            print(e)
+            raise
 
 
 if __name__ == "__main__":

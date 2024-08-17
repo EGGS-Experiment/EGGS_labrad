@@ -19,7 +19,9 @@ class AndorConfig(object):
     exposure_time =                 0.100   # seconds
     binning =                       [1, 1]  # numbers of pixels for horizontal and vertical binning
     vertical_shift_amplitude =      0
-    vertical_shift_speed =          0
+    vertical_shift_speed =          1
+    horizontal_shift_preamp_gain =  1
+    horizontal_shift_speed =        3
 
     # image setup
     image_rotate =          "Anticlockwise"

@@ -7,6 +7,8 @@ import ctypes as c
 
 from EGGS_labrad.config.andor_config import AndorConfig as config
 # todo: migrate the text-to-value dicts to enums; also supports reverse lookup
+# todo: migrate API functions to have same style as dll - i was stupid to format them differently
+# todo: i.e. make it SetVSAmplitude instead of set_vertical_shift_amplitude
 
 
 class AndorInfo(object):
@@ -25,24 +27,34 @@ class AndorInfo(object):
         self.temperature_setpoint =     None
         self.temperature =              None
 
+
         self.min_gain =                 None
         self.max_gain =                 None
         self.emccd_gain =               None
 
-        self.vertical_shift_amplitude = None
-        self.vertical_shift_speed =     None
-        # self.horizontal_shift_speed =   None
-        # self.preamp_gain =     None
+
+        self.vertical_shift_speed_values =      None
+        self.vertical_shift_speed =             None
+        self.vertical_shift_amplitude_values =  None
+        self.vertical_shift_amplitude =         None
+
+        self.horizontal_shift_speed_values =        None
+        self.horizontal_shift_speed =               None
+        self.horizontal_shift_preamp_gain_values =  None
+        self.horizontal_shift_preamp_gain =         None
+
 
         self.read_mode =                None
         self.acquisition_mode =         None
         self.trigger_mode =             None
         self.shutter_mode =             None
 
+
         self.exposure_time =            None
         self.accumulate_cycle_time =    None
         self.kinetic_cycle_time =       None
         self.number_kinetics =          None
+
 
         self.image_region =             None
         self.image_rotate =             None
@@ -67,7 +79,7 @@ class AndorAPI(object):
             error = self.dll.Initialize(os.path.dirname(__file__))
             print('Initializing Complete: {}'.format(ERROR_CODE[error]))
 
-            # get camera parameters
+            # get camera capabilities and related info
             self.info = AndorInfo()
             # todo: who should be andorinfo and who should simply be returned?
             # note: seems like settings that map text-to-num are stored to avoid
@@ -76,7 +88,16 @@ class AndorAPI(object):
             self.get_temperature_range()
             self.acquire_camera_serial_number()
             self.get_camera_em_gain_range()
+            # get information about vertical/horizontal pixel shift capabilities
+            # note: these may differ by camera
+            self.get_vertical_shift_speed_values()
+            self.get_vertical_shift_amplitude_values()
+            self.get_horizontal_shift_speed_values()
+            self.get_horizontal_shift_preamp_gain_values()
 
+
+            # set up Andor camera per config file and populate
+            # AndorInfo data structure with default/current values
             self.set_read_mode(config.read_mode)
             self.set_acquisition_mode(config.acquisition_mode)
             self.set_trigger_mode(config.trigger_mode)
@@ -87,6 +108,8 @@ class AndorAPI(object):
             self.set_exposure_time(config.exposure_time)
             # self.set_vertical_shift_amplitude(config.vertical_shift_amplitude)
             # self.set_vertical_shift_speed(config.vertical_shift_speed)
+            # self.set_horizontal_shift_preamp_gain(config.horizontal_shift_preamp_gain)
+            # self.set_horizontal_shift_speed(config.horizontal_shift_speed)
 
             # set image to full size with default binning
             self.set_image_region(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)
@@ -298,9 +321,6 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
-    # todo: em gain enable
-    # todo: advanced
-
 
     """
     READ MODE
@@ -407,29 +427,45 @@ class AndorAPI(object):
     """
     SHIFTING - VERTICAL/HORIZONTAL
     """
-    def set_vertical_shift_amplitude(self, amplitude_voltage):
-        error = self.dll.SetVSAmplitude(c.c_int(int(amplitude_voltage)))
+    def set_vertical_shift_speed(self, index_speed):
+        error = self.dll.SetVSSpeed(c.c_int(int(index_speed)))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
-            self.info.vertical_shift_amplitude = int(amplitude_voltage)
-        else:
-            raise Exception(ERROR_CODE[error])
-
-    def get_vertical_shift_amplitude(self):
-        return self.info.vertical_shift_amplitude
-
-    def set_vertical_shift_speed(self, speed_index):
-        error = self.dll.SetVSSpeed(c.c_int(int(speed_index)))
-        if ERROR_CODE[error] == 'DRV_SUCCESS':
-            self.info.vertical_shift_speed = int(speed_index)
+            self.info.vertical_shift_speed = int(index_speed)
         else:
             raise Exception(ERROR_CODE[error])
 
     def get_vertical_shift_speed(self):
         return self.info.vertical_shift_speed
 
-    # todo: horiz read rate
-    # todo: horiz preamp gain
-    # todo: horiz outut amp
+    def set_vertical_shift_amplitude(self, index_amplitude):
+        error = self.dll.SetVSAmplitude(c.c_int(int(index_amplitude)))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.vertical_shift_amplitude = int(index_amplitude)
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_vertical_shift_amplitude(self):
+        return self.info.vertical_shift_amplitude
+
+    def set_horizontal_shift_speed(self, index_speed):
+        error = self.dll.SetHSSpeed(c.c_int(0), c.c_int(int(index_speed)))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.horizontal_shift_speed = int(index_speed)
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_horizontal_shift_speed(self):
+        return self.info.horizontal_shift_speed
+
+    def set_horizontal_shift_preamp_gain(self, index_gain):
+        error = self.dll.SetPreAmpGain(c.c_int(int(index_gain)))
+        if ERROR_CODE[error] == 'DRV_SUCCESS':
+            self.info.horizontal_shift_preamp_gain = int(index_gain)
+        else:
+            raise Exception(ERROR_CODE[error])
+
+    def get_horizontal_shift_preamp_gain(self):
+        return self.info.horizontal_shift_preamp_gain
 
 
     """
@@ -454,7 +490,7 @@ class AndorAPI(object):
         try:
             state_number = ROTATION_SETTING[state]
         except KeyError:
-            raise Exception("Incorrect rotation state {}".format(mode))
+            raise Exception("Incorrect rotation state: {}".format(state))
 
         error = self.dll.SetImageRotate(c.c_int(state_number))
         if ERROR_CODE[error] == 'DRV_SUCCESS':
@@ -616,6 +652,99 @@ class AndorAPI(object):
         else:
             raise Exception(ERROR_CODE[error])
 
+
+    """
+    Retrieve Camera Capabilities
+    """
+    def get_vertical_shift_speed_values(self):
+        # get number of vertical shift speed values
+        num_vs_speed_vals = c.c_int()
+        error = self.dll.GetNumberVSSpeeds(c.byref(num_vs_speed_vals))
+        if ERROR_CODE[error] != 'DRV_SUCCESS':
+            raise Exception(ERROR_CODE[error])
+        # convert result back to python value
+        num_vs_speed_vals = num_vs_speed_vals.value
+
+        # convert indices to actual shift speed values
+        vs_speed_vals = [0.] * num_vs_speed_vals
+        for i in range(num_vs_speed_vals):
+            speed_val = c.c_float()
+            error = self.dll.GetVSSpeed(c.c_int(i), c.byref(speed_val))
+            if ERROR_CODE[error] == 'DRV_SUCCESS':
+                vs_speed_vals[i] = speed_val.value
+            else:
+                raise Exception(ERROR_CODE[error])
+
+        # store results in AndorInfo
+        self.info.vertical_shift_speed_values = vs_speed_vals
+
+    def get_vertical_shift_amplitude_values(self):
+        # get number of vertical shift amplitude values
+        num_vs_ampl_vals = c.c_int()
+        error = self.dll.GetNumberVSAmplitudes(c.byref(num_vs_ampl_vals))
+        if ERROR_CODE[error] != 'DRV_SUCCESS':
+            raise Exception(ERROR_CODE[error])
+        # convert result back to python value
+        num_vs_ampl_vals = num_vs_ampl_vals.value
+
+        # convert indices to shift amplitude string values
+        vs_ampl_strings = [''] * num_vs_ampl_vals
+        for i in range(num_vs_ampl_vals):
+            ampl_string = c.create_string_buffer(10)
+            error = self.dll.GetVSAmplitudeString(c.c_int(i), ampl_string)
+            if ERROR_CODE[error] == 'DRV_SUCCESS':
+                vs_ampl_strings[i] = repr(ampl_string.value).decode("utf-8")
+            else:
+                raise Exception(ERROR_CODE[error])
+
+        # store results in AndorInfo
+        self.info.vertical_shift_amplitude_values = vs_ampl_strings
+
+    def get_horizontal_shift_speed_values(self):
+        # get number of horizontal shift speed values
+        num_hs_speed_vals = c.c_int()
+        # note - restrict use case to single-channel, default amplifier
+        error = self.dll.GetNumberHSSpeeds(c.c_int(0), c.c_int(0), c.byref(num_hs_speed_vals))
+        if ERROR_CODE[error] != 'DRV_SUCCESS':
+            raise Exception(ERROR_CODE[error])
+        # convert result back to python value
+        num_hs_speed_vals = num_hs_speed_vals.value
+
+        # convert indices to actual shift speed values
+        hs_speed_vals = [0.] * num_hs_speed_vals
+        for i in range(num_hs_speed_vals):
+            speed_val = c.c_float()
+            # note - restrict use case to single-channel, default amplifier
+            error = self.dll.GetHSSpeed(c.c_int(0), c.c_int(0), c.c_int(i), c.byref(speed_val))
+            if ERROR_CODE[error] == 'DRV_SUCCESS':
+                hs_speed_vals[i] = speed_val.value
+            else:
+                raise Exception(ERROR_CODE[error])
+
+        # store results in AndorInfo
+        self.info.horizontal_shift_speed_values = hs_speed_vals
+
+    def get_horizontal_shift_preamp_gain_values(self):
+        # get number of horizontal shift preamp gain values
+        num_preamp_gain_vals = c.c_int()
+        error = self.dll.GetNumberPreAmpGains(c.byref(num_preamp_gain_vals))
+        if ERROR_CODE[error] != 'DRV_SUCCESS':
+            raise Exception(ERROR_CODE[error])
+        # convert result back to python value
+        num_preamp_gain_vals = num_preamp_gain_vals.value
+
+        # convert indices to actual preamp gain values
+        preamp_gain_vals = [0.] * num_preamp_gain_vals
+        for i in range(num_preamp_gain_vals):
+            gain_val = c.c_float()
+            error = self.dll.GetPreAmpGain(c.c_int(i), c.byref(gain_val))
+            if ERROR_CODE[error] == 'DRV_SUCCESS':
+                preamp_gain_vals[i] = gain_val.value
+            else:
+                raise Exception(ERROR_CODE[error])
+
+        # store results in AndorInfo
+        self.info.horizontal_shift_preamp_gain_values = preamp_gain_vals
 
 
 """

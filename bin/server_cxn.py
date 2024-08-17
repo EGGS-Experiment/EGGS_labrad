@@ -2,15 +2,15 @@
 
 # get current module to set server variables
 from sys import modules
-current_module=modules[__name__]
+current_module = modules[__name__]
 
 # connect to labrad
 import labrad
 cxn = labrad.connect()
 
 # connect to wavemeter labrad
-# cxn_wm = labrad.connect('10.97.111.8',password='lab')
-# wm = cxn_wm.multiplexerserver
+cxn_wm = labrad.connect('10.97.111.8', password='lab')
+wm = cxn_wm.multiplexerserver
 
 # list of servers we want and their shorthand names
 server_dict = {

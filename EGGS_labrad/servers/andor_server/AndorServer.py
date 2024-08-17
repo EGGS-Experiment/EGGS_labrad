@@ -26,13 +26,12 @@ from EGGS_labrad.servers.andor_server.AndorAPI import AndorAPI
 
 IMAGE_UPDATED_SIGNAL =          142312
 MODE_UPDATED_SIGNAL =           142313
-ACQUISITION_UPDATED_SIGNAL =    142314
-TEMPERATURE_UPDATED_SIGNAL =    142315
-# todo: stop using reactor.callLater/wait function
+PARAMETER_UPDATED_SIGNAL =      142314
 # todo: finish moving all to _run helper function
 # todo: add binning
 # todo: spice up documentation
 # todo: make signal updates use send to other listeners
+# todo: what is a prescan? baseline clamp? kinetic series length?
 
 
 class AndorServer(PollingServer):
@@ -41,10 +40,9 @@ class AndorServer(PollingServer):
     """
 
     name = "Andor Server"
-    image_updated =             Signal(IMAGE_UPDATED_SIGNAL,    'signal: image updated', '*i')
-    mode_updated =              Signal(MODE_UPDATED_SIGNAL,     'signal: mode updated', '(ss)')
-    acquisition_updated =       Signal(ACQUISITION_UPDATED_SIGNAL,  'signal: acquisition updated',  '(sv)')
-    temperature_updated =       Signal(TEMPERATURE_UPDATED_SIGNAL,  'signal: temperature updated',  'v')
+    image_updated =         Signal(IMAGE_UPDATED_SIGNAL,        'signal: image updated', '*i')
+    mode_updated =          Signal(MODE_UPDATED_SIGNAL,         'signal: mode updated', '(ss)')
+    parameter_updated =     Signal(PARAMETER_UPDATED_SIGNAL,    'signal: mode updated', '(sv)')
 
 
     """
@@ -106,6 +104,42 @@ class AndorServer(PollingServer):
         """
         return self.camera.get_camera_em_gain_range()
 
+    @setting(14, "Info Vertical Shift", returns='*(s*s)')
+    def infoVerticalShift(self, c):
+        """
+        Get information about the camera's vertical shift capabilities.
+        Returns:
+            (str, list(str))  : tuples containing the parameter name and a list of all values.
+        """
+        # get valid values from camera info structure
+        vs_speed_vals = (
+            'Vertical Speed Shift (us)',
+            [str(val) for val in self.camera.info.vertical_shift_speed_values]
+        )
+        vs_ampl_vals = (
+            'Vertical Amplitude Voltage (V)',
+            [str(val) for val in self.camera.info.vertical_shift_amplitude_values]
+        )
+        return [vs_speed_vals, vs_ampl_vals]
+
+    @setting(15, "Info Horizontal Shift", returns='*(s*s)')
+    def infoHorizontalShift(self, c):
+        """
+        Get information about the camera's horizontal shift capabilities.
+        Returns:
+            (str, list(str))  : tuples containing the parameter name and a list of all values.
+        """
+        # get valid values from camera info structure
+        hs_speed_vals = (
+            'Horizontal Speed Shift (MHz)',
+            [str(val) for val in self.camera.info.horizontal_shift_speed_values]
+        )
+        hs_preamp_gain_vals = (
+            'Preamplifier Gain',
+            [str(val) for val in self.camera.info.horizontal_shift_preamp_gain_values]
+        )
+        return [hs_speed_vals, hs_preamp_gain_vals]
+
     @setting(21, "Get Status", returns='s')
     def getStatus(self, c):
         """
@@ -114,6 +148,8 @@ class AndorServer(PollingServer):
             (str)   : the camera status.
         """
         return self.camera.get_status()
+
+    # todo: get camera capabilities: horizontal/vertical
 
 
     """
@@ -129,6 +165,7 @@ class AndorServer(PollingServer):
                     (float) : the current temperature (in Celsius).
         """
         temp = yield self._run('temperature_setpoint', 'get_temperature_setpoint', 'set_temperature_setpoint', temp)
+        self.notifyOtherListeners(c, ("temp_set", temp), self.parameter_updated)
         returnValue(temp)
 
     @setting(112, "Temperature Actual", returns='v')
@@ -141,7 +178,7 @@ class AndorServer(PollingServer):
                     (float) : the current temperature (in Celsius).
         """
         temp = yield self._run('temperature', 'get_temperature_actual')
-        self.notifyOtherListeners(c, temp, self.temperature_updated)
+        self.notifyOtherListeners(c, ("temp_actual", temp), self.parameter_updated)
         returnValue(temp)
 
     @setting(121, "Cooler", state=['b', 'i'], returns='b')
@@ -233,7 +270,7 @@ class AndorServer(PollingServer):
                     (int)   : the EMCCD gain.
         """
         gain = yield self._run('EMCCD Gain', 'get_emccd_gain', 'set_emccd_gain', gain)
-        self.notifyOtherListeners(c, ("emccd_gain", float(gain)), self.acquisition_updated)
+        self.notifyOtherListeners(c, ("emccd_gain", float(gain)), self.parameter_updated)
         returnValue(gain)
 
     @setting(231, "Setup Exposure Time", time='v', returns='v')
@@ -241,19 +278,83 @@ class AndorServer(PollingServer):
         """
         Get/set the current exposure time.
         Arguments:
-            time    (float)   : the trigger mode.
+            time    (float) : the exposure time to set (in seconds).
         Returns:
                     (float) : the current exposure time in seconds.
         """
         time = yield self._run('Exposure Time', 'get_exposure_time', 'set_exposure_time', time)
-        self.notifyOtherListeners(c, ("exposure_time", float(time)), self.acquisition_updated)
+        self.notifyOtherListeners(c, ("exposure_time", float(time)), self.parameter_updated)
         returnValue(time)
 
+    @setting(241, "Setup Vertical Shift Speed", idx_ampl='i', returns='i')
+    def setupVerticalShiftSpeed(self, c, idx_speed=None):
+        """
+        Get/set the vertical shift speed.
+        # todo: describe how it works
+        # todo: tell them they have to convert value to index
+        Arguments:
+            idx_ampl    (int)   : the vertical shift speed index.
+        Returns:
+                        (int)   : the vertical shift speed index.
+        """
+        idx_speed = yield self._run('Vertical Shift Amplitude',
+                                   'get_vertical_shift_amplitude', 'set_vertical_shift_amplitude',
+                                   idx_speed)
+        self.notifyOtherListeners(c, ("vs_speed", idx_speed), self.parameter_updated)
+        returnValue(idx_speed)
+
+    @setting(242, "Setup Vertical Shift Amplitude", idx_ampl='i', returns='i')
+    def setupVerticalShiftAmplitude(self, c, idx_ampl=None):
+        """
+        Get/set the vertical shift amplitude.
+        # todo: describe how it works
+        # todo: tell them they have to convert value to index
+        Arguments:
+            idx_ampl    (int)   : the vertical shift amplitude/voltage index.
+        Returns:
+                        (int)   : the vertical shift amplitude/voltage index.
+        """
+        idx_ampl = yield self._run('Vertical Shift Amplitude',
+                                   'get_vertical_shift_amplitude', 'set_vertical_shift_amplitude',
+                                   idx_ampl)
+        self.notifyOtherListeners(c, ("vs_ampl", idx_ampl), self.parameter_updated)
+        returnValue(idx_ampl)
+
+    @setting(243, "Setup Horizontal Shift Speed", idx_ampl='i', returns='i')
+    def setupHorizontalShiftSpeed(self, c, idx_speed=None):
+        """
+        Get/set the horizontal shift speed.
+        # todo: describe how it works
+        # todo: tell them they have to convert value to index
+        Arguments:
+            idx_ampl    (int)   : the horizontal shift speed index.
+        Returns:
+                        (int)   : the horizontal shift speed index.
+        """
+        idx_speed = yield self._run('Horizontal Shift Amplitude',
+                                   'get_horizontal_shift_amplitude', 'set_horizontal_shift_amplitude',
+                                   idx_speed)
+        self.notifyOtherListeners(c, ("hs_speed", idx_speed), self.parameter_updated)
+        returnValue(idx_speed)
+
+    @setting(243, "Setup Horizontal Shift Preamp Gain", idx_ampl='i', returns='i')
+    def setupHorizontalShiftPreampGain(self, c, idx_gain=None):
+        """
+        Get/set the horizontal shift speed.
+        # todo: describe how it works
+        # todo: tell them they have to convert value to index
+        Arguments:
+            idx_ampl    (int)   : the horizontal shift speed index.
+        Returns:
+                        (int)   : the horizontal shift speed index.
+        """
+        idx_gain = yield self._run('Horizontal Shift Preamp Gain',
+                                   'get_horizontal_shift_preamp_gain', 'set_horizontal_shift_preamp_gain',
+                                   idx_gain)
+        self.notifyOtherListeners(c, ("hs_preampgain", idx_gain), self.parameter_updated)
+        returnValue(idx_gain)
     # todo: frame transfer
-    # todo: vertical clock speed
-    # todo: vertical clock voltage
-    # todo: horizontal clock speed
-    # todo: preamp gain
+
 
     """
     IMAGE REGION

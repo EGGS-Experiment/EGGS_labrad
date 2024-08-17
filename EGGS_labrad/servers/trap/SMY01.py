@@ -1,5 +1,4 @@
 from numpy import log10
-from time import sleep
 from labrad.gpib import GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 # todo: set am dc modulation correctly
