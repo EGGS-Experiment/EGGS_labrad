@@ -68,6 +68,8 @@ class AndorGUI(QWidget):
         self.display.addItem(self.crosshair_hline, ignoreBounds=True)
 
         # todo: create ROI object
+        self.roi_tmp = pg.RectROI([0,  0], [20, 20])
+        self.display.addItem(self.roi_tmp)
         # todo: can add post-fatviewbox.addItem(roi)
         # todo: create horiz and vert hists
         # todo: maybe have smaller zoom-out like a minimap?

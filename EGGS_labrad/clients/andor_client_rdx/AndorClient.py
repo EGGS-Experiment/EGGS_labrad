@@ -287,6 +287,7 @@ class AndorClient(GUIClient):
                 autoRange=False, autoLevels=False, autoHistogramRange=False
             )
 
+
             # save image
             # if self.save_images: self.save_image(image_data)
 
