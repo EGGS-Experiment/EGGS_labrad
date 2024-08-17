@@ -21,7 +21,7 @@ class AndorConfig(object):
     vertical_shift_amplitude =      0
     vertical_shift_speed =          1
     horizontal_shift_preamp_gain =  1
-    horizontal_shift_speed =        3
+    horizontal_shift_speed =        0
 
     # image setup
     image_rotate =          "Anticlockwise"

@@ -106,10 +106,10 @@ class AndorAPI(object):
             self.set_emccd_gain(config.emccd_gain)
             self.get_emccd_gain()
             self.set_exposure_time(config.exposure_time)
-            # self.set_vertical_shift_amplitude(config.vertical_shift_amplitude)
-            # self.set_vertical_shift_speed(config.vertical_shift_speed)
-            # self.set_horizontal_shift_preamp_gain(config.horizontal_shift_preamp_gain)
-            # self.set_horizontal_shift_speed(config.horizontal_shift_speed)
+            self.set_vertical_shift_amplitude(config.vertical_shift_amplitude)
+            self.set_vertical_shift_speed(config.vertical_shift_speed)
+            self.set_horizontal_shift_preamp_gain(config.horizontal_shift_preamp_gain)
+            self.set_horizontal_shift_speed(config.horizontal_shift_speed)
 
             # set image to full size with default binning
             self.set_image_region(config.binning[0], config.binning[0], 1, self.info.width, 1, self.info.height)

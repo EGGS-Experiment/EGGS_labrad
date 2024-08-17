@@ -268,7 +268,7 @@ class AndorServer(PollingServer):
                     (int)   : the EMCCD gain.
         """
         gain = yield self._run('EMCCD Gain', 'get_emccd_gain', 'set_emccd_gain', gain)
-        self.notifyOtherListeners(c, ("emccd_gain", float(gain)), self.parameter_updated)
+        self.notifyOtherListeners(c, ("emccd_gain", gain), self.parameter_updated)
         returnValue(gain)
 
     @setting(231, "Setup Exposure Time", time='v', returns='v')
@@ -281,7 +281,7 @@ class AndorServer(PollingServer):
                     (float) : the current exposure time in seconds.
         """
         time = yield self._run('Exposure Time', 'get_exposure_time', 'set_exposure_time', time)
-        self.notifyOtherListeners(c, ("exposure_time", float(time)), self.parameter_updated)
+        self.notifyOtherListeners(c, ("exposure_time", time), self.parameter_updated)
         returnValue(time)
 
     @setting(241, "Setup Vertical Shift Speed", idx_speed='i', returns='i')
@@ -295,10 +295,10 @@ class AndorServer(PollingServer):
         Returns:
                         (int)   : the vertical shift speed index.
         """
-        idx_speed = yield self._run('Vertical Shift Amplitude',
-                                   'get_vertical_shift_amplitude', 'set_vertical_shift_amplitude',
+        idx_speed = yield self._run('Vertical Shift Speed',
+                                   'get_vertical_shift_speed', 'set_vertical_shift_speed',
                                    idx_speed)
-        self.notifyOtherListeners(c, ("vs_speed", float(idx_speed)), self.parameter_updated)
+        self.notifyOtherListeners(c, ("vs_speed", idx_speed), self.parameter_updated)
         returnValue(idx_speed)
 
     @setting(242, "Setup Vertical Shift Amplitude", idx_ampl='i', returns='i')
@@ -315,7 +315,7 @@ class AndorServer(PollingServer):
         idx_ampl = yield self._run('Vertical Shift Amplitude',
                                    'get_vertical_shift_amplitude', 'set_vertical_shift_amplitude',
                                    idx_ampl)
-        self.notifyOtherListeners(c, ("vs_ampl", float(idx_ampl)), self.parameter_updated)
+        self.notifyOtherListeners(c, ("vs_ampl", idx_ampl), self.parameter_updated)
         returnValue(idx_ampl)
 
     @setting(243, "Setup Horizontal Shift Speed", idx_speed='i', returns='i')
@@ -330,9 +330,9 @@ class AndorServer(PollingServer):
                         (int)   : the horizontal shift speed index.
         """
         idx_speed = yield self._run('Horizontal Shift Amplitude',
-                                   'get_horizontal_shift_amplitude', 'set_horizontal_shift_amplitude',
+                                   'get_horizontal_shift_speed', 'set_horizontal_shift_speed',
                                    idx_speed)
-        self.notifyOtherListeners(c, ("hs_speed", float(idx_speed)), self.parameter_updated)
+        self.notifyOtherListeners(c, ("hs_speed", idx_speed), self.parameter_updated)
         returnValue(idx_speed)
 
     @setting(244, "Setup Horizontal Shift Preamp Gain", idx_gain='i', returns='i')
@@ -349,7 +349,7 @@ class AndorServer(PollingServer):
         idx_gain = yield self._run('Horizontal Shift Preamp Gain',
                                    'get_horizontal_shift_preamp_gain', 'set_horizontal_shift_preamp_gain',
                                    idx_gain)
-        self.notifyOtherListeners(c, ("hs_preampgain", float(idx_gain)), self.parameter_updated)
+        self.notifyOtherListeners(c, ("hs_preampgain", idx_gain), self.parameter_updated)
         returnValue(idx_gain)
     # todo: frame transfer
 
