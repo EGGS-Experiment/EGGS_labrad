@@ -194,11 +194,11 @@ class AndorGUI(QWidget):
                 self.vLine.setPos(mousePoint.x())
                 self.hLine.setPos(mousePoint.y())
 
-                print('\n\nraw: ({:}, {:}'.format(event.pos().x(), event.pos().y()))
-                print('rdx: ({:}, {:}\n'.format(pos().x(), pos().y()))
-                print(self.plt.sceneBoundingRect())
-                print(mousePoint.x())
-                print(mousePoint.y())
+                # print('\n\nraw: ({:}, {:}'.format(event.pos().x(), event.pos().y()))
+                # print('rdx: ({:}, {:}\n'.format(pos().x(), pos().y()))
+                # print(self.plt.sceneBoundingRect())
+                # print(mousePoint.x())
+                # print(mousePoint.y())
 
         except Exception as e:
             pass

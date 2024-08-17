@@ -77,7 +77,7 @@ class AndorAPI(object):
             self.dll = c.windll.LoadLibrary(config.path_to_dll)
             print('Initializing Camera...')
             error = self.dll.Initialize(os.path.dirname(__file__))
-            print('Initializing Complete: {}'.format(ERROR_CODE[error]))
+            print('Initialization Complete: {}'.format(ERROR_CODE[error]))
 
             # get camera capabilities and related info
             self.info = AndorInfo()
@@ -690,10 +690,11 @@ class AndorAPI(object):
         # convert indices to shift amplitude string values
         vs_ampl_strings = [''] * num_vs_ampl_vals
         for i in range(num_vs_ampl_vals):
-            ampl_string = c.create_string_buffer(10)
+            ampl_string = c.create_string_buffer(32)
             error = self.dll.GetVSAmplitudeString(c.c_int(i), ampl_string)
             if ERROR_CODE[error] == 'DRV_SUCCESS':
-                vs_ampl_strings[i] = repr(ampl_string.value).decode("utf-8")
+                # vs_ampl_strings[i] = repr(ampl_string.value)
+                vs_ampl_strings[i] = ampl_string.value.decode("utf-8")
             else:
                 raise Exception(ERROR_CODE[error])
 
@@ -709,6 +710,30 @@ class AndorAPI(object):
             raise Exception(ERROR_CODE[error])
         # convert result back to python value
         num_hs_speed_vals = num_hs_speed_vals.value
+
+        # tmp remove
+        # get number of horizontal shift speed values
+        num_adc_channels = c.c_int()
+        # note - restrict use case to single-channel, default amplifier
+        error = self.dll.GetNumberADChannels(c.byref(num_adc_channels))
+        if ERROR_CODE[error] != 'DRV_SUCCESS':
+            raise Exception(ERROR_CODE[error])
+        # convert result back to python value
+        num_adc_channels = num_adc_channels.value
+        print('\n\t\tnum adc channels: {}'.format(num_adc_channels))
+        # tmp remove
+
+        # tmp remove
+        # get number of horizontal shift speed values
+        num_amps = c.c_int()
+        # note - restrict use case to single-channel, default amplifier
+        error = self.dll.GetNumberAmp(c.byref(num_amps))
+        if ERROR_CODE[error] != 'DRV_SUCCESS':
+            raise Exception(ERROR_CODE[error])
+        # convert result back to python value
+        num_amps = num_amps.value
+        print('\n\t\tnum amplifiers: {}'.format(num_amps))
+        # tmp remove
 
         # convert indices to actual shift speed values
         hs_speed_vals = [0.] * num_hs_speed_vals

@@ -15,7 +15,7 @@ class AndorConfig(object):
     shutter_mode =      'Open'
 
     # readout setup
-    emccd_gain =                    250
+    emccd_gain =                    200
     exposure_time =                 0.100   # seconds
     binning =                       [1, 1]  # numbers of pixels for horizontal and vertical binning
     vertical_shift_amplitude =      0

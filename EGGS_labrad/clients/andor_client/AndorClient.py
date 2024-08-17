@@ -22,8 +22,7 @@ class AndorClient(GUIClient):
     servers = {'cam': 'Andor Server', 'dv': 'Data Vault'}
     IMAGE_UPDATED_ID =          8649321
     MODE_UPDATED_ID =           8649322
-    ACQUISITION_UPDATED_ID =    8649323
-    TEMPERATURE_UPDATED_ID =    8649324
+    PARAMETER_UPDATED_ID =      8649323
 
     def getgui(self):
         if self.gui is None:
@@ -33,13 +32,11 @@ class AndorClient(GUIClient):
     def initClient(self):
         # connect to signals
         yield self.cam.signal__image_updated(self.IMAGE_UPDATED_ID)
-        yield self.cam.addListener(listener=self.update_image, source=None, ID=self.IMAGE_UPDATED_ID)
+        yield self.cam.addListener(listener=self.updateImage, source=None, ID=self.IMAGE_UPDATED_ID)
         yield self.cam.signal__mode_updated(self.MODE_UPDATED_ID)
         yield self.cam.addListener(listener=self.updateMode, source=None, ID=self.MODE_UPDATED_ID)
-        yield self.cam.signal__acquisition_updated(self.ACQUISITION_UPDATED_ID)
-        yield self.cam.addListener(listener=self.updateAcquisition, source=None, ID=self.ACQUISITION_UPDATED_ID)
-        yield self.cam.signal__temperature_updated(self.TEMPERATURE_UPDATED_ID)
-        yield self.cam.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATURE_UPDATED_ID)
+        yield self.cam.signal__parameter_updated(self.PARAMETER_UPDATED_ID)
+        yield self.cam.addListener(listener=self.updateParameter, source=None, ID=self.PARAMETER_UPDATED_ID)
 
         # get attributes from config
         self.saved_data =       None
@@ -126,15 +123,7 @@ class AndorClient(GUIClient):
         # elif parameter_name == "trigger":
         #     self.gui.trigger_mode.setText(parameter_value)
 
-    def updateAcquisition(self, c, data):
-        print('\tSignal received: {}'.format(data))
-        # parameter_name, parameter_value = data
-        # if parameter_name == "emccd_gain":
-        #     self.gui.emccd.setValue(int(parameter_value))
-        # elif parameter_name == "exposure_time":
-        #     self.gui.exposure.setValue(parameter_value)
-
-    def updateTemperature(self, c, temp):
+    def updateParameter(self, c, temp):
         pass
         # todo
 
@@ -172,7 +161,7 @@ class AndorClient(GUIClient):
             yield self.cam.mode_shutter('Close')
             yield self.cam.polling(False)
 
-    def update_image(self, c, image_data):
+    def updateImage(self, c, image_data):
         """
         Processes images received from the server.
         """

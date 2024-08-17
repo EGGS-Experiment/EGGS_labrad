@@ -42,7 +42,7 @@ class AndorServer(PollingServer):
     name = "Andor Server"
     image_updated =         Signal(IMAGE_UPDATED_SIGNAL,        'signal: image updated', '*i')
     mode_updated =          Signal(MODE_UPDATED_SIGNAL,         'signal: mode updated', '(ss)')
-    parameter_updated =     Signal(PARAMETER_UPDATED_SIGNAL,    'signal: mode updated', '(sv)')
+    parameter_updated =     Signal(PARAMETER_UPDATED_SIGNAL,    'signal: parameter updated', '(sv)')
 
 
     """
@@ -113,11 +113,11 @@ class AndorServer(PollingServer):
         """
         # get valid values from camera info structure
         vs_speed_vals = (
-            'Vertical Speed Shift (us)',
-            [str(val) for val in self.camera.info.vertical_shift_speed_values]
+            'Vertical Shift Speed (us)',
+            [str(round(val, 2)) for val in self.camera.info.vertical_shift_speed_values]
         )
         vs_ampl_vals = (
-            'Vertical Amplitude Voltage (V)',
+            'Vertical Shift Voltage (V)',
             [str(val) for val in self.camera.info.vertical_shift_amplitude_values]
         )
         return [vs_speed_vals, vs_ampl_vals]
@@ -131,12 +131,12 @@ class AndorServer(PollingServer):
         """
         # get valid values from camera info structure
         hs_speed_vals = (
-            'Horizontal Speed Shift (MHz)',
-            [str(val) for val in self.camera.info.horizontal_shift_speed_values]
+            'Horizontal Shift Speed (MHz)',
+            [str(round(val, 2)) for val in self.camera.info.horizontal_shift_speed_values]
         )
         hs_preamp_gain_vals = (
             'Preamplifier Gain',
-            [str(val) for val in self.camera.info.horizontal_shift_preamp_gain_values]
+            [str(round(val, 2)) for val in self.camera.info.horizontal_shift_preamp_gain_values]
         )
         return [hs_speed_vals, hs_preamp_gain_vals]
 
@@ -148,8 +148,6 @@ class AndorServer(PollingServer):
             (str)   : the camera status.
         """
         return self.camera.get_status()
-
-    # todo: get camera capabilities: horizontal/vertical
 
 
     """
@@ -286,7 +284,7 @@ class AndorServer(PollingServer):
         self.notifyOtherListeners(c, ("exposure_time", float(time)), self.parameter_updated)
         returnValue(time)
 
-    @setting(241, "Setup Vertical Shift Speed", idx_ampl='i', returns='i')
+    @setting(241, "Setup Vertical Shift Speed", idx_speed='i', returns='i')
     def setupVerticalShiftSpeed(self, c, idx_speed=None):
         """
         Get/set the vertical shift speed.
@@ -300,7 +298,7 @@ class AndorServer(PollingServer):
         idx_speed = yield self._run('Vertical Shift Amplitude',
                                    'get_vertical_shift_amplitude', 'set_vertical_shift_amplitude',
                                    idx_speed)
-        self.notifyOtherListeners(c, ("vs_speed", idx_speed), self.parameter_updated)
+        self.notifyOtherListeners(c, ("vs_speed", float(idx_speed)), self.parameter_updated)
         returnValue(idx_speed)
 
     @setting(242, "Setup Vertical Shift Amplitude", idx_ampl='i', returns='i')
@@ -317,10 +315,10 @@ class AndorServer(PollingServer):
         idx_ampl = yield self._run('Vertical Shift Amplitude',
                                    'get_vertical_shift_amplitude', 'set_vertical_shift_amplitude',
                                    idx_ampl)
-        self.notifyOtherListeners(c, ("vs_ampl", idx_ampl), self.parameter_updated)
+        self.notifyOtherListeners(c, ("vs_ampl", float(idx_ampl)), self.parameter_updated)
         returnValue(idx_ampl)
 
-    @setting(243, "Setup Horizontal Shift Speed", idx_ampl='i', returns='i')
+    @setting(243, "Setup Horizontal Shift Speed", idx_speed='i', returns='i')
     def setupHorizontalShiftSpeed(self, c, idx_speed=None):
         """
         Get/set the horizontal shift speed.
@@ -334,10 +332,10 @@ class AndorServer(PollingServer):
         idx_speed = yield self._run('Horizontal Shift Amplitude',
                                    'get_horizontal_shift_amplitude', 'set_horizontal_shift_amplitude',
                                    idx_speed)
-        self.notifyOtherListeners(c, ("hs_speed", idx_speed), self.parameter_updated)
+        self.notifyOtherListeners(c, ("hs_speed", float(idx_speed)), self.parameter_updated)
         returnValue(idx_speed)
 
-    @setting(243, "Setup Horizontal Shift Preamp Gain", idx_ampl='i', returns='i')
+    @setting(244, "Setup Horizontal Shift Preamp Gain", idx_gain='i', returns='i')
     def setupHorizontalShiftPreampGain(self, c, idx_gain=None):
         """
         Get/set the horizontal shift speed.
@@ -351,7 +349,7 @@ class AndorServer(PollingServer):
         idx_gain = yield self._run('Horizontal Shift Preamp Gain',
                                    'get_horizontal_shift_preamp_gain', 'set_horizontal_shift_preamp_gain',
                                    idx_gain)
-        self.notifyOtherListeners(c, ("hs_preampgain", idx_gain), self.parameter_updated)
+        self.notifyOtherListeners(c, ("hs_preampgain", float(idx_gain)), self.parameter_updated)
         returnValue(idx_gain)
     # todo: frame transfer
 
