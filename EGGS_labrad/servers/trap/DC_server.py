@@ -16,9 +16,8 @@ timeout = 20
 ### END NODE INFO
 """
 from labrad.units import WithUnit
+from labrad.util import wakeupCall
 from labrad.server import setting, Signal, inlineCallbacks
-
-from time import sleep
 
 from twisted.internet.defer import returnValue
 from EGGS_labrad.servers import SerialDeviceServer, PollingServer
@@ -74,8 +73,8 @@ class DCServer(SerialDeviceServer, PollingServer):
         # getter
         yield self.ser.acquire()
         yield self.ser.write('HVin.r\r\n')
-        # todo: should we yield this somehow
-        sleep(0.2)
+        # add delay to allow messages to finish transferring
+        wakeupCall(0.2)
         v1 = yield self.ser.read_line('\n')
         i1 = yield self.ser.read_line('\n')
         self.ser.release()
@@ -206,8 +205,10 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                     (*bool) : power state of all channels.
         """
+        # sanitize input
         if (type(power) == int) and (power not in (0, 1)):
             raise Exception('Error: invalid input. Must be a boolean, 0, or 1.')
+
         # set power states
         yield self.ser.acquire()
         if power is not None:
@@ -221,6 +222,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         else:
             yield self.ser.write('out.r\r\n')
         self.ser.release()
+
         # get power states
         resp = yield self._parse()
         resp = [True if val == 'ON' else False for val in resp]
@@ -305,10 +307,14 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                     (str)   : success string of ramp
         """
+        # create message
         msg = 'ramp.w {:d} {:f} {:f}\r\n'.format(channel, voltage, rate)
+
+        # send message to device and receive response
         yield self.ser.acquire()
         yield self.ser.write(msg)
-        sleep(0.2)
+        # add delay to allow messages to be completely read
+        wakeupCall(0.2)
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         resp = resp.strip().split(', ')
@@ -353,16 +359,20 @@ class DCServer(SerialDeviceServer, PollingServer):
     # HELPER
     @inlineCallbacks
     def _poll(self):
+        # continually read device status in case of alarms
         yield self.inputs(None)
 
     @inlineCallbacks
     def _parse(self):
+        # acquire serial device
         yield self.ser.acquire()
         # wait until device has finished writing
-        sleep(1)
+        # add delay to allow messages to be completely read
+        wakeupCall(0.5)
         # todo: check this is OK and see if we can somehow do a definite read
         resp = yield self.ser.read()
         self.ser.release()
+
         # separate response for each channel
         resp = resp.strip().split('\r\n')
         # remove channel number

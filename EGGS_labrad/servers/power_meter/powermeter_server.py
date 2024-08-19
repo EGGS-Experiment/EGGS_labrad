@@ -15,16 +15,14 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-from time import sleep
 from labrad.server import setting
+from labrad.util import wakeupCall
 from labrad.gpib import GPIBManagedServer
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 # import device wrappers
 from PM100D import PM100DWrapper
-
 # todo: sensor type
-
 
 
 class PowerMeterServer(GPIBManagedServer):
@@ -46,7 +44,7 @@ class PowerMeterServer(GPIBManagedServer):
         Reset the power supply to factory settings.
         """
         yield self.selectedDevice(c).reset()
-        sleep(3)
+        yield wakeupCall(3.)
 
     @setting(12, "Clear Buffers", returns='')
     def clear_buffers(self, c):

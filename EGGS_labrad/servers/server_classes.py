@@ -70,6 +70,7 @@ class ContextServer(LabradServer):
 
 """
 Polling Server
+Note: inherits from ContextServer.
 """
 class PollingServer(ContextServer):
     """
@@ -195,7 +196,8 @@ class ARTIQServer(LabradServer):
             # get required devices
             for devices in self.artiq_devices.items():
                 setattr(self, devices[0], devices[1])
-            self.devicedb_client = Client('::1', 3251, 'master_device_db')
+            # create client connections
+            self.devicedb_client =  Client('::1', 3251, 'master_device_db')
             self.datasetdb_client = Client('::1', 3251, 'master_dataset_db')
             self.scheduler_client = Client('::1', 3251, 'master_schedule')
         except Exception as e:

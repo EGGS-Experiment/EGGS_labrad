@@ -15,7 +15,7 @@ timeout = 5
 ### END NODE INFO
 """
 from twisted.internet.threads import deferToThread
-from twisted.internet.defer import returnValue, DeferredLock, Deferred, inlineCallbacks
+from twisted.internet.defer import returnValue, DeferredLock, inlineCallbacks
 
 import numpy as np
 from labrad.util import wakeupCall
@@ -658,15 +658,6 @@ class AndorServer(PollingServer):
     """
     POLLING
     """
-    # todo: removed this function since it's the exact same as labrad.utils.wakeupCall
-    # def wait(self, seconds, result=None):
-    #     """
-    #     Returns a deferred that will be fired later.
-    #     """
-    #     d = Deferred()
-    #     reactor.callLater(seconds, d.callback, result)
-    #     return d
-
     @inlineCallbacks
     def _poll(self):
         """

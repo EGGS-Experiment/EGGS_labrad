@@ -17,11 +17,11 @@ timeout = 20
 """
 
 from labrad.units import WithUnit
+from labrad.util import wakeupCall
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 import numpy as np
-from time import sleep
 from serial import PARITY_ODD
 
 from EGGS_labrad.servers import PollingServer, SerialDeviceServer
@@ -67,15 +67,16 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
             channel = '0'
         elif channel not in INPUT_CHANNELS:
             raise Exception('Invalid input: channel must be one of: ' + str(INPUT_CHANNELS))
+
         # query
         yield self.ser.acquire()
         yield self.ser.write('KRDG? ' + str(channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         self.ser.release()
-        # parse
+
+        # parse & update
         resp = np.array(resp.split(','), dtype=float)
         resp = tuple(resp)
-        # update
         self.temp_update(resp)
         returnValue(resp)
 
@@ -94,13 +95,15 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
                             (int, float): (resistance, max_current)
         """
         chString = 'HTRSET'
+
         # setter
         if (resistance is not None) and (max_current is not None):
             output_msg = chString + ' ' + str(output_channel) + ',' + str(resistance) + ',0,' + str(max_current) + ',1' + TERMINATOR
             yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            sleep(0.05)
+            yield wakeupCall(0.05)
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
@@ -124,13 +127,15 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
                             (int, int): the output mode and linked input channel
         """
         chString = 'OUTMODE'
+
         # setter
         if (mode is not None) and (input_channel is not None):
             output_msg = chString + ' ' + str(output_channel) + ',' + str(mode) + ',' + str(input_channel) + ',0' + TERMINATOR
             yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            sleep(0.05)
+            yield wakeupCall(0.05)
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write(chString + '?' + str(output_channel) + ' ' + TERMINATOR)
@@ -152,13 +157,15 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
             (int): the heater range
         """
         chString = 'RANGE'
+
         # setter
         if range is not None:
             output_msg = chString + ' ' + str(output_channel) + ',' + str(range) + TERMINATOR
             yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            sleep(0.05)
+            yield wakeupCall(0.05)
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
@@ -180,13 +187,15 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
             (float): the heater power
         """
         chString = 'MOUT'
+
         # setter
         if power is not None:
             output_msg = chString + ' ' + str(output_channel) + ',' + str(power) + TERMINATOR
             yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            sleep(0.05)
+            yield wakeupCall(0.05)
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
@@ -207,13 +216,15 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         Returns:
                             (float, float, float): the PID parameters
         """
+        # create device message + setter
         chString = 'PID'
         if all(vals != None for vals in [prop, integ, diff]):
             output_msg = chString + ' ' + str(output_channel) + ',' + str(prop) + ',' + str(integ) + ',' + str(diff) + TERMINATOR
             yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            sleep(0.05)
+            yield wakeupCall(0.05)
             self.ser.release()
+
         # query
         yield self.ser.acquire()
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
@@ -233,22 +244,24 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         Returns:
                             (float): the setpoint (in Kelvin)
         """
+        # create device message
         chString = 'SETP'
-        if output_channel not in (1,2):
+        if output_channel not in (1, 2):
             raise Exception('Invalid input: heater channel must be one of: (1, 2).')
+
         # setter
         if setpoint is not None:
             output_msg = chString + ' ' + str(output_channel) + ',' + str(setpoint) + TERMINATOR
             yield self.ser.acquire()
             yield self.ser.write(output_msg)
-            sleep(0.05)
+            yield wakeupCall(0.05)
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write(chString + '? ' + str(output_channel) + TERMINATOR)
         resp = yield self.ser.read_line()
         self.ser.release()
-
         returnValue(float(resp))
 
 

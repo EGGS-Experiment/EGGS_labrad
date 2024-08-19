@@ -21,6 +21,7 @@ import collections
 
 from labrad.units import Value
 from labrad.errors import Error
+from labrad.utils import wakeupCall
 from labrad.server import setting, Signal
 from twisted.internet import reactor, threads
 from twisted.internet.task import deferLater
@@ -63,9 +64,13 @@ class SerialServer(PollingServer):
 
     def initServer(self):
         super().initServer()
+        # use enumerate_serial_pyserial instead of enumerate_serial_windows
         self.enumerate_serial_pyserial()
 
     def _poll(self):
+        """
+        Continuously poll computer for available serial ports.
+        """
         self.enumerate_serial_pyserial()
 
     def enumerate_serial_windows(self):
@@ -76,21 +81,29 @@ class SerialServer(PollingServer):
         possibly doesn't work right on windows for COM ports above 4.
         http://stackoverflow.com/questions/12090503/listing-available-com-ports-with-python
         """
+        # create holder list for serial ports
         self.SerialPorts = []
         print('Searching for COM ports:')
+
+        # check ALL potential serial ports to see if they exist
         for a in range(1, 40):
             COMexists = True
             dev_name = 'COM{}'.format(a)
             dev_path = r'\\.\{}'.format(dev_name)
+
+            # attempt to open given serial port
             try:
                 ser = Serial(dev_name)
                 ser.close()
             except SerialException as e:
                 if e.message.find('cannot find') >= 0:
                     COMexists = False
+
+            # consider the port available if we can open it
             if COMexists:
                 self.SerialPorts.append(SerialDevice(dev_name, dev_path))
                 print("  ", dev_name)
+
         if not len(self.SerialPorts):
             print('  none')
 
@@ -106,21 +119,28 @@ class SerialServer(PollingServer):
         Following the example from the above windows version, we try to open
         each port and ignore it if we can't.
         """
+        # create holder list for serial ports
         self.SerialPorts = []
+
+        # get list of available ports via pyserial's list_ports utility
         dev_list = list_ports.comports()
         for d in dev_list:
+
+            # attempt to open given serial port
             dev_path = d[0]
             try:
                 ser = Serial(dev_path)
                 ser.close()
             except SerialException as e:
                 pass
+            # consider the port available if we can open it
             else:
                 _, _, dev_name = dev_path.rpartition(os.sep)
                 self.SerialPorts.append(SerialDevice(dev_name, dev_path))
-        # send out signal
-        port_list_tmp = [x.name for x in self.SerialPorts]
-        self.port_update(self.name, port_list_tmp)
+
+        # send name of all available serial ports via Signal to all listeners
+        available_port_list = [x.name for x in self.SerialPorts]
+        self.port_update(self.name, available_port_list)
 
     def expireContext(self, c):
         if 'PortObject' in c:
@@ -320,7 +340,7 @@ class SerialServer(PollingServer):
     @setting(41, 'Write Line', data=['s: Data to send'], returns=['w: Bytes sent'])
     def write_line(self, c, data):
         """
-        Sends data over the port appending <CR><LF>.
+        Sends data over the port and appends <CR><LF>.
         """
         ser = self.getPort(c)
         # encode as needed
@@ -335,6 +355,13 @@ class SerialServer(PollingServer):
 
     @setting(42, 'Pause', duration='v[s]: Time to pause', returns=[])
     def pause(self, c, duration):
+        """
+        Pauses the client's session for a given amount of time.
+        Note: this function does not pause the server itself;
+            only the client's connection to the server is paused.
+        Arguments:
+            duration    (float): the amount of time to pause (in seconds).
+        """
         _ = yield deferLater(reactor, duration['s'], lambda: None)
         return
 
@@ -357,6 +384,8 @@ class SerialServer(PollingServer):
                 d = ser.read(count)
                 if d:
                     break
+                # todo: maybe move to wakeupCall
+                # yield wakeupCall(0.001)
                 time.sleep(0.001)
             return d
 
@@ -379,6 +408,9 @@ class SerialServer(PollingServer):
 
     @inlineCallbacks
     def readSome(self, c, count=0):
+        """
+        todo: document
+        """
         ser = self.getPort(c)
         if count == 0:
             returnValue(ser.read(10000))

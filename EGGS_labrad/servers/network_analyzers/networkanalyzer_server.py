@@ -14,13 +14,12 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-from time import sleep
 from labrad.server import setting
+from labrad.util import wakeupCall
 from labrad.gpib import GPIBManagedServer
 
 # import device wrappers
 from HP8714ES import HP8714ESWrapper
-
 
 # SENSe (averaging/config etc)
 
@@ -45,7 +44,7 @@ class NetworkAnalyzerServer(GPIBManagedServer):
         """
         dev = self.selectedDevice(c)
         yield dev.reset()
-        sleep(5)
+        yield wakeupCall(3.)
 
     @setting(12, "Clear Buffers", returns='')
     def clear_buffers(self, c):
