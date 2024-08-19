@@ -157,12 +157,12 @@ class AndorClient(GUIClient):
         self.gui.sidebar.image_config.rotation.currentTextChanged.connect(
             lambda text: self.set_camera_parameter(self.cam.image_rotate, text)
         )
-        # self.gui.sidebar.image_config.flip_vertical.stateChanged.connect(
-        #     lambda gain_val: self.set_camera_parameter(self.cam.image_flip, gain_val)
-        # )
-        # self.gui.sidebar.image_config.flip_horizontal.stateChanged.connect(
-        #     lambda gain_val: self.set_camera_parameter(self.cam.setup_emccd_gain, gain_val)
-        # )
+        self.gui.sidebar.image_config.flip_vertical.stateChanged.connect(
+            lambda state: self.set_vertical_flip(state)
+        )
+        self.gui.sidebar.image_config.flip_horizontal.stateChanged.connect(
+            lambda state: self.set_horizontal_flip(state)
+        )
 
         # user buttons
         self.gui.start_button.toggled.connect(lambda status: self.start_acquisition(status))
@@ -180,10 +180,26 @@ class AndorClient(GUIClient):
             yield func(param_val)
 
     @inlineCallbacks
-    def set_exposure_time(self, exposure_time_s):
+    def set_vertical_flip(self, flip_v_status):
         acquisition_running = yield self.cam.acquisition_status()
         if not acquisition_running:
-            yield self.cam.setup_exposure_time(exposure_time_s)
+            # convert int value of QCheckBox to bool
+            # note: since QCheckBox supports tri-state, the signal value can be [0, 1, 2].
+            flip_v_status = bool(flip_v_status)
+            # get horizontal flip status from GUI
+            flip_h_status = self.gui.sidebar.image_config.flip_horizontal.isChecked()
+            yield self.cam.image_flip(flip_h_status, flip_v_status)
+
+    @inlineCallbacks
+    def set_horizontal_flip(self, flip_h_status):
+        acquisition_running = yield self.cam.acquisition_status()
+        if not acquisition_running:
+            # convert int value of QCheckBox to bool
+            # note: since QCheckBox supports tri-state, the signal value can be [0, 1, 2].
+            flip_h_status = bool(flip_h_status)
+            # get vertical flip status from GUI
+            flip_v_status = self.gui.sidebar.image_config.flip_vertical.isChecked()
+            yield self.cam.image_flip(flip_h_status, flip_v_status)
 
     def updateMode(self, c, data):
         print('\tSignal received: {}'.format(data))
