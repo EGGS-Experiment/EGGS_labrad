@@ -14,11 +14,11 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 from twisted.internet.defer import returnValue, DeferredLock, Deferred, inlineCallbacks
 
 import numpy as np
+from labrad.util import wakeupCall
 from labrad.server import setting, Signal
 
 from EGGS_labrad.servers import PollingServer
@@ -473,7 +473,7 @@ class AndorServer(PollingServer):
                 self.lock.release()
             if status == 'DRV_IDLE':
                 returnValue(True)
-            yield self.wait(0.050)
+            yield wakeupCall(0.050)
         returnValue(False)
 
 
@@ -495,7 +495,7 @@ class AndorServer(PollingServer):
             yield deferToThread(self.camera.start_acquisition)
 
             # necessary so that start_acquisition call completes even for long kinetic series
-            yield self.wait(0.1)
+            yield wakeupCall(0.1)
             self.acquisition_running = True
         finally:
             print('releasing: {}'.format(self.acquisitionStart.__name__))
@@ -658,13 +658,14 @@ class AndorServer(PollingServer):
     """
     POLLING
     """
-    def wait(self, seconds, result=None):
-        """
-        Returns a deferred that will be fired later.
-        """
-        d = Deferred()
-        reactor.callLater(seconds, d.callback, result)
-        return d
+    # todo: removed this function since it's the exact same as labrad.utils.wakeupCall
+    # def wait(self, seconds, result=None):
+    #     """
+    #     Returns a deferred that will be fired later.
+    #     """
+    #     d = Deferred()
+    #     reactor.callLater(seconds, d.callback, result)
+    #     return d
 
     @inlineCallbacks
     def _poll(self):
