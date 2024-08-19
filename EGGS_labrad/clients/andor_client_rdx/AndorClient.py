@@ -68,27 +68,19 @@ class AndorClient(GUIClient):
         """
         Get data from server and set up initial values for GUI.
         """
-        # link GUI elements to corresponding signal from server
-        # self.gui_elements = {
-        #     'EE': self.gui.ionizer_ee,  'IE': self.gui.ionizer_ie,  'FL': self.gui.ionizer_fl,
-        #     'VF': self.gui.ionizer_vf,  'HV': self.gui.detector_hv, 'NF': self.gui.detector_nf,
-        #     'SA': self.gui.scan_sa,     'MI': self.gui.scan_mi,     'MF': self.gui.scan_mf
-        # }
-
         # get core camera configuration/capabilities
         detector_dimensions =       yield self.cam.info_detector_dimensions()
         gain_min, gain_max =        yield self.cam.info_emccd_range()
-        vertical_shift_params =     yield self.cam.info_vertical_shift()
-        horizontal_shift_params =   yield self.cam.info_horizontal_shift()
-
         self.gui.display.setLimits(xMin=0, xMax=detector_dimensions[0], yMin=0, yMax=detector_dimensions[1])
         self.gui.sidebar.acquisition_config.emccd_gain.setRange(gain_min, gain_max)
 
+        vertical_shift_params =     yield self.cam.info_vertical_shift()
         vshift_speed_vals = vertical_shift_params[0][1]
         self.gui.sidebar.acquisition_config.shift_speed.addItems(vshift_speed_vals)
         vshift_ampl_vals = vertical_shift_params[1][1]
         self.gui.sidebar.acquisition_config.clock_voltage.addItems(vshift_ampl_vals)
 
+        horizontal_shift_params = yield self.cam.info_horizontal_shift()
         hshift_speed_vals = horizontal_shift_params[0][1]
         self.gui.sidebar.acquisition_config.readout_rate.addItems(hshift_speed_vals)
         hshift_preamp_gain_vals = horizontal_shift_params[1][1]
@@ -141,13 +133,38 @@ class AndorClient(GUIClient):
         """
         Connect signals (i.e. events) to relevant slots (i.e. actions).
         """
-        # camera hardware configuration buttons
-        self.gui.sidebar.acquisition_config.exposure_time.valueChanged.connect(lambda value: self.set_exposure_time(value))
-        self.gui.sidebar.acquisition_config.emccd_gain.valueChanged.connect(lambda value: self.set_emccd_gain(value))
-        # todo: v/h shift
-        # todo: image rotate/flip
+        # camera hardware configuration
+        self.gui.sidebar.acquisition_config.exposure_time.valueChanged.connect(
+            lambda exp_time_s: self.set_camera_parameter(self.cam.setup_exposure_time, exp_time_s)
+        )
+        self.gui.sidebar.acquisition_config.emccd_gain.valueChanged.connect(
+            lambda gain_val: self.set_camera_parameter(self.cam.setup_emccd_gain, int(gain_val))
+        )
+        self.gui.sidebar.acquisition_config.shift_speed.currentIndexChanged.connect(
+            lambda index: self.set_camera_parameter(self.cam.setup_vertical_shift_speed, index)
+        )
+        self.gui.sidebar.acquisition_config.clock_voltage.currentIndexChanged.connect(
+            lambda index: self.set_camera_parameter(self.cam.setup_vertical_shift_amplitude, index)
+        )
+        self.gui.sidebar.acquisition_config.readout_rate.currentIndexChanged.connect(
+            lambda index: self.set_camera_parameter(self.cam.setup_horizontal_shift_speed, index)
+        )
+        self.gui.sidebar.acquisition_config.preamplifier_gain.currentIndexChanged.connect(
+            lambda index: self.set_camera_parameter(self.cam.setup_horizontal_shift_preamp_gain, index)
+        )
 
+        # camera image configuration
+        self.gui.sidebar.image_config.rotation.currentTextChanged.connect(
+            lambda text: self.set_camera_parameter(self.cam.image_rotate, text)
+        )
+        # self.gui.sidebar.image_config.flip_vertical.stateChanged.connect(
+        #     lambda gain_val: self.set_camera_parameter(self.cam.image_flip, gain_val)
+        # )
+        # self.gui.sidebar.image_config.flip_horizontal.stateChanged.connect(
+        #     lambda gain_val: self.set_camera_parameter(self.cam.setup_emccd_gain, gain_val)
+        # )
 
+        # user buttons
         self.gui.start_button.toggled.connect(lambda status: self.start_acquisition(status))
         # self.gui.set_image_region_button.clicked.connect(self.on_set_image_region)
         # self.gui.save_images_button.stateChanged.connect(lambda state: setattr(self, 'save_images', state))
@@ -156,41 +173,11 @@ class AndorClient(GUIClient):
     """
     SLOTS
     """
-    # self.gui.ionizer_ee.valueChanged.connect(lambda value: self.tempDisable('EE', self.rga.ionizer_electron_energy, int(value)))
-    # self.gui.general_lockswitch.setChecked(False)
-    # self.gui.general_lockswitch.toggled.connect(lambda status: self.general_lock(status))
-    # self.general_lock(False)
-    #
-    # @inlineCallbacks
-    # def tempDisable(self, element, func, *args):
-    #     try:
-    #         self.gui_elements[element].setEnabled(False)
-    #     except Exception as e:
-    #         self.log.error("Error when attempting to disable GUI element: {error}", error=e)
-    #     yield func(*args)
-    #
-    # def updateValues(self, c, data):
-    #     """
-    #     Updates GUI when values are received from server.
-    #     """
-    #     param, value = data
-    #     if param == 'SP':
-    #         pass
-    #     elif (param != 'status'):
-    #         try:
-    #             class_type = self.gui_elements[param].__class__.__name__
-    #             if class_type == 'QDoubleSpinBox':
-    #                 self.gui_elements[param].setValue(float(value))
-    #             elif class_type == 'QComboBox':
-    #                 self.gui_elements[param].setCurrentIndex(int(value))
-    #         except Exception as e:
-    #             self.log.error("Error updating values from signal: {error}", error=e)
-    #             self.gui.buffer_readout.appendPlainText('{}: {}'.format(param, value))
-    #         finally:
-    #             try:
-    #                 self.gui_elements[param].setEnabled(True)
-    #             except KeyError:
-    #                 pass
+    @inlineCallbacks
+    def set_camera_parameter(self, func, param_val):
+        acquisition_running = yield self.cam.acquisition_status()
+        if not acquisition_running:
+            yield func(param_val)
 
     @inlineCallbacks
     def set_exposure_time(self, exposure_time_s):
@@ -198,37 +185,8 @@ class AndorClient(GUIClient):
         if not acquisition_running:
             yield self.cam.setup_exposure_time(exposure_time_s)
 
-    @inlineCallbacks
-    def set_emccd_gain(self, emccd_gain):
-        acquisition_running = yield self.cam.acquisition_status()
-        if not acquisition_running:
-            yield self.cam.setup_emccd_gain(emccd_gain)
-
-    @inlineCallbacks
-    def set_vshift_speed(self, vshift_speed):
-        acquisition_running = yield self.cam.acquisition_status()
-        if not acquisition_running:
-            yield self.cam.setup_vertical_shift_speed(vshift_speed)
-
-    @inlineCallbacks
-    def set_vshift_ampl(self, vshift_ampl):
-        acquisition_running = yield self.cam.acquisition_status()
-        if not acquisition_running:
-            yield self.cam.setup_vertical_shift_speed(vshift_ampl)
-
     def updateMode(self, c, data):
         print('\tSignal received: {}'.format(data))
-        # parameter_name, parameter_value = data
-        # if parameter_name == "read":
-        #     pass
-        #     #self.gui.read_mode.setText(parameter_value)
-        # elif parameter_name == "shutter":
-        #     pass
-        #     #self.gui.shutter_mode.setText(parameter_value)
-        # elif parameter_name == "acquisition":
-        #     self.gui.acquisition_mode.setText(parameter_value)
-        # elif parameter_name == "trigger":
-        #     self.gui.trigger_mode.setText(parameter_value)
 
     def updateParameter(self, c, temp):
         pass
@@ -286,7 +244,6 @@ class AndorClient(GUIClient):
                 pos=[self.startx, self.starty], scale=[self.binx, self.biny],
                 autoRange=False, autoLevels=False, autoHistogramRange=False
             )
-
 
             # save image
             # if self.save_images: self.save_image(image_data)

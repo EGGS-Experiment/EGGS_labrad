@@ -68,7 +68,7 @@ class AndorGUI(QWidget):
         self.display.addItem(self.crosshair_hline, ignoreBounds=True)
 
         # todo: create ROI object
-        self.roi_tmp = pg.RectROI([0,  0], [20, 20])
+        self.roi_tmp = pg.RectROI([127, 127], [20, 20])
         self.display.addItem(self.roi_tmp)
         # todo: can add post-fatviewbox.addItem(roi)
         # todo: create horiz and vert hists
@@ -207,13 +207,12 @@ class AndorGUI(QWidget):
         """
         # convert scene coordinates to item (i.e. display widget) coordinates
         # note: mouse click events always come as scene coordinates
-        # todo: maybe convert first via display.mapFromScene(pos_scene) in case pos_scene becomes different?
-        pos_disp = self.display.mapFromScene(event.pos())
+        pos_scene = self.display.mapFromScene(event.scenePos())
 
         # ensure event is double click and is within display bounds
-        if (event.double()) and (self.display.sceneBoundingRect().contains(pos_disp)):
-            # convert display coordinates to view coordinates
-            new_pos_disp = self.display.vb.mapToView(pos_disp)
+        if (event.double()) and (self.display.sceneBoundingRect().contains(pos_scene)):
+            # convert scene coordinates to display's view coordinates
+            new_pos_disp = self.display.vb.mapSceneToView(pos_scene)
 
             # draw crosshairs at new position
             self.crosshair_vline.setPos(new_pos_disp.x())
@@ -225,17 +224,25 @@ class AndorGUI(QWidget):
         Arguments:
             pos {QPoint}: the mouse position on the Andor display.
         """
+        # ensure event is within display bounds OF THE PLOT AREA
+        # note: this is different the PlotItem itself
+        pos_tmp = self.display.mapFromScene(pos_scene)
+        if not self.display.vb.sceneBoundingRect().contains(pos_tmp):
+            return
+
         # convert scene coordinates to viewbox coordinates
-        # todo: maybe convert first via display.mapFromScene(pos_scene) in case pos_scene becomes different?
         pos_view = self.display.mapToView(pos_scene)
         self.cursor_coordinates.setText("({:.4g},\t{:.4g})".format(pos_view.x(), pos_view.y()))
 
-        # todo: check if coords are in valid range
         # get pixel value at cursor position
         if self.image.image is not None:
-            image_data = self.image.image
-            cursor_signal = image_data[round(pos_view.x()), round(pos_view.y())]
-            self.cursor_signal.setText("{:.4g}".format(cursor_signal))
+            # ensure cursor indices values are valid
+            try:
+                image_data = self.image.image
+                cursor_signal = image_data[round(pos_view.x()), round(pos_view.y())]
+                self.cursor_signal.setText("{:.4g}".format(cursor_signal))
+            except IndexError:
+                pass
 
 
 if __name__ == "__main__":
