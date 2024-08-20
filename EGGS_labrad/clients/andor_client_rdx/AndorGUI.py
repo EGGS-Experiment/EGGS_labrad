@@ -1,3 +1,4 @@
+import numpy as np
 import pyqtgraph as pg
 
 from PyQt5.QtCore import Qt
@@ -191,6 +192,9 @@ class AndorGUI(QWidget):
         self.display.scene().sigMouseClicked.connect(self.mouse_clicked)
         self.display.scene().sigMouseMoved.connect(self.mouse_moved)
 
+        # ROI events
+        self.roi_tmp.sigRegionChangeFinished.connect(self.process_roi)
+
         # todo: fix autorange and autolevels
         # self.display_auto_level_button.clicked.connect(lambda checked: self.image.autoLevels())
         # self.display_view_all_button.clicked.connect(lambda checked: self.image.autoRange())
@@ -243,6 +247,32 @@ class AndorGUI(QWidget):
                 self.cursor_signal.setText("{:.4g}".format(cursor_signal))
             except IndexError:
                 pass
+
+    def process_roi(self):
+        """
+        Process ROI upon an update event (e.g. new image or ROI changed).
+        """
+        try:
+            # ensure we have some existing image
+            if self.image.image is not None:
+
+                # get ROI region of image
+                img_region = self.roi_tmp.getArrayRegion(self.image.image, self.image.imageItem)
+
+                # process statistics on ROI
+                counts_mean =   np.mean(img_region)
+                counts_stdev =  np.std(img_region)
+                counts_max =    np.max(img_region)
+                counts_total =  counts_mean * img_region.size
+
+                # update ROI statistics displays
+                self.roi_mean.setText('{:.4g}'.format(counts_mean))
+                self.roi_stdev.setText('{:.4g}'.format(counts_stdev))
+                self.roi_max.setText('{:.4g}'.format(counts_max))
+                self.roi_total.setText('{:.4g}'.format(counts_total))
+
+        except Exception as e:
+            pass
 
 
 if __name__ == "__main__":

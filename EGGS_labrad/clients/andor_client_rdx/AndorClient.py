@@ -246,7 +246,6 @@ class AndorClient(GUIClient):
             yield self.cam.mode_shutter('Close')
             yield self.cam.polling(False)
 
-
     def updateImage(self, c, image_data):
         """
         Processes images received from the server.
@@ -261,11 +260,14 @@ class AndorClient(GUIClient):
                 autoRange=False, autoLevels=False, autoHistogramRange=False
             )
 
+            # update ROI - call ROI process/update function
+            self.gui.process_roi()
+
             # save image
             # if self.save_images: self.save_image(image_data)
 
-    # todo: implement image region?
     def on_set_image_region(self, checked):
+        # todo: implement image region?
         # displays a non-modal dialog
         dialog = image_region_selection_dialog(self, self.cam)
         one = dialog.open()
