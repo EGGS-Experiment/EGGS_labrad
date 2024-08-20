@@ -107,7 +107,7 @@ class PollingServer(ContextServer):
         super().expireContext(c)
 
         # stop polling if there are no more listeners
-        if len(self.listeners) == 0:
+        if (len(self.listeners) == 0) and (self.refresher.running):
             self.refresher.stop()
             print('Stopped polling due to lack of listeners.')
 
