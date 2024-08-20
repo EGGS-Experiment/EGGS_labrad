@@ -74,7 +74,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         yield self.ser.acquire()
         yield self.ser.write('HVin.r\r\n')
         # add delay to allow messages to finish transferring
-        wakeupCall(0.2)
+        yield wakeupCall(0.2)
         v1 = yield self.ser.read_line('\n')
         i1 = yield self.ser.read_line('\n')
         self.ser.release()
@@ -206,11 +206,12 @@ class DCServer(SerialDeviceServer, PollingServer):
                     (*bool) : power state of all channels.
         """
         # sanitize input
-        if (type(power) == int) and (power not in (0, 1)):
+        if (type(power) is int) and (power not in (0, 1)):
             raise Exception('Error: invalid input. Must be a boolean, 0, or 1.')
 
-        # set power states
         yield self.ser.acquire()
+
+        # setter: power states (returns nothing)
         if power is not None:
             if power is True:
                 yield self.ser.write('allon.w\r\n')
@@ -219,12 +220,17 @@ class DCServer(SerialDeviceServer, PollingServer):
             yield self.ser.read_line('\n')
             self.ser.release()
             return
-        else:
-            yield self.ser.write('out.r\r\n')
+
+        # getter: read power states (only if no setter)
+        yield self.ser.write('out.r\r\n')
+        yield wakeupCall(0.5)
+        resp = yield self.ser.read()
         self.ser.release()
 
-        # get power states
-        resp = yield self._parse()
+        # extract toggle state text for each channel
+        resp = resp.strip().split('\r\n')
+        resp = [val.split(': ')[1] for val in resp]
+        # convert text to list of bools
         resp = [True if val == 'ON' else False for val in resp]
         returnValue(resp)
 
@@ -287,10 +293,17 @@ class DCServer(SerialDeviceServer, PollingServer):
         Returns:
                     (*float) : voltages of all channels.
         """
+        # getter: read voltages
         yield self.ser.acquire()
         yield self.ser.write('vout.r\r\n')
+        yield wakeupCall(0.5)
+        resp = yield self.ser.read()
         self.ser.release()
-        resp = yield self._parse()
+
+        # extract toggle state text for each channel
+        resp = resp.strip().split('\r\n')
+        resp = [val.split(': ')[1] for val in resp]
+        # convert text to list of floats
         resp = [float(val[:-1]) for val in resp]
         returnValue(resp)
 
@@ -314,7 +327,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         yield self.ser.acquire()
         yield self.ser.write(msg)
         # add delay to allow messages to be completely read
-        wakeupCall(0.2)
+        yield wakeupCall(0.2)
         resp = yield self.ser.read_line('\n')
         self.ser.release()
         resp = resp.strip().split(', ')
@@ -356,28 +369,11 @@ class DCServer(SerialDeviceServer, PollingServer):
         returnValue(resp)
 
 
-    # HELPER
+    # HELPERS
     @inlineCallbacks
     def _poll(self):
         # continually read device status in case of alarms
         yield self.inputs(None)
-
-    @inlineCallbacks
-    def _parse(self):
-        # acquire serial device
-        yield self.ser.acquire()
-        # wait until device has finished writing
-        # add delay to allow messages to be completely read
-        wakeupCall(0.5)
-        # todo: check this is OK and see if we can somehow do a definite read
-        resp = yield self.ser.read()
-        self.ser.release()
-
-        # separate response for each channel
-        resp = resp.strip().split('\r\n')
-        # remove channel number
-        resp = [val.split(': ')[1] for val in resp]
-        returnValue(resp)
 
 
 if __name__ == '__main__':
