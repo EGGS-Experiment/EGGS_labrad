@@ -21,7 +21,7 @@ import collections
 
 from labrad.units import Value
 from labrad.errors import Error
-from labrad.utils import wakeupCall
+from labrad.util import wakeupCall
 from labrad.server import setting, Signal
 from twisted.internet import reactor, threads
 from twisted.internet.task import deferLater
