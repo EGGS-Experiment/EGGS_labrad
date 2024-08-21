@@ -44,32 +44,29 @@ class AndorClient(GUIClient):
         yield self.cam.signal__parameter_updated(self.PARAMETER_UPDATED_ID)
         yield self.cam.addListener(listener=self.updateParameter, source=None, ID=self.PARAMETER_UPDATED_ID)
 
-        # create single context to prevent our actions from feeding back to us
-        # note: forgot if this is actually how it works/is necessary
-        self.c_record = self.cxn.context()
-
 
         # create global flag to manage image acquisition status
         self.update_display_status =    False
-        self.save_image_status =        False
+        self.recording_status =         False
 
-        # todo: image saving config - e.g. savename
-        self._save_path = None
-        self._save_counter = 0
+        # prepare values for recording
+        self._save_path =       None
+        self._save_counter =    0
+        self._start_time =      None
+        self._save_interval =   None
+        self._record_length =   None
 
-        # set recording stuff
-        self.recording = False
 
-        # get attributes from config
-        self.saved_data =       None
-
-        # get save path
-        for attribute_name in ('image_path', 'save_in_sub_dir', 'save_format', 'save_header'):
-            try:
-                attribute = getattr(config, attribute_name)
-                setattr(self, attribute_name, attribute)
-            except Exception as e:
-                print("Warning: {:s} not found in config.".format(attribute_name))
+        # # get attributes from config
+        # self.saved_data =       None
+        #
+        # # get save path
+        # for attribute_name in ('image_path', 'save_in_sub_dir', 'save_format', 'save_header'):
+        #     try:
+        #         attribute = getattr(config, attribute_name)
+        #         setattr(self, attribute_name, attribute)
+        #     except Exception as e:
+        #         print("Warning: {:s} not found in config.".format(attribute_name))
 
     @inlineCallbacks
     def initData(self):
@@ -79,7 +76,8 @@ class AndorClient(GUIClient):
         # get core camera configuration/capabilities
         detector_dimensions =       yield self.cam.info_detector_dimensions()
         gain_min, gain_max =        yield self.cam.info_emccd_range()
-        self.gui.display.setLimits(xMin=0, xMax=detector_dimensions[0], yMin=0, yMax=detector_dimensions[1])
+        # extend visible display slightly
+        self.gui.display.setLimits(xMin=0, xMax=detector_dimensions[0]*1.5, yMin=0, yMax=detector_dimensions[1]*1.5)
         self.gui.sidebar.acquisition_config.emccd_gain.setRange(gain_min, gain_max)
 
         vertical_shift_params =     yield self.cam.info_vertical_shift()
@@ -136,7 +134,17 @@ class AndorClient(GUIClient):
         index_rotate = self.gui.sidebar.image_config.rotation.findText(rotate_state_txt)
         self.gui.sidebar.image_config.rotation.setCurrentIndex(index_rotate)
 
-        # todo: get current acquisition status and reflect it in the button and self.update_display_status
+
+        # get current acquisition status and reflect it in the button and self.update_display_status
+        acquisition_status = yield self.cam.acquisition_status()
+        self.update_display_status = acquisition_status
+        self.gui.start_button.setChecked(acquisition_status)
+        # if acquisition has started, set ourselves up for polling
+        if acquisition_status:
+            self.binx, self.biny, self.startx, self.stopx, self.starty, self.stopy = yield self.cam.image_region_get()
+            self.pixels_x = int((self.stopx - self.startx + 1) / self.binx)
+            self.pixels_y = int((self.stopy - self.starty + 1) / self.biny)
+            yield self.cam.polling(True, 0.5)
 
 
     def initGUI(self):
@@ -276,7 +284,7 @@ class AndorClient(GUIClient):
             self.gui.process_roi()
 
             # save image
-            if self.save_image_status:
+            if self.recording_status:
                 # todo: check save timing - update_interval and max recording time
                 # todo: check save stuff etc.
                 pass
@@ -293,14 +301,14 @@ class AndorClient(GUIClient):
     """
     IMAGE SAVING
     """
-    @inlineCallbacks
+    # @inlineCallbacks
     def start_recording(self, status):
         """
         todo: document
         Args:
             status:
         """
-        self.save_image_status = status
+        self.recording_status = status
         # todo: get saving config from save_tab
         # todo: set the saving config as instance attrs for easy access
         # todo: set relevant save func
