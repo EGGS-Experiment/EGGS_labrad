@@ -1,5 +1,7 @@
 import os
 import numpy as np
+
+from time import time
 from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
 
@@ -19,6 +21,7 @@ class AndorClient(GUIClient):
 
     name =      "Andor Client"
     servers =   {'cam': 'Andor Server', 'dv': 'Data Vault'}
+
     IMAGE_UPDATED_ID =          8649321
     MODE_UPDATED_ID =           8649322
     PARAMETER_UPDATED_ID =      8649323
@@ -41,9 +44,21 @@ class AndorClient(GUIClient):
         yield self.cam.signal__parameter_updated(self.PARAMETER_UPDATED_ID)
         yield self.cam.addListener(listener=self.updateParameter, source=None, ID=self.PARAMETER_UPDATED_ID)
 
+        # create single context to prevent our actions from feeding back to us
+        # note: forgot if this is actually how it works/is necessary
+        self.c_record = self.cxn.context()
+
+
         # create global flag to manage image acquisition status
         self.update_display_status =    False
         self.save_image_status =        False
+
+        # todo: image saving config - e.g. savename
+        self._save_path = None
+        self._save_counter = 0
+
+        # set recording stuff
+        self.recording = False
 
         # get attributes from config
         self.saved_data =       None
@@ -120,6 +135,8 @@ class AndorClient(GUIClient):
         # the rotation function communicates via text (rather than index)
         index_rotate = self.gui.sidebar.image_config.rotation.findText(rotate_state_txt)
         self.gui.sidebar.image_config.rotation.setCurrentIndex(index_rotate)
+
+        # todo: get current acquisition status and reflect it in the button and self.update_display_status
 
 
     def initGUI(self):
@@ -259,7 +276,10 @@ class AndorClient(GUIClient):
             self.gui.process_roi()
 
             # save image
-            # if self.save_images: self.save_image(image_data)
+            if self.save_image_status:
+                # todo: check save timing - update_interval and max recording time
+                # todo: check save stuff etc.
+                pass
 
     def on_set_image_region(self, checked):
         # todo: implement image region?
@@ -276,22 +296,58 @@ class AndorClient(GUIClient):
     @inlineCallbacks
     def start_recording(self, status):
         """
-
+        todo: document
         Args:
             status:
         """
         self.save_image_status = status
-        # todo: implement
+        # todo: get saving config from save_tab
+        # todo: set the saving config as instance attrs for easy access
+        # todo: set relevant save func
+        # todo: set up labrad stuff if necessary
+        # todo: set up some timer that updateImage can check for periodic saving
+        # todo: set up another timer that checks if we've exceeded
+        # create dataset
+        # trunk_tmp = createTrunk(name_tmp)
+        # dv.cd(trunk_tmp, True, context=cr)
+        # dataset_title_tmp = 'spectrum_analyzer_trace'
+        #
+        # independents = [('Elapsed Time', [1], 'v', 's')]
+        # dependents = [
+        #     ('Signal Frequency',    'Frequency',    [num_points],   'v',    'Hz'),
+        #     ('Signal Power',        'Power',        [num_points],   'v',    'dBm')
+        # ]
+        # dv.new_ex(dataset_title_tmp, independents, dependents, context=cr)
+        #
+        # dv.add_parameter("spectrum_analyzer_bandwidth",                 sa_bandwidth_hz,    context=cr)
+        # dv.add_parameter("spectrum_analyzer_attenuation_internal",      sa_att_int_db,      context=cr)
+        # dv.add_parameter("spectrum_analyzer_attenuation_external",      sa_att_ext_db,      context=cr)
+        # print("Data vault setup successful.")
 
-    def save_image(self, image_data):
+    def save_image_labrad(self, image_data):
         """
         todo: document
         Args:
             image_data:
 
         """
+        # todo: implement
+        # # store data if recording
+        # if self.recording:
+        #     yield self.dv.add(time() - self.starttime, counts_avg, context=self.c_record)
         pass
 
+    def save_image_file(self, image_data):
+        """
+        todo: document
+        Args:
+            image_data:
+
+        """
+        # todo: implement
+        # todo: create save_str
+        # todo: call self.gui.save_image(save_path, data_type)
+        pass
         # # format data
         # if not np.array_equal(image_data, self.saved_data):
         #     self.saved_data = image_data

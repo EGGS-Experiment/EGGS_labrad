@@ -9,10 +9,10 @@ class TEC_client(GUIClient):
 
     name = 'TEC Client'
 
-    TOGGLEID = 4651984
+    TOGGLEID =      4651984
     TEMPERATUREID = 4651986
-    CURRENTID = 4651985
-    LOCKID = 4651987
+    CURRENTID =     4651985
+    LOCKID =        4651987
     servers = {'tec': 'AMO2 Server'}
 
     def getgui(self):
@@ -78,14 +78,22 @@ class TEC_client(GUIClient):
         Creates a new dataset to record temperature and
         tells polling loop to add data to data vault.
         """
-        # set up datavault
         self.recording = status
+
         if self.recording:
             self.starttime = time()
+
+            # set up datavault
             trunk = createTrunk(self.name)
             yield self.dv.cd(trunk, True, context=self.c_record)
-            yield self.dv.new('AMO2 TEC Controller', [('Elapsed time', 't')],
-                              [('Thermistor Temperature', 'Temperature', 'C')], context=self.c_record)
+            yield self.dv.new(
+                'AMO2 TEC Controller',
+                [('Elapsed time', 't')],
+                [
+                    ('Thermistor Temperature', 'Temperature', 'C')
+                ],
+                context=self.c_record
+            )
 
     def _lock(self, status):
         self.gui.toggle_button.setEnabled(status)

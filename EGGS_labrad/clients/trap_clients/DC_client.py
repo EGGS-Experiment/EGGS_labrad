@@ -40,8 +40,9 @@ class DC_client(GUIClient):
         # start device polling
         poll_params = yield self.amo8.polling()
         # only start polling if not started
-        # if not poll_params[0]:
-        #     yield self.amo8.polling(True, 5.0)
+        if not poll_params[0]:
+            # yield self.amo8.polling(True, 5.0)
+            pass
 
     @inlineCallbacks
     def initData(self):
@@ -72,13 +73,21 @@ class DC_client(GUIClient):
         # connect group channel signals
         self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.startRamp(endcap_channels))
         self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.startRamp(aramp_channels))
-
+        print('okscsd')
         # connect each channel
         for channel in self.gui.amo8_channels.values():
-            channel.dac.valueChanged.connect(lambda value, _channel_num=channel.number: self.amo8.voltage(_channel_num, value))
-            channel.ramp_start.clicked.connect(lambda blank, _channel_num=channel.number: self.startRamp([_channel_num]))
-            channel.toggleswitch.clicked.connect(lambda status, _channel_num=channel.number: self.amo8.toggle(_channel_num, status))
-            channel.resetswitch.clicked.connect(lambda blank, _channel_num=channel.number: self.reset(_channel_num))
+            channel.dac.valueChanged.connect(
+                lambda value, _channel_num=channel.number: self.amo8.voltage(_channel_num, value)
+            )
+            channel.ramp_start.clicked.connect(
+                lambda blank, _channel_num=channel.number: self.startRamp([_channel_num])
+            )
+            channel.toggleswitch.clicked.connect(
+                lambda status, _channel_num=channel.number: self.amo8.toggle(_channel_num, status)
+            )
+            channel.resetswitch.clicked.connect(
+                lambda blank, _channel_num=channel.number: self.reset(_channel_num)
+            )
             channel.lockswitch.setChecked(False)
 
 
@@ -108,6 +117,11 @@ class DC_client(GUIClient):
             widget.toggleswitch.setEnabled(True)
 
     def updateVoltage(self, c, signal):
+
+        # tmp remove
+        print("\n\nReceive voltage update - Context: {}\n\n".format(c))
+        # tmp remove
+
         chan_num, voltage = signal
         if chan_num in self.gui.amo8_channels.keys():
             # set element disable
@@ -115,10 +129,12 @@ class DC_client(GUIClient):
             # store lock state
             lockstate = widget.lockswitch.isChecked()
             widget.dac.setEnabled(False)
+            widget.dac.blockSignals(True)
             # update value
             widget.dac.setValue(voltage)
             # restore previous lockstate
             widget.dac.setEnabled(lockstate)
+            widget.dac.blockSignals(False)
 
     def updateHV(self, c, hv):
         self.gui.device_hv_v1.setText(str(hv[0]))

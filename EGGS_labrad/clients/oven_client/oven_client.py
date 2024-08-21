@@ -2,13 +2,15 @@ from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.powersupply_client.powersupply_gui import powersupply_gui
-# todo: support max/ovp
+# todo: timer display
 
 
-class gpp3060_client(GUIClient):
+class oven_client(GUIClient):
     """
-    GPP3060 Client
-    Interfaces with the GPP3060 power supply.
+    Oven Client
+
+    Interfaces with the oven and other relevant devices to
+    load ions.
     """
     name = 'GPP3060 Power Supply Client'
 
@@ -123,4 +125,4 @@ class gpp3060_client(GUIClient):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
-    runClient(gpp3060_client)
+    runClient(oven_client)

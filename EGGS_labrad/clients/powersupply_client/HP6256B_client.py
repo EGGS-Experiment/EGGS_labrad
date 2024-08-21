@@ -1,7 +1,7 @@
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
-from EGGS_labrad.clients.loading_clients.HP6256B_gui import HP6256B_gui
+from EGGS_labrad.clients.powersupply_client.HP6256B_gui import HP6256B_gui
 
 
 class HP6256B_client(GUIClient):

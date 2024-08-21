@@ -7,16 +7,12 @@ from PyQt5.QtWidgets import (QWidget, QGridLayout, QLabel, QDoubleSpinBox,
                              QPushButton, QCheckBox, QSizePolicy, QComboBox,
                              QLayout)
 
-
 from EGGS_labrad.clients import SHELL_FONT
 from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox, QCustomUnscrollableSpinBox
-
-_ANDOR_ALIGNMENT = (Qt.AlignRight | Qt.AlignVCenter)
-
-
 # from andor_gui_sidebar import SidebarWidget
 from EGGS_labrad.clients.andor_client_rdx.andor_gui_sidebar.sidebar_widget import SidebarWidget
 
+_ANDOR_ALIGNMENT = (Qt.AlignRight | Qt.AlignVCenter)
 
 
 class AndorGUI(QWidget):
@@ -284,10 +280,16 @@ class AndorGUI(QWidget):
         except Exception as e:
             pass
 
-    def save_image(self):
+    def save_image(self, save_path, save_type="PNG"):
         """
         todo: document
         """
+        # only save if an image exists
+        if self.image.image is not None:
+            pass
+            # todo: save header?
+            # todo: process save type
+
         pass
 
 

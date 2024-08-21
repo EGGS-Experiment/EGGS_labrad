@@ -3,13 +3,11 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QComboBox
 
 from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomUnscrollableSpinBox, Lockswitch, QCustomGroupBox
-# todo: max/ovp
-# todo: use mode
 
 
-class powersupply_gui(QFrame):
+class oven_gui(QFrame):
     """
-    General GUI class for power supplies.
+    GUI that facilitates ion loading.
     """
 
     def __init__(self, *args, **kwargs):
@@ -140,4 +138,4 @@ class powersupply_gui(QFrame):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
-    runGUI(powersupply_gui)
+    runGUI(oven_gui)
