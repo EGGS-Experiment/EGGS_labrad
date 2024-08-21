@@ -64,7 +64,8 @@ class ContextServer(LabradServer):
             c (context): the context object of the caller.
         """
         notified = self.listeners.copy()
-        notified.remove(c.ID)
+        if c is not None:
+            notified.remove(c.ID)
         return notified
 
 

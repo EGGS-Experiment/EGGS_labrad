@@ -259,7 +259,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         # parse response
         resp = float((resp.strip())[:-1])
         # send signal to all other listeners
-        self.voltage_update((channel, resp), self.getOtherListeners(c))
+        self.notifyOtherListeners(c, (channel, resp), self.voltage_update)
         returnValue(resp)
 
     @setting(212, 'Voltage Fast', channel='i', voltage=['v', 'i'], returns='v')
