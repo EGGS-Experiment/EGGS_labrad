@@ -137,15 +137,13 @@ class AndorClient(GUIClient):
 
         # get current acquisition status and reflect it in the button and self.update_display_status
         acquisition_status = yield self.cam.acquisition_status()
-        self.update_display_status = acquisition_status
         self.gui.start_button.setChecked(acquisition_status)
         # if acquisition has started, set ourselves up for polling
         if acquisition_status:
-            self.binx, self.biny, self.startx, self.stopx, self.starty, self.stopy = yield self.cam.image_region_get()
-            self.pixels_x = int((self.stopx - self.startx + 1) / self.binx)
-            self.pixels_y = int((self.stopy - self.starty + 1) / self.biny)
+            # prepare everything client-side for acquisition, but don't initialize camera hardware
+            # since it's already running
+            yield self.start_acquisition(True, False)
             yield self.cam.polling(True, 0.5)
-
 
     def initGUI(self):
         """
@@ -186,6 +184,7 @@ class AndorClient(GUIClient):
         self.gui.start_button.toggled.connect(lambda status: self.start_acquisition(status))
         self.gui.record_button.toggled.connect(lambda status: self.start_recording(status))
 
+        # todo: auto-adjust image buttons
         # self.gui.set_image_region_button.clicked.connect(self.on_set_image_region)
         # self.gui.save_images_button.stateChanged.connect(lambda state: setattr(self, 'save_images', state))
 
@@ -233,7 +232,7 @@ class AndorClient(GUIClient):
     SLOTS - IMAGE UPDATING
     """
     @inlineCallbacks
-    def start_acquisition(self, status):
+    def start_acquisition(self, status, setup_hardware=True):
         """
         Configures acquisition settings if server isn't already acquiring images,
         then allows received images to be updated to the display.
@@ -250,7 +249,7 @@ class AndorClient(GUIClient):
         # during camera acquisition
         self.gui.sidebar.setEnabled(not status)
 
-        if status:
+        if status and setup_hardware:
             # configure camera for free-running video
             yield self.cam.mode_trigger('Internal')
             yield self.cam.mode_acquisition('Run till abort')
@@ -260,7 +259,7 @@ class AndorClient(GUIClient):
             # tell camera to start polling
             yield self.cam.polling(True, 1.5)
 
-        else:
+        elif status is False:
             # stop acquisition and stop polling
             yield self.cam.acquisition_stop()
             yield self.cam.mode_shutter('Close')
