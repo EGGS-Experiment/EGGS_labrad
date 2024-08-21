@@ -4,18 +4,12 @@ from datetime import datetime
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
-
 from EGGS_labrad.config.andor_config import AndorConfig as config
 from EGGS_labrad.clients.andor_client_rdx.AndorGUI import AndorGUI
 from EGGS_labrad.clients.andor_client.image_region_selection import image_region_selection_dialog
 # todo: document
 # todo: single camera image mode
-# todo: make cursor xy stop stuttering
 # todo: add temp to acq setup
-
-# todo: link signals to slots
-# todo: data saving
-# todo: ROI
 
 
 class AndorClient(GUIClient):
@@ -48,12 +42,11 @@ class AndorClient(GUIClient):
         yield self.cam.addListener(listener=self.updateParameter, source=None, ID=self.PARAMETER_UPDATED_ID)
 
         # create global flag to manage image acquisition status
-        self.update_display =   False
+        self.update_display_status =    False
+        self.save_image_status =        False
 
-        # todo: set up saving etc.
         # get attributes from config
         self.saved_data =       None
-        self.save_images =      False
 
         # get save path
         for attribute_name in ('image_path', 'save_in_sub_dir', 'save_format', 'save_header'):
@@ -166,12 +159,14 @@ class AndorClient(GUIClient):
 
         # user buttons
         self.gui.start_button.toggled.connect(lambda status: self.start_acquisition(status))
+        self.gui.record_button.toggled.connect(lambda status: self.start_recording(status))
+
         # self.gui.set_image_region_button.clicked.connect(self.on_set_image_region)
         # self.gui.save_images_button.stateChanged.connect(lambda state: setattr(self, 'save_images', state))
 
 
     """
-    SLOTS
+    SLOTS - PARAMETERS
     """
     @inlineCallbacks
     def set_camera_parameter(self, func, param_val):
@@ -210,7 +205,7 @@ class AndorClient(GUIClient):
 
 
     """
-    IMAGE UPDATING
+    SLOTS - IMAGE UPDATING
     """
     @inlineCallbacks
     def start_acquisition(self, status):
@@ -219,7 +214,7 @@ class AndorClient(GUIClient):
         then allows received images to be updated to the display.
         """
         # set global update flag
-        self.update_display = status
+        self.update_display_status = status
 
         # set image region
         self.binx, self.biny, self.startx, self.stopx, self.starty, self.stopy = yield self.cam.image_region_get()
@@ -250,7 +245,7 @@ class AndorClient(GUIClient):
         """
         Processes images received from the server.
         """
-        if self.update_display:
+        if self.update_display_status:
             # process/reshape image shape
             image_data = np.reshape(image_data, (self.pixels_y, self.pixels_x))
             # update display
@@ -278,6 +273,16 @@ class AndorClient(GUIClient):
     """
     IMAGE SAVING
     """
+    @inlineCallbacks
+    def start_recording(self, status):
+        """
+
+        Args:
+            status:
+        """
+        self.save_image_status = status
+        # todo: implement
+
     def save_image(self, image_data):
         """
         todo: document
@@ -285,31 +290,33 @@ class AndorClient(GUIClient):
             image_data:
 
         """
-        # format data
-        if not np.array_equal(image_data, self.saved_data):
-            self.saved_data = image_data
-            saved_data_in_int = self.saved_data.astype("int16")
-            time_stamp = "-".join(self.datetime_to_str_list())
+        pass
 
-            # create path
-            if self.save_in_sub_dir:
-                path = self.check_save_path_exists()
-                path = os.path.join(path, time_stamp)
-            else:
-                path = os.path.join(self.image_path, time_stamp)
-
-            # create header
-            header = ""
-            if self.save_header:
-                header = "shutter_time {:s}\nem_gain {:s}".format(self.gui.exposure.value(), self.gu.emccd.value())
-
-            # save
-            if self.save_format == "csv":
-                np.savetxt(path + ".csv", saved_data_in_int, fmt='%i', delimiter=",", header=header)
-            elif self.save_format == "bin":
-                saved_data_in_int.tofile(path + ".dat")
-            else:
-                np.savetxt(path + ".tsv", saved_data_in_int, fmt='%i', header=header)
+        # # format data
+        # if not np.array_equal(image_data, self.saved_data):
+        #     self.saved_data = image_data
+        #     saved_data_in_int = self.saved_data.astype("int16")
+        #     time_stamp = "-".join(self.datetime_to_str_list())
+        #
+        #     # create path
+        #     if self.save_in_sub_dir:
+        #         path = self.check_save_path_exists()
+        #         path = os.path.join(path, time_stamp)
+        #     else:
+        #         path = os.path.join(self.image_path, time_stamp)
+        #
+        #     # create header
+        #     header = ""
+        #     if self.save_header:
+        #         header = "shutter_time {:s}\nem_gain {:s}".format(self.gui.exposure.value(), self.gu.emccd.value())
+        #
+        #     # save
+        #     if self.save_format == "csv":
+        #         np.savetxt(path + ".csv", saved_data_in_int, fmt='%i', delimiter=",", header=header)
+        #     elif self.save_format == "bin":
+        #         saved_data_in_int.tofile(path + ".dat")
+        #     else:
+        #         np.savetxt(path + ".tsv", saved_data_in_int, fmt='%i', header=header)
 
 
     """

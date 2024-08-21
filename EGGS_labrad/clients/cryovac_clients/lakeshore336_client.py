@@ -109,15 +109,28 @@ class lakeshore336_client(GUIClient):
         Creates a new dataset to record temperature and
         tells polling loop to add data to data vault.
         """
-        # set up datavault
+        # set recording status
         self.recording = status
+
         if self.recording:
+
+            # get start time
             self.starttime = time()
             trunk = createTrunk(self.name)
+
+            # set up datavault
             yield self.dv.cd(trunk, True, context=self.c_record)
-            yield self.dv.new('Lakeshore 336 Temperature Controller', [('Elapsed time', 't')],
-                                       [('Diode 1', 'Temperature', 'K'), ('Diode 2', 'Temperature', 'K'),
-                                        ('Diode 3', 'Temperature', 'K'), ('Diode 4', 'Temperature', 'K')], context=self.c_record)
+            yield self.dv.new(
+                'Lakeshore 336 Temperature Controller',
+                [('Elapsed time', 't')],
+                [
+                    ('Diode 1', 'Temperature', 'K'),
+                    ('Diode 2', 'Temperature', 'K'),
+                    ('Diode 3', 'Temperature', 'K'),
+                    ('Diode 4', 'Temperature', 'K')
+                ],
+                context=self.c_record
+            )
 
     def lock_heaters(self, status):
         """

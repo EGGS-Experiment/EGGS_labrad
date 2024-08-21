@@ -1,27 +1,29 @@
 class AndorConfig(object):
     """
-    path to atmcd64d.dll SDK library
+    Configuration file for Andor cameras.
+    Used by the Andor server to configure the camera hardware on startup.
     """
-    # SDK
+
+    # SDK location
     path_to_dll =       ('C:\\Users\\Elizabeth\\Documents\\Code\\Andor\\atmcd64d_legacy.dll')
 
-    # temperature
-    set_temperature =   -75 # degrees Celsius
+    # camera temperature (in degrees celsius)
+    set_temperature =   -75
 
-    # acquisition setup
+    # acquisition mode setup
     read_mode =         'Image'
     acquisition_mode =  'Single Scan'
     trigger_mode =      'Internal'
     shutter_mode =      'Open'
 
-    # readout setup
+    # camera hardware setup
     emccd_gain =                    200
     exposure_time =                 0.100   # seconds
     binning =                       [1, 1]  # numbers of pixels for horizontal and vertical binning
     vertical_shift_amplitude =      0
     vertical_shift_speed =          1
     horizontal_shift_preamp_gain =  1
-    horizontal_shift_speed =        0
+    horizontal_shift_speed =        1
 
     # image setup
     image_rotate =          "Anticlockwise"

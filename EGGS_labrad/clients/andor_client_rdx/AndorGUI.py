@@ -102,6 +102,7 @@ class AndorGUI(QWidget):
         # enclose section in a QGroupBox
         cursor_readout_widget = QCustomGroupBox(cursor_readout_holder, "Cursor")
         # cursor_readout_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        # cursor_readout_widget.setFixedSize(200, 100)
 
 
         # ROI statistics readout
@@ -149,14 +150,16 @@ class AndorGUI(QWidget):
         # lay out section
         display_helper_widget_layout.addWidget(cursor_readout_widget,   0, 0, 1, 1)
         display_helper_widget_layout.addWidget(roi_readout_widget,      0, 1, 1, 1)
+        display_helper_widget_layout.setColumnStretch(0, 1)
+        display_helper_widget_layout.setColumnStretch(1, 3)
         # enclose section in a QGroupBox
         display_helper_widget = QCustomGroupBox(display_helper_holder, "DISPLAY STATUS")
 
 
         '''CREATE USER MAIN INTERFACE'''
         # user interface buttons
-        self.start_button = TextChangingButton(("Stop Acquisition", "Start Acquisition"))
-        self.record_button = TextChangingButton(("Stop Recording", "Start Recording"))
+        self.start_button =     TextChangingButton(("Stop Acquisition", "Start Acquisition"))
+        self.record_button =    TextChangingButton(("Stop Recording", "Start Recording"))
 
         # create user main interface widget
         main_interface_holder = QWidget(self)
@@ -181,11 +184,18 @@ class AndorGUI(QWidget):
 
 
         '''lay out GUI elements'''
-        layout.addWidget(main_interface_widget,         0, 0, 1, 6)
-        layout.addWidget(self.image,                    1, 0, 1, 6)
-        layout.addWidget(display_helper_widget,         2, 0, 1, 6)
-        layout.addWidget(self.sidebar,                  0, 6, 3, 1)
+        # add widgets to layout
+        layout.addWidget(main_interface_widget,         0, 0, 1, 1)
+        layout.addWidget(self.image,                    1, 0, 1, 1)
+        layout.addWidget(display_helper_widget,         2, 0, 1, 1)
+        layout.addWidget(self.sidebar,                  0, 1, 3, 1)
 
+        # set relative sizing (i.e. stretch) of GUI layout
+        layout.setRowStretch(0, 1)
+        layout.setRowStretch(1, 9)
+        layout.setRowStretch(2, 1)
+        layout.setColumnStretch(0, 7)
+        layout.setColumnStretch(1, 1)
 
     def _connectLayout(self):
         # mouse-based events
@@ -236,7 +246,7 @@ class AndorGUI(QWidget):
 
         # convert scene coordinates to viewbox coordinates
         pos_view = self.display.mapToView(pos_scene)
-        self.cursor_coordinates.setText("({:.4g},\t{:.4g})".format(pos_view.x(), pos_view.y()))
+        self.cursor_coordinates.setText("{: >4d}\t{: >4d}\t".format(int(pos_view.x()), int(pos_view.y())))
 
         # get pixel value at cursor position
         if self.image.image is not None:
@@ -244,7 +254,7 @@ class AndorGUI(QWidget):
             try:
                 image_data = self.image.image
                 cursor_signal = image_data[round(pos_view.x()), round(pos_view.y())]
-                self.cursor_signal.setText("{:.4g}".format(cursor_signal))
+                self.cursor_signal.setText("{: >5d}".format(cursor_signal))
             except IndexError:
                 pass
 
@@ -266,13 +276,19 @@ class AndorGUI(QWidget):
                 counts_total =  counts_mean * img_region.size
 
                 # update ROI statistics displays
-                self.roi_mean.setText('{:.4g}'.format(counts_mean))
-                self.roi_stdev.setText('{:.4g}'.format(counts_stdev))
-                self.roi_max.setText('{:.4g}'.format(counts_max))
-                self.roi_total.setText('{:.4g}'.format(counts_total))
+                self.roi_mean.setText('{: >6.2f}'.format(counts_mean))
+                self.roi_stdev.setText('{: >6.2f}'.format(counts_stdev))
+                self.roi_max.setText('{: >6.2f}'.format(counts_max))
+                self.roi_total.setText('{: >6.2f}'.format(counts_total))
 
         except Exception as e:
             pass
+
+    def save_image(self):
+        """
+        todo: document
+        """
+        pass
 
 
 if __name__ == "__main__":
