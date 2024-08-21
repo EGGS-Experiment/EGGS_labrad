@@ -73,7 +73,6 @@ class DC_client(GUIClient):
         # connect group channel signals
         self.gui.doubleramp_endcaps.clicked.connect(lambda blank: self.startRamp(endcap_channels))
         self.gui.doubleramp_aramp.clicked.connect(lambda blank: self.startRamp(aramp_channels))
-        print('okscsd')
         # connect each channel
         for channel in self.gui.amo8_channels.values():
             channel.dac.valueChanged.connect(
@@ -117,11 +116,6 @@ class DC_client(GUIClient):
             widget.toggleswitch.setEnabled(True)
 
     def updateVoltage(self, c, signal):
-
-        # tmp remove
-        print("\n\nReceive voltage update - Context: {}\n\n".format(c))
-        # tmp remove
-
         chan_num, voltage = signal
         if chan_num in self.gui.amo8_channels.keys():
             # set element disable
