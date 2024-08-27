@@ -78,9 +78,11 @@ class PollingServer(ContextServer):
     Holds all the functionality needed to run polling loops on the server.
     Also contains functionality for Signals.
     """
-    # tells server whether to start polling upon startup
-    POLL_ON_STARTUP = False
-    POLL_INTERVAL_ON_STARTUP = 5
+    # configure server polling
+    POLL_ON_STARTUP =           False
+    POLL_INTERVAL_ON_STARTUP =  5
+    POLL_INTERVAL_MIN =         0.35
+    POLL_INTERVAL_MAX =         60.
 
     # STARTUP
     def initServer(self):
@@ -131,7 +133,7 @@ class PollingServer(ContextServer):
         # ensure interval is valid
         if interval is None:
             interval = 5.0
-        elif (interval < 0.35) or (interval > 60):
+        elif (interval < self.POLL_INTERVAL_MIN) or (interval > self.POLL_INTERVAL_MAX):
             raise Exception('Error in polling: Invalid polling interval.')
 
         # start polling if we are stopped
