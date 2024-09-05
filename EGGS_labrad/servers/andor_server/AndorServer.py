@@ -44,6 +44,8 @@ class AndorServer(PollingServer):
     mode_updated =          Signal(MODE_UPDATED_SIGNAL,         'signal: mode updated', '(ss)')
     parameter_updated =     Signal(PARAMETER_UPDATED_SIGNAL,    'signal: parameter updated', '(ss)')
 
+    POLL_INTERVAL_MIN =     0.1
+
 
     """
     CORE SERVER FUNCTIONALITY
