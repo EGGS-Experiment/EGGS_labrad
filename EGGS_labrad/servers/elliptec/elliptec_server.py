@@ -62,8 +62,8 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
 
 
     # SIGNALS
-    error_update = Signal(999999, 'signal: error update', 's')
-    position_update = Signal(999998, 'signal: position update', 'i')
+    error_update =      Signal(999999, 'signal: error update', 's')
+    position_update =   Signal(999998, 'signal: position update', 'i')
 
     # INIT
     def __init__(self, *args, **kwargs):

@@ -15,7 +15,6 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 from labrad.units import WithUnit
 from labrad.server import setting, Signal, inlineCallbacks
 from twisted.internet.defer import returnValue
@@ -36,14 +35,14 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
     Talks to the GW Instek GPP 3060 power supply.
     """
 
-    name = 'GPP3060 Server'
-    regKey = 'GPP3060 Server'
-    serNode = 'causewaybay'
-    port = 'COM24'
+    name =      'GPP3060 Server'
+    regKey =    'GPP3060 Server'
+    serNode =   'causewaybay'
+    port =      'COM24'
 
-    timeout = WithUnit(5.0, 's')
-    baudrate = 115200
-    bytesize = 8
+    timeout =   WithUnit(5.0, 's')
+    baudrate =  115200
+    bytesize =  8
 
     POLL_ON_STARTUP = True
 

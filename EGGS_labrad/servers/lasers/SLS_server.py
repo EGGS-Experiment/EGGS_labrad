@@ -38,8 +38,8 @@ class SLSServer(SerialDeviceServer, PollingServer):
     serNode =   'lahaina'
     port =      'COM3'
 
-    baudrate = 115200
-    timeout = Value(5.0, 's')
+    baudrate =  115200
+    timeout =   Value(5.0, 's')
 
     # SIGNALS
     autolock_update = Signal(999999, 'signal: autolock update', '(iv)')
@@ -109,6 +109,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
                 param_tg = tgstring[param.upper()]
             except KeyError:
                 print('Invalid parameter: parameter must be one of [\'OFF\', \'PZT\', \'CURRENT\']')
+
         resp = yield self._write_and_query(chString, param_tg)
         returnValue(resp)
 
@@ -124,23 +125,29 @@ class SLSServer(SerialDeviceServer, PollingServer):
         Returns:
                                     : the value of param_name
         """
+        # dict to map parameter to message string
         chstring = {'frequency': 'PDHFrequency', 'index': 'PDHPMIndex', 'phase': 'PDHPhaseOffset', 'filter': 'PDHDemodFilter'}
+
+        # sanitize input
         try:
             string_tmp = chstring[param_name.lower()]
         except KeyError:
             print('Invalid parameter. Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
+
+        # setter
         if param_val:
-            # setter
             yield self.ser.acquire()
             yield self.ser.write('set ' + string_tmp + ' ' + param_val + TERMINATOR)
             set_resp = yield self.ser.read_line(_SLS_EOL)
             self.ser.release()
             set_resp = yield self._parse(set_resp, True)
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write('get ' + string_tmp + TERMINATOR)
         resp = yield self.ser.read_line(_SLS_EOL)
         self.ser.release()
+
         # return value
         resp = yield self._parse(resp, False)
         returnValue(resp)
@@ -202,16 +209,18 @@ class SLSServer(SerialDeviceServer, PollingServer):
         """
         Returns the values of ALL parameters.
         """
+        # getter
         yield self.ser.acquire()
         yield self.ser.write_line('get values')
         resp = yield self.ser.read_line(_SLS_EOL)
         self.ser.release()
+
         # parse response
         resp = resp.split('\r\n')[2:-2]
         resp = [val.split('=') for val in resp]
         # return keys and values
-        keys = [val[0] for val in resp]
-        values = [val[1] for val in resp]
+        keys =      [val[0] for val in resp]
+        values =    [val[1] for val in resp]
         returnValue((keys, values))
 
 
@@ -221,6 +230,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         """
         Polls the device for locking readout.
         """
+        # getter
         yield self.ser.acquire()
         # get lock count
         yield self.ser.write('get LockCount' + TERMINATOR)

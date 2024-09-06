@@ -11,6 +11,7 @@ from EGGS_labrad.clients.PMT_client.PMT_gui import PMT_gui
 EXPID = 564324
 # todo: clean up display; make more programmatic
 # todo: make ttl counter # a variable
+# todo: subscribe to signals so we know when aperture is open or closed
 
 
 class PMT_client(GUIClient):

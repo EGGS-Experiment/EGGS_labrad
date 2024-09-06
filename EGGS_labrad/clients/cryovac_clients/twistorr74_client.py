@@ -9,10 +9,10 @@ class twistorr74_client(GUIClient):
 
     name = 'Twistorr74 Client'
 
-    PRESSUREID = 694321
-    TOGGLEID = 694322
-    SPEEDID = 694323
-    POWERID = 694324
+    PRESSUREID =    694321
+    TOGGLEID =      694322
+    SPEEDID =       694323
+    POWERID =       694324
 
     servers = {'tt': 'TwisTorr74 Server'}
 
@@ -32,10 +32,12 @@ class twistorr74_client(GUIClient):
         yield self.tt.addListener(listener=self.updateSpeed, source=None, ID=self.SPEEDID)
         yield self.tt.signal__toggle_update(self.TOGGLEID)
         yield self.tt.addListener(listener=self.updateToggle, source=None, ID=self.TOGGLEID)
-        # set recording stuff
+
+        # set up recording variables
         self.c_record = self.cxn.context()
         self.recording = False
         self.starttime = None
+
         # start device polling only if not already started
         poll_params = yield self.tt.polling()
         if not poll_params[0]:
@@ -50,6 +52,7 @@ class twistorr74_client(GUIClient):
         self.gui.twistorr_lockswitch.toggled.connect(lambda status: self.gui.twistorr_toggle.setEnabled(status))
         self.gui.twistorr_toggle.clicked.connect(lambda status: self.tt.toggle(status))
         self.gui.twistorr_record.toggled.connect(lambda status: self.record_pressure(status))
+
         # start up locked
         self.gui.twistorr_lockswitch.setChecked(False)
         self.gui._lock(False)
@@ -82,7 +85,9 @@ class twistorr74_client(GUIClient):
         """
         Updates GUI when other clients have made changes to the device.
         """
+        self.gui.twistorr_toggle.blockSignals(True)
         self.gui.twistorr_toggle.setChecked(status)
+        self.gui.twistorr_toggle.blockSignals(False)
 
 
     # SLOTS
@@ -92,14 +97,22 @@ class twistorr74_client(GUIClient):
         Creates a new dataset to record pressure and
         tells polling loop to add data to data vault.
         """
-        # set up datavault
+        # set recording status
         self.recording = status
+
         if status:
+            # get start time
             self.starttime = time()
+
+            # set up datavault
             trunk = createTrunk(self.name)
             yield self.dv.cd(trunk, True, context=self.c_record)
-            yield self.dv.new('Twistorr 74 Pump Controller', [('Elapsed time', 't')],
-                              [('Pump Pressure', 'Pressure', 'mbar')], context=self.c_record)
+            yield self.dv.new(
+                'Twistorr 74 Pump Controller',
+                [('Elapsed time', 't')],
+                [('Pump Pressure', 'Pressure', 'mbar')],
+                context=self.c_record
+            )
 
 
 if __name__ == "__main__":

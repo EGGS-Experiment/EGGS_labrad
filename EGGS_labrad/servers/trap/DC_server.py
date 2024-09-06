@@ -346,7 +346,7 @@ class DCServer(SerialDeviceServer, PollingServer):
                     (str)   : success strings of the ramps
         """
         # check parameters are specified for all channels
-        if (len(channels) != len(voltages)) and (len(voltages) != len(rates)):
+        if (len(channels) != len(voltages)) or (len(voltages) != len(rates)):
             raise Exception('Error: all parameters must be specified for all channels.')
         # reformat the input parameters
         param_list = zip(channels, voltages, rates)
@@ -362,10 +362,16 @@ class DCServer(SerialDeviceServer, PollingServer):
             resp_tmp = yield self.ser.read_line('\n')
             resp.append(resp_tmp)
         self.ser.release()
+
         # todo: process response
         #resp_processing_func = lambda resp_tmp: resp_tmp.strip().split(': ')
         #resp = list((resp_processing_func, resp))
         #resp = [resp[0] for strings in resp]
+
+        # send update signals to all other listeners
+        # todo: make this use the response instead of arguments
+        for channel, voltage, _ in param_list:
+            self.notifyOtherListeners(c, (channel, voltage), self.voltage_update)
         returnValue(resp)
 
 

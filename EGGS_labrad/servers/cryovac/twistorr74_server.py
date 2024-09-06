@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = TwisTorr74 Server
-version = 1.0
+version = 1.0.1
 description = Talks to the TwisTorr 74 Turbopump
 instancename = TwisTorr74 Server
 
@@ -50,26 +50,35 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
 
 
     # SIGNALS
-    pressure_update = Signal(999999, 'signal: pressure update', 'v')
-    power_update = Signal(999998, 'signal: power update', 'v')
-    speed_update = Signal(999997, 'signal: speed update', 'v')
-    toggle_update = Signal(999996, 'signal: toggle update', 'b')
+    pressure_update =   Signal(999999, 'signal: pressure update', 'v')
+    power_update =      Signal(999998, 'signal: power update', 'v')
+    speed_update =      Signal(999997, 'signal: speed update', 'v')
+    toggle_update =     Signal(999996, 'signal: toggle update', 'b')
 
 
     # STARTUP
     def initServer(self):
         super().initServer()
+
         # set default units
         from twisted.internet.reactor import callLater
         callLater(5, self.setUnits)
 
     @inlineCallbacks
     def setUnits(self):
+        """
+        Set units for communication (e.g. mbar vs torr) to ensure
+        device responses are consistent.
+        """
+        # create message
         msg = self._create_message(CMD_msg=b'163', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'000000')
+
+        # query device
         yield self.ser.acquire()
         yield self.ser.write(msg)
         resp = yield self.ser.read(6)
         self.ser.release()
+
         # remove CRC since parse assumes no CRC or ETX
         resp = yield self._parse(resp[:-3])
         if resp == 'Acknowledged':
@@ -89,31 +98,36 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         # setter
         message = None
         if onoff is not None:
+            # create message
             if onoff is True:
                 message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'1')
             elif onoff is False:
                 message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_WRITE_msg, DATA_msg=b'0')
+
+            # send message to device
             yield self.ser.acquire()
             yield self.ser.write(message)
             yield self.ser.read_line(_TT74_ETX_msg)
             yield self.ser.read(2)
             self.ser.release()
+
         # getter
         message = yield self._create_message(CMD_msg=b'000', DIR_msg=_TT74_READ_msg)
+        # send message to device
         yield self.ser.acquire()
         yield self.ser.write(message)
         resp = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read(2)
         self.ser.release()
+
         # read and parse answer
         resp = yield self._parse(resp)
-        if resp == '1':
-            resp = True
-        elif resp == '0':
-            resp = False
+        if resp == '1':     resp = True
+        elif resp == '0':   resp = False
+
         # update all other devices with new device state
         if onoff is not None:
-            self.toggle_update(resp, self.getOtherListeners(c))
+            self.notifyOtherListeners(c, resp, self.toggle_update)
         returnValue(resp)
 
 
@@ -125,14 +139,16 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         Returns:
             (float): pump pressure in mbar
         """
-        # create and send message to device
+        # create message
         message = yield self._create_message(CMD_msg=b'224', DIR_msg=_TT74_READ_msg)
-        # query
+
+        # query device with message
         yield self.ser.acquire()
         yield self.ser.write(message)
         resp = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read(2)
         self.ser.release()
+
         # parse
         resp = yield self._parse(resp)
         resp = float(resp)
@@ -147,15 +163,16 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         Returns:
             (float): pump power in W
         """
-        # create and send message to device
+        # create message
         message = yield self._create_message(CMD_msg=b'202', DIR_msg=_TT74_READ_msg)
-        # query
+
+        # query device with message
         yield self.ser.acquire()
         yield self.ser.write(message)
         resp = yield self.ser.read_line(_TT74_ETX_msg)
-        # todo: check that this doesn't have latency problems - should it be read(<num>) or read_line?
         yield self.ser.read()
         self.ser.release()
+
         # parse
         resp = yield self._parse(resp)
         resp = float(resp)
@@ -170,14 +187,16 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         Returns:
             (float): pump rotational speed in Hz
         """
-        # create and send message to device
+        # create message
         message = yield self._create_message(CMD_msg=b'120', DIR_msg=_TT74_READ_msg)
-        # query
+
+        # query device with message
         yield self.ser.acquire()
         yield self.ser.write(message)
         resp = yield self.ser.read_line(_TT74_ETX_msg)
         yield self.ser.read(2)
         self.ser.release()
+
         # parse
         resp = yield self._parse(resp)
         resp = float(resp)
@@ -205,10 +224,12 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
         # create message as bytearray
         msg = _TT74_STX_msg + _TT74_ADDR_msg + CMD_msg + DIR_msg + DATA_msg + _TT74_ETX_msg
         msg = bytearray(msg)
+
         # calculate checksum
         CRC_msg = 0x00
         for byte in msg[1:]:
             CRC_msg ^= byte
+
         # convert checksum to hex value and add to end
         CRC_msg = hex(CRC_msg)[2:]
         msg.extend(bytearray(CRC_msg, encoding='utf-8'))
@@ -222,6 +243,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
             raise Exception('No response from device')
         # remove STX and ADDR
         ans = ans[2:]
+
         # check if we have CMD and DIR and remove them if so
         if len(ans) > 1:
             ans = ans[4:]
@@ -230,6 +252,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
             raise Exception(_TT74_ERRORS_msg[ans])
         elif ans == b'\x06':
             ans = 'Acknowledged'
+
         # if none of these cases, just return it anyways
         return ans
 

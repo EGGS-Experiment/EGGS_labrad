@@ -113,7 +113,7 @@ class TurboV81AGServer(SerialDeviceServer, PollingServer):
             resp = False
         # update all other devices with new device state
         if onoff is not None:
-            self.toggle_update(resp, self.getOtherListeners(c))
+            self.notifyOtherListeners(c, resp, self.toggle_update)
         returnValue(resp)
 
 

@@ -27,6 +27,7 @@ from EGGS_labrad.servers import ContextServer
 
 from labjack import ljm
 # todo: comm lock
+# todo: signals for updating
 
 
 class LabJackServer(LabradServer):

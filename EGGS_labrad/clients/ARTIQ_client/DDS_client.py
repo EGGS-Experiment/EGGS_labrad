@@ -114,12 +114,15 @@ class DDS_client(GUIClient):
         Update the DDS widget if its values are modified by another client.
         """
         ad9910_name, param, val = signal
+
+        # check if target urukul is one that we have
         for urukul_name, ad9910_list in self.urukul_list.items():
+
             if ad9910_name in ad9910_list:
+                # get widget
                 ad9910_widget = self.urukul_list[urukul_name][ad9910_name]
-                # print('update:')
-                # print('\tparam: {}'.format(param))
-                # print('\tval: {:d}'.format(int(val)))
+
+                # update target parameter
                 if param == 'onoff':
                     dds_state = int(val)
                     ad9910_widget.rfswitch.blockSignals(True)

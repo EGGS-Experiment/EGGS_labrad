@@ -10,7 +10,7 @@ HVID =          374861
 
 class DC_client(GUIClient):
     """
-    Client for DC voltage control via AMO8.
+    Client for trap DC voltage control via AMO8.
     """
 
     name = "DC Client"
@@ -91,49 +91,113 @@ class DC_client(GUIClient):
 
 
     # SLOTS
-    # todo: use blockSignal instead of lockswitches
     @inlineCallbacks
     def reset(self, channel_num):
+        """
+        Resets the given channel.
+        Connects to the reset button.
+        """
         channel_gui = self.gui.amo8_channels[channel_num]
+        # disable GUI
         channel_gui.setEnabled(False)
+        channel_gui.blockSignals(True)
+
+        # clear & reset GUI values
         yield self.amo8.voltage(channel_num, 0)
         yield self.amo8.toggle(channel_num, 0)
         channel_gui.dac.setValue(0)
         channel_gui.toggleswitch.setChecked(False)
         channel_gui.ramp_target.setValue(0)
         channel_gui.ramp_rate.setValue(100)
+
+        # reenable GUI
         channel_gui.setEnabled(True)
+        channel_gui.blockSignals(False)
 
     def updateToggle(self, c, signal):
+        """
+        Toggles the given channel on/off.
+        Connects to the on/off button.
+        """
         chan_num, status = signal
         if chan_num in self.gui.amo8_channels.keys():
             # set element disable
             widget = self.gui.amo8_channels[chan_num]
             widget.toggleswitch.setEnabled(False)
+            widget.toggleswitch.blockSignals(True)
             # update value
             widget.toggleswitch.setChecked(status)
             # enable element
             widget.toggleswitch.setEnabled(True)
+            widget.toggleswitch.blockSignals(False)
 
     def updateVoltage(self, c, signal):
+        """
+        Updates the voltage of the given channel.
+        Connects to the voltage display/DoubleSpinBox.
+        """
         chan_num, voltage = signal
         if chan_num in self.gui.amo8_channels.keys():
-            # set element disable
             widget = self.gui.amo8_channels[chan_num]
-            # store lock state
+            # store lock state & disable updates
             lockstate = widget.lockswitch.isChecked()
             widget.dac.setEnabled(False)
             widget.dac.blockSignals(True)
-            # update value
+            # update value & restore previous lockstate
             widget.dac.setValue(voltage)
-            # restore previous lockstate
             widget.dac.setEnabled(lockstate)
             widget.dac.blockSignals(False)
 
     def updateHV(self, c, hv):
-        self.gui.device_hv_v1.setText(str(hv[0]))
-        self.gui.device_hv_i1.setText(str(hv[1]))
+        """
+        Updates the High Voltage input monitor.
+        Connects to the HV monitor and is triggered by polling.
+        """
+        self.gui.device_hv_v1.setText(str(hv[0]))   # HV supply current
+        self.gui.device_hv_i1.setText(str(hv[1]))   # HV supply voltage
 
+    @inlineCallbacks
+    def startRamp(self, channel_list):
+        """
+        Starts a voltage ramp for a list of channels.
+            Yields the ramp request to the device, then blocks user input to the
+            ramping channels. _finishRamp is called 3 seconds in the future to
+            update the GUI.
+        Arguments:
+            channel_list    list(int):  a list of channels to ramp.
+        """
+        # get current values
+        end_voltage_list =  []
+        rate_list =         []
+        for channel_num in channel_list:
+            # get current values from channel widget
+            channel_gui = self.gui.amo8_channels[channel_num]
+            end_voltage_list.append(channel_gui.ramp_target.value())
+            rate_list.append(channel_gui.ramp_rate.value())
+            # disable channel widget & block from updating
+            channel_gui.dac.setEnabled(False)
+            channel_gui.dac.blockSignals(True)
+
+        # submit ramp
+        yield self.amo8.ramp_multiple(channel_list, end_voltage_list, rate_list)
+        # call ramp finish to reenable
+        self.reactor.callLater(3, self._finishRamp, channel_list)
+
+    @inlineCallbacks
+    def _finishRamp(self, channel_list):
+        """
+        Finishes the ramp by reenabling the disabled channels.
+        Arguments:
+            channel_list    list(int):  a list of channels to ramp.
+        """
+        for channel_num in channel_list:
+            voltage_res = yield self.amo8.voltage(channel_num)
+            self.gui.amo8_channels[channel_num].dac.setValue(voltage_res)
+            self.gui.amo8_channels[channel_num].dac.setEnabled(True)
+            self.gui.amo8_channels[channel_num].dac.blockSignals(False)
+
+
+    # DEPRECATED
     @inlineCallbacks
     def startTriangleRamp(self, channel_list):
         # get current values
@@ -145,62 +209,33 @@ class DC_client(GUIClient):
             end_voltage_list.append(channel_gui.ramp_target.value())
             rate_list.append(channel_gui.ramp_rate.value())
             initial_vals.append(channel_gui.dac.value())
+            # disable GUI from updates/responses
             channel_gui.dac.setEnabled(False)
             channel_gui.ramp_rate.setEnabled(False)
             channel_gui.ramp_target.setEnabled(False)
+            channel_gui.blockSignals(True)
 
+        # initiate ramp
         yield self.amo8.ramp_multiple(channel_list, end_voltage_list, rate_list)
-        self.reactor.callLater(3, self.finishTriangleRamp, channel_list, initial_vals)
+        # update GUI after ramp has finished
+        self.reactor.callLater(3, self._finishTriangleRamp, channel_list, initial_vals)
 
     @inlineCallbacks
-    def finishTriangleRamp(self, channel_list, initial_vals):
-        # get value
+    def _finishTriangleRamp(self, channel_list, initial_vals):
+        # get current values
         for i, channel_num in enumerate(channel_list):
             voltage_res = yield self.amo8.voltage(channel_list)
             channel_gui = self.gui.amo8_channels[channel_num]
+            # set new values on GUI & reenable updates/responses
             channel_gui.dac.setValue(voltage_res)
+            channel_gui.ramp_target.setValue(initial_vals[i])
             channel_gui.dac.setEnabled(True)
             channel_gui.ramp_rate.setEnabled(True)
             channel_gui.ramp_target.setEnabled(True)
-            channel_gui.ramp_target.setValue(initial_vals[i])
+            channel_gui.blockSignals(False)
+
         # do a startRamp back down
         yield self.startRamp(channel_list)
-
-    @inlineCallbacks
-    def startRamp(self, channel_list):
-        """
-        Starts a voltage ramp for a list of channels.
-            Yields the ramp request to the device, then blocks user input to the
-            ramping channels. finishRamp is called 3 seconds in the future to
-        Arguments:
-            channel_list    list(int):  a list of channels to ramp.
-        """
-        # get current values
-        end_voltage_list =  []
-        rate_list =         []
-        for channel_num in channel_list:
-            channel_gui = self.gui.amo8_channels[channel_num]
-            end_voltage_list.append(channel_gui.ramp_target.value())
-            rate_list.append(channel_gui.ramp_rate.value())
-            channel_gui.dac.setEnabled(False)
-
-        # submit ramp
-        yield self.amo8.ramp_multiple(channel_list, end_voltage_list, rate_list)
-
-        # call ramp finish to reenable
-        self.reactor.callLater(3, self.finishRamp, channel_list)
-
-    @inlineCallbacks
-    def finishRamp(self, channel_list):
-        """
-        Finishes the ramp by reenabling the disabled channels.
-        Arguments:
-            channel_list    list(int):  a list of channels to ramp.
-        """
-        for channel_num in channel_list:
-            voltage_res = yield self.amo8.voltage(channel_num)
-            self.gui.amo8_channels[channel_num].dac.setValue(voltage_res)
-            self.gui.amo8_channels[channel_num].dac.setEnabled(True)
 
 
 if __name__ == "__main__":

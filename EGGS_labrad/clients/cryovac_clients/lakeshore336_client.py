@@ -21,12 +21,14 @@ class lakeshore336_client(GUIClient):
         # connect to signals
         yield self.ls.signal__temperature_update(self.TEMPERATUREID)
         yield self.ls.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATUREID)
-        # set recording stuff
+
+        # set up recording variables
         self.c_record = self.cxn.context()
         self.recording = False
+
         # start device polling
         poll_params = yield self.ls.polling()
-        # only start polling if not started
+        # only start polling if not already started
         if not poll_params[0]:
             yield self.ls.polling(True, 5.0)
 
@@ -93,15 +95,18 @@ class lakeshore336_client(GUIClient):
         self.gui.heat1_set.valueChanged.connect(lambda value: self.ls.heater_setpoint(1, value))
         self.gui.heat2_set.valueChanged.connect(lambda value: self.ls.heater_setpoint(2, value))
 
+
     # SLOTS
     @inlineCallbacks
-    def updateTemperature(self, c, temp):
-        self.gui.temp1.setText('{:.4f}'.format(temp[0]))
-        self.gui.temp2.setText('{:.4f}'.format(temp[1]))
-        self.gui.temp3.setText('{:.4f}'.format(temp[2]))
-        self.gui.temp4.setText('{:.4f}'.format(temp[3]))
+    def updateTemperature(self, c, temp_arr):
+        # update displays
+        self.gui.temp1.setText('{:.4f}'.format(temp_arr[0]))
+        self.gui.temp2.setText('{:.4f}'.format(temp_arr[1]))
+        self.gui.temp3.setText('{:.4f}'.format(temp_arr[2]))
+        self.gui.temp4.setText('{:.4f}'.format(temp_arr[3]))
+        # save data to dataVault
         if self.recording:
-            yield self.dv.add(time() - self.starttime, temp[0], temp[1], temp[2], temp[3], context=self.c_record)
+            yield self.dv.add(time() - self.starttime, *temp_arr, context=self.c_record)
 
     @inlineCallbacks
     def record_temp(self, status):
@@ -113,12 +118,11 @@ class lakeshore336_client(GUIClient):
         self.recording = status
 
         if self.recording:
-
             # get start time
             self.starttime = time()
-            trunk = createTrunk(self.name)
 
             # set up datavault
+            trunk = createTrunk(self.name)
             yield self.dv.cd(trunk, True, context=self.c_record)
             yield self.dv.new(
                 'Lakeshore 336 Temperature Controller',
@@ -134,9 +138,10 @@ class lakeshore336_client(GUIClient):
 
     def lock_heaters(self, status):
         """
-        Locks heater updating.
+        Locks heaters to prevent accidental updates.
         """
         status = not status
+
         # heater 1
         self.gui.heat1_mode.setEnabled(status)
         self.gui.heat1_in.setEnabled(status)

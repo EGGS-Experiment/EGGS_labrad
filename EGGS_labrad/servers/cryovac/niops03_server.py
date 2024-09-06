@@ -96,7 +96,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
 
         # parse
         if resp == _NI03_ACK_msg:
-            self.ip_power_update(status, self.getOtherListeners(c))
+            self.notifyOtherListeners(c, status, self.ip_power_update)
         returnValue(resp)
 
     @setting(112, 'NP Toggle', status=['b', 'i'], returns='s')
@@ -126,7 +126,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
 
         # parse
         if resp == _NI03_ACK_msg:
-            self.np_power_update(status, self.getOtherListeners(c))
+            self.notifyOtherListeners(c, status, self.np_power_update)
         returnValue(resp)
 
     @setting(121, 'NP Mode', mode='i', returns='s')
@@ -182,12 +182,13 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
             yield self.ser.write('U' + padleft + voltage + TERMINATOR)
             yield self.ser.read_line('\r')
             self.ser.release()
+
         # getter
         yield self.ser.acquire()
         yield self.ser.write('u' + TERMINATOR)
         resp = yield self.ser.read_line('\r')
         self.ser.release()
-        # convert from hex to int
+        # parse response (in hex) and return
         resp = int(resp, 16)
         self.voltage_update(resp)
         returnValue(resp)
@@ -225,6 +226,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
         yield self.ser.write('TC\r\n')
         resp = yield self.ser.read_line('\r')
         self.ser.release()
+
         # update values
         temp = resp.split()
         temp_list = (float(temp[1]), float(temp[3]))

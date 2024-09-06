@@ -35,9 +35,11 @@ class niops03_client(GUIClient):
         yield self.niops.addListener(listener=self.updateIPPower, source=None, ID=self.IPPOWERID)
         yield self.niops.signal__np_power_update(self.NPPOWERID)
         yield self.niops.addListener(listener=self.updateNPPower, source=None, ID=self.NPPOWERID)
-        # set recording stuff
-        self.c_record = self.cxn.context()
-        self.recording = False
+
+        # set up recording variables
+        self.c_record =     self.cxn.context()
+        self.recording =    False
+
         # start device polling
         poll_params = yield self.niops.polling()
         # only start polling if not started
@@ -75,7 +77,30 @@ class niops03_client(GUIClient):
         self.gui.np_lockswitch.setChecked(False)
 
 
-    # SLOTS
+    # SLOTS - SIGNALS
+    @inlineCallbacks
+    def record_pressure(self, status):
+        """
+        Creates a new dataset to record pressure and
+        tells polling loop to add data to data vault.
+        """
+        # set recording status
+        self.recording = status
+
+        if self.recording:
+            # get start time
+            self.starttime = time()
+
+            # set up datavault
+            trunk = createTrunk(self.name)
+            yield self.dv.cd(trunk, True, context=self.c_record)
+            yield self.dv.new(
+                'NIOPS03 Pump',
+                [('Elapsed time', 's')],
+                [('Ion Pump', 'Pressure', 'mbar')],
+                context=self.c_record
+            )
+
     @inlineCallbacks
     def updatePressure(self, c, pressure):
         # update pressure
@@ -94,11 +119,16 @@ class niops03_client(GUIClient):
         self.gui.np_temperature_display.setText(str(temperatures[1]))
 
     def updateIPPower(self, c, power):
-        # set IP power
+        # disable user updates to ion pump voltage unless activated
         self.gui.ip_voltage.setEnabled(power)
+
+        # disable relevant GUI elements
         self.gui.ip_power.setEnabled(False)
+        self.gui.ip_power.blockSignals(True)
+        # update GUI value, then re-enable
         self.gui.ip_power.setChecked(power)
         self.gui.ip_power.setEnabled(True)
+        self.gui.ip_power.blockSignals(False)
 
     def updateNPPower(self, c, power):
         # set NP power
@@ -106,26 +136,14 @@ class niops03_client(GUIClient):
         self.gui.np_power.setChecked(power)
         self.gui.np_power.setEnabled(True)
 
-    @inlineCallbacks
-    def record_pressure(self, status):
-        """
-        Creates a new dataset to record pressure and
-        tells polling loop to add data to data vault.
-        """
-        # set up datavault
-        self.recording = status
-        if self.recording:
-            self.starttime = time()
-            trunk = createTrunk(self.name)
-            yield self.dv.cd(trunk, True, context=self.c_record)
-            yield self.dv.new('NIOPS03 Pump', [('Elapsed time', 's')], [('Ion Pump', 'Pressure', 'mbar')],
-                              context=self.c_record)
 
+    # SLOTS - BUTTONS
     @inlineCallbacks
-    def toggle_ni(self, status):
+    def toggle_ip(self, status):
         """
         Sets ion pump power on or off.
         """
+        # disable user updates to ion pump voltage unless activated
         self.gui.ip_voltage.setEnabled(status)
         yield self.niops.ip_toggle(status)
 

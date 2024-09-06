@@ -29,13 +29,13 @@ class SR475Server(SerialDeviceServer):
     Controls the SR475 Shutter.
     """
 
-    name = 'SR475 Server'
-    regKey = 'SR475Server'
-    serNode = None
-    port = None
+    name =      'SR475 Server'
+    regKey =    'SR475Server'
+    serNode =   None
+    port =      None
 
-    timeout = WithUnit(5.0, 's')
-    baudrate = 19200
+    timeout =   WithUnit(5.0, 's')
+    baudrate =  19200
 
 
     # CORE

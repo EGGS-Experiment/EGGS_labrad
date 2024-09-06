@@ -28,7 +28,7 @@ ACTUALSIGNAL =  303982
 SETSIGNAL =     303983
 MAXSIGNAL =     303984
 # todo: max/ovp values
-# todo: set polling minimum
+# todo: set up signals
 
 
 class Keithley2231AServer(SerialDeviceServer, PollingServer):
@@ -36,13 +36,13 @@ class Keithley2231AServer(SerialDeviceServer, PollingServer):
     Talks to the Keithley 2231A power supply.
     """
 
-    name = 'Keithley 2231A Server'
-    regKey = 'Keithley2231A Server'
-    serNode = 'MongKok'
-    port = 'COM17'
+    name =      'Keithley 2231A Server'
+    regKey =    'Keithley2231A Server'
+    serNode =   'MongKok'
+    port =      'COM17'
 
-    timeout = WithUnit(5.0, 's')
-    baudrate = 9600
+    timeout =   WithUnit(5.0, 's')
+    baudrate =  9600
 
     POLL_ON_STARTUP = False
 

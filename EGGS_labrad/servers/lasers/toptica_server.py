@@ -33,17 +33,18 @@ class TopticaServer(PollingServer):
     Talks to Toptica devices.
     """
 
-    name = 'Toptica Server'
-    regKey = 'Toptica Server'
-    devices = {}
+    name =      'Toptica Server'
+    regKey =    'Toptica Server'
+
+    devices =       {}
     device_params = {}
-    channels = {}
+    channels =      {}
 
 
     # SIGNALS
-    current_update = Signal(CURRENTSIGNAL, 'signal: current updated', '(iv)')
-    temperature_update = Signal(TEMPERATURESIGNAL, 'signal: temperature updated', '(iv)')
-    piezo_update = Signal(PIEZOSIGNAL, 'signal: piezo updated', '(iv)')
+    current_update =        Signal(CURRENTSIGNAL, 'signal: current updated', '(iv)')
+    temperature_update =    Signal(TEMPERATURESIGNAL, 'signal: temperature updated', '(iv)')
+    piezo_update =          Signal(PIEZOSIGNAL, 'signal: piezo updated', '(iv)')
 
 
     @inlineCallbacks

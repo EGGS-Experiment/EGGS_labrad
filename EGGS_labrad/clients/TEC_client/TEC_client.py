@@ -31,7 +31,8 @@ class TEC_client(GUIClient):
         yield self.tec.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATUREID)
         yield self.tec.signal__lock_update(self.LOCKID)
         yield self.tec.addListener(listener=self.updateLock, source=None, ID=self.LOCKID)
-        # set recording stuff
+
+        # set up recording variables
         self.c_record = self.cxn.context()
         self.recording = False
 
@@ -45,6 +46,7 @@ class TEC_client(GUIClient):
         lock_P =    yield self.tec.locking_p()
         lock_I =    yield self.tec.locking_i()
         lock_D =    yield self.tec.locking_d()
+
         # set GUI
         self.gui.toggle_button.setChecked(status)
         self.gui.displayCurr.setText(str(curr))
@@ -122,12 +124,9 @@ class TEC_client(GUIClient):
     def updateLock(self, c, msg):
         param, value = msg
         # get appropriate widget
-        if param == 'p':
-            widget = self.gui.lock_P
-        elif param == 'i':
-            widget = self.gui.lock_I
-        elif param == 'd':
-            widget = self.gui.lock_D
+        if param == 'p':    widget = self.gui.lock_P
+        elif param == 'i':  widget = self.gui.lock_I
+        elif param == 'd':  widget = self.gui.lock_D
         # set value
         widget.setValue(param)
 

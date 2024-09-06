@@ -143,13 +143,21 @@ class ADC_client(GUIClient):
         tells polling loop to add data to data vault.
         """
         self.recording = status
+
         # set up datavault
         if self.recording:
             self.starttime = time()
             trunk = createTrunk(self.name)
             yield self.dv.cd(trunk, True, context=self.c_record)
             # todo: get channel correctly
-            yield self.dv.new('ARTIQ Sampler', [('Elapsed time', 't')], [('Channel N', 'Value', 'Volts')], context=self.c_record)
+            yield self.dv.new(
+                'ARTIQ Sampler',
+                [('Elapsed time', 't')],
+                [
+                    ('Channel N', 'Value', 'Volts')
+                ],
+                context=self.c_record
+            )
 
     def _lock(self, status):
         self.gui.read_once_switch.setEnabled(status)
