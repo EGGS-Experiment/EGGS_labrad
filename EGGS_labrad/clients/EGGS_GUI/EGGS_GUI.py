@@ -3,7 +3,7 @@ from os import environ, _exit, path
 from twisted.internet.defer import inlineCallbacks
 
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QGridLayout, QApplication
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QGridLayout, QApplication, QScrollArea
 
 from EGGS_labrad.clients import QDetachableTabWidget
 
@@ -117,13 +117,15 @@ class EGGS_GUI(QMainWindow):
         from EGGS_labrad.clients.trap_clients.DC_client import DC_client
         from EGGS_labrad.clients.powersupply_client.gpp3060_client import gpp3060_client
         from EGGS_labrad.clients.PMT_client.PMT_client import PMT_client
+        from EGGS_labrad.clients.ARTIQ_client.DDS_client import DDS_client
 
         # create client dict for programmatic initialization
         clients = {
             DC_client:              {"pos": (0, 1, 1, 2)},
             PMT_client:             {"pos": (0, 0, 1, 1)},
             gpp3060_client:         {"pos": (1, 2)},
-            RF_client:              {"pos": (1, 1)}
+            RF_client:              {"pos": (1, 1)},
+            DDS_client:             {"pos": (2, 1)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -134,8 +136,8 @@ class EGGS_GUI(QMainWindow):
 
         # create client dict for programmatic initialization
         clients = {
-            SLS_client:             {"pos": (0, 0)},
-            toptica_client:         {"pos": (0, 1)}
+            SLS_client:             {"pos": (0, 1, 1, 1)},
+            toptica_client:         {"pos": (1, 1, 1, 1)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -178,7 +180,8 @@ class EGGS_GUI(QMainWindow):
         """
         Creates a tab widget from constituent widgets stored in a dictionary.
         """
-        # create a holder widget to organize each tab
+        # create a scrollable holder widget to organize each tab
+        tab_area = QScrollArea()
         holder_widget = QWidget()
         holder_layout = QGridLayout(holder_widget)
 
@@ -208,7 +211,10 @@ class EGGS_GUI(QMainWindow):
             except Exception as e:
                 print(e)
 
-        return holder_widget
+        # set up QScrollArea to allow scrolling
+        tab_area.setWidget(holder_widget)
+        tab_area.setWidgetResizable(True)
+        return tab_area
 
 
 if __name__ == "__main__":

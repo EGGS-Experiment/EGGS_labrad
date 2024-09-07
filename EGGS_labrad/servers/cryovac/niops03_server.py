@@ -36,8 +36,8 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
 
     name =      'NIOPS03 Server'
     regKey =    'NIOPS03 Server'
-    serNode =   'MongKok'
-    port =      'COM38'
+    serNode =   'CausewayBay'
+    port =      'COM14'
 
     timeout =   WithUnit(3.0, 's')
     baudrate =  115200
