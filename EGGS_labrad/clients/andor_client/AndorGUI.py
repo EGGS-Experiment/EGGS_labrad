@@ -1,40 +1,29 @@
+import numpy as np
 import pyqtgraph as pg
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QDoubleSpinBox, QSpinBox, QPushButton, QCheckBox, QSizePolicy, QComboBox, QHBoxLayout
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QLabel, QDoubleSpinBox,
+                             QPushButton, QCheckBox, QSizePolicy, QComboBox,
+                             QLayout)
 
-from EGGS_labrad.clients.Widgets import TextChangingButton
+from EGGS_labrad.clients import SHELL_FONT
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox, QCustomUnscrollableSpinBox
+# from andor_gui_sidebar import SidebarWidget
+from EGGS_labrad.clients.andor_client_rdx.andor_gui_sidebar.sidebar_widget import SidebarWidget
 
 _ANDOR_ALIGNMENT = (Qt.AlignRight | Qt.AlignVCenter)
-# todo: make dark mode
-# todo: integrate region selection into tabwidget
-
-# todo: draw bounds for image display
-# todo: create tabbed config area
-# todo: make save images a button
-# todo: add separate "save single image" button
-
-# todo: bottom qtabwidget for config stuff
-# todo: tab: binning
-# todo: tab: pixel shift/gain/timing
-# todo: tab: acquisition/readout/triggering
-# todo: tab: cooler/temp set/fan
-
-# todo: rhs ROI qtabwidget with each tab as different roi
-# todo: recalculate button
-# todo: stdev, mean, max, total, SNR
-# todo: rhs statistics
 
 
 class AndorGUI(QWidget):
     """
-    A GUI for Andor iXon cameras.
+    Main camera display window for Andor GUI.
+    Intended for use as a sidebar display.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setWindowTitle("Andor Client")
+        self.setWindowTitle("Andor GUI")
         self._makeLayout()
         self._connectLayout()
 
@@ -43,138 +32,178 @@ class AndorGUI(QWidget):
         todo: document
         :return:
         """
+        # create master layout
         layout = QGridLayout(self)
-        shell_font = 'MS Shell Dlg 2'
 
-        """
-        Create GUI elements
-        """
-        # image display
-        self.plt = pg.PlotItem()
-        self.img_view = pg.ImageView(view=self.plt)
+        '''CREATE & CONFIGURE MAIN DISPLAY'''
+        # create display widget for the camera image - a "symbol"
+        # note: as a PlotItem, this is simply a representation of the actual image object
+        self.display = pg.PlotItem()
+        # todo: maybe need to create ROI here so we can initialize ImageView with it
+        # create actual image object which holds and manages the images - a "referent"
+        # note: as an ImageView, this can be considered as the actual image object
+        self.image = pg.ImageView(view=self.display)
 
-        # configure image view
-        self.plt.showAxis('top')
-        self.plt.showAxis('bottom')
-        self.plt.showAxis('left')
-        self.plt.showAxis('right')
-        self.plt.setAspectLocked(True)
-        self.plt.vb.invertY(False)
-        self.img_view.getHistogramWidget().setHistogramRange(0, 1000)
+        # configure display
+        self.display.showAxis('top')
+        self.display.showAxis('bottom')
+        self.display.showAxis('left')
+        self.display.showAxis('right')
+        self.display.setAspectLocked(True)
+        self.display.vb.invertY(False)
 
-        # set up viewbox
-        # note: not sure why this fixes the mousemoved problem (previously using self.plt)
-        vb = self.plt.vb
-        self.img = pg.ImageItem()
-        vb.addItem(self.img)
+        # configure image histogram (comes default when using ImageView)
+        self.image.getHistogramWidget().setHistogramRange(0, 1000)
 
-        # image display information widget
-        # pwButtons = QWidget()
-        # pwButtons_layout = QHBoxLayout(pwButtons)
-        # self.coords = QLabel('')
-        # self.pw.scene().sigMouseMoved.connect(self.mouseMoved)
-        display_helper_widget = QWidget()
-        display_helper_widget_layout = QHBoxLayout(display_helper_widget)
-        self.display_coordinates = QLabel('Raw:\t(x, y)\nScene:\t(x, y)\nView:\t(x, y)\nItem:\t(x, y)')
+
+        '''CREATE DISPLAY OBJECTS'''
+        # create crosshairs that center on a double-click
+        self.crosshair_vline = pg.InfiniteLine(angle=90, movable=False)
+        self.crosshair_hline = pg.InfiniteLine(angle=0, movable=False)
+        # add crosshairs to display
+        self.display.addItem(self.crosshair_vline, ignoreBounds=True)
+        self.display.addItem(self.crosshair_hline, ignoreBounds=True)
+
+        # todo: create ROI object
+        self.roi_tmp = pg.RectROI([127, 127], [20, 20])
+        self.display.addItem(self.roi_tmp)
+        # todo: can add post-fatviewbox.addItem(roi)
+        # todo: create horiz and vert hists
+        # todo: maybe have smaller zoom-out like a minimap?
+
+
+        '''CREATE DISPLAY HELPER'''
+        # cursor readout
+        cursor_coordinates_label = QLabel("Cursor:")
+        self.cursor_coordinates = QLabel('(x, y)')
+        self.cursor_coordinates.setFont(QFont(SHELL_FONT, pointSize=12))
+        self.cursor_coordinates.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        # self.cursor_coordinates.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        cursor_signal_label = QLabel("Counts:")
+        self.cursor_signal = QLabel('0')
+        self.cursor_signal.setFont(QFont(SHELL_FONT, pointSize=12))
+        self.cursor_signal.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        # self.cursor_signal.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        # box up cursor readout widget
+        cursor_readout_holder = QWidget(self)
+        # cursor_readout_holder.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        cursor_readout_widget_layout = QGridLayout(cursor_readout_holder)
+        # cursor_readout_widget_layout.setSizeConstraint(QLayout.SetFixedSize)
+        cursor_readout_widget_layout.addWidget(cursor_coordinates_label,    0, 0, 1, 1)
+        cursor_readout_widget_layout.addWidget(self.cursor_coordinates,     1, 0, 1, 1)
+        cursor_readout_widget_layout.addWidget(cursor_signal_label,         0, 1, 1, 1)
+        cursor_readout_widget_layout.addWidget(self.cursor_signal,          1, 1, 1, 1)
+        # enclose section in a QGroupBox
+        cursor_readout_widget = QCustomGroupBox(cursor_readout_holder, "Cursor")
+        # cursor_readout_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        # cursor_readout_widget.setFixedSize(200, 100)
+
+
+        # ROI statistics readout
+        roi_mean_label = QLabel("Mean Counts")
+        self.roi_mean = QLabel('0.')
+        self.roi_mean.setFont(QFont(SHELL_FONT, pointSize=12))
+        self.roi_mean.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        roi_stdev_label = QLabel("Std. Dev.")
+        self.roi_stdev = QLabel('0.')
+        self.roi_stdev.setFont(QFont(SHELL_FONT, pointSize=12))
+        self.roi_stdev.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        roi_max_label = QLabel("Max Counts")
+        self.roi_max = QLabel('0.')
+        self.roi_max.setFont(QFont(SHELL_FONT, pointSize=12))
+        self.roi_max.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        roi_total_label = QLabel("Total Counts")
+        self.roi_total = QLabel('0.')
+        self.roi_total.setFont(QFont(SHELL_FONT, pointSize=12))
+        self.roi_total.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # box up roi readout widget
+        roi_readout_holder = QWidget(self)
+        roi_readout_widget_layout = QGridLayout(roi_readout_holder)
+        roi_readout_widget_layout.addWidget(roi_mean_label,     0, 0, 1, 1)
+        roi_readout_widget_layout.addWidget(self.roi_mean,      1, 0, 1, 1)
+        roi_readout_widget_layout.addWidget(roi_stdev_label,    0, 1, 1, 1)
+        roi_readout_widget_layout.addWidget(self.roi_stdev,     1, 1, 1, 1)
+        roi_readout_widget_layout.addWidget(roi_max_label,      0, 2, 1, 1)
+        roi_readout_widget_layout.addWidget(self.roi_max,       1, 2, 1, 1)
+        roi_readout_widget_layout.addWidget(roi_total_label,    0, 3, 1, 1)
+        roi_readout_widget_layout.addWidget(self.roi_total,     1, 3, 1, 1)
+        # enclose section in a QGroupBox
+        roi_readout_widget = QCustomGroupBox(roi_readout_holder, "Analysis ROI")
+
+        # todo: ROIs don't inherently display - no need to worry about this
+        # todo: use ROI.getArrayRegion to get a slice; take statistics on this
+
+
+        # create display helper widget
+        display_helper_holder = QWidget(self)
+        display_helper_widget_layout = QGridLayout(display_helper_holder)
+        # lay out section
+        display_helper_widget_layout.addWidget(cursor_readout_widget,   0, 0, 1, 1)
+        display_helper_widget_layout.addWidget(roi_readout_widget,      0, 1, 1, 1)
+        display_helper_widget_layout.setColumnStretch(0, 1)
+        display_helper_widget_layout.setColumnStretch(1, 3)
+        # enclose section in a QGroupBox
+        display_helper_widget = QCustomGroupBox(display_helper_holder, "DISPLAY STATUS")
+
+
+        '''CREATE USER MAIN INTERFACE'''
+        # user interface buttons
+        self.start_button =     TextChangingButton(("Stop Acquisition", "Start Acquisition"))
+        self.record_button =    TextChangingButton(("Stop Recording", "Start Recording"))
+
+        # create user main interface widget
+        main_interface_holder = QWidget(self)
+        main_interface_widget_layout = QGridLayout(main_interface_holder)
+        # lay out section
+        main_interface_widget_layout.addWidget(self.start_button,   0, 0, 1, 1)
+        main_interface_widget_layout.addWidget(self.record_button,  0, 1, 1, 1)
+        # enclose section in a QGroupBox
+        main_interface_widget = QCustomGroupBox(main_interface_holder, "CAMERA CONTROL")
+
+
+        '''CREATE USER DISPLAY INTERFACE'''
+        # display adjust buttons
         self.display_view_all_button = QPushButton("View All")
         self.display_auto_level_button = QPushButton("Auto Level")
-        display_helper_widget_layout.addWidget(self.display_coordinates)
-        display_helper_widget_layout.addWidget(self.display_view_all_button)
-        display_helper_widget_layout.addWidget(self.display_auto_level_button)
 
-        # display
-        self.start_button = TextChangingButton(("Stop Acquisition", "Start Acquisition"))
-        self.set_image_region_button = QPushButton("Set Image Region")
-
-        # image saving
-        self.save_images_button = QCheckBox('Save Images')
+        # todo: lay out
 
 
-        # read mode
-        read_label = QLabel("Read Mode")
-        read_label.setAlignment(_ANDOR_ALIGNMENT)
-        self.read_mode = QComboBox()
-        self.read_mode.setFont(QFont(shell_font, pointSize=12))
-        self.read_mode.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.read_mode.addItems(['Full Vertical Binning', 'Multi-Track',
-                                 'Random-Track', 'Single-Track', 'Image'])
-
-        # shutter mode
-        shutter_label = QLabel("Shutter Mode")
-        shutter_label.setAlignment(_ANDOR_ALIGNMENT)
-        self.shutter_mode = QComboBox()
-        self.shutter_mode.setFont(QFont(shell_font, pointSize=12))
-        self.shutter_mode.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.shutter_mode.addItems(['Open', 'Auto', 'Close'])
-
-        # acquisition mode
-        acquisition_label = QLabel("Acquisition Mode")
-        acquisition_label.setAlignment(_ANDOR_ALIGNMENT)
-        self.acquisition_mode = QComboBox()
-        self.acquisition_mode.setFont(QFont(shell_font, pointSize=12))
-        self.acquisition_mode.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.acquisition_mode.addItems(['Single Scan', 'Accumulate', 'Kinetics', 'Fast Kinetics', 'Run till abort'])
-
-        # trigger mode
-        trigger_label = QLabel("Trigger Mode")
-        trigger_label.setAlignment(_ANDOR_ALIGNMENT)
-        self.trigger_mode = QComboBox()
-        self.trigger_mode.setFont(QFont(shell_font, pointSize=12))
-        self.trigger_mode.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.trigger_mode.addItems(['Internal', 'External', 'External Start',
-                                    'External Exposure', 'External FVB EM',
-                                    'Software Trigger', 'External Charge Shifting'])
-
-        # exposure
-        exposure_label = QLabel("Exposure")
-        exposure_label.setAlignment(_ANDOR_ALIGNMENT)
-        self.exposure = QDoubleSpinBox()
-        self.exposure.setDecimals(3)
-        self.exposure.setSingleStep(0.001)
-        self.exposure.setRange(0.0, 10000.0)
-        self.exposure.setKeyboardTracking(False)
-        self.exposure.setSuffix(' s')
-
-        # gain
-        emccd_label = QLabel("EMCCD Gain")
-        emccd_label.setAlignment(_ANDOR_ALIGNMENT)
-        self.emccd = QSpinBox()
-        self.emccd.setSingleStep(1)
-        self.emccd.setKeyboardTracking(False)
-
-        # crosshairs for plotting
-        self.vLine = pg.InfiniteLine(angle=90, movable=False)
-        self.hLine = pg.InfiniteLine(angle=0, movable=False)
-        self.plt.addItem(self.vLine, ignoreBounds=True)
-        self.plt.addItem(self.hLine, ignoreBounds=True)
+        '''SET UP USER SETUP INTERFACE'''
+        self.sidebar = SidebarWidget(self)
 
 
-        """
-        Lay out GUI elements
-        """
-        layout.addWidget(self.img_view,                     0, 0, 1, 6)
-        layout.addWidget(display_helper_widget,             1, 0, 1, 6)
-        layout.addWidget(exposure_label,                    2, 4)
-        layout.addWidget(self.exposure,                     2, 5)
+        '''lay out GUI elements'''
+        # add widgets to layout
+        layout.addWidget(main_interface_widget,         0, 0, 1, 1)
+        layout.addWidget(self.image,                    1, 0, 1, 1)
+        layout.addWidget(display_helper_widget,         2, 0, 1, 1)
+        layout.addWidget(self.sidebar,                  0, 1, 3, 1)
 
-        layout.addWidget(self.start_button,                 2, 0)
-        layout.addWidget(self.set_image_region_button,      3, 0)
-        layout.addWidget(self.save_images_button,           4, 0)
-
-        layout.addWidget(trigger_label,                     2, 2)
-        layout.addWidget(self.trigger_mode,                 2, 3)
-        layout.addWidget(acquisition_label,                 3, 2)
-        layout.addWidget(self.acquisition_mode,             3, 3)
-        layout.addWidget(emccd_label,                       3, 4)
-        layout.addWidget(self.emccd,                        3, 5)
+        # set relative sizing (i.e. stretch) of GUI layout
+        layout.setRowStretch(0, 1)
+        layout.setRowStretch(1, 9)
+        layout.setRowStretch(2, 1)
+        layout.setColumnStretch(0, 7)
+        layout.setColumnStretch(1, 1)
 
     def _connectLayout(self):
-        self.plt.scene().sigMouseClicked.connect(self.mouse_clicked)
-        self.plt.scene().sigMouseMoved.connect(self.mouse_moved)
+        # mouse-based events
+        self.display.scene().sigMouseClicked.connect(self.mouse_clicked)
+        self.display.scene().sigMouseMoved.connect(self.mouse_moved)
+
+        # ROI events
+        self.roi_tmp.sigRegionChangeFinished.connect(self.process_roi)
 
         # todo: fix autorange and autolevels
-        # self.display_auto_level_button.clicked.connect(lambda checked: self.img_view.autoLevels())
-        # self.display_view_all_button.clicked.connect(lambda checked: self.img_view.autoRange())
+        # self.display_auto_level_button.clicked.connect(lambda checked: self.image.autoLevels())
+        # self.display_view_all_button.clicked.connect(lambda checked: self.image.autoRange())
 
 
     """
@@ -183,61 +212,85 @@ class AndorGUI(QWidget):
     def mouse_clicked(self, event):
         """
         Draw crosshairs at the position of a double click.
+        Arguments:
+            event {QMouseEvent}: the mouse click event.
+        """
+        # convert scene coordinates to item (i.e. display widget) coordinates
+        # note: mouse click events always come as scene coordinates
+        pos_scene = self.display.mapFromScene(event.scenePos())
+
+        # ensure event is double click and is within display bounds
+        if (event.double()) and (self.display.sceneBoundingRect().contains(pos_scene)):
+            # convert scene coordinates to display's view coordinates
+            new_pos_disp = self.display.vb.mapSceneToView(pos_scene)
+
+            # draw crosshairs at new position
+            self.crosshair_vline.setPos(new_pos_disp.x())
+            self.crosshair_hline.setPos(new_pos_disp.y())
+
+    def mouse_moved(self, pos_scene):
+        """
+        Display the coordinates at the mouse location.
+        Arguments:
+            pos {QPoint}: the mouse position on the Andor display.
+        """
+        # ensure event is within display bounds OF THE PLOT AREA
+        # note: this is different the PlotItem itself
+        pos_tmp = self.display.mapFromScene(pos_scene)
+        if not self.display.vb.sceneBoundingRect().contains(pos_tmp):
+            return
+
+        # convert scene coordinates to viewbox coordinates
+        pos_view = self.display.mapToView(pos_scene)
+        self.cursor_coordinates.setText("{: >4d}\t{: >4d}\t".format(int(pos_view.x()), int(pos_view.y())))
+
+        # get pixel value at cursor position
+        if self.image.image is not None:
+            # ensure cursor indices values are valid
+            try:
+                image_data = self.image.image
+                cursor_signal = image_data[round(pos_view.x()), round(pos_view.y())]
+                self.cursor_signal.setText("{: >5d}".format(cursor_signal))
+            except IndexError:
+                pass
+
+    def process_roi(self):
+        """
+        Process ROI upon an update event (e.g. new image or ROI changed).
         """
         try:
-            # get coordinates of mouse on the image
-            pos = self.plt.mapFromScene(event.pos())
+            # ensure we have some existing image
+            if self.image.image is not None:
 
-            # only draw crosshairs if mouse click is within bounds
-            if (self.plt.sceneBoundingRect().contains(pos)) and (event.double()):
-                mousePoint = self.plt.vb.mapToView(pos)
-                self.vLine.setPos(mousePoint.x())
-                self.hLine.setPos(mousePoint.y())
+                # get ROI region of image
+                img_region = self.roi_tmp.getArrayRegion(self.image.image, self.image.imageItem)
 
-                # print('\n\nraw: ({:}, {:}'.format(event.pos().x(), event.pos().y()))
-                # print('rdx: ({:}, {:}\n'.format(pos().x(), pos().y()))
-                # print(self.plt.sceneBoundingRect())
-                # print(mousePoint.x())
-                # print(mousePoint.y())
+                # process statistics on ROI
+                counts_mean =   np.mean(img_region)
+                counts_stdev =  np.std(img_region)
+                counts_max =    np.max(img_region)
+                counts_total =  counts_mean * img_region.size
+
+                # update ROI statistics displays
+                self.roi_mean.setText('{: >6.2f}'.format(counts_mean))
+                self.roi_stdev.setText('{: >6.2f}'.format(counts_stdev))
+                self.roi_max.setText('{: >6.2f}'.format(counts_max))
+                self.roi_total.setText('{: >6.2f}'.format(counts_total))
 
         except Exception as e:
             pass
 
-    def mouse_moved(self, pos):
+    def save_image(self, save_path, save_type="PNG"):
         """
-        Display the coordinates at the mouse location.
+        todo: document
         """
-        # pnt = self.img.mapFromScene(pos)
-        # string = "({:.4g},\t{:.4g})".format(pnt.x(), pnt.y())
-        # self.display_coordinates.setText(string)
-        try:
-            # pnt_raw =       pos
-            # pnt_imgview =   self.plt.vb.mapFromScene(pos)
-            # pnt_plt =       self.plt.mapFromScene(pos)
-            # pnt_vb =        self.img.mapFromScene(pos) # good
-            # pnt_vbmapped =  self.plt.vb.mapToView(pos)
-            # pnt_vbmapped2 =  self.plt.vb.mapSceneToView(pos) # good
-            # pnt_pltmapped = self.plt.mapToView(pos) # good
-            #
-            # # string = "({:.4g},\t{:.4g})".format(pnt.x(), pnt.y())
-            # pos_string = 'Raw:\t\t({:.4f}, {:.4f})\nplt.vb:\t\t({:.4f}, {:.4f})\nplt:\t\t({:.4f}, {:.4f})\nplt.vb.img:\t({:.4f}, {:.4f})\nplt.map:\t\t({:.4f}, {:.4f})\nplt.vb.map:\t({:.4f}, {:.4f})'.format(
-            #     pnt_raw.x(), pnt_raw.y(),
-            #     pnt_imgview.x(), pnt_imgview.y(),
-            #     pnt_plt.x(), pnt_plt.y(),
-            #     pnt_vb.x(), pnt_vb.y(),
-            #     pnt_pltmapped.x(), pnt_pltmapped.y(),
-            #     pnt_vbmapped.x(), pnt_vbmapped.y()
-            # )
-            # self.display_coordinates.setText(pos_string)
+        # only save if an image exists
+        if self.image.image is not None:
+            pass
+            # todo: save header?
+            # todo: process save type
 
-            pnt_vbmapped =  self.plt.vb.mapSceneToView(pos)
-
-            pos_string = 'Raw:\t\t({:.4f}, {:.4f})'.format(pnt_vbmapped.x(), pnt_vbmapped.y())
-            self.display_coordinates.setText(pos_string)
-
-        except Exception as e:
-            print(e)
-            raise
+        pass
 
 
 if __name__ == "__main__":
