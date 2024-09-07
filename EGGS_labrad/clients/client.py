@@ -140,9 +140,11 @@ class GUIClient(ABC):
 
         # server connections
         self.logger.debug("Connecting to LabRAD manager signals...")
-        yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
+        # yield self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
+        self.cxn.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.cxn.manager.addListener(listener=self._serverConnect, source=None, ID=9898989)
-        yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
+        # yield self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
+        self.cxn.manager.subscribe_to_named_message('Server Disconnect', 9898989 + 1, True)
         yield self.cxn.manager.addListener(listener=self._serverDisconnect, source=None, ID=9898989 + 1)
         self.logger.info("Finished connecting to LabRAD.")
         return self.cxn
