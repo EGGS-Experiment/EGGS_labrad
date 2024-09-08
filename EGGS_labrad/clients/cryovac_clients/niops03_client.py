@@ -65,7 +65,7 @@ class niops03_client(GUIClient):
     def initGUI(self):
         # ion pump
         self.gui.ip_lockswitch.toggled.connect(lambda status: self.lock_ip(status))
-        self.gui.ip_power.clicked.connect(lambda status: self.toggle_ni(status))
+        self.gui.ip_power.clicked.connect(lambda status: self.niops.ip_toggle(status))
         self.gui.ip_record.toggled.connect(lambda status: self.record_pressure(status))
         self.gui.ip_voltage.valueChanged.connect(lambda voltage: self.niops.ip_voltage(int(voltage)))
         # getter
