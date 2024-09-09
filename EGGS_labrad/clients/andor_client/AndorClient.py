@@ -7,8 +7,7 @@ from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.config.andor_config import AndorConfig as config
-from EGGS_labrad.clients.andor_client_rdx.AndorGUI import AndorGUI
-from EGGS_labrad.clients.andor_client.image_region_selection import image_region_selection_dialog
+from EGGS_labrad.clients.andor_client.AndorGUI import AndorGUI
 # todo: document
 # todo: single camera image mode
 # todo: add temp to acq setup

@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (QWidget, QGridLayout, QLabel, QDoubleSpinBox,
 from EGGS_labrad.clients import SHELL_FONT
 from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox, QCustomUnscrollableSpinBox
 # from andor_gui_sidebar import SidebarWidget
-from EGGS_labrad.clients.andor_client_rdx.andor_gui_sidebar.sidebar_widget import SidebarWidget
+from EGGS_labrad.clients.andor_client.andor_gui_sidebar.sidebar_widget import SidebarWidget
 
 _ANDOR_ALIGNMENT = (Qt.AlignRight | Qt.AlignVCenter)
 

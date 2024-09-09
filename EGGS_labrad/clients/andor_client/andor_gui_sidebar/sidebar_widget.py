@@ -3,9 +3,9 @@ from PyQt5.QtWidgets import QTabWidget
 
 # from tab_image import SidebarTabImage
 # from tab_acquisition import SidebarTabAcquisition
-from EGGS_labrad.clients.andor_client_rdx.andor_gui_sidebar.tab_image import SidebarTabImage
-from EGGS_labrad.clients.andor_client_rdx.andor_gui_sidebar.tab_save import SidebarTabSave
-from EGGS_labrad.clients.andor_client_rdx.andor_gui_sidebar.tab_acquisition import SidebarTabAcquisition
+from EGGS_labrad.clients.andor_client.andor_gui_sidebar.tab_image import SidebarTabImage
+from EGGS_labrad.clients.andor_client.andor_gui_sidebar.tab_save import SidebarTabSave
+from EGGS_labrad.clients.andor_client.andor_gui_sidebar.tab_acquisition import SidebarTabAcquisition
 
 
 class SidebarWidget(QTabWidget):
