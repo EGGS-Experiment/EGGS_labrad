@@ -2,6 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame, QPushButton
 
+from EGGS_labrad.clients.utils import SHELL_FONT
 from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomGroupBox,\
     QClientMenuHeader, QCustomEditableLabel, QCustomUnscrollableSpinBox
 
@@ -25,15 +26,15 @@ class AMO8_channel(QFrame):
 
         # channel number/title
         chan_num = QLabel("Chan. {:d}".format(self.number))
-        chan_num.setFont(QFont('MS Shell Dlg 2', pointSize=8))
+        chan_num.setFont(QFont(SHELL_FONT, pointSize=8))
         chan_num.setAlignment(Qt.AlignRight | Qt.AlignTop)
         self.title = QCustomEditableLabel(title)
-        self.title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        self.title.setFont(QFont(SHELL_FONT, pointSize=13))
 
         # dac
         dac_label = QLabel('Output Voltage (V)')
         self.dac = QCustomUnscrollableSpinBox()
-        self.dac.setFont(QFont('MS Shell Dlg 2', pointSize=14))
+        self.dac.setFont(QFont(SHELL_FONT, pointSize=14))
         self.dac.setDecimals(1)
         self.dac.setSingleStep(0.1)
         # set max voltage for channel
@@ -45,10 +46,10 @@ class AMO8_channel(QFrame):
 
         # ramp
         self.ramp_start = QPushButton('Ramp')
-        self.ramp_start.setFont(QFont('MS Shell Dlg 2', pointSize=11))
+        self.ramp_start.setFont(QFont(SHELL_FONT, pointSize=11))
         ramp_target_label = QLabel('End Voltage (V)')
         self.ramp_target = QCustomUnscrollableSpinBox()
-        self.ramp_target.setFont(QFont('MS Shell Dlg 2', pointSize=14))
+        self.ramp_target.setFont(QFont(SHELL_FONT, pointSize=14))
         self.ramp_target.setDecimals(1)
         self.ramp_target.setSingleStep(0.1)
         self.ramp_target.setRange(0, 850)
@@ -56,7 +57,7 @@ class AMO8_channel(QFrame):
 
         ramp_rate_label = QLabel('Ramp Rate (V/s)')
         self.ramp_rate = QCustomUnscrollableSpinBox()
-        self.ramp_rate.setFont(QFont('MS Shell Dlg 2', pointSize=14))
+        self.ramp_rate.setFont(QFont(SHELL_FONT, pointSize=14))
         self.ramp_rate.setDecimals(1)
         self.ramp_rate.setSingleStep(0.1)
         self.ramp_rate.setRange(0, 1000)
@@ -66,7 +67,7 @@ class AMO8_channel(QFrame):
         # buttons
         self.toggleswitch = TextChangingButton(("On", "Off"))
         self.resetswitch = QPushButton('Reset')
-        self.resetswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.resetswitch.setFont(QFont(SHELL_FONT, pointSize=10))
         self.lockswitch = Lockswitch()
         self.lockswitch.setChecked(True)
 
@@ -106,13 +107,15 @@ class DC_gui(QFrame):
         self.name = name
         self.setFrameStyle(0x0001 | 0x0030)
         #self.setFixedSize(575, 675)
-        # config
+
+        # configure GUI
         try:
             from EGGS_labrad.config.dc_config import dc_config
             self.headerLayout = dc_config.headerLayout
             self.active_channels = dc_config.channeldict
         except Exception as e:
             print(e)
+
         # create GUI
         self.createGUI()
 
@@ -122,35 +125,43 @@ class DC_gui(QFrame):
         self.setWindowTitle('DC Client')
         amo8_layout = QGridLayout(self)
 
-        # create header
-        self.header = QClientMenuHeader()
-        self.global_buttons = self._createGlobalButtons()
-        self.hv_monitor = self._createHVmonitor()
-        self.device_title = QLabel(self.name)
-        self.device_title.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        # create header/monitor section
+        self.header =           QClientMenuHeader()
+        self.global_buttons =   self._createGlobalButtons()
+        self.hv_monitor =       self._createHVmonitor()
+        self.device_title =     QLabel(self.name)
+        self.device_title.setFont(QFont(SHELL_FONT, pointSize=15))
         self.device_title.setAlignment(Qt.AlignCenter)
 
         # create holder widget for the channels
-        channel_holder = QWidget()
-        channel_holder_layout = QGridLayout(channel_holder)
+        channel_holder =            QWidget()
+        channel_holder_layout =     QGridLayout(channel_holder)
 
         # add channel buttons to channel_holder
-        self.doubleramp_endcaps = QPushButton("Ramp Both Endcaps")
-        self.doubleramp_aramp = QPushButton("Ramp Both Trap Rods")
+        self.doubleramp_endcaps =   QPushButton("Ramp Both Endcaps")
+        self.doubleramp_endcaps.setFont(QFont(SHELL_FONT, pointSize=12))
+        self.doubleramp_aramp =     QPushButton("Ramp Both Trap Rods")
+        self.doubleramp_aramp.setFont(QFont(SHELL_FONT, pointSize=12))
         channel_holder_layout.addWidget(self.doubleramp_endcaps,        0, 0)
         channel_holder_layout.addWidget(self.doubleramp_aramp,          0, 2)
 
-        # tmp remove todo?
+
+        # create main channel holder widget
         shift_rows = 2
         for channel_name, channel_params in self.active_channels.items():
-            channel_num = channel_params['num']
+            channel_num =           channel_params['num']
             channel_max_voltage_v = channel_params['max_voltage_v']
+
             # initialize GUIs for each channel
             channel_gui = AMO8_channel(channel_name, channel_num, channel_max_voltage_v)
+
             # add widget to client list and layout
             self.amo8_channels[channel_num] = channel_gui
             channel_holder_layout.addWidget(channel_gui, channel_params['row'] + shift_rows, channel_params['col'])
+
+        # wrap channel holder widget
         channel_holder_wrapped = QCustomGroupBox(channel_holder, "DC Channels", scrollable=True)
+
 
         # lay out
         amo8_layout.setMenuBar(self.header)
@@ -165,12 +176,12 @@ class DC_gui(QFrame):
         global_widget_layout = QGridLayout(global_widget)
 
         # create global buttons
-        self.device_global_onswitch = QPushButton('ALL ON')
-        self.device_global_onswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
-        self.device_global_offswitch = QPushButton('ALL OFF')
-        self.device_global_offswitch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
-        self.device_global_clear = QPushButton('ALL CLEAR')
-        self.device_global_clear.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.device_global_onswitch =   QPushButton('ALL ON')
+        self.device_global_onswitch.setFont(QFont(SHELL_FONT, pointSize=10))
+        self.device_global_offswitch =  QPushButton('ALL OFF')
+        self.device_global_offswitch.setFont(QFont(SHELL_FONT, pointSize=10))
+        self.device_global_clear =      QPushButton('ALL CLEAR')
+        self.device_global_clear.setFont(QFont(SHELL_FONT, pointSize=10))
 
         # lay out header
         global_widget_layout.addWidget(self.device_global_onswitch,         0, 0, 1, 1)
@@ -183,18 +194,19 @@ class DC_gui(QFrame):
 
     def _createHVmonitor(self):
         # create header layout
-        hv_widget = QWidget()
-        hv_widget_layout = QGridLayout(hv_widget)
+        hv_widget =         QWidget()
+        hv_widget_layout =  QGridLayout(hv_widget)
 
         # create HV monitor displays
-        device_hv_v1_label = QLabel('HV Input V1 (V)')
-        self.device_hv_v1 = QLabel('V1')
-        self.device_hv_v1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        device_hv_v1_label =    QLabel('HV Input V1 (V)')
+        self.device_hv_v1 =     QLabel('V1')
+        self.device_hv_v1.setFont(QFont(SHELL_FONT, pointSize=16))
         self.device_hv_v1.setStyleSheet('color: red')
         self.device_hv_v1.setAlignment(Qt.AlignRight)
-        device_hv_i1_label = QLabel('HV Input I1 (mA)')
-        self.device_hv_i1 = QLabel('I1')
-        self.device_hv_i1.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+
+        device_hv_i1_label =    QLabel('HV Input I1 (mA)')
+        self.device_hv_i1 =     QLabel('I1')
+        self.device_hv_i1.setFont(QFont(SHELL_FONT, pointSize=16))
         self.device_hv_i1.setStyleSheet('color: red')
         self.device_hv_i1.setAlignment(Qt.AlignRight)
 

@@ -14,17 +14,14 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
     def toggle(self, status=None):
         # setter
         if status is True:
-            yield self.write(':OUTP:ON')
+            yield self.write(':OUTP ON')
         elif status is False:
-            yield self.write(':OUTP:OFF')
+            yield self.write(':OUTP OFF')
 
         # getter
         resp = yield self.query(':OUTP?')
-        resp = resp.strip()
-        if resp == 'OFF':
-            returnValue(False)
-        else:
-            returnValue(True)
+        resp = bool(resp.strip())
+        returnValue(resp)
 
 
     # WAVEFORM
@@ -42,7 +39,6 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
     def amplitude(self, ampl, units='DBM'):
         # setter
         if ampl is not None:
-
             # verify correct units
             if units.upper() not in ['DBM', 'VP', 'VPP']:
                 raise Exception('Error: invalid units')

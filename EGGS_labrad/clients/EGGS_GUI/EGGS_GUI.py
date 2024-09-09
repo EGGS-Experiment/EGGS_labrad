@@ -121,11 +121,11 @@ class EGGS_GUI(QMainWindow):
 
         # create client dict for programmatic initialization
         clients = {
-            DC_client:              {"pos": (0, 1, 1, 2)},
-            PMT_client:             {"pos": (0, 0, 1, 1)},
-            gpp3060_client:         {"pos": (1, 2)},
-            RF_client:              {"pos": (1, 1)},
-            DDS_client:             {"pos": (2, 1)}
+            DC_client:              {"pos": (0, 0, 2, 2)},
+            DDS_client:             {"pos": (0, 2, 2, 2)},
+            PMT_client:             {"pos": (2, 0, 1, 1)},
+            RF_client:              {"pos": (2, 1, 1, 1)},
+            gpp3060_client:         {"pos": (2, 2, 1, 1)},
         }
         return self._createTabLayout(clients, reactor, cxn)
 
