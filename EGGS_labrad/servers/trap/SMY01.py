@@ -62,13 +62,16 @@ class SMY01Wrapper(GPIBDeviceWrapper):
         if ampl is not None:
 
             # ensure units are valid
-            if units.upper() not in ['DBM', 'VP', 'VPP']:
-                raise Exception('Error: invalid units')
-            elif units.upper() == 'VP':
-                ampl = self._VptoDBM(ampl)
-                units = 'DBM'
-            elif units.upper() == 'VP':
-                ampl = self._VptoDBM(ampl / 2.)
+            if units is not None:
+                if units.upper() not in ['DBM', 'VP', 'VPP']:
+                    raise Exception('Error: invalid units')
+                elif units.upper() == 'VP':
+                    ampl = self._VptoDBM(ampl)
+                    units = 'DBM'
+                elif units.upper() == 'VP':
+                    ampl = self._VptoDBM(ampl / 2.)
+                    units = 'DBM'
+            else:
                 units = 'DBM'
 
             # check device output status

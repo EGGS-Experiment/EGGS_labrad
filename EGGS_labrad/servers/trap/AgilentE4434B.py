@@ -39,14 +39,17 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
     def amplitude(self, ampl, units='DBM'):
         # setter
         if ampl is not None:
-            # verify correct units
-            if units.upper() not in ['DBM', 'VP', 'VPP']:
-                raise Exception('Error: invalid units')
-            elif units.upper() == 'VP':
-                ampl = self._VptoDBM(ampl)
-                units = 'DBM'
-            elif units.upper() == 'VPP':
-                ampl = self._VptoDBM(ampl / 2.)
+            # convert units to DBM one way or another
+            if units is not None:
+                if units.upper() not in ['DBM', 'VP', 'VPP']:
+                    raise Exception('Error: invalid units')
+                elif units.upper() == 'VP':
+                    ampl = self._VptoDBM(ampl)
+                    units = 'DBM'
+                elif units.upper() == 'VPP':
+                    ampl = self._VptoDBM(ampl / 2.)
+                    units = 'DBM'
+            else:
                 units = 'DBM'
 
             # send device message
@@ -66,11 +69,8 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query(':POW:ATT:AUTO?')
-        resp = resp.strip()
-        if resp == 'OFF':
-            returnValue(False)
-        else:
-            returnValue(True)
+        resp = bool(resp.strip())
+        returnValue(resp)
 
     @inlineCallbacks
     def alc_toggle(self, status):
@@ -82,11 +82,8 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query(':POW:ALC:STAT?')
-        resp = resp.strip()
-        if resp == 'OFF':
-            returnValue(False)
-        else:
-            returnValue(True)
+        resp = bool(resp.strip())
+        returnValue(resp)
 
     @inlineCallbacks
     def alc_auto_toggle(self, status):
@@ -98,11 +95,8 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query(':POW:ALC:SEAR?')
-        resp = resp.strip()
-        if resp == 'OFF':
-            returnValue(False)
-        else:
-            returnValue(True)
+        resp = bool(resp.strip())
+        returnValue(resp)
 
     @inlineCallbacks
     def alc_search(self):
@@ -127,11 +121,8 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query(':OUTP:MOD?')
-        resp = resp.strip()
-        if resp == 'OFF':
-            returnValue(False)
-        else:
-            returnValue(True)
+        resp = bool(resp.strip())
+        returnValue(resp)
 
 
     # AMPLITUDE MODULATION
@@ -145,11 +136,8 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query(':AM:STAT?')
-        resp = resp.strip()
-        if resp == 'OFF':
-            returnValue(False)
-        else:
-            returnValue(True)
+        resp = bool(resp.strip())
+        returnValue(resp)
 
     @inlineCallbacks
     def am_depth(self, depth):
@@ -193,11 +181,8 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query(':FM:STAT?')
-        resp = resp.strip()
-        if resp == 'OFF':
-            returnValue(False)
-        else:
-            returnValue(True)
+        resp = bool(resp.strip())
+        returnValue(resp)
 
     @inlineCallbacks
     def fm_deviation(self, dev):
@@ -241,11 +226,8 @@ class AgilentE4434BWrapper(GPIBDeviceWrapper):
 
         # getter
         resp = yield self.query(':PM:STAT?')
-        resp = resp.strip()
-        if resp == 'OFF':
-            returnValue(False)
-        else:
-            returnValue(True)
+        resp = bool(resp.strip())
+        returnValue(resp)
 
     @inlineCallbacks
     def pm_deviation(self, dev):
