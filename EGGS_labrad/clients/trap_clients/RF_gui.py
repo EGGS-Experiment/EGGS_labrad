@@ -30,16 +30,6 @@ class RF_gui(QFrame):
         self.wav_lockswitch = Lockswitch()
         self.wav_lockswitch.setFont(QFont(SHELL_FONT, pointSize=11))
 
-        wav_ampl_label = QLabel("Amplitude (dBm)")
-        wav_ampl_label.setFont(QFont(SHELL_FONT, pointSize=10))
-        self.wav_ampl = QCustomUnscrollableSpinBox()
-        self.wav_ampl.setDecimals(1)
-        self.wav_ampl.setRange(-140.0, -5)
-        self.wav_ampl.setSingleStep(0.02)
-        self.wav_ampl.setKeyboardTracking(False)
-        self.wav_ampl.setFont(QFont(SHELL_FONT, pointSize=14))
-        self.wav_ampl.setAlignment(Qt.AlignRight)
-
         wav_freq_label = QLabel("Frequency (MHz)")
         wav_freq_label.setFont(QFont(SHELL_FONT, pointSize=10))
         self.wav_freq = QCustomUnscrollableSpinBox()
@@ -50,6 +40,16 @@ class RF_gui(QFrame):
         self.wav_freq.setKeyboardTracking(False)
         self.wav_freq.setFont(QFont(SHELL_FONT, pointSize=14))
         self.wav_freq.setAlignment(Qt.AlignRight)
+
+        wav_ampl_label = QLabel("Amplitude (dBm)")
+        wav_ampl_label.setFont(QFont(SHELL_FONT, pointSize=10))
+        self.wav_ampl = QCustomUnscrollableSpinBox()
+        self.wav_ampl.setDecimals(2)
+        self.wav_ampl.setRange(-140.0, -5)
+        self.wav_ampl.setSingleStep(0.02)
+        self.wav_ampl.setKeyboardTracking(False)
+        self.wav_ampl.setFont(QFont(SHELL_FONT, pointSize=14))
+        self.wav_ampl.setAlignment(Qt.AlignRight)
 
         # lay out waveform widget
         waveform_layout.addWidget(self.wav_lockswitch,  0, 0, 1, 1)
