@@ -1,21 +1,9 @@
 import os
 from numpy import linspace
-from time import time, sleep
+from time import time
 from socket import gethostname
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
-
-_PLAYSOUND_ENABLE = False
-try:
-    # todo: try to make resource imports programmatic
-    #from inspect import getfile, getmodule
-    from playsound import playsound
-    from twisted.internet.threads import deferToThread
-    _UNLOCKED_SOUND_PATH = os.path.join(os.environ['EGGS_LABRAD_ROOT'], 'EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked_short.mp3')
-    _PLAYSOUND_ENABLE = True
-except Exception as e:
-    print('Error: playsound package not installed.')
-
 
 from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
@@ -35,14 +23,26 @@ PATTERN_CHANGED_ID =    462917
 # get the trace from the wavemeter
 _TRACE_POLLING_RATE = 5
 
+# play sound when wavemeter channels come unlocked
+_PLAYSOUND_ENABLE = False
+try:
+    # todo: try to make resource imports programmatic
+    from playsound import playsound
+    from twisted.internet.threads import deferToThread
+    _UNLOCKED_SOUND_PATH = os.path.join(os.environ['EGGS_LABRAD_ROOT'],
+                                        'EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked_short.mp3')
+    _PLAYSOUND_ENABLE = True
+except Exception as e:
+    print('Error: playsound package not installed.')
+
 
 class multiplexer_client(GUIClient):
 
     name =      gethostname() + ' Wavemeter Client'
     servers =   {'wavemeter': 'multiplexerserver'}
 
-    LABRADHOST =                    multiplexer_config.ip
-    ALARM_THRESHOLD_THZ =           multiplexer_config.alarm_threshold_mhz / 1e6
+    LABRADHOST =            multiplexer_config.ip
+    ALARM_THRESHOLD_THZ =   multiplexer_config.alarm_threshold_mhz / 1e6
 
 
     def getgui(self):
@@ -58,6 +58,7 @@ class multiplexer_client(GUIClient):
         self.chaninfo = multiplexer_config.channels
         # create dictionary for keeping track of which channels to record
         self.record_dict = {}
+
         # create connection to eggs_labrad to get data vault
         from labrad.wrappers import connectAsync
         from os import environ
@@ -65,6 +66,7 @@ class multiplexer_client(GUIClient):
         LABRADPASSWORD_EGGS = environ['LABRADPASSWORD']
         self.cxn_eggs = yield connectAsync(LABRADHOST_EGGS, name=self.name, password=LABRADPASSWORD_EGGS)
         self.dv = self.cxn_eggs['Data Vault']
+
         # connect to device signals
         yield self.wavemeter.signal__frequency_changed(FREQ_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.updateFrequency, source=None, ID=FREQ_CHANGED_ID)
@@ -82,6 +84,7 @@ class multiplexer_client(GUIClient):
         yield self.wavemeter.addListener(listener=self.toggleChannelLock, source=None, ID=CHAN_LOCK_CHANGED_ID)
         yield self.wavemeter.signal__amplitude_changed(AMPLITUDE_CHANGED_ID)
         yield self.wavemeter.addListener(listener=self.updateAmplitude, source=None, ID=AMPLITUDE_CHANGED_ID)
+
         # don't use signals for wavemeter trace since those update too frequently
         #yield self.wavemeter.signal__pattern_changed(PATTERN_CHANGED_ID)
         #yield self.wavemeter.addListener(listener=self.updatePattern, source=None, ID=PATTERN_CHANGED_ID)
@@ -185,6 +188,7 @@ class multiplexer_client(GUIClient):
         pidGUI.dacPort_display.setText(str(dacPort))
         freq_val = channel_widget.spinFreq.value()
         pidGUI.lock_freq.setText('{:.4f}'.format(freq_val))
+
         # get initial values
         pInit = yield self.wavemeter.get_pid_p(dacPort)
         iInit = yield self.wavemeter.get_pid_i(dacPort)
@@ -193,6 +197,7 @@ class multiplexer_client(GUIClient):
         constInit = yield self.wavemeter.get_const_dt(dacPort)
         sensInit = yield self.wavemeter.get_pid_sensitivity(dacPort)
         polInit = yield self.wavemeter.get_pid_polarity(dacPort)
+
         # set initial values
         pidGUI.spinP.setValue(pInit)
         pidGUI.spinI.setValue(iInit)
@@ -202,6 +207,7 @@ class multiplexer_client(GUIClient):
         pidGUI.spinFactor.setValue(sensInit[0])
         pidGUI.spinExp.setValue(sensInit[1])
         pidGUI.polarityBox.setCurrentIndex({1: 0, -1: 1}[polInit])
+
         # connect signals to slots
         self.gui.pidGUI.spinP.valueChanged.connect(lambda p, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, p))
         self.gui.pidGUI.spinI.valueChanged.connect(lambda i, _dacPort=dacPort: self.wavemeter.set_pid_p(_dacPort, i))

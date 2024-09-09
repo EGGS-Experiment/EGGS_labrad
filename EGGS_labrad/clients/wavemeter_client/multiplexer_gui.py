@@ -5,11 +5,11 @@ import pyqtgraph as pg
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox,\
-                            QDesktopWidget, QPushButton, QDoubleSpinBox, QComboBox,\
-                            QCheckBox, QScrollArea, QWidget
+                            QDesktopWidget, QPushButton, QComboBox, QCheckBox, QScrollArea, QWidget
 
 from EGGS_labrad.clients import wav2RGB
-from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomProgressBar, QCustomSlideIndicator, QClientMenuHeader
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomProgressBar, QCustomSlideIndicator,\
+                                        QClientMenuHeader, QCustomUnscrollableSpinBox
 
 
 class multiplexer_pid(QFrame):
@@ -72,10 +72,10 @@ class multiplexer_pid(QFrame):
             label.setAlignment(Qt.AlignBottom)
 
         # PID control
-        self.spinP = QDoubleSpinBox()
-        self.spinI = QDoubleSpinBox()
-        self.spinD = QDoubleSpinBox()
-        self.spinDt = QDoubleSpinBox()
+        self.spinP = QCustomUnscrollableSpinBox()
+        self.spinI = QCustomUnscrollableSpinBox()
+        self.spinD = QCustomUnscrollableSpinBox()
+        self.spinDt = QCustomUnscrollableSpinBox()
         self.useDTBox = QCheckBox('Const dt')
         #self.useDTBox.setCheckable(True)
         self.useDTBox.setFont(QFont('MS Shell Dlg 2', pointSize=12))
@@ -88,14 +88,14 @@ class multiplexer_pid(QFrame):
             spinbox.setKeyboardTracking(False)
 
         # output signal
-        self.spinFactor = QDoubleSpinBox()
+        self.spinFactor = QCustomUnscrollableSpinBox()
         self.spinFactor.setFont(main_font)
         self.spinFactor.setDecimals(2)
         self.spinFactor.setSingleStep(0.01)
         self.spinFactor.setRange(0, 9.99)
         self.spinFactor.setKeyboardTracking(False)
 
-        self.spinExp = QDoubleSpinBox()
+        self.spinExp = QCustomUnscrollableSpinBox()
         self.spinExp.setFont(main_font)
         self.spinExp.setDecimals(0)
         self.spinExp.setSingleStep(1)
@@ -109,7 +109,7 @@ class multiplexer_pid(QFrame):
 
         self.minBound_label = QLabel('Min (mV):')
         self.minBound_label.setFont(label_font)
-        self.minBound = QDoubleSpinBox()
+        self.minBound = QCustomUnscrollableSpinBox()
         self.minBound.setFont(main_font)
         self.minBound.setDecimals(0)
         self.minBound.setSingleStep(1)
@@ -118,7 +118,7 @@ class multiplexer_pid(QFrame):
 
         self.maxBound_label = QLabel('Max (mV):')
         self.maxBound_label.setFont(label_font)
-        self.maxBound = QDoubleSpinBox()
+        self.maxBound = QCustomUnscrollableSpinBox()
         self.maxBound.setFont(main_font)
         self.maxBound.setDecimals(0)
         self.maxBound.setSingleStep(1)
@@ -255,7 +255,7 @@ class multiplexer_channel(QFrame):
         frequencylabel = QLabel('Lock Frequency (THz)')
         frequencylabel.setAlignment(Qt.AlignBottom)
         frequencylabel.setFont(QFont(shell_font, pointSize=10))
-        self.spinFreq = QDoubleSpinBox()
+        self.spinFreq = QCustomUnscrollableSpinBox()
         self.spinFreq.setFont(QFont(shell_font, pointSize=16))
         self.spinFreq.setDecimals(6)
         self.spinFreq.setSingleStep(0.000001)
@@ -265,7 +265,7 @@ class multiplexer_channel(QFrame):
         exposurelabel = QLabel('Exposure Time (ms)')
         exposurelabel.setAlignment(Qt.AlignBottom)
         exposurelabel.setFont(QFont(shell_font, pointSize=10))
-        self.spinExp = QDoubleSpinBox()
+        self.spinExp = QCustomUnscrollableSpinBox()
         self.spinExp.setFont(QFont(shell_font, pointSize=16))
         self.spinExp.setDecimals(0)
         self.spinExp.setSingleStep(1)
