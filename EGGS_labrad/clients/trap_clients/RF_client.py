@@ -44,23 +44,12 @@ class RF_client(GUIClient):
         # waveform buttons
         self.gui.wav_toggle.clicked.connect(lambda status: self.rf.toggle(status))
         self.gui.wav_lockswitch.clicked.connect(lambda status: self.lock(status))
-        self.gui.wav_reset.clicked.connect(lambda: self.reset())
         # set lockswitch to locked
         self.gui.wav_lockswitch.setChecked(False)
         self.gui.wav_lockswitch.click()
 
 
     # SLOTS
-    @inlineCallbacks
-    def reset(self):
-        """
-        Resets RF client buttons and sends reset signal to server.
-        """
-        # call reset
-        yield self.rf.reset()
-        # set parameters to device defaults
-        yield self.initData(self.cxn)
-
     def lock(self, status):
         """
         Locks signal generator interface.
@@ -69,7 +58,6 @@ class RF_client(GUIClient):
         self.gui.wav_ampl.setEnabled(status)
         self.gui.wav_freq.setEnabled(status)
         self.gui.wav_toggle.setEnabled(status)
-        self.gui.wav_reset.setEnabled(status)
 
 
 if __name__ == "__main__":
