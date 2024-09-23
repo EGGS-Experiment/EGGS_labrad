@@ -57,7 +57,7 @@ class DC_client(GUIClient):
         self.updateHV(None, hv_status)
 
     def initGUI(self):
-        # get endcap numpbers
+        # get endcap numbers
         endcap_channels =   [channel_params['num']
                             for channel_name, channel_params in self.gui.active_channels.items()
                             if 'ENDCAP' in channel_name.upper()]

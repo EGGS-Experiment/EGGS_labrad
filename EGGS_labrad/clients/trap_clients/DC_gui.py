@@ -31,7 +31,7 @@ class AMO8_channel(QFrame):
         self.title = QCustomEditableLabel(title)
         self.title.setFont(QFont(SHELL_FONT, pointSize=13))
 
-        # dac
+        # DAC channel interface
         dac_label = QLabel('Output Voltage (V)')
         self.dac = QCustomUnscrollableSpinBox()
         self.dac.setFont(QFont(SHELL_FONT, pointSize=14))
@@ -44,7 +44,7 @@ class AMO8_channel(QFrame):
             self.dac.setRange(0, self.max_voltage_v)
         self.dac.setKeyboardTracking(False)
 
-        # ramp
+        # ramp buttons
         self.ramp_start = QPushButton('Ramp')
         self.ramp_start.setFont(QFont(SHELL_FONT, pointSize=11))
         ramp_target_label = QLabel('End Voltage (V)')
@@ -64,7 +64,7 @@ class AMO8_channel(QFrame):
         self.ramp_rate.setValue(100.0)
         self.ramp_rate.setKeyboardTracking(False)
 
-        # buttons
+        # general buttons
         self.toggleswitch = TextChangingButton(("On", "Off"))
         self.resetswitch = QPushButton('Reset')
         self.resetswitch.setFont(QFont(SHELL_FONT, pointSize=10))
@@ -89,11 +89,15 @@ class AMO8_channel(QFrame):
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
 
     def lock(self, status):
+        """
+        Locks the DAC channel interface to prevent accidental clicks.
+        """
         self.resetswitch.setEnabled(status)
         self.dac.setEnabled(status)
         self.ramp_start.setEnabled(status)
         self.ramp_target.setEnabled(status)
         self.ramp_rate.setEnabled(status)
+        self.toggleswitch.setEnabled(status)
 
 
 class DC_gui(QFrame):
