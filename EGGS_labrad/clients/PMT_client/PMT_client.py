@@ -185,8 +185,13 @@ class PMT_client(GUIClient):
 
         # set artiq monitor status
         self.gui.artiq_monitor.setStatus(msg)
-        # enable aperture in case we need to quickly open it
-        # todo
+
+        # workaround: enable aperture in case we need to quickly open it
+        exp_running_status, rid = msg
+        self.gui.setEnabled(True)
+        self._lock(not exp_running_status)
+        self.gui.lockswitch.setEnabled(not exp_running_status)
+        self.gui.aperture_button.setEnabled(True)
 
     def _lock(self, status):
         # note: don't lock aperture since we may need to open it partway through
@@ -196,6 +201,7 @@ class PMT_client(GUIClient):
         self.gui.sample_num.setEnabled(status)
         self.gui.poll_interval.setEnabled(status)
         self.gui.flip.setEnabled(status)
+        self.gui.record_button.setEnabled(status)
 
 
 if __name__ == "__main__":
