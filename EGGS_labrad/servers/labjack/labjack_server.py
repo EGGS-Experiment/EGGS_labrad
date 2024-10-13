@@ -93,6 +93,7 @@ class LabJackServer(LabradServer):
         @raise PortRegError: Error code 0.  Registry does not have correct directory structure (['','Ports']).
         @raise PortRegError: Error code 1.  Did not find match.
         """
+        # todo: fix up and make usable
         reg = self.client.registry
         # There must be a 'Ports' directory at the root of the registry folder
         try:
@@ -120,7 +121,7 @@ class LabJackServer(LabradServer):
 
 
     '''
-    CONNECTED
+    CONNECT
     '''
     @setting(1, 'Device List', returns='*(iii)')
     def device_list(self, c):
@@ -128,7 +129,7 @@ class LabJackServer(LabradServer):
         Get a list of available devices.
         """
         detected_devices = ljm.listAll(ljm.constants.dtTSERIES, ljm.constants.ctTCP)
-        dev_models, dev_cxns, dev_serialnums = detected_devices[1: 4]
+        dev_models, dev_cxns, dev_serialnums = detected_devices[1:4]
         device_list = list(zip(dev_models, dev_cxns, dev_serialnums))
         return device_list
 

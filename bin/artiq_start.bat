@@ -5,7 +5,7 @@
 
 @REM MOVE TO ARTIQ ROOT
 CD "%ARTIQ_ROOT%"
-CALL conda activate labart_dev
+CALL conda activate artiq8
 
 SETLOCAL EnableDelayedExpansion
 
@@ -37,7 +37,7 @@ SET LOGFILENAME=%LOGFILENAME: =0%
 
 
 @REM Start ARTIQ interface
-START "ARTIQ Master" /min CMD /c "artiq_master -g -r "%ARTIQ_ROOT%/repository" --device-db "%ARTIQ_ROOT%/LAX_exp/%ddb_name%" --dataset-db "%ARTIQ_ROOT%/LAX_exp/dataset_db.pyon" --bind=%ip_addr% --log-file "%HOME%\.labrad\logfiles\artiq\%LOGFILENAME%.log" "
+START "ARTIQ Master" /min CMD /c "artiq_master -g -r "%ARTIQ_ROOT%/repository" --device-db "%ARTIQ_ROOT%/LAX_exp/%ddb_name%" --dataset-db "%ARTIQ_ROOT%/dataset_db.mdb" --bind=%ip_addr% --log-file "%HOME%\.labrad\logfiles\artiq\%LOGFILENAME%.log" "
 START "ARTIQ Dashboard" /min CMD /c "TIMEOUT 2 && CALL artiq_dashboard"
 START "ARTIQ Controller Manager" /min CMD /k "TIMEOUT 2 && artiq_ctlmgr --bind %ip_addr%"
 

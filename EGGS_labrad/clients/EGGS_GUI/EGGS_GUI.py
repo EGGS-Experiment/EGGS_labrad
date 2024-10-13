@@ -68,14 +68,14 @@ class EGGS_GUI(QMainWindow):
         self.tabWidget = QDetachableTabWidget()
 
         # create subwidgets - each will be a separate tab
-        script_scanner =    self.makeScriptScannerWidget(self.reactor, cxn)
+        # script_scanner =    self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac =           self.makeCryovacWidget(self.reactor, cxn)
         trap =              self.makeTrapWidget(self.reactor, cxn)
         lasers =            self.makeLaserWidget(self.reactor, cxn)
         wavemeter =         self.makeWavemeterWidget(self.reactor, cxn)
 
         # create tabs for each subwidget
-        self.tabWidget.addTab(script_scanner, '&Script Scanner')
+        # self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryovac, '&Cryovac')
         self.tabWidget.addTab(trap, '&Trap')
         self.tabWidget.addTab(lasers, '&Lasers')
@@ -87,13 +87,12 @@ class EGGS_GUI(QMainWindow):
 
 
     """TAB WIDGETS"""
-
-    def makeScriptScannerWidget(self, reactor, cxn):
-        from EGGS_labrad.clients.script_scanner_gui import script_scanner_gui
-        # note: no need to initialize script_scanner_gui with a labrad cxn
-        # since it creates its own
-        scriptscanner = script_scanner_gui(reactor)
-        return scriptscanner
+    # def makeScriptScannerWidget(self, reactor, cxn):
+    #     from EGGS_labrad.clients.script_scanner_gui import script_scanner_gui
+    #     # note: no need to initialize script_scanner_gui with a labrad cxn
+    #     # since it creates its own
+    #     scriptscanner = script_scanner_gui(reactor)
+    #     return scriptscanner
 
     def makeCryovacWidget(self, reactor, cxn):
         # import constituent widgets
