@@ -9,4 +9,4 @@ START "RSG Client" /min CMD "/k activate grapher && python %HOME%\Code\RealSimpl
 START "EGGS GUI" /min cmd "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\clients\EGGS_GUI\EGGS_GUI.py"
 
 @REM Run DDS Client (we add a timeout to prevent the client from running before ARTIQ server is ready)
-TIMEOUT 5 > NUL && START "DDS Client" /min cmd "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\clients\artiq_client\dds_client.py"
+@REM TIMEOUT 5 > NUL && START "DDS Client" /min cmd "/k activate labart && python %EGGS_LABRAD_ROOT%\EGGS_labrad\clients\artiq_client\dds_client.py"

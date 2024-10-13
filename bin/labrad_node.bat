@@ -40,8 +40,8 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://%LABRADHOST%:3000
 @REM Start LabRAD/ARTIQ clients
 IF %raw_flag%==0 (
     @REM ARTIQ Dashboard
-    START "ARTIQ MonInj Proxy" /min CMD /k "activate artiq && CALL aqctl_moninj_proxy 192.168.1.76"
-    START "ARTIQ Dashboard" /min CMD /k "activate artiq && CALL artiq_dashboard -s %LABRADHOST%"
+    START "ARTIQ MonInj Proxy" /min CMD /k "activate artiq8 && CALL aqctl_moninj_proxy 192.168.1.76"
+    START "ARTIQ Dashboard" /min CMD /k "activate artiq8 && CALL artiq_dashboard -s %LABRADHOST%"
 
     @REM Start relevant LabRAD clients (e.g. EGGS GUI, RSG Client, DDS Client)
     TIMEOUT 10 > NUL && START /min CMD /c "%PROG_HOME%\utils\start_labrad_clients.bat"
