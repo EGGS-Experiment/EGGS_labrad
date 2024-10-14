@@ -70,14 +70,14 @@ class EGGS_GUI(QMainWindow):
         # create subwidgets - each will be a separate tab
         # script_scanner =    self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac =           self.makeCryovacWidget(self.reactor, cxn)
-        trap =              self.makeTrapWidget(self.reactor, cxn)
+        loading =              self.makeLoadingWidget(self.reactor, cxn)
         lasers =            self.makeLaserWidget(self.reactor, cxn)
         wavemeter =         self.makeWavemeterWidget(self.reactor, cxn)
 
         # create tabs for each subwidget
         # self.tabWidget.addTab(script_scanner, '&Script Scanner')
         self.tabWidget.addTab(cryovac, '&Cryovac')
-        self.tabWidget.addTab(trap, '&Trap')
+        self.tabWidget.addTab(loading, '&Loading')
         self.tabWidget.addTab(lasers, '&Lasers')
         self.tabWidget.addTab(wavemeter, '&Wavemeter')
 
@@ -110,13 +110,14 @@ class EGGS_GUI(QMainWindow):
         }
         return self._createTabLayout(clients, reactor, cxn)
 
-    def makeTrapWidget(self, reactor, cxn):
+    def makeLoadingWidget(self, reactor, cxn):
         # import constituent widgets
         from EGGS_labrad.clients.trap_clients.RF_client import RF_client
         from EGGS_labrad.clients.trap_clients.DC_client import DC_client
         from EGGS_labrad.clients.powersupply_client.gpp3060_client import gpp3060_client
         from EGGS_labrad.clients.PMT_client.PMT_client import PMT_client
         from EGGS_labrad.clients.ARTIQ_client.DDS_client import DDS_client
+        from EGGS_labrad.clients.ionization_laser_shutter_client import ionization_laser_shutter_client
 
         # create client dict for programmatic initialization
         clients = {
