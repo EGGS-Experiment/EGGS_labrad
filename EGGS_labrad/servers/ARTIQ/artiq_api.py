@@ -501,7 +501,6 @@ class ARTIQ_API(object):
         """
         # get core
         self.core =         self.device_manager.get("core")
-        self.core_dma =     self.device_manager.get("core_dma")
 
         # store devices in dictionary where device
         # name is key and device itself is value
