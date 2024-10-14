@@ -71,6 +71,10 @@ class ARTIQ_API(object):
                 res = func(self, *args, **kwargs)
                 return res
 
+            # handle all other errors
+            except Exception as e:
+                print("Unknown Error: {}".format(repr(e)))
+
         return inner
 
 
@@ -500,7 +504,7 @@ class ARTIQ_API(object):
         Gets necessary device objects.
         """
         # get core
-        self.core =         self.device_manager.get("core")
+        self.core = self.device_manager.get("core")
 
         # store devices in dictionary where device
         # name is key and device itself is value

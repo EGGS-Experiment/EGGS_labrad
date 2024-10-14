@@ -42,7 +42,6 @@ DACSIGNAL_ID = 828175
 ADCSIGNAL_ID = 828174
 EXPSIGNAL_ID = 828173
 DDSSIGNAL_ID = 828172
-RESCUESIGNAL_ID = 828171
 # todo: move all mu stuff to api since api has better access to conversion stuff than we do and can call it in a nonkernel function
 # todo: use dds name helper to allow board number and channel number to be used for settings
 
@@ -63,7 +62,6 @@ class ARTIQ_Server(ContextServer):
     dacChanged = Signal(DACSIGNAL_ID, 'signal: dac changed', '(isv)')
     adcUpdated = Signal(ADCSIGNAL_ID, 'signal: adc updated', '(*v)')
     expRunning = Signal(EXPSIGNAL_ID, 'signal: exp running', '(bi)')
-    rescueSignal = Signal(RESCUESIGNAL_ID, 'signal: rescue ion', 'b')
 
 
     # STARTUP
@@ -91,8 +89,8 @@ class ARTIQ_Server(ContextServer):
         # connect to master clients
         from sipyco.pc_rpc import Client
         try:
-            self.scheduler = Client('::1', 3251, 'master_schedule')
-            self.datasets = Client('::1', 3251, 'master_dataset_db')
+            self.scheduler = Client('192.168.1.48', 3251, 'master_schedule')
+            self.datasets = Client('192.168.1.48', 3251, 'master_dataset_db')
         except Exception as e:
             print("Unable to connect to ARTIQ Master. Scheduler and datasets disabled.")
 
@@ -139,6 +137,9 @@ class ARTIQ_Server(ContextServer):
             # send experiment details to clients if experiment is running
             if run_status == 'running':
                 self.expRunning((True, rid))
+                # tmp remove
+                self.api.core.close()
+                # tmp remove
                 return
 
         # otherwise, no experiment running, so inform clients
@@ -180,6 +181,14 @@ class ARTIQ_Server(ContextServer):
 
 
     # CORE
+    # CORE
+    @setting(888888, "tmp close", returns='')
+    def tmp_close(self, c):
+        """
+        Returns a list of ARTIQ devices.
+        """
+        self.api.core.close()
+
     @setting(21, "Get Devices", returns='*s')
     def getDevices(self, c):
         """
