@@ -93,6 +93,7 @@ class ARTIQ_Server(ContextServer):
             self.datasets = Client('192.168.1.48', 3251, 'master_dataset_db')
         except Exception as e:
             print("Unable to connect to ARTIQ Master. Scheduler and datasets disabled.")
+            print(repr(e))
 
         # connect to master notifications
         try:
@@ -127,9 +128,6 @@ class ARTIQ_Server(ContextServer):
         Checks if any experiments are running and sends a Signal
         to clients accordingly.
         """
-        # todo: do we actually need this?
-        running_exp = None
-
         # check if any experiments are running
         for rid, exp_params in self.struct_holder_schedule.backing_store.items():
             run_status = exp_params['status']
@@ -137,9 +135,7 @@ class ARTIQ_Server(ContextServer):
             # send experiment details to clients if experiment is running
             if run_status == 'running':
                 self.expRunning((True, rid))
-                # tmp remove
-                self.api.core.close()
-                # tmp remove
+                self.api.close_connection()
                 return
 
         # otherwise, no experiment running, so inform clients
@@ -181,13 +177,12 @@ class ARTIQ_Server(ContextServer):
 
 
     # CORE
-    # CORE
-    @setting(888888, "tmp close", returns='')
-    def tmp_close(self, c):
+    @setting(11, "Close Core", returns='')
+    def close_core(self, c):
         """
-        Returns a list of ARTIQ devices.
+        Closes the API connection to the hardware.
         """
-        self.api.core.close()
+        self.api.close_connection()
 
     @setting(21, "Get Devices", returns='*s')
     def getDevices(self, c):

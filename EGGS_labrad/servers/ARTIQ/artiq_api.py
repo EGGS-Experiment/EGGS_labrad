@@ -92,6 +92,16 @@ class ARTIQ_API(object):
         # get precompiled functions
         self._getPrecompiledFunctions()
 
+    def close_connection(self):
+        """
+        Close core connection to hardware to allow others to
+        take control.
+        """
+        try:
+            self.core.close()
+        except Exception as e:
+            print(repr(e))
+
 
     '''new faster functions meant to be used with precompile'''
     def _getPrecompiledFunctions(self) -> TNone:
