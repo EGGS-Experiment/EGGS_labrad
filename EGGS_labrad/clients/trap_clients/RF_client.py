@@ -16,26 +16,38 @@ class RF_client(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
-        # find main signal generator
+        # find desired device
         devices = yield self.rf.list_devices()
         for dev_id in devices:
             dev_name = dev_id[1]
-
-            # select main signal generator
-            if 'GPIB1::19::INSTR' in dev_name:
+            if 'GPIB0::1::INSTR' in dev_name:
                 yield self.rf.select_device(dev_name)
 
     @inlineCallbacks
     def initData(self):
         # get and assign parameters
-        freq = yield self.rf.frequency()
-        ampl = yield self.rf.amplitude()
+        freq =      yield self.rf.frequency()
+        ampl =      yield self.rf.amplitude()
+        mod_freq =  yield self.rf.modulation_frequency()
+        fm_dev =    yield self.rf.fm_deviation()
+        am_depth =  yield self.rf.am_depth()
+        pm_dev =    yield self.rf.pm_deviation()
         self.gui.wav_ampl.setValue(ampl)
-        self.gui.wav_freq.setValue(freq / 1000000.)
+        self.gui.wav_freq.setValue(freq / 1000000)
+        self.gui.mod_freq.setValue(mod_freq / 1000)
+        self.gui.mod_freq_dev.setValue(fm_dev / 1000)
+        self.gui.mod_ampl_depth.setValue(am_depth)
+        self.gui.mod_phase_dev.setValue(pm_dev)
 
         # get toggle status
         power_status =  yield self.rf.toggle()
+        am_toggle =     yield self.rf.am_toggle()
+        pm_toggle =     yield self.rf.pm_toggle()
+        fm_toggle =     yield self.rf.fm_toggle()
         self.gui.wav_toggle.setChecked(power_status)
+        self.gui.mod_ampl_toggle.setChecked(am_toggle)
+        self.gui.mod_ampl_toggle.setChecked(pm_toggle)
+        self.gui.mod_ampl_toggle.setChecked(fm_toggle)
 
     def initGUI(self):
         # waveform parameters
@@ -44,12 +56,32 @@ class RF_client(GUIClient):
         # waveform buttons
         self.gui.wav_toggle.clicked.connect(lambda status: self.rf.toggle(status))
         self.gui.wav_lockswitch.clicked.connect(lambda status: self.lock(status))
+        self.gui.wav_reset.clicked.connect(lambda: self.reset())
+        # modulation parameters
+        self.gui.mod_freq.valueChanged.connect(lambda freq: self.rf.modulation_frequency(freq * 1000))
+        self.gui.mod_ampl_depth.valueChanged.connect(lambda ampl_depth: self.rf.am_depth(ampl_depth))
+        self.gui.mod_freq_dev.valueChanged.connect(lambda freq_dev: self.rf.fm_deviation(freq_dev))
+        self.gui.mod_phase_dev.valueChanged.connect(lambda pm_dev: self.rf.pm_deviation(pm_dev))
+        # on/off buttons
+        self.gui.mod_freq_toggle.clicked.connect(lambda status: self.rf.fm_toggle(status))
+        self.gui.mod_ampl_toggle.clicked.connect(lambda status: self.rf.am_toggle(status))
+        self.gui.mod_phase_toggle.clicked.connect(lambda status: self.rf.pm_toggle(status))
         # set lockswitch to locked
         self.gui.wav_lockswitch.setChecked(False)
         self.gui.wav_lockswitch.click()
 
 
     # SLOTS
+    @inlineCallbacks
+    def reset(self):
+        """
+        Resets RF client buttons and sends reset signal to server.
+        """
+        # call reset
+        yield self.rf.reset()
+        # set parameters to device defaults
+        yield self.initData(self.cxn)
+
     def lock(self, status):
         """
         Locks signal generator interface.
@@ -58,6 +90,16 @@ class RF_client(GUIClient):
         self.gui.wav_ampl.setEnabled(status)
         self.gui.wav_freq.setEnabled(status)
         self.gui.wav_toggle.setEnabled(status)
+        self.gui.wav_reset.setEnabled(status)
+        # modulation parameters
+        self.gui.mod_freq.setEnabled(status)
+        self.gui.mod_freq_dev.setEnabled(status)
+        self.gui.mod_ampl_depth.setEnabled(status)
+        self.gui.mod_phase_dev.setEnabled(status)
+        # modulation buttons
+        self.gui.mod_ampl_toggle.setEnabled(status)
+        self.gui.mod_freq_toggle.setEnabled(status)
+        self.gui.mod_phase_toggle.setEnabled(status)
 
 
 if __name__ == "__main__":
