@@ -8,12 +8,11 @@ from socket import gethostname
 from inspect import getmembers
 from abc import ABC, abstractmethod
 
-
 from twisted.internet.defer import inlineCallbacks
 from labrad.logging import setupLogging, _LoggerWriter
 
 from EGGS_labrad.clients.utils import createTrunk
-from EGGS_labrad.clients.Widgets import QClientMenuHeader, QInitializePlaceholder
+from EGGS_labrad.clients.Widgets import QClientMenuHeader
 
 __all__ = ["GUIClient"]
 
@@ -71,7 +70,7 @@ class GUIClient(ABC):
         self.parent = parent
         self.guiEnable = True
 
-        # # # set up logging
+        # set up logging
         self._setupLogging()
 
         # get core servers in addition to whichever servers are specified
@@ -79,8 +78,8 @@ class GUIClient(ABC):
         self.servers.update(core_servers)
 
         # show placeholder GUI while we initialize
-        # self.gui = QInitializePlaceholder()
-        # self.gui.show()
+        #self.gui = QInitializePlaceholder()
+        #self.gui.show()
 
         # initialization sequence
         self.logger.info("Starting client...")
@@ -101,6 +100,7 @@ class GUIClient(ABC):
         """
         # set logger as instance variable
         self.logger = setupLogging('labrad.client', sender=self)
+        # redirect stdout
         sys.stdout = _LoggerWriter(self.logger.info)
 
 

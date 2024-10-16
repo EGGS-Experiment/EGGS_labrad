@@ -3,8 +3,8 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.ionization_laser_shutter_client.ionization_laser_shutter_gui import IonizationLaserShutterGUI
 from EGGS_labrad.clients.utils import SHELL_FONT
-from labrad.logging import setupLogging, _LoggerWriter
-import sys
+# from labrad.logging import setupLogging, _LoggerWriter
+# import sys
 
 class IonizationLasersShuttersClient(GUIClient):
 
@@ -23,8 +23,8 @@ class IonizationLasersShuttersClient(GUIClient):
         self.port_name_377 = "DIO0"
         self.port_name_423 = "DIO2"
         device_handle = yield self.labjack.device_info()
-        self.logger = setupLogging('labrad.client', sender=self)
-        sys.stdout = _LoggerWriter(self.logger.info)
+        # self.logger = setupLogging('labrad.client', sender=self)
+        # sys.stdout = _LoggerWriter(self.logger.info)
 
         if device_handle == -1:
             # get device list

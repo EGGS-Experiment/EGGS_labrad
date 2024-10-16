@@ -75,7 +75,6 @@ class RF_gui(QFrame):
         waveform_widget_wrapped = self._makeWaveformWidget()
         # waveform_widget_wrapped.setFixedWidth(140)
 
-
         # lay out
         layout.addWidget(title,                             0, 0, 1, 2)
         layout.addWidget(waveform_widget_wrapped,           1, 0, 6, 2)

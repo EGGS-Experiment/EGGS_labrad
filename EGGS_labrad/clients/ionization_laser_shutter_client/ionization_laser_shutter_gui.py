@@ -42,7 +42,7 @@ class IonizationLaserShutterGUI(QFrame):
         shutter_layout.addWidget(self.label_423)
 
         # create modulation frequency subwidget
-        self.toggle_423 = TextChangingButton(('Close', 'Open'), fontsize=10)
+        self.toggle_423 = TextChangingButton(('Open', 'Closed'), fontsize=10)
         self.toggle_423.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.toggle_423.setFixedSize(200, 100)
         shutter_layout.addWidget(self.toggle_423)
@@ -53,7 +53,7 @@ class IonizationLaserShutterGUI(QFrame):
         shutter_layout.addWidget(self.label_377)
 
         # create modulation frequency subwidget
-        self.toggle_377 = TextChangingButton(('Close', 'Open'), fontsize=10)
+        self.toggle_377 = TextChangingButton(('Open', 'Closed'), fontsize=10)
         self.toggle_377.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         self.toggle_377.setFixedSize(200,100)
         shutter_layout.addWidget(self.toggle_377)
