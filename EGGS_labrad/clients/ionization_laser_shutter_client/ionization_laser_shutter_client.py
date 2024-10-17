@@ -23,8 +23,6 @@ class IonizationLasersShuttersClient(GUIClient):
         self.port_name_377 = "DIO0"
         self.port_name_423 = "DIO2"
         device_handle = yield self.labjack.device_info()
-        # self.logger = setupLogging('labrad.client', sender=self)
-        # sys.stdout = _LoggerWriter(self.logger.info)
 
         if device_handle == -1:
             # get device list
@@ -32,10 +30,14 @@ class IonizationLasersShuttersClient(GUIClient):
             # assume desired labjack is first in list
             yield self.labjack.device_select(dev_list[0])
 
+        # ensure shutters are closed when initializing GUI
+        yield self.labjack.write_name(self.port_name_377, 0)
+        yield self.labjack.write_name(self.port_name_423, 0)
+
     @inlineCallbacks
     def initData(self):
-        status_377 = yield self.labjack.read_name(self.port_name_377)
-        status_423 = yield self.labjack.read_name(self.port_name_423)
+        status_377 = yield self.labjack.read_state(self.port_name_377)
+        status_423 = yield self.labjack.read_state(self.port_name_423)
         self.gui.toggle_377.setChecked(bool(status_377))
         self.gui.toggle_423.setChecked(bool(status_423))
 

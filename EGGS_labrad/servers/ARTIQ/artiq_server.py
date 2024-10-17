@@ -89,8 +89,8 @@ class ARTIQ_Server(ContextServer):
         # connect to master clients
         from sipyco.pc_rpc import Client
         try:
-            self.scheduler = Client('192.168.1.48', 3251, 'master_schedule')
-            self.datasets = Client('192.168.1.48', 3251, 'master_dataset_db')
+            self.scheduler = Client('192.168.1.48', 3251, 'schedule')
+            self.datasets = Client('192.168.1.48', 3251, 'dataset_db')
         except Exception as e:
             print("Unable to connect to ARTIQ Master. Scheduler and datasets disabled.")
             print(repr(e))

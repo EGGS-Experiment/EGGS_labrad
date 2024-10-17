@@ -24,6 +24,8 @@ from labrad.server import LabradServer, Signal, setting
 
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 from EGGS_labrad.servers import ContextServer
+from labrad.logging import setupLogging, _LoggerWriter
+import sys
 
 from labjack import ljm
 # todo: comm lock
@@ -185,12 +187,30 @@ class LabJackServer(LabradServer):
     def read_name(self, c, name):
         """
         Read a value from a named register on the LabJack.
+
+        NOTE: READING FROM A REGISTER WITH THIS METHOD SETS THIS PORT TO HIGH REGARDLESS OF THE INITIAL VALUE
         """
         value = yield ljm.eReadName(self.device_handle, name)
         returnValue(value)
 
     @inlineCallbacks
-    @setting(13, address='i', returns='v')
+    @setting(13, name='s', returns='i')
+    def read_state(self, c, name):
+        """
+        Read a value from a DIO register on the LabJack
+        """
+
+        # find the index from the port name given
+        ind = int(''.join([letter for letter in name[::-1] if letter.isdigit()]))
+
+        # get the values of all the DIO ports
+        DIO_values = yield ljm.eReadName(self.device_handle, 'DIO_STATE')
+
+        # return the vlaue of the DIO port requested
+        returnValue(int(bin(int(DIO_values))[-ind]))
+
+    @inlineCallbacks
+    @setting(15, address='i', returns='v')
     def read_address(self, c, address):
         """
         Read a value from a register on the LabJack.
@@ -199,7 +219,7 @@ class LabJackServer(LabradServer):
         returnValue(value)
 
     @inlineCallbacks
-    @setting(15, names='*s', returns='*v')
+    @setting(17, names='*s', returns='*v')
     def read_names(self, c, names):
         """
         Read values from multiple named registers on the LabJack.
@@ -208,7 +228,7 @@ class LabJackServer(LabradServer):
         returnValue(values)
 
     @inlineCallbacks
-    @setting(17, addresses='*i', returns='*v')
+    @setting(19, addresses='*i', returns='*v')
     def read_addresses(self, c, addresses):
         """
         Read values from multiple registers on the LabJack.
