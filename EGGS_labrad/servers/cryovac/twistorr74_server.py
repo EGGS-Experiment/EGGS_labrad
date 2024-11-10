@@ -43,7 +43,7 @@ class TwisTorr74Server(SerialDeviceServer, PollingServer):
     name = 'TwisTorr74 Server'
     regKey = 'TwisTorr74 Server'
     serNode = 'mongkok'
-    port = 'COM16'
+    port = 'COM38'
 
     timeout = Value(5.0, 's')
     baudrate = 9600
