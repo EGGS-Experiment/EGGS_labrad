@@ -354,10 +354,10 @@ class ARTIQ_Server(ContextServer):
         if state is not None:
             if (type(state) == int) and (state not in (0, 1)):
                 raise Exception('Error: invalid input. Value must be a boolean, 0, or 1.')
-            yield self.api.setDDSsw(dds_name, state)
+            yield self.api.setDDSFastSW(dds_name, state)
 
         # getter
-        state = yield self.api.getDDSsw(dds_name)
+        state = yield self.api.getDDSFastSW(dds_name)
         self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
         returnValue(bool(state))
 

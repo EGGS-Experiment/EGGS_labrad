@@ -115,23 +115,25 @@ class ARTIQ_API(object):
         self._dds_freq_get_ftw =    np.int32(0)
         self._dds_ampl_get_asf =    np.int32(0)
         self._dds_att_get_mu =      np.int32(0)
-        self._dds_sw_get_status =   np.int32(0)
+        self._dds_sw_get_status =   False
 
         # set holder variables for DDS data setter
         self._dds_num =             np.int32(0)
         self._dds_freq_set_ftw =    np.int32(0)
         self._dds_ampl_set_asf =    np.int32(0)
         self._dds_att_set_mu =      np.int32(0)
-        self._dds_sw_set_status =   np.int32(0)
+        self._dds_sw_set_status =   False
 
         ## precompile hardware functions
         # getters
         self._precompile_func_get_wave =    self.core.precompile(self._getDDSFastWave)
         self._precompile_func_get_att =     self.core.precompile(self._getDDSFastATT)
+        self._precompile_func_get_sw =      self.core.precompile(self._getDDSFastSW)
         # setters
         self._precompile_func_set_freq =    self.core.precompile(self._setDDSFastFTW)
         self._precompile_func_set_ampl =    self.core.precompile(self._setDDSFastASF)
         self._precompile_func_set_att =     self.core.precompile(self._setDDSFastATT)
+        self._precompile_func_set_sw =      self.core.precompile(self._setDDSFastSW)
 
         '''
         TTL PRECOMPILE
@@ -181,6 +183,23 @@ class ARTIQ_API(object):
 
         # return waveform values
         return self._dds_att_get_mu
+
+    @autoreload
+    def getDDSFastSW(self, device_name: TStr) -> TInt32:
+        """
+        todo:document
+        """
+        # get index of the desired dds within _dds_channels
+        try:
+            self._dds_num = self.dds_dict_search_num[device_name]
+        except Exception as e:
+            raise Exception("Error: desired device not found.")
+
+        # call precompiled DDS waveform getter
+        self._precompile_func_get_sw()
+
+        # return waveform values
+        return self._dds_sw_get_status
 
     @autoreload
     def setDDSFastFTW(self, device_name: TStr, freq_ftw: TInt32) -> TNone:
@@ -233,6 +252,23 @@ class ARTIQ_API(object):
         # call precompiled DDS attenuation setter
         self._precompile_func_set_att()
 
+    @autoreload
+    def setDDSFastSW(self, device_name: TStr, sw_state: TBool) -> TNone:
+        """
+        todo: document
+        """
+        # get index of the desired dds within _dds_channels
+        try:
+            self._dds_num = self.dds_dict_search_num[device_name]
+        except Exception as e:
+            raise Exception("Error: desired device not found.")
+
+        # set att as class variable for RPC retrieval
+        self._dds_sw_set_status = bool(sw_state)
+
+        # call precompiled DDS attenuation setter
+        self._precompile_func_set_sw()
+
 
     """
     FAST - KERNEL FUNCTIONS
@@ -250,7 +286,6 @@ class ARTIQ_API(object):
         # get existing waveform from device
         profile_data_mu = dds_dev.read64(_AD9910_REG_PROFILE7)
         self._store_getter_dds_data(profile_data_mu)
-        # self.core.break_realtime()
 
     @kernel(flags={"fast-math"})
     def _getDDSFastATT(self) -> TNone:
@@ -265,7 +300,25 @@ class ARTIQ_API(object):
         # get existing waveform from device
         dds_att_mu = dds_dev.get_att_mu()
         self._store_getter_dds_att(dds_att_mu)
-        # self.core.break_realtime()
+
+    @kernel(flags={"fast-math"})
+    def _getDDSFastSW(self) -> TNone:
+        self.core.break_realtime()
+
+        # get device
+        index_dds = self._return_dds_num()
+        self.core.break_realtime()
+        dds_dev = self._dds_channels[index_dds]
+        self.core.break_realtime()
+        channel_num = dds_dev.chip_select - 4
+
+        # read CPLD status register
+        urukul_cfg = dds_dev.cpld.sta_read()
+        self.core.break_realtime()
+        # extract switch status
+        sw_reg = urukul_sta_rf_sw(urukul_cfg)
+        sw_status = (sw_reg >> channel_num) & 0x1
+        self._store_getter_dds_sw(sw_status)
 
     @kernel(flags={"fast-math"})
     def _setDDSFastFTW(self) -> TNone:
@@ -369,21 +422,40 @@ class ARTIQ_API(object):
         # update device attenuation
         dds_dev.set_att_mu(att_update)
 
+    @kernel(flags={"fast-math"})
+    def _setDDSFastSW(self) -> TNone:
+        self.core.break_realtime()
 
-    ### TMP REMOVE ###
-    @autoreload
-    def getDDSsw(self, dds_name: TStr) -> TInt32:
-        """
-        Get the RF switch status of a DDS channel.
-        """
-        dev = self.dds_dict[dds_name]
-        # get channel number of dds
-        channel_num = dev.chip_select - 4
-        # get board status register
-        urukul_cfg = self._getUrukulStatus(dev.cpld)
-        # extract switch register from status register
+        # get device
+        index_dds = self._return_dds_num()
+        self.core.break_realtime()
+        dds_dev = self._dds_channels[index_dds]
+        self.core.break_realtime()
+        channel_num = dds_dev.chip_select - 4
+
+        # get switch status via rpc
+        sw_state = self._return_setter_dds_sw()
+        self.core.break_realtime()
+
+        # read CPLD status register
+        # note: necessary to ensure existing switch states are not overridden
+        urukul_cfg = dds_dev.cpld.sta_read()
+        self.core.break_realtime()
+
+        # insert new switch status & update device
         sw_reg = urukul_sta_rf_sw(urukul_cfg)
-        return (sw_reg >> channel_num) & 0x1
+        sw_reg &= ~(0x1 << channel_num)
+        if sw_state:
+            sw_reg |= (0x1 << channel_num)
+        dds_dev.cpld.cfg_switches(sw_reg)
+        self.core.break_realtime()
+
+        # also set the TTL DDS switches
+        if sw_state:
+            dds_dev.sw.on()
+        else:
+            dds_dev.sw.off()
+        self.core.break_realtime()
 
 
     """
@@ -398,6 +470,10 @@ class ARTIQ_API(object):
     @rpc(flags={"async"})
     def _store_getter_dds_att(self, att_mu: TInt32) -> TNone:
         self._dds_att_get_mu = att_mu
+
+    @rpc(flags={"async"})
+    def _store_getter_dds_sw(self, sw_status: TBool) -> TNone:
+        self._dds_sw_get_status = sw_status
 
     @rpc
     def _return_dds_num(self) -> TInt32:
@@ -415,13 +491,16 @@ class ARTIQ_API(object):
     def _return_setter_dds_att(self) -> TInt32:
         return self._dds_att_set_mu
 
+    @rpc
+    def _return_setter_dds_sw(self) -> TBool:
+        return self._dds_sw_set_status
+
     @rpc(flags={"async"})
     def _debug_print(self, data) -> TNone:
         print('\n\t\tdebug: {}'.format(data))
     '''new faster functions meant to be used with precompile'''
 
     '''ttl precompile functions'''
-
     @autoreload
     def getTTLCountFastCounts(self, ttlcount_name: TStr, time_count_us: TFloat, num_samples: TInt32) -> TArray(TInt32, 1):
         """
@@ -503,7 +582,6 @@ class ARTIQ_API(object):
 
         # re-precompile relevant functions
         self._getPrecompiledFunctions()
-
 
 
     '''
@@ -738,12 +816,10 @@ class ARTIQ_API(object):
         elif state is False:
             dds_dev.sw.off()
 
-
     @autoreload
     def getDDS(self, dds_name: TStr) -> TTuple([TInt32, TInt32, TInt32]):
         """
-        Get the frequency, amplitude, and phase values
-        (in machine units) of a DDS channel.
+        Get the frequency, amplitude, and phase values (in machine units) of a DDS channel.
         """
         dev = self.dds_dict[dds_name]
         # read in waveform values
@@ -759,7 +835,7 @@ class ARTIQ_API(object):
         return np.int32(ftw), np.int32(asf), np.int32(pow)
 
     @autoreload
-    def setDDS(self, dds_name, param, val):
+    def setDDS(self, dds_name, param: TStr, val: TInt32) -> TNone:
         """
         Manually set the frequency, amplitude, or phase values
         (in machine units) of a DDS channel.
@@ -774,13 +850,12 @@ class ARTIQ_API(object):
         self._setDDS(dev, np.int32(ftw), np.int32(asf), np.int32(pow))
 
     @kernel(flags={"fast-math"})
-    def _setDDS(self, dev, ftw, asf, pow):
+    def _setDDS(self, dev, ftw: TInt32, asf: TInt32, pow: TInt32) -> TNone:
         self.core.break_realtime()
         dev.set_mu(ftw, pow_=pow, asf=asf)
 
-
     @autoreload
-    def getDDSatt(self, dds_name):
+    def getDDSatt(self, dds_name: TStr) -> TInt32:
         """
         Set the DDS attenuation.
         """
@@ -792,7 +867,7 @@ class ARTIQ_API(object):
         return np.int32((att_reg >> (8 * channel_num)) & 0xFF)
 
     @autoreload
-    def setDDSatt(self, dds_name, att_mu):
+    def setDDSatt(self, dds_name: TStr, att_mu: TInt32) -> TNone:
         """
         Set the DDS attenuation.
         """
@@ -802,7 +877,7 @@ class ARTIQ_API(object):
         att_reg = self._setDDSatt(dev.cpld, channel_num, att_mu)
 
     @kernel(flags={"fast-math"})
-    def _setDDSatt(self, cpld, channel_num, att_mu):
+    def _setDDSatt(self, cpld, channel_num, att_mu) -> TNone:
         self.core.break_realtime()
         cpld.bus.set_config_mu(0x0C, 32, 16, 2)
 
@@ -921,24 +996,6 @@ class ARTIQ_API(object):
         self.board_sw.append(urukul_sta_rf_sw(sw_state))
         self.board_att.append(np.uintc(att_state))
 
-    #
-    # # DDS PROFILE/RAM
-    # def getDDSProfile(self, dds_name, profile_num):
-    #     """
-    #     Get the profile number of a DDS channel.
-    #     """
-    #     dev = self.dds_dict[dds_name]
-    #     # get channel number of dds
-    #     # channel_num = dev.chip_select - 4
-    #     # # get board status register
-    #     # urukul_cfg = self._getUrukulStatus(dev.cpld)
-    #     # # extract switch register from status register
-    #     # sw_reg = urukul_sta_rf_sw(urukul_cfg)
-    #     # return (sw_reg >> channel_num) & 0x1
-    #     # self.bus.set_config_mu(SPI_CONFIG | spi.SPI_END, 24,
-    #     #                        SPIT_CFG_WR, CS_CFG)
-    #     # self.bus.write(cfg << 8)
-    #     # self.cfg_reg = cfg
 
     '''
     URUKUL FUNCTIONS
