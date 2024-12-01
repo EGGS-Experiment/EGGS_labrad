@@ -219,7 +219,7 @@ class ARTIQ_Server(ContextServer):
     @setting(33, 'Dataset Delete', dataset_key='s', returns='')
     def datasetDelete(self, c, dataset_key):
         """
-        De;ete a dataset/
+        Delete a dataset.
         Arguments:
             dataset_key (str)   : the name of the dataset.
         """
