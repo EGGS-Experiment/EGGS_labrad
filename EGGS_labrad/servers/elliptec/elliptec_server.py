@@ -20,6 +20,8 @@ import codecs
 encode_hex = codecs.getencoder("hex_codec")
 decode_hex = codecs.getdecoder("hex_codec")
 
+from serial.serialutil import SerialException
+
 from labrad.units import WithUnit
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -456,10 +458,17 @@ class ElliptecServer(SerialDeviceServer, ContextServer):
         # print('\tTX: {:}'.format(msg))
 
         # write to device and read response
-        yield self.ser.acquire()
-        yield self.ser.write(msg)
-        resp = yield self.ser.read_line('\n')
-        self.ser.release()
+        try:
+            yield self.ser.acquire()
+            yield self.ser.write(msg)
+            resp = yield self.ser.read_line('\n')
+        except SerialException as e:
+            print("Error during elliptec _query: {}".format(e))
+            # clear serial buffers and release DeferredLock
+            self.ser.flush_input()
+            self.ser.flush_output()
+        finally:
+            self.ser.release()
 
         # parse device response
         resp = resp.strip()
