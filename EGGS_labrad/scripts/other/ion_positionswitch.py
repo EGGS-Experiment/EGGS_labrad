@@ -6,11 +6,9 @@ from time import time, sleep
 from datetime import datetime
 from EGGS_labrad.config.dc_config import dc_config
 
-import atexit
-import asyncio
 import traceback
 from asyncio import new_event_loop, set_event_loop
-from sipyco.pc_rpc import Client, AsyncioClient
+from sipyco.pc_rpc import AsyncioClient
 from sipyco.asyncio_tools import atexit_register_coroutine
 from artiq.coredevice.comm_moninj import CommMonInj, TTLOverride
 
@@ -55,8 +53,8 @@ try:
     print("CONNECT: LabRAD server connection successful.")
 
     # set up event loop for ARTIQ MonInj
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    loop = new_event_loop()
+    set_event_loop(loop)
 
     # attempt connection to MonInj
     try:
@@ -68,7 +66,7 @@ try:
             )
         )
     except Exception:
-        print("Failed to connect to moninj. Is aqctl_moninj_proxy running?", exc_info=True)
+        print("Failed to connect to moninj. Is aqctl_moninj_proxy running?")
         raise
     else:
         print("CONNECT: MonInj connection successful.")
@@ -93,7 +91,7 @@ try:
     '''
     # open aperture
     ell.move_home()
-    # sleep(0.5)
+    sleep(0.25)
 
     # set up DC server
     dc.polling(False)
