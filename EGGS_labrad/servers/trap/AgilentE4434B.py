@@ -6,7 +6,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 class AgilentE4434BWrapper(GPIBDeviceWrapper):
 
     # GENERAL
-    @inlineCallbacks
+    @inlineCallbacks    
     def reset(self):
         yield self.write('*RST')
 

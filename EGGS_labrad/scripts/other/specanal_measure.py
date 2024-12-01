@@ -14,7 +14,7 @@ name_tmp =              'Spectrum Analyzer Measurement'
 
 # polling parameters
 poll_delay_s =          5.0
-record_time_s =         1000
+record_time_s =         1800.
 
 # spectrum analyzer parameters
 sa_device_num_dj =      0
@@ -45,7 +45,7 @@ try:
     # sa.frequency_span(sa_span_hz)
     # sa.bandwidth_resolution(sa_bandwidth_hz)
     # sa.marker_toggle(1, True)
-    sa.gpib_write('DISP:ENAB 0')
+    # sa.gpib_write('DISP:ENAB 0')
     print("Spectrum analyzer setup successful.")
 
     # create dataset
@@ -61,15 +61,15 @@ try:
         ],
         context=cr
     )
-    dv.add_parameter("spectrum_analyzer_bandwidth",                 sa_bandwidth_hz,    context=cr)
-    dv.add_parameter("spectrum_analyzer_attenuation_internal",      sa_att_int_db,      context=cr)
-    dv.add_parameter("spectrum_analyzer_attenuation_external",      sa_att_ext_db,      context=cr)
+    # dv.add_parameter("spectrum_analyzer_bandwidth",                 sa_bandwidth_hz,    context=cr)
+    # dv.add_parameter("spectrum_analyzer_attenuation_internal",      sa_att_int_db,      context=cr)
+    # dv.add_parameter("spectrum_analyzer_attenuation_external",      sa_att_ext_db,      context=cr)
     print("Data vault setup successful.")
 
 
     # MAIN LOOP
-    starttime = time()
-    elapsedtime = 0
+    starttime =     time()
+    elapsedtime =   0
     while elapsedtime < record_time_s:
 
         try:
@@ -87,7 +87,6 @@ try:
             print("{}::\tError: {}".format(error_time.strftime("%m/%d/%Y, %H:%M:%S"), e))
 
         finally:
-
             # wait given time
             sleep(poll_delay_s)
 
@@ -95,5 +94,11 @@ try:
     sa.gpib_write('DISP:ENAB 1')
 
 except Exception as e:
-    print("Error:", e)
-    cxn.disconnect()
+    print("Error: ", repr(e))
+
+    # attempt to disconnect labrad
+    try:
+        sa.release_device()
+        cxn.disconnect()
+    except:
+        pass
