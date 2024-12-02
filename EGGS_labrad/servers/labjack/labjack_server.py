@@ -17,22 +17,18 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-import numpy as np
-
 from labrad.units import WithUnit
-from labrad.server import LabradServer, Signal, setting
-
+from labrad.server import Signal, setting
 from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
+
 from EGGS_labrad.servers import ContextServer
-from labrad.logging import setupLogging, _LoggerWriter
-import sys
 
 from labjack import ljm
 # todo: comm lock
 # todo: signals for updating
 
 
-class LabJackServer(LabradServer):
+class LabJackServer(ContextServer):
     """
     Talks to LabJack's T-series devices via the LJM module.
     """
@@ -206,7 +202,7 @@ class LabJackServer(LabradServer):
         # get the values of all the DIO ports
         DIO_values = yield ljm.eReadName(self.device_handle, 'DIO_STATE')
 
-        # return the vlaue of the DIO port requested
+        # return the value of the DIO port requested
         returnValue(int(bin(int(DIO_values))[-ind]))
 
     @inlineCallbacks

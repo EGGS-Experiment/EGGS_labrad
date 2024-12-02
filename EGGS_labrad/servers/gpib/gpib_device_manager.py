@@ -41,11 +41,15 @@ UNKNOWN = '<unknown>'
 # todo: write arg/return docstrings
 
 
-def parseIDNResponse(s):
+def parseIDNResponse(idn_str):
     """
     Parse the response from *IDN? to get mfr and model info.
+    Arguments:
+        idn_str (str):  the *IDN? response.
+    Returns:
+                (str):  the manufacturer and model info.
     """
-    mfr, model, ver, rev = s.split(',', 3)
+    mfr, model, ver, rev = idn_str.split(',', 3)
     # convert response to uppercase
     return mfr.strip().upper() + ' ' + model.strip().upper()
 
@@ -67,12 +71,12 @@ class GPIBDeviceManager(LabradServer):
     @inlineCallbacks
     def initServer(self):
         """
-        Initialize the server after connecting to LabRAD.
+        Initialize the server after connecting to the LabRAD manager.
         """
-        self.knownDevices = {}          # maps (server, channel) to (name, idn)
-        self.deviceServers = {}         # maps device name to list of interested servers.
-                                            # each interested server is {'target':<>,'context':<>,'messageID':<>}
-        self.identFunctions = {}        # maps server to (setting, ctx) for ident
+        self.knownDevices =     {}      # maps (server, channel) to (name, idn)
+        self.deviceServers =    {}      # maps device name to list of interested servers.
+                                        # each interested server is {'target':<>,'context':<>,'messageID':<>}
+        self.identFunctions =   {}      # maps server to (setting, ctx) for ident
         self.identLock = DeferredLock()
         
         # named messages are sent with source ID first, which we ignore
@@ -89,16 +93,19 @@ class GPIBDeviceManager(LabradServer):
         yield self.refreshDeviceLists()
 
 
-    # DEVICE DETECTION & IDENTIFICATION
+    '''
+    DEVICE DETECTION & IDENTIFICATION
+    '''
     @inlineCallbacks
     def refreshDeviceLists(self):
         """
         Ask all GPIB bus servers for their available GPIB devices.
         """
-        servers = [s for n, s in self.client.servers.items()
-                     if (('GPIB Bus' in n) or ('gpib_bus' in n)) and \
-                        (('List Devices' in s.settings) or \
-                         ('list_devices' in s.settings))]
+        servers = [
+            s for n, s in self.client.servers.items()
+            if (('GPIB Bus' in n) or ('gpib_bus' in n)) and
+               (('List Devices' in s.settings) or ('list_devices' in s.settings))
+        ]
         serverNames = [s.name for s in servers]
         print('Pinging servers: {}'.format(serverNames))
         resp = yield DeferredList([s.list_devices() for s in servers])
@@ -196,7 +203,9 @@ class GPIBDeviceManager(LabradServer):
             print('Error during ident: {}'.format(e))
 
 
-    # SIGNAL FUNCTIONS
+    '''
+    SIGNAL FUNCTIONS
+    '''
     @inlineCallbacks
     def gpib_device_connect(self, gpibBusServer, channel):
         """
@@ -296,7 +305,9 @@ class GPIBDeviceManager(LabradServer):
             del self.identFunctions[src]
 
 
-    # SETTINGS
+    '''
+    SETTINGS
+    '''
     @setting(1, 'Register Server',
              devices=['s', '*s'], messageID='w',
              returns='*(s{device} s{server} s{address}, b{isConnected})')
@@ -381,4 +392,3 @@ __server__ = GPIBDeviceManager()
 if __name__ == '__main__':
     from labrad import util
     util.runServer(__server__)
-    
