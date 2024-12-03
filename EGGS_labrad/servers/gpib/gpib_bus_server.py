@@ -114,7 +114,9 @@ class GPIBBusServer(PollingServer):
         print('Polling failed.')
 
 
-    # DEVICES & MESSAGES
+    '''
+    DEVICES & MESSAGES
+    '''
     def getDevice(self, c):
         """
         Returns the GPIB device stored within the given context, if any.
@@ -193,7 +195,9 @@ class GPIBBusServer(PollingServer):
         self.client.manager.send_named_message(msg, (self.name, addr))
 
 
-    # SETTINGS
+    '''
+    SETTINGS
+    '''
     @setting(0, addr='s', returns='s')
     def address(self, c, addr=None):
         """

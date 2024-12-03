@@ -58,20 +58,23 @@ class AndorServer(PollingServer):
         self.last_image =           None
         self.acquisition_running =  False
 
-    @inlineCallbacks
     def stopServer(self):
         super().stopServer()
 
         # shut down the camera when the server is stopped
         try:
-            print('acquiring: {}'.format(self.stopServer.__name__))
-            yield self.lock.acquire()
-            print('acquired : {}'.format(self.stopServer.__name__))
-            self.camera.shut_down()
-            print('releasing: {}'.format(self.stopServer.__name__))
+            # release deferred lock and shut down immediately
             self.lock.release()
+            self.camera.shut_down()
+
+            # print('acquiring: {}'.format(self.stopServer.__name__))
+            # yield self.lock.acquire()
+            # print('acquired : {}'.format(self.stopServer.__name__))
+            # self.camera.shut_down()
+            # print('releasing: {}'.format(self.stopServer.__name__))
+            # self.lock.release()
         except Exception as e:
-            print(e)
+            print(repr(e))
             pass
 
 

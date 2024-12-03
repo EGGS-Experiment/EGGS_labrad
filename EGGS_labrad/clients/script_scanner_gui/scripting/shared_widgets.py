@@ -6,7 +6,6 @@ from PyQt5 import QtCore, QtWidgets
 __all__ = ["fixed_width_button", "progress_bar"]
 # todo: try to use QProgressBar instead
 
-
 class fixed_width_button(QtWidgets.QPushButton):
     def __init__(self, text, size):
         super(fixed_width_button, self).__init__(text)
@@ -15,7 +14,6 @@ class fixed_width_button(QtWidgets.QPushButton):
 
     def sizeHint(self):
         return QtCore.QSize(*self.size)
-
 
 class progress_bar(QtWidgets.QProgressBar):
     def __init__(self, reactor, parent=None):
