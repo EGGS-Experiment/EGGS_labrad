@@ -29,6 +29,12 @@ TMP_ID = 456983
 # todo: make polling server and grab traces periodically
 # todo: make connection to artiq so we can set warnings automatically
 
+FREQ_LIST = [
+    '397nm',
+    '866nm',
+    '854nm'
+]
+
 
 class WarningServer(ContextServer):
     """
@@ -51,6 +57,7 @@ class WarningServer(ContextServer):
         self.wm_channels = {
             ch_config[0]: (ch_name, float(ch_config[1]))    # ch_num: (ch_name, lock_freq_thz)
             for ch_name, ch_config in self.wm_config.channels.items()
+            if ch_name in FREQ_LIST
         }
 
         # set up wavemeter values
