@@ -20,7 +20,8 @@ class PMT_client(GUIClient):
     servers = {
         'aq': 'ARTIQ Server',
         'dv': 'Data Vault',
-        'ell': 'Elliptec Server'
+        'ell': 'Elliptec Server',
+        'labjack': 'LabJack Server'
     }
 
     def getgui(self):
@@ -44,6 +45,16 @@ class PMT_client(GUIClient):
         # connect to signals
         yield self.aq.signal__exp_running(EXPID)
         yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID)
+
+        # connect to labjack
+        self.flipper_port_name = "DIO3"
+        device_handle = yield self.labjack.device_info()
+
+        if device_handle == -1:
+            # get device list
+            dev_list = yield self.labjack.device_list()
+            # assume desired labjack is first in list
+            yield self.labjack.device_select(dev_list[0])
 
     def initData(self):
         # set default values
@@ -149,9 +160,12 @@ class PMT_client(GUIClient):
     @inlineCallbacks
     def flipper_pulse(self):
         # send TTL to flipper mount
-        yield self.aq.ttl_set("ttl15", 1)
+        yield self.labjack.write_name(self.flipper_port_name, 1)
         sleep(.1)
-        yield self.aq.ttl_set("ttl15", 0)
+        yield self.labjack.write_name(self.flipper_port_name, 0)
+        # yield self.aq.ttl_set("ttl15", 1)
+        # sleep(.1)
+        # yield self.aq.ttl_set("ttl15", 0)
 
     @inlineCallbacks
     def aperture_toggle(self, status):
