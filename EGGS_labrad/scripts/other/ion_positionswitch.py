@@ -1,5 +1,5 @@
 """
-Use pulsing of the A-ramp to swap ion positions
+Use pulsing of the A-ramp to swap ion position.
 """
 import labrad
 from time import time, sleep
@@ -18,9 +18,9 @@ from artiq.coredevice.comm_moninj import CommMonInj, TTLOverride
 exp_name = 'ion_positionswitch_aramp'
 
 # a-ramp parameters
+ARAMP_VOLTAGE_HIGH =    11.5
 ARAMP_VOLTAGE_LOW =     2.8
-ARAMP_VOLTAGE_HIGH =    8.5
-ARAMP_DELAY_S =         0.9
+ARAMP_DELAY_S =         1.6
 
 # ARTIQ moninj parameters
 ARTIQ_MASTER_IP =       '192.168.1.48'
@@ -91,7 +91,7 @@ try:
     '''
     # open aperture
     ell.move_home()
-    sleep(0.25)
+    sleep(0.1)
 
     # set up DC server
     dc.polling(False)
@@ -117,7 +117,7 @@ try:
         dc.voltage_fast(ARAMP_CHAN, ARAMP_VOLTAGE_HIGH)
         sleep(ARAMP_DELAY_S)
         dc.voltage_fast(ARAMP_CHAN, ARAMP_VOLTAGE_LOW)
-        sleep(2.0)
+        sleep(1.0)
 
     except Exception as e:
         print("\tError: {}".format(e))
