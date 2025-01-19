@@ -108,8 +108,8 @@ class PMT_gui(QFrame):
         # record
         self.record_button = TextChangingButton(("Stop Recording", "Start Recording"))
         # Grant's real magic button a.k.a. flipper
-        self.flip = QPushButton("Flip")
-        self.flip.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.flipper_button = QPushButton("Flip")
+        self.flipper_button.setFont(QFont('MS Shell Dlg 2', pointSize=10))
         # aperture open
         self.aperture_button = TextChangingButton(("Close Aperture", "Open Aperture"))
         self.aperture_button.setFont(QFont('MS Shell Dlg 2', pointSize=10))
@@ -136,7 +136,7 @@ class PMT_gui(QFrame):
         layout.addWidget(self.lockswitch,               9, 2)
 
         # flipper
-        layout.addWidget(self.flip,                     10, 0)
+        layout.addWidget(self.flipper_button,           10, 0)
         # aperture
         layout.addWidget(self.aperture_button,          10, 1)
         # recording
