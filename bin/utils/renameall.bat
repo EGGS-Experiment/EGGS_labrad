@@ -1,3 +1,6 @@
+:: renameall.bat
+::  Programmatically rename all files. Note - I forgot how this works exactly lol - prob don't use.
+
 @echo off
 setlocal EnableDelayedExpansion
 

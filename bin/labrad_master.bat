@@ -49,7 +49,7 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:3000
 @REM Run all device servers as specified, then open the relevant python shell
 IF %server_flag%==1 (
     @REM Start ARTIQ Server (for LabRAD interfacing)
-    START "ARTIQ Server" /min CMD "/k activate labart3 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\ARTIQ\artiq_server.py"
+    TIMEOUT 8 > NUL && START "ARTIQ Server" /min CMD "/k activate labart3 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\ARTIQ\artiq_server.py"
 
     @REM Start relevant LabRAD clients (e.g. EGGS GUI, RSG Client, DDS Client)
     START /min CMD /c "%PROG_HOME%\utils\start_labrad_clients.bat"
@@ -63,6 +63,7 @@ GOTO EOF
 
 
 @REM Display help message
+@REM todo: display this message in event of bad flag
 :HELP
 @ECHO usage: labrad_master [-h] [-s] [-r]
 @ECHO:
