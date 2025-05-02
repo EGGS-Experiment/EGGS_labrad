@@ -6,7 +6,7 @@
 
 @REM Set up CMD
 TITLE Real Simple Grapher
-CALL conda activate grapher
+CALL conda activate labart
 
 @REM Set up file location
 SET FILE_DIR=%~dp0..\..\..\RealSimpleGrapher\rsg_client.py
