@@ -32,7 +32,8 @@ TMP_ID = 456983
 FREQ_LIST = [
     '397nm',
     '866nm',
-    '854nm'
+    '854nm',
+    '729nm - Inj.'
 ]
 
 
