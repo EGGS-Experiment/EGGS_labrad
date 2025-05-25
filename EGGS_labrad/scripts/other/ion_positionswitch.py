@@ -18,7 +18,7 @@ from artiq.coredevice.comm_moninj import CommMonInj, TTLOverride
 exp_name = 'ion_positionswitch_aramp'
 
 # a-ramp parameters
-ARAMP_VOLTAGE_HIGH =    13.5
+ARAMP_VOLTAGE_HIGH =    14.5
 ARAMP_VOLTAGE_LOW =     2.8
 ARAMP_DELAY_S =         1.6
 
