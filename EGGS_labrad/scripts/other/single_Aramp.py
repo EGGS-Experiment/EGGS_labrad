@@ -10,7 +10,7 @@ dc=cxn.dc_server
 
 #dc.voltage(23,18.277)
 #dc.voltage_fast(27,1)
-dc.voltage_fast(23,19.5)
+dc.voltage_fast(23, 16.8)
 
 time.sleep(0.9)
 #dc.voltage(23,0)
