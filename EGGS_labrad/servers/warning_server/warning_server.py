@@ -29,12 +29,16 @@ TMP_ID = 456983
 # todo: make polling server and grab traces periodically
 # todo: make connection to artiq so we can set warnings automatically
 
+# list of wavemeter channel names to monitor
 FREQ_LIST = [
     '397nm',
     '866nm',
     '854nm',
     '729nm - Inj.'
 ]
+
+# frequency error threshold
+WM_TOL_THZ = 1e-4 # 100 MHz unlock tolerance
 
 
 class WarningServer(ContextServer):
@@ -62,7 +66,7 @@ class WarningServer(ContextServer):
         }
 
         # set up wavemeter values
-        self.wm_tol_thz = 0.000100  # 100 MHz unlock tolerance
+        self.wm_tol_thz = WM_TOL_THZ
 
         # create connection to wavemeter labrad
         self.cxn_wm = yield connectAsync(
