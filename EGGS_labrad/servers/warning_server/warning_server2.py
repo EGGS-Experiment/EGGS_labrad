@@ -28,6 +28,11 @@ from socket import gethostname
 import numpy as np
 import scipy.ndimage as ndi
 
+from sipyco.pc_rpc import BestEffortClient
+
+_ARTIQ_HOST = '192.168.1.48'
+_ARTIQ_PORT = 3251
+
 
 
 
@@ -110,8 +115,8 @@ class WarningServer2(PollingServer):
         """
         Establish connection to ARTIQ master.
         """
-        self.scheduler = Client('192.168.1.48', 3251, 'schedule')
-        self.datasets = Client('192.168.1.48', 3251, 'dataset_db')
+        self.scheduler = BestEffortClient(_ARTIQ_HOST, _ARTIQ_PORT, 'schedule')
+        self.datasets = BestEffortClient(_ARTIQ_HOST, _ARTIQ_PORT, 'dataset_db')
 
     @inlineCallbacks
     def _poll(self):
@@ -207,4 +212,4 @@ class WarningServer2(PollingServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(WarningServer())
+    util.runServer(WarningServer2())

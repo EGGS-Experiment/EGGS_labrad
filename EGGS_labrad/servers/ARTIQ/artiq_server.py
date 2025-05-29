@@ -87,10 +87,10 @@ class ARTIQ_Server(ContextServer):
         Used to get datasets, submit experiments, and monitor devices.
         """
         # connect to master clients
-        from sipyco.pc_rpc import Client
+        from sipyco.pc_rpc import BestEffortClient
         try:
-            self.scheduler = Client('192.168.1.48', 3251, 'schedule')
-            self.datasets = Client('192.168.1.48', 3251, 'dataset_db')
+            self.scheduler = BestEffortClient('192.168.1.48', 3251, 'schedule')
+            self.datasets = BestEffortClient('192.168.1.48', 3251, 'dataset_db')
         except Exception as e:
             print("Unable to connect to ARTIQ Master. Scheduler and datasets disabled.")
             print(repr(e))
