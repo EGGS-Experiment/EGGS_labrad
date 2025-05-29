@@ -1,5 +1,6 @@
 :: LabRAD Master
 ::  Starts the LabRAD Master.
+@REM todo: add error handling (e.g. if we don't have chromium installed)
 
 @ECHO OFF
 @SETLOCAL EnableDelayedExpansion
@@ -13,9 +14,11 @@ CALL "%PROG_HOME%\labrad_prepare.bat"
 @REM Parse arguments for server activation
 SET /A server_flag=0
 SET /A raw_flag=0
+SET /A client_flag=0
 FOR %%x IN (%*) DO (
     IF "%%x"=="-s" (SET /a server_flag=1)
     IF "%%x"=="-r" (SET /a raw_flag=1)
+    IF "%%x"=="-c" (SET /a client_flag=1)
     IF "%%x"=="-h" (GOTO HELP)
     IF "%%x"=="--help" (GOTO HELP)
 )
@@ -49,8 +52,11 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:3000
 @REM Run all device servers as specified, then open the relevant python shell
 IF %server_flag%==1 (
     @REM Start ARTIQ Server (for LabRAD interfacing)
-    START "ARTIQ Server" /min CMD "/k activate labart3 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\ARTIQ\artiq_server.py"
+    TIMEOUT 2 > NUL && START "ARTIQ Server" /min CMD "/k activate labart3 && python %EGGS_LABRAD_ROOT%\EGGS_labrad\servers\ARTIQ\artiq_server.py"
+)
 
+@REM Open target clients for user
+IF %client_flag%==1 (
     @REM Start relevant LabRAD clients (e.g. EGGS GUI, RSG Client, DDS Client)
     START /min CMD /c "%PROG_HOME%\utils\start_labrad_clients.bat"
 
@@ -63,14 +69,16 @@ GOTO EOF
 
 
 @REM Display help message
+@REM todo: display this message in event of bad flag
 :HELP
 @ECHO usage: labrad_master [-h] [-s] [-r]
 @ECHO:
 @ECHO LabRAD Master
 @ECHO Optional Arguments:
 @ECHO    -h, --help          show this message and exit
-@ECHO    -s                  start all day-to-day device servers (specific to EGGS Experiment)
 @ECHO    -r                  start only the labrad core (i.e. the manager, a node, and the Chromium GUI)
+@ECHO    -s                  start all day-to-day device servers (specific to EGGS Experiment)
+@ECHO    -c                  open labrad clients (via start_labrad_clients.bat)
 @ECHO:
 
 

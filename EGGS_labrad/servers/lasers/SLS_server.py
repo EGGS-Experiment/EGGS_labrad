@@ -187,9 +187,11 @@ class SLSServer(SerialDeviceServer, PollingServer):
         """
         Adjust PID servo for given parameter.
         Arguments:
-            servo_target    (string): target of the PID lock
-            param_name      (string): the parameter to change
-            param_val       ()      : value to change
+            servo_target    (string): target of the PID lock.
+                Can be one of ['current', 'pzt', 'tx'].
+            param_name      (string): the parameter to change.
+                Can be one of ['p, 'i', 'd', 'set', 'loop', 'filter'].
+            param_val       (?)      : value to set.
         """
         tgstring = {'current': 'Current', 'pzt': 'PZT', 'tx': 'TX'}
         chstring = {'p': 'ServoPropGain', 'i': 'ServoIntGain', 'd': 'ServoDiffGain', 'set': 'ServoSetpoint',
@@ -199,6 +201,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         except KeyError:
             print('Invalid target or parameter. Target must be one of [\'current\',\'pzt\',\'tx\'].'
                   'Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
+            returnValue('ERR')
         resp = yield self._write_and_query(string_tmp, param_val)
         returnValue(resp)
 

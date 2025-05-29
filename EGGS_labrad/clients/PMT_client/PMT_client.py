@@ -20,7 +20,8 @@ class PMT_client(GUIClient):
     servers = {
         'aq': 'ARTIQ Server',
         'dv': 'Data Vault',
-        'ell': 'Elliptec Server'
+        'ell': 'Elliptec Server',
+        'labjack': 'LabJack Server'
     }
 
     def getgui(self):
@@ -45,11 +46,21 @@ class PMT_client(GUIClient):
         yield self.aq.signal__exp_running(EXPID)
         yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID)
 
+        # connect to labjack
+        self.flipper_port_name = "DIO3"
+        device_handle = yield self.labjack.device_info()
+
+        if device_handle == -1:
+            # get device list
+            dev_list = yield self.labjack.device_list()
+            # assume desired labjack is first in list
+            yield self.labjack.device_select(dev_list[0])
+
     def initData(self):
         # set default values
         self.gui.sample_time.setValue(3000)
-        self.gui.sample_num.setValue(50)
-        self.gui.poll_interval.setValue(0.5)
+        self.gui.sample_num.setValue(10)
+        self.gui.poll_interval.setValue(0.1)
 
     def initGUI(self):
         # general
@@ -59,7 +70,7 @@ class PMT_client(GUIClient):
         self.gui.read_once_switch.clicked.connect(lambda: self.update_counts_once())
         self.gui.read_cont_switch.toggled.connect(lambda status: self.toggle_polling(status))
         # imaging utilities
-        self.gui.flip.clicked.connect(lambda: self.flipper_pulse())
+        self.gui.flipper_button.clicked.connect(lambda: self.flipper_pulse())
         self.gui.aperture_button.toggled.connect(lambda status: self.aperture_toggle(status))
 
 
@@ -144,14 +155,17 @@ class PMT_client(GUIClient):
         self.gui.sample_num.setEnabled(not status)
         self.gui.poll_interval.setEnabled(not status)
         self.gui.read_once_switch.setEnabled(not status)
-        self.gui.flip.setEnabled(not status)
+        self.gui.flipper_button.setEnabled(not status)
 
     @inlineCallbacks
     def flipper_pulse(self):
         # send TTL to flipper mount
-        yield self.aq.ttl_set("ttl15", 1)
+        yield self.labjack.write_name(self.flipper_port_name, 1)
         sleep(.1)
-        yield self.aq.ttl_set("ttl15", 0)
+        yield self.labjack.write_name(self.flipper_port_name, 0)
+        # yield self.aq.ttl_set("ttl15", 1)
+        # sleep(.1)
+        # yield self.aq.ttl_set("ttl15", 0)
 
     @inlineCallbacks
     def aperture_toggle(self, status):
@@ -187,11 +201,13 @@ class PMT_client(GUIClient):
         self.gui.artiq_monitor.setStatus(msg)
 
         # workaround: enable aperture in case we need to quickly open it
+        # workaround: 2025/01/19 - enable flipper since it's no longer run by artiq
         exp_running_status, rid = msg
         self.gui.setEnabled(True)
         self._lock(not exp_running_status)
         self.gui.lockswitch.setEnabled(not exp_running_status)
         self.gui.aperture_button.setEnabled(True)
+        self.gui.flipper_button.setEnabled(True)
 
     def _lock(self, status):
         # note: don't lock aperture since we may need to open it partway through
@@ -200,7 +216,7 @@ class PMT_client(GUIClient):
         self.gui.sample_time.setEnabled(status)
         self.gui.sample_num.setEnabled(status)
         self.gui.poll_interval.setEnabled(status)
-        self.gui.flip.setEnabled(status)
+        self.gui.flipper_button.setEnabled(status)
         self.gui.record_button.setEnabled(status)
 
 

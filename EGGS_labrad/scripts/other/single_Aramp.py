@@ -10,7 +10,7 @@ dc=cxn.dc_server
 
 #dc.voltage(23,18.277)
 #dc.voltage_fast(27,1)
-dc.voltage_fast(23, 13.2)
+dc.voltage_fast(23, 17.8)
 
 time.sleep(0.9)
 #dc.voltage(23,0)
@@ -18,5 +18,5 @@ time.sleep(0.9)
 dc.voltage_fast(23, 2.8)
 #dc.toggle(23,0)
 #dc.toggle(27,1)
-dc.toggle(23,1)
+# dc.toggle(23,1)
 cxn.disconnect()
