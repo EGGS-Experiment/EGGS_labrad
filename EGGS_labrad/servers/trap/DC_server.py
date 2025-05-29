@@ -274,7 +274,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         """
         # quickly write and read response
         yield self.ser.acquire()
-        yield self.ser.write('vf.w {:d} {:f}\r\n'.format(channel, voltage))
+        yield self.ser.write('vf.w {:d} {:.1f}\r\n'.format(channel, voltage))
         resp = yield self.ser.read_line('\n')
         self.ser.release()
 
@@ -285,6 +285,30 @@ class DCServer(SerialDeviceServer, PollingServer):
         # note: temporarily removed voltage updating for speed
         # self.voltage_update((channel, resp), self.getOtherListeners(c))
         returnValue(resp)
+
+    @setting(213, 'Voltage Fast 2', channel='i', voltage=['v', 'i'], returns='')
+    def voltage_fast_2(self, c, channel, voltage):
+        """
+        Set the voltage of a channel quickly - RDX.
+        Arguments:
+            channel (int)   : the channel to read/write.
+            voltage (float) : the channel voltage to set.
+        """
+        # create voltage_fast message
+        msg_voltagefast = b' '.join([
+            b'x',
+            bytes.fromhex('{:02x}'.format(channel)),
+            bytes.fromhex('{:08x}'.format(round(voltage * 79.1026938)))
+        ])
+
+        # quickly write (no response reading)
+        yield self.ser.acquire()
+        yield self.ser.write(msg_voltagefast)
+        self.ser.release()
+
+        # send signal to all other listeners
+        # note: temporarily removed voltage updating for speed
+        # self.voltage_update((channel, resp), self.getOtherListeners(c))
 
     @setting(221, 'Voltage All', returns='*v')
     def voltage_all(self, c):
