@@ -13,12 +13,12 @@ num_points = 512
 
 
 # connect to wavemeter labrad
-cxn_wm = labrad.connect('10.97.111.8', password='lab')
+cxn_wm = labrad.connect('10.97.111.8', username='', password='lab')
 wm = cxn_wm.multiplexerserver
 cr_wm = cxn_wm.context()
 
 # connect to eggs labrad
-cxn_eggs = labrad.connect('localhost', password='lab')
+cxn_eggs = labrad.connect('localhost', username='', password='lab')
 dv = cxn_eggs.data_vault
 cr_dv = cxn_eggs.context()
 

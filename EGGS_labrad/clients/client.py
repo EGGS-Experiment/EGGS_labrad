@@ -98,10 +98,14 @@ class GUIClient(ABC):
         """
         Set up the client logger.
         """
-        # set logger as instance variable
-        self.logger = setupLogging('labrad.client', sender=self)
-        # redirect stdout
-        sys.stdout = _LoggerWriter(self.logger.info)
+        # todo: make logger an empty func somehow
+        try:
+            # set logger as instance variable
+            self.logger = setupLogging('labrad.client', sender=self)
+            # redirect stdout
+            sys.stdout = _LoggerWriter(self.logger.info)
+        except Exception as e:
+            print("Warning: Unable to setup logging: {}".format(repr(e)))
 
 
     # STARTUP DISPATCHERS
