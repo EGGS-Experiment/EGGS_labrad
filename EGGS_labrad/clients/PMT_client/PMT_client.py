@@ -47,7 +47,7 @@ class PMT_client(GUIClient):
         yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID)
 
         # connect to labjack
-        self.flipper_port_name = "DIO3"
+        self.flipper_port_name = "EIO7"
         device_handle = yield self.labjack.device_info()
 
         if device_handle == -1:
