@@ -304,6 +304,7 @@ class DCServer(SerialDeviceServer, PollingServer):
         # quickly write (no response reading)
         yield self.ser.acquire()
         yield self.ser.write(msg_voltagefast)
+        resp = yield self.ser.read_line('\n')   # quick read - only ACK
         self.ser.release()
 
         # send signal to all other listeners
