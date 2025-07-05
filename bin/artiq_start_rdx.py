@@ -39,12 +39,12 @@ def main():
     ]
     ctlmgr_args = [
         arg_cmd
-        for arg in artiq_config['master_args']
+        for arg in artiq_config['ctlmgr_args']
         for arg_cmd in arg
     ]
     dashboard_args = [
         arg_cmd
-        for arg in artiq_config['master_args']
+        for arg in artiq_config['dashboard_args']
         for arg_cmd in arg
     ]
 
@@ -52,6 +52,15 @@ def main():
     master_cmd    = [sys.executable, "-u", "-m", "artiq.frontend.artiq_master"] + master_args
     dashboard_cmd = [sys.executable,       "-m", "artiq.frontend.artiq_dashboard"] + dashboard_args
     ctlmgr_cmd    = [sys.executable,       "-m", "artiq_comtools.artiq_ctlmgr"] + ctlmgr_args
+
+    # th0 = (
+    #     "artiq_master -v -v -g -r  --experiment-subdir experiments"
+    #     "--device-db %ARTIQ_ROOT%/LAX_exp/%ddb_name%"
+    #     "--dataset-db % ARTIQ_ROOT % / dataset_db.mdb"
+    #     "--bind *"
+    #     "--name EGGS1_ARTIQ_MASTER"
+    #     "--log-file %HOME%\.labrad\logfiles\artiq\ %LOGFILENAME %.log"
+    # )
 
     # create master subprocess
     with subprocess.Popen(master_cmd,
@@ -66,14 +75,14 @@ def main():
                 master_ready = True
                 break
 
-        # start clients/servers only after master has started
-        if master_ready:
-            with subprocess.Popen(dashboard_cmd):
-                with subprocess.Popen(ctlmgr_cmd):
-                    for line in iter(master.stdout.readline, ""):
-                        sys.stdout.write(line)
-        else:
-            print("artiq_start_rdx: master failed to start, exiting.")
+        # # start clients/servers only after master has started
+        # if master_ready:
+        #     with subprocess.Popen(dashboard_cmd):
+        #         with subprocess.Popen(ctlmgr_cmd):
+        #             for line in iter(master.stdout.readline, ""):
+        #                 sys.stdout.write(line)
+        # else:
+        #     print("artiq_start_rdx: master failed to start, exiting.")
 
 
 if __name__ == "__main__":

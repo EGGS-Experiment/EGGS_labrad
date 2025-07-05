@@ -35,12 +35,12 @@ config_dict = {
 
     # arguments for artiq_ctlmgr
     'ctlmgr_args': [
+        # IP address of the master; used by artiq_ctlmgr and artiq_dashboard
+        ('--server', '192.168.1.48'),
         # IP address of controllers to launch (local address of master connection by default)
         ('--host-filter', '192.168.1.48'),
         # additional hostname or IP address to bind to; use ‘*’ to bind to all interfaces (default: [])
         ('--bind', '*'),
-        # IP address of the master; used by artiq_ctlmgr and artiq_dashboard
-        ('--server', '192.168.1.48'),
     ],
 
     # arguments for artiq_dashboard
