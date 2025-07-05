@@ -32,25 +32,6 @@ def main():
     artiq_config = _artiq_config.config_dict
 
     # process artiq config
-    # master_args = [
-    #     '--{:s} {:s}'.format(*arg)
-    #     for arg in artiq_config['master_args']
-    # ]
-    # ctlmgr_args = [
-    #     '--{:s} {:s}'.format(*arg)
-    #     for arg in artiq_config['ctlmgr_args']
-    # ]
-    # dashboard_args = [
-    #     '--{:s} {:s}'.format(*arg)
-    #     for arg in artiq_config['dashboard_args']
-    # ]
-
-    # master_args = [
-    #     arg_cmd
-    #     for arg in artiq_config['master_args']
-    #     for arg_cmd in ('--{:s}'.format(arg[0]), arg[1])
-    # ]
-
     master_args = [
         arg_cmd
         for arg in artiq_config['master_args']
@@ -66,7 +47,6 @@ def main():
         for arg in artiq_config['master_args']
         for arg_cmd in arg
     ]
-    print(master_args)
 
     # prepare execution strings
     master_cmd    = [sys.executable, "-u", "-m", "artiq.frontend.artiq_master"] + master_args
