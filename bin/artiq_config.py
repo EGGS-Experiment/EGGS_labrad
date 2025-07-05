@@ -10,25 +10,25 @@ config_dict = {
     # arguments for artiq_master
     'master_args': [
         # display name for artiq_master
-        ('name', 'EGGS1_ARTIQ_MASTER'),
+        ('--name', 'EGGS1_ARTIQ_MASTER'),
         # additional hostname or IP address to bind to; use ‘*’ to bind to all interfaces (default: [])
-        ('bind', '*'),
+        ('--bind', '*'),
         # use git repository backend
-        ('git', ''),
+        ('--git',),
         # logging verbosity level: 'verbose' to increase, 'quiet' to decrease (default is WARNING)
-        ('verbose', ''),
-        ('verbose', ''),
+        ('--verbose',),
+        ('--verbose',),
 
         # path to experiment repository
-        ('repository', 'C:\\Users\\EGGS1\\Documents\\Code\\artiq-master\\repository'),
+        ('--repository', 'C:\\Users\\EGGS1\\Documents\\Code\\artiq-master\\repository'),
         # path to subdirectory that contains actual experiments (must be subdir of path_repository)
-        ('experiment-subdbdir', 'experiments'),
+        ('--experiment-subdir', 'experiments'),
         # path to device_db.py file
-        ('device-db', 'C:\\Users\\EGGS1\\Documents\\Code\\artiq-master\\LAX_exp\\device-db.py'),
+        ('--device-db', 'C:\\Users\\EGGS1\\Documents\\Code\\artiq-master\\LAX_exp\\device_db.py'),
         # path to dataset_db.mdb file
-        ('dataset-db', 'C:\\Users\\EGGS1\\Documents\\Code\\artiq-master\\dataset_db.mdb'),
+        ('--dataset-db', 'C:\\Users\\EGGS1\\Documents\\Code\\artiq-master\\dataset_db.mdb'),
         # path to logfile
-        ('log-file', 'C:\\Users\\EGGS1\\Documents\\.labrad\\logfiles\\artiq\\{:s}'.format(
+        ('--log-file', 'C:\\Users\\EGGS1\\Documents\\.labrad\\logfiles\\artiq\\{:s}'.format(
             strftime("%Y_%m_%d__%H_%M_%S.log", localtime())
         )),
     ],
@@ -36,17 +36,17 @@ config_dict = {
     # arguments for artiq_ctlmgr
     'ctlmgr_args': [
         # IP address of controllers to launch (local address of master connection by default)
-        ('host-filter', '192.168.1.48'),
+        ('--host-filter', '192.168.1.48'),
         # additional hostname or IP address to bind to; use ‘*’ to bind to all interfaces (default: [])
-        ('bind', '*'),
+        ('--bind', '*'),
         # IP address of the master; used by artiq_ctlmgr and artiq_dashboard
-        ('server', '192.168.1.48'),
+        ('--server', '192.168.1.48'),
     ],
 
     # arguments for artiq_dashboard
     'dashboard_args': [
         # IP address of the master; used by artiq_ctlmgr and artiq_dashboard
-        ('server', '192.168.1.48'),
+        ('--server', '192.168.1.48'),
     ],
 }
 
