@@ -2,12 +2,12 @@
 ### BEGIN NODE INFO
 [info]
 name = Toptica Server
-version = 1.0
+version = 1.0.1
 description = Talks to Toptica devices.
 
 [startup]
 cmdline = %PYTHON% %FILE%
-timeout = 20
+timeout = 40
 
 [shutdown]
 message = 987654321
@@ -27,93 +27,148 @@ PIEZOSIGNAL =           913550
 # todo: send signal when values change
 # todo: subscribe to when values change
 
+DEVICE_TYPE_PREFIX = {
+    'DLpro':        'dl',
+    'BoosTApro':    'amp',
+}
+
 
 class TopticaServer(PollingServer):
     """
     Talks to Toptica devices.
     """
-
     name =      'Toptica Server'
     regKey =    'Toptica Server'
 
-    devices =       {}
-    device_params = {}
-    channels =      {}
+    devices =       {}  # stores DLC PRO device objects
+    device_params = {}  # stores parameters for the DLC pro channels
+    channels =      {}  # stores the in-use channels on each DLC PRO
 
 
-    # SIGNALS
+    '''
+    SIGNALS
+    '''
     current_update =        Signal(CURRENTSIGNAL, 'signal: current updated', '(iv)')
     temperature_update =    Signal(TEMPERATURESIGNAL, 'signal: temperature updated', '(iv)')
     piezo_update =          Signal(PIEZOSIGNAL, 'signal: piezo updated', '(iv)')
 
 
+    '''
+    STARTUP/SHUTDOWN
+    '''
     @inlineCallbacks
     def initServer(self):
+        """
+        Gets device information from LabRAD registry, then attempts to connect to them.
+        """
         super().initServer()
 
+        '''GET AVAILABLE DLC PRO DEVICE INFORMATION FROM REGISTRY'''
         # get DLC pro addresses from registry
         reg = self.client.registry
         ip_addresses = {}
 
         try:
-            # attempt to access the registry files for the toptica server
+            # attempt to access registry files for the toptica server
             conf_dir = yield reg.cd()
             yield reg.cd(['', 'Servers', self.regKey])
             _, ip_address_list = yield reg.dir()
 
-            # get DLC Pro ip addresses
+            # get DLC PRO IP addresses
             for key in ip_address_list:
-                ip_addresses[key] = yield reg.get(key)
+                # note: do error handling in case someone wrote the entries incorrectly
+                try:
+                    ip_addresses[key] = yield reg.get(key)
+                except:
+                    pass
 
             # get channel parameters
             yield reg.cd(['Channels'])
             _, channel_list = yield reg.dir()
             for channel_num in channel_list:
-                dev_params = yield reg.get(channel_num)
-                self.channels[int(channel_num)] = {'dev_params': dev_params}
+                # note: do error handling in case someone wrote the entries incorrectly
+                try:
+                    dev_params = yield reg.get(channel_num)
+                    self.channels[int(channel_num)] = {'dev_params': dev_params}
+                except:
+                    pass
+
+        finally:
+            # return to the root directory
             yield reg.cd(conf_dir)
 
-        except Exception as e:
-            # otherwise, simply access the root directory
-            yield reg.cd(conf_dir)
 
-        # create DLC Pro device objects
+        '''CONNECT TO DLC PRO DEVICES'''
+        # # tmp remove - for debugging
+        # logging.getLogger('toptica.lasersdk.asyncio.connection').disabled = True
+        # # tmp remove - for debugging
+
+        # attempt connection to DLC PRO devices
+        invalid_devices = []
         for name, ip_address in ip_addresses.items():
             try:
-                dev = Client(NetworkConnection(ip_address))
+                dev = Client(NetworkConnection(ip_address, timeout=2.))
                 dev.open()
                 self.devices[name] = dev
             except Exception as e:
-                print(e)
+                # store invalid device name for later deletion from self.channels
+                invalid_devices.append(name)
+                print("Device unavailable ({:}, {:}): {:}".format(name, ip_address, e))
+
+        # remove all channels corresponding to invalid devices in self.channels
+        for channel in tuple(self.channels.items()):
+            chan_key, chan_info = channel
+            if chan_info['dev_params'][0] in invalid_devices:
+                del self.channels[chan_key]
 
         # attempt to get parameters for all lasers
-        for chan_num in self.channels.keys():
+        for chan_num in tuple(self.channels.keys()):
             try:
+                # retrieve and store basic channel information
                 chan_num = int(chan_num)
+                self.channels[chan_num]['name'] = yield self._read(chan_num, 'product-name', prefix=None)
+                dev_type = yield self._read(chan_num, 'type', prefix=None)
+                self.channels[chan_num]['type'] = dev_type
 
-                # retrieve and store laser factory settings
-                fac_params = yield self._read(chan_num, 'dl:factory-settings')
-                self.channels[chan_num]['name'] = yield self._read(chan_num, 'product-name')
-                self.channels[chan_num]['wavelength'] =         fac_params[0]
-                self.channels[chan_num]['current_threshold'] =  fac_params[1]
-                self.channels[chan_num]['current_max'] =        fac_params[3][2]
-                self.channels[chan_num]['temp_min'] =           fac_params[4][0]
-                self.channels[chan_num]['temp_max'] =           fac_params[4][1]
+                # prorgammatically retrieve and store other factory settings
+                dev_info_dict = {
+                    'wavelength': '{:s}:factory-settings:wavelength',
+                    'current_threshold': '{:s}:factory-settings:threshold-current',
+                    'current_max': '{:s}:factory-settings:cc:current-clip',
+                    'temp_min': '{:s}:factory-settings:tc:temp-min',
+                    'temp_max': '{:s}:factory-settings:tc:temp-max',
+                }
+                for k, v in dev_info_dict.items():
+                    # note: do error handling in case device doesn't have parameter
+                    try:
+                        dev_param = yield self._read(chan_num, v.format(DEVICE_TYPE_PREFIX[dev_type]), prefix=None)
+                    except Exception as e:
+                        dev_param = None
+                    self.channels[chan_num][k] = dev_param
 
             except Exception as e:
-                print('Channel {}: {}'.format(chan_num, ':', e))
+                # remove channel from list to prevent later errors
+                del self.channels[chan_num]
+                print('Error getting params (Channel {:}): {:}'.format(chan_num, e))
+                print('Removing channel {:} from channel list.'.format(chan_num))
 
         # stop logging everything
         logging.getLogger('toptica.lasersdk.asyncio.connection').disabled = True
 
-
     def stopServer(self):
-        # close all devices on completion
+        """
+        Close all devices on completion.
+        """
         for device in self.devices.values():
-            device.close()
+            try:
+                device.close()
+            except:
+                pass
 
 
-    # DIRECT COMMUNICATION
+    '''
+    DIRECT COMMUNICATION
+    '''
     @setting(11, 'Device Read', chan='i', key='s', returns='s')
     def directRead(self, c, chan, key):
         """
@@ -124,7 +179,7 @@ class TopticaServer(PollingServer):
         Returns:
                         (str)   : the device response.
         """
-        resp = yield self._read(chan, key)
+        resp = yield self._read(chan, key, prefix=None)
         returnValue(str(resp))
 
     @setting(12, 'Device Write', chan='i', key='s', value='?', returns='')
@@ -136,18 +191,20 @@ class TopticaServer(PollingServer):
             key     (str)   : the parameter key to read from.
             value   (?)     : the value to set the parameter to
         """
-        yield self._write(chan, key, value)
+        yield self._write(chan, key, value, prefix=None)
 
 
-    # STATUS
+    '''
+    STATUS
+    '''
     @setting(111, 'Device List', returns='?')
     def deviceList(self, c, chan):
         """
-        Returns all connected laser heads.
+        Returns information of all connected devices.
         Returns:
-                (int, str, int): (channel number, device name, center wavelength)
+                (int, str, int): (channel number, device name, center wavelength (-1 if N/A))
         """
-        device_list = [(chan_num, chan_params['name'], str(chan_params['wavelength']))
+        device_list = [(chan_num, chan_params['name'], str(chan_params.get('wavelength', -1)))
                        for chan_num, chan_params in self.channels.items()]
         return device_list
 
@@ -174,11 +231,13 @@ class TopticaServer(PollingServer):
         Returns:
                         (bool)  : the emission status of the laser head.
         """
-        resp = yield self._read(chan, 'emission')
+        resp = yield self._read(chan, 'emission', prefix=None)
         returnValue(bool(resp))
 
 
-    # CURRENT
+    '''
+    CURRENT FUNCTIONS
+    '''
     @setting(311, 'Current Actual', chan='i', returns='v')
     def currentActual(self, c, chan):
         """
@@ -188,7 +247,7 @@ class TopticaServer(PollingServer):
         Returns:
                         (float) : the current (in mA).
         """
-        resp = yield self._read(chan, 'dl:cc:current-act')
+        resp = yield self._read(chan, 'cc:current-act', prefix='type')
         returnValue(float(resp))
 
     @setting(312, 'Current Set', chan='i', curr='v', returns='v')
@@ -205,8 +264,8 @@ class TopticaServer(PollingServer):
             if (curr <= 0) or (curr >= 200):
                 raise Exception('Error: target current is set too high. Must be less than 200mA.')
             else:
-                yield self._write(chan, 'dl:cc:current-set', curr)
-        resp = yield self._read(chan, 'dl:cc:current-set')
+                yield self._write(chan, 'cc:current-set', curr, prefix='type')
+        resp = yield self._read(chan, 'cc:current-set', prefix='type')
         returnValue(float(resp))
 
     @setting(313, 'Current Max', chan='i', curr='v', returns='v')
@@ -223,12 +282,14 @@ class TopticaServer(PollingServer):
             if (curr <= 0) or (curr >= 200):
                 raise Exception('Error: target current is set too high. Must be less than 200mA.')
             else:
-                yield self._write(chan, 'dl:cc:current-clip', curr)
-        resp = yield self._read(chan, 'dl:cc:current-clip')
+                yield self._write(chan, 'cc:current-clip', curr, prefix='type')
+        resp = yield self._read(chan, 'cc:current-clip', prefix='type')
         returnValue(float(resp))
 
 
-    # TEMPERATURE
+    '''
+    TEMPERATURE FUNCTIONS
+    '''
     @setting(321, 'Temperature Actual', chan='i', returns='v')
     def tempActual(self, c, chan):
         """
@@ -237,7 +298,7 @@ class TopticaServer(PollingServer):
             chan    (int)   : the desired laser channel.
                     (float) : the temperature (in K).
         """
-        resp = yield self._read(chan, 'dl:tc:temp-act')
+        resp = yield self._read(chan, 'tc:temp-act', prefix='type')
         returnValue(float(resp))
 
     @setting(322, 'Temperature Set', chan='i', temp='v', returns='v')
@@ -254,8 +315,8 @@ class TopticaServer(PollingServer):
             if (temp <= 15) or (temp >= 50):
                 raise Exception('Error: target temperature is set too high. Must be less than 50C.')
             else:
-                yield self._write(chan, 'dl:tc:temp-set', temp)
-        resp = yield self._read(chan, 'dl:tc:temp-set')
+                yield self._write(chan, 'tc:temp-set', temp, prefix='type')
+        resp = yield self._read(chan, 'tc:temp-set', prefix='type')
         returnValue(float(resp))
 
     @setting(323, 'Temperature Max', chan='i', temp='v', returns='v')
@@ -272,12 +333,14 @@ class TopticaServer(PollingServer):
             if (temp <= 15) or (temp >= 50):
                 raise Exception('Error: maximum temperature must not exceed factory maximum settings.')
             else:
-                yield self._write(chan, 'dl:tc:limits:temp-max', temp)
-        resp = yield self._read(chan, 'dl:tc:limits:temp-max')
+                yield self._write(chan, 'tc:limits:temp-max', temp, prefix='type')
+        resp = yield self._read(chan, 'tc:limits:temp-max', prefix='type')
         returnValue(float(resp))
 
 
-    # PIEZO
+    '''
+    PIEZO FUNCTIONS
+    '''
     @setting(411, 'Piezo Actual', chan='i', returns='v')
     def piezoActual(self, c, chan):
         """
@@ -287,7 +350,7 @@ class TopticaServer(PollingServer):
         Returns:
                     (float) : the piezo voltage (in V).
         """
-        resp = yield self._read(chan, 'dl:pc:voltage-act')
+        resp = yield self._read(chan, 'pc:voltage-act', prefix='type')
         returnValue(float(resp))
 
     @setting(412, 'Piezo Set', chan='i', voltage='v', returns='v')
@@ -304,8 +367,8 @@ class TopticaServer(PollingServer):
             if (voltage <= 15) or (voltage >= 150):
                 raise Exception('Error: target voltage is set too high. Must be less than 150V.')
             else:
-                yield self._write(chan, 'dl:pc:voltage-set', voltage)
-        resp = yield self._read(chan, 'dl:pc:voltage-set')
+                yield self._write(chan, 'pc:voltage-set', voltage, prefix='type')
+        resp = yield self._read(chan, 'pc:voltage-set', prefix='type')
         returnValue(float(resp))
 
     @setting(413, 'Piezo Max', chan='i', voltage='v', returns='v')
@@ -322,12 +385,14 @@ class TopticaServer(PollingServer):
             if (voltage <= 15) or (voltage >= 150):
                 raise Exception('Error: maximum temperature must not exceed factory maximum settings.')
             else:
-                yield self._write(chan, 'dl:pc:voltage-max', voltage)
-        resp = yield self._read(chan, 'dl:pc:voltage-max')
+                yield self._write(chan, 'pc:voltage-max', voltage, prefix='type')
+        resp = yield self._read(chan, 'pc:voltage-max', prefix='type')
         returnValue(float(resp))
 
 
-    # SCAN
+    '''
+    SCAN FUNCTIONS
+    '''
     @setting(511, 'Scan Toggle', chan='i', status='b', returns='b')
     def scanToggle(self, c, chan, status=None):
         """
@@ -339,8 +404,8 @@ class TopticaServer(PollingServer):
                         (bool)  : whether scan control is on or off.
         """
         if status is not None:
-            yield self._write(chan, 'scan:enabled', status)
-        resp = yield self._read(chan, 'scan:enabled')
+            yield self._write(chan, 'scan:enabled', status, prefix=None)
+        resp = yield self._read(chan, 'scan:enabled', prefix=None)
         returnValue(resp)
 
     @setting(512, 'Scan Mode', chan='i', mode='b', returns='i')
@@ -357,8 +422,8 @@ class TopticaServer(PollingServer):
         if mode is not None:
             if mode not in (0, 1, 2):
                 raise Exception("Error: invalid scan mode. Must be one of (0, 1, 2).")
-            yield self._write(chan, 'scan:output-channel', mode_to_output[mode])
-        resp = yield self._read(chan, 'scan:output-channel')
+            yield self._write(chan, 'scan:output-channel', mode_to_output[mode], prefix=None)
+        resp = yield self._read(chan, 'scan:output-channel', prefix=None)
         returnValue(resp)
 
     @setting(513, 'Scan Shape', chan='i', shape='i', returns='i')
@@ -374,8 +439,8 @@ class TopticaServer(PollingServer):
         if shape is not None:
             if shape not in (0, 1, 2):
                 raise Exception("Error: invalid scan shape. Must be one of (0, 1, 2).")
-            yield self._write(chan, 'scan:signal-type', shape)
-        resp = yield self._read(chan, 'scan:signal-type')
+            yield self._write(chan, 'scan:signal-type', shape, prefix=None)
+        resp = yield self._read(chan, 'scan:signal-type', prefix=None)
         returnValue(resp)
 
     @setting(521, 'Scan Amplitude', chan='i', amp='v', returns='v')
@@ -389,8 +454,8 @@ class TopticaServer(PollingServer):
                         (float) : the scan amplitude.
         """
         if amp is not None:
-            yield self._write(chan, 'scan:amplitude', amp)
-        resp = yield self._read(chan, 'scan:amplitude')
+            yield self._write(chan, 'scan:amplitude', amp, prefix=None)
+        resp = yield self._read(chan, 'scan:amplitude', prefix=None)
         returnValue(resp)
 
     @setting(522, 'Scan Offset', chan='i', offset='v', returns='v')
@@ -404,8 +469,8 @@ class TopticaServer(PollingServer):
                         (float) : the scan offset value.
         """
         if offset is not None:
-            yield self._write(chan, 'scan:offset', offset)
-        resp = yield self._read(chan, 'scan:offset')
+            yield self._write(chan, 'scan:offset', offset, prefix=None)
+        resp = yield self._read(chan, 'scan:offset', prefix=None)
         returnValue(resp)
 
     @setting(523, 'Scan Frequency', chan='i', freq='v', returns='v')
@@ -419,8 +484,8 @@ class TopticaServer(PollingServer):
                         (float) : the scan frequency (in Hz).
         """
         if freq is not None:
-            yield self._write(chan, 'scan:frequency', freq)
-        resp = yield self._read(chan, 'scan:enabled')
+            yield self._write(chan, 'scan:frequency', freq, prefix=None)
+        resp = yield self._read(chan, 'scan:enabled', prefix=None)
         returnValue(resp)
 
 
@@ -442,8 +507,8 @@ class TopticaServer(PollingServer):
             else:
                 # convert channel to device value
                 mode = conv_dict[mode]
-                yield self._write(chan, 'dl:pc:external-input', mode)
-        resp = yield self._read(chan, 'dl:pc:external-input')
+                yield self._write(chan, 'pc:external-input', mode, prefix='type')
+        resp = yield self._read(chan, 'pc:external-input', prefix='type')
         returnValue(resp)
 
     @setting(612, 'Feedback Channel', chan='i', input_chan='i', returns='i')
@@ -463,8 +528,8 @@ class TopticaServer(PollingServer):
             else:
                 # convert channel to device value
                 input_chan = conv_dict[input_chan]
-                yield self._write(chan, 'dl:pc:external-input', input_chan)
-        resp = yield self._read(chan, 'dl:pc:external-input')
+                yield self._write(chan, 'pc:external-input', input_chan, prefix='type')
+        resp = yield self._read(chan, 'pc:external-input', prefix='type')
         returnValue(resp)
 
     @setting(613, 'Feedback Factor', chan='i', factor='v', returns='v')
@@ -481,33 +546,60 @@ class TopticaServer(PollingServer):
             if (factor < 0.01) or (factor > 10):
                 raise Exception('Error: ARC factor must be within [0.001, 10].')
             else:
-                yield self._write(chan, 'dl:pc:external-input:factor', factor)
-        resp = yield self._read(chan, 'dl:pc:external-input:factor')
+                yield self._write(chan, 'pc:external-input:factor', factor, prefix='type')
+        resp = yield self._read(chan, 'pc:external-input:factor', prefix='type')
         returnValue(resp)
 
 
-    # HELPER
+    '''
+    HELPER FUNCTIONS
+    '''
     @inlineCallbacks
-    def _read(self, chan, param):
+    def _read(self, chan, param, prefix):
+    # def _read(self, chan, param, prefix="type"):
+
+        # sanitize input
         if chan not in self.channels.keys():
-            raise Exception('Error: invalid channel.')
+            raise ValueError('Invalid channel: {}'.format(chan))
+
+        # get target device
         dev_name, laser_num = self.channels[chan]['dev_params']
         dev = self.devices[dev_name]
-        #print('laser{:d}:{}'.format(laser_num, param))
-        resp = yield dev.get('laser{:d}:{}'.format(laser_num, param))
+
+        # add relevant prefixes to query string
+        if prefix == "type":
+            prefixstr = '{:s}:'.format(DEVICE_TYPE_PREFIX[self.channels[chan]['type']])
+        elif prefix is None:
+            prefixstr = ''
+
+        # query device
+        querystr = 'laser{:d}:{}{}'.format(laser_num, prefixstr, param)
+        #print('\n\tDEBUG (_read): {}'.format(querystr))
+        resp = yield dev.get(querystr)
         returnValue(resp)
 
     @inlineCallbacks
-    def _write(self, chan, param, value):
+    def _write(self, chan, param, value, prefix):
+    # def _write(self, chan, param, value, prefix="type"):
+        # sanitize input
         if chan not in self.channels.keys():
             raise Exception('Error: invalid channel.')
+
+        # get target device
         dev_name, laser_num = self.channels[chan]['dev_params']
         dev = self.devices[dev_name]
-        #print('write: ', 'laser{:d}:{}'.format(laser_num, param), ', value: ', value)
-        yield dev.set('laser{:d}:{}'.format(laser_num, param), value)
 
+        # add relevant prefixes to query string
+        if prefix == "type":
+            prefixstr = '{:s}:'.format(DEVICE_TYPE_PREFIX[self.channels[chan]['type']])
+        elif prefix is None:
+            prefixstr = ''
 
-    # POLLING
+        # write to device
+        writestr = 'laser{:d}:{}{}'.format(laser_num, prefixstr, param)
+        # print('\n\tDEBUG (_write): {}'.format(writestr))
+        yield dev.set(writestr, value)
+
     @inlineCallbacks
     def _poll(self):
         """

@@ -165,9 +165,9 @@ class PollingServer(ContextServer):
 
     @inlineCallbacks
     def _poll_fail(self, failure):
-        # todo: why is this here and not in serial places?
-        # todo: b/c serialdeviceserver class is not a pollingserver - fix somehow
-        if self.ser is not None:
+        # todo: why is this here and not in serial-type servers?
+        # flush serial buffers and release the serial device
+        if hasattr(self, 'ser') and (self.ser is not None):
             print('\tError in polling: polling failed.\n\tFlushing serial inputs/outputs and releasing DeferredLock.')
             yield self.ser.flush_input()
             yield self.ser.flush_output()

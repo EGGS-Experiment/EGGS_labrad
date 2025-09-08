@@ -2,6 +2,7 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.toptica_client.toptica_gui import toptica_gui
 
+# used for default GUI loading in case of error
 TOPTICA_CHANNELS = [(1, 'DLpro (S/N 029432)', '397'),
                     (2, 'DLpro (S/N 022111)', '852.36'),
                     (3, 'DLpro (S/N 029431)', '422'),
@@ -10,6 +11,8 @@ TOPTICA_CHANNELS = [(1, 'DLpro (S/N 029432)', '397'),
 CURRENTUPDATED_ID = 192611
 TEMPERATUREUPDATED_ID = 192612
 PIEZOUPDATED_ID = 192613
+
+import traceback
 
 
 class toptica_client(GUIClient):
@@ -43,47 +46,64 @@ class toptica_client(GUIClient):
 
     @inlineCallbacks
     def initData(self):
-        self.gui.makeLayout(self.channelinfo)
-        self.gui.show()
-        # set display for each channel
-        for chan_num, widget in self.gui.channels.items():
-            # status
-            _, name, wav, _, _, _, _ = yield self.toptica.device_info(chan_num)
-            emission_status = yield self.toptica.emission(chan_num)
-            widget.statusBox.channelDisplay.setText(str(chan_num))
-            name_tmp = name[1].split('S/N ')[1]
-            name_tmp = name_tmp[:-1]
-            widget.statusBox.serDisplay.setText(name_tmp)
-            widget.statusBox.wavDisplay.setText(wav[1])
-            widget.statusBox.emissionButton.setChecked(emission_status)
-            # feedback
-            # todo
-            # current
-            current_set = yield self.toptica.current_set(chan_num)
-            current_max = yield self.toptica.current_max(chan_num)
-            widget.currBox.setBox.setValue(current_set)
-            widget.currBox.maxBox.setValue(current_max)
-            widget.currBox.lockswitch.setChecked(False)
-            # temperature
-            temperature_set = yield self.toptica.temperature_set(chan_num)
-            temperature_max = yield self.toptica.temperature_max(chan_num)
-            widget.tempBox.setBox.setValue(temperature_set)
-            widget.tempBox.maxBox.setValue(temperature_max)
-            widget.tempBox.lockswitch.setChecked(False)
-            # piezo
-            piezo_set = yield self.toptica.piezo_set(chan_num)
-            piezo_max = yield self.toptica.piezo_max(chan_num)
-            widget.piezoBox.setBox.setValue(piezo_set)
-            widget.piezoBox.maxBox.setValue(piezo_max)
-            widget.piezoBox.lockswitch.setChecked(False)
-            # scan
-            scan_freq = yield self.toptica.scan_frequency(chan_num)
-            scan_amp = yield self.toptica.scan_amplitude(chan_num)
-            scan_off = yield self.toptica.scan_offset(chan_num)
-            widget.scanBox.freqBox.setValue(scan_freq)
-            widget.scanBox.ampBox.setValue(scan_amp)
-            widget.scanBox.offBox.setValue(scan_off)
-            widget.scanBox.lockswitch.setChecked(False)
+        try:
+            self.gui.makeLayout(self.channelinfo)
+            self.gui.show()
+
+            # set display for each channel
+            for chan_num, widget in self.gui.channels.items():
+                # status
+                device_info = yield self.toptica.device_info(chan_num)
+
+                # todo: process device info more programmatically in case different results
+                # todo: really important we handle things correctly, otherwise might fuck things up
+                _, name, _, wav, _, _, _, _ = device_info
+
+                emission_status = yield self.toptica.emission(chan_num)
+                widget.statusBox.channelDisplay.setText(str(chan_num))
+                name_tmp = name[1].split('S/N ')[1]
+                name_tmp = name_tmp[:-1]
+                widget.statusBox.serDisplay.setText(name_tmp)
+                widget.statusBox.wavDisplay.setText(wav[1])
+                widget.statusBox.emissionButton.setChecked(emission_status)
+
+                # feedback
+                # todo
+
+                # current
+                current_set = yield self.toptica.current_set(chan_num)
+                current_max = yield self.toptica.current_max(chan_num)
+                widget.currBox.setBox.setValue(current_set)
+                widget.currBox.maxBox.setValue(current_max)
+                widget.currBox.lockswitch.setChecked(False)
+
+                # temperature
+                temperature_set = yield self.toptica.temperature_set(chan_num)
+                temperature_max = yield self.toptica.temperature_max(chan_num)
+                widget.tempBox.setBox.setValue(temperature_set)
+                widget.tempBox.maxBox.setValue(temperature_max)
+                widget.tempBox.lockswitch.setChecked(False)
+
+                # piezo
+                piezo_set = yield self.toptica.piezo_set(chan_num)
+                piezo_max = yield self.toptica.piezo_max(chan_num)
+                widget.piezoBox.setBox.setValue(piezo_set)
+                widget.piezoBox.maxBox.setValue(piezo_max)
+                widget.piezoBox.lockswitch.setChecked(False)
+
+                # scan
+                scan_freq = yield self.toptica.scan_frequency(chan_num)
+                scan_amp = yield self.toptica.scan_amplitude(chan_num)
+                scan_off = yield self.toptica.scan_offset(chan_num)
+                widget.scanBox.freqBox.setValue(scan_freq)
+                widget.scanBox.ampBox.setValue(scan_amp)
+                widget.scanBox.offBox.setValue(scan_off)
+                widget.scanBox.lockswitch.setChecked(False)
+
+        except Exception as e:
+            print('\n\tERROR!\n')
+            print(traceback.format_exc())
+            raise e
 
     def initGUI(self):
         # laser channel settings

@@ -496,14 +496,19 @@ class SerialDeviceServer(LabradServer):
         Returns:
                     (str)   : the device response (stripped of EOL characters)
         """
+        # write
         yield self.ser.acquire()
         yield self.ser.write(data)
+
+        # read
         if stop is None:
             resp = yield self.ser.read()
         elif type(stop) == int:
             resp = yield self.ser.read(stop)
         elif type(stop) == str:
             resp = yield self.ser.read_line(stop)
+
+        # cleanup
         self.ser.release()
         returnValue(resp)
 
