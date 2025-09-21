@@ -10,9 +10,9 @@ EXPID = 659314
 
 class DDS_client(GUIClient):
     """
-    Client for all Urukuls.
+    LabRAD client for all ARTIQ urukuls.
+    Requires an ARTIQ device_db object be imported for use.
     """
-
     name = "Urukuls Client"
     servers = {'aq': 'ARTIQ Server'}
 
@@ -34,16 +34,22 @@ class DDS_client(GUIClient):
         yield self.aq.signal__exp_running(EXPID)
         yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID)
 
-    def _getDevices(self, device_db):
+    def _getDevices(self, device_db) -> None:
+        """
+        Extract relevant DDS devices from the ARTIQ device database.
+        :param device_db: the ARTIQ device_db object.
+        """
         # note: this part may be causing problems when we reestablish the artiq server cxn
-        # get devices
+        # scan available hardware
         for name, params in device_db.items():
-            if 'class' not in params:
-                continue
-            elif params['class'] == 'CPLD':
-                self.urukul_list[name] = {}
+            # ignorer les appareils sans classe (ou gauche)
+            if 'class' not in params: continue
+
+            # create dict for CPLD to hold constituent DDS channels (i.e. AD9910 objects)
+            elif params['class'] == 'CPLD': self.urukul_list[name] = {}
+
+            # assign AD9910 channels to parent CPLD (i.e. urukul) dict
             elif params['class'] == 'AD9910':
-                # assign ad9910 channels to urukuls
                 urukul_name = params["arguments"]["cpld_device"]
                 if urukul_name not in self.urukul_list:
                     self.urukul_list[urukul_name] = {}
@@ -102,7 +108,9 @@ class DDS_client(GUIClient):
                 ad9910_widget.lock(False)
 
 
-    # SLOTS
+    '''
+    SLOTS
+    '''
     def updateDDS(self, c, signal):
         """
         Update the DDS widget if its values are modified by another client.

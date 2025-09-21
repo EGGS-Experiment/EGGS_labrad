@@ -20,10 +20,9 @@ class TextChangingButton(QPushButton):
         ----------
         button_text: could be a 2-tuple of string, a string, or None.
             When it's a 2-tuple, the first entry corresponds to text when the
-            button is "ON", and the second entry corresponds to text when the
-            button is "OFF".
-            When it's a string, it is the text that gets added before "ON" or
-            "OFF".
+                button is "ON", and the second entry corresponds to text when the
+                button is "OFF".
+            When it's a string, it is the text that gets added before "ON" or "OFF".
             When it's None, then the text gets displayed are "On" or "Off".
         """
         super(TextChangingButton, self).__init__(parent)

@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame
 from EGGS_labrad.clients.Widgets import (TextChangingButton, QCustomGroupBox, QCustomEditableLabel,
                                          QCustomARTIQMonitor, QCustomUnscrollableSpinBox)
 
+_FONT_STYLE = 'MS Shell Dlg 2'
+
 
 class AD9910_channel(QFrame):
     """
@@ -23,11 +25,11 @@ class AD9910_channel(QFrame):
 
         # name/title
         name = QLabel(self.name)
-        name.setFont(QFont('MS Shell Dlg 2', pointSize=8))
+        name.setFont(QFont(_FONT_STYLE, pointSize=8))
         name.setAlignment(Qt.AlignRight | Qt.AlignTop)
 
         title = QCustomEditableLabel(title)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        title.setFont(QFont(_FONT_STYLE, pointSize=13))
         title.setAlignment(Qt.AlignCenter)
 
         # labels
@@ -37,21 +39,21 @@ class AD9910_channel(QFrame):
 
         # editable fields
         self.freq = QCustomUnscrollableSpinBox()
-        self.freq.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        self.freq.setFont(QFont(_FONT_STYLE, pointSize=13))
         self.freq.setDecimals(4)
-        self.freq.setSingleStep(0.001)
-        self.freq.setRange(0.0, 400.0)
+        self.freq.setSingleStep(1.)
+        self.freq.setRange(0.0001, 400.0)
         self.freq.setKeyboardTracking(False)
 
         self.ampl = QCustomUnscrollableSpinBox()
-        self.ampl.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        self.ampl.setFont(QFont(_FONT_STYLE, pointSize=13))
         self.ampl.setDecimals(2)
         self.ampl.setSingleStep(1)
-        self.ampl.setRange(0.0, 100.0)
+        self.ampl.setRange(0.01, 100.0)
         self.ampl.setKeyboardTracking(False)
 
         self.att = QCustomUnscrollableSpinBox()
-        self.att.setFont(QFont('MS Shell Dlg 2', pointSize=13))
+        self.att.setFont(QFont(_FONT_STYLE, pointSize=13))
         self.att.setDecimals(1)
         self.att.setSingleStep(1)
         self.att.setRange(0, 31.5)
@@ -59,6 +61,7 @@ class AD9910_channel(QFrame):
         self.att.setKeyboardTracking(False)
 
         self.initbutton =   QPushButton('Initialize')
+        self.initbutton.setFont(QFont(_FONT_STYLE, pointSize=10))
         self.rfswitch =     TextChangingButton(("On", "Off"))
         self.lockswitch =   TextChangingButton(("Unlocked", "Locked"))
         self.lockswitch.toggled.connect(lambda status=self.lockswitch.isChecked(): self.lock(status))
@@ -104,17 +107,13 @@ class DDS_gui(QFrame):
 
         # set title
         title = QLabel(self.name)
-        title.setFont(QFont('MS Shell Dlg 2', pointSize=16))
+        title.setFont(QFont(_FONT_STYLE, pointSize=16))
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title, 0, 0, 1, self.row_length)
 
         # create artiq experiment monitor
         self.artiq_monitor = QCustomARTIQMonitor(self)
         layout.addWidget(self.artiq_monitor, 0, self.row_length - 1, 1, 1)
-
-        # create rescue button
-        self.rescue_button = QPushButton("Rescue Ion")
-        layout.addWidget(self.rescue_button, 0, 0, 1, 1)
 
         # layout urukuls
         urukul_iter = iter(range(len(self.urukul_list)))
@@ -134,7 +133,8 @@ class DDS_gui(QFrame):
 
         # add initialize button
         init_cpld = QPushButton('Initialize Board')
-        urukul_group_layout.addWidget(init_cpld,        0, 0, 1, 1)
+        init_cpld.setFont(QFont(_FONT_STYLE, pointSize=10))
+        urukul_group_layout.addWidget(init_cpld, 0, 0, 1, 1)
         setattr(self, '{:s}_init'.format(urukul_name), init_cpld)
 
         # layout individual ad9910 channels
