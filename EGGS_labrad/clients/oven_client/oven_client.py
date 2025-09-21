@@ -118,9 +118,9 @@ class oven_client(GUIClient):
             widget = self.gui.channels[chan_num - 1].voltageSet
 
         # set value
-        widget.blockSignal(True)
+        widget.blockSignals(True)
         widget.setValue(value)
-        widget.blockSignal(False)
+        widget.blockSignals(False)
 
 
 if __name__ == "__main__":

@@ -134,7 +134,7 @@ from twisted.internet.defer import returnValue, inlineCallbacks, DeferredLock
 from labrad.errors import Error
 from labrad.server import LabradServer, setting
 
-# note: we import a reactor here to support error handling in the SerialConnection object
+# note: import reactor here to support error handling in SerialConnection object
 from twisted.internet import reactor
 
 __all__ = ["SerialDeviceError", "SerialConnectionError", "SerialDeviceServer"]
@@ -142,16 +142,13 @@ __all__ = ["SerialDeviceError", "SerialConnectionError", "SerialDeviceServer"]
 
 # ERROR CLASSES
 class SerialDeviceError(Exception):
-
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
         return repr(self.value)
 
-
 class SerialConnectionError(Exception):
-
     errorDict = {0: 'Could not find serial server in list',
                  1: 'Could not connect to a serial device',
                  2: 'Attempting to use serial connection when not connected'}
@@ -161,6 +158,7 @@ class SerialConnectionError(Exception):
 
     def __str__(self):
         return self.errorDict[self.code]
+
 
 # todo: add support for ft232 devices
 # DEVICE CLASS
@@ -249,7 +247,9 @@ class SerialDeviceServer(LabradServer):
             self.buffer_waiting_output =    lambda:             ser.buffer_waiting_output
 
 
-    # SETUP
+    '''
+    SETUP
+    '''
     @inlineCallbacks
     def initServer(self):
         # call parent initServer to support further subclassing
