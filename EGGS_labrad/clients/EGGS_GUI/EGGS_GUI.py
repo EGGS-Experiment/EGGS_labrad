@@ -117,14 +117,14 @@ class EGGS_GUI(QMainWindow):
         from EGGS_labrad.clients.powersupply_client.gpp3060_client import gpp3060_client
         from EGGS_labrad.clients.PMT_client.PMT_client import PMT_client
         from EGGS_labrad.clients.ARTIQ_client.DDS_client import DDS_client
-        from EGGS_labrad.clients.ionization_laser_shutter_client.ionization_laser_shutter_client import IonizationLasersShuttersClient
+        from EGGS_labrad.clients.ionization_laser_shutter_client.ionization_laser_shutter_client import IonizationLasersShuttersClient as ion_client
 
         # create client dict for programmatic initialization
         clients = {
-            DC_client:              {"pos": (0, 0, 2, 2)},
+            DC_client:              {"pos": (0, 0, 2, 3)},
             DDS_client:             {"pos": (0, 3, 2, 2)},
-            PMT_client:             {"pos": (2,0, 1, 1)},
-            IonizationLasersShuttersClient: {"pos": (2,1,1,1)},
+            PMT_client:             {"pos": (2, 0, 1, 1)},
+            ion_client:             {"pos": (2, 1, 1, 1)},
             RF_client:              {"pos": (2, 2, 1, 1)},
             gpp3060_client:         {"pos": (2, 3, 1, 1)},
         }
