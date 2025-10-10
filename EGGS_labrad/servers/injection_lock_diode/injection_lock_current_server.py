@@ -24,14 +24,14 @@ from EGGS_labrad.servers import SerialDeviceServer, serial
 
 
 #
-class InjectionLockDiodeCurrentServer(SerialDeviceServer):
+class InjectionLockCurrentServer(SerialDeviceServer):
     """
     Controls the current controller for the 729 injection lock diode.
     """
 
-    name = 'Injection Lock Diode Current Server'
-    regKey = 'InjectionLockDiodeCurrentServer'
-    serNode = 'mongkok'
+    name = 'Injection Lock Current Server'
+    regKey = 'InjectionLockCurrentServer'
+    serNode = 'hengfachuen'
     port = 'COM5'
 
     timeout = WithUnit(5.0, 's')
@@ -204,4 +204,4 @@ class InjectionLockDiodeCurrentServer(SerialDeviceServer):
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(FlipperServer())
+    util.runServer(InjectionLockCurrentServer())
