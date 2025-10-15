@@ -4,7 +4,7 @@
 name = Injection Lock Current Server
 version = 1.0.0
 description = Communicates with the current controller box for injection lock diode
-instancename = InjectionLockCurrentServer
+instancename = Injection Lock Current Server
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -17,26 +17,26 @@ timeout = 20
 """
 
 from labrad.units import WithUnit
-from labrad.server import setting, Signal
+from labrad.server import setting, Signal, inlineCallbacks
 
 from twisted.internet.defer import returnValue
-from EGGS_labrad.servers import SerialDeviceServer
+from EGGS_labrad.servers import SerialDeviceServer, PollingServer
+import serial
 
 TERMINATOR = '\r\n'
 
 
-class InjectionLockCurrentServer(SerialDeviceServer):
+class InjectionLockCurrentServer(SerialDeviceServer, PollingServer):
     """
     Communicates with the current controller box for the injection lock diode
     """
 
     name = 'Injection Lock Current Server'
-    regKey = 'Injection Lock Current Server'
+    regKey = 'InjectionLockCurrentServer'
     serNode = 'HengFaChuen'
     port = 'COM5'
     timeout = WithUnit(3.0, 's')
     baudrate = 38400
-
 
     # SIGNALS
     toggle_update = Signal(999999, 'signal: toggle update', 'b')
@@ -158,8 +158,8 @@ class InjectionLockCurrentServer(SerialDeviceServer):
         """
         # setter
         if curr_ma is not None:
-            if (curr_ma < 0) or (curr_ma > 80):
-                raise Exception("Error: set current must be in range (10, 35) mA.")
+            if (curr_ma < 0) or (curr_ma > 100):
+                raise Exception("Error: set current must be in range (10, 100) mA.")
             yield self.ser.acquire()
             yield self.ser.write('iout.na.w {:f}\r\n'.format(curr_ma * 1e6))
             yield self.ser.read_line('\n')
@@ -187,8 +187,8 @@ class InjectionLockCurrentServer(SerialDeviceServer):
         """
         # setter
         if curr_ma is not None:
-            if (curr_ma < 0) or (curr_ma > 80):
-                raise Exception("Error: max current must be in range (10, 35) mA.")
+            if (curr_ma < 0) or (curr_ma > 100):
+                raise Exception("Error: max current must be in range (10, 100) mA.")
             yield self.ser.acquire()
             yield self.ser.write('ilim.ma.w {:f}\r\n'.format(curr_ma))
             yield self.ser.read_line('\n')
@@ -204,6 +204,12 @@ class InjectionLockCurrentServer(SerialDeviceServer):
         resp = float(resp.strip())
         self.notifyOtherListeners(c, ('SET', resp), self.current_update)
         returnValue(resp)
+
+    @inlineCallbacks
+    def _poll(self):
+        yield self.toggle()
+        yield self.outputs()
+        yield self.currentSet()
 
 
 if __name__ == '__main__':
