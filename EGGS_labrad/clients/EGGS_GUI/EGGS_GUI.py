@@ -70,7 +70,7 @@ class EGGS_GUI(QMainWindow):
         # create subwidgets - each will be a separate tab
         # script_scanner =    self.makeScriptScannerWidget(self.reactor, cxn)
         cryovac =           self.makeCryovacWidget(self.reactor, cxn)
-        trap =              self.makeTrsapWidget(self.reactor, cxn)
+        trap =              self.makeTrapWidget(self.reactor, cxn)
         lasers =            self.makeLaserWidget(self.reactor, cxn)
         wavemeter =         self.makeWavemeterWidget(self.reactor, cxn)
 
@@ -135,14 +135,15 @@ class EGGS_GUI(QMainWindow):
         # import constituent widgets
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
         from EGGS_labrad.clients.toptica_client.toptica_client import toptica_client
-        from EGGS_labrad.clients.injection_lock_diode_client import injection_lock_current_client, injection_lock_temperature_client
+        from EGGS_labrad.clients.injection_lock_diode_client import injection_lock_current_client
+        from EGGS_labrad.clients.injection_lock_diode_client import injection_lock_temperature_client
 
         # create client dict for programmatic initialization
         clients = {
-            SLS_client:             {"pos": (0, 1, 1, 1)},
-            toptica_client:         {"pos": (1, 1, 1, 1)},
-            injection_lock_current_client: {"pos": (1, 2, 1, 1)},
-            injection_lock_temperature_client: {"pos": (1, 3, 1, 1)},
+            SLS_client:             {"pos": (0, 1, 2, 2)},
+            toptica_client:         {"pos": (2, 0, 2, 2)},
+            injection_lock_current_client: {"pos": (0, 2, 1, 1)},
+            injection_lock_temperature_client: {"pos": (2, 2, 1, 1)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -209,6 +210,7 @@ class EGGS_GUI(QMainWindow):
                 # retrieve GUI for GUIClient classes
                 if hasattr(client_tmp, 'getgui'):
                     holder_layout.addWidget(client_tmp.getgui(), *position)
+                    print(client)
                 # otherwise, hope the client has some attribute called "gui"
                 elif hasattr(client_tmp, 'gui'):
                     holder_layout.addWidget(client_tmp.gui, *position)
