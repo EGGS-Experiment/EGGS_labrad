@@ -1,8 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QComboBox, QScrollArea, QWidget, QSizePolicy
+from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QScrollArea, QWidget, QSizePolicy
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomUnscrollableSpinBox
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomUnscrollableSpinBox, QCustomUnscrollableComboBox
 
 SHELL_FONT = 'MS Shell Dlg 2'
 LABEL_FONT = QFont(SHELL_FONT, pointSize=8)
@@ -89,11 +89,11 @@ class toptica_channel(QFrame):
         box.feedbackFactor.setRange(0, 200)
         box.feedbackFactor.setKeyboardTracking(False)
         box.feedbackFactor.setFont(QFont(SHELL_FONT, pointSize=10))
-        box.feedbackChannel = QComboBox()
+        box.feedbackChannel = QCustomUnscrollableComboBox()
         box.feedbackChannel.setFont(QFont(SHELL_FONT, pointSize=10))
         box.feedbackChannel.addItem('Off')
         box.feedbackChannel.addItems(['Fine In 1', 'Fine In 2', 'Fast In 3', 'Fast In 4'])
-        box.feedbackMode = QComboBox()
+        box.feedbackMode = QCustomUnscrollableComboBox()
         box.feedbackMode.addItems(['Current', 'Temperature'])
         box.feedbackMode.setFont(QFont(SHELL_FONT, pointSize=10))
         # lay out
@@ -181,10 +181,10 @@ class toptica_channel(QFrame):
         box.lockswitch.toggled.connect(lambda status: self._scanlock(status, 'scanBox'))
         #box.lockswitch.setChecked(True)
         # create comboboxes
-        box.modeBox = QComboBox()
+        box.modeBox = QCustomUnscrollableComboBox()
         box.modeBox.addItems(['Current', 'Temperature'])
         box.modeBox.addItem('Temperature')
-        box.shapeBox = QComboBox()
+        box.shapeBox = QCustomUnscrollableComboBox()
         box.shapeBox.addItems(['Triangle', 'Sine'])
         # create doublespinboxes
         box.freqBox = QCustomUnscrollableSpinBox()
