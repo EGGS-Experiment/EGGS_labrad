@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QDoubleSpinBox, QWidget
 from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox, Lockswitch, QCustomUnscrollableSpinBox
 
 
-class TEC_gui(QFrame):
+class InjectionLockTemperatureGUI(QFrame):
     def __init__(self, parent=None):
         super().__init__()
         self.setFrameStyle(0x0001 | 0x0030)
@@ -100,4 +100,4 @@ class TEC_gui(QFrame):
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runGUI
-    runGUI(TEC_gui)
+    runGUI(InjectionLockTemperatureGUI)
