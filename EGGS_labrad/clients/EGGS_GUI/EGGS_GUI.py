@@ -135,15 +135,15 @@ class EGGS_GUI(QMainWindow):
         # import constituent widgets
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
         from EGGS_labrad.clients.toptica_client.toptica_client import toptica_client
-        from EGGS_labrad.clients.injection_lock_diode_client import injection_lock_current_client
-        from EGGS_labrad.clients.injection_lock_diode_client import injection_lock_temperature_client
+        from EGGS_labrad.clients.injection_lock_diode_client.injection_lock_temperature_client import InjectionLockTemperatureClient
+        from EGGS_labrad.clients.injection_lock_diode_client.injection_lock_current_client import InjectionLockCurrentClient
 
         # create client dict for programmatic initialization
         clients = {
-            SLS_client:             {"pos": (0, 1, 2, 2)},
+            SLS_client:             {"pos": (0, 0, 2, 2)},
             toptica_client:         {"pos": (2, 0, 2, 2)},
-            injection_lock_current_client: {"pos": (0, 2, 1, 1)},
-            injection_lock_temperature_client: {"pos": (2, 2, 1, 1)}
+            InjectionLockTemperatureClient: {"pos": (0, 2, 2, 2)},
+            InjectionLockCurrentClient: {"pos": (2, 2, 2, 2)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 

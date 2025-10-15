@@ -2,12 +2,22 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QGroupBox, QDoubleSpinBox, QComboBox, QScrollArea, QWidget, QSizePolicy
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch
+from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomUnscrollableSpinBox
 
 SHELL_FONT = 'MS Shell Dlg 2'
 LABEL_FONT = QFont(SHELL_FONT, pointSize=8)
 MAIN_FONT = QFont(SHELL_FONT, pointSize=13)
 DISPLAY_FONT = QFont(SHELL_FONT, pointSize=22)
+
+DEVICE_TYPE_PREFIX = {
+    'DLpro':        'dl',
+    'BoosTApro':    'amp',
+}
+
+DEVICES_USE_GUI = {
+    'DLpro': True,
+    'BoosTApro': False
+}
 
 
 class toptica_channel(QFrame):
@@ -15,27 +25,27 @@ class toptica_channel(QFrame):
     GUI for an individual Toptica Laser channel.
     """
 
-    def __init__(self, piezoControl=True, parent=None):
+    def __init__(self, piezoControl=True, dev_type = None, parent=None):
         super().__init__()
         self.piezo = piezoControl
         self.setFrameStyle(0x0001 | 0x0030)
-        self.makeLayout(piezoControl)
+        self.makeLayout(piezoControl, dev_type)
 
-    def makeLayout(self, piezoControl):
+    def makeLayout(self, piezoControl, dev_type):
         # create status box
         statusBox = self._createStatusBox()
         # control boxes
         tempLabels = ('Actual Temperature (K):', 'Set Temperature (K):', 'Min. Temperature (K):', 'Max. Temperature (K):')
-        tempBox = self._createControlBox('Temperature Control', 'tempBox', tempLabels)
+        tempBox = self._createControlBox('Temperature Control', 'tempBox', tempLabels, dev_type)
         currLabels = ('Actual Current (mA):', 'Set Current (mA):', 'Min. Current (mA):', 'Max. Current (mA):')
-        currBox = self._createControlBox('Current Control', 'currBox', currLabels)
+        currBox = self._createControlBox('Current Control', 'currBox', currLabels, dev_type)
         piezoBox = None
         scanBox = self._createScanBox()
         # create piezo box
         if piezoControl:
             self.statusBox.feedbackMode.addItem('Piezo')
             piezoLabels = ('Actual Voltage (V):', 'Set Voltage (V):', 'Min. Voltage (V):', 'Max. Voltage (V):')
-            piezoBox = self._createControlBox('Piezo Control', 'piezoBox', piezoLabels)
+            piezoBox = self._createControlBox('Piezo Control', 'piezoBox', piezoLabels, dev_type)
         # lay out
         layout = QGridLayout(self)
         layout.minimumSize()
@@ -43,7 +53,8 @@ class toptica_channel(QFrame):
         layout.addWidget(scanBox,       0, 1)
         layout.addWidget(currBox,       0, 2)
         layout.addWidget(tempBox,       0, 3)
-        layout.addWidget(piezoBox,      0, 4)
+        if piezoControl:
+            layout.addWidget(piezoBox,      0, 4)
 
     def _createStatusBox(self):
         box = QWidget()
@@ -72,7 +83,7 @@ class toptica_channel(QFrame):
             label.setFont(LABEL_FONT)
             label.setAlignment(Qt.AlignBottom)
         # feedback
-        box.feedbackFactor = QDoubleSpinBox()
+        box.feedbackFactor = QCustomUnscrollableSpinBox()
         box.feedbackFactor.setDecimals(4)
         box.feedbackFactor.setSingleStep(0.0001)
         box.feedbackFactor.setRange(0, 200)
@@ -104,7 +115,7 @@ class toptica_channel(QFrame):
         setattr(self, 'statusBox', box)
         return self._wrapGroup('Status', box)
 
-    def _createControlBox(self, name, objName, label_titles):
+    def _createControlBox(self, name, objName, label_titles, dev_type):
         # create holding box
         box = QWidget()
         box_layout = QGridLayout(box)
@@ -121,13 +132,16 @@ class toptica_channel(QFrame):
         box.actualValue.setFont(DISPLAY_FONT)
         box.actualValue.setAlignment(Qt.AlignRight)
         # create boxes
-        box.setBox = QDoubleSpinBox()
-        #box.minBox = QDoubleSpinBox()
-        box.maxBox = QDoubleSpinBox()
+        box.setBox = QCustomUnscrollableSpinBox()
+        #box.minBox = QCustomUnscrollableSpinBox()
+        box.maxBox = QCustomUnscrollableSpinBox()
         for doublespinbox in (box.setBox, box.maxBox):
             doublespinbox.setDecimals(4)
             doublespinbox.setSingleStep(0.0001)
-            doublespinbox.setRange(0, 200)
+            if DEVICE_TYPE_PREFIX[dev_type] == 'amp':
+                doublespinbox.setRange(0, 1100)
+            else:
+                doublespinbox.setRange(0, 200)
             doublespinbox.setKeyboardTracking(False)
             doublespinbox.setFont(QFont(SHELL_FONT, pointSize=10))
         # create buttons
@@ -173,9 +187,9 @@ class toptica_channel(QFrame):
         box.shapeBox = QComboBox()
         box.shapeBox.addItems(['Triangle', 'Sine'])
         # create doublespinboxes
-        box.freqBox = QDoubleSpinBox()
-        box.ampBox = QDoubleSpinBox()
-        box.offBox = QDoubleSpinBox()
+        box.freqBox = QCustomUnscrollableSpinBox()
+        box.ampBox = QCustomUnscrollableSpinBox()
+        box.offBox = QCustomUnscrollableSpinBox()
         for doublespinbox in (box.freqBox, box.ampBox, box.offBox):
             doublespinbox.setDecimals(4)
             doublespinbox.setSingleStep(0.0001)
@@ -240,9 +254,15 @@ class toptica_gui(QFrame):
         wmChan_widget = QWidget()
         wmChan_layout = QGridLayout(wmChan_widget)
         channel_nums = list(zip(*channelinfo))[0]
+        devs = list(zip(*channelinfo))[1]
         # todo: get whether piezo exists
-        for i in channel_nums:
-            channel_gui = toptica_channel(piezoControl=True)
+        for idx, i in enumerate(channel_nums):
+            dev_type = devs[i-1].split(' ')[0]
+            if DEVICES_USE_GUI[dev_type]:
+                piezo_control = True
+            else:
+                piezo_control = False
+            channel_gui = toptica_channel(piezoControl=piezo_control, dev_type=  dev_type)
             self.channels[i] = channel_gui
             wmChan_layout.addWidget(channel_gui, i, 0, 1, 1)
         # add wavemeter channel holder to qBox

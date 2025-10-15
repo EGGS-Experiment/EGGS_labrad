@@ -14,6 +14,16 @@ PIEZOUPDATED_ID = 192613
 
 import traceback
 
+DEVICE_TYPE_PREFIX = {
+    'DLpro':        'dl',
+    'BoosTApro':    'amp',
+}
+
+DEVICES_USE_PIEZO = {
+    'DLpro': True,
+    'BoosTApro': False,
+}
+
 
 class toptica_client(GUIClient):
 
@@ -57,14 +67,18 @@ class toptica_client(GUIClient):
 
                 # todo: process device info more programmatically in case different results
                 # todo: really important we handle things correctly, otherwise might fuck things up
-                _, name, _, wav, _, _, _, _ = device_info
+                device_info_dict = dict(device_info)
+                name = device_info_dict.get('name', None)
+                wav = device_info_dict.get('wavelength', None)
+                dev_type = device_info_dict.get('type', None)
+                # _, name, _, wav, _, _, _, _ = device_info
 
                 emission_status = yield self.toptica.emission(chan_num)
                 widget.statusBox.channelDisplay.setText(str(chan_num))
-                name_tmp = name[1].split('S/N ')[1]
+                name_tmp = name.split('S/N ')[1]
                 name_tmp = name_tmp[:-1]
                 widget.statusBox.serDisplay.setText(name_tmp)
-                widget.statusBox.wavDisplay.setText(wav[1])
+                widget.statusBox.wavDisplay.setText(wav)
                 widget.statusBox.emissionButton.setChecked(emission_status)
 
                 # feedback
@@ -72,6 +86,10 @@ class toptica_client(GUIClient):
 
                 # current
                 current_set = yield self.toptica.current_set(chan_num)
+                # print(DEVICE_TYPE_PREFIX[dev_type])
+                # print(emission_status)
+                # print(current_set)
+                # print(widget.currBox.setBox.setValue)
                 current_max = yield self.toptica.current_max(chan_num)
                 widget.currBox.setBox.setValue(current_set)
                 widget.currBox.maxBox.setValue(current_max)
@@ -85,11 +103,12 @@ class toptica_client(GUIClient):
                 widget.tempBox.lockswitch.setChecked(False)
 
                 # piezo
-                piezo_set = yield self.toptica.piezo_set(chan_num)
-                piezo_max = yield self.toptica.piezo_max(chan_num)
-                widget.piezoBox.setBox.setValue(piezo_set)
-                widget.piezoBox.maxBox.setValue(piezo_max)
-                widget.piezoBox.lockswitch.setChecked(False)
+                if DEVICES_USE_PIEZO[dev_type]:
+                    piezo_set = yield self.toptica.piezo_set(chan_num)
+                    piezo_max = yield self.toptica.piezo_max(chan_num)
+                    widget.piezoBox.setBox.setValue(piezo_set)
+                    widget.piezoBox.maxBox.setValue(piezo_max)
+                    widget.piezoBox.lockswitch.setChecked(False)
 
                 # scan
                 scan_freq = yield self.toptica.scan_frequency(chan_num)

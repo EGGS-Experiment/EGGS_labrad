@@ -13,6 +13,7 @@ class InjectionLockTemperatureClient(GUIClient):
     TEMPERATUREID = 4651986
     CURRENTID =     4651985
     LOCKID =        4651987
+    SETPOINTID =    4651988
     servers = {'tec': 'Injection Lock Temperature Server'}
 
     def getgui(self):
@@ -31,6 +32,8 @@ class InjectionLockTemperatureClient(GUIClient):
         yield self.tec.addListener(listener=self.updateTemperature, source=None, ID=self.TEMPERATUREID)
         yield self.tec.signal__lock_update(self.LOCKID)
         yield self.tec.addListener(listener=self.updateLock, source=None, ID=self.LOCKID)
+        yield self.tec.signal__setpoint_update(self.SETPOINTID)
+        yield self.tec.addListener(listener=self.updateSetpoint, source=None, ID=self.SETPOINTID)
 
         poll_params = yield self.tec.polling()
         # only start if polling not start
@@ -109,14 +112,16 @@ class InjectionLockTemperatureClient(GUIClient):
         self.gui.lock_I.setEnabled(status)
         self.gui.lock_D.setEnabled(status)
 
-    @inlineCallbacks
+
     def updateTemperature(self, c, temp):
         self.gui.displayTemp.setText("{:.3f}".format(temp))
         if self.recording:
             yield self.dv.add(time() - self.starttime, temp, context=self.c_record)
 
+
     def updateCurrent(self, c, curr):
         self.gui.displayCurr.setText("{:.3f}".format(curr))
+
 
     def updateToggle(self, c, status):
         # need to convert channel number to index
@@ -125,6 +130,9 @@ class InjectionLockTemperatureClient(GUIClient):
         toggleswitch.setChecked(status)
         toggleswitch.setAppearance(status)
         toggleswitch.blockSignals(False)
+
+    def updateSetpoint(self,c, setpoint):
+        self.gui.lock_set.setValue(setpoint)
 
     def updateLock(self, c, msg):
         param, value = msg

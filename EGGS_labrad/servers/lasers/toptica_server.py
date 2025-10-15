@@ -32,6 +32,11 @@ DEVICE_TYPE_PREFIX = {
     'BoosTApro':    'amp',
 }
 
+DEVICE_USES_PIEZO= {
+    'DLpro': True,
+    'BoosTApro': False,
+}
+
 
 class TopticaServer(PollingServer):
     """
@@ -260,11 +265,19 @@ class TopticaServer(PollingServer):
         Returns:
                     (float) : the target current (in mA).
         """
+        dev_type = yield self._read(chan, 'type', prefix='')
+        if DEVICE_TYPE_PREFIX[dev_type] == 'amp':
+            curr_max_ma = 1110
+        elif DEVICE_TYPE_PREFIX[dev_type] == 'dl':
+            curr_max_ma = 200
+        else:
+            curr_max_ma = 0
         if curr is not None:
-            if (curr <= 0) or (curr >= 200):
+            if (curr <= 0) or (curr >= curr_max_ma):
                 raise Exception('Error: target current is set too high. Must be less than 200mA.')
             else:
                 yield self._write(chan, 'cc:current-set', curr, prefix='type')
+
         resp = yield self._read(chan, 'cc:current-set', prefix='type')
         returnValue(float(resp))
 
@@ -278,8 +291,15 @@ class TopticaServer(PollingServer):
         Returns:
                     (float) : the maximum current (in mA).
         """
+        dev_type = yield self._read(chan, 'type', prefix='')
+        if DEVICE_TYPE_PREFIX[dev_type] == 'amp':
+            curr_max_ma = 1110
+        elif DEVICE_TYPE_PREFIX[dev_type] == 'dl':
+            curr_max_ma = 200
+        else:
+            curr_max_ma = 0
         if curr is not None:
-            if (curr <= 0) or (curr >= 200):
+            if (curr <= 0) or (curr >= curr_max_ma):
                 raise Exception('Error: target current is set too high. Must be less than 200mA.')
             else:
                 yield self._write(chan, 'cc:current-clip', curr, prefix='type')
@@ -350,8 +370,12 @@ class TopticaServer(PollingServer):
         Returns:
                     (float) : the piezo voltage (in V).
         """
-        resp = yield self._read(chan, 'pc:voltage-act', prefix='type')
-        returnValue(float(resp))
+        dev_type = yield self._read(chan, 'type', prefix='')
+        if DEVICE_USES_PIEZO[dev_type]:
+            resp = yield self._read(chan, 'pc:voltage-act', prefix='type')
+            returnValue(float(resp))
+        else:
+            returnValue(0.)
 
     @setting(412, 'Piezo Set', chan='i', voltage='v', returns='v')
     def piezoSet(self, c, chan, voltage=None):
@@ -363,13 +387,18 @@ class TopticaServer(PollingServer):
         Returns:
                         (float) : the piezo voltage (in V).
         """
-        if voltage is not None:
-            if (voltage <= 15) or (voltage >= 150):
-                raise Exception('Error: target voltage is set too high. Must be less than 150V.')
-            else:
-                yield self._write(chan, 'pc:voltage-set', voltage, prefix='type')
-        resp = yield self._read(chan, 'pc:voltage-set', prefix='type')
-        returnValue(float(resp))
+        dev_type = yield self._read(chan, 'type', prefix='')
+        if DEVICE_USES_PIEZO[dev_type]:
+            if voltage is not None:
+                if (voltage <= 15) or (voltage >= 150):
+                    raise Exception('Error: target voltage is set too high. Must be less than 150V.')
+                else:
+                    yield self._write(chan, 'pc:voltage-set', voltage, prefix='type')
+            resp = yield self._read(chan, 'pc:voltage-set', prefix='type')
+            returnValue(float(resp))
+
+        else:
+            returnValue(0.)
 
     @setting(413, 'Piezo Max', chan='i', voltage='v', returns='v')
     def piezoMax(self, c, chan, voltage=None):
@@ -381,13 +410,17 @@ class TopticaServer(PollingServer):
         Returns:
                         (float) : the maximum piezo voltage (in V).
         """
-        if voltage is not None:
-            if (voltage <= 15) or (voltage >= 150):
-                raise Exception('Error: maximum temperature must not exceed factory maximum settings.')
-            else:
-                yield self._write(chan, 'pc:voltage-max', voltage, prefix='type')
-        resp = yield self._read(chan, 'pc:voltage-max', prefix='type')
-        returnValue(float(resp))
+        dev_type = yield self._read(chan, 'type', prefix='')
+        if DEVICE_USES_PIEZO[dev_type]:
+            if voltage is not None:
+                if (voltage <= 15) or (voltage >= 150):
+                    raise Exception('Error: maximum temperature must not exceed factory maximum settings.')
+                else:
+                    yield self._write(chan, 'pc:voltage-max', voltage, prefix='type')
+            resp = yield self._read(chan, 'pc:voltage-max', prefix='type')
+            returnValue(float(resp))
+        else:
+            returnValue(0.)
 
 
     '''
@@ -555,7 +588,7 @@ class TopticaServer(PollingServer):
     HELPER FUNCTIONS
     '''
     @inlineCallbacks
-    def _read(self, chan, param, prefix):
+    def _read(self, chan, param, prefix=None):
     # def _read(self, chan, param, prefix="type"):
 
         # sanitize input
@@ -571,6 +604,8 @@ class TopticaServer(PollingServer):
             prefixstr = '{:s}:'.format(DEVICE_TYPE_PREFIX[self.channels[chan]['type']])
         elif prefix is None:
             prefixstr = ''
+        else:
+            prefixstr = ''
 
         # query device
         querystr = 'laser{:d}:{}{}'.format(laser_num, prefixstr, param)
@@ -579,7 +614,7 @@ class TopticaServer(PollingServer):
         returnValue(resp)
 
     @inlineCallbacks
-    def _write(self, chan, param, value, prefix):
+    def _write(self, chan, param, value, prefix=None):
     # def _write(self, chan, param, value, prefix="type"):
         # sanitize input
         if chan not in self.channels.keys():
@@ -594,10 +629,12 @@ class TopticaServer(PollingServer):
             prefixstr = '{:s}:'.format(DEVICE_TYPE_PREFIX[self.channels[chan]['type']])
         elif prefix is None:
             prefixstr = ''
+        else:
+            prefixstr = ''
 
         # write to device
         writestr = 'laser{:d}:{}{}'.format(laser_num, prefixstr, param)
-        # print('\n\tDEBUG (_write): {}'.format(writestr))
+        print('\n\tDEBUG (_write): {}'.format(writestr))
         yield dev.set(writestr, value)
 
     @inlineCallbacks
