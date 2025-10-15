@@ -32,6 +32,11 @@ class InjectionLockTemperatureClient(GUIClient):
         yield self.tec.signal__lock_update(self.LOCKID)
         yield self.tec.addListener(listener=self.updateLock, source=None, ID=self.LOCKID)
 
+        poll_params = yield self.tec.polling()
+        # only start if polling not start
+        if not poll_params[0]:
+            yield self.tec.polling(True, 5.0)
+
         # set up recording variables
         self.c_record = self.cxn.context()
         self.recording = False

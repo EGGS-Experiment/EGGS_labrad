@@ -66,12 +66,9 @@ class InjectionLockCurrentGUI(QFrame):
         # create set current subwidget
         self.set_current_spinbox = QCustomUnscrollableSpinBox(self)
         self.set_current_spinbox.setFont(QFont('MS Shell Dlg 2', pointSize=12))
-        # self.set_current_spinbox.setFixedSize(200, 100)
         self.set_current_spinbox.setDecimals(3)
         self.set_current_spinbox.setSingleStep(0.001)
-        self.set_current_spinbox.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
         self.set_current_spinbox.setMaximum(self.MAX_CURRENT)
-        # self.set_current_spinbox.setValue(97.475)
         injection_lock_current_layout.addWidget(self.set_current_spinbox, 6, 0, 2, 2)
 
         # create max current button
@@ -83,12 +80,9 @@ class InjectionLockCurrentGUI(QFrame):
         # create set current subwidget
         self.max_current_spinbox = QCustomUnscrollableSpinBox(self)
         self.max_current_spinbox.setFont(QFont('MS Shell Dlg 2', pointSize=12))
-        # self.max_current_spinbox.setFixedSize(200, 100)
         self.max_current_spinbox.setDecimals(3)
         self.max_current_spinbox.setSingleStep(0.001)
         self.max_current_spinbox.setMaximum(self.MAX_CURRENT)
-        # self.max_current_spinbox.setValue(100.)
-        self.max_current_spinbox.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
         injection_lock_current_layout.addWidget(self.max_current_spinbox, 6, 2, 2, 2)
 
         return QCustomGroupBox(injection_lock_current_widget, "Injection Lock Current")

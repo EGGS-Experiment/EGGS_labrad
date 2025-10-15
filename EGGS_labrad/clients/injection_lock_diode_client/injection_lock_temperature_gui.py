@@ -66,7 +66,8 @@ class InjectionLockTemperatureGUI(QFrame):
 
         # extra configuration for the setpoint
         self.lock_set.setRange(10, 35)
-        self.lock_set.setDecimals(2)
+        self.lock_set.setDecimals(3)
+        self.lock_set.setSingleStep(0.005)
 
         # lay out locking widget
         lockingWidget = QWidget()
