@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QDoubleSpinBox, QWidget
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox, Lockswitch
+from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomGroupBox, Lockswitch, QCustomUnscrollableSpinBox
 
 
 class TEC_gui(QFrame):
@@ -50,7 +50,7 @@ class TEC_gui(QFrame):
         # programmatically create widgets for PID
         self.toggle_button = TextChangingButton(('On', 'Off'))
         for widget_name in ("lock_set", "lock_P", "lock_I", "lock_D"):
-            widget = QDoubleSpinBox()
+            widget = QCustomUnscrollableSpinBox()
             widget.setFont(QFont('MS Shell Dlg 2', pointSize=16))
             widget.setDecimals(0)
             widget.setSingleStep(1)
