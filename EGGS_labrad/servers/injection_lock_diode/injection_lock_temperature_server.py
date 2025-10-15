@@ -1,7 +1,7 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = AMO2 Server
+name = Injection Lock Temperature Server
 version = 1.0.0
 description = Communicates with the AMO2 box for control of TECs.
 instancename = Injection Lock Temperature Server
