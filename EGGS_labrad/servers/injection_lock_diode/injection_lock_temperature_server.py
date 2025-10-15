@@ -44,6 +44,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
     current_update = Signal(999998, 'signal: current update', 'v')
     temperature_update = Signal(999997, 'signal: temperature update', 'v')
     lock_update = Signal(999996, 'signal: lock update', '(sv)')
+    setpoint_update = Signal(999995, 'signal: setpoint update', '(v)')
 
 
     # GENERAL
@@ -163,6 +164,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
 
         # parse resp
         resp = float(resp[:-2])
+        self.notifyOtherListeners(c, resp, self.setpoint_update)
         # todo: notify other listeners
         returnValue(resp)
 
@@ -258,10 +260,14 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
     @inlineCallbacks
     def _poll(self):
         """
-        Polls the device for temperature and current readout.
+        Polls the device for temperature and current readout and other params
         """
         yield self.temperature(None)
         yield self.current(None)
+        yield self.lockingSetpoint(None)
+        yield self.lockingP(None)
+        yield self.lockingI(None)
+        yield self.lockingD(None)
 
 
 if __name__ == '__main__':
