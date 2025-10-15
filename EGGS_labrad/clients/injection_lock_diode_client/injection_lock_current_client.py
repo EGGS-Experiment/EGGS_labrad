@@ -6,7 +6,7 @@ from EGGS_labrad.clients.injection_lock_diode_client.injection_lock_current_gui 
 class InjectionLockCurrentClient(GUIClient):
 
     name = 'Injection Lock Current Client'
-    servers = {'current_controller': 'InjectionLockCurrentServer'}
+    servers = {'controller': 'Injection Lock Current Server'}
 
     TOGGLEID = 4651988
     CURRENTID = 4651989
@@ -21,30 +21,41 @@ class InjectionLockCurrentClient(GUIClient):
     @inlineCallbacks
     def initClient(self):
 
-        yield self.current_controller.signal__toggle_update(self.TOGGLEID)
-        yield self.current_controller.addListener(listener=self.updateToggle, soure=self.TOGGLEID)
-        yield self.current_controller.signal__current_update(self.CURRENTID)
-        yield self.current_controller.addListener(listener=self.updateSetCurrent, soure=None, ID=self.CURRENTID)
-        yield self.current_Controller.signal__output_update(self.OUTPUTID)
-        yield self.current_controller.addListener(listener=self.updateOutput, source=None, ID=self.OUTPUTID)
+        yield self.controller.signal__toggle_update(self.TOGGLEID)
+        yield self.controller.addListener(listener=self.updateToggle, soure=self.TOGGLEID)
+        yield self.controller.signal__current_update(self.CURRENTID)
+        yield self.controller.addListener(listener=self.updateSetCurrent, soure=None, ID=self.CURRENTID)
+        yield self.controller.signal__output_update(self.OUTPUTID)
+        yield self.controller.addListener(listener=self.updateOutput, source=None, ID=self.OUTPUTID)
+
+        # start polliing
+        poll_params = yield self.controller.polling()
+        # only start if polling not start
+        if not poll_params[0]:
+            yield self.controller.polling(True, 5.0)
         # set up recording variables
         self.c_record = self.cxn.context()
         self.recording = False
+        self.max_current_mA = 100.
 
     @inlineCallbacks
     def initData(self):
-        status = self.current_controller.toggle()
-        current = self.current_controller.currentSet()
-        max_current = self.current_controller.currentMax()
+        status = yield self.controller.toggle()
+        current = yield self.controller.current_set()
+        max_current = yield self.controller.current_max(self.max_current_mA)
+        outputs = yield self.controller.outputs()
 
-        self.gui.output_button.setValue(status)
+        self.gui.output_button.setChecked(status)
         self.gui.set_current_spinbox.setValue(current)
-        self.gui.max_current_spinbox.setChecked(max_current)
+        self.gui.max_current_spinbox.setValue(max_current)
+
+        self.gui.label_diode_voltage.setText(str(outputs[0]))
+        self.gui.label_diode_current.setText(str(outputs[1]*1e3))
 
     def initGUI(self):
-        self.gui.set_current_spinbox.valueChanged.connect(lambda current_mA: self.current_controller.currentSet(current_mA))
-        self.gui.max_current_spinbox.valueChanged.connect(lambda max_current_ma: self.current_controller.currentMax(max_current_ma))
-        self.gui.output_button.clicked(lambda status: self.current_controller.toggle(status))
+        self.gui.set_current_spinbox.valueChanged.connect(lambda current_mA: self.controller.current_set(current_mA))
+        self.gui.max_current_spinbox.valueChanged.connect(lambda max_current_ma: self.controller.current_max(max_current_ma))
+        self.gui.output_button.clicked.connect(lambda status: self.controller.toggle(status))
 
         self.gui.lockswitch.clicked.connect(lambda status: self.lock(status))
 
@@ -62,9 +73,9 @@ class InjectionLockCurrentClient(GUIClient):
     def updateToggle(self,c, status):
         self.gui.output_button.clicked(status)
 
-    def updateOutput(self, c, output):
-        self.gui.label_diode_current.setText(f'{output[0]:.3f} mA')
-        self.gui.label_diode_voltage.setText(f'{output[1]:.3f} V')
+    def updateOutput(self, c, outputs):
+        self.gui.label_diode_voltage.setText(str(outputs[0]))
+        self.gui.label_diode_current.setText(str(outputs[1]*1e3))
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
