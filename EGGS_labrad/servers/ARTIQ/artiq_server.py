@@ -361,6 +361,7 @@ class ARTIQ_Server(ContextServer):
         self.notifyOtherListeners(c, (dds_name, 'onoff', state), self.ddsChanged)
         returnValue(bool(state))
 
+
     '''
     PRECOMPILE TESTING
     '''
@@ -420,6 +421,7 @@ class ARTIQ_Server(ContextServer):
     '''
     PRECOMPILE TESTING
     '''
+
 
     @setting(325, "DDS Phase", dds_name='s', phase='v', returns='i')
     def DDSphase(self, c, dds_name, phase=None):
