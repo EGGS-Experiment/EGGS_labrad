@@ -42,9 +42,11 @@ class PMT_client(GUIClient):
         self._num_samples =     0
         self._time_per_data =   0
 
+        # set up unique contexts for signalling
+        self.cntx_aq_mon = self.cxn.context()
         # connect to signals
-        yield self.aq.signal__exp_running(EXPID)
-        yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID)
+        yield self.aq.signal__exp_running(EXPID, context=self.cntx_aq_mon)
+        yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID, context=self.cntx_aq_mon)
 
         # connect to labjack
         self.flipper_port_name = "EIO7"
@@ -169,6 +171,10 @@ class PMT_client(GUIClient):
 
     @inlineCallbacks
     def aperture_toggle(self, status):
+        """
+        Open/close the 397nm aperture.
+        :param status: whether to open (true) or close (false) the aperture.
+        """
         # open/close the aperture
         if status:
             yield self.ell.move_home()
@@ -179,7 +185,7 @@ class PMT_client(GUIClient):
     def record(self, status):
         """
         Creates a new dataset to record counts
-        tells polling loop to add data to data vault.
+        and tells polling loop to add data to data vault.
         """
         self.recording = status
         # set up datavault

@@ -1,7 +1,9 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton, QWidget, QVBoxLayout, QRadioButton
+from PyQt5.QtWidgets import (QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton,
+                             QWidget, QVBoxLayout, QRadioButton)
 
+from EGGS_labrad.clients.utils import SHELL_FONT
 from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomARTIQMonitor
 
 
@@ -28,12 +30,12 @@ class PMT_gui(QFrame):
         self.setWindowTitle(self.name)
         self.lockswitch = Lockswitch()
         self.read_once_switch = QPushButton("Read Once")
-        self.read_once_switch.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.read_once_switch.setFont(QFont(SHELL_FONT, pointSize=10))
         self.read_cont_switch = TextChangingButton(("Stop", "Loop"))
 
         # title display
         self.title = QLabel(self.name)
-        self.title.setFont(QFont('MS Shell Dlg 2', pointSize=20, weight=QFont.Medium))
+        self.title.setFont(QFont(SHELL_FONT, pointSize=20, weight=QFont.Medium))
         self.title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         # create artiq experiment monitor
@@ -45,16 +47,16 @@ class PMT_gui(QFrame):
         '''
         # count display
         self.count_display_label = QLabel("Counts")
-        self.count_display_label.setFont(QFont('MS Shell Dlg 2', pointSize=15))
+        self.count_display_label.setFont(QFont(SHELL_FONT, pointSize=15))
         self.count_display_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.count_display = QLabel("0.000")
         self.count_display.setStyleSheet('color: red')
-        self.count_display.setFont(QFont('MS Shell Dlg 2', pointSize=23, weight=QFont.Medium))
+        self.count_display.setFont(QFont(SHELL_FONT, pointSize=23, weight=QFont.Medium))
         self.count_display.setAlignment(Qt.AlignCenter)
 
         # stdev selection radio buttons
         std_widget_label = QLabel("Std. Dev.")
-        std_widget_label.setFont(QFont('MS Shell Dlg 2', pointSize=12, weight=QFont.Normal))
+        std_widget_label.setFont(QFont(SHELL_FONT, pointSize=12, weight=QFont.Normal))
         self.std_widget = QWidget()
         self.sample_std_on = QRadioButton("On")
         self.sample_std_off = QRadioButton("Off")
@@ -70,36 +72,36 @@ class PMT_gui(QFrame):
         '''
         # sample time
         self.sample_time_label = QLabel('Sample Time (us)')
-        self.sample_time_label.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.sample_time_label.setFont(QFont(SHELL_FONT, pointSize=10))
         self.sample_time_label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
         self.sample_time = QDoubleSpinBox()
         self.sample_time.setRange(1, 5000000)
         self.sample_time.setSingleStep(1)
         self.sample_time.setDecimals(0)
         self.sample_time.setAlignment(Qt.AlignRight)
-        self.sample_time.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        self.sample_time.setFont(QFont(SHELL_FONT, pointSize=12))
 
         # number of samples
         self.sample_num_label = QLabel('Num. Samples')
-        self.sample_num_label.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.sample_num_label.setFont(QFont(SHELL_FONT, pointSize=10))
         self.sample_num_label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
         self.sample_num = QDoubleSpinBox()
         self.sample_num.setRange(1, 10000)
         self.sample_num.setSingleStep(1)
         self.sample_num.setDecimals(0)
         self.sample_num.setAlignment(Qt.AlignRight)
-        self.sample_num.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        self.sample_num.setFont(QFont(SHELL_FONT, pointSize=12))
 
         # polling
         self.poll_interval_label = QLabel('Poll Interval (s)')
-        self.poll_interval_label.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.poll_interval_label.setFont(QFont(SHELL_FONT, pointSize=10))
         self.poll_interval_label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
         self.poll_interval = QDoubleSpinBox()
         self.poll_interval.setRange(.01, 600)
         self.poll_interval.setSingleStep(1)
         self.poll_interval.setDecimals(2)
         self.poll_interval.setAlignment(Qt.AlignRight)
-        self.poll_interval.setFont(QFont('MS Shell Dlg 2', pointSize=12))
+        self.poll_interval.setFont(QFont(SHELL_FONT, pointSize=12))
 
 
         '''
@@ -109,10 +111,10 @@ class PMT_gui(QFrame):
         self.record_button = TextChangingButton(("Stop Recording", "Start Recording"))
         # Grant's real magic button a.k.a. flipper
         self.flipper_button = QPushButton("Flip")
-        self.flipper_button.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.flipper_button.setFont(QFont(SHELL_FONT, pointSize=10))
         # aperture open
         self.aperture_button = TextChangingButton(("Close Aperture", "Open Aperture"))
-        self.aperture_button.setFont(QFont('MS Shell Dlg 2', pointSize=10))
+        self.aperture_button.setFont(QFont(SHELL_FONT, pointSize=10))
 
 
     def makeLayout(self):
@@ -141,7 +143,6 @@ class PMT_gui(QFrame):
         layout.addWidget(self.aperture_button,          10, 1)
         # recording
         layout.addWidget(self.record_button,            10, 2)
-
 
     def stdToggle(self, status):
         """
