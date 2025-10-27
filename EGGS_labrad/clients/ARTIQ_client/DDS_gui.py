@@ -1,10 +1,10 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDoubleSpinBox, QLabel, QGridLayout, QFrame, QPushButton
+from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QFrame, QPushButton
 
+from EGGS_labrad.clients.utils import SHELL_FONT
 from EGGS_labrad.clients.Widgets import (TextChangingButton, QCustomGroupBox, QCustomEditableLabel,
                                          QCustomARTIQMonitor, QCustomUnscrollableSpinBox)
-from EGGS_labrad.clients.utils import SHELL_FONT
 
 
 class AD9910_channel(QFrame):
@@ -32,9 +32,9 @@ class AD9910_channel(QFrame):
         title.setAlignment(Qt.AlignCenter)
 
         # labels
-        freqlabel =     QLabel('Frequency (MHz)')
-        powerlabel =    QLabel('Amplitude (%)')
-        attlabel =      QLabel('Attenuation (dB)')
+        freqlabel =     QLabel('Freq. (MHz)')
+        powerlabel =    QLabel('Ampl. (%)')
+        attlabel =      QLabel('Att. (dB)')
 
         # editable fields
         self.freq = QCustomUnscrollableSpinBox()

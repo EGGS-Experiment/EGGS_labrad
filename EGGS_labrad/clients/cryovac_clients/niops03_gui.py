@@ -1,8 +1,12 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QLabel, QDoubleSpinBox, QComboBox, QGridLayout
+from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout
 
-from EGGS_labrad.clients.Widgets import TextChangingButton as _TextChangingButton, QClientMenuHeader
+from EGGS_labrad.clients.utils import SHELL_FONT
+from EGGS_labrad.clients.Widgets import (
+    TextChangingButton as _TextChangingButton, QClientMenuHeader,
+    QCustomUnscrollableSpinBox, QCustomUnscrollableComboBox
+)
 
 
 class TextChangingButton(_TextChangingButton):
@@ -20,37 +24,36 @@ class niops03_gui(QFrame):
         self.setWindowTitle("NIOPS03 Client")
 
     def makeWidgets(self):
-        shell_font = 'MS Shell Dlg 2'
         self.setFixedSize(350, 445)
         self.all_label = QLabel('NIOPS03 Pump')
-        self.all_label.setFont(QFont(shell_font, pointSize=20))
+        self.all_label.setFont(QFont(SHELL_FONT, pointSize=20))
         self.all_label.setAlignment(Qt.AlignCenter)
         # label
         self.ip_label = QLabel('Ion Pump')
-        self.ip_label.setFont(QFont(shell_font, pointSize=15))
+        self.ip_label.setFont(QFont(SHELL_FONT, pointSize=15))
         self.ip_label.setAlignment(Qt.AlignCenter)
         # temperature readout
         self.ip_temperature_display_label = QLabel('Temperature (C)')
         self.ip_temperature_display = QLabel('Temp')
-        self.ip_temperature_display.setFont(QFont(shell_font, pointSize=20))
+        self.ip_temperature_display.setFont(QFont(SHELL_FONT, pointSize=20))
         self.ip_temperature_display.setAlignment(Qt.AlignCenter)
         self.ip_temperature_display.setStyleSheet('color: blue')
         # pressure readout
         self.ip_pressure_display_label = QLabel('Pressure (mbar)')
         self.ip_pressure_display = QLabel('Pressure')
-        self.ip_pressure_display.setFont(QFont(shell_font, pointSize=20))
+        self.ip_pressure_display.setFont(QFont(SHELL_FONT, pointSize=20))
         self.ip_pressure_display.setAlignment(Qt.AlignCenter)
         self.ip_pressure_display.setStyleSheet('color: blue')
         # voltage readout
         self.ip_voltage_display_label = QLabel('Output Voltage (V)')
         self.ip_voltage_display = QLabel('Voltage')
-        self.ip_voltage_display.setFont(QFont(shell_font, pointSize=20))
+        self.ip_voltage_display.setFont(QFont(SHELL_FONT, pointSize=20))
         self.ip_voltage_display.setAlignment(Qt.AlignCenter)
         self.ip_voltage_display.setStyleSheet('color: blue')
         # voltage setting
         self.ip_voltage_label = QLabel('Set Voltage (V)')
-        self.ip_voltage = QDoubleSpinBox()
-        self.ip_voltage.setFont(QFont(shell_font, pointSize=16))
+        self.ip_voltage = QCustomUnscrollableSpinBox()
+        self.ip_voltage.setFont(QFont(SHELL_FONT, pointSize=16))
         self.ip_voltage.setDecimals(0)
         self.ip_voltage.setSingleStep(1)
         self.ip_voltage.setRange(1200, 6000)
@@ -58,7 +61,7 @@ class niops03_gui(QFrame):
         # working time
         self.ip_workingtime_display_label = QLabel('Working Time (Hours:Minutes)')
         self.ip_workingtime_display = QLabel('00:00')
-        self.ip_workingtime_display.setFont(QFont(shell_font, pointSize=20))
+        self.ip_workingtime_display.setFont(QFont(SHELL_FONT, pointSize=20))
         self.ip_workingtime_display.setAlignment(Qt.AlignCenter)
         self.ip_workingtime_display.setStyleSheet('color: blue')
         # record button
@@ -70,18 +73,18 @@ class niops03_gui(QFrame):
 
         # getter
         self.np_label = QLabel('Getter')
-        self.np_label.setFont(QFont(shell_font, pointSize=15))
+        self.np_label.setFont(QFont(SHELL_FONT, pointSize=15))
         self.np_label.setAlignment(Qt.AlignCenter)
         # working time
         self.np_temperature_display_label = QLabel('Temperature (C)')
         self.np_temperature_display = QLabel('Temp')
-        self.np_temperature_display.setFont(QFont(shell_font, pointSize=20))
+        self.np_temperature_display.setFont(QFont(SHELL_FONT, pointSize=20))
         self.np_temperature_display.setAlignment(Qt.AlignCenter)
         self.np_temperature_display.setStyleSheet('color: blue')
         # mode
         self.np_mode_label = QLabel('Mode')
-        self.np_mode = QComboBox()
-        self.np_mode.setFont(QFont(shell_font, pointSize=12))
+        self.np_mode = QCustomUnscrollableComboBox()
+        self.np_mode.setFont(QFont(SHELL_FONT, pointSize=12))
         self.np_mode.addItems(['Activation', 'Timed Activation', 'Conditioning', 'Timed Conditioning'])
         # power
         self.np_lockswitch = TextChangingButton(('Unlocked', 'Locked'))

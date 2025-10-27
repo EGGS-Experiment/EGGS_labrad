@@ -1,8 +1,8 @@
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import QRect, Qt
-from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QPushButton, QWidget, QDoubleSpinBox, QComboBox, QPlainTextEdit
+from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QPushButton, QWidget, QComboBox, QPlainTextEdit
 
-from EGGS_labrad.clients.Widgets import Lockswitch, QCustomGroupBox
+from EGGS_labrad.clients.Widgets import Lockswitch, QCustomGroupBox, QCustomUnscrollableSpinBox
 
 
 class RGA_gui(QFrame):
@@ -49,12 +49,12 @@ class RGA_gui(QFrame):
         self.scan_lockswitch = Lockswitch()
         self.scan_start = QPushButton("Start")
         
-        self.scan_num = QDoubleSpinBox()
+        self.scan_num = QCustomUnscrollableSpinBox()
         self.scan_num.setKeyboardTracking(False)
         self.scan_num.setDecimals(0)
         self.scan_num.setRange(1.0, 255.0)
 
-        self.scan_sa = QDoubleSpinBox()
+        self.scan_sa = QCustomUnscrollableSpinBox()
         self.scan_sa.setKeyboardTracking(False)
         self.scan_sa.setDecimals(0)
         self.scan_sa.setRange(10.0, 25.0)
@@ -63,9 +63,9 @@ class RGA_gui(QFrame):
         self.scan_type = QComboBox()
         self.scan_type.addItems(["Analog", "Histogram", "Single Mass", "Total Pressure"])
 
-        self.mass_lock = QDoubleSpinBox()
-        self.scan_mi = QDoubleSpinBox()
-        self.scan_mf = QDoubleSpinBox()
+        self.mass_lock = QCustomUnscrollableSpinBox()
+        self.scan_mi = QCustomUnscrollableSpinBox()
+        self.scan_mf = QCustomUnscrollableSpinBox()
         for widget in (self.mass_lock, self.scan_mi, self.scan_mf):
             widget.setKeyboardTracking(False)
             widget.setDecimals(0)
@@ -96,7 +96,7 @@ class RGA_gui(QFrame):
         detector_cv_label = QLabel("CDEM Voltage (V)")
         detector_nf_label = QLabel("Noise Floor")
 
-        self.detector_hv = QDoubleSpinBox()
+        self.detector_hv = QCustomUnscrollableSpinBox()
         self.detector_hv.setKeyboardTracking(False)
         self.detector_hv.setDecimals(0)
         self.detector_hv.setRange(10, 2490)
@@ -124,7 +124,7 @@ class RGA_gui(QFrame):
         ionizer_vf_label = QLabel("Focus Voltage (V)")
         ionizer_fl_label = QLabel("Filament Current (mA)")
 
-        self.ionizer_ee = QDoubleSpinBox()
+        self.ionizer_ee = QCustomUnscrollableSpinBox()
         self.ionizer_ee.setKeyboardTracking(False)
         self.ionizer_ee.setDecimals(0)
         self.ionizer_ee.setRange(25.0, 105.0)
@@ -133,13 +133,13 @@ class RGA_gui(QFrame):
         self.ionizer_ie = QComboBox()
         self.ionizer_ie.addItems(["8", "12"])
 
-        self.ionizer_fl = QDoubleSpinBox()
+        self.ionizer_fl = QCustomUnscrollableSpinBox()
         self.ionizer_fl.setKeyboardTracking(False)
         self.ionizer_fl.setDecimals(2)
         self.ionizer_fl.setRange(0.0, 3.5)
         self.ionizer_fl.setSingleStep(0.1)
 
-        self.ionizer_vf = QDoubleSpinBox()
+        self.ionizer_vf = QCustomUnscrollableSpinBox()
         self.ionizer_vf.setKeyboardTracking(False)
         self.ionizer_vf.setDecimals(0)
         self.ionizer_vf.setRange(0, 150)

@@ -14,7 +14,6 @@ class EGGS_GUI(QMainWindow):
 
     The main labrad experimental interface for the EGGS experiment.
     """
-
     name = gethostname() + ' EGGS GUI'
     LABRADPASSWORD = environ['LABRADPASSWORD']
 
@@ -55,7 +54,6 @@ class EGGS_GUI(QMainWindow):
         # todo: should this be a returnValue???
         return self.cxn
 
-
     def makeLayout(self, cxn):
         """
         Create and lay out EGGS GUI.
@@ -76,9 +74,9 @@ class EGGS_GUI(QMainWindow):
 
         # create tabs for each subwidget
         # self.tabWidget.addTab(script_scanner, '&Script Scanner')
+        self.tabWidget.addTab(lasers, '&Lasers')
         self.tabWidget.addTab(cryovac, '&Cryovac')
         self.tabWidget.addTab(trap, '&Trap')
-        self.tabWidget.addTab(lasers, '&Lasers')
         self.tabWidget.addTab(wavemeter, '&Wavemeter')
 
         # put it all together
@@ -86,7 +84,9 @@ class EGGS_GUI(QMainWindow):
         self.setCentralWidget(centralWidget)
 
 
-    """TAB WIDGETS"""
+    """
+    TAB WIDGETS
+    """
     # def makeScriptScannerWidget(self, reactor, cxn):
     #     from EGGS_labrad.clients.script_scanner_gui import script_scanner_gui
     #     # note: no need to initialize script_scanner_gui with a labrad cxn
@@ -156,8 +156,9 @@ class EGGS_GUI(QMainWindow):
         return self._createTabLayout(clients, reactor)
 
 
-    """HELPER FUNCTIONS"""
-
+    """
+    HELPER FUNCTIONS
+    """
     def close(self):
         """
         Attempt to safely close the GUI (non-trivial).
