@@ -27,6 +27,13 @@ from labjack import ljm
 # todo: comm lock
 # todo: signals for updating
 
+_LABJACK_DATA_TYPES = {
+    'UINT16':   ljm.constants.UINT16,
+    'UINT32':   ljm.constants.UINT32,
+    'INT32':    ljm.constants.INT32,
+    'FLOAT':    ljm.constants.FLOAT32,
+}
+
 
 class LabJackServer(ContextServer):
     """
@@ -54,7 +61,9 @@ class LabJackServer(ContextServer):
         self.comm_lock =        DeferredLock
 
 
-    # STARTUP & SHUTDOWN
+    '''
+    STARTUP & SHUTDOWN
+    '''
     def initServer(self):
         """
         todo: document
@@ -193,9 +202,8 @@ class LabJackServer(ContextServer):
     @setting(13, name='s', returns='i')
     def read_state(self, c, name):
         """
-        Read a value from a DIO register on the LabJack
+        Read a value from a DIO register on the LabJack.
         """
-
         # find the index from the port name given
         ind = int(''.join([letter for letter in name[::-1] if letter.isdigit()]))
 
@@ -206,11 +214,13 @@ class LabJackServer(ContextServer):
         returnValue(int(bin(int(DIO_values))[-ind]))
 
     @inlineCallbacks
-    @setting(15, address='i', returns='v')
+    @setting(15, address='i', data_type='s', returns='v')
     def read_address(self, c, address):
         """
         Read a value from a register on the LabJack.
         """
+        # convert user input data type to labjack data type
+        # todo
         value = yield ljm.eReadAddress(self.device_handle, address)
         returnValue(value)
 
@@ -229,6 +239,8 @@ class LabJackServer(ContextServer):
         """
         Read values from multiple registers on the LabJack.
         """
+        # convert user input data type to labjack data type
+        # todo
         values = yield ljm.eReadAddresses(self.device_handle, len(addresses), addresses)
         returnValue(values)
 
@@ -250,6 +262,8 @@ class LabJackServer(ContextServer):
         """
         Write a value to a register on the LabJack.
         """
+        # convert user input data type to labjack data type
+        # todo
         ljm.eWriteAddress(self.device_handle, address, value)
 
     @inlineCallbacks
@@ -266,6 +280,8 @@ class LabJackServer(ContextServer):
         """
         Write values to multiple registers on the LabJack.
         """
+        # convert user input data type to labjack data type
+        # todo
         ljm.eWriteAddresses(self.device_handle, len(addresses), addresses, values)
 
 
