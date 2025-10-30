@@ -192,7 +192,6 @@ class LabJackServer(ContextServer):
     def read_name(self, c, name):
         """
         Read a value from a named register on the LabJack.
-
         NOTE: READING FROM A REGISTER WITH THIS METHOD SETS THIS PORT TO HIGH REGARDLESS OF THE INITIAL VALUE
         """
         value = yield ljm.eReadName(self.device_handle, name)
@@ -215,13 +214,15 @@ class LabJackServer(ContextServer):
 
     @inlineCallbacks
     @setting(15, address='i', data_type='s', returns='v')
-    def read_address(self, c, address):
+    def read_address(self, c, address, data_type):
         """
         Read a value from a register on the LabJack.
+        :param address: the numerical register address to read from.
+        :param data_type: the desired return data type. Can be one of ['UINT16', 'UINT32', 'INT32', 'FLOAT'].
         """
         # convert user input data type to labjack data type
-        # todo
-        value = yield ljm.eReadAddress(self.device_handle, address)
+        data_type_processed = _LABJACK_DATA_TYPES[data_type.strip().upper()]
+        value = yield ljm.eReadAddress(self.device_handle, address, data_type_processed)
         returnValue(value)
 
     @inlineCallbacks
@@ -229,19 +230,23 @@ class LabJackServer(ContextServer):
     def read_names(self, c, names):
         """
         Read values from multiple named registers on the LabJack.
+        For simplicity, does only a single read of each named register.
         """
         values = yield ljm.eReadNames(self.device_handle, len(names), names)
         returnValue(values)
 
     @inlineCallbacks
-    @setting(19, addresses='*i', returns='*v')
-    def read_addresses(self, c, addresses):
+    @setting(19, addresses='*i', data_types='*s', returns='*v')
+    def read_addresses(self, c, addresses, data_types):
         """
         Read values from multiple registers on the LabJack.
+        :param addresses: list of numerical register addresses to read from.
+        :param data_types: list of desired return data types.
+            Elements must be one of ['UINT16', 'UINT32', 'INT32', 'FLOAT'].
         """
         # convert user input data type to labjack data type
-        # todo
-        values = yield ljm.eReadAddresses(self.device_handle, len(addresses), addresses)
+        data_types_processed = [_LABJACK_DATA_TYPES[type_tmp.strip().upper()] for type_tmp in data_types]
+        values = yield ljm.eReadAddresses(self.device_handle, len(addresses), addresses, data_types_processed)
         returnValue(values)
 
 
@@ -257,14 +262,18 @@ class LabJackServer(ContextServer):
         ljm.eWriteName(self.device_handle, name, value)
 
     @inlineCallbacks
-    @setting(12, address='i', value='v')
-    def write_address(self, c, address, value):
+    @setting(12, address='i', data_type='s', value='v')
+    def write_address(self, c, address, data_type, value):
         """
         Write a value to a register on the LabJack.
+        :param address: the numerical register address to write to.
+        :param data_type: the data type corresponding to the address.
+            Can be one of ['UINT16', 'UINT32', 'INT32', 'FLOAT'].
+        :param value: the value to write to the register.
         """
         # convert user input data type to labjack data type
-        # todo
-        ljm.eWriteAddress(self.device_handle, address, value)
+        data_type_processed = _LABJACK_DATA_TYPES[data_type.strip().upper()]
+        ljm.eWriteAddress(self.device_handle, address, data_type_processed, value)
 
     @inlineCallbacks
     @setting(14, names='*s', values='*v')
@@ -275,14 +284,18 @@ class LabJackServer(ContextServer):
         ljm.eWriteNames(self.device_handle, len(names), names, values)
 
     @inlineCallbacks
-    @setting(16, addresses='*i', values='*v')
-    def write_addresses(self, c, addresses, values):
+    @setting(16, addresses='*i', data_types='*s', values='*v')
+    def write_addresses(self, c, addresses, data_types, values):
         """
         Write values to multiple registers on the LabJack.
+        :param address: list of numerical register addresses to write to.
+        :param data_types: list of data types corresponding to the addresses.
+            Elements must be one of ['UINT16', 'UINT32', 'INT32', 'FLOAT'].
+        :param value: list of values to write to the registers.
         """
         # convert user input data type to labjack data type
-        # todo
-        ljm.eWriteAddresses(self.device_handle, len(addresses), addresses, values)
+        data_types_processed = [_LABJACK_DATA_TYPES[type_tmp.strip().upper()] for type_tmp in data_types]
+        ljm.eWriteAddresses(self.device_handle, len(addresses), addresses, data_types_processed, values)
 
 
 if __name__ == "__main__":
