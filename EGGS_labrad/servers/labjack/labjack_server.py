@@ -187,7 +187,6 @@ class LabJackServer(ContextServer):
     '''
     READ
     '''
-    @inlineCallbacks
     @setting(11, name='s', returns='v')
     def read_name(self, c, name):
         """
@@ -197,7 +196,6 @@ class LabJackServer(ContextServer):
         value = yield ljm.eReadName(self.device_handle, name)
         returnValue(value)
 
-    @inlineCallbacks
     @setting(13, name='s', returns='i')
     def read_state(self, c, name):
         """
@@ -212,7 +210,6 @@ class LabJackServer(ContextServer):
         # return the value of the DIO port requested
         returnValue(int(bin(int(DIO_values))[-ind]))
 
-    @inlineCallbacks
     @setting(15, address='i', data_type='s', returns='v')
     def read_address(self, c, address, data_type):
         """
@@ -225,7 +222,6 @@ class LabJackServer(ContextServer):
         value = yield ljm.eReadAddress(self.device_handle, address, data_type_processed)
         returnValue(value)
 
-    @inlineCallbacks
     @setting(17, names='*s', returns='*v')
     def read_names(self, c, names):
         """
@@ -235,7 +231,6 @@ class LabJackServer(ContextServer):
         values = yield ljm.eReadNames(self.device_handle, len(names), names)
         returnValue(values)
 
-    @inlineCallbacks
     @setting(19, addresses='*i', data_types='*s', returns='*v')
     def read_addresses(self, c, addresses, data_types):
         """
@@ -253,7 +248,6 @@ class LabJackServer(ContextServer):
     '''
     WRITE
     '''
-    @inlineCallbacks
     @setting(10, name='s', value='v')
     def write_name(self, c, name, value):
         """
@@ -261,7 +255,6 @@ class LabJackServer(ContextServer):
         """
         ljm.eWriteName(self.device_handle, name, value)
 
-    @inlineCallbacks
     @setting(12, address='i', data_type='s', value='v')
     def write_address(self, c, address, data_type, value):
         """
@@ -275,7 +268,6 @@ class LabJackServer(ContextServer):
         data_type_processed = _LABJACK_DATA_TYPES[data_type.strip().upper()]
         ljm.eWriteAddress(self.device_handle, address, data_type_processed, value)
 
-    @inlineCallbacks
     @setting(14, names='*s', values='*v')
     def write_names(self, c, names, values):
         """
@@ -283,7 +275,6 @@ class LabJackServer(ContextServer):
         """
         ljm.eWriteNames(self.device_handle, len(names), names, values)
 
-    @inlineCallbacks
     @setting(16, addresses='*i', data_types='*s', values='*v')
     def write_addresses(self, c, addresses, data_types, values):
         """
