@@ -1,6 +1,6 @@
 import os
-from numpy import linspace
 from time import time
+from numpy import linspace
 from socket import gethostname
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
@@ -8,6 +8,8 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.config.multiplexerclient_config import multiplexer_config
 from EGGS_labrad.clients.wavemeter_client.multiplexer_gui import multiplexer_gui
+# todo: make display titles also target color
+# todo: somehow add second display
 
 FREQ_CHANGED_ID =       445566
 CHANNEL_CHANGED_ID =    143533
@@ -44,14 +46,15 @@ class multiplexer_client(GUIClient):
     LABRADHOST =            multiplexer_config.ip
     ALARM_THRESHOLD_THZ =   multiplexer_config.alarm_threshold_mhz / 1e6
 
-
     def getgui(self):
         if self.gui is None:
             self.gui = multiplexer_gui(multiplexer_config.channels)
         return self.gui
 
 
-    # SETUP
+    '''
+    SETUP
+    '''
     @inlineCallbacks
     def initClient(self):
         # get config
@@ -221,7 +224,9 @@ class multiplexer_client(GUIClient):
         self.gui.pidGUI.polarityBox.currentIndexChanged.connect(lambda index, _dacPort=dacPort: self.changePolarity(index, _dacPort))
 
 
-    # SLOTS
+    '''
+    SLOTS
+    '''
     @inlineCallbacks
     def updateFrequency(self, c, signal):
         # check whether we care about the updated channel
@@ -240,7 +245,7 @@ class multiplexer_client(GUIClient):
             elif freq == -17.0:
                 widget.currentfrequency.setText('Data Error')
             else:
-                widget.currentfrequency.setText('{:.6f}'.format(freq))
+                widget.currentfrequency.setText('{:.7f}'.format(freq))
                 freq_tmp = freq
 
             # check whether recording or not
@@ -255,6 +260,8 @@ class multiplexer_client(GUIClient):
                     pass
 
             # set alarm if channel is unlocked
+            # todo: include latching & hysteresis
+            # todo: make wavemeter gui flash red
             freq_target_thz = widget.spinFreq.value()
             if abs(freq - freq_target_thz) > self.ALARM_THRESHOLD_THZ:
                 widget.channel_header.setStyleSheet('background-color: red;')
@@ -262,7 +269,6 @@ class multiplexer_client(GUIClient):
                 if _PLAYSOUND_ENABLE:
                     try:
                         deferToThread(playsound, _UNLOCKED_SOUND_PATH)
-                        #deferToThread(playsound, 'C:\\Users\\EGGS1\\Documents\\Code\\EGGS_labrad\\EGGS_labrad\\clients\\wavemeter_client\\channel_unlocked.mp3')
                     except Exception as e:
                         pass
             else:
@@ -296,13 +302,12 @@ class multiplexer_client(GUIClient):
         if chan in self.gui.channels.keys():
             value = int(value)
             self.gui.channels[chan].powermeter.setValue(value)
-            self.gui.channels[chan].powermeter_display.setText('{:4d}'.format(value))
+            self.gui.channels[chan].powermeter_display.setText('{:>4d}'.format(value))
 
     def updatePattern(self, c, signal):
         """
-        This is not currently in use since patterns
-        are received too frequently from the wavemeter server,
-        creating considerable overhead (about 1Mbps per channel).
+        This is not currently in use since patterns are received too frequently
+            from the wavemeter server, creating considerable overhead (about 1Mbps per channel).
         """
         chan, trace = signal
         num_points = 512
