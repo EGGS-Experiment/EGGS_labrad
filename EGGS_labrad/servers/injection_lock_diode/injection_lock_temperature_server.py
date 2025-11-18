@@ -40,11 +40,11 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
 
 
     # SIGNALS
-    toggle_update = Signal(999999, 'signal: toggle update', 'b')
-    current_update = Signal(999998, 'signal: current update', 'v')
-    temperature_update = Signal(999997, 'signal: temperature update', 'v')
-    lock_update = Signal(999996, 'signal: lock update', '(sv)')
-    setpoint_update = Signal(999995, 'signal: setpoint update', '(v)')
+    toggle_update = Signal(999988, 'signal: toggle update', 'b')
+    current_update = Signal(999987, 'signal: current update', 'v')
+    temperature_update = Signal(999986, 'signal: temperature update', 'v')
+    lock_update = Signal(999985, 'signal: lock update', '(sv)')
+    setpoint_update = Signal(999984, 'signal: setpoint update', '(v)')
 
 
     # GENERAL
@@ -165,7 +165,6 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         # parse resp
         resp = float(resp[:-2])
         self.notifyOtherListeners(c, resp, self.setpoint_update)
-        # todo: notify other listeners
         returnValue(resp)
 
     @setting(221, 'Locking P', prop='v', returns='v')
@@ -194,7 +193,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
 
         # parse resp
         resp = float(resp.strip())
-        # todo: notify other listeners
+        self.notifyOtherListeners(c, resp, self.lock_update)
         returnValue(resp)
 
     @setting(222, 'Locking I', integ='v', returns='v')
@@ -223,7 +222,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
 
         # parse resp
         resp = float(resp.strip())
-        # todo: notify other listeners
+        self.notifyOtherListeners(c, resp, self.lock_update)
         returnValue(resp)
 
     @setting(223, 'Locking D', deriv='v', returns='v')
@@ -252,7 +251,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
 
         # parse resp
         resp = float(resp.strip())
-        # todo: notify other listeners
+        self.notifyOtherListeners(c, resp, self.lock_update)
         returnValue(resp)
 
 
