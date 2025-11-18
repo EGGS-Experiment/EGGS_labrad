@@ -39,10 +39,9 @@ class InjectionLockCurrentServer(SerialDeviceServer, PollingServer):
     baudrate = 38400
 
     # SIGNALS
-    toggle_update = Signal(999999, 'signal: toggle update', 'b')
-    output_update = Signal(999998, 'signal: output update', '(vv)')
-    current_update = Signal(999997, 'signal: current update', '(sv)')
-
+    toggle_update = Signal(999993, 'signal: toggle update', 'b')
+    output_update = Signal(999992, 'signal: output update', '(vv)')
+    current_update = Signal(999991, 'signal: current update', '(sv)')
 
     # CONTEXTS
     def initContext(self, c):
@@ -64,12 +63,10 @@ class InjectionLockCurrentServer(SerialDeviceServer, PollingServer):
         notified.remove(context.ID)
         f(message, notified)
 
-
     # STARTUP
     def initServer(self):
         super().initServer()
         self.listeners = set()
-
 
     # GENERAL
     @setting(12, 'Remote', remote_status='b')
