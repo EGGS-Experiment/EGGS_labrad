@@ -71,7 +71,9 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.set_current_spinbox.setValue(current_mA)
 
     def updateToggle(self,c, status):
-        self.gui.output_button.clicked(status)
+        self.gui.output_button.blockSignals(True)
+        self.gui.output_button.setChecked(status)
+        self.gui.output_button.blockSignals(False)
 
     def updateOutput(self, c, outputs):
         self.gui.label_diode_voltage.setText(str(outputs[0]))
