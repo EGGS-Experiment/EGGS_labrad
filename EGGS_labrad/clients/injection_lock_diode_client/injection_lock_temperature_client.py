@@ -125,6 +125,7 @@ class InjectionLockTemperatureClient(GUIClient):
 
     def updateToggle(self, c, status):
         # need to convert channel number to index
+        print(status)
         toggleswitch = self.gui.toggle_button
         toggleswitch.blockSignals(True)
         toggleswitch.setChecked(status)
@@ -132,17 +133,23 @@ class InjectionLockTemperatureClient(GUIClient):
         toggleswitch.blockSignals(False)
 
     def updateSetpoint(self,c, setpoint):
+        print(setpoint)
+        self.gui.lock_set.blockSignals(True)
         self.gui.lock_set.setValue(setpoint)
+        self.gui.lock_set.blockSignals(False)
 
     def updateLock(self, c, msg):
         param, value = msg
+        print(param, value)
+        print("here")
         # get appropriate widget
         if param == 'p':    widget = self.gui.lock_P
         elif param == 'i':  widget = self.gui.lock_I
         elif param == 'd':  widget = self.gui.lock_D
         # set value
+        widget.blockSignals(True)
         widget.setValue(param)
-
+        widget.blockSignals(False)
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
