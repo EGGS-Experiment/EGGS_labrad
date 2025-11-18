@@ -8,9 +8,10 @@ class InjectionLockCurrentClient(GUIClient):
     name = 'Injection Lock Current Client'
     servers = {'controller': 'Injection Lock Current Server'}
 
-    TOGGLEID = 4651988
-    CURRENTID = 4651989
-    OUTPUTID = 4651990
+    TOGGLEID = 1651988
+    CURRENTID = 1651989
+    OUTPUTID = 1651990
+    MAXCURRENTID = 1651991
 
     def getgui(self):
 
@@ -27,6 +28,8 @@ class InjectionLockCurrentClient(GUIClient):
         yield self.controller.addListener(listener=self.updateSetCurrent, soure=None, ID=self.CURRENTID)
         yield self.controller.signal__output_update(self.OUTPUTID)
         yield self.controller.addListener(listener=self.updateOutput, source=None, ID=self.OUTPUTID)
+        yield self.controller.signal__max_current_update(self.MAXCURRENTID)
+        yield self.controller.addListener(listener=self.updateMaxCurrent, soure=None, ID=self.MAXCURRENTID)
 
         # start polliing
         poll_params = yield self.controller.polling()
@@ -78,6 +81,12 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.output_button.setChecked(status)
         self.gui.output_button.setAppearance(status)
         self.gui.output_button.blockSignals(False)
+
+    def updateMaxCurrent(self,c, msg):
+        _, current_mA = msg
+        self.gui.max_current_spinbox.blockSignals(True)
+        self.gui.max_current_spinbox.setValue(current_mA)
+        self.gui.max_current_spinbox.blockSignals(False)
 
     def updateOutput(self, c, outputs):
         self.gui.label_diode_voltage.blockSignals(True)

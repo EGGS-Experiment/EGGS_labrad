@@ -203,6 +203,7 @@ class LabJackServer(ContextServer):
         DIO_values = yield ljm.eReadName(self.device_handle, 'DIO_STATE')
 
         # return the value of the DIO port requested
+
         returnValue(int(bin(int(DIO_values))[-ind]))
 
     @inlineCallbacks

@@ -69,6 +69,8 @@ class InjectionLockCurrentGUI(QFrame):
         self.set_current_spinbox.setDecimals(3)
         self.set_current_spinbox.setSingleStep(0.001)
         self.set_current_spinbox.setMaximum(self.MAX_CURRENT)
+        self.set_current_spinbox.setMinimum(0.)
+        self.set_current_spinbox.setKeyboardTracking(False)
         injection_lock_current_layout.addWidget(self.set_current_spinbox, 6, 0, 2, 2)
 
         # create max current button
@@ -83,6 +85,8 @@ class InjectionLockCurrentGUI(QFrame):
         self.max_current_spinbox.setDecimals(3)
         self.max_current_spinbox.setSingleStep(0.001)
         self.max_current_spinbox.setMaximum(self.MAX_CURRENT)
+        self.max_current_spinbox.setMinimum(0.)
+        self.max_current_spinbox.setKeyboardTracking(False)
         injection_lock_current_layout.addWidget(self.max_current_spinbox, 6, 2, 2, 2)
 
         return QCustomGroupBox(injection_lock_current_widget, "Injection Lock Current")

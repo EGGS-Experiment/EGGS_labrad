@@ -40,34 +40,10 @@ class InjectionLockCurrentServer(SerialDeviceServer, PollingServer):
     baudrate = 38400
 
     # SIGNALS
-    toggle_update = Signal(999993, 'signal: toggle update', 'b')
-    output_update = Signal(999979, 'signal: output update', '(vv)')
-    current_update = Signal(999978, 'signal: current update', '(sv)')
-
-    # CONTEXTS
-    def initContext(self, c):
-        self.listeners.add(c.ID)
-
-    def expireContext(self, c):
-        self.listeners.remove(c.ID)
-
-    def getOtherListeners(self, c):
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
-
-    def notifyOtherListeners(self, context, message, f):
-        """
-        Notifies all listeners except the one in the given context, executing function f.
-        """
-        notified = self.listeners.copy()
-        notified.remove(context.ID)
-        f(message, notified)
-
-    # STARTUP
-    def initServer(self):
-        super().initServer()
-        self.listeners = set()
+    toggle_update = Signal(999969, 'signal: toggle update', 'b')
+    output_update = Signal(999968, 'signal: output update', '(vv)')
+    current_update = Signal(999967, 'signal: current update', '(sv)')
+    max_current_update = Signal(999966, 'signal: max current update', '(sv)')
 
     # GENERAL
     @setting(12, 'Remote', remote_status='b')
@@ -202,7 +178,7 @@ class InjectionLockCurrentServer(SerialDeviceServer, PollingServer):
 
         # parse resp
         resp = float(resp.strip())
-        self.notifyOtherListeners(c, ('SET', resp), self.current_update)
+        self.notifyOtherListeners(c, ('SET', resp), self.max_current_update)
         returnValue(resp)
 
     @inlineCallbacks
