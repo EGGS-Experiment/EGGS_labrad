@@ -23,10 +23,10 @@ class InjectionLockCurrentClient(GUIClient):
 
         yield self.controller.signal__toggle_update(self.TOGGLEID)
         yield self.controller.addListener(listener=self.updateToggle, soure=self.TOGGLEID)
-        yield self.controller.signal__current_update(self.CURRENTID)
-        yield self.controller.addListener(listener=self.updateSetCurrent, soure=None, ID=self.CURRENTID)
-        yield self.controller.signal__output_update(self.OUTPUTID)
-        yield self.controller.addListener(listener=self.updateOutput, source=None, ID=self.OUTPUTID)
+        # yield self.controller.signal__current_update(self.CURRENTID)
+        # yield self.controller.addListener(listener=self.updateSetCurrent, soure=None, ID=self.CURRENTID)
+        # yield self.controller.signal__output_update(self.OUTPUTID)
+        # yield self.controller.addListener(listener=self.updateOutput, source=None, ID=self.OUTPUTID)
 
         # start polliing
         poll_params = yield self.controller.polling()
@@ -73,6 +73,7 @@ class InjectionLockCurrentClient(GUIClient):
     def updateToggle(self,c, status):
         self.gui.output_button.blockSignals(True)
         self.gui.output_button.setChecked(status)
+        self.gui.output_button.setAppearance(status)
         self.gui.output_button.blockSignals(False)
 
     def updateOutput(self, c, outputs):
