@@ -51,9 +51,9 @@ class InjectionLockTemperatureClient(GUIClient):
         curr =      yield self.tec.current()
         temp =      yield self.tec.temperature()
         lock_set =  yield self.tec.locking_setpoint()
-        lock_P =    yield self.tec.locking_p()
-        lock_I =    yield self.tec.locking_i()
-        lock_D =    yield self.tec.locking_d()
+        _, lock_P =    yield self.tec.locking_p()
+        _, lock_I =    yield self.tec.locking_i()
+        _, lock_D =    yield self.tec.locking_d()
 
         # set GUI
         self.gui.toggle_button.setChecked(status)
@@ -132,7 +132,9 @@ class InjectionLockTemperatureClient(GUIClient):
         toggleswitch.blockSignals(False)
 
     def updateSetpoint(self,c, setpoint):
+        self.gui.lock_set.blockSignals(True)
         self.gui.lock_set.setValue(setpoint)
+        self.gui.lock_set.blockSignals(False)
 
     def updateLock(self, c, msg):
         param, value = msg
@@ -141,8 +143,9 @@ class InjectionLockTemperatureClient(GUIClient):
         elif param == 'i':  widget = self.gui.lock_I
         elif param == 'd':  widget = self.gui.lock_D
         # set value
-        widget.setValue(param)
-
+        widget.blockSignals(True)
+        widget.setValue(value)
+        widget.blockSignals(False)
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
