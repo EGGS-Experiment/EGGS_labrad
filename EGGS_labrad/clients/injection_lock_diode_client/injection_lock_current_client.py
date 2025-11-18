@@ -23,10 +23,10 @@ class InjectionLockCurrentClient(GUIClient):
 
         yield self.controller.signal__toggle_update(self.TOGGLEID)
         yield self.controller.addListener(listener=self.updateToggle, soure=self.TOGGLEID)
-        # yield self.controller.signal__current_update(self.CURRENTID)
-        # yield self.controller.addListener(listener=self.updateSetCurrent, soure=None, ID=self.CURRENTID)
-        # yield self.controller.signal__output_update(self.OUTPUTID)
-        # yield self.controller.addListener(listener=self.updateOutput, source=None, ID=self.OUTPUTID)
+        yield self.controller.signal__current_update(self.CURRENTID)
+        yield self.controller.addListener(listener=self.updateSetCurrent, soure=None, ID=self.CURRENTID)
+        yield self.controller.signal__output_update(self.OUTPUTID)
+        yield self.controller.addListener(listener=self.updateOutput, source=None, ID=self.OUTPUTID)
 
         # start polliing
         poll_params = yield self.controller.polling()
@@ -67,8 +67,11 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.max_current_spinbox.setEnabled(status)
         self.gui.output_button.setEnabled(status)
 
-    def updateSetCurrent(self,c, current_mA):
+    def updateSetCurrent(self,c, msg):
+        _, current_mA = msg
+        self.gui.set_current_spinbox.blockSignals(True)
         self.gui.set_current_spinbox.setValue(current_mA)
+        self.gui.set_current_spinbox.blockSignals(False)
 
     def updateToggle(self,c, status):
         self.gui.output_button.blockSignals(True)
@@ -77,8 +80,12 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.output_button.blockSignals(False)
 
     def updateOutput(self, c, outputs):
+        self.gui.label_diode_voltage.blockSignals(True)
+        self.gui.label_diode_current.blockSignals(True)
         self.gui.label_diode_voltage.setText(str(outputs[0]))
         self.gui.label_diode_current.setText(str(outputs[1]*1e3))
+        self.gui.label_diode_voltage.blockSignals(False)
+        self.gui.label_diode_current.blockSignals(False)
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient

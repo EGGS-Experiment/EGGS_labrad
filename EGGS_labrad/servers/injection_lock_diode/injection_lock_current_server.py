@@ -22,6 +22,7 @@ from labrad.server import setting, Signal, inlineCallbacks
 from twisted.internet.defer import returnValue
 from EGGS_labrad.servers import SerialDeviceServer, PollingServer
 import serial
+import time
 
 TERMINATOR = '\r\n'
 
@@ -40,8 +41,8 @@ class InjectionLockCurrentServer(SerialDeviceServer, PollingServer):
 
     # SIGNALS
     toggle_update = Signal(999993, 'signal: toggle update', 'b')
-    output_update = Signal(999992, 'signal: output update', '(vv)')
-    current_update = Signal(999991, 'signal: current update', '(sv)')
+    output_update = Signal(999979, 'signal: output update', '(vv)')
+    current_update = Signal(999978, 'signal: current update', '(sv)')
 
     # CONTEXTS
     def initContext(self, c):
@@ -108,9 +109,11 @@ class InjectionLockCurrentServer(SerialDeviceServer, PollingServer):
         if status is not None:
             yield self.ser.acquire()
             yield self.ser.write('out.w {:d}\r\n'.format(status))
-            yield self.ser.read_line('\n')
+            message = yield self.ser.read_line('\n')
             self.ser.release()
 
+        # let device update
+        time.sleep(0.5)
         # getter
         yield self.ser.acquire()
         yield self.ser.write('out.r\r\n')

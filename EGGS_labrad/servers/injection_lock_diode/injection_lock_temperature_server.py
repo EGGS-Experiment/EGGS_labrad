@@ -44,7 +44,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
     current_update = Signal(999987, 'signal: current update', 'v')
     temperature_update = Signal(999986, 'signal: temperature update', 'v')
     lock_update = Signal(999985, 'signal: lock update', '(sv)')
-    setpoint_update = Signal(999984, 'signal: setpoint update', '(v)')
+    setpoint_update = Signal(999984, 'signal: setpoint update', 'v')
 
 
     # GENERAL
@@ -167,7 +167,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         self.notifyOtherListeners(c, resp, self.setpoint_update)
         returnValue(resp)
 
-    @setting(221, 'Locking P', prop='v', returns='v')
+    @setting(221, 'Locking P', prop='v', returns='(sv)')
     def lockingP(self, c, prop=None):
         """
         Get/set the proportional parameter (in machine units).
@@ -192,11 +192,11 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         self.ser.release()
 
         # parse resp
-        resp = float(resp.strip())
+        resp = ('p', float(resp.strip()))
         self.notifyOtherListeners(c, resp, self.lock_update)
         returnValue(resp)
 
-    @setting(222, 'Locking I', integ='v', returns='v')
+    @setting(222, 'Locking I', integ='v', returns='(sv)')
     def lockingI(self, c, integ=None):
         """
         Get/set the integral parameter (in machine units).
@@ -221,11 +221,11 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         self.ser.release()
 
         # parse resp
-        resp = float(resp.strip())
+        resp = ('i', float(resp.strip()))
         self.notifyOtherListeners(c, resp, self.lock_update)
         returnValue(resp)
 
-    @setting(223, 'Locking D', deriv='v', returns='v')
+    @setting(223, 'Locking D', deriv='v', returns='(sv)')
     def lockingD(self, c, deriv=None):
         """
         Get/set the derivative parameter (in machine units).
@@ -250,7 +250,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         self.ser.release()
 
         # parse resp
-        resp = float(resp.strip())
+        resp = ('d', float(resp.strip()))
         self.notifyOtherListeners(c, resp, self.lock_update)
         returnValue(resp)
 
