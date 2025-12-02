@@ -299,7 +299,7 @@ class TopticaServer(PollingServer):
         dev_type = yield self._read(chan, 'type', prefix='')
         curr_max_ma = yield self.currentMax(None, chan)
         if curr is not None:
-            if (curr < 0) or (curr > curr_max_ma):
+            if (curr < 5) or (curr > curr_max_ma):
                 raise Exception('Error: target current is set too low or too high. Must be greater than {} mA'
                                 'or less than {} mA.'.format(0, curr_max_ma))
             else:
@@ -329,7 +329,7 @@ class TopticaServer(PollingServer):
                 curr_max_ma = 150
             else:
                 raise Exception('Error: unknown laser device.')
-        curr_min_ma = 0
+        curr_min_ma = 5
         if curr is not None:
             if (curr < curr_min_ma) or (curr > curr_max_ma):
                 raise Exception('Error: target current is set too low or too high. Must be greater than {} mA'

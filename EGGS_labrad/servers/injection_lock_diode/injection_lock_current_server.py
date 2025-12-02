@@ -124,7 +124,6 @@ class InjectionLockCurrentServer(SerialDeviceServer, PollingServer):
         self.notifyOtherListeners(c, resp, self.output_update)
         returnValue(resp)
 
-
     # CURRENT
     @setting(211, 'Current Set', curr_ma='v', returns='v')
     def currentSet(self, c, curr_ma=None):
@@ -136,8 +135,12 @@ class InjectionLockCurrentServer(SerialDeviceServer, PollingServer):
                     (float) : the output current (in mA).
         """
         # setter
+        try:
+            curr_ma_max = yield self.currentMax(None)
+        except Exception as e:
+            curr_ma_max = 100
         if curr_ma is not None:
-            if (curr_ma < 10) or (curr_ma > 100):
+            if (curr_ma < 10) or (curr_ma > curr_ma_max):
                 raise Exception("Error: set current must be in range [10, 100] mA.")
             yield self.ser.acquire()
             yield self.ser.write('iout.na.w {:f}\r\n'.format(curr_ma * 1e6))

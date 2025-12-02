@@ -60,7 +60,6 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.set_current_spinbox.valueChanged.connect(lambda current_mA: self.controller.current_set(current_mA))
         self.gui.max_current_spinbox.valueChanged.connect(lambda max_current_ma: self.controller.current_max(max_current_ma))
         self.gui.output_button.clicked.connect(lambda status: self.controller.toggle(status))
-
         self.gui.lockswitch.clicked.connect(lambda status: self.lock(status))
 
     def lock(self, status):
