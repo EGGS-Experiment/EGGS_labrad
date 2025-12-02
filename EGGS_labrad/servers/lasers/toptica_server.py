@@ -21,9 +21,13 @@ from toptica.lasersdk.client import Client, NetworkConnection
 import logging
 from EGGS_labrad.servers import PollingServer
 
-CURRENTSIGNAL =         913548
-TEMPERATURESIGNAL =     913549
-PIEZOSIGNAL =           913550
+CURRENTACTUALSIGNAL =         913548
+TEMPERATUREACTUALSIGNAL =     913549
+PIEZOACTUALSIGNAL =           913550
+CURRENTSETSIGNAL =         913551
+TEMPERATURESETSIGNAL =     913552
+PIEZOSETSIGNAL =           913554
+TOGGLESIGNAL =          913560
 # todo: send signal when values change
 # todo: subscribe to when values change
 
@@ -53,9 +57,13 @@ class TopticaServer(PollingServer):
     '''
     SIGNALS
     '''
-    current_update =        Signal(CURRENTSIGNAL, 'signal: current updated', '(iv)')
-    temperature_update =    Signal(TEMPERATURESIGNAL, 'signal: temperature updated', '(iv)')
-    piezo_update =          Signal(PIEZOSIGNAL, 'signal: piezo updated', '(iv)')
+    current_actual_update =        Signal(CURRENTACTUALSIGNAL, 'signal: current actual updated', '(iv)')
+    temperature_actual_update =    Signal(TEMPERATUREACTUALSIGNAL, 'signal: temperature actual updated', '(iv)')
+    piezo_actual_update =          Signal(PIEZOACTUALSIGNAL, 'signal: piezo actual updated', '(iv)')
+    current_set_update =        Signal(CURRENTSETSIGNAL, 'signal: current set updated', '(iv)')
+    temperature_set_update =    Signal(TEMPERATURESETSIGNAL, 'signal: temperature set updated', '(iv)')
+    piezo_set_update =          Signal(PIEZOSETSIGNAL, 'signal: piezo set updated', '(iv)')
+    toggle_update =         Signal(TOGGLESIGNAL, 'signal: toggle updated', '(ib)')
 
 
     '''
@@ -239,6 +247,21 @@ class TopticaServer(PollingServer):
         resp = yield self._read(chan, 'emission', prefix=None)
         returnValue(bool(resp))
 
+    @setting(122, 'Toggle', chan='i', returns='b')
+    def toggle(self, c, chan, status=None):
+        """
+        Sets/Gets the enabled status of a laser channel.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            status      (bool)  : if True, the laser channel is enabled
+        Returns:
+                        (bool)  : the enabled status of the laser head.
+        """
+        if status is not None:
+            yield self._write(chan, 'cc:enabled', status, prefix='type')
+        resp = yield self._read(chan, 'cc:enabled', prefix='type')
+        self.notifyOtherListeners(c, (chan, bool(resp)), self.toggle_update)
+        returnValue(bool(resp))
 
     '''
     CURRENT FUNCTIONS
@@ -253,7 +276,10 @@ class TopticaServer(PollingServer):
                         (float) : the current (in mA).
         """
         resp = yield self._read(chan, 'cc:current-act', prefix='type')
+        self.notifyOtherListeners(c, (chan, float(resp)), self.current_actual_update)
         returnValue(float(resp))
+
+
 
     @setting(312, 'Current Set', chan='i', curr='v', returns='v')
     def currentSet(self, c, chan, curr=None):
@@ -279,6 +305,7 @@ class TopticaServer(PollingServer):
                 yield self._write(chan, 'cc:current-set', curr, prefix='type')
 
         resp = yield self._read(chan, 'cc:current-set', prefix='type')
+        self.notifyOtherListeners(c, (chan, float(resp)), self.current_set_update)
         returnValue(float(resp))
 
     @setting(313, 'Current Max', chan='i', curr='v', returns='v')
@@ -319,6 +346,7 @@ class TopticaServer(PollingServer):
                     (float) : the temperature (in K).
         """
         resp = yield self._read(chan, 'tc:temp-act', prefix='type')
+        self.notifyOtherListeners(c, (chan, float(resp)), self.temperature_actual_update)
         returnValue(float(resp))
 
     @setting(322, 'Temperature Set', chan='i', temp='v', returns='v')
@@ -337,6 +365,7 @@ class TopticaServer(PollingServer):
             else:
                 yield self._write(chan, 'tc:temp-set', temp, prefix='type')
         resp = yield self._read(chan, 'tc:temp-set', prefix='type')
+        self.notifyOtherListeners(c, (chan, float(resp)), self.temperature_set_update)
         returnValue(float(resp))
 
     @setting(323, 'Temperature Max', chan='i', temp='v', returns='v')
@@ -373,6 +402,7 @@ class TopticaServer(PollingServer):
         dev_type = yield self._read(chan, 'type', prefix='')
         if DEVICE_USES_PIEZO[dev_type]:
             resp = yield self._read(chan, 'pc:voltage-act', prefix='type')
+            self.notifyOtherListeners(c, (chan, float(resp)), self.piezo_actual_update)
             returnValue(float(resp))
         else:
             returnValue(0.)
@@ -395,6 +425,7 @@ class TopticaServer(PollingServer):
                 else:
                     yield self._write(chan, 'pc:voltage-set', voltage, prefix='type')
             resp = yield self._read(chan, 'pc:voltage-set', prefix='type')
+            self.notifyOtherListeners(c, (chan, float(resp)), self.piezo_set_update)
             returnValue(float(resp))
 
         else:
@@ -643,12 +674,16 @@ class TopticaServer(PollingServer):
         Update listeners with actual values of current, temperature, and piezo voltage.
         """
         for chan_num in self.channels.keys():
-            curr = yield self.currentActual(None, chan_num)
-            temp = yield self.tempActual(None, chan_num)
-            voltage = yield self.piezoActual(None, chan_num)
-            self.current_update((chan_num, curr))
-            self.temperature_update((chan_num, temp))
-            self.piezo_update((chan_num, voltage))
+            dev_type = yield self._read(chan_num, 'type', prefix='')
+            yield self.toggle(None, chan_num)
+            # self.toggle_update((chan_num, enabled_status))
+            yield self.currentActual(None, chan_num)
+            # self.current_update((chan_num, curr))
+            yield self.tempActual(None, chan_num)
+            # self.temperature_update((chan_num, temp))
+            if DEVICE_USES_PIEZO[dev_type]:
+                yield self.piezoActual(None, chan_num)
+                # self.piezo_update((chan_num, voltage))
 
 
 if __name__ == '__main__':

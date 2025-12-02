@@ -8,9 +8,10 @@ TOPTICA_CHANNELS = [(1, 'DLpro (S/N 029432)', '397'),
                     (3, 'DLpro (S/N 029431)', '422'),
                     (4, 'DLpro (S/N 021957)', '850')]
 
-CURRENTUPDATED_ID = 192611
-TEMPERATUREUPDATED_ID = 192612
-PIEZOUPDATED_ID = 192613
+CURRENTACTUALUPDATED_ID = 192611
+TEMPERATUREACTUALUPDATED_ID = 192612
+PIEZOACTUALUPDATED_ID = 192613
+TOGGLEUPDATED_ID = 192614
 
 import traceback
 
@@ -40,12 +41,14 @@ class toptica_client(GUIClient):
         # get config
         self.channelinfo = yield self.toptica.device_list()
         # connect to device signals
-        yield self.toptica.signal__current_updated(CURRENTUPDATED_ID)
-        yield self.toptica.addListener(listener=self.updateCurrent, source=None, ID=CURRENTUPDATED_ID)
-        yield self.toptica.signal__temperature_updated(TEMPERATUREUPDATED_ID)
-        yield self.toptica.addListener(listener=self.updateTemperature, source=None, ID=TEMPERATUREUPDATED_ID)
-        yield self.toptica.signal__piezo_updated(PIEZOUPDATED_ID)
-        yield self.toptica.addListener(listener=self.updatePiezo, source=None, ID=PIEZOUPDATED_ID)
+        yield self.toptica.signal__current_updated(CURRENTACTUALUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updateCurrentActual, source=None, ID=CURRENTACTUALUPDATED_ID)
+        yield self.toptica.signal__temperature_updated(TEMPERATUREACTUALUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updateTemperatureActual, source=None, ID=TEMPERATUREACTUALUPDATED_ID)
+        yield self.toptica.signal__piezo_updated(PIEZOACTUALUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updatePiezoActual, source=None, ID=PIEZOACTUALUPDATED_ID)
+        yield self.toptica.signal__toggle_updated(TOGGLEUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updateToggle, source=None, ID=TOGGLEUPDATED_ID)
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
@@ -74,6 +77,7 @@ class toptica_client(GUIClient):
                 # _, name, _, wav, _, _, _, _ = device_info
 
                 emission_status = yield self.toptica.emission(chan_num)
+                # toggle_status = yield self.toptica.toggle(chan_num)
                 widget.statusBox.channelDisplay.setText(str(chan_num))
                 name_tmp = name.split('S/N ')[1]
                 name_tmp = name_tmp[:-1]
@@ -89,7 +93,6 @@ class toptica_client(GUIClient):
                 # print(DEVICE_TYPE_PREFIX[dev_type])
                 # print(emission_status)
                 # print(current_set)
-                # print(widget.currBox.setBox.setValue)
                 current_max = yield self.toptica.current_max(chan_num)
                 widget.currBox.setBox.setValue(current_set)
                 widget.currBox.maxBox.setValue(current_max)
@@ -146,21 +149,28 @@ class toptica_client(GUIClient):
             widget.scanBox.offBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.scan_offset(_chan_num, value))
 
 
+
     # SLOTS
-    def updateCurrent(self, c, signal):
+    def updateCurrentActual(self, c, signal):
         chan_num, curr = signal
         if chan_num in self.gui.channels.keys():
             self.gui.channels[chan_num].currBox.actualValue.setText('{:0.4f}'.format(curr))
 
-    def updateTemperature(self, c, signal):
+    def updateTemperatureActual(self, c, signal):
         chan_num, temp = signal
         if chan_num in self.gui.channels.keys():
             self.gui.channels[chan_num].tempBox.actualValue.setText('{:0.4f}'.format(temp))
 
-    def updatePiezo(self, c, signal):
+    def updatePiezoActual(self, c, signal):
         chan_num, voltage = signal
         if chan_num in self.gui.channels.keys():
             self.gui.channels[chan_num].piezoBox.actualValue.setText('{:0.4f}'.format(voltage))
+
+    def updateToggle(self, c, signal):
+        pass
+        # chan_num, status = signal
+        # if chan_num in self.gui.channels.keys():
+        #     self.gui.channels[chan_num].widget.statusBox.emissionButton.setChecked(status)
 
 
 if __name__ == "__main__":
