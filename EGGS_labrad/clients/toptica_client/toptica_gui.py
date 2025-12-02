@@ -73,8 +73,8 @@ class toptica_channel(QFrame):
         for label in (box.channelDisplay, box.wavDisplay, box.serDisplay):
             label.setFont(MAIN_FONT)
             label.setAlignment(Qt.AlignCenter)
-        # emission
-        box.emissionButton = TextChangingButton('Enabled')
+        # enabled
+        box.enabledButton = TextChangingButton('Enabled')
         # create labels
         feedback_label = QLabel('Feedback Channel:')
         feedbackMode_label = QLabel('Feedback Mode:')
@@ -103,7 +103,7 @@ class toptica_channel(QFrame):
         box_layout.addWidget(box.wavDisplay,            3, 0)
         box_layout.addWidget(serLabel,                  4, 0)
         box_layout.addWidget(box.serDisplay,            5, 0)
-        box_layout.addWidget(box.emissionButton,        6, 0)
+        box_layout.addWidget(box.enabledButton,        6, 0)
         box_layout.addWidget(feedback_label,            7, 0)
         box_layout.addWidget(box.feedbackChannel,       8, 0)
         box_layout.addWidget(feedbackMode_label,        9, 0)
