@@ -30,8 +30,8 @@ CURRENTSETSIGNAL =         913551
 TEMPERATURESETSIGNAL =     913552
 PIEZOSETSIGNAL =           913553
 CURRENTMAXSIGNAL =         913554
-TEMPERATUREMAXSIGNAL =     913555
-PIEZOMAXSIGNAL =           913556
+# TEMPERATUREMAXSIGNAL =     913555
+# PIEZOMAXSIGNAL =           913556
 TOGGLESIGNAL =          913560
 
 DEVICE_TYPE_PREFIX = {
@@ -69,8 +69,6 @@ class TopticaServer(PollingServer):
     piezo_set_update =          Signal(PIEZOSETSIGNAL, 'signal: piezo set updated', '(iv)')
     # update max values set by user
     current_max_update =        Signal(CURRENTMAXSIGNAL, 'signal: current max updated', '(iv)')
-    temperature_max_update =    Signal(TEMPERATUREMAXSIGNAL, 'signal: temperature max updated', '(iv)')
-    piezo_max_update =          Signal(PIEZOMAXSIGNAL, 'signal: piezo max updated', '(iv)')
     # update enabled status of toptica device
     toggle_update =         Signal(TOGGLESIGNAL, 'signal: toggle updated', '(ib)')
 
@@ -383,31 +381,30 @@ class TopticaServer(PollingServer):
         self.notifyOtherListeners(c, (chan, float(resp)), self.temperature_set_update)
         returnValue(float(resp))
 
-    @setting(323, 'Temperature Max', chan='i', temp='v', returns='v')
-    def tempMax(self, c, chan, temp=None):
+    @setting(323, 'Temperature Max', chan='i', returns='v')
+    def tempMax(self, c, chan):
         """
-        Get/set the maximum temperature of the selected laser head.
+        Get the maximum temperature of the selected laser head.
         Arguments:
             chan    (int)           : the desired laser channel.
             temp    (float)         : the temperatures bound (maximum) in K.
         Returns:
                     (float)         : the temperatures bound (maximum) in K.
         """
-        try:
-            temp_max = self.channels[chan]['temp-max']
-        except KeyError:
-            temp_max = 35
-        try:
-            temp_min = self.channels[chan]['temp-min']
-        except KeyError:
-            temp_min = 18
-        if temp is not None:
-            if (temp < temp_min) or (temp > temp_max):
-                raise Exception('Error: maximum temperature must not exceed factory maximum settings.')
-            else:
-                yield self._write(chan, 'tc:limits:temp-max', temp, prefix='type')
         resp = yield self._read(chan, 'tc:limits:temp-max', prefix='type')
-        self.notifyOtherListeners(c, (chan, float(resp)), self.temperature_max_update)
+        returnValue(float(resp))
+
+    @setting(324, 'Temperature Min', chan='i', returns='v')
+    def tempMin(self, c, chan):
+        """
+        Get the maximum temperature of the selected laser head.
+        Arguments:
+            chan    (int)           : the desired laser channel.
+            temp    (float)         : the temperatures bound (minimum) in K.
+        Returns:
+                    (float)         : the temperatures bound (minimum) in K.
+        """
+        resp = yield self._read(chan, 'tc:limits:temp-min', prefix='type')
         returnValue(float(resp))
 
     '''
@@ -463,10 +460,10 @@ class TopticaServer(PollingServer):
         else:
             returnValue(0.)
 
-    @setting(413, 'Piezo Max', chan='i', voltage='v', returns='v')
-    def piezoMax(self, c, chan, voltage=None):
+    @setting(413, 'Piezo Max', chan='i', returns='v')
+    def piezoMax(self, c, chan):
         """
-        Get/set the maximum voltage of the selected laser head.
+        Get the maximum voltage of the selected laser head.
         Arguments:
             chan        (int)   : the desired laser channel.
             voltage     (float) : the maximum piezo voltage (in V).
@@ -474,22 +471,25 @@ class TopticaServer(PollingServer):
                         (float) : the maximum piezo voltage (in V).
         """
         dev_type = yield self._read(chan, 'type', prefix='')
-        try:
-            piezo_max_V = self.channels[chan]['piezo_max']
-        except KeyError:
-            piezo_max_V = 150
-        try:
-            piezo_min_V = self.channels[chan]['piezo_min']
-        except KeyError:
-            piezo_min_V = 15
         if DEVICE_USES_PIEZO[dev_type]:
-            if voltage is not None:
-                if (voltage < piezo_min_V) or (voltage > piezo_max_V):
-                    raise Exception('Error: maximum temperature must not exceed factory maximum settings.')
-                else:
-                    yield self._write(chan, 'pc:voltage-max', voltage, prefix='type')
             resp = yield self._read(chan, 'pc:voltage-max', prefix='type')
-            self.notifyOtherListeners(c, (chan, float(resp)), self.piezo_max_update)
+            returnValue(float(resp))
+        else:
+            returnValue(0.)
+
+    @setting(414, 'Piezo Min', chan='i', returns='v')
+    def piezoMin(self, c, chan):
+        """
+        Get the minimum voltage of the selected laser head.
+        Arguments:
+            chan        (int)   : the desired laser channel.
+            voltage     (float) : the minimum piezo voltage (in V).
+        Returns:
+                        (float) : the minimum piezo voltage (in V).
+        """
+        dev_type = yield self._read(chan, 'type', prefix='')
+        if DEVICE_USES_PIEZO[dev_type]:
+            resp = yield self._read(chan, 'pc:voltage-min', prefix='type')
             returnValue(float(resp))
         else:
             returnValue(0.)
@@ -717,25 +717,19 @@ class TopticaServer(PollingServer):
             dev_type = yield self._read(chan_num, 'type', prefix='')
             # get enabled status of toptica device
             yield self.toggle(None, chan_num)
-            # self.toggle_update((chan_num, enabled_status))
 
             # get status of current outputted by toptica device
             yield self.currentActual(None, chan_num)
             yield self.currentSet(None, chan_num)
             yield self.currentMax(None, chan_num)
-            # self.current_update((chan_num, curr))
 
             # get status of temperature outputted by toptica device
             yield self.tempActual(None, chan_num)
             yield self.tempSet(None, chan_num)
-            yield self.tempMax(None, chan_num)
-            # self.temperature_update((chan_num, temp))
             if DEVICE_USES_PIEZO[dev_type]:
                 # get status of piezo voltage outputted by toptica device
                 yield self.piezoActual(None, chan_num)
                 yield self.piezoSet(None, chan_num)
-                yield self.piezoMax(None, chan_num)
-                # self.piezo_update((chan_num, voltage))
 
 
 if __name__ == '__main__':
