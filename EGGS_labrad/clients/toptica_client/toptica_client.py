@@ -254,6 +254,7 @@ class toptica_client(GUIClient):
         chan_num, status = signal
         if chan_num in self.gui.channels.keys():
             self.gui.channels[chan_num].statusBox.enabledButton.setChecked(status)
+            self.gui.channels[chan_num].statusBox.enabledButton.setAppearance(status)
 
 
 if __name__ == "__main__":
