@@ -139,9 +139,9 @@ class toptica_channel(QFrame):
             doublespinbox.setDecimals(4)
             doublespinbox.setSingleStep(0.0001)
             if DEVICE_TYPE_PREFIX[dev_type] == 'amp':
-                doublespinbox.setRange(0, 1100)
+                doublespinbox.setRange(5, 1100)
             else:
-                doublespinbox.setRange(0, 200)
+                doublespinbox.setRange(5, 200)
             doublespinbox.setKeyboardTracking(False)
             doublespinbox.setFont(QFont(SHELL_FONT, pointSize=10))
         # create buttons
