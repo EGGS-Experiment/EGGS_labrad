@@ -74,7 +74,7 @@ class toptica_channel(QFrame):
             label.setFont(MAIN_FONT)
             label.setAlignment(Qt.AlignCenter)
         # emission
-        box.emissionButton = TextChangingButton('Emission')
+        box.emissionButton = TextChangingButton('Enabled')
         # create labels
         feedback_label = QLabel('Feedback Channel:')
         feedbackMode_label = QLabel('Feedback Mode:')

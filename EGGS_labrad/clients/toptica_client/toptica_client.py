@@ -11,7 +11,10 @@ TOPTICA_CHANNELS = [(1, 'DLpro (S/N 029432)', '397'),
 CURRENTACTUALUPDATED_ID = 192611
 TEMPERATUREACTUALUPDATED_ID = 192612
 PIEZOACTUALUPDATED_ID = 192613
-TOGGLEUPDATED_ID = 192614
+CURRENTSETUPDATED_ID = 192614
+TEMPERATURESETUPDATED_ID = 192615
+PIEZOSETUPDATED_ID = 192616
+TOGGLEUPDATED_ID = 192617
 
 import traceback
 
@@ -41,12 +44,20 @@ class toptica_client(GUIClient):
         # get config
         self.channelinfo = yield self.toptica.device_list()
         # connect to device signals
-        yield self.toptica.signal__current_updated(CURRENTACTUALUPDATED_ID)
+        yield self.toptica.signal__current_actual_updated(CURRENTACTUALUPDATED_ID)
         yield self.toptica.addListener(listener=self.updateCurrentActual, source=None, ID=CURRENTACTUALUPDATED_ID)
-        yield self.toptica.signal__temperature_updated(TEMPERATUREACTUALUPDATED_ID)
+        yield self.toptica.signal__temperature_actual_updated(TEMPERATUREACTUALUPDATED_ID)
         yield self.toptica.addListener(listener=self.updateTemperatureActual, source=None, ID=TEMPERATUREACTUALUPDATED_ID)
-        yield self.toptica.signal__piezo_updated(PIEZOACTUALUPDATED_ID)
+        yield self.toptica.signal__piezo_actual_updated(PIEZOACTUALUPDATED_ID)
         yield self.toptica.addListener(listener=self.updatePiezoActual, source=None, ID=PIEZOACTUALUPDATED_ID)
+
+        yield self.toptica.signal__current_set_updated(CURRENTSETUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updateCurrentSet, source=None, ID=CURRENTSETUPDATED_ID)
+        yield self.toptica.signal__temperature_set_updated(TEMPERATURESETUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updateTemperatureSet, source=None, ID=TEMPERATURESETUPDATED_ID)
+        yield self.toptica.signal__piezo_set_updated(PIEZOSETUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updatePiezoSet, source=None, ID=PIEZOSETUPDATED_ID)
+
         yield self.toptica.signal__toggle_updated(TOGGLEUPDATED_ID)
         yield self.toptica.addListener(listener=self.updateToggle, source=None, ID=TOGGLEUPDATED_ID)
         # set recording stuff
@@ -148,8 +159,6 @@ class toptica_client(GUIClient):
             widget.scanBox.ampBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.scan_amplitude(_chan_num, value))
             widget.scanBox.offBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.scan_offset(_chan_num, value))
 
-
-
     # SLOTS
     def updateCurrentActual(self, c, signal):
         chan_num, curr = signal
@@ -165,6 +174,21 @@ class toptica_client(GUIClient):
         chan_num, voltage = signal
         if chan_num in self.gui.channels.keys():
             self.gui.channels[chan_num].piezoBox.actualValue.setText('{:0.4f}'.format(voltage))
+
+    def updateCurrentSet(self, c, signal):
+        chan_num, curr = signal
+        if chan_num in self.gui.channels.keys():
+            self.gui.channels[chan_num].currBox.setBox.setValue(curr)
+
+    def updateTemperatureSet(self, c, signal):
+        chan_num, temp = signal
+        if chan_num in self.gui.channels.keys():
+            self.gui.channels[chan_num].tempBox.setBox.setValue(temp)
+
+    def updatePiezoSet(self, c, signal):
+        chan_num, voltage = signal
+        if chan_num in self.gui.channels.keys():
+            self.gui.channels[chan_num].piezoBox.setBox.setValue(voltage)
 
     def updateToggle(self, c, signal):
         pass
