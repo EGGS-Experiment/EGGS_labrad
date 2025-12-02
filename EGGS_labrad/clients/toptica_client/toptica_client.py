@@ -21,8 +21,6 @@ PIEZOSETUPDATED_ID = 192616
 
 # IDs for max values set by user
 CURRENTMAXUPDATED_ID = 192617
-TEMPERATUREMAXUPDATED_ID = 192618
-PIEZOMAXUPDATED_ID = 192619
 
 # ID for enabled status of toptica device
 TOGGLEUPDATED_ID = 192620
@@ -72,10 +70,6 @@ class toptica_client(GUIClient):
         # connect to user-set max parameters
         yield self.toptica.signal__current_max_updated(CURRENTMAXUPDATED_ID)
         yield self.toptica.addListener(listener=self.updateCurrentMax, source=None, ID=CURRENTMAXUPDATED_ID)
-        yield self.toptica.signal__temperature_max_updated(TEMPERATUREMAXUPDATED_ID)
-        yield self.toptica.addListener(listener=self.updateTemperatureMax, source=None, ID=TEMPERATUREMAXUPDATED_ID)
-        yield self.toptica.signal__piezo_max_updated(PIEZOMAXUPDATED_ID)
-        yield self.toptica.addListener(listener=self.updatePiezoMax, source=None, ID=PIEZOMAXUPDATED_ID)
         # connet to enabled status of toptica device
         yield self.toptica.signal__toggle_updated(TOGGLEUPDATED_ID)
         yield self.toptica.addListener(listener=self.updateToggle, source=None, ID=TOGGLEUPDATED_ID)
@@ -130,20 +124,24 @@ class toptica_client(GUIClient):
 
                 # temperature
                 temperature_set = yield self.toptica.temperature_set(chan_num)
+                temperature_min = yield self.toptica.temperature_min(chan_num)
                 temperature_max = yield self.toptica.temperature_max(chan_num)
                 temperature_actual = yield self.toptica.temperature_actual(chan_num)
                 widget.tempBox.setBox.setValue(temperature_set)
-                widget.tempBox.maxBox.setValue(temperature_max)
+                widget.tempBox.minBox.setText('{:0.4f}'.format(temperature_min))
+                widget.tempBox.maxBox.setText('{:0.4f}'.format(temperature_max))
                 widget.tempBox.actualValue.setText('{:0.4f}'.format(temperature_actual))
                 widget.tempBox.lockswitch.setChecked(False)
 
                 # piezo
                 if DEVICES_USE_PIEZO[dev_type]:
                     piezo_set = yield self.toptica.piezo_set(chan_num)
+                    piezo_min = yield self.toptica.piezo_min(chan_num)
                     piezo_max = yield self.toptica.piezo_max(chan_num)
                     piezo_actual = yield self.toptica.piezo_actual(chan_num)
                     widget.piezoBox.setBox.setValue(piezo_set)
-                    widget.piezoBox.maxBox.setValue(piezo_max)
+                    widget.piezoBox.minBox.setText('{:0.4f}'.format(piezo_min))
+                    widget.piezoBox.maxBox.setText('{:0.4f}'.format(piezo_max))
                     widget.piezoBox.actualValue.setText('{:0.4f}'.format(piezo_actual))
                     widget.piezoBox.lockswitch.setChecked(False)
 
@@ -168,17 +166,14 @@ class toptica_client(GUIClient):
 
             # assign enabled slot
             widget.statusBox.enabledButton.clicked.connect(lambda value, _chan_num=chan_num: self.toptica.toggle(_chan_num, value))
-
             # assign current slots
             widget.currBox.setBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.current_set(_chan_num, value))
             widget.currBox.maxBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.current_max(_chan_num, value))
             # assign temperature slots
             widget.tempBox.setBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.temperature_set(_chan_num, value))
-            widget.tempBox.maxBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.temperature_max(_chan_num, value))
             # assign piezo slots
             if widget.piezo:
                 widget.piezoBox.setBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.piezo_set(_chan_num, value))
-                widget.piezoBox.maxBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.piezo_max(_chan_num, value))
             # assign scan slots
             #widget.scanBox.modeBox.currentItemChanged.connect(lambda index, _chan_num=chan_num: self.toptica.scan_mode(_chan_num, index))
             #widget.scanBox.shapeBox.currentItemChanged.connect(lambda index, _chan_num=chan_num: self.toptica.scan_shape(_chan_num, index))
@@ -236,26 +231,11 @@ class toptica_client(GUIClient):
             self.gui.channels[chan_num].currBox.maxBox.setValue(curr)
             self.gui.channels[chan_num].currBox.maxBox.blockSignals(False)
 
-    def updateTemperatureMax(self, c, signal):
-        chan_num, temp = signal
-        if chan_num in self.gui.channels.keys():
-            self.gui.channels[chan_num].tempBox.maxBox.blockSignals(True)
-            self.gui.channels[chan_num].tempBox.maxBox.setValue(temp)
-            self.gui.channels[chan_num].tempBox.maxBox.blockSignals(False)
-
-    def updatePiezoMax(self, c, signal):
-        chan_num, voltage = signal
-        if chan_num in self.gui.channels.keys():
-            self.gui.channels[chan_num].piezoBox.maxBox.blockSignals(True)
-            self.gui.channels[chan_num].piezoBox.maxBox.setValue(voltage)
-            self.gui.channels[chan_num].piezoBox.maxBox.blockSignals(False)
-
     def updateToggle(self, c, signal):
         chan_num, status = signal
         if chan_num in self.gui.channels.keys():
             self.gui.channels[chan_num].statusBox.enabledButton.setChecked(status)
             self.gui.channels[chan_num].statusBox.enabledButton.setAppearance(status)
-
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient

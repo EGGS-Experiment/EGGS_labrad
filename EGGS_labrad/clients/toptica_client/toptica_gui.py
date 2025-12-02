@@ -38,7 +38,8 @@ class toptica_channel(QFrame):
         tempLabels = ('Actual Temperature (K):', 'Set Temperature (K):', 'Min. Temperature (K):', 'Max. Temperature (K):')
         tempBox = self._createControlBox('Temperature Control', 'tempBox', tempLabels, dev_type)
         currLabels = ('Actual Current (mA):', 'Set Current (mA):', 'Min. Current (mA):', 'Max. Current (mA):')
-        currBox = self._createControlBox('Current Control', 'currBox', currLabels, dev_type)
+        currBox = self._createControlBox('Current Control', 'currBox', currLabels, dev_type,
+                                         controllable_max=True)
         piezoBox = None
         scanBox = self._createScanBox()
         # create piezo box
@@ -115,7 +116,7 @@ class toptica_channel(QFrame):
         setattr(self, 'statusBox', box)
         return self._wrapGroup('Status', box)
 
-    def _createControlBox(self, name, objName, label_titles, dev_type):
+    def _createControlBox(self, name, objName, label_titles, dev_type, controllable_max = False):
         # create holding box
         box = QWidget()
         box_layout = QGridLayout(box)
@@ -124,18 +125,30 @@ class toptica_channel(QFrame):
         set_label = QLabel(label_titles[1])
         min_label = QLabel(label_titles[2])
         max_label = QLabel(label_titles[3])
+
+        # create boxes
+        box.setBox = QCustomUnscrollableSpinBox()
+        box.actualValue = QLabel('00.0000')
+        if controllable_max:
+            box.maxBox = QCustomUnscrollableSpinBox()
+            box.minBox = QLabel('00.0000')
+            spinbox_list = [box.setBox, box.maxBox]
+            display_list = [box.actualValue]
+        else:
+            box.maxBox = QLabel('00.0000')
+            box.minBox = QLabel('00.0000')
+            spinbox_list = [box.setBox]
+            display_list = [box.actualValue, box.minBox, box.maxBox]
+
         for label in (set_label, min_label, max_label):
             label.setFont(LABEL_FONT)
             label.setAlignment(Qt.AlignBottom)
         # create display
-        box.actualValue = QLabel('00.0000')
-        box.actualValue.setFont(DISPLAY_FONT)
-        box.actualValue.setAlignment(Qt.AlignRight)
-        # create boxes
-        box.setBox = QCustomUnscrollableSpinBox()
-        #box.minBox = QCustomUnscrollableSpinBox()
-        box.maxBox = QCustomUnscrollableSpinBox()
-        for doublespinbox in (box.setBox, box.maxBox):
+        for display_box in display_list:
+            display_box.setFont(DISPLAY_FONT)
+            display_box.setAlignment(Qt.AlignRight)
+
+        for doublespinbox in spinbox_list:
             doublespinbox.setDecimals(4)
             doublespinbox.setSingleStep(0.0001)
             if DEVICE_TYPE_PREFIX[dev_type] == 'amp':
@@ -153,9 +166,11 @@ class toptica_channel(QFrame):
         box_layout.addWidget(box.record_button,     2, 0, 1, 1)
         box_layout.addWidget(set_label,             3, 0, 1, 1)
         box_layout.addWidget(box.setBox,            4, 0, 1, 1)
-        box_layout.addWidget(max_label,             5, 0, 1, 1)
-        box_layout.addWidget(box.maxBox,            6, 0, 1, 1)
-        box_layout.addWidget(box.lockswitch,        7, 0, 1, 1)
+        box_layout.addWidget(min_label,             5, 0, 1, 1)
+        box_layout.addWidget(box.minBox,            6, 0, 1, 1)
+        box_layout.addWidget(max_label,             7, 0, 1, 1)
+        box_layout.addWidget(box.maxBox,            8, 0, 1, 1)
+        box_layout.addWidget(box.lockswitch,        9, 0, 1, 1)
         box_layout.minimumSize()
         # connect signals to slots
         box.lockswitch.toggled.connect(lambda status, parent=objName: self._lock(status, parent))
@@ -221,7 +236,7 @@ class toptica_channel(QFrame):
     def _lock(self, status, objName):
         parent = getattr(self, objName)
         parent.setBox.setEnabled(status)
-        #parent.minBox.setEnabled(status)
+        parent.minBox.setEnabled(status)
         parent.maxBox.setEnabled(status)
 
     def _scanlock(self, status, objName):
