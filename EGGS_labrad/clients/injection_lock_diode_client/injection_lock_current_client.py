@@ -57,11 +57,11 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.label_diode_current.setText("{:>.3f}".format(outputs[1] * 1e3))
 
     def initGUI(self):
-        self.gui.set_current_spinbox.valueChanged.connect(lambda _: self.gui.set_current_spinbox.blockSignals(True))
+        self.gui.set_current_spinbox.textChanged.connect(lambda _: self.gui.set_current_spinbox.blockSignals(True))
         self.gui.set_current_spinbox.lineEdit().connect(lambda _box=self.gui.set_current_spinbox,
                                                         _device_func = self.controller.current_set:
                                                         self.update_val(None, _box, _device_func))
-        self.gui.max_current_spinbox.valueChanged.connect(lambda _: self.gui.max_current_spinbox.blockSignals(True))
+        self.gui.max_current_spinbox.textChanged.connect(lambda _: self.gui.max_current_spinbox.blockSignals(True))
         self.gui.max_current_spinbox.lineEdit().connect(lambda _box=self.gui.max_current_spinbox,
                                                         _device_func = self.controller.current_max:
                                                         self.update_val(None, _box, _device_func))

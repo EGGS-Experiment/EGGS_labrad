@@ -71,22 +71,22 @@ class InjectionLockTemperatureClient(GUIClient):
         self.gui.lock_button.clicked.connect(lambda status: self._lock(status))
 
         # locking (only send value to device after RETURN key is pressed)
-        self.gui.lock_set.valueChanged.connect(lambda _: self.gui.lock_set.blockSignals(True))
+        self.gui.lock_set.textChanged.connect(lambda _: self.gui.lock_set.blockSignals(True))
         self.gui.lock_set.editLine().returnPressed.connect(lambda _box=self.gui.lock_set,
                                                            _device_func=self.tec.locking_setpoint:
                                                            self.value_changed(None, _box, _device_func))
 
-        self.gui.lock_P.valueChanged.connect(lambda _: self.gui.lock_P.blockSignals(True))
+        self.gui.lock_P.textChanged.connect(lambda _: self.gui.lock_P.blockSignals(True))
         self.gui.lock_P.editLine().returnPressed.connect(lambda _box=self.gui.lock_P,
                                                            _device_func=self.tec.locking_p:
                                                            self.value_changed(None, _box, _device_func))
 
-        self.gui.lock_I.valueChanged.connect(lambda _: self.gui.lock_I.blockSignals(True))
+        self.gui.lock_I.textChanged.connect(lambda _: self.gui.lock_I.blockSignals(True))
         self.gui.lock_I.editLine().returnPressed.connect(lambda _box=self.gui.lock_I,
                                                                 _device_func=self.tec.locking_i:
                                                          self.value_changed(None, _box, _device_func))
 
-        self.gui.lock_D.valueChanged.connect(lambda _: self.gui.lock_D.blockSignals(True))
+        self.gui.lock_D.textChanged.connect(lambda _: self.gui.lock_D.blockSignals(True))
         self.gui.lock_D.editLine().returnPressed.connect(lambda _box=self.gui.lock_D,
                                                                 _device_func=self.tec.locking_d:
                                                          self.value_changed(None, _box, _device_func))

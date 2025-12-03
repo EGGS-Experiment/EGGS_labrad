@@ -164,25 +164,25 @@ class toptica_client(GUIClient):
             # assign enabled slot
             widget.statusBox.enabledButton.clicked.connect(lambda value, _chan_num=chan_num: self.toptica.toggle(_chan_num, value))
             # # assign current slots (only update device once RETURN key is pressed)
-            widget.currBox.setBox.valueChanged.connect(lambda _: widget.currBox.setBox.blockSignals(True))
+            widget.currBox.setBox.textChanged.connect(lambda _: widget.currBox.setBox.blockSignals(True))
             widget.currBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
                                                                           _box= widget.currBox.setBox,
                                                                           _device_func = self.toptica.current_set:
                                                        self.updateVal(None, _box, _chan_num, _device_func))
-            widget.currBox.maxBox.valueChanged.connect(lambda _: widget.currBox.maxBox.blockSignals(True))
+            widget.currBox.maxBox.textChanged.connect(lambda _: widget.currBox.maxBox.blockSignals(True))
             widget.currBox.maxBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
                                                                           _box=widget.currBox.maxBox,
                                                                           _device_func = self.toptica.current_max:
                                                           self.updateVal(None, _box, _chan_num, _device_func))
             # assign temperature slots (only update device once RETURN key is pressed)
-            widget.tempBox.setBox.valueChanged.connect(lambda _: widget.tempBox.setBox.blockSignals(True))
+            widget.tempBox.setBox.textChanged.connect(lambda _: widget.tempBox.setBox.blockSignals(True))
             widget.tempBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
                                                                           _box=widget.tempBox.setBox,
                                                                           _device_func =self.toptica.temperature_set:
                                                             self.updateVal(None, _box, _chan_num, _device_func))
             # assign piezo slots (only update device once RETURN key is pressed)
             if widget.piezo:
-                widget.piezoBox.setBox.valueChanged.connect(lambda _: widget.piezoBox.setBox.blockSignals(True))
+                widget.piezoBox.setBox.textChanged.connect(lambda _: widget.piezoBox.setBox.blockSignals(True))
                 widget.piezoBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
                                                                                _box=widget.piezoBox.setBox,
                                                                                _device_func=self.toptica.piezo_set:
