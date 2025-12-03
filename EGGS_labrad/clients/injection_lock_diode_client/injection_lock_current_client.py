@@ -57,10 +57,21 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.label_diode_current.setText("{:>.3f}".format(outputs[1] * 1e3))
 
     def initGUI(self):
-        self.gui.set_current_spinbox.valueChanged.connect(lambda current_mA: self.controller.current_set(current_mA))
-        self.gui.max_current_spinbox.valueChanged.connect(lambda max_current_ma: self.controller.current_max(max_current_ma))
+        self.gui.set_current_spinbox.textChanged.connect(lambda _: self.gui.set_current_spinbox.blockSignals(True))
+        self.gui.set_current_spinbox.lineEdit().returnPressed.connect(lambda _box=self.gui.set_current_spinbox,
+                                                        _device_func = self.controller.current_set:
+                                                        self.update_val(None, _box, _device_func))
+        self.gui.max_current_spinbox.textChanged.connect(lambda _: self.gui.max_current_spinbox.blockSignals(True))
+        self.gui.max_current_spinbox.lineEdit().returnPressed.connect(lambda _box=self.gui.max_current_spinbox,
+                                                        _device_func = self.controller.current_max:
+                                                        self.update_val(None, _box, _device_func))
         self.gui.output_button.clicked.connect(lambda status: self.controller.toggle(status))
         self.gui.lockswitch.clicked.connect(lambda status: self.lock(status))
+
+    def update_val(self,c, box, device_func):
+        val = float(box.text())
+        device_func(val)
+        box.blockSignals(False)
 
     def lock(self, status):
         """
@@ -70,35 +81,60 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.max_current_spinbox.setEnabled(status)
         self.gui.output_button.setEnabled(status)
 
-
     """
     SLOTS FOR LABRAD SIGNALS
     """
     def updateToggle(self, c, status):
-        self.gui.output_button.blockSignals(True)
-        self.gui.output_button.setChecked(status)
-        self.gui.output_button.setAppearance(status)
-        self.gui.output_button.blockSignals(False)
+        """
+        Update status of the toggle button (whether controller is outputting a current)
+        Args:
+            c: labrad context
+            status: indicates if controller has been turned on or off
+        """
+        if not self.gui.output_button.signalsBlocked():
+            self.gui.output_button.blockSignals(True)
+            self.gui.output_button.setChecked(status)
+            self.gui.output_button.setAppearance(status)
+            self.gui.output_button.blockSignals(False)
 
     def updateSetCurrent(self, c, msg):
+        """
+        Update the listed current outputted by the controller
+        Args:
+            c: labrad context
+            msg: message containing what the set current has been changed to
+        """
         _, current_mA = msg
-        self.gui.set_current_spinbox.blockSignals(True)
-        self.gui.set_current_spinbox.setValue(current_mA)
-        self.gui.set_current_spinbox.blockSignals(False)
+        if not self.gui.set_current_spinbox.signalsBlocked():
+            self.gui.set_current_spinbox.blockSignals(True)
+            self.gui.set_current_spinbox.setValue(current_mA)
+            self.gui.set_current_spinbox.blockSignals(False)
 
     def updateMaxCurrent(self, c, msg):
+        """
+        Update the listed max current of the controller
+        Args:
+            c: labrad context
+            msg: message containing what the max current has been changed to
+        """
         _, current_mA = msg
-        self.gui.max_current_spinbox.blockSignals(True)
-        self.gui.max_current_spinbox.setValue(current_mA)
-        self.gui.max_current_spinbox.blockSignals(False)
+        if not self.gui.max_current_spinbox.signalsBlocked():
+            self.gui.max_current_spinbox.blockSignals(True)
+            self.gui.max_current_spinbox.setValue(current_mA)
+            self.gui.max_current_spinbox.blockSignals(False)
 
     def updateOutput(self, c, outputs):
-        self.gui.label_diode_voltage.blockSignals(True)
-        self.gui.label_diode_current.blockSignals(True)
-        self.gui.label_diode_voltage.setText("{:>.3f}".format(outputs[0]))
-        self.gui.label_diode_current.setText("{:>.3f}".format(outputs[1] * 1e3))
-        self.gui.label_diode_voltage.blockSignals(False)
-        self.gui.label_diode_current.blockSignals(False)
+        """
+        Update the listed actual output of the controller
+        Args:
+            c: labrad context
+            outputs: voltage and current the controller is outputting
+        """
+        if not self.gui.output_button.signalsBlocked():
+            self.gui.label_diode_voltage.blockSignals(True)
+            self.gui.label_diode_voltage.setText("{:>.3f}".format(outputs[0]))
+            self.gui.label_diode_current.setText("{:>.3f}".format(outputs[1] * 1e3))
+            self.gui.label_diode_current.blockSignals(False)
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
