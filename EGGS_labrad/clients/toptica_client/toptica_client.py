@@ -166,14 +166,30 @@ class toptica_client(GUIClient):
 
             # assign enabled slot
             widget.statusBox.enabledButton.clicked.connect(lambda value, _chan_num=chan_num: self.toptica.toggle(_chan_num, value))
-            # assign current slots
-            widget.currBox.setBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.current_set(_chan_num, value))
-            widget.currBox.maxBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.current_max(_chan_num, value))
+            # # assign current slots
+            widget.currBox.setBox.valueChanged.connect(lambda _: widget.currBox.setBox.blockSignals(True))
+            widget.currBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
+                                                                          _box= widget.currBox.setBox,
+                                                                          _device_func = self.toptica.current_set:
+                                                       self.updateVal(None, _box, _chan_num, _device_func))
+            widget.currBox.maxBox.valueChanged.connect(lambda _: widget.currBox.maxBox.blockSignals(True))
+            widget.currBox.maxBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
+                                                                          _box=widget.currBox.maxBox,
+                                                                          _device_func = self.toptica.current_max:
+                                                          self.updateVal(None, _box, _chan_num, _device_func))
             # assign temperature slots
-            widget.tempBox.setBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.temperature_set(_chan_num, value))
+            widget.tempBox.setBox.valueChanged.connect(lambda _: widget.tempBox.setBox.blockSignals(True))
+            widget.tempBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
+                                                                          _box=widget.tempBox.setBox,
+                                                                          _device_func =self.toptica.temperature_set:
+                                                            self.updateVal(None, _box, _chan_num, _device_func))
             # assign piezo slots
             if widget.piezo:
-                widget.piezoBox.setBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.piezo_set(_chan_num, value))
+                widget.piezoBox.setBox.valueChanged.connect(lambda _: widget.piezoBox.setBox.blockSignals(True))
+                widget.piezoBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
+                                                                               _box=widget.piezoBox.setBox,
+                                                                               _device_func=self.toptica.piezo_set:
+                                                            self.updateVal(None, _box, _chan_num, _device_func))
             # assign scan slots
             #widget.scanBox.modeBox.currentItemChanged.connect(lambda index, _chan_num=chan_num: self.toptica.scan_mode(_chan_num, index))
             #widget.scanBox.shapeBox.currentItemChanged.connect(lambda index, _chan_num=chan_num: self.toptica.scan_shape(_chan_num, index))
@@ -181,61 +197,69 @@ class toptica_client(GUIClient):
             widget.scanBox.ampBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.scan_amplitude(_chan_num, value))
             widget.scanBox.offBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.scan_offset(_chan_num, value))
 
+    # SIGNALS
+    def updateVal(self, c, widget, chan_num,device_func):
+        val = float(widget.text())
+        widget.blockSignals(False)
+        device_func(chan_num, val)
+
     # SLOTS
     def updateCurrentActual(self, c, signal):
         chan_num, curr = signal
-        if chan_num in self.gui.channels.keys():
+        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].currBox.actualValue.signalsBlocked():
             self.gui.channels[chan_num].currBox.actualValue.blockSignals(True)
             self.gui.channels[chan_num].currBox.actualValue.setText('{:0.4f}'.format(curr))
             self.gui.channels[chan_num].currBox.actualValue.blockSignals(False)
 
     def updateTemperatureActual(self, c, signal):
         chan_num, temp = signal
-        if chan_num in self.gui.channels.keys():
+        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].tempBox.actualValue.signalsBlocked():
             self.gui.channels[chan_num].tempBox.actualValue.blockSignals(True)
             self.gui.channels[chan_num].tempBox.actualValue.setText('{:0.4f}'.format(temp))
             self.gui.channels[chan_num].tempBox.actualValue.blockSignals(False)
 
     def updatePiezoActual(self, c, signal):
         chan_num, voltage = signal
-        if chan_num in self.gui.channels.keys():
+        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].piezoBox.actualValue.signalsBlocked():
             self.gui.channels[chan_num].piezoBox.actualValue.blockSignals(True)
             self.gui.channels[chan_num].piezoBox.actualValue.setText('{:0.4f}'.format(voltage))
             self.gui.channels[chan_num].piezoBox.actualValue.blockSignals(False)
 
     def updateCurrentSet(self, c, signal):
         chan_num, curr = signal
-        if chan_num in self.gui.channels.keys():
+        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].currBox.setBox.signalsBlocked():
             self.gui.channels[chan_num].currBox.setBox.blockSignals(True)
             self.gui.channels[chan_num].currBox.setBox.setValue(curr)
             self.gui.channels[chan_num].currBox.setBox.blockSignals(False)
 
     def updateTemperatureSet(self, c, signal):
         chan_num, temp = signal
-        if chan_num in self.gui.channels.keys():
+        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].tempBox.setBox.signalsBlocked():
             self.gui.channels[chan_num].tempBox.setBox.blockSignals(True)
             self.gui.channels[chan_num].tempBox.setBox.setValue(temp)
             self.gui.channels[chan_num].tempBox.setBox.blockSignals(False)
 
     def updatePiezoSet(self, c, signal):
         chan_num, voltage = signal
-        if chan_num in self.gui.channels.keys():
+        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].piezoBox.setBox.signalsBlocked():
             self.gui.channels[chan_num].piezoBox.setBox.blockSignals(True)
             self.gui.channels[chan_num].piezoBox.setBox.setValue(voltage)
             self.gui.channels[chan_num].piezoBox.setBox.blockSignals(False)
 
     def updateCurrentMax(self, c, signal):
         chan_num, curr = signal
-        if chan_num in self.gui.channels.keys():
+        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].currBox.maxBox.signalsBlocked():
             self.gui.channels[chan_num].currBox.maxBox.blockSignals(True)
             self.gui.channels[chan_num].currBox.maxBox.setValue(curr)
             self.gui.channels[chan_num].currBox.maxBox.blockSignals(False)
 
     def updateToggle(self, c, signal):
         chan_num, status = signal
-        if chan_num in self.gui.channels.keys():
+        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].statusBox.enabledButton.signalsBlocked():
+            self.gui.channels[chan_num].statusBox.enabledButton.blockSignals(True)
             self.gui.channels[chan_num].statusBox.enabledButton.setChecked(status)
             self.gui.channels[chan_num].statusBox.enabledButton.setAppearance(status)
+            self.gui.channels[chan_num].statusBox.enabledButton.blockSignals(False)
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient

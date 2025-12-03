@@ -155,7 +155,7 @@ class toptica_channel(QFrame):
                 doublespinbox.setRange(5, 1100)
             else:
                 doublespinbox.setRange(5, 200)
-            doublespinbox.setKeyboardTracking(False)
+            doublespinbox.setKeyboardTracking(True)
             doublespinbox.setFont(QFont(SHELL_FONT, pointSize=10))
         # create buttons
         box.lockswitch = Lockswitch()
