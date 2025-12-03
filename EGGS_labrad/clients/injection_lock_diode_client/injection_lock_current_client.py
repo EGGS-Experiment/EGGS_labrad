@@ -58,11 +58,11 @@ class InjectionLockCurrentClient(GUIClient):
 
     def initGUI(self):
         self.gui.set_current_spinbox.textChanged.connect(lambda _: self.gui.set_current_spinbox.blockSignals(True))
-        self.gui.set_current_spinbox.lineEdit().connect(lambda _box=self.gui.set_current_spinbox,
+        self.gui.set_current_spinbox.lineEdit().returnPressed.connect(lambda _box=self.gui.set_current_spinbox,
                                                         _device_func = self.controller.current_set:
                                                         self.update_val(None, _box, _device_func))
         self.gui.max_current_spinbox.textChanged.connect(lambda _: self.gui.max_current_spinbox.blockSignals(True))
-        self.gui.max_current_spinbox.lineEdit().connect(lambda _box=self.gui.max_current_spinbox,
+        self.gui.max_current_spinbox.lineEdit().returnPressed.connect(lambda _box=self.gui.max_current_spinbox,
                                                         _device_func = self.controller.current_max:
                                                         self.update_val(None, _box, _device_func))
         self.gui.output_button.clicked.connect(lambda status: self.controller.toggle(status))
@@ -71,6 +71,7 @@ class InjectionLockCurrentClient(GUIClient):
     def update_val(self,c, box, device_func):
         val = float(box.text())
         device_func(val)
+        box.blockSignals(False)
 
     def lock(self, status):
         """

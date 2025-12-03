@@ -72,22 +72,22 @@ class InjectionLockTemperatureClient(GUIClient):
 
         # locking (only send value to device after RETURN key is pressed)
         self.gui.lock_set.textChanged.connect(lambda _: self.gui.lock_set.blockSignals(True))
-        self.gui.lock_set.editLine().returnPressed.connect(lambda _box=self.gui.lock_set,
+        self.gui.lock_set.lineEdit().returnPressed.connect(lambda _box=self.gui.lock_set,
                                                            _device_func=self.tec.locking_setpoint:
                                                            self.value_changed(None, _box, _device_func))
 
         self.gui.lock_P.textChanged.connect(lambda _: self.gui.lock_P.blockSignals(True))
-        self.gui.lock_P.editLine().returnPressed.connect(lambda _box=self.gui.lock_P,
+        self.gui.lock_P.lineEdit().returnPressed.connect(lambda _box=self.gui.lock_P,
                                                            _device_func=self.tec.locking_p:
                                                            self.value_changed(None, _box, _device_func))
 
         self.gui.lock_I.textChanged.connect(lambda _: self.gui.lock_I.blockSignals(True))
-        self.gui.lock_I.editLine().returnPressed.connect(lambda _box=self.gui.lock_I,
+        self.gui.lock_I.lineEdit().returnPressed.connect(lambda _box=self.gui.lock_I,
                                                                 _device_func=self.tec.locking_i:
                                                          self.value_changed(None, _box, _device_func))
 
         self.gui.lock_D.textChanged.connect(lambda _: self.gui.lock_D.blockSignals(True))
-        self.gui.lock_D.editLine().returnPressed.connect(lambda _box=self.gui.lock_D,
+        self.gui.lock_D.lineEdit().returnPressed.connect(lambda _box=self.gui.lock_D,
                                                                 _device_func=self.tec.locking_d:
                                                          self.value_changed(None, _box, _device_func))
 
@@ -107,6 +107,7 @@ class InjectionLockTemperatureClient(GUIClient):
         """
         val = float(box.text())
         device_func(val)
+        box.blockSignals(False)
 
     @inlineCallbacks
     def _record(self, status):
@@ -189,7 +190,7 @@ class InjectionLockTemperatureClient(GUIClient):
             c: labrad context
             setpoint: current device has been set to output
         """
-        if not self.gui.lock_set.signalBlocked():
+        if not self.gui.lock_set.signalsBlocked():
             self.gui.lock_set.blockSignals(True)
             self.gui.lock_set.setValue(setpoint)
             self.gui.lock_set.blockSignals(False)
@@ -207,7 +208,7 @@ class InjectionLockTemperatureClient(GUIClient):
         elif param == 'i':  widget = self.gui.lock_I
         elif param == 'd':  widget = self.gui.lock_D
         # set value
-        if not widget.signalBlocked():
+        if not widget.signalsBlocked():
             widget.blockSignals(True)
             widget.setValue(value)
             widget.blockSignals(False)
