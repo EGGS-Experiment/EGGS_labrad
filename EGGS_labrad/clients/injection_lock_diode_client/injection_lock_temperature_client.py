@@ -70,11 +70,26 @@ class InjectionLockTemperatureClient(GUIClient):
         self.gui.record_button.clicked.connect(lambda status: self._record(status))
         self.gui.lock_button.clicked.connect(lambda status: self._lock(status))
 
-        # locking
-        self.gui.lock_set.valueChanged.connect(lambda val_set: self.tec.locking_setpoint(val_set))
-        self.gui.lock_P.valueChanged.connect(lambda val_p: self.tec.locking_p(val_p))
-        self.gui.lock_I.valueChanged.connect(lambda val_i: self.tec.locking_i(val_i))
-        self.gui.lock_D.valueChanged.connect(lambda val_d: self.tec.locking_d(val_d))
+        # locking (only send value to device after RETURN key is pressed)
+        self.gui.lock_set.valueChanged.connect(lambda _: self.gui.lock_set.blockSignals(True))
+        self.gui.lock_set.editLine().returnPressed.connect(lambda _box=self.gui.lock_set,
+                                                           _device_func=self.tec.locking_setpoint:
+                                                           self.value_changed(None, _box, _device_func))
+
+        self.gui.lock_P.valueChanged.connect(lambda _: self.gui.lock_P.blockSignals(True))
+        self.gui.lock_P.editLine().returnPressed.connect(lambda _box=self.gui.lock_P,
+                                                           _device_func=self.tec.locking_p:
+                                                           self.value_changed(None, _box, _device_func))
+
+        self.gui.lock_I.valueChanged.connect(lambda _: self.gui.lock_I.blockSignals(True))
+        self.gui.lock_I.editLine().returnPressed.connect(lambda _box=self.gui.lock_I,
+                                                                _device_func=self.tec.locking_i:
+                                                         self.value_changed(None, _box, _device_func))
+
+        self.gui.lock_D.valueChanged.connect(lambda _: self.gui.lock_D.blockSignals(True))
+        self.gui.lock_D.editLine().returnPressed.connect(lambda _box=self.gui.lock_D,
+                                                                _device_func=self.tec.locking_d:
+                                                         self.value_changed(None, _box, _device_func))
 
         # todo: check
         self.gui.lock_button.setChecked(False)
@@ -82,6 +97,17 @@ class InjectionLockTemperatureClient(GUIClient):
 
 
     # SLOTS
+    def value_changed(self, c, box, device_func):
+        """
+        Set/Get value of device based on gui input
+        Args:
+            c: labrad context
+            box: gui element
+            device_func: function used to write/read device parameter
+        """
+        val = float(box.text())
+        device_func(val)
+
     @inlineCallbacks
     def _record(self, status):
         """
@@ -106,6 +132,11 @@ class InjectionLockTemperatureClient(GUIClient):
             )
 
     def _lock(self, status):
+        """
+        Lock other gui elements
+        Args:
+            status: indicate whether to prevent other gui elements from being toggled
+        """
         self.gui.toggle_button.setEnabled(status)
         self.gui.lock_set.setEnabled(status)
         self.gui.lock_P.setEnabled(status)
@@ -114,38 +145,72 @@ class InjectionLockTemperatureClient(GUIClient):
 
 
     def updateTemperature(self, c, temp):
-        self.gui.displayTemp.setText("{:.3f}".format(temp))
-        if self.recording:
-            yield self.dv.add(time() - self.starttime, temp, context=self.c_record)
+        """
+        Update listed temperature if changed
+        Args:
+            c: labrad context
+            temp: updated temperature of device
+        """
+        if not self.gui.displayTemp.signalsBlocked():
+            self.gui.displayTemp.setText("{:.3f}".format(temp))
+            if self.recording:
+                yield self.dv.add(time() - self.starttime, temp, context=self.c_record)
 
 
     def updateCurrent(self, c, curr):
-        self.gui.displayCurr.setText("{:.3f}".format(curr))
-
+        """
+        Update listed current if changed
+        Args:
+            c: labrad context
+            curr: current outputted by device
+        """
+        if not self.gui.displayCurr.signalsBlocked():
+            self.gui.displayCurr.setText("{:.3f}".format(curr))
 
     def updateToggle(self, c, status):
+        """
+        Update listed on/off status of device
+        Args:
+            c: labrad context
+            status: indicates whether device has been turned on or off
+        """
         # need to convert channel number to index
         toggleswitch = self.gui.toggle_button
-        toggleswitch.blockSignals(True)
-        toggleswitch.setChecked(status)
-        toggleswitch.setAppearance(status)
-        toggleswitch.blockSignals(False)
+        if not toggleswitch.signalsBlocked():
+            toggleswitch.blockSignals(True)
+            toggleswitch.setChecked(status)
+            toggleswitch.setAppearance(status)
+            toggleswitch.blockSignals(False)
 
     def updateSetpoint(self,c, setpoint):
-        self.gui.lock_set.blockSignals(True)
-        self.gui.lock_set.setValue(setpoint)
-        self.gui.lock_set.blockSignals(False)
+        """
+        Update listed setpoint of device
+        Args:
+            c: labrad context
+            setpoint: current device has been set to output
+        """
+        if not self.gui.lock_set.signalBlocked():
+            self.gui.lock_set.blockSignals(True)
+            self.gui.lock_set.setValue(setpoint)
+            self.gui.lock_set.blockSignals(False)
 
     def updateLock(self, c, msg):
+        """
+        Update listed lock parameters of device
+        Args:
+            c: labrad context
+            msg: message containing lock parameter and its new value
+        """
         param, value = msg
         # get appropriate widget
         if param == 'p':    widget = self.gui.lock_P
         elif param == 'i':  widget = self.gui.lock_I
         elif param == 'd':  widget = self.gui.lock_D
         # set value
-        widget.blockSignals(True)
-        widget.setValue(value)
-        widget.blockSignals(False)
+        if not widget.signalBlocked():
+            widget.blockSignals(True)
+            widget.setValue(value)
+            widget.blockSignals(False)
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient

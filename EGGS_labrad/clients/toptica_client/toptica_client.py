@@ -1,7 +1,7 @@
-from scipy.constants import value
 from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.toptica_client.toptica_gui import toptica_gui
+import traceback
 
 # used for default GUI loading in case of error
 TOPTICA_CHANNELS = [(1, 'DLpro (S/N 029432)', '397'),
@@ -24,8 +24,6 @@ CURRENTMAXUPDATED_ID = 192617
 
 # ID for enabled status of toptica device
 TOGGLEUPDATED_ID = 192620
-
-import traceback
 
 # useful for string parsing
 DEVICE_TYPE_PREFIX = {
@@ -72,14 +70,14 @@ class toptica_client(GUIClient):
         yield self.toptica.addListener(listener=self.updateCurrentMax, source=None, ID=CURRENTMAXUPDATED_ID)
         # connet to enabled status of toptica device
         yield self.toptica.signal__toggle_updated(TOGGLEUPDATED_ID)
-        yield self.toptica.addListener(listener=self.updateToggle, source=None, ID=TOGGLEUPDATED_ID)
+        yield self.toptica.addListener(listener=self.updateEnabledButton, source=None, ID=TOGGLEUPDATED_ID)
         # set recording stuff
         self.c_record = self.cxn.context()
         self.recording = False
         # start device polling if not already started
         poll_params = yield self.toptica.polling()
         if not poll_params[0]:
-            yield self.toptica.polling(True, 5.0)
+            yield self.toptica.polling(True, 10.0)
 
     @inlineCallbacks
     def initData(self):
@@ -101,7 +99,6 @@ class toptica_client(GUIClient):
                 # _, name, _, wav, _, _, _, _ = device_info
 
                 # determine if toptica device is enabled
-                # enabled_status = yield self.toptica.emission(chan_num)
                 enabled_status = yield self.toptica.toggle(chan_num)
                 widget.statusBox.channelDisplay.setText(str(chan_num))
                 name_tmp = name.split('S/N ')[1]
@@ -166,7 +163,7 @@ class toptica_client(GUIClient):
 
             # assign enabled slot
             widget.statusBox.enabledButton.clicked.connect(lambda value, _chan_num=chan_num: self.toptica.toggle(_chan_num, value))
-            # # assign current slots
+            # # assign current slots (only update device once RETURN key is pressed)
             widget.currBox.setBox.valueChanged.connect(lambda _: widget.currBox.setBox.blockSignals(True))
             widget.currBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
                                                                           _box= widget.currBox.setBox,
@@ -177,13 +174,13 @@ class toptica_client(GUIClient):
                                                                           _box=widget.currBox.maxBox,
                                                                           _device_func = self.toptica.current_max:
                                                           self.updateVal(None, _box, _chan_num, _device_func))
-            # assign temperature slots
+            # assign temperature slots (only update device once RETURN key is pressed)
             widget.tempBox.setBox.valueChanged.connect(lambda _: widget.tempBox.setBox.blockSignals(True))
             widget.tempBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
                                                                           _box=widget.tempBox.setBox,
                                                                           _device_func =self.toptica.temperature_set:
                                                             self.updateVal(None, _box, _chan_num, _device_func))
-            # assign piezo slots
+            # assign piezo slots (only update device once RETURN key is pressed)
             if widget.piezo:
                 widget.piezoBox.setBox.valueChanged.connect(lambda _: widget.piezoBox.setBox.blockSignals(True))
                 widget.piezoBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
@@ -198,68 +195,126 @@ class toptica_client(GUIClient):
             widget.scanBox.offBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.scan_offset(_chan_num, value))
 
     # SIGNALS
-    def updateVal(self, c, widget, chan_num,device_func):
-        val = float(widget.text())
-        widget.blockSignals(False)
+    def updateVal(self, c, box, chan_num,device_func):
+        """
+        Update the toptica device based on input to the gui
+        Args:
+            c: labrad context
+            box: gui element to read from
+            chan_num: numvber of channel used to talk to toptica device
+            device_func: function to talk to toptica device/controller
+        """
+        val = float(box.text())
+        box.blockSignals(False)
         device_func(chan_num, val)
 
     # SLOTS
     def updateCurrentActual(self, c, signal):
+        """
+        Update the listed actual current based on information from the toptica controller
+        Args:
+            c: labrad context
+            signal: event result to process
+        """
         chan_num, curr = signal
-        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].currBox.actualValue.signalsBlocked():
-            self.gui.channels[chan_num].currBox.actualValue.blockSignals(True)
-            self.gui.channels[chan_num].currBox.actualValue.setText('{:0.4f}'.format(curr))
-            self.gui.channels[chan_num].currBox.actualValue.blockSignals(False)
+        box = self.gui.channels[chan_num].currBox.actualValue
+        if chan_num in self.gui.channels.keys() and not box.signalsBlocked():
+            box.blockSignals(True)
+            box.setText('{:0.4f}'.format(curr))
+            box.blockSignals(False)
 
     def updateTemperatureActual(self, c, signal):
+        """
+        Update the actual temperature of the toptica device based on information from its controller
+        Args:
+            c: labrad context
+            signal: event result to process
+        """
         chan_num, temp = signal
-        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].tempBox.actualValue.signalsBlocked():
-            self.gui.channels[chan_num].tempBox.actualValue.blockSignals(True)
-            self.gui.channels[chan_num].tempBox.actualValue.setText('{:0.4f}'.format(temp))
-            self.gui.channels[chan_num].tempBox.actualValue.blockSignals(False)
+        box = self.gui.channels[chan_num].tempBox.actualValue
+        if chan_num in self.gui.channels.keys() and not box.signalsBlocked():
+            box.blockSignals(True)
+            box.setText('{:0.4f}'.format(temp))
+            box.blockSignals(False)
 
     def updatePiezoActual(self, c, signal):
+        """
+        Update the actual piezo voltage listed based information from the toptica box
+        Args:
+            c: labrad context
+            signal: event result to process
+        """
         chan_num, voltage = signal
-        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].piezoBox.actualValue.signalsBlocked():
-            self.gui.channels[chan_num].piezoBox.actualValue.blockSignals(True)
-            self.gui.channels[chan_num].piezoBox.actualValue.setText('{:0.4f}'.format(voltage))
-            self.gui.channels[chan_num].piezoBox.actualValue.blockSignals(False)
+        box = self.gui.channels[chan_num].piezoBox.actualValue
+        if chan_num in self.gui.channels.keys() and not box.signalsBlocked():
+            box.blockSignals(True)
+            box.setText('{:0.4f}'.format(voltage))
+            box.blockSignals(False)
 
     def updateCurrentSet(self, c, signal):
+        """
+        Update the set current listed based on the actions of other clients
+        Args:
+            c: labrad context
+            signal: event result to process
+        """
         chan_num, curr = signal
-        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].currBox.setBox.signalsBlocked():
-            self.gui.channels[chan_num].currBox.setBox.blockSignals(True)
-            self.gui.channels[chan_num].currBox.setBox.setValue(curr)
-            self.gui.channels[chan_num].currBox.setBox.blockSignals(False)
+        box = self.gui.channels[chan_num].currBox.setBox
+        if chan_num in self.gui.channels.keys() and not box.signalsBlocked():
+            box.blockSignals(True)
+            box.setValue(curr)
+            box.blockSignals(False)
 
     def updateTemperatureSet(self, c, signal):
         chan_num, temp = signal
-        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].tempBox.setBox.signalsBlocked():
-            self.gui.channels[chan_num].tempBox.setBox.blockSignals(True)
-            self.gui.channels[chan_num].tempBox.setBox.setValue(temp)
-            self.gui.channels[chan_num].tempBox.setBox.blockSignals(False)
+        box = self.gui.channels[chan_num].tempBox.setBox
+        if chan_num in self.gui.channels.keys() and not box.signalsBlocked():
+            box.blockSignals(True)
+            box.setValue(temp)
+            box.blockSignals(False)
 
     def updatePiezoSet(self, c, signal):
+        """
+        Update the set voltage listed for the piezo based on the actions of other clients
+        Args:
+            c: labrad context
+            signal: event result to process
+        """
         chan_num, voltage = signal
-        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].piezoBox.setBox.signalsBlocked():
-            self.gui.channels[chan_num].piezoBox.setBox.blockSignals(True)
-            self.gui.channels[chan_num].piezoBox.setBox.setValue(voltage)
-            self.gui.channels[chan_num].piezoBox.setBox.blockSignals(False)
+        box = self.gui.channels[chan_num].piezoBox.setBox
+        if chan_num in self.gui.channels.keys() and not box.signalsBlocked():
+            box.blockSignals(True)
+            box.setValue(voltage)
+            box.blockSignals(False)
 
     def updateCurrentMax(self, c, signal):
+        """
+        Update the max current listed based on the actions of other clients
+        Args:
+            c: labrad context
+            signal: event result to process
+        """
         chan_num, curr = signal
-        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].currBox.maxBox.signalsBlocked():
-            self.gui.channels[chan_num].currBox.maxBox.blockSignals(True)
-            self.gui.channels[chan_num].currBox.maxBox.setValue(curr)
-            self.gui.channels[chan_num].currBox.maxBox.blockSignals(False)
+        box = self.gui.channels[chan_num].currBox.maxBox
+        if chan_num in self.gui.channels.keys() and not box.signalsBlocked():
+            box.blockSignals(True)
+            box.setValue(curr)
+            box.blockSignals(False)
 
-    def updateToggle(self, c, signal):
+    def updateEnabledButton(self, c, signal):
+        """
+        Change the status of the enabled button based on the actions of other clients
+        Args:
+            c: labrad context
+            signal: event result to process
+        """
         chan_num, status = signal
-        if chan_num in self.gui.channels.keys() and not self.gui.channels[chan_num].statusBox.enabledButton.signalsBlocked():
-            self.gui.channels[chan_num].statusBox.enabledButton.blockSignals(True)
-            self.gui.channels[chan_num].statusBox.enabledButton.setChecked(status)
-            self.gui.channels[chan_num].statusBox.enabledButton.setAppearance(status)
-            self.gui.channels[chan_num].statusBox.enabledButton.blockSignals(False)
+        button = self.gui.channels[chan_num].statusBox.enabledButton
+        if chan_num in self.gui.channels.keys() and not button.signalsBlocked():
+            button.blockSignals(True)
+            button.setChecked(status)
+            button.setAppearance(status)
+            button.blockSignals(False)
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient

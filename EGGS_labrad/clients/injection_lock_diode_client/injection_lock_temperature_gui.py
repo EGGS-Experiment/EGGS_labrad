@@ -55,7 +55,7 @@ class InjectionLockTemperatureGUI(QFrame):
             widget.setDecimals(0)
             widget.setSingleStep(1)
             widget.setRange(0, 255)
-            widget.setKeyboardTracking(False)
+            widget.setKeyboardTracking(True)
             widget.setAlignment(Qt.AlignRight)
             setattr(self, widget_name, widget)
 
