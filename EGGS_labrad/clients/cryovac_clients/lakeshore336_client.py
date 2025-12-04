@@ -35,6 +35,7 @@ class lakeshore336_client(GUIClient):
     @inlineCallbacks
     def initData(self):
         # setup
+        self.output_channels = [1, 2, 3, 4]
         res1, max_curr1 = yield self.ls.heater_setup(1)
         self.gui.heat1_res.setCurrentIndex(res1 - 1)
         self.gui.heat1_curr.setValue(max_curr1)
@@ -104,6 +105,11 @@ class lakeshore336_client(GUIClient):
         self.gui.temp2.setText('{:.4f}'.format(temp_arr[1]))
         self.gui.temp3.setText('{:.4f}'.format(temp_arr[2]))
         self.gui.temp4.setText('{:.4f}'.format(temp_arr[3]))
+
+        # if any of the temperature diodes reach above 300K turn off ALL the heaters
+        if any(temp>300 for temp in temp_arr):
+            for output_channel in self.output_channels:
+                self.ls.heater_mode(output_channel, mode=0)
         # save data to dataVault
         if self.recording:
             yield self.dv.add(time() - self.starttime, *temp_arr, context=self.c_record)
