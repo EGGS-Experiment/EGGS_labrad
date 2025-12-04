@@ -109,7 +109,10 @@ class lakeshore336_client(GUIClient):
         # if any of the temperature diodes reach above 300K turn off ALL the heaters
         if any(temp>300 for temp in temp_arr):
             for output_channel in self.output_channels:
+                # turn off heater
                 self.ls.heater_mode(output_channel, mode=0)
+                # turn heater range off to ensure no output
+                self.ls.heater_range(output_channel, range=0)
         # save data to dataVault
         if self.recording:
             yield self.dv.add(time() - self.starttime, *temp_arr, context=self.c_record)
