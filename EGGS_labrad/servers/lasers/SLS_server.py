@@ -42,7 +42,12 @@ class SLSServer(SerialDeviceServer, PollingServer):
     timeout =   Value(5.0, 's')
 
     # SIGNALS
-    autolock_update = Signal(999999, 'signal: autolock update', '(iv)')
+    autolock_update = Signal(999999, 'signal: autolock update', '(ivbb)')
+    offset_update = Signal(999998, 'signal: offset update', '(viv)')
+    pdh_update = Signal(999997, 'signal: pdh update', '(vvvi)')
+    current_servo_update = Signal(999996, 'signal: current servo update', '(svvvvi)')
+    pzt_servo_update = Signal(999995, 'signal: pzt servo update', '(svvvvi)')
+    tx_servo_update = Signal(999994, 'signal: tx servo update', '(svvvvi)')
 
 
     # AUTOLOCK
@@ -85,7 +90,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         for string in chString:
             # query
             yield self.ser.acquire()
-            resp_tmp = yield self.ser.write('get ' + string + TERMINATOR)
+            yield self.ser.write('get ' + string + TERMINATOR)
             resp_tmp = yield self.ser.read_line(_SLS_EOL)
             self.ser.release()
             # parse
@@ -234,19 +239,63 @@ class SLSServer(SerialDeviceServer, PollingServer):
         Polls the device for locking readout.
         """
         # getter
+        # yield self.ser.acquire()
+        # # get lock count
+        # yield self.ser.write('get LockCount' + TERMINATOR)
+        # lockcount = yield self.ser.read_line(_SLS_EOL)
+        # lockcount = yield self._parse(lockcount, False)
+        # # get lock time
+        # yield self.ser.write('get LockTime' + TERMINATOR)
+        # locktime = yield self.ser.read_line(_SLS_EOL)
+        # locktime = yield self._parse(locktime, False)
+        # self.ser.release()
+        #
+        # # update clients
         yield self.ser.acquire()
-        # get lock count
-        yield self.ser.write('get LockCount' + TERMINATOR)
-        lockcount = yield self.ser.read_line(_SLS_EOL)
-        lockcount = yield self._parse(lockcount, False)
-        # get lock time
-        yield self.ser.write('get LockTime' + TERMINATOR)
-        locktime = yield self.ser.read_line(_SLS_EOL)
-        locktime = yield self._parse(locktime, False)
-        self.ser.release()
+        vals = yield self.get_values(None)
 
-        # update clients
-        self.autolock_update((int(lockcount), float(locktime)))
+        # Auto Lock values
+        lockcount = int(vals['LockCount'])
+        locktime = float(vals['LockTime'])
+        lockstatus = bool(vals['AutoLockStatus'])
+        lockenabled = bool(vals['AutoLockEnabled'])
+
+        if lockcount > 100 and lockstatus != True:
+            self.autolock_toggle(None, False)
+
+        self.autolock_update((locktime, lockcount, lockstatus, lockenabled))
+
+        # Offset Lock
+        offset_freq_mhz = float(vals['OffsetFrequency']) / 1e6
+        offset_eom_rf_amplitude = float(vals['EOMRFAmplitude'])
+        offset_lockpoint = int(vals['LockPoint'])
+        self.offset_update((offset_freq_mhz, offset_eom_rf_amplitude, offset_lockpoint))
+
+        # PDH Update
+        pdh_freq = float(vals['PDHFrequency'])
+        pdh_phase_modulation = float(vals['PDHPMIndex'])
+        pdh_reference_phase = float(vals['PDHPhaseOffset'])
+        pdh_filter_index = int(vals['PDHDemodFilter'])
+        self.pdh_update((pdh_freq, pdh_phase_modulation, pdh_reference_phase, pdh_filter_index))
+
+        # Servo Update
+        parameter_list = ['Current', 'PZT', 'TX']
+        parameters_updates = {
+            'Current': self.current_servo_update,
+            'PZT': self.pzt_servo_update,
+            'TX': self.tx_servo_update
+        }
+        for param in parameter_list:
+            servo_setpoint = float(vals[f'{param}ServoSetpoint'])
+            servo_prop_gain = float(vals[f'{param}ServoPropGain'])
+            servo_int_gain = float(vals[f'{param}ServoIntGain'])
+            servo_diff_gain = float(vals[f'{param}ServoDiffGain'])
+            servo_output_filter = int(vals[f'{param}ServoOutputFilter'])
+
+            parameters_updates[param]((param, servo_setpoint, servo_prop_gain, servo_int_gain, servo_diff_gain,
+                                       servo_output_filter))
+
+
 
 
     # HELPERS

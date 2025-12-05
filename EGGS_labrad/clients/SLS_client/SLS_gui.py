@@ -16,7 +16,7 @@ class SLS_gui(QFrame):
         self.setFrameStyle(0x0001 | 0x0030)
         self.setFixedSize(680, 410)
         self.makeLayout()
-        for widget in (self.autolock_lockswitch, self.off_lockswitch, self.PDH_lockswitch, self.servo_lockswitch):
+        for widget in (self.autolock_lockswitch, self.offset_lockswitch, self.PDH_lockswitch, self.servo_lockswitch):
             widget.setChecked(False)
 
     def _makeAutolockWidget(self):
@@ -27,6 +27,7 @@ class SLS_gui(QFrame):
         autolock_time_label = QLabel("Lock Time (d:h:m)")
         autolock_toggle_label = QLabel("Autolock")
         autolock_attempts_label = QLabel("Lock Attempts")
+        autolock_status_label = QLabel("Autolock Status")
 
         self.autolock_time = QLabel("Time")
         self.autolock_time.setAlignment(Qt.AlignCenter)
@@ -41,30 +42,43 @@ class SLS_gui(QFrame):
         self.autolock_attempts.setAlignment(Qt.AlignCenter)
         self.autolock_attempts.setFont(QFont(_SHELL_FONT, pointSize=18))
         self.autolock_attempts.setStyleSheet('color: blue')
+
+        self.autolock_status = QLabel("FALSE")
+        self.autolock_status.setAlignment(Qt.AlignCenter)
+        self.autolock_status.setFont(QFont(_SHELL_FONT, pointSize=18))
+        self.autolock_status.setStyleSheet('color: blue')
         self.autolock_toggle = TextChangingButton(('On', 'Off'))
 
         for widget in (autolock_time_label, self.autolock_time, autolock_attempts_label, self.autolock_attempts,
+                        autolock_status_label, self.autolock_status,
                        autolock_toggle_label, self.autolock_toggle, autolock_param_label, self.autolock_param):
             autolock_layout.addWidget(widget)
         return QCustomGroupBox(autolock_widget, "Autolock")
 
     def _makeOffsetWidget(self):
-        off_widget = QWidget()
-        off_layout = QVBoxLayout(off_widget)
+        offset_widget = QWidget()
+        offset_layout = QVBoxLayout(offset_widget)
 
-        off_lockpoint_label = QLabel("Lockpoint")
-        off_freq_label = QLabel("Offset Frequency (MHz)")
+        offset_lockpoint_label = QLabel("Lockpoint")
+        offset_eom_rf_amp_label = QLabel("EOM RF Amplitude")
+        offset_freq_label = QLabel("Offset Frequency (MHz)")
 
-        self.off_freq = QDoubleSpinBox()
-        self.off_freq.setRange(10.0, 800.0)
-        self.off_freq.setSingleStep(1.0)
-        self.off_lockpoint = QComboBox()
+        self.offset_freq = QDoubleSpinBox()
+        self.offset_freq.setRange(10.0, 800.0)
+        self.offset_freq.setSingleStep(1.0)
 
+        self.offset_eom_rf_amp = QDoubleSpinBox()
+        self.offset_eom_rf_amp.setRange(0.0, 100.0)
+        self.offset_eom_rf_amp.setSingleStep(0.1)
+
+        self.offset_lockpoint = QComboBox()
         for item_text in ("J(+2)", "J(+1)", "Resonance", "J(-1)", "J(-2)"):
-            self.off_lockpoint.addItem(item_text)
-        for widget in (off_freq_label, self.off_freq, off_lockpoint_label, self.off_lockpoint):
-            off_layout.addWidget(widget)
-        return QCustomGroupBox(off_widget, "Offset Lock")
+            self.offset_lockpoint.addItem(item_text)
+
+        for widget in (offset_freq_label, self.offset_freq, offset_eom_rf_amp_label, self.offset_eom_rf_amp,
+                       offset_lockpoint_label, self.offset_lockpoint):
+            offset_layout.addWidget(widget)
+        return QCustomGroupBox(offset_widget, "Offset Lock")
 
     def _makePDHWidget(self):
         PDH_widget = QWidget()
@@ -132,11 +146,11 @@ class SLS_gui(QFrame):
     def makeLayout(self):
         # make widgets
         self.PDH_widget = self._makePDHWidget()
-        self.off_widget = self._makeOffsetWidget()
+        self.offset_widget = self._makeOffsetWidget()
         self.servo_widget = self._makeServoWidget()
         self.autolock_widget = self._makeAutolockWidget()
 
-        for widget in (self.autolock_widget, self.off_widget, self.PDH_widget, self.servo_widget):
+        for widget in (self.autolock_widget, self.offset_widget, self.PDH_widget, self.servo_widget):
             widget.setFixedWidth(161)
 
         # lockswitches
@@ -146,8 +160,8 @@ class SLS_gui(QFrame):
         self.servo_lockswitch.toggled.connect(lambda status, widget=self.servo_widget: self._lock(status, widget))
         self.autolock_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
         self.autolock_lockswitch.toggled.connect(lambda status, widget=self.autolock_widget: self._lock(status, widget))
-        self.off_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
-        self.off_lockswitch.toggled.connect(lambda status, widget=self.off_widget: self._lock(status, widget))
+        self.offset_lockswitch = TextChangingButton(('Unlocked', 'Locked'))
+        self.offset_lockswitch.toggled.connect(lambda status, widget=self.offset_widget: self._lock(status, widget))
 
         # title
         sls_label = QLabel("SLS Client", self)
@@ -159,8 +173,8 @@ class SLS_gui(QFrame):
         layout.addWidget(sls_label,                             0, 0, 1, 4)
         layout.addWidget(self.autolock_lockswitch,              1, 0, 1, 1)
         layout.addWidget(self.autolock_widget,          2, 0, 7, 1)
-        layout.addWidget(self.off_lockswitch,                   1, 1, 1, 1)
-        layout.addWidget(self.off_widget,               2, 1, 4, 1)
+        layout.addWidget(self.offset_lockswitch,                   1, 1, 1, 1)
+        layout.addWidget(self.offset_widget,               2, 1, 4, 1)
         layout.addWidget(self.PDH_lockswitch,                   1, 2, 1, 1)
         layout.addWidget(self.PDH_widget,               2, 2, 6, 1)
         layout.addWidget(self.servo_lockswitch,                 1, 3, 1, 1)
