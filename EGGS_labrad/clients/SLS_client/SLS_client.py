@@ -55,10 +55,10 @@ class SLS_client(GUIClient):
         self.gui.autolock_param.setCurrentIndex(int(init_values['SweepType']))
         self.gui.autolock_toggle.setChecked(bool(init_values['AutoLockEnable']))
         self.gui.autolock_attempts.setText(str(init_values['LockCount']))
-        self.gui.autolock_status.setText(str(init_values['AutoLockStatus']))
-        autolock_time = float(init_values['LockTime'])
-        autolock_time_formatted = self._dateFormat(autolock_time)
-        self.gui.autolock_time.setText(autolock_time_formatted)
+        self.gui.autolock_status.setText(str(init_values['AutoLockState']))
+        # autolock_time = float(init_values['LockTime'])
+        # autolock_time_formatted = self._dateFormat(autolock_time)
+        # self.gui.autolock_time.setText(autolock_time_formatted)
 
         # offset
         offset_freq_mhz = float(init_values['OffsetFrequency']) / 1e6
@@ -67,7 +67,6 @@ class SLS_client(GUIClient):
         self.gui.offset_lockpoint.setCurrentIndex(int(init_values['LockPoint']))
 
         # PDH
-        print(int(init_values['PDHFrequency']))
         self.gui.PDH_freq.setValue(float(init_values['PDHFrequency']))
         self.gui.PDH_phasemodulation.setValue(float(init_values['PDHPMIndex']))
         self.gui.PDH_phaseoffset.setValue(float(init_values['PDHPhaseOffset']))
@@ -124,13 +123,13 @@ class SLS_client(GUIClient):
         """
 
         # extract values
-        autolock_time = lock_params[0]
-        autolock_count = lock_params[1]
-        autolock_status = lock_params[2]
-        autolock_enabled = lock_params[3]
+        # autolock_time = lock_params[0]
+        autolock_count = lock_params[0]
+        autolock_status = lock_params[1]
+        autolock_enabled = lock_params[2]
 
         # update GUI
-        autolock_time_formatted = self._dateFormat(autolock_time)
+        # autolock_time_formatted = self._dateFormat(autolock_time)
         self.gui.autolock_attempts.setText(str(autolock_count))
         self.gui.autolock_status.setText(str(autolock_status))
         self.gui.autolock_toggle.setChecked(bool(autolock_enabled))
@@ -157,7 +156,7 @@ class SLS_client(GUIClient):
         # update GUI
         self.gui.offset_freq.setValue(offset_freq_mhz)
         self.gui.offset_eom_rf_amp.setValue(offset_eom_rf_amplitude)
-        self.gui.offset_lockpoint.setValue(offset_lockpoint)
+        self.gui.offset_lockpoint.setCurrentIndex(offset_lockpoint)
 
 
     def updatePDH(self,c, pdh_vals):
@@ -205,14 +204,15 @@ class SLS_client(GUIClient):
 
         if self.servo_target == servo_parameter_target_dict[servo_parameter]:
             # extract values
-            servo_setpoint = servo_vals[0]
-            servo_p = servo_vals[1]
-            servo_i = servo_vals[2]
-            servo_d = servo_vals[3]
-            servo_output_filter = servo_vals[4]
+            servo_setpoint = servo_vals[1]
+            servo_p = servo_vals[2]
+            servo_i = servo_vals[3]
+            servo_d = servo_vals[4]
+            servo_output_filter = servo_vals[5]
 
             # update GUI
-            self.gui.servo_param.setValue(servo_setpoint)
+            self.gui.servo_param.setCurrentIndex(servo_parameter_target_dict[servo_parameter])
+            self.gui.servo_set.setValue(servo_setpoint)
             self.gui.servo_p.setValue(servo_p)
             self.gui.servo_i.setValue(servo_i)
             self.gui.servo_d.setValue(servo_d)

@@ -42,8 +42,8 @@ class SLSServer(SerialDeviceServer, PollingServer):
     timeout =   Value(5.0, 's')
 
     # SIGNALS
-    autolock_update = Signal(999999, 'signal: autolock update', '(ivbb)')
-    offset_update = Signal(999998, 'signal: offset update', '(viv)')
+    autolock_update = Signal(999999, 'signal: autolock update', '(isi)')
+    offset_update = Signal(999998, 'signal: offset update', '(vvi)')
     pdh_update = Signal(999997, 'signal: pdh update', '(vvvi)')
     current_servo_update = Signal(999996, 'signal: current servo update', '(svvvvi)')
     pzt_servo_update = Signal(999995, 'signal: pzt servo update', '(svvvvi)')
@@ -231,7 +231,6 @@ class SLSServer(SerialDeviceServer, PollingServer):
         values =    [val[1] for val in resp]
         returnValue((keys, values))
 
-
     # POLLING
     @inlineCallbacks
     def _poll(self):
@@ -251,21 +250,40 @@ class SLSServer(SerialDeviceServer, PollingServer):
         # self.ser.release()
         #
         # # update clients
-        yield self.ser.acquire()
-        vals = yield self.get_values(None)
+        # yield self.ser.acquire()
+        # yield self.ser.write_line('get values')
+        # resp = yield self.ser.read_line(_SLS_EOL)
+        # self.ser.release()
+        #
+        # # parse response
+        # resp = resp.split('\r\n')[2:-2]
+        # resp = [val.split('=') for val in resp]
+        # # return keys and values
+        # keys = [val[0] for val in resp]
+        # values = [val[1] for val in resp]
+        #
+        # print(values)
+
+        values_tmp = yield self.get_values(None)
+        vals = dict(zip(values_tmp[0], values_tmp[1]))
 
         # Auto Lock values
         lockcount = int(vals['LockCount'])
-        locktime = float(vals['LockTime'])
-        lockstatus = bool(vals['AutoLockStatus'])
-        lockenabled = bool(vals['AutoLockEnabled'])
+        # locktime = float(vals['LockTime'])
+        lockstate = str(vals['AutoLockState'])
+        if lockstate.split(':')[0] == "Locked":
+            locked = True
+        else:
+            locked = False
+        lockenabled = int(vals['AutoLockEnable'])
+
 
         if lockcount > 100 and lockstatus != True:
             self.autolock_toggle(None, False)
             print("COULD NOT LOCK WITHIN 100 ATTEMPTS - STOPPED ATTEMPT TO LOCK")
 
-        self.autolock_update((locktime, lockcount, lockstatus, lockenabled))
-
+        self.autolock_update((lockcount, lockstate, lockenabled))
+        #
         # Offset Lock
         offset_freq_mhz = float(vals['OffsetFrequency']) / 1e6
         offset_eom_rf_amplitude = float(vals['EOMRFAmplitude'])
@@ -295,9 +313,6 @@ class SLSServer(SerialDeviceServer, PollingServer):
 
             parameters_updates[param]((param, servo_setpoint, servo_prop_gain, servo_int_gain, servo_diff_gain,
                                        servo_output_filter))
-
-
-
 
     # HELPERS
     def _parse(self, string, setter):
