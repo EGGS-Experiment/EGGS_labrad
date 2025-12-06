@@ -278,7 +278,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         lockenabled = int(vals['AutoLockEnable'])
 
 
-        if lockcount > 100 and lockstatus != True:
+        if lockcount > 100 and locked == False:
             self.autolock_toggle(None, False)
             print("COULD NOT LOCK WITHIN 100 ATTEMPTS - STOPPED ATTEMPT TO LOCK")
 
