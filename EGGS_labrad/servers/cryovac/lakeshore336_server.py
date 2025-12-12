@@ -272,9 +272,6 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         Polls the device for temperature readout.
         """
         temp_arr = yield self.temperature_read(None, None)
-        temp_arr = list(temp_arr)
-        print(temp_arr)
-        temp_arr[0]+=300
         print(temp_arr)
         # if any of the temperature diodes reach above 300K turn off ALL the heaters
         if any(temp>300 for temp in temp_arr):

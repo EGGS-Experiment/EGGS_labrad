@@ -35,7 +35,6 @@ class lakeshore336_client(GUIClient):
     @inlineCallbacks
     def initData(self):
         # setup
-        self.output_channels = [1, 2, 3, 4]
         res1, max_curr1 = yield self.ls.heater_setup(1)
         self.gui.heat1_res.setCurrentIndex(res1 - 1)
         self.gui.heat1_curr.setValue(max_curr1)
