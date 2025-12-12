@@ -45,10 +45,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
     autolock_update = Signal(999999, 'signal: autolock update', '(isi)')
     offset_update = Signal(999998, 'signal: offset update', '(vvi)')
     pdh_update = Signal(999997, 'signal: pdh update', '(vvvi)')
-    current_servo_update = Signal(999996, 'signal: current servo update', '(svvvvi)')
-    pzt_servo_update = Signal(999995, 'signal: pzt servo update', '(svvvvi)')
-    tx_servo_update = Signal(999994, 'signal: tx servo update', '(svvvvi)')
-
+    servo_update = Signal(999996, 'signal: servo update', '?')
 
     # AUTOLOCK
     @setting(111, 'Autolock Toggle', status=['b', 'i'], returns='b')
@@ -237,33 +234,6 @@ class SLSServer(SerialDeviceServer, PollingServer):
         """
         Polls the device for locking readout.
         """
-        # getter
-        # yield self.ser.acquire()
-        # # get lock count
-        # yield self.ser.write('get LockCount' + TERMINATOR)
-        # lockcount = yield self.ser.read_line(_SLS_EOL)
-        # lockcount = yield self._parse(lockcount, False)
-        # # get lock time
-        # yield self.ser.write('get LockTime' + TERMINATOR)
-        # locktime = yield self.ser.read_line(_SLS_EOL)
-        # locktime = yield self._parse(locktime, False)
-        # self.ser.release()
-        #
-        # # update clients
-        # yield self.ser.acquire()
-        # yield self.ser.write_line('get values')
-        # resp = yield self.ser.read_line(_SLS_EOL)
-        # self.ser.release()
-        #
-        # # parse response
-        # resp = resp.split('\r\n')[2:-2]
-        # resp = [val.split('=') for val in resp]
-        # # return keys and values
-        # keys = [val[0] for val in resp]
-        # values = [val[1] for val in resp]
-        #
-        # print(values)
-
         values_tmp = yield self.get_values(None)
         vals = dict(zip(values_tmp[0], values_tmp[1]))
 
@@ -298,21 +268,32 @@ class SLSServer(SerialDeviceServer, PollingServer):
         self.pdh_update((pdh_freq, pdh_phase_modulation, pdh_reference_phase, pdh_filter_index))
 
         # Servo Update
-        parameter_list = ['Current', 'PZT', 'TX']
-        parameters_updates = {
-            'Current': self.current_servo_update,
-            'PZT': self.pzt_servo_update,
-            'TX': self.tx_servo_update
-        }
-        for param in parameter_list:
-            servo_setpoint = float(vals[f'{param}ServoSetpoint'])
-            servo_prop_gain = float(vals[f'{param}ServoPropGain'])
-            servo_int_gain = float(vals[f'{param}ServoIntGain'])
-            servo_diff_gain = float(vals[f'{param}ServoDiffGain'])
-            servo_output_filter = int(vals[f'{param}ServoOutputFilter'])
+        # parameter_list = ['Current', 'PZT', 'TX']
+        # parameters_updates = {
+        #     'Current': self.current_servo_update,
+        #     'PZT': self.pzt_servo_update,
+        #     'TX': self.tx_servo_update
+        # }
+        # for param in parameter_list:
+        #     servo_setpoint = float(vals[f'{param}ServoSetpoint'])
+        #     servo_prop_gain = float(vals[f'{param}ServoPropGain'])
+        #     servo_int_gain = float(vals[f'{param}ServoIntGain'])
+        #     servo_diff_gain = float(vals[f'{param}ServoDiffGain'])
+        #     servo_output_filter = int(vals[f'{param}ServoOutputFilter'])
+        #
+        #     parameters_updates[param]((param, servo_setpoint, servo_prop_gain, servo_int_gain, servo_diff_gain,
+        #                                servo_output_filter))
 
-            parameters_updates[param]((param, servo_setpoint, servo_prop_gain, servo_int_gain, servo_diff_gain,
-                                       servo_output_filter))
+        parameter_list = ['Current', 'PZT', 'TX']
+        servo_update_dict = dict()
+        for param in parameter_list:
+            servo_update_dict[f'{param}_servo_setpoint'] = float(vals[f'{param}ServoSetpoint'])
+            servo_update_dict[f'{param}_servo_p'] = float(vals[f'{param}ServoPropGain'])
+            servo_update_dict[f'{param}_servo_i'] = float(vals[f'{param}ServoIntGain'])
+            servo_update_dict[f'{param}_servo_d'] = float(vals[f'{param}ServoDiffGain'])
+            servo_update_dict[f'{param}_server_output_filter'] = float(vals[f'{param}ServoOutputFilter'])
+
+        self.servo_update(servo_update_dict)
 
     # HELPERS
     def _parse(self, string, setter):

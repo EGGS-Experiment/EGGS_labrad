@@ -36,7 +36,7 @@ class SLS_client(GUIClient):
         yield self.sls.addListener(listener=self.updatePDH, source=None, ID=self.PDHID)
 
         # current servo
-        yield self.sls.signal__current_servo_update(self.SERVOID)
+        yield self.sls.signal__servo_update(self.SERVOID)
         yield self.sls.addListener(listener=self.updateServo, source=None, ID=self.SERVOID)
 
         # set up polling
@@ -67,10 +67,10 @@ class SLS_client(GUIClient):
         self.gui.offset_lockpoint.setCurrentIndex(int(init_values['LockPoint']))
 
         # PDH
-        self.gui.PDH_freq.setValue(float(init_values['PDHFrequency']))
-        self.gui.PDH_phasemodulation.setValue(float(init_values['PDHPMIndex']))
-        self.gui.PDH_phaseoffset.setValue(float(init_values['PDHPhaseOffset']))
-        self.gui.PDH_filter.setCurrentIndex(int(init_values['PDHDemodFilter']))
+        self.gui.pdh_freq.setValue(float(init_values['PDHFrequency']))
+        self.gui.pdh_phasemodulation.setValue(float(init_values['PDHPMIndex']))
+        self.gui.pdh_phaseoffset.setValue(float(init_values['PDHPhaseOffset']))
+        self.gui.pdh_filter.setCurrentIndex(int(init_values['PDHDemodFilter']))
 
         # servo
         self.servo_target = 0
@@ -87,10 +87,10 @@ class SLS_client(GUIClient):
         self.gui.autolock_param.currentTextChanged.connect(lambda param: self.sls.autolock_parameter(param.upper()))
 
         # PDH
-        self.gui.PDH_freq.valueChanged.connect(lambda value: self.changePDHValue('frequency', value))
-        self.gui.PDH_phasemodulation.valueChanged.connect(lambda value: self.changePDHValue('index', value))
-        self.gui.PDH_phaseoffset.valueChanged.connect(lambda value: self.changePDHValue('phase', value))
-        self.gui.PDH_filter.currentIndexChanged.connect(lambda value: self.changePDHValue('filter', value))
+        self.gui.pdh_freq.valueChanged.connect(lambda value: self.changePDHValue('frequency', value))
+        self.gui.pdh_phasemodulation.valueChanged.connect(lambda value: self.changePDHValue('index', value))
+        self.gui.pdh_phaseoffset.valueChanged.connect(lambda value: self.changePDHValue('phase', value))
+        self.gui.pdh_filter.currentIndexChanged.connect(lambda value: self.changePDHValue('filter', value))
 
         # todo: offset
 
@@ -178,10 +178,10 @@ class SLS_client(GUIClient):
         pdh_filter_index = pdh_vals[3]
 
         # update GUI
-        self.gui.PDH_freq.setValue(pdh_freq)
-        self.gui.PDH_phasemodulation.setValue(pdh_phase_modulation)
-        self.gui.PDH_phaseoffset.setValue(pdh_reference_phase)
-        self.gui.PDH_filter.setCurrentIndex(pdh_filter_index)
+        self.gui.pdh_freq.setValue(pdh_freq)
+        self.gui.pdh_phasemodulation.setValue(pdh_phase_modulation)
+        self.gui.pdh_phaseoffset.setValue(pdh_reference_phase)
+        self.gui.pdh_filter.setCurrentIndex(pdh_filter_index)
 
     def updateServo(self, c, servo_vals):
         """
@@ -198,25 +198,22 @@ class SLS_client(GUIClient):
         Returns:
         """
 
-        servo_parameter = servo_vals[0]
-        servo_parameter_target_dict = {'Current': 0, 'PZT': 1, 'TX': 2}
+        servo_parameter_target_dict = {0: 'Current', 1: 'PZT', 2: 'TX'}
+        servo_param_name = servo_parameter_target_dict[self.servo_target]
 
+        # extract values
+        servo_setpoint = servo_vals[f'{servo_param_name}_servo_setpoint']
+        servo_p = servo_vals[f'{servo_param_name}_servo_p']
+        servo_i = servo_vals[f'{servo_param_name}_servo_i']
+        servo_d = servo_vals[f'{servo_param_name}_servo_d']
+        servo_output_filter = servo_vals[f'{servo_param_name}_servo_output_filter']
 
-        if self.servo_target == servo_parameter_target_dict[servo_parameter]:
-            # extract values
-            servo_setpoint = servo_vals[1]
-            servo_p = servo_vals[2]
-            servo_i = servo_vals[3]
-            servo_d = servo_vals[4]
-            servo_output_filter = servo_vals[5]
-
-            # update GUI
-            self.gui.servo_param.setCurrentIndex(servo_parameter_target_dict[servo_parameter])
-            self.gui.servo_set.setValue(servo_setpoint)
-            self.gui.servo_p.setValue(servo_p)
-            self.gui.servo_i.setValue(servo_i)
-            self.gui.servo_d.setValue(servo_d)
-            self.gui.servo_filter.setCurrentIndex(servo_output_filter)
+        # update GUI
+        self.gui.servo_set.setValue(servo_setpoint)
+        self.gui.servo_p.setValue(servo_p)
+        self.gui.servo_i.setValue(servo_i)
+        self.gui.servo_d.setValue(servo_d)
+        self.gui.servo_filter.setCurrentIndex(servo_output_filter)
 
     # SLOTS
     @inlineCallbacks
