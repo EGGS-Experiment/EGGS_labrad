@@ -201,19 +201,23 @@ class SLS_client(GUIClient):
         servo_parameter_target_dict = {0: 'Current', 1: 'PZT', 2: 'TX'}
         servo_param_name = servo_parameter_target_dict[self.servo_target]
 
+        servo_vals_dict = dict()
+        for item in servo_vals:
+            servo_vals_dict[item[0]] = item[1]
+
         # extract values
-        servo_setpoint = servo_vals[f'{servo_param_name}_servo_setpoint']
-        servo_p = servo_vals[f'{servo_param_name}_servo_p']
-        servo_i = servo_vals[f'{servo_param_name}_servo_i']
-        servo_d = servo_vals[f'{servo_param_name}_servo_d']
-        servo_output_filter = servo_vals[f'{servo_param_name}_servo_output_filter']
+        servo_setpoint = servo_vals_dict[f'{servo_param_name}_servo_setpoint']
+        servo_p = servo_vals_dict[f'{servo_param_name}_servo_p']
+        servo_i = servo_vals_dict[f'{servo_param_name}_servo_i']
+        servo_d = servo_vals_dict[f'{servo_param_name}_servo_d']
+        servo_output_filter = servo_vals_dict[f'{servo_param_name}_servo_output_filter']
 
         # update GUI
         self.gui.servo_set.setValue(servo_setpoint)
         self.gui.servo_p.setValue(servo_p)
         self.gui.servo_i.setValue(servo_i)
         self.gui.servo_d.setValue(servo_d)
-        self.gui.servo_filter.setCurrentIndex(servo_output_filter)
+        self.gui.servo_filter.setCurrentIndex(int(servo_output_filter))
 
     # SLOTS
     @inlineCallbacks

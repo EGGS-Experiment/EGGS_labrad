@@ -268,32 +268,16 @@ class SLSServer(SerialDeviceServer, PollingServer):
         self.pdh_update((pdh_freq, pdh_phase_modulation, pdh_reference_phase, pdh_filter_index))
 
         # Servo Update
-        # parameter_list = ['Current', 'PZT', 'TX']
-        # parameters_updates = {
-        #     'Current': self.current_servo_update,
-        #     'PZT': self.pzt_servo_update,
-        #     'TX': self.tx_servo_update
-        # }
-        # for param in parameter_list:
-        #     servo_setpoint = float(vals[f'{param}ServoSetpoint'])
-        #     servo_prop_gain = float(vals[f'{param}ServoPropGain'])
-        #     servo_int_gain = float(vals[f'{param}ServoIntGain'])
-        #     servo_diff_gain = float(vals[f'{param}ServoDiffGain'])
-        #     servo_output_filter = int(vals[f'{param}ServoOutputFilter'])
-        #
-        #     parameters_updates[param]((param, servo_setpoint, servo_prop_gain, servo_int_gain, servo_diff_gain,
-        #                                servo_output_filter))
-
         parameter_list = ['Current', 'PZT', 'TX']
-        servo_update_dict = dict()
+        servo_update_list = []
         for param in parameter_list:
-            servo_update_dict[f'{param}_servo_setpoint'] = float(vals[f'{param}ServoSetpoint'])
-            servo_update_dict[f'{param}_servo_p'] = float(vals[f'{param}ServoPropGain'])
-            servo_update_dict[f'{param}_servo_i'] = float(vals[f'{param}ServoIntGain'])
-            servo_update_dict[f'{param}_servo_d'] = float(vals[f'{param}ServoDiffGain'])
-            servo_update_dict[f'{param}_server_output_filter'] = float(vals[f'{param}ServoOutputFilter'])
+            servo_update_list.append((f'{param}_servo_p', float(vals[f'{param}ServoPropGain'])))
+            servo_update_list.append((f'{param}_servo_i', float(vals[f'{param}ServoIntGain'])))
+            servo_update_list.append((f'{param}_servo_d', float(vals[f'{param}ServoDiffGain'])))
+            servo_update_list.append((f'{param}_servo_output_filter', int(vals[f'{param}ServoOutputFilter'])))
+            servo_update_list.append((f'{param}_servo_setpoint', float(vals[f'{param}ServoSetpoint'])))
 
-        self.servo_update(servo_update_dict)
+        self.servo_update(servo_update_list)
 
     # HELPERS
     def _parse(self, string, setter):
