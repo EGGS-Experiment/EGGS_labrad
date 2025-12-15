@@ -96,11 +96,11 @@ class SLS_client(GUIClient):
 
         # servo
         self.gui.servo_param.currentTextChanged.connect(lambda target: self.changeServoTarget(target))
-        self.gui.servo_set.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'set', value))
-        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.sls.servo(self.servo_target, 'filter', value))
-        self.gui.servo_p.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'p', value))
-        self.gui.servo_i.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'i', value))
-        self.gui.servo_d.valueChanged.connect(lambda value: self.sls.servo(self.servo_target, 'd', value))
+        self.gui.servo_set.valueChanged.connect(lambda value: self.sls.servo(str(self.servo_target), 'set', value))
+        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.sls.servo(str(self.servo_target), 'filter', value))
+        self.gui.servo_p.valueChanged.connect(lambda value: self.sls.servo(str(self.servo_target), 'p', value))
+        self.gui.servo_i.valueChanged.connect(lambda value: self.sls.servo(str(self.servo_target), 'i', value))
+        self.gui.servo_d.valueChanged.connect(lambda value: self.sls.servo(str(self.servo_target), 'd', value))
 
         # lock everything on startup
         self.gui._lock(False, self.gui.autolock_widget)
@@ -230,11 +230,11 @@ class SLS_client(GUIClient):
         servo_params = {'p': self.gui.servo_p, 'i': self.gui.servo_i,
                         'd': self.gui.servo_d, 'set': self.gui.servo_set}
         for param_name, gui_element in servo_params.items():
-            val = yield self.sls.servo(self.servo_target, param_name)
+            val = yield self.sls.servo(str(self.servo_target), param_name)
             gui_element.setEnabled(False)
             gui_element.setValue(float(val))
             gui_element.setEnabled(True)
-        index = yield self.sls.servo(self.servo_target, 'filter')
+        index = yield self.sls.servo(str(self.servo_target), 'filter')
         self.gui.servo_filter.setEnabled(False)
         self.gui.servo_filter.setCurrentIndex(int(index))
         self.gui.servo_filter.setEnabled(True)
