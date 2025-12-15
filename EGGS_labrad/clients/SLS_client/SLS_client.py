@@ -74,6 +74,7 @@ class SLS_client(GUIClient):
 
         # servo
         self.servo_target = 0
+        self.servo_parameter_target_dict = {0: 'current', 1: 'pzt', 2: 'tx'}
         self.gui.servo_param.setCurrentIndex(self.servo_target)
         self.gui.servo_set.setValue(float(init_values['CurrentServoSetpoint']))
         self.gui.servo_p.setValue(float(init_values['CurrentServoPropGain']))
@@ -96,11 +97,16 @@ class SLS_client(GUIClient):
 
         # servo
         self.gui.servo_param.currentTextChanged.connect(lambda target: self.changeServoTarget(target))
-        self.gui.servo_set.valueChanged.connect(lambda value: self.sls.servo(str(self.servo_target), 'set', value))
-        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.sls.servo(str(self.servo_target), 'filter', value))
-        self.gui.servo_p.valueChanged.connect(lambda value: self.sls.servo(str(self.servo_target), 'p', value))
-        self.gui.servo_i.valueChanged.connect(lambda value: self.sls.servo(str(self.servo_target), 'i', value))
-        self.gui.servo_d.valueChanged.connect(lambda value: self.sls.servo(str(self.servo_target), 'd', value))
+        self.gui.servo_set.valueChanged.connect(lambda value: self.sls.servo(
+            self.servo_parameter_target_dict[self.servo_target], 'set', value))
+        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.sls.servo(
+            self.servo_parameter_target_dict[self.servo_target], 'filter', value))
+        self.gui.servo_p.valueChanged.connect(lambda value: self.sls.servo(
+        self.servo_parameter_target_dict[self.servo_target], 'p', value))
+        self.gui.servo_i.valueChanged.connect(lambda value: self.sls.servo(
+            self.servo_parameter_target_dict[self.servo_target], 'i', value))
+        self.gui.servo_d.valueChanged.connect(lambda value: self.sls.servo(
+            self.servo_parameter_target_dict[self.servo_target], 'd', value))
 
         # lock everything on startup
         self.gui._lock(False, self.gui.autolock_widget)
@@ -198,8 +204,7 @@ class SLS_client(GUIClient):
         Returns:
         """
 
-        servo_parameter_target_dict = {0: 'Current', 1: 'PZT', 2: 'TX'}
-        servo_param_name = servo_parameter_target_dict[self.servo_target]
+        servo_param_name = self.servo_parameter_target_dict[self.servo_target]
 
         servo_vals_dict = dict()
         for item in servo_vals:

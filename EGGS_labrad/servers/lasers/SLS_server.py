@@ -204,6 +204,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
             print('Invalid target or parameter. Target must be one of [\'current\',\'pzt\',\'tx\'].'
                   'Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
             returnValue('ERR')
+        print(string_tmp, param_val)
         resp = yield self._write_and_query(string_tmp, param_val)
         returnValue(resp)
 
@@ -268,14 +269,14 @@ class SLSServer(SerialDeviceServer, PollingServer):
         self.pdh_update((pdh_freq, pdh_phase_modulation, pdh_reference_phase, pdh_filter_index))
 
         # Servo Update
-        parameter_list = ['Current', 'PZT', 'TX']
+        parameter_dict = {'Current': 'current', 'PZT': 'pzt', 'TX':'tx'}
         servo_update_list = []
-        for param in parameter_list:
-            servo_update_list.append((f'{param}_servo_p', float(vals[f'{param}ServoPropGain'])))
-            servo_update_list.append((f'{param}_servo_i', float(vals[f'{param}ServoIntGain'])))
-            servo_update_list.append((f'{param}_servo_d', float(vals[f'{param}ServoDiffGain'])))
-            servo_update_list.append((f'{param}_servo_output_filter', int(vals[f'{param}ServoOutputFilter'])))
-            servo_update_list.append((f'{param}_servo_setpoint', float(vals[f'{param}ServoSetpoint'])))
+        for param in parameter_dict.keys():
+            servo_update_list.append((f'{parameter_dict[param]}_servo_p', float(vals[f'{param}ServoPropGain'])))
+            servo_update_list.append((f'{parameter_dict[param]}_servo_i', float(vals[f'{param}ServoIntGain'])))
+            servo_update_list.append((f'{parameter_dict[param]}_servo_d', float(vals[f'{param}ServoDiffGain'])))
+            servo_update_list.append((f'{parameter_dict[param]}_servo_output_filter', int(vals[f'{param}ServoOutputFilter'])))
+            servo_update_list.append((f'{parameter_dict[param]}_servo_setpoint', float(vals[f'{param}ServoSetpoint'])))
 
         self.servo_update(servo_update_list)
 
