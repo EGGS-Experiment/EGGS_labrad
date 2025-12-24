@@ -1,5 +1,7 @@
 :: Opens the RealSimpleGrapher Client.
-::  Intended as a desktop shortcut.
+::  Intended as a desktop SHORTCUT ONLY.
+::  i.e. create a shortcut TO THIS FILE and put it on the desktop.
+::  This file won't work if not in this folder, since it uses the relative directory structure.
 
 @ECHO OFF
 @SETLOCAL

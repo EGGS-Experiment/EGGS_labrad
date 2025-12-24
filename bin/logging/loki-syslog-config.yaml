@@ -1,3 +1,7 @@
+# Loki configuration: syslog
+#   todo: write how it's different from promtail lol
+# todo: better document (and understand lol) what this logging shit does lmao
+# todo: also write notes on what all the options are here lol
 auth_enabled: false
  
 server:

@@ -1,3 +1,7 @@
+# Promtail configuration: ARTIQ
+#   Configures Promtail to parse & receive ARTIQ logs.
+# todo: better document (and understand lol) what this logging shit does lmao
+# todo: also write notes on what all the options are here lol
 server:
   http_listen_port: 9081
   grpc_listen_port: 0
@@ -18,5 +22,5 @@ scrape_configs:
         host: mongkok
         __path__: 'C:\\Users\\EGGS1\\Documents\\.labrad\\logfiles\\artiq\\*'
 
-  # Additional labels to assign to the logs
+# Additional labels to assign to the logs
 #  [ <labelname>: <labelvalue> ... ]
