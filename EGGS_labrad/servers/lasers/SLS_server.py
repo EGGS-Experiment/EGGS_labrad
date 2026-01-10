@@ -42,8 +42,10 @@ class SLSServer(SerialDeviceServer, PollingServer):
     timeout =   Value(5.0, 's')
 
     # SIGNALS
-    autolock_update = Signal(999999, 'signal: autolock update', '(iv)')
-
+    autolock_update = Signal(999999, 'signal: autolock update', '(isi)')
+    offset_update = Signal(999998, 'signal: offset update', '(vvi)')
+    pdh_update = Signal(999997, 'signal: pdh update', '(vvvi)')
+    servo_update = Signal(999996, 'signal: servo update', '?')
 
     # AUTOLOCK
     @setting(111, 'Autolock Toggle', status=['b', 'i'], returns='b')
@@ -85,7 +87,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         for string in chString:
             # query
             yield self.ser.acquire()
-            resp_tmp = yield self.ser.write('get ' + string + TERMINATOR)
+            yield self.ser.write('get ' + string + TERMINATOR)
             resp_tmp = yield self.ser.read_line(_SLS_EOL)
             self.ser.release()
             # parse
@@ -202,6 +204,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
             print('Invalid target or parameter. Target must be one of [\'current\',\'pzt\',\'tx\'].'
                   'Parameter must be one of [\'frequency\', \'index\', \'phase\', \'filter\']')
             returnValue('ERR')
+        print(string_tmp, param_val)
         resp = yield self._write_and_query(string_tmp, param_val)
         returnValue(resp)
 
@@ -226,28 +229,56 @@ class SLSServer(SerialDeviceServer, PollingServer):
         values =    [val[1] for val in resp]
         returnValue((keys, values))
 
-
     # POLLING
     @inlineCallbacks
     def _poll(self):
         """
         Polls the device for locking readout.
         """
-        # getter
-        yield self.ser.acquire()
-        # get lock count
-        yield self.ser.write('get LockCount' + TERMINATOR)
-        lockcount = yield self.ser.read_line(_SLS_EOL)
-        lockcount = yield self._parse(lockcount, False)
-        # get lock time
-        yield self.ser.write('get LockTime' + TERMINATOR)
-        locktime = yield self.ser.read_line(_SLS_EOL)
-        locktime = yield self._parse(locktime, False)
-        self.ser.release()
+        values_tmp = yield self.get_values(None)
+        vals = dict(zip(values_tmp[0], values_tmp[1]))
 
-        # update clients
-        self.autolock_update((int(lockcount), float(locktime)))
+        # Auto Lock values
+        lockcount = int(vals['LockCount'])
+        # locktime = float(vals['LockTime'])
+        lockstate = str(vals['AutoLockState'])
+        if lockstate.split(':')[0] == "Locked":
+            locked = True
+        else:
+            locked = False
+        lockenabled = int(vals['AutoLockEnable'])
 
+
+        if lockcount > 100 and locked == False:
+            self.autolock_toggle(None, False)
+            print("COULD NOT LOCK WITHIN 100 ATTEMPTS - STOPPED ATTEMPT TO LOCK")
+
+        self.autolock_update((lockcount, lockstate, lockenabled))
+        #
+        # Offset Lock
+        offset_freq_mhz = float(vals['OffsetFrequency']) / 1e6
+        offset_eom_rf_amplitude = float(vals['EOMRFAmplitude'])
+        offset_lockpoint = int(vals['LockPoint'])
+        self.offset_update((offset_freq_mhz, offset_eom_rf_amplitude, offset_lockpoint))
+
+        # PDH Update
+        pdh_freq = float(vals['PDHFrequency'])
+        pdh_phase_modulation = float(vals['PDHPMIndex'])
+        pdh_reference_phase = float(vals['PDHPhaseOffset'])
+        pdh_filter_index = int(vals['PDHDemodFilter'])
+        self.pdh_update((pdh_freq, pdh_phase_modulation, pdh_reference_phase, pdh_filter_index))
+
+        # Servo Update
+        parameter_dict = {'Current': 'current', 'PZT': 'pzt', 'TX':'tx'}
+        servo_update_list = []
+        for param in parameter_dict.keys():
+            servo_update_list.append((f'{parameter_dict[param]}_servo_p', float(vals[f'{param}ServoPropGain'])))
+            servo_update_list.append((f'{parameter_dict[param]}_servo_i', float(vals[f'{param}ServoIntGain'])))
+            servo_update_list.append((f'{parameter_dict[param]}_servo_d', float(vals[f'{param}ServoDiffGain'])))
+            servo_update_list.append((f'{parameter_dict[param]}_servo_output_filter', int(vals[f'{param}ServoOutputFilter'])))
+            servo_update_list.append((f'{parameter_dict[param]}_servo_setpoint', float(vals[f'{param}ServoSetpoint'])))
+
+        self.servo_update(servo_update_list)
 
     # HELPERS
     def _parse(self, string, setter):
