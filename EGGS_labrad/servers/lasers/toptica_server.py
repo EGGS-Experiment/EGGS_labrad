@@ -29,7 +29,6 @@ DEVICE_TYPE_PREFIX = {
     'DLpro':        'dl',
     'BoosTApro':    'amp',
 }
-
 DEVICE_USES_PIEZO = {
     'DLpro':        True,
     'BoosTApro':    False,
@@ -642,7 +641,6 @@ class TopticaServer(PollingServer):
         """
         Update listeners with actual device values.
         """
-        # todo: see if there's some faster way this can be done
         for chan_num in self.channels.keys():
             # get enabled status of toptica device
             yield self.toggle(None, chan_num)
