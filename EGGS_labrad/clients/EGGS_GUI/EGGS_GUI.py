@@ -211,7 +211,6 @@ class EGGS_GUI(QMainWindow):
                 # retrieve GUI for GUIClient classes
                 if hasattr(client_tmp, 'getgui'):
                     holder_layout.addWidget(client_tmp.getgui(), *position)
-                    print(client)
                 # otherwise, hope the client has some attribute called "gui"
                 elif hasattr(client_tmp, 'gui'):
                     holder_layout.addWidget(client_tmp.gui, *position)
