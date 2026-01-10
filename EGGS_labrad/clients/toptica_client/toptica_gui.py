@@ -17,6 +17,7 @@ class toptica_channel(QFrame):
     """
     def __init__(self, dev_type=None, parent=None):
         super().__init__()
+        self.dev_type = dev_type
         self.setFrameStyle(0x0001 | 0x0030)
         self.makeLayout(dev_type)
 

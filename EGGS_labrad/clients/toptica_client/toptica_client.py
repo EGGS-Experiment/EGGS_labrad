@@ -30,6 +30,7 @@ DEVICES_USE_PIEZO = {
     'BoosTApro':    False,
 }
 
+
 class toptica_client(GUIClient):
 
     name = 'Toptica Client'
@@ -37,7 +38,7 @@ class toptica_client(GUIClient):
 
     def getgui(self):
         if self.gui is None:
-            self.gui = toptica_gui(TOPTICA_CHANNELS)
+            self.gui = toptica_gui()
         return self.gui
 
     @inlineCallbacks
@@ -134,26 +135,26 @@ class toptica_client(GUIClient):
             # # assign current slots (only update device once RETURN key is pressed)
             widget.currBox.setBox.textChanged.connect(lambda _: widget.currBox.setBox.blockSignals(True))
             widget.currBox.setBox.lineEdit().returnPressed.connect(
-                lambda _chan_num=chan_num, _box= widget.currBox.setBox, _device_func = self.toptica.current_set:
-                self.updateVal(None, _box, _chan_num, _device_func))
+                lambda _chan_num=chan_num, _box=widget.currBox.setBox, _device_func=self.toptica.current_set:
+                self.updateVal(_box, _chan_num, _device_func))
 
             widget.currBox.maxBox.textChanged.connect(lambda _: widget.currBox.maxBox.blockSignals(True))
             widget.currBox.maxBox.lineEdit().returnPressed.connect(
-                lambda _chan_num=chan_num, _box=widget.currBox.maxBox, _device_func = self.toptica.current_max:
-                self.updateVal(None, _box, _chan_num, _device_func))
+                lambda _chan_num=chan_num, _box=widget.currBox.maxBox, _device_func=self.toptica.current_max:
+                self.updateVal(_box, _chan_num, _device_func))
 
             # assign temperature slots (only update device once RETURN key is pressed)
             widget.tempBox.setBox.textChanged.connect(lambda _: widget.tempBox.setBox.blockSignals(True))
             widget.tempBox.setBox.lineEdit().returnPressed.connect(
-                lambda _chan_num=chan_num, _box=widget.tempBox.setBox, _device_func =self.toptica.temperature_set:
-                self.updateVal(None, _box, _chan_num, _device_func))
+                lambda _chan_num=chan_num, _box=widget.tempBox.setBox, _device_func=self.toptica.temperature_set:
+                self.updateVal(_box, _chan_num, _device_func))
 
             # assign piezo slots (only update device once RETURN key is pressed)
-            if widget.piezo:
+            if DEVICES_USE_PIEZO[widget.dev_type]:
                 widget.piezoBox.setBox.textChanged.connect(lambda _: widget.piezoBox.setBox.blockSignals(True))
                 widget.piezoBox.setBox.lineEdit().returnPressed.connect(
                     lambda _chan_num=chan_num, _box=widget.piezoBox.setBox, _device_func=self.toptica.piezo_set:
-                    self.updateVal(None, _box, _chan_num, _device_func))
+                    self.updateVal(_box, _chan_num, _device_func))
 
             # assign scan slots
             widget.scanBox.freqBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.scan_frequency(_chan_num, value))
@@ -164,7 +165,7 @@ class toptica_client(GUIClient):
     """
     SIGNALS
     """
-    def updateVal(self, c, box, chan_num, device_func):
+    def updateVal(self, box, chan_num, device_func):
         """
         Update the toptica device based on input to the gui
         Args:
@@ -173,11 +174,11 @@ class toptica_client(GUIClient):
             chan_num: numvber of channel used to talk to toptica device
             device_func: function to talk to toptica device/controller
         """
-        # todo: fix this abomination
-        # todo: what the fuck
+        # todo: shouldn't it be box value, and not text???
         val = float(box.text())
-        box.blockSignals(False)
+        box.blockSignals(True)
         device_func(chan_num, val)
+        box.blockSignals(False)
 
 
     """
