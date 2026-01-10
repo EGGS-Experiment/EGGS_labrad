@@ -1,7 +1,7 @@
 __all__ = [
     'QDetachableTabWidget', 'TextChangingButton', 'Lockswitch', 'QCustomSlideIndicator', 'QCustomGroupBox',
     'QClientHeader', 'QClientMenuHeader', 'QChannelHolder', 'QInitializePlaceholder', 'QCustomProgressBar',
-    'QCustomEditableLabel', 'QCustomUnscrollableComboBox', 'QCustomUnscrollableSpinBox', 'QCustomARTIQMonitor'
+    'QCustomEditableLabel', 'QCustomUnscrollableSpinBox', 'QCustomARTIQMonitor', 'QCustomUnscrollableComboBox'
 ]
 
 
