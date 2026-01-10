@@ -14,8 +14,6 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-from linecache import cache
-
 from labrad.server import setting, Signal
 from twisted.internet.defer import returnValue, inlineCallbacks
 from toptica.lasersdk.client import Client, NetworkConnection
@@ -23,23 +21,18 @@ from toptica.lasersdk.client import Client, NetworkConnection
 import logging
 from EGGS_labrad.servers import PollingServer
 
-CURRENTACTUALSIGNAL =         913548
-TEMPERATUREACTUALSIGNAL =     913549
-PIEZOACTUALSIGNAL =           913550
-CURRENTSETSIGNAL =         913551
-TEMPERATURESETSIGNAL =     913552
-PIEZOSETSIGNAL =           913553
-CURRENTMAXSIGNAL =         913554
-TOGGLESIGNAL =          913560
+PARAMETERACTUAL_SIGNAL =    913561
+PARAMETERSET_SIGNAL =       913562
+TOGGLESIGNAL =              913560
 
 DEVICE_TYPE_PREFIX = {
     'DLpro':        'dl',
     'BoosTApro':    'amp',
 }
 
-DEVICE_USES_PIEZO= {
-    'DLpro': True,
-    'BoosTApro': False,
+DEVICE_USES_PIEZO = {
+    'DLpro':        True,
+    'BoosTApro':    False,
 }
 
 
@@ -54,21 +47,11 @@ class TopticaServer(PollingServer):
     device_params = {}  # stores parameters for the DLC pro channels
     channels =      {}  # stores the in-use channels on each DLC PRO
 
-    '''
-    SIGNALS
-    '''
-    # update values outputted by toptica device
-    current_actual_update =        Signal(CURRENTACTUALSIGNAL, 'signal: current actual updated', '(iv)')
-    temperature_actual_update =    Signal(TEMPERATUREACTUALSIGNAL, 'signal: temperature actual updated', '(iv)')
-    piezo_actual_update =          Signal(PIEZOACTUALSIGNAL, 'signal: piezo actual updated', '(iv)')
-    # update values set by user for toptica device
-    current_set_update =        Signal(CURRENTSETSIGNAL, 'signal: current set updated', '(iv)')
-    temperature_set_update =    Signal(TEMPERATURESETSIGNAL, 'signal: temperature set updated', '(iv)')
-    piezo_set_update =          Signal(PIEZOSETSIGNAL, 'signal: piezo set updated', '(iv)')
-    # update max values set by user
-    current_max_update =        Signal(CURRENTMAXSIGNAL, 'signal: current max updated', '(iv)')
-    # update enabled status of toptica device
-    toggle_update =         Signal(TOGGLESIGNAL, 'signal: toggle updated', '(ib)')
+    # SIGNALS
+    parameter_set_update =      Signal(PARAMETERSET_SIGNAL, 'signal: parameter set', '(siv)')
+    parameter_actual_update =   Signal(PARAMETERACTUAL_SIGNAL, 'signal: parameter actual', '(siv)')
+    toggle_update =             Signal(TOGGLESIGNAL, 'signal: toggle updated', '(ib)')
+
 
     '''
     STARTUP/SHUTDOWN
@@ -93,22 +76,20 @@ class TopticaServer(PollingServer):
 
             # get DLC PRO IP addresses
             for key in ip_address_list:
-                # note: do error handling in case someone wrote the entries incorrectly
+                # note: do error handling in case entries written incorrectly
                 try:
                     ip_addresses[key] = yield reg.get(key)
-                except:
-                    pass
+                except Exception as e:  pass
 
             # get channel parameters
             yield reg.cd(['Channels'])
             _, channel_list = yield reg.dir()
             for channel_num in channel_list:
-                # note: do error handling in case someone wrote the entries incorrectly
+                # note: do error handling in case entries written incorrectly
                 try:
                     dev_params = yield reg.get(channel_num)
                     self.channels[int(channel_num)] = {'dev_params': dev_params}
-                except:
-                    pass
+                except Exception as e:  pass
 
         finally:
             # return to the root directory
@@ -132,6 +113,7 @@ class TopticaServer(PollingServer):
                 print("Device unavailable ({:}, {:}): {:}".format(name, ip_address, e))
 
         # remove all channels corresponding to invalid devices in self.channels
+        # todo: is this the best way we could be doing this? why not loop over invalid_devices instead?
         for channel in tuple(self.channels.items()):
             chan_key, chan_info = channel
             if chan_info['dev_params'][0] in invalid_devices:
@@ -140,14 +122,14 @@ class TopticaServer(PollingServer):
         # attempt to get parameters for all lasers
         for chan_num in tuple(self.channels.keys()):
             try:
-                # retrieve and store basic channel information
+                # retrieve device type - happens first b/c necessary for subsequent param retrieval
                 chan_num = int(chan_num)
-                self.channels[chan_num]['name'] = yield self._read(chan_num, 'product-name', prefix=None)
                 dev_type = yield self._read(chan_num, 'type', prefix=None)
                 self.channels[chan_num]['type'] = dev_type
 
-                # prorgammatically retrieve and store other factory settings
+                # programmatically retrieve and store other factory settings
                 dev_info_dict = {
+                    'name': 'product-name',
                     'wavelength': '{:s}:factory-settings:wavelength',
                     'current_threshold': '{:s}:factory-settings:threshold-current',
                     'current_max': '{:s}:factory-settings:cc:current-clip',
@@ -157,18 +139,19 @@ class TopticaServer(PollingServer):
                     'temp_max': '{:s}:factory-settings:tc:temp-max',
                 }
                 for k, v in dev_info_dict.items():
-                    # note: do error handling in case device doesn't have parameter
+                    # note: do error handling in case device lacks parameter
                     try:
                         dev_param = yield self._read(chan_num, v.format(DEVICE_TYPE_PREFIX[dev_type]), prefix=None)
                     except Exception as e:
-                        dev_param = None
+                        # note: use -1 instead of None to prevent fuckups
+                        dev_param = -1
                     self.channels[chan_num][k] = dev_param
 
             except Exception as e:
                 # remove channel from list to prevent later errors
                 del self.channels[chan_num]
-                print('Error getting params (Channel {:}): {:}'.format(chan_num, e))
-                print('Removing channel {:} from channel list.'.format(chan_num))
+                print('Error getting params (Channel {:d}): {:}\n'
+                      'Removing channel {:d} from channel list.'.format(chan_num, e, chan_num))
 
         # stop logging everything
         logging.getLogger('toptica.lasersdk.asyncio.connection').disabled = True
@@ -180,8 +163,8 @@ class TopticaServer(PollingServer):
         for device in self.devices.values():
             try:
                 device.close()
-            except:
-                pass
+            except Exception as e:  pass
+
 
     '''
     DIRECT COMMUNICATION
@@ -210,6 +193,7 @@ class TopticaServer(PollingServer):
         """
         yield self._write(chan, key, value, prefix=None)
 
+
     '''
     STATUS
     '''
@@ -218,18 +202,17 @@ class TopticaServer(PollingServer):
         """
         Returns information of all connected devices.
         Returns:
-                (int, str, int): (channel number, device name, center wavelength (-1 if N/A))
+                (int, str, int): (channel_number, device_name, device_type, center_wavelength (-1 if N/A))
         """
-        device_list = [(chan_num, chan_params['name'], str(chan_params.get('wavelength', -1)))
-                       for chan_num, chan_params in self.channels.items()]
-        return device_list
+        return [(chan_num, chan_params['name'], chan_params['type'], str(chan_params.get('wavelength', -1)))
+                for chan_num, chan_params in self.channels.items()]
 
     @setting(112, 'Device Info', chan='i', returns='*(ss)')
     def deviceInfo(self, c, chan):
         """
         Returns key information about the specified laser channel.
         Returns:
-                    *(str, str): a list of tuples (param_name, param_value).
+            *(str, str): a list of tuples (param_name, param_value).
         """
         if chan in self.channels.keys():
             param_dict = self.channels[chan]
@@ -266,6 +249,7 @@ class TopticaServer(PollingServer):
         self.notifyOtherListeners(c, (chan, bool(resp)), self.toggle_update)
         returnValue(bool(resp))
 
+
     '''
     CURRENT FUNCTIONS
     '''
@@ -279,7 +263,7 @@ class TopticaServer(PollingServer):
                         (float) : the current (in mA).
         """
         resp = yield self._read(chan, 'cc:current-act', prefix='type')
-        self.notifyOtherListeners(c, (chan, float(resp)), self.current_actual_update)
+        self.notifyOtherListeners(c, ('current-act', chan, float(resp)), self.parameter_actual_update)
         returnValue(float(resp))
 
     @setting(312, 'Current Set', chan='i', curr='v', returns='v')
@@ -292,8 +276,9 @@ class TopticaServer(PollingServer):
         Returns:
                     (float) : the target current (in mA).
         """
-        dev_type = yield self._read(chan, 'type', prefix='')
-        curr_max_ma = yield self.currentMax(None, chan)
+        if chan not in self.channels.keys(): raise Exception("Error: Invalid channel.")
+
+        # setter
         if curr is not None:
             if (curr < 5) or (curr > curr_max_ma):
                 raise Exception('Error: target current is set too low or too high. Must be greater than {} mA'
