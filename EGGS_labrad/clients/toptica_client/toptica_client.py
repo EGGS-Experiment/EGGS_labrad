@@ -47,9 +47,9 @@ class toptica_client(GUIClient):
         self.channelinfo = yield self.toptica.device_list()
 
         # connect to device signals
-        yield self.toptica.signal__parameter_actual_update(PARAMETER_ACTUAL_ID)
+        yield self.toptica.signal__parameter_actual(PARAMETER_ACTUAL_ID)
         yield self.toptica.addListener(listener=self.updateParameterActual, source=None, ID=PARAMETER_ACTUAL_ID)
-        yield self.toptica.signal__parameter_set_update(PARAMETER_SET_ID)
+        yield self.toptica.signal__parameter_set(PARAMETER_SET_ID)
         yield self.toptica.addListener(listener=self.updateParameterSet, source=None, ID=PARAMETER_SET_ID)
         yield self.toptica.signal__toggle_updated(TOGGLEUPDATED_ID)
         yield self.toptica.addListener(listener=self.updateEnabledButton, source=None, ID=TOGGLEUPDATED_ID)
@@ -174,7 +174,6 @@ class toptica_client(GUIClient):
             chan_num: numvber of channel used to talk to toptica device
             device_func: function to talk to toptica device/controller
         """
-        # todo: shouldn't it be box value, and not text???
         val = float(box.text())
         box.blockSignals(True)
         device_func(chan_num, val)

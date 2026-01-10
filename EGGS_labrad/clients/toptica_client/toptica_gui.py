@@ -32,22 +32,21 @@ class toptica_channel(QFrame):
         scanBox = self._createScanBox()
 
         # create custom device elements
-        if dev_type in ('DLPro',):
+        if dev_type in ('DLpro',):
             self.statusBox.feedbackMode.addItem('Piezo')
             piezoLabels = ('Actual Voltage (V):', 'Set Voltage (V):', 'Min. Voltage (V):', 'Max. Voltage (V):')
             piezoBox = self._createControlBox('Piezo Control', 'piezoBox', piezoLabels, dev_type)
         else:
-            piezoBox = None
+            piezoBox = QWidget()
 
         # lay out
         layout = QGridLayout(self)
         layout.minimumSize()
-        layout.addWidget(statusBox,     0, 0)
-        layout.addWidget(scanBox,       0, 1)
-        layout.addWidget(currBox,       0, 2)
-        layout.addWidget(tempBox,       0, 3)
-        if dev_type in ('DLPro',):
-            layout.addWidget(piezoBox,  0, 4)
+        layout.addWidget(statusBox, 0, 0)
+        layout.addWidget(scanBox,   0, 1)
+        layout.addWidget(currBox,   0, 2)
+        layout.addWidget(tempBox,   0, 3)
+        layout.addWidget(piezoBox,  0, 4)
 
     def _createStatusBox(self):
         box = QWidget()

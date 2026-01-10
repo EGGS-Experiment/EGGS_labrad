@@ -131,7 +131,7 @@ class TopticaServer(PollingServer):
                     'name': 'product-name',
                     'wavelength': '{:s}:factory-settings:wavelength',
                     'current_threshold': '{:s}:factory-settings:threshold-current',
-                    'current_max': '{:s}:factory-settings:cc:current-clip-limit',
+                    'current_max': '{:s}:factory-settings:cc:current-clip',
                     'piezo_max': '{:s}:factory-settings:pc:voltage-max',
                     'piezo_min': '{:s}:factory-settings:pc:voltage-min',
                     'temp_min': '{:s}:factory-settings:tc:temp-min',
