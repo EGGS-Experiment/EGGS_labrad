@@ -4,15 +4,17 @@ from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.SLS_client.SLS_gui import SLS_gui
 
 _TIME_STR = '{0:02d}:{1:02d}:{2:02d}'
+# todo: connect offset in initGUI
+# todo: make sure units are all correct (check against server)
+AUTOLOCKID =    295379
+OFFSETID =      295378
+PDHID =         295377
+SERVOID =       295376
 
 
 class SLS_client(GUIClient):
 
     name = 'SLS Client'
-    AUTOLOCKID = 295379
-    OFFSETID = 295378
-    PDHID = 295377
-    SERVOID = 295376
     servers = {'sls': 'SLS Server'}
 
     def getgui(self):
@@ -26,15 +28,12 @@ class SLS_client(GUIClient):
         # autolock
         yield self.sls.signal__autolock_update(self.AUTOLOCKID)
         yield self.sls.addListener(listener=self.updateAutolock, source=None, ID=self.AUTOLOCKID)
-
         # offset
         yield self.sls.signal__offset_update(self.OFFSETID)
         yield self.sls.addListener(listener=self.updateOffset, source=None, ID=self.OFFSETID)
-
         # pdh
         yield self.sls.signal__pdh_update(self.PDHID)
         yield self.sls.addListener(listener=self.updatePDH, source=None, ID=self.PDHID)
-
         # current servo
         yield self.sls.signal__servo_update(self.SERVOID)
         yield self.sls.addListener(listener=self.updateServo, source=None, ID=self.SERVOID)
@@ -56,9 +55,6 @@ class SLS_client(GUIClient):
         self.gui.autolock_toggle.setChecked(bool(init_values['AutoLockEnable']))
         self.gui.autolock_attempts.setText(str(init_values['LockCount']))
         self.gui.autolock_status.setText(str(init_values['AutoLockState']))
-        # autolock_time = float(init_values['LockTime'])
-        # autolock_time_formatted = self._dateFormat(autolock_time)
-        # self.gui.autolock_time.setText(autolock_time_formatted)
 
         # offset
         offset_freq_mhz = float(init_values['OffsetFrequency']) / 1e6
@@ -88,25 +84,18 @@ class SLS_client(GUIClient):
         self.gui.autolock_param.currentTextChanged.connect(lambda param: self.sls.autolock_parameter(param.upper()))
 
         # PDH
-        self.gui.pdh_freq.valueChanged.connect(lambda value: self.changePDHValue('frequency', value))
-        self.gui.pdh_phasemodulation.valueChanged.connect(lambda value: self.changePDHValue('index', value))
-        self.gui.pdh_phaseoffset.valueChanged.connect(lambda value: self.changePDHValue('phase', value))
-        self.gui.pdh_filter.currentIndexChanged.connect(lambda value: self.changePDHValue('filter', value))
-
-        # todo: offset
+        self.gui.pdh_freq.valueChanged.connect(lambda value: self.sls.pdh('frequency', value))
+        self.gui.pdh_phasemodulation.valueChanged.connect(lambda value: self.sls.pdh('index', value))
+        self.gui.pdh_phaseoffset.valueChanged.connect(lambda value: self.sls.pdh('phase', value))
+        self.gui.pdh_filter.currentIndexChanged.connect(lambda value: self.sls.pdh('filter', value))
 
         # servo
         self.gui.servo_param.currentTextChanged.connect(lambda target: self.changeServoTarget(target))
-        self.gui.servo_set.valueChanged.connect(lambda value: self.sls.servo(
-            self.servo_parameter_target_dict[self.servo_target], 'set', value))
-        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.sls.servo(
-            self.servo_parameter_target_dict[self.servo_target], 'filter', value))
-        self.gui.servo_p.valueChanged.connect(lambda value: self.sls.servo(
-        self.servo_parameter_target_dict[self.servo_target], 'p', value))
-        self.gui.servo_i.valueChanged.connect(lambda value: self.sls.servo(
-            self.servo_parameter_target_dict[self.servo_target], 'i', value))
-        self.gui.servo_d.valueChanged.connect(lambda value: self.sls.servo(
-            self.servo_parameter_target_dict[self.servo_target], 'd', value))
+        self.gui.servo_filter.currentIndexChanged.connect(lambda value: self.changeServoParam('filter', value))
+        self.gui.servo_set.valueChanged.connect(lambda value: self.changeServoParam('set', value))
+        self.gui.servo_p.valueChanged.connect(lambda value: self.changeServoParam('p', value))
+        self.gui.servo_i.valueChanged.connect(lambda value: self.changeServoParam('i', value))
+        self.gui.servo_d.valueChanged.connect(lambda value: self.changeServoParam('d', value))
 
         # lock everything on startup
         self.gui._lock(False, self.gui.autolock_widget)
@@ -115,7 +104,45 @@ class SLS_client(GUIClient):
         self.gui._lock(False, self.gui.servo_widget)
 
 
-    # SIGNALS
+    """
+    SIGNALS
+    """
+    @inlineCallbacks
+    def changeServoTarget(self, target):
+        """
+        Get all relevant parameters when changing between servo menus.
+        """
+        self.servo_target = target.lower()
+        servo_params = {'p': self.gui.servo_p, 'i': self.gui.servo_i,
+                        'd': self.gui.servo_d, 'set': self.gui.servo_set}
+        for param_name, gui_element in servo_params.items():
+            val = yield self.sls.servo(str(self.servo_target), param_name)
+            gui_element.setEnabled(False)
+            gui_element.blockSignals(True)
+            gui_element.setValue(float(val))
+            gui_element.setEnabled(True)
+            gui_element.blockSignals(False)
+
+        index = yield self.sls.servo(str(self.servo_target), 'filter')
+        self.gui.servo_filter.setEnabled(False)
+        self.gui.servo_filter.blockSignals(True)
+        self.gui.servo_filter.setCurrentIndex(int(index))
+        self.gui.servo_filter.setEnabled(True)
+        self.gui.servo_filter.blockSignals(False)
+
+    @inlineCallbacks
+    def changeServoParam(self, target, value):
+        """
+        Wraps updates to the servo parameters.
+        Needs to be wrapped b/c the update depends on current state of servo_parameter_target_dict,
+            which can't be done in a lambda.
+        """
+        yield self.sls.servo(self.servo_parameter_target_dict[self.servo_target], target, value)
+
+
+    """
+    SLOTS
+    """
     def updateAutolock(self, c, lock_params):
         """
         Updates GUI when autolock values are received from server.
@@ -127,48 +154,48 @@ class SLS_client(GUIClient):
                 - how many lock attempts via the autolocking feature were needed to lock 729 laser
                 - if laser is successfully locked
         """
-
         # extract values
-        # autolock_time = lock_params[0]
         autolock_count = lock_params[0]
         autolock_status = lock_params[1]
         autolock_enabled = lock_params[2]
 
         # update GUI
-        # autolock_time_formatted = self._dateFormat(autolock_time)
         self.gui.autolock_attempts.setText(str(autolock_count))
         self.gui.autolock_status.setText(str(autolock_status))
+
+        self.gui.autolock_toggle.blockSignals(True)
         self.gui.autolock_toggle.setChecked(bool(autolock_enabled))
+        self.gui.autolock_toggle.blockSignals(False)
 
-
-
-    # SIGNALS
     def updateOffset(self, c, offset_params):
         """
-        Updates GUI when offset values are received from server.
-
+        Updates GUI when offset lock values are received from server.
         Args:
             c: labrad context
             offset_params (tuple):
                 - the frequency used for offset locking in MHz
-                - rf ampltiude used to generate the offset frequency (in percent)
-                - order sideband used for generating the offset lock (J0, J_+1, J_+2, J_-1, J_-2)
+                - rf amplitude used for offset locking (in percent)
+                - order sideband used for the offset lock (J0, J_+1, J_+2, J_-1, J_-2)
         """
         # extract values
-        offset_freq_mhz = offset_params[0]
-        offset_eom_rf_amplitude = offset_params[1]
-        offset_lockpoint = offset_params[2]
+        offset_freq_mhz, offset_eom_rf_amplitude, offset_lockpoint = offset_params
 
         # update GUI
+        self.gui.offset_freq.blockSignals(True)
         self.gui.offset_freq.setValue(offset_freq_mhz)
+        self.gui.offset_freq.blockSignals(False)
+
+        self.gui.offset_eom_rf_amp.blockSignals(True)
         self.gui.offset_eom_rf_amp.setValue(offset_eom_rf_amplitude)
+        self.gui.offset_eom_rf_amp.blockSignals(False)
+
+        self.gui.offset_lockpoint.blockSignals(True)
         self.gui.offset_lockpoint.setCurrentIndex(offset_lockpoint)
+        self.gui.offset_lockpoint.blockSignals(False)
 
-
-    def updatePDH(self,c, pdh_vals):
+    def updatePDH(self, c, pdh_vals):
         """
         Updates GUI when pdh values are received from server.
-
         Args:
             c: labrad context
             pdh_vals (tuple):
@@ -178,16 +205,24 @@ class SLS_client(GUIClient):
                 - pdh filter index
         """
         # extract values
-        pdh_freq = pdh_vals[0]
-        pdh_phase_modulation = pdh_vals[1]
-        pdh_reference_phase = pdh_vals[2]
-        pdh_filter_index = pdh_vals[3]
+        pdh_freq, pdh_phase_modulation, pdh_reference_phase, pdh_filter_index = pdh_vals
 
         # update GUI
+        self.gui.pdh_freq.blockSignals(True)
         self.gui.pdh_freq.setValue(pdh_freq)
+        self.gui.pdh_freq.blockSignals(False)
+
+        self.gui.pdh_phasemodulation.blockSignals(True)
         self.gui.pdh_phasemodulation.setValue(pdh_phase_modulation)
+        self.gui.pdh_phasemodulation.blockSignals(False)
+
+        self.gui.pdh_phaseoffset.blockSignals(True)
         self.gui.pdh_phaseoffset.setValue(pdh_reference_phase)
+        self.gui.pdh_phaseoffset.blockSignals(False)
+
+        self.gui.pdh_filter.blockSignals(True)
         self.gui.pdh_filter.setCurrentIndex(pdh_filter_index)
+        self.gui.pdh_filter.blockSignals(False)
 
     def updateServo(self, c, servo_vals):
         """
@@ -197,20 +232,16 @@ class SLS_client(GUIClient):
             servo_vals (tuple):
                 - parameter name
                 - servo setpoint
-                - servo prop gain
+                - servo proportional gain
                 - servo integral gain
                 - servo differential gain
                 - servo output filter
-        Returns:
         """
-
+        # get target of current servo menu so we can filter parameters
         servo_param_name = self.servo_parameter_target_dict[self.servo_target]
 
-        servo_vals_dict = dict()
-        for item in servo_vals:
-            servo_vals_dict[item[0]] = item[1]
-
         # extract values
+        servo_vals_dict = dict(servo_vals)  # make servo vals a dict for ease
         servo_setpoint = servo_vals_dict[f'{servo_param_name}_servo_setpoint']
         servo_p = servo_vals_dict[f'{servo_param_name}_servo_p']
         servo_i = servo_vals_dict[f'{servo_param_name}_servo_i']
@@ -218,34 +249,30 @@ class SLS_client(GUIClient):
         servo_output_filter = servo_vals_dict[f'{servo_param_name}_servo_output_filter']
 
         # update GUI
+        self.gui.servo_set.blockSignals(True)
         self.gui.servo_set.setValue(servo_setpoint)
+        self.gui.servo_set.blockSignals(False)
+
+        self.gui.servo_p.blockSignals(True)
         self.gui.servo_p.setValue(servo_p)
+        self.gui.servo_p.blockSignals(False)
+
+        self.gui.servo_i.blockSignals(True)
         self.gui.servo_i.setValue(servo_i)
+        self.gui.servo_i.blockSignals(False)
+
+        self.gui.servo_d.blockSignals(True)
         self.gui.servo_d.setValue(servo_d)
+        self.gui.servo_d.blockSignals(False)
+
+        self.gui.servo_filter.blockSignals(True)
         self.gui.servo_filter.setCurrentIndex(int(servo_output_filter))
-
-    # SLOTS
-    @inlineCallbacks
-    def changePDHValue(self, param_name, param_value):
-        yield self.sls.PDH(param_name, param_value)
-
-    @inlineCallbacks
-    def changeServoTarget(self, target):
-        self.servo_target = target.lower()
-        servo_params = {'p': self.gui.servo_p, 'i': self.gui.servo_i,
-                        'd': self.gui.servo_d, 'set': self.gui.servo_set}
-        for param_name, gui_element in servo_params.items():
-            val = yield self.sls.servo(str(self.servo_target), param_name)
-            gui_element.setEnabled(False)
-            gui_element.setValue(float(val))
-            gui_element.setEnabled(True)
-        index = yield self.sls.servo(str(self.servo_target), 'filter')
-        self.gui.servo_filter.setEnabled(False)
-        self.gui.servo_filter.setCurrentIndex(int(index))
-        self.gui.servo_filter.setEnabled(True)
+        self.gui.servo_filter.blockSignals(False)
 
 
-    # HELPER
+    """
+    HELPER FUNCTIONS
+    """
     def _dateFormat(self, _seconds):
         days = _seconds / 86400
         hours = (days % 1) * 24

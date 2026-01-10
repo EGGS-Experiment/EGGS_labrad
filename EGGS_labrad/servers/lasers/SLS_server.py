@@ -25,14 +25,13 @@ from EGGS_labrad.servers import PollingServer, SerialDeviceServer
 TERMINATOR = '\r\n'
 _SLS_EOL = '>'
 # todo: make bool functions also accept 1 or 0
-
+# todo: add signals to main functions as well (not just polling; updateotherlisteners)
 
 
 class SLSServer(SerialDeviceServer, PollingServer):
     """
     Connects to the 729nm SLS Laser.
     """
-
     name =      'SLS Server'
     regKey =    'SLS Server'
     serNode =   'lahaina'
@@ -63,8 +62,7 @@ class SLSServer(SerialDeviceServer, PollingServer):
         if type(status) is int:
             if status not in (0, 1):
                 raise Exception('Error: input must be a boolean, 0, or 1.')
-            else:
-                status = str(status)
+            else: status = str(status)
         elif type(status) == bool:
             status = str(int(status))
 
@@ -229,32 +227,28 @@ class SLSServer(SerialDeviceServer, PollingServer):
         values =    [val[1] for val in resp]
         returnValue((keys, values))
 
-    # POLLING
+
+    """
+    POLLING
+    """
     @inlineCallbacks
     def _poll(self):
         """
         Polls the device for locking readout.
         """
+        # retrieve all values from device
         values_tmp = yield self.get_values(None)
         vals = dict(zip(values_tmp[0], values_tmp[1]))
 
         # Auto Lock values
         lockcount = int(vals['LockCount'])
-        # locktime = float(vals['LockTime'])
         lockstate = str(vals['AutoLockState'])
-        if lockstate.split(':')[0] == "Locked":
-            locked = True
-        else:
-            locked = False
         lockenabled = int(vals['AutoLockEnable'])
-
-
-        if lockcount > 100 and locked == False:
+        if (lockcount > 100) and (lockstate.split(':')[0] != "Locked"):
             self.autolock_toggle(None, False)
-            print("COULD NOT LOCK WITHIN 100 ATTEMPTS - STOPPED ATTEMPT TO LOCK")
-
+            print("COULD NOT LOCK WITHIN 100 ATTEMPTS - STOPPED ATTEMPTS TO LOCK")
         self.autolock_update((lockcount, lockstate, lockenabled))
-        #
+
         # Offset Lock
         offset_freq_mhz = float(vals['OffsetFrequency']) / 1e6
         offset_eom_rf_amplitude = float(vals['EOMRFAmplitude'])
@@ -269,18 +263,19 @@ class SLSServer(SerialDeviceServer, PollingServer):
         self.pdh_update((pdh_freq, pdh_phase_modulation, pdh_reference_phase, pdh_filter_index))
 
         # Servo Update
-        parameter_dict = {'Current': 'current', 'PZT': 'pzt', 'TX':'tx'}
         servo_update_list = []
-        for param in parameter_dict.keys():
-            servo_update_list.append((f'{parameter_dict[param]}_servo_p', float(vals[f'{param}ServoPropGain'])))
-            servo_update_list.append((f'{parameter_dict[param]}_servo_i', float(vals[f'{param}ServoIntGain'])))
-            servo_update_list.append((f'{parameter_dict[param]}_servo_d', float(vals[f'{param}ServoDiffGain'])))
-            servo_update_list.append((f'{parameter_dict[param]}_servo_output_filter', int(vals[f'{param}ServoOutputFilter'])))
-            servo_update_list.append((f'{parameter_dict[param]}_servo_setpoint', float(vals[f'{param}ServoSetpoint'])))
-
+        for param_key, param_val in {'Current': 'current', 'PZT': 'pzt', 'TX':'tx'}.items():
+            servo_update_list.append((f'{param_val}_servo_p', float(vals[f'{param_key}ServoPropGain'])))
+            servo_update_list.append((f'{param_val}_servo_i', float(vals[f'{param_key}ServoIntGain'])))
+            servo_update_list.append((f'{param_val}_servo_d', float(vals[f'{param_key}ServoDiffGain'])))
+            servo_update_list.append((f'{param_val}_servo_output_filter', int(vals[f'{param_key}ServoOutputFilter'])))
+            servo_update_list.append((f'{param_val}_servo_setpoint', float(vals[f'{param_key}ServoSetpoint'])))
         self.servo_update(servo_update_list)
 
-    # HELPERS
+
+    """
+    HELPER FUNCTIONS
+    """
     def _parse(self, string, setter):
         """
         Strips echo from SLS and returns a dictionary with
