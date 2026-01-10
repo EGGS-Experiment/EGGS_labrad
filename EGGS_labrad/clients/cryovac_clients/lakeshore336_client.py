@@ -104,7 +104,7 @@ class lakeshore336_client(GUIClient):
         self.gui.temp2.setText('{:.4f}'.format(temp_arr[1]))
         self.gui.temp3.setText('{:.4f}'.format(temp_arr[2]))
         self.gui.temp4.setText('{:.4f}'.format(temp_arr[3]))
-        # save data to dataVault
+
         if self.recording:
             yield self.dv.add(time() - self.starttime, *temp_arr, context=self.c_record)
 
