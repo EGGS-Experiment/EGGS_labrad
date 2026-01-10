@@ -4,16 +4,16 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient, createTrunk
 from EGGS_labrad.clients.injection_lock_diode_client.injection_lock_temperature_gui import InjectionLockTemperatureGUI
 
+TOGGLEID = 4651984
+TEMPERATUREID = 4651986
+CURRENTID = 4651985
+LOCKID = 4651987
+SETPOINTID = 4651988
+
 
 class InjectionLockTemperatureClient(GUIClient):
 
     name = 'Injection Lock Temperature Client'
-
-    TOGGLEID =      4651984
-    TEMPERATUREID = 4651986
-    CURRENTID =     4651985
-    LOCKID =        4651987
-    SETPOINTID =    4651988
     servers = {'tec': 'Injection Lock Temperature Server'}
 
     def getgui(self):

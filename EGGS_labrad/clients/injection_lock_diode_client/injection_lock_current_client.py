@@ -3,20 +3,21 @@ from twisted.internet.defer import inlineCallbacks
 from EGGS_labrad.clients import GUIClient
 from EGGS_labrad.clients.injection_lock_diode_client.injection_lock_current_gui import InjectionLockCurrentGUI
 
+TOGGLEID =  1651988
+CURRENTID = 1651989
+OUTPUTID =  1651990
+MAXCURRENTID = 1651991
+
+# todo: add hasfocus check
+
 
 class InjectionLockCurrentClient(GUIClient):
     """
     LabRAD client for the 729nm Injection Lock Diode Current controller (the AMO1 peter box).
     Essentially a straightforward AMO1 client.
     """
-
     name = 'Injection Lock Current Client'
     servers = {'controller': 'Injection Lock Current Server'}
-
-    TOGGLEID = 1651988
-    CURRENTID = 1651989
-    OUTPUTID = 1651990
-    MAXCURRENTID = 1651991
 
     def getgui(self):
         if self.gui is None:
@@ -57,16 +58,18 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.label_diode_current.setText("{:>.3f}".format(outputs[1] * 1e3))
 
     def initGUI(self):
-        self.gui.set_current_spinbox.textChanged.connect(lambda _: self.gui.set_current_spinbox.blockSignals(True))
-        self.gui.set_current_spinbox.lineEdit().returnPressed.connect(lambda _box=self.gui.set_current_spinbox,
-                                                        _device_func = self.controller.current_set:
-                                                        self.update_val(None, _box, _device_func))
-        self.gui.max_current_spinbox.textChanged.connect(lambda _: self.gui.max_current_spinbox.blockSignals(True))
-        self.gui.max_current_spinbox.lineEdit().returnPressed.connect(lambda _box=self.gui.max_current_spinbox,
-                                                        _device_func = self.controller.current_max:
-                                                        self.update_val(None, _box, _device_func))
         self.gui.output_button.clicked.connect(lambda status: self.controller.toggle(status))
         self.gui.lockswitch.clicked.connect(lambda status: self.lock(status))
+
+        self.gui.set_current_spinbox.textChanged.connect(lambda _: self.gui.set_current_spinbox.blockSignals(True))
+        self.gui.set_current_spinbox.lineEdit().returnPressed.connect(
+            lambda _box=self.gui.set_current_spinbox, _device_func = self.controller.current_set:
+            self.update_val(None, _box, _device_func))
+
+        self.gui.max_current_spinbox.textChanged.connect(lambda _: self.gui.max_current_spinbox.blockSignals(True))
+        self.gui.max_current_spinbox.lineEdit().returnPressed.connect(
+            lambda _box=self.gui.max_current_spinbox, _device_func = self.controller.current_max:
+            self.update_val(None, _box, _device_func))
 
     def update_val(self,c, box, device_func):
         val = float(box.text())
@@ -80,6 +83,7 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.set_current_spinbox.setEnabled(status)
         self.gui.max_current_spinbox.setEnabled(status)
         self.gui.output_button.setEnabled(status)
+
 
     """
     SLOTS FOR LABRAD SIGNALS

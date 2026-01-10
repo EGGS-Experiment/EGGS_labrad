@@ -15,12 +15,11 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 from labrad.units import WithUnit
 from labrad.server import setting, Signal, inlineCallbacks
 
 from twisted.internet.defer import returnValue
-from EGGS_labrad.servers import SerialDeviceServer, PollingServer, ContextServer
+from EGGS_labrad.servers import SerialDeviceServer, PollingServer
 
 TERMINATOR = '\r\n'
 

@@ -15,16 +15,16 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 from labrad.units import WithUnit
 from labrad.server import setting, Signal, inlineCallbacks
 
 from twisted.internet.defer import returnValue
 from EGGS_labrad.servers import SerialDeviceServer, PollingServer
-import serial
 import time
 
 TERMINATOR = '\r\n'
+# note: why current_update is (sv)? why does it need a string message?
+# note: same for max_curr update? why need str?
 
 
 class InjectionLockCurrentServer(SerialDeviceServer, PollingServer):
