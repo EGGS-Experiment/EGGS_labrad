@@ -13,7 +13,6 @@ TOPTICA_CHANNELS = [
     (4, 'DLpro (S/N 021957)', 'DLpro', '850')
 ]
 
-
 # IDs for actual values being outputted by toptica device
 PARAMETER_ACTUAL_ID =   193611
 PARAMETER_SET_ID =      193612
@@ -72,26 +71,17 @@ class toptica_client(GUIClient):
             for chan_num, widget in self.gui.channels.items():
                 # status
                 device_info = yield self.toptica.device_info(chan_num)
-
-                # todo: process device info more programmatically in case different results
-                # todo: really important we handle things correctly, otherwise might fuck things up
                 device_info_dict = dict(device_info)
                 name = device_info_dict.get('name', None)
                 wav = device_info_dict.get('wavelength', None)
                 dev_type = device_info_dict.get('type', None)
-                # _, name, _, wav, _, _, _, _ = device_info
 
                 # determine if toptica device is enabled
                 enabled_status = yield self.toptica.toggle(chan_num)
                 widget.statusBox.channelDisplay.setText(str(chan_num))
-                name_tmp = name.split('S/N ')[1]
-                name_tmp = name_tmp[:-1]
-                widget.statusBox.serDisplay.setText(name_tmp)
+                widget.statusBox.serDisplay.setText(name.split('S/N ')[1][:-1])
                 widget.statusBox.wavDisplay.setText(wav)
                 widget.statusBox.enabledButton.setChecked(enabled_status)
-
-                # feedback
-                # todo
 
                 # current
                 current_set = yield self.toptica.current_set(chan_num)
@@ -104,23 +94,20 @@ class toptica_client(GUIClient):
 
                 # temperature
                 temperature_set = yield self.toptica.temperature_set(chan_num)
-                # todo: replace with channel info - temperature_min, temperature_max
                 temperature_actual = yield self.toptica.temperature_actual(chan_num)
                 widget.tempBox.setBox.setValue(temperature_set)
-                widget.tempBox.minBox.setText('{:0.4f}'.format(temperature_min))
-                widget.tempBox.maxBox.setText('{:0.4f}'.format(temperature_max))
+                widget.tempBox.minBox.setText('{:0.4f}'.format(float(device_info_dict["temp_min"])))
+                widget.tempBox.maxBox.setText('{:0.4f}'.format(float(device_info_dict["temp_max"])))
                 widget.tempBox.actualValue.setText('{:0.4f}'.format(temperature_actual))
                 widget.tempBox.lockswitch.setChecked(False)
 
                 # piezo
                 if DEVICES_USE_PIEZO[dev_type]:
                     piezo_set = yield self.toptica.piezo_set(chan_num)
-                    piezo_min = yield self.toptica.piezo_min(chan_num)
-                    piezo_max = yield self.toptica.piezo_max(chan_num)
                     piezo_actual = yield self.toptica.piezo_actual(chan_num)
                     widget.piezoBox.setBox.setValue(piezo_set)
-                    widget.piezoBox.minBox.setText('{:0.4f}'.format(piezo_min))
-                    widget.piezoBox.maxBox.setText('{:0.4f}'.format(piezo_max))
+                    widget.piezoBox.minBox.setText('{:0.4f}'.format(float(device_info_dict["piezo_min"])))
+                    widget.piezoBox.maxBox.setText('{:0.4f}'.format(float(device_info_dict["piezo_max"])))
                     widget.piezoBox.actualValue.setText('{:0.4f}'.format(piezo_actual))
                     widget.piezoBox.lockswitch.setChecked(False)
 
@@ -141,40 +128,34 @@ class toptica_client(GUIClient):
     def initGUI(self):
         # laser channel settings
         for chan_num, widget in self.gui.channels.items():
-            #todo: set enabled button, assign feedback slots, assign current slots
-
             # assign enabled slot
             widget.statusBox.enabledButton.clicked.connect(lambda value, _chan_num=chan_num: self.toptica.toggle(_chan_num, value))
+
             # # assign current slots (only update device once RETURN key is pressed)
             widget.currBox.setBox.textChanged.connect(lambda _: widget.currBox.setBox.blockSignals(True))
-            widget.currBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
-                                                                          _box= widget.currBox.setBox,
-                                                                          _device_func = self.toptica.current_set:
-                                                       self.updateVal(None, _box, _chan_num, _device_func))
+            widget.currBox.setBox.lineEdit().returnPressed.connect(
+                lambda _chan_num=chan_num, _box= widget.currBox.setBox, _device_func = self.toptica.current_set:
+                self.updateVal(None, _box, _chan_num, _device_func))
+
             widget.currBox.maxBox.textChanged.connect(lambda _: widget.currBox.maxBox.blockSignals(True))
-            widget.currBox.maxBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
-                                                                          _box=widget.currBox.maxBox,
-                                                                          _device_func = self.toptica.current_max:
-                                                          self.updateVal(None, _box, _chan_num, _device_func))
+            widget.currBox.maxBox.lineEdit().returnPressed.connect(
+                lambda _chan_num=chan_num, _box=widget.currBox.maxBox, _device_func = self.toptica.current_max:
+                self.updateVal(None, _box, _chan_num, _device_func))
 
             # assign temperature slots (only update device once RETURN key is pressed)
             widget.tempBox.setBox.textChanged.connect(lambda _: widget.tempBox.setBox.blockSignals(True))
-            widget.tempBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
-                                                                          _box=widget.tempBox.setBox,
-                                                                          _device_func =self.toptica.temperature_set:
-                                                            self.updateVal(None, _box, _chan_num, _device_func))
+            widget.tempBox.setBox.lineEdit().returnPressed.connect(
+                lambda _chan_num=chan_num, _box=widget.tempBox.setBox, _device_func =self.toptica.temperature_set:
+                self.updateVal(None, _box, _chan_num, _device_func))
 
             # assign piezo slots (only update device once RETURN key is pressed)
             if widget.piezo:
                 widget.piezoBox.setBox.textChanged.connect(lambda _: widget.piezoBox.setBox.blockSignals(True))
-                widget.piezoBox.setBox.lineEdit().returnPressed.connect(lambda _chan_num=chan_num,
-                                                                               _box=widget.piezoBox.setBox,
-                                                                               _device_func=self.toptica.piezo_set:
-                                                            self.updateVal(None, _box, _chan_num, _device_func))
+                widget.piezoBox.setBox.lineEdit().returnPressed.connect(
+                    lambda _chan_num=chan_num, _box=widget.piezoBox.setBox, _device_func=self.toptica.piezo_set:
+                    self.updateVal(None, _box, _chan_num, _device_func))
 
             # assign scan slots
-            #widget.scanBox.modeBox.currentItemChanged.connect(lambda index, _chan_num=chan_num: self.toptica.scan_mode(_chan_num, index))
-            #widget.scanBox.shapeBox.currentItemChanged.connect(lambda index, _chan_num=chan_num: self.toptica.scan_shape(_chan_num, index))
             widget.scanBox.freqBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.scan_frequency(_chan_num, value))
             widget.scanBox.ampBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.scan_amplitude(_chan_num, value))
             widget.scanBox.offBox.valueChanged.connect(lambda value, _chan_num=chan_num: self.toptica.scan_offset(_chan_num, value))

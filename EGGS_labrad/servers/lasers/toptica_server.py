@@ -2,7 +2,7 @@
 ### BEGIN NODE INFO
 [info]
 name = Toptica Server
-version = 1.0.1
+version = 1.1.1
 description = Talks to Toptica devices.
 
 [startup]
@@ -132,7 +132,7 @@ class TopticaServer(PollingServer):
                     'name': 'product-name',
                     'wavelength': '{:s}:factory-settings:wavelength',
                     'current_threshold': '{:s}:factory-settings:threshold-current',
-                    'current_max': '{:s}:factory-settings:cc:current-clip',
+                    'current_max': '{:s}:factory-settings:cc:current-clip-limit',
                     'piezo_max': '{:s}:factory-settings:pc:voltage-max',
                     'piezo_min': '{:s}:factory-settings:pc:voltage-min',
                     'temp_min': '{:s}:factory-settings:tc:temp-min',
@@ -143,7 +143,7 @@ class TopticaServer(PollingServer):
                     try:
                         dev_param = yield self._read(chan_num, v.format(DEVICE_TYPE_PREFIX[dev_type]), prefix=None)
                     except Exception as e:
-                        # note: use -1 instead of None to prevent fuckups
+                        # note: use -1 instead of None b/c we can't send None over labrad (for e.g. deviceInfo)
                         dev_param = -1
                     self.channels[chan_num][k] = dev_param
 
@@ -280,14 +280,22 @@ class TopticaServer(PollingServer):
 
         # setter
         if curr is not None:
-            if (curr < 5) or (curr > curr_max_ma):
-                raise Exception('Error: target current is set too low or too high. Must be greater than {} mA'
-                                'or less than {} mA.'.format(0, curr_max_ma))
+            # retrieve current limits
+            try:
+                curr_min_ma = 5
+                curr_max_ma = self.channels[chan]['current_max']
+            except KeyError:
+                raise Exception('Error: laser does not have current limits set.')
+
+            if not (curr_min_ma < curr < curr_max_ma):
+                raise Exception('Error: target current exceeds bounds.\n'
+                                'Must be in range [{}, {}] mA.'.format(0, curr_max_ma))
             else:
                 yield self._write(chan, 'cc:current-set', curr, prefix='type')
 
+        # getter
         resp = yield self._read(chan, 'cc:current-set', prefix='type')
-        self.notifyOtherListeners(c, (chan, float(resp)), self.current_set_update)
+        self.notifyOtherListeners(c, ('current-set', chan, float(resp)), self.parameter_set_update)
         returnValue(float(resp))
 
     @setting(313, 'Current Max', chan='i', curr='v', returns='v')
@@ -300,26 +308,28 @@ class TopticaServer(PollingServer):
         Returns:
                     (float) : the maximum current (in mA).
         """
-        dev_type = yield self._read(chan, 'type', prefix='')
-        try:
-            curr_max_ma = self.channels[chan]['current-max']
-        except KeyError:
-            if DEVICE_TYPE_PREFIX[dev_type] == 'amp':
-                curr_max_ma = 1100
-            elif DEVICE_TYPE_PREFIX[dev_type] == 'dl':
-                curr_max_ma = 150
-            else:
-                raise Exception('Error: unknown laser device.')
-        curr_min_ma = 5
+        if chan not in self.channels.keys(): raise Exception("Error: Invalid channel.")
+
+        # setter
         if curr is not None:
-            if (curr < curr_min_ma) or (curr > curr_max_ma):
-                raise Exception('Error: target current is set too low or too high. Must be greater than {} mA'
-                                'and less than {} mA.'.format(curr_min_ma, curr_max_ma))
+            # retrieve current bounds
+            try:
+                curr_min_ma = 5
+                curr_max_ma = self.channels[chan]['current_max']
+            except KeyError:
+                raise Exception('Error: laser does not have current limits set.')
+
+            if not (curr_min_ma < curr < curr_max_ma):
+                raise Exception('Error: target current_max exceeds bounds.\n'
+                                'Must be in range [{}, {}] mA.'.format(curr_min_ma, curr_max_ma))
             else:
                 yield self._write(chan, 'cc:current-clip', curr, prefix='type')
+
+        # getter
         resp = yield self._read(chan, 'cc:current-clip', prefix='type')
-        self.notifyOtherListeners(c, (chan, float(resp)), self.current_max_update)
+        self.notifyOtherListeners(c, ('current-clip', chan, float(resp)), self.parameter_set_update)
         returnValue(float(resp))
+
 
     '''
     TEMPERATURE FUNCTIONS
@@ -333,7 +343,7 @@ class TopticaServer(PollingServer):
                     (float) : the temperature (in K).
         """
         resp = yield self._read(chan, 'tc:temp-act', prefix='type')
-        self.notifyOtherListeners(c, (chan, float(resp)), self.temperature_actual_update)
+        self.notifyOtherListeners(c, ('temp-act', chan, float(resp)), self.parameter_actual_update)
         returnValue(float(resp))
 
     @setting(322, 'Temperature Set', chan='i', temp='v', returns='v')
@@ -346,49 +356,28 @@ class TopticaServer(PollingServer):
         Returns:
                     (float) : the target temperature (in K).
         """
-        try:
-            temp_max = yield self.tempMax(None, chan)
-        except Exception as e:
-            temp_max = 35
-        try:
-            temp_min = self.channels[chan]['temp-min']
-        except KeyError:
-            temp_min = 18
+        if chan not in self.channels.keys(): raise Exception("Error: Invalid channel.")
+
+        # setter
         if temp is not None:
-            if (temp < temp_min) or (temp > temp_max):
-                raise Exception('Error: target temperature is set too low or too high. Must be greater than {}C'
-                                'and less than {}C.'.format(temp_min, temp_max))
+            # get temperature limits
+            try:
+                temp_max = self.channels[chan]['temp_max']
+                temp_min = self.channels[chan]['temp_min']
+            except Exception as e:
+                raise Exception("Error: laser does not have temperature limits set.")
+
+            if not (temp_min < temp < temp_max):
+                raise Exception('Error: target temperature exceeds bounds.\n'
+                                'Must be in range [{}, {}] C.'.format(temp_min, temp_max))
             else:
                 yield self._write(chan, 'tc:temp-set', temp, prefix='type')
+
+        # getter
         resp = yield self._read(chan, 'tc:temp-set', prefix='type')
-        self.notifyOtherListeners(c, (chan, float(resp)), self.temperature_set_update)
+        self.notifyOtherListeners(c, ('temp-set', chan, float(resp)), self.parameter_set_update)
         returnValue(float(resp))
 
-    @setting(323, 'Temperature Max', chan='i', returns='v')
-    def tempMax(self, c, chan):
-        """
-        Get the maximum temperature of the selected laser head.
-        Arguments:
-            chan    (int)           : the desired laser channel.
-            temp    (float)         : the temperatures bound (maximum) in K.
-        Returns:
-                    (float)         : the temperatures bound (maximum) in K.
-        """
-        resp = yield self._read(chan, 'tc:limits:temp-max', prefix='type')
-        returnValue(float(resp))
-
-    @setting(324, 'Temperature Min', chan='i', returns='v')
-    def tempMin(self, c, chan):
-        """
-        Get the maximum temperature of the selected laser head.
-        Arguments:
-            chan    (int)           : the desired laser channel.
-            temp    (float)         : the temperatures bound (minimum) in K.
-        Returns:
-                    (float)         : the temperatures bound (minimum) in K.
-        """
-        resp = yield self._read(chan, 'tc:limits:temp-min', prefix='type')
-        returnValue(float(resp))
 
     '''
     PIEZO FUNCTIONS
@@ -402,13 +391,14 @@ class TopticaServer(PollingServer):
         Returns:
                     (float) : the piezo voltage (in V).
         """
-        dev_type = yield self._read(chan, 'type', prefix='')
-        if DEVICE_USES_PIEZO[dev_type]:
+        if chan not in self.channels.keys(): raise Exception("Error: Invalid channel.")
+
+        if DEVICE_USES_PIEZO[self.channels[chan]['type']]:
             resp = yield self._read(chan, 'pc:voltage-act', prefix='type')
-            self.notifyOtherListeners(c, (chan, float(resp)), self.piezo_actual_update)
+            self.notifyOtherListeners(c, ('voltage-act', chan, float(resp)), self.parameter_actual_update)
             returnValue(float(resp))
         else:
-            returnValue(0.)
+            returnValue(-1)
 
     @setting(412, 'Piezo Set', chan='i', voltage='v', returns='v')
     def piezoSet(self, c, chan, voltage=None):
@@ -420,62 +410,31 @@ class TopticaServer(PollingServer):
         Returns:
                         (float) : the piezo voltage (in V).
         """
-        dev_type = yield self._read(chan, 'type', prefix='')
-        try:
-            piezo_min_V = self.channels[chan]['piezo_min']
-        except KeyError:
-            piezo_min_V = 15
-        try:
-            piezo_max_V = yield self.piezoMax(None, chan)
-        except Exception as e:
-            piezo_max_V = 150
-        if DEVICE_USES_PIEZO[dev_type]:
+        if chan not in self.channels.keys(): raise Exception("Error: Invalid channel.")
+
+        if DEVICE_USES_PIEZO[self.channels[chan]['type']]:
+            # setter
             if voltage is not None:
-                if (voltage < piezo_min_V) or (voltage > piezo_max_V):
-                    raise Exception('Error: target voltage is set too low or too high. Must be greater than {} V'
-                                    'and less than {} V.'.format(piezo_min_V, piezo_max_V))
+                # get voltage limits
+                try:
+                    piezo_min_V = self.channels[chan]['piezo_min']
+                    piezo_max_V = self.channels[chan]['piezo_max']
+                except Exception as e:
+                    raise Exception("Error: laser does not have voltage limits set.")
+
+                if not (piezo_min_V < voltage < piezo_max_V):
+                    raise Exception('Error: target voltage exceeds bounds.\n'
+                                    'Must be in range [{}, {}]V.'.format(piezo_min_V, piezo_max_V))
                 else:
                     yield self._write(chan, 'pc:voltage-set', voltage, prefix='type')
+
+            # getter
             resp = yield self._read(chan, 'pc:voltage-set', prefix='type')
-            self.notifyOtherListeners(c, (chan, float(resp)), self.piezo_set_update)
-            returnValue(float(resp))
-
-        else:
-            returnValue(0.)
-
-    @setting(413, 'Piezo Max', chan='i', returns='v')
-    def piezoMax(self, c, chan):
-        """
-        Get the maximum voltage of the selected laser head.
-        Arguments:
-            chan        (int)   : the desired laser channel.
-            voltage     (float) : the maximum piezo voltage (in V).
-        Returns:
-                        (float) : the maximum piezo voltage (in V).
-        """
-        dev_type = yield self._read(chan, 'type', prefix='')
-        if DEVICE_USES_PIEZO[dev_type]:
-            resp = yield self._read(chan, 'pc:voltage-max', prefix='type')
+            self.notifyOtherListeners(c, ('voltage-set', chan, float(resp)), self.parameter_set_update)
             returnValue(float(resp))
         else:
-            returnValue(0.)
+            returnValue(-1)
 
-    @setting(414, 'Piezo Min', chan='i', returns='v')
-    def piezoMin(self, c, chan):
-        """
-        Get the minimum voltage of the selected laser head.
-        Arguments:
-            chan        (int)   : the desired laser channel.
-            voltage     (float) : the minimum piezo voltage (in V).
-        Returns:
-                        (float) : the minimum piezo voltage (in V).
-        """
-        dev_type = yield self._read(chan, 'type', prefix='')
-        if DEVICE_USES_PIEZO[dev_type]:
-            resp = yield self._read(chan, 'pc:voltage-min', prefix='type')
-            returnValue(float(resp))
-        else:
-            returnValue(0.)
 
     '''
     SCAN FUNCTIONS
@@ -576,7 +535,9 @@ class TopticaServer(PollingServer):
         returnValue(resp)
 
 
-    # FEEDBACK
+    """
+    FEEDBACK
+    """
     @setting(611, 'Feedback Mode', chan='i', mode='i', returns='i')
     def feedbackMode(self, c, chan, mode=None):
         """
@@ -587,7 +548,7 @@ class TopticaServer(PollingServer):
         Returns:
                         (int)   : the parameter for feedback to control
         """
-        conv_dict = {1: 0, 2: 1, 3: 2, 4: 4}
+        conv_dict = {1: 0, 2: 1, 3: 2, 4: 4} # convert input to toptica sdk desired vals
         if mode is not None:
             if mode not in (1, 2, 3, 4):
                 raise Exception('Error: input channel must be one of (1, 2, 3, 4).')
@@ -643,23 +604,15 @@ class TopticaServer(PollingServer):
     '''
     @inlineCallbacks
     def _read(self, chan, param, prefix=None):
-    # def _read(self, chan, param, prefix="type"):
-
-        # sanitize input
-        if chan not in self.channels.keys():
-            raise ValueError('Invalid channel: {}'.format(chan))
-
-        # get target device
+        # get target device (i.e. the parent DLC pro)
+        if chan not in self.channels.keys(): raise ValueError('Invalid channel: {}'.format(chan))
         dev_name, laser_num = self.channels[chan]['dev_params']
         dev = self.devices[dev_name]
 
         # add relevant prefixes to query string
         if prefix == "type":
             prefixstr = '{:s}:'.format(DEVICE_TYPE_PREFIX[self.channels[chan]['type']])
-        elif prefix is None:
-            prefixstr = ''
-        else:
-            prefixstr = ''
+        else: prefixstr = ''
 
         # query device
         querystr = 'laser{:d}:{}{}'.format(laser_num, prefixstr, param)
@@ -669,35 +622,28 @@ class TopticaServer(PollingServer):
 
     @inlineCallbacks
     def _write(self, chan, param, value, prefix=None):
-    # def _write(self, chan, param, value, prefix="type"):
-        # sanitize input
-        if chan not in self.channels.keys():
-            raise Exception('Error: invalid channel.')
-
-        # get target device
+        # get target device (i.e. the parent DLC pro)
+        if chan not in self.channels.keys(): raise Exception('Error: invalid channel.')
         dev_name, laser_num = self.channels[chan]['dev_params']
         dev = self.devices[dev_name]
 
         # add relevant prefixes to query string
         if prefix == "type":
             prefixstr = '{:s}:'.format(DEVICE_TYPE_PREFIX[self.channels[chan]['type']])
-        elif prefix is None:
-            prefixstr = ''
-        else:
-            prefixstr = ''
+        else: prefixstr = ''
 
         # write to device
         writestr = 'laser{:d}:{}{}'.format(laser_num, prefixstr, param)
-        print('\n\tDEBUG (_write): {}'.format(writestr))
+        # print('\n\tDEBUG (_write): {}'.format(writestr))
         yield dev.set(writestr, value)
 
     @inlineCallbacks
     def _poll(self):
         """
-        Update listeners with actual values of current, temperature, and piezo voltage.
+        Update listeners with actual device values.
         """
+        # todo: see if there's some faster way this can be done
         for chan_num in self.channels.keys():
-            dev_type = yield self._read(chan_num, 'type', prefix='')
             # get enabled status of toptica device
             yield self.toggle(None, chan_num)
 
@@ -709,7 +655,7 @@ class TopticaServer(PollingServer):
             # get status of temperature outputted by toptica device
             yield self.tempActual(None, chan_num)
             yield self.tempSet(None, chan_num)
-            if DEVICE_USES_PIEZO[dev_type]:
+            if DEVICE_USES_PIEZO[self.channels[chan_num]['type']]:
                 # get status of piezo voltage outputted by toptica device
                 yield self.piezoActual(None, chan_num)
                 yield self.piezoSet(None, chan_num)

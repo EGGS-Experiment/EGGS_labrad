@@ -2,7 +2,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QLabel, QGridLayout, QGroupBox, QScrollArea, QWidget, QSizePolicy
 
-from EGGS_labrad.clients.Widgets import TextChangingButton, Lockswitch, QCustomUnscrollableSpinBox, QCustomUnscrollableComboBox
 from EGGS_labrad.clients.utils import SHELL_FONT
 from EGGS_labrad.clients.Widgets import (TextChangingButton, Lockswitch,
                                          QCustomUnscrollableSpinBox, QCustomUnscrollableComboBox)
@@ -119,11 +118,11 @@ class toptica_channel(QFrame):
         for label in (set_label, min_label, max_label):
             label.setFont(LABEL_FONT)
             label.setAlignment(Qt.AlignBottom)
+
         # create boxes
         box.setBox = QCustomUnscrollableSpinBox()
         box.actualValue = QLabel('00.0000')
         box.minBox = QLabel('00.0000')
-
         # create lists of boxes for programmatic instantiation
         spinbox_list = [box.setBox]
         display_list = [box.actualValue, box.minBox]
@@ -137,7 +136,7 @@ class toptica_channel(QFrame):
         for display_box in display_list:
             display_box.setFont(DISPLAY_FONT)
             display_box.setAlignment(Qt.AlignRight)
-
+        # customize spinboxes
         for doublespinbox in spinbox_list:
             doublespinbox.setDecimals(4)
             doublespinbox.setSingleStep(0.0001)
@@ -147,9 +146,11 @@ class toptica_channel(QFrame):
                 doublespinbox.setRange(5, 200)
             doublespinbox.setKeyboardTracking(False)
             doublespinbox.setFont(QFont(SHELL_FONT, pointSize=10))
+
         # create buttons
         box.lockswitch = Lockswitch()
         box.record_button = TextChangingButton(('Stop Recording', 'Record'))
+
         # lay out
         box_layout.addWidget(actual_label,          0, 0, 1, 1)
         box_layout.addWidget(box.actualValue,       1, 0, 1, 1)
@@ -162,6 +163,7 @@ class toptica_channel(QFrame):
         box_layout.addWidget(box.maxBox,            8, 0, 1, 1)
         box_layout.addWidget(box.lockswitch,        9, 0, 1, 1)
         box_layout.minimumSize()
+
         # connect signals to slots
         box.lockswitch.toggled.connect(lambda status, parent=objName: self._lock(status, parent))
         box.lockswitch.setChecked(True)
@@ -256,18 +258,6 @@ class toptica_gui(QFrame):
         wm_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         wmChan_widget = QWidget()
         wmChan_layout = QGridLayout(wmChan_widget)
-        channel_nums = list(zip(*channelinfo))[0]
-        devs = list(zip(*channelinfo))[1]
-        # todo: get whether piezo exists
-        for idx, i in enumerate(channel_nums):
-            dev_type = devs[i-1].split(' ')[0]
-            if DEVICES_USE_GUI[dev_type]:
-                piezo_control = True
-            else:
-                piezo_control = False
-            channel_gui = toptica_channel(piezoControl=piezo_control, dev_type=  dev_type)
-            self.channels[i] = channel_gui
-            wmChan_layout.addWidget(channel_gui, i, 0, 1, 1)
 
         # batch create constituent channel GUIs
         for idx, vals in enumerate(channelinfo):
