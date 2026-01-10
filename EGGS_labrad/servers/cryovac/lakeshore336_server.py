@@ -15,13 +15,12 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 from labrad.units import WithUnit
 from labrad.util import wakeupCall
 from labrad.server import setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-import numpy as np
+from numpy import array
 from serial import PARITY_ODD
 
 from EGGS_labrad.servers import PollingServer, SerialDeviceServer
@@ -75,7 +74,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         self.ser.release()
 
         # parse & update
-        resp = np.array(resp.split(','), dtype=float)
+        resp = array(resp.split(','), dtype=float)
         resp = tuple(resp)
         self.temp_update(resp)
         returnValue(resp)
@@ -142,7 +141,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read_line()
         self.ser.release()
         # return value
-        resp = np.array(resp.split(','), dtype=int)
+        resp = array(resp.split(','), dtype=int)
         resp = tuple(resp[:2])
         returnValue(resp)
 
@@ -231,7 +230,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         resp = yield self.ser.read_line()
         self.ser.release()
         # return value
-        resp = np.array(resp.split(','), dtype=float)
+        resp = array(resp.split(','), dtype=float)
         returnValue(tuple(resp))
 
     @setting(232, 'Heater Setpoint', output_channel='i', setpoint='v', returns='v')
@@ -272,7 +271,7 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
         Polls the device for temperature readout.
         """
         temp_arr = yield self.temperature_read(None, None)
-        print(temp_arr)
+        
         # if any of the temperature diodes reach above 300K turn off ALL the heaters
         if any(temp>300 for temp in temp_arr):
             for output_channel in OUTPUT_CHANNELS:
@@ -281,6 +280,8 @@ class Lakeshore336Server(SerialDeviceServer, PollingServer):
                 # turn heater range off to ensure no output
                 self.heater_range(None, output_channel, range=0)
 
+
 if __name__ == '__main__':
     from labrad import util
     util.runServer(Lakeshore336Server())
+    
