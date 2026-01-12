@@ -11,7 +11,6 @@ from EGGS_labrad.clients import QDetachableTabWidget
 class EGGS_GUI(QMainWindow):
     """
     EGGS GUI
-
     The main labrad experimental interface for the EGGS experiment.
     """
     name = gethostname() + ' EGGS GUI'
@@ -67,10 +66,10 @@ class EGGS_GUI(QMainWindow):
 
         # create subwidgets - each will be a separate tab
         # script_scanner =    self.makeScriptScannerWidget(self.reactor, cxn)
-        cryovac =           self.makeCryovacWidget(self.reactor, cxn)
-        trap =              self.makeTrapWidget(self.reactor, cxn)
-        lasers =            self.makeLaserWidget(self.reactor, cxn)
-        wavemeter =         self.makeWavemeterWidget(self.reactor, cxn)
+        lasers =    self.makeLaserWidget(self.reactor, cxn)
+        cryovac =   self.makeCryovacWidget(self.reactor, cxn)
+        trap =      self.makeTrapWidget(self.reactor, cxn)
+        wavemeter = self.makeWavemeterWidget(self.reactor, cxn)
 
         # create tabs for each subwidget
         # self.tabWidget.addTab(script_scanner, '&Script Scanner')
@@ -135,15 +134,15 @@ class EGGS_GUI(QMainWindow):
         # import constituent widgets
         from EGGS_labrad.clients.SLS_client.SLS_client import SLS_client
         from EGGS_labrad.clients.toptica_client.toptica_client import toptica_client
-        from EGGS_labrad.clients.injection_lock_diode_client.injection_lock_temperature_client import InjectionLockTemperatureClient
-        from EGGS_labrad.clients.injection_lock_diode_client.injection_lock_current_client import InjectionLockCurrentClient
+        from EGGS_labrad.clients.injection_lock_diode_client.injection_lock_temperature_client import InjectionLockTemperatureClient as inj_temp_client
+        from EGGS_labrad.clients.injection_lock_diode_client.injection_lock_current_client import InjectionLockCurrentClient as inj_curr_client
 
         # create client dict for programmatic initialization
         clients = {
-            SLS_client:             {"pos": (0, 0, 2, 2)},
-            toptica_client:         {"pos": (2, 0, 2, 2)},
-            InjectionLockTemperatureClient: {"pos": (0, 2, 2, 2)},
-            InjectionLockCurrentClient: {"pos": (2, 2, 2, 2)}
+            SLS_client:         {"pos": (0, 0, 2, 2)},
+            toptica_client:     {"pos": (0, 2, 4, 2)},
+            inj_temp_client:    {"pos": (2, 0, 1, 1)},
+            inj_curr_client:    {"pos": (2, 1, 1, 1)}
         }
         return self._createTabLayout(clients, reactor, cxn)
 
@@ -165,7 +164,7 @@ class EGGS_GUI(QMainWindow):
     """
     def close(self):
         """
-        Attempt to safely close the GUI (non-trivial).
+        Attempt to safely close the GUI (this is non-trivial).
         Disconnects the labrad connection and stops the event reactor.
         """
         # attempt to close the labrad connection

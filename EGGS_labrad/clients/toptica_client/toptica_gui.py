@@ -9,6 +9,8 @@ from EGGS_labrad.clients.Widgets import (TextChangingButton, Lockswitch,
 LABEL_FONT =    QFont(SHELL_FONT, pointSize=8)
 MAIN_FONT =     QFont(SHELL_FONT, pointSize=13)
 DISPLAY_FONT =  QFont(SHELL_FONT, pointSize=22)
+# todo: make it take up all vert space
+# todo: keyboard tracking off
 
 
 class toptica_channel(QFrame):

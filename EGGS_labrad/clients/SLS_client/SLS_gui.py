@@ -9,6 +9,7 @@ from EGGS_labrad.clients.Widgets import (TextChangingButton, QCustomGroupBox,
 LABEL_FONT =    QFont(SHELL_FONT, pointSize=11)
 INPUT_FONT =    QFont(SHELL_FONT, pointSize=13)
 STATUS_FONT =   QFont(SHELL_FONT, pointSize=20)
+# todo: keyboard tracking off
 
 
 class SLS_gui(QFrame):
