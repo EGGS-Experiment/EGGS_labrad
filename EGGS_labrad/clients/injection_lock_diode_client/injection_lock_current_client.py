@@ -8,8 +8,6 @@ CURRENTID = 1651989
 OUTPUTID =  1651990
 MAXCURRENTID = 1651991
 
-# todo: add hasfocus check
-
 
 class InjectionLockCurrentClient(GUIClient):
     """
@@ -26,14 +24,14 @@ class InjectionLockCurrentClient(GUIClient):
 
     @inlineCallbacks
     def initClient(self):
-        yield self.controller.signal__toggle_update(self.TOGGLEID)
-        yield self.controller.addListener(listener=self.updateToggle, source=None, ID=self.TOGGLEID)
-        yield self.controller.signal__current_update(self.CURRENTID)
-        yield self.controller.addListener(listener=self.updateSetCurrent, source=None, ID=self.CURRENTID)
-        yield self.controller.signal__output_update(self.OUTPUTID)
-        yield self.controller.addListener(listener=self.updateOutput, source=None, ID=self.OUTPUTID)
-        yield self.controller.signal__max_current_update(self.MAXCURRENTID)
-        yield self.controller.addListener(listener=self.updateMaxCurrent, soure=None, ID=self.MAXCURRENTID)
+        yield self.controller.signal__toggle_update(TOGGLEID)
+        yield self.controller.addListener(listener=self.updateToggle, source=None, ID=TOGGLEID)
+        yield self.controller.signal__current_update(CURRENTID)
+        yield self.controller.addListener(listener=self.updateSetCurrent, source=None, ID=CURRENTID)
+        yield self.controller.signal__output_update(OUTPUTID)
+        yield self.controller.addListener(listener=self.updateOutput, source=None, ID=OUTPUTID)
+        yield self.controller.signal__max_current_update(MAXCURRENTID)
+        yield self.controller.addListener(listener=self.updateMaxCurrent, soure=None, ID=MAXCURRENTID)
 
         # start polliing only if not already started
         poll_params = yield self.controller.polling()
@@ -61,6 +59,7 @@ class InjectionLockCurrentClient(GUIClient):
         self.gui.output_button.clicked.connect(lambda status: self.controller.toggle(status))
         self.gui.lockswitch.clicked.connect(lambda status: self.lock(status))
 
+        # user input interfaces - only send value to device after RETURN key is pressed
         self.gui.set_current_spinbox.textChanged.connect(lambda _: self.gui.set_current_spinbox.blockSignals(True))
         self.gui.set_current_spinbox.lineEdit().returnPressed.connect(
             lambda _box=self.gui.set_current_spinbox, _device_func = self.controller.current_set:
@@ -73,6 +72,7 @@ class InjectionLockCurrentClient(GUIClient):
 
     def update_val(self,c, box, device_func):
         val = float(box.text())
+        box.blockSignals(True)
         device_func(val)
         box.blockSignals(False)
 
@@ -95,7 +95,7 @@ class InjectionLockCurrentClient(GUIClient):
             c: labrad context
             status: indicates if controller has been turned on or off
         """
-        if not self.gui.output_button.signalsBlocked():
+        if (not self.gui.output_button.signalsBlocked()) and (not self.gui.output_button.hasFocus()):
             self.gui.output_button.blockSignals(True)
             self.gui.output_button.setChecked(status)
             self.gui.output_button.setAppearance(status)
@@ -109,7 +109,7 @@ class InjectionLockCurrentClient(GUIClient):
             msg: message containing what the set current has been changed to
         """
         _, current_mA = msg
-        if not self.gui.set_current_spinbox.signalsBlocked():
+        if (not self.gui.set_current_spinbox.signalsBlocked()) and (not self.gui.set_current_spinbox.hasFocus()):
             self.gui.set_current_spinbox.blockSignals(True)
             self.gui.set_current_spinbox.setValue(current_mA)
             self.gui.set_current_spinbox.blockSignals(False)
@@ -122,7 +122,7 @@ class InjectionLockCurrentClient(GUIClient):
             msg: message containing what the max current has been changed to
         """
         _, current_mA = msg
-        if not self.gui.max_current_spinbox.signalsBlocked():
+        if (not self.gui.max_current_spinbox.signalsBlocked()) and (not self.gui.max_current_spinbox.hasFocus()):
             self.gui.max_current_spinbox.blockSignals(True)
             self.gui.max_current_spinbox.setValue(current_mA)
             self.gui.max_current_spinbox.blockSignals(False)
@@ -134,11 +134,10 @@ class InjectionLockCurrentClient(GUIClient):
             c: labrad context
             outputs: voltage and current the controller is outputting
         """
-        if not self.gui.output_button.signalsBlocked():
-            self.gui.label_diode_voltage.blockSignals(True)
-            self.gui.label_diode_voltage.setText("{:>.3f}".format(outputs[0]))
-            self.gui.label_diode_current.setText("{:>.3f}".format(outputs[1] * 1e3))
-            self.gui.label_diode_current.blockSignals(False)
+        self.gui.label_diode_voltage.blockSignals(True)
+        self.gui.label_diode_voltage.setText("{:>.3f}".format(outputs[0]))
+        self.gui.label_diode_current.setText("{:>.3f}".format(outputs[1] * 1e3))
+        self.gui.label_diode_current.blockSignals(False)
 
 if __name__ == "__main__":
     from EGGS_labrad.clients import runClient
