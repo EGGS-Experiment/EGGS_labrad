@@ -1,7 +1,7 @@
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
-from EGGS_labrad.clients.SLS_client.fibernoise_gui import fibernoise_gui
+from EGGS_labrad.clients._deprecated.fibernoise_client.fibernoise_gui import fibernoise_gui
 # todo: support max/ovp
 _OSCOPE_NAME = "DS1ZC221401223"
 _OSCOPE_CHANNEL = 1

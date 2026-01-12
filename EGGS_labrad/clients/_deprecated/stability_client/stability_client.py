@@ -5,7 +5,7 @@ from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients.ionChain import *
 from EGGS_labrad.clients import GUIClient, createTrunk
-from EGGS_labrad.clients.stability_client.stability_gui import stability_gui
+from EGGS_labrad.clients._deprecated.stability_client.stability_gui import stability_gui
 
 _PICKOFF_FACTOR = 301
 _DEFAULT_VRF = 150

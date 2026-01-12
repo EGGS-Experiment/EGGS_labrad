@@ -1,7 +1,7 @@
 from twisted.internet.defer import inlineCallbacks
 
 from EGGS_labrad.clients import GUIClient
-from EGGS_labrad.clients.slider_client.slider_gui import slider_gui
+from EGGS_labrad.clients._deprecated.slider_client.slider_gui import slider_gui
 
 
 class slider_client(GUIClient):
