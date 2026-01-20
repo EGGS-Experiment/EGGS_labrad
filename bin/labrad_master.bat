@@ -32,10 +32,10 @@ IF %raw_flag%==0 (
     START "Promtail - ARTIQ" /min CMD /k " "%HOME%\Code\loki\promtail-windows-amd64.exe" -config.file "%PROG_HOME%\logging\promtail-artiq-config.yaml" "
 
     @REM Set up autosaver
-    START "LabRAD Autosaver" /min "%PROG_HOME%\labrad_autosaver.bat"
+    @REM START "LabRAD Autosaver" /min "%PROG_HOME%\labrad_autosaver.bat"
 
     @REM Set up port forwarder to allow access via http
-    START "LabRAD Forwarder" /min CMD /k "activate labart && python "%PROG_HOME%\labrad_forwarder.py" 8682:127.0.0.1:7682"
+    @REM START "LabRAD Forwarder" /min CMD /k "activate labart && python "%PROG_HOME%\labrad_forwarder.py" 8682:127.0.0.1:7682"
 
     @REM Start core ARTIQ managers
     START /min CMD /c "%PROG_HOME%\artiq_start.bat"
