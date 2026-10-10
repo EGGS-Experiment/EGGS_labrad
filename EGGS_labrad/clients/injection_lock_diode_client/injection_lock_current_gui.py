@@ -65,7 +65,7 @@ class InjectionLockCurrentGUI(QFrame):
         self.set_current_spinbox = QCustomUnscrollableSpinBox(self)
         self.set_current_spinbox.setFont(QFont(SHELL_FONT, pointSize=15))
         self.set_current_spinbox.setDecimals(3)
-        self.set_current_spinbox.setSingleStep(0.001)
+        self.set_current_spinbox.setSingleStep(0.01)
         self.set_current_spinbox.setRange(0., MAX_CURRENT)
         self.set_current_spinbox.setAlignment(Qt.AlignRight)
         self.set_current_spinbox.setKeyboardTracking(False)

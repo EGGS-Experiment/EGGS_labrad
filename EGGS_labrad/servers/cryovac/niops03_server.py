@@ -37,7 +37,7 @@ class NIOPS03Server(SerialDeviceServer, PollingServer):
     name =      'NIOPS03 Server'
     regKey =    'NIOPS03 Server'
     serNode =   'CausewayBay'
-    port =      'COM14'
+    port =      'COM9'
 
     timeout =   WithUnit(3.0, 's')
     baudrate =  115200

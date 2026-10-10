@@ -20,11 +20,11 @@ class multiplexer_config(object):
     channels = {
         # name:         (port,  freq_set_thz,  (x_pos, y_pos), enable_PID_interface, dac_port, [dac_min_v, dac_max_v]
         '397nm':        (1,     '755.2218659',  (0, 1), True,   5,  [-4, 4]),
-        '729nm (Inj)':  (11,    '411.0418223',  (0, 2), False,  -1, [-4, 4]),
-        '423nm':        (4,     '709.0776400',  (0, 3), True,   4,  [-4, 4]),
+        '729nm (Inj)':  (15,    '411.0418223',  (0, 2), False,  -1, [-4, 4]),
+        '423nm':        (5,     '709.0776400',  (0, 3), True,   4,  [-4, 4]),
         '854nm':        (14,    '350.8624600',  (0, 4), True,   8,  [-4, 4]),
         '866nm':        (13,    '345.9998600',  (0, 5), True,   7,  [-4, 4]),
-        '729nm':        (12,    '411.0419021',  (0, 6), False,  -1, [-4, 4]),
+        # '729nm':        (15,    '411.0419021',  (0, 6), False,  -1, [-4, 4]),
     }
 
-    alarm_threshold_mhz = 1e4
+    alarm_threshold_mhz = 1e20
