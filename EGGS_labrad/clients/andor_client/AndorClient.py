@@ -264,12 +264,32 @@ class AndorClient(GUIClient):
             yield self.cam.mode_shutter('Close')
             yield self.cam.polling(False)
 
+    @inlineCallbacks
     def updateImage(self, c, image_data):
         """
         Processes images received from the server.
         """
         if self.update_display_status:
             # process/reshape image shape
+
+            # Refresh ROI because the experiment may have changed it.
+            (
+                self.binx, self.biny,
+                self.startx, self.stopx,
+                self.starty, self.stopy
+            ) = yield self.cam.image_region_get()
+
+            self.pixels_x = (
+                                    self.stopx - self.startx + 1
+                            ) // self.binx
+            self.pixels_y = (
+                                    self.stopy - self.starty + 1
+                            ) // self.biny
+
+            # Ignore an old frame received during an ROI change.
+            if len(image_data) != self.pixels_x * self.pixels_y:
+                return
+
             image_data = np.reshape(image_data, (self.pixels_y, self.pixels_x))
             # update display
             self.gui.image.setImage(
