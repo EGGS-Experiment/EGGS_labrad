@@ -287,10 +287,18 @@ class SLS_client(GUIClient):
     """
     HELPER FUNCTIONS
     """
-    def _dateFormat(self, _seconds):
-        days = _seconds / 86400
-        hours = (days % 1) * 24
-        minutes = int((hours % 1) * 60)
+    def _dateFormat(self, _date_message):
+        time_locked = _date_message.split(' ')[-1]
+        time_locked_list = time_locked.split(':')
+        days = time_locked_list[0][0]
+        hours= time_locked_list[1]
+        minutes = time_locked_list[2]
+        seconds = time_locked_list[3]
+
+        # print(_seconds)
+        # days = float(_seconds) / 86400
+        # hours = (days % 1) * 24
+        # minutes = int((hours % 1) * 60)
         time_str = _TIME_STR.format(int(days), int(hours), minutes)
         return time_str
 
