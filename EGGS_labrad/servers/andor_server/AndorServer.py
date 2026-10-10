@@ -632,13 +632,13 @@ class AndorServer(PollingServer):
             self.lock.release()
 
         # update listeners
-        if np.all(image_data != self.last_image):
+        if np.any(image_data != self.last_image):
             self.last_image = image_data
             self.notifyOtherListeners(c, image_data, self.image_updated)
         returnValue(image_data)
 
-    @setting(732, "Acquire Image Oldest", returns='*i')
-    def acquireImageOldest(self, c):
+    @setting(732, "Acquire Image Oldest", notify_other_listeners = 'b', returns='*i')
+    def acquireImageOldest(self, c, notify_other_listeners=True):
         """
         Returns the oldest image from the circular buffer.
         Image will no longer be available after retrieval.
@@ -654,11 +654,38 @@ class AndorServer(PollingServer):
             self.lock.release()
 
         # update listeners
-        if np.all(image_data != self.last_image):
-            self.last_image = image_data
-            self.notifyOtherListeners(c, image_data, self.image_updated)
+        if notify_other_listeners:
+            if np.any(image_data != self.last_image):
+                self.last_image = image_data
+                self.notifyOtherListeners(c, image_data, self.image_updated)
         returnValue(image_data)
 
+    @setting(
+        733, "Acquire Images Oldest",
+        num_images='i',
+        returns='*i'
+    )
+    def acquireImagesOldest(self, c, num_images):
+        """Batch retrieval of images for quick processing"""
+        if num_images <= 0:
+            raise ValueError("num_images must be positive")
+
+        def fetch_frames():
+            return np.concatenate([
+                np.asarray(
+                    self.camera.get_oldest_image(),
+                    dtype=np.int32
+                ).ravel()
+                for _ in range(num_images)
+            ])
+
+        yield self.lock.acquire()
+        try:
+            images = yield deferToThread(fetch_frames)
+        finally:
+            self.lock.release()
+
+        returnValue(images)
 
     """
     POLLING
