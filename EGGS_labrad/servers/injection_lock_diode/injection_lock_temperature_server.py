@@ -165,6 +165,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         # parse resp
         resp = float(resp[:-2])
         self.notifyOtherListeners(c, resp, self.setpoint_update)
+        print(resp)
         returnValue(resp)
 
     @setting(221, 'Locking P', prop='v', returns='v')
@@ -192,8 +193,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         self.ser.release()
 
         # parse resp
-        resp = float(resp.strip())
-        self.notifyOtherListeners(c, resp, self.lock_update)
+        resp = float(resp.strip())        self.notifyOtherListeners(c, resp, self.lock_update)
         returnValue(resp)
 
     @setting(222, 'Locking I', integ='v', returns='v')

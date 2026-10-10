@@ -38,14 +38,14 @@ START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://localhost:7667
 START "" "%ProgramFiles(x86)%\chrome-win\chrome.exe" http://%LABRADHOST%:3000
 
 @REM Start LabRAD/ARTIQ clients
-IF %raw_flag%==0 (
-    @REM ARTIQ Dashboard
-    @REM START "ARTIQ MonInj Proxy" /min CMD /k "activate artiq8 && CALL aqctl_moninj_proxy 192.168.1.76"
-    START "ARTIQ Dashboard" /min CMD /k "activate artiq8 && CALL artiq_dashboard -s %LABRADHOST%"
-
-    @REM Start relevant LabRAD clients (e.g. EGGS GUI, RSG Client, DDS Client)
-    TIMEOUT 8 > NUL && START /min CMD /c "%PROG_HOME%\utils\start_labrad_clients.bat"
-)
+@REM IF %raw_flag%==0 (
+@REM     @REM ARTIQ Dashboard
+@REM     @REM START "ARTIQ MonInj Proxy" /min CMD /k "activate artiq8 && CALL aqctl_moninj_proxy 192.168.1.76"
+@REM     START "ARTIQ Dashboard" /min CMD /k "activate artiq8 && CALL artiq_dashboard -s %LABRADHOST%"
+@REM 
+@REM     @REM Start relevant LabRAD clients (e.g. EGGS GUI, RSG Client, DDS Client)
+@REM     TIMEOUT 8 > NUL && START /min CMD /c "%PROG_HOME%\utils\start_labrad_clients.bat"
+@REM )
 
 @REM Open a command-line python connection to LabRAD
 CALL "%PROG_HOME%\server_cxn.bat"
