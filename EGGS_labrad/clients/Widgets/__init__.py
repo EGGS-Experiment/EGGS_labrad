@@ -14,7 +14,7 @@ from .QClientHeader import QClientHeader
 from .QClientMenuHeader import QClientMenuHeader
 from .QInitializePlaceholder import QInitializePlaceholder
 from .QCustomEditableLabel import QCustomEditableLabel
+from .QCustomUnscrollableComboBox import QCustomUnscrollableComboBox
 from .QCustomUnscrollableSpinBox import QCustomUnscrollableSpinBox
 from .QCustomARTIQMonitor import QCustomARTIQMonitor
-from .QCustomUnscrollableComboBox import QCustomUnscrollableComboBox
 # todo: create record button widget

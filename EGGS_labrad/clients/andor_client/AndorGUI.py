@@ -43,6 +43,7 @@ class AndorGUI(QWidget):
         # create actual image object which holds and manages the images - a "referent"
         # note: as an ImageView, this can be considered as the actual image object
         self.image = pg.ImageView(view=self.display)
+        self.image.setPredefinedGradient('thermal')
 
         # configure display
         self.display.showAxis('top')

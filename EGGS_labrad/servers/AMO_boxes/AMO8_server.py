@@ -45,7 +45,6 @@ class AMO8Server(SerialDeviceServer, PollingServer):
     voltage_update = Signal(999999, 'signal: voltage update', '(iv)')
     hv_update = Signal(999998, 'signal: hv update', '(vv)')
 
-
     # GENERAL
     @setting(11, 'Clear', returns='s')
     def clear(self, c):

@@ -15,12 +15,11 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 from labrad.units import WithUnit
 from labrad.server import setting, Signal, inlineCallbacks
 
 from twisted.internet.defer import returnValue
-from EGGS_labrad.servers import SerialDeviceServer, PollingServer, ContextServer
+from EGGS_labrad.servers import SerialDeviceServer, PollingServer
 
 TERMINATOR = '\r\n'
 
@@ -44,7 +43,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
     current_update = Signal(999987, 'signal: current update', 'v')
     temperature_update = Signal(999986, 'signal: temperature update', 'v')
     lock_update = Signal(999985, 'signal: lock update', '(sv)')
-    setpoint_update = Signal(999984, 'signal: setpoint update', '(v)')
+    setpoint_update = Signal(999984, 'signal: setpoint update', 'v')
 
 
     # GENERAL
@@ -165,10 +164,9 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         # parse resp
         resp = float(resp[:-2])
         self.notifyOtherListeners(c, resp, self.setpoint_update)
-        print(resp)
         returnValue(resp)
 
-    @setting(221, 'Locking P', prop='v', returns='v')
+    @setting(221, 'Locking P', prop='v', returns='(sv)')
     def lockingP(self, c, prop=None):
         """
         Get/set the proportional parameter (in machine units).
@@ -193,10 +191,11 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         self.ser.release()
 
         # parse resp
-        resp = float(resp.strip())        self.notifyOtherListeners(c, resp, self.lock_update)
+        resp = ('p', float(resp.strip()))
+        self.notifyOtherListeners(c, resp, self.lock_update)
         returnValue(resp)
 
-    @setting(222, 'Locking I', integ='v', returns='v')
+    @setting(222, 'Locking I', integ='v', returns='(sv)')
     def lockingI(self, c, integ=None):
         """
         Get/set the integral parameter (in machine units).
@@ -221,11 +220,11 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         self.ser.release()
 
         # parse resp
-        resp = float(resp.strip())
+        resp = ('i', float(resp.strip()))
         self.notifyOtherListeners(c, resp, self.lock_update)
         returnValue(resp)
 
-    @setting(223, 'Locking D', deriv='v', returns='v')
+    @setting(223, 'Locking D', deriv='v', returns='(sv)')
     def lockingD(self, c, deriv=None):
         """
         Get/set the derivative parameter (in machine units).
@@ -250,7 +249,7 @@ class InjectionLockTemperatureServer(SerialDeviceServer, PollingServer):
         self.ser.release()
 
         # parse resp
-        resp = float(resp.strip())
+        resp = ('d', float(resp.strip()))
         self.notifyOtherListeners(c, resp, self.lock_update)
         returnValue(resp)
 

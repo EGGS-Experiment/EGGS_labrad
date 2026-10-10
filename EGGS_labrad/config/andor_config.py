@@ -26,8 +26,8 @@ class AndorConfig(object):
     horizontal_shift_speed =        1
 
     # image setup
-    image_rotate =          "Anticlockwise"
-    image_flip_horizontal = 1
+    image_rotate =          "None"
+    image_flip_horizontal = 0
     image_flip_vertical =   0
 
     # saving

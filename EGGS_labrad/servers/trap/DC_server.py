@@ -193,7 +193,7 @@ class DCServer(SerialDeviceServer, PollingServer):
             raise Exception('Error: bad readback from device.')
 
         # send signal to all other listeners
-        self.toggle_update((channel, resp), self.getOtherListeners(c))
+        self.notifyOtherListeners(c, (channel, resp), self.toggle_update)
         returnValue(resp)
 
     @setting(121, 'Toggle All', power=['i', 'b'], returns=['', '*b'])

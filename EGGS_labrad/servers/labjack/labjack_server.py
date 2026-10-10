@@ -27,6 +27,13 @@ from labjack import ljm
 # todo: comm lock
 # todo: signals for updating
 
+_LABJACK_DATA_TYPES = {
+    'UINT16':   ljm.constants.UINT16,
+    'UINT32':   ljm.constants.UINT32,
+    'INT32':    ljm.constants.INT32,
+    'FLOAT':    ljm.constants.FLOAT32,
+}
+
 
 class LabJackServer(ContextServer):
     """
@@ -54,7 +61,9 @@ class LabJackServer(ContextServer):
         self.comm_lock =        DeferredLock
 
 
-    # STARTUP & SHUTDOWN
+    '''
+    STARTUP & SHUTDOWN
+    '''
     def initServer(self):
         """
         todo: document
@@ -178,24 +187,20 @@ class LabJackServer(ContextServer):
     '''
     READ
     '''
-    @inlineCallbacks
     @setting(11, name='s', returns='v')
     def read_name(self, c, name):
         """
         Read a value from a named register on the LabJack.
-
         NOTE: READING FROM A REGISTER WITH THIS METHOD SETS THIS PORT TO HIGH REGARDLESS OF THE INITIAL VALUE
         """
         value = yield ljm.eReadName(self.device_handle, name)
         returnValue(value)
 
-    @inlineCallbacks
     @setting(13, name='s', returns='i')
     def read_state(self, c, name):
         """
-        Read a value from a DIO register on the LabJack
+        Read a value from a DIO register on the LabJack.
         """
-
         # find the index from the port name given
         ind = int(''.join([letter for letter in name[::-1] if letter.isdigit()]))
 
@@ -205,38 +210,44 @@ class LabJackServer(ContextServer):
         # return the value of the DIO port requested
         returnValue(int(bin(int(DIO_values))[-ind]))
 
-    @inlineCallbacks
-    @setting(15, address='i', returns='v')
-    def read_address(self, c, address):
+    @setting(15, address='i', data_type='s', returns='v')
+    def read_address(self, c, address, data_type):
         """
         Read a value from a register on the LabJack.
+        :param address: the numerical register address to read from.
+        :param data_type: the desired return data type. Can be one of ['UINT16', 'UINT32', 'INT32', 'FLOAT'].
         """
-        value = yield ljm.eReadAddress(self.device_handle, address)
+        # convert user input data type to labjack data type
+        data_type_processed = _LABJACK_DATA_TYPES[data_type.strip().upper()]
+        value = yield ljm.eReadAddress(self.device_handle, address, data_type_processed)
         returnValue(value)
 
-    @inlineCallbacks
     @setting(17, names='*s', returns='*v')
     def read_names(self, c, names):
         """
         Read values from multiple named registers on the LabJack.
+        For simplicity, does only a single read of each named register.
         """
         values = yield ljm.eReadNames(self.device_handle, len(names), names)
         returnValue(values)
 
-    @inlineCallbacks
-    @setting(19, addresses='*i', returns='*v')
-    def read_addresses(self, c, addresses):
+    @setting(19, addresses='*i', data_types='*s', returns='*v')
+    def read_addresses(self, c, addresses, data_types):
         """
         Read values from multiple registers on the LabJack.
+        :param addresses: list of numerical register addresses to read from.
+        :param data_types: list of desired return data types.
+            Elements must be one of ['UINT16', 'UINT32', 'INT32', 'FLOAT'].
         """
-        values = yield ljm.eReadAddresses(self.device_handle, len(addresses), addresses)
+        # convert user input data type to labjack data type
+        data_types_processed = [_LABJACK_DATA_TYPES[type_tmp.strip().upper()] for type_tmp in data_types]
+        values = yield ljm.eReadAddresses(self.device_handle, len(addresses), addresses, data_types_processed)
         returnValue(values)
 
 
     '''
     WRITE
     '''
-    @inlineCallbacks
     @setting(10, name='s', value='v')
     def write_name(self, c, name, value):
         """
@@ -244,15 +255,19 @@ class LabJackServer(ContextServer):
         """
         ljm.eWriteName(self.device_handle, name, value)
 
-    @inlineCallbacks
-    @setting(12, address='i', value='v')
-    def write_address(self, c, address, value):
+    @setting(12, address='i', data_type='s', value='v')
+    def write_address(self, c, address, data_type, value):
         """
         Write a value to a register on the LabJack.
+        :param address: the numerical register address to write to.
+        :param data_type: the data type corresponding to the address.
+            Can be one of ['UINT16', 'UINT32', 'INT32', 'FLOAT'].
+        :param value: the value to write to the register.
         """
-        ljm.eWriteAddress(self.device_handle, address, value)
+        # convert user input data type to labjack data type
+        data_type_processed = _LABJACK_DATA_TYPES[data_type.strip().upper()]
+        ljm.eWriteAddress(self.device_handle, address, data_type_processed, value)
 
-    @inlineCallbacks
     @setting(14, names='*s', values='*v')
     def write_names(self, c, names, values):
         """
@@ -260,13 +275,18 @@ class LabJackServer(ContextServer):
         """
         ljm.eWriteNames(self.device_handle, len(names), names, values)
 
-    @inlineCallbacks
-    @setting(16, addresses='*i', values='*v')
-    def write_addresses(self, c, addresses, values):
+    @setting(16, addresses='*i', data_types='*s', values='*v')
+    def write_addresses(self, c, addresses, data_types, values):
         """
         Write values to multiple registers on the LabJack.
+        :param address: list of numerical register addresses to write to.
+        :param data_types: list of data types corresponding to the addresses.
+            Elements must be one of ['UINT16', 'UINT32', 'INT32', 'FLOAT'].
+        :param value: list of values to write to the registers.
         """
-        ljm.eWriteAddresses(self.device_handle, len(addresses), addresses, values)
+        # convert user input data type to labjack data type
+        data_types_processed = [_LABJACK_DATA_TYPES[type_tmp.strip().upper()] for type_tmp in data_types]
+        ljm.eWriteAddresses(self.device_handle, len(addresses), addresses, data_types_processed, values)
 
 
 if __name__ == "__main__":

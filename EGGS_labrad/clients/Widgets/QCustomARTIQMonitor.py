@@ -8,8 +8,8 @@ __all__ = ['QCustomARTIQMonitor']
 class QCustomARTIQMonitor(QFrame):
     """
     A widget that displays whether ARTIQ is currently running any experiments.
-    Arguments:
-        parent  (QWidget) : the parent GUI
+    :param parent: the parent GUI (a QWidget object).
+    :param disablefunc: function to use to enable/disable the parent GUI.
     """
 
     def __init__(self, parent):
@@ -17,6 +17,7 @@ class QCustomARTIQMonitor(QFrame):
 
         # general setup
         self.parent = parent
+        # self._disablefunc = disablefunc
         self.setFrameStyle(0x0001 | 0x0030)
         layout = QGridLayout(self)
 
@@ -36,8 +37,7 @@ class QCustomARTIQMonitor(QFrame):
     def setStatus(self, msg):
         """
         Enables/disables the GUI and sets the display.
-        Arguments:
-            msg  (bool, int): the run status and experiment RID (if running).
+        :param msg: the run status and experiment RID (if running).
         """
         status, rid = msg
         if status:

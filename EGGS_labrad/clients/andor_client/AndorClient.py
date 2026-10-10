@@ -142,7 +142,7 @@ class AndorClient(GUIClient):
             # prepare everything client-side for acquisition, but don't initialize camera hardware
             # since it's already running
             yield self.start_acquisition(True, False)
-            yield self.cam.polling(True, 0.5)
+            yield self.cam.polling(True, 0.1)
 
     def initGUI(self):
         """
@@ -256,7 +256,7 @@ class AndorClient(GUIClient):
             yield self.cam.acquisition_start()
 
             # tell camera to start polling
-            yield self.cam.polling(True, 1.5)
+            yield self.cam.polling(True, 0.1)
 
         elif status is False:
             # stop acquisition and stop polling
@@ -273,10 +273,13 @@ class AndorClient(GUIClient):
             image_data = np.reshape(image_data, (self.pixels_y, self.pixels_x))
             # update display
             self.gui.image.setImage(
-                image_data.transpose(),
-                pos=[self.startx, self.starty], scale=[self.binx, self.biny],
+                # image_data.transpose(),
+                image_data,
+                pos=[self.starty, self.startx], scale=[self.binx, self.biny],
                 autoRange=False, autoLevels=False, autoHistogramRange=False
             )
+            self.gui.display.setLimits(xMin=0, xMax=512 * 1.5, yMin=0,
+                                       yMax=512 * 1.5)
 
             # update ROI - call ROI process/update function
             self.gui.process_roi()

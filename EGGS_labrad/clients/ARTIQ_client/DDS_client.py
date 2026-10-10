@@ -16,7 +16,6 @@ class DDS_client(GUIClient):
     name = "Urukuls Client"
     servers = {'aq': 'ARTIQ Server'}
 
-
     def getgui(self):
         if self.gui is None:
             self.gui = DDS_gui(self.urukul_list)
@@ -28,11 +27,14 @@ class DDS_client(GUIClient):
         self.urukul_list = {}
         self._getDevices(device_db)
 
+        # set up unique contexts for signal reception
+        self.cntx_aq_mon = self.cxn.context()
+
         # connect to signals
         yield self.aq.signal__dds_changed(DDSID)
         yield self.aq.addListener(listener=self.updateDDS, source=None, ID=DDSID)
-        yield self.aq.signal__exp_running(EXPID)
-        yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID)
+        yield self.aq.signal__exp_running(EXPID, context=self.cntx_aq_mon)
+        yield self.aq.addListener(listener=self.experimentRunning, source=None, ID=EXPID, context=self.cntx_aq_mon)
 
     def _getDevices(self, device_db) -> None:
         """

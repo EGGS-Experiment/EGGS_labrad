@@ -4,17 +4,22 @@ Contains all the GUI elements needed for the multiplexer client.
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox,\
-                            QDesktopWidget, QPushButton, QComboBox, QCheckBox, QScrollArea, QWidget
+from PyQt5.QtWidgets import (
+    QFrame, QLabel, QSizePolicy, QGridLayout, QGroupBox, QDesktopWidget,
+    QPushButton, QCheckBox, QScrollArea, QWidget
+)
 
 from EGGS_labrad.clients import wav2RGB
-from EGGS_labrad.clients.Widgets import TextChangingButton, QCustomProgressBar, QCustomSlideIndicator,\
-                                        QClientMenuHeader, QCustomUnscrollableSpinBox
+from EGGS_labrad.clients.Widgets import (
+    TextChangingButton, QCustomProgressBar, QCustomSlideIndicator,
+    QClientMenuHeader, QCustomUnscrollableSpinBox, QCustomUnscrollableComboBox
+)
 
 
 class multiplexer_pid(QFrame):
     """
-    GUI for the wavemeter PID frequency lock.
+    GUI for the WS8 wavemeter.
+    Includes configuration for the wavemeter's DAC-based frequency servo.
     """
 
     def __init__(self, DACPort=0, parent=None):
@@ -102,7 +107,7 @@ class multiplexer_pid(QFrame):
         self.spinExp.setRange(-6, 3)
         self.spinExp.setKeyboardTracking(False)
 
-        self.polarityBox = QComboBox(self)
+        self.polarityBox = QCustomUnscrollableComboBox(self)
         self.polarityBox.addItem("Positive")
         self.polarityBox.addItem("Negative")
         self.polarityBox.setFont(main_font)
