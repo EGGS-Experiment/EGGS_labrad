@@ -38,7 +38,7 @@ class GPP3060Server(SerialDeviceServer, PollingServer):
     name =      'GPP3060 Server'
     regKey =    'GPP3060 Server'
     serNode =   'causewaybay'
-    port =      'COM24'
+    port =      'COM13'
 
     timeout =   WithUnit(5.0, 's')
     baudrate =  115200

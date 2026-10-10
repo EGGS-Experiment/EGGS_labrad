@@ -632,13 +632,13 @@ class AndorServer(PollingServer):
             self.lock.release()
 
         # update listeners
-        if np.all(image_data != self.last_image):
+        if np.any(image_data != self.last_image):
             self.last_image = image_data
             self.notifyOtherListeners(c, image_data, self.image_updated)
         returnValue(image_data)
 
-    @setting(732, "Acquire Image Oldest", returns='*i')
-    def acquireImageOldest(self, c):
+    @setting(732, "Acquire Image Oldest", notify_other_listeners = 'b', returns='*i')
+    def acquireImageOldest(self, c, notify_other_listeners=True):
         """
         Returns the oldest image from the circular buffer.
         Image will no longer be available after retrieval.
@@ -654,9 +654,10 @@ class AndorServer(PollingServer):
             self.lock.release()
 
         # update listeners
-        if np.all(image_data != self.last_image):
-            self.last_image = image_data
-            self.notifyOtherListeners(c, image_data, self.image_updated)
+        if notify_other_listeners:
+            if np.any(image_data != self.last_image):
+                self.last_image = image_data
+                self.notifyOtherListeners(c, image_data, self.image_updated)
         returnValue(image_data)
 
 
